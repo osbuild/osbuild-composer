@@ -5,7 +5,7 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"os/exec"
@@ -50,7 +50,7 @@ func TestBuildChecksContentType(t *testing.T) {
 	assert.NoError(t, err)
 	defer rsp.Body.Close()
 	assert.Equal(t, rsp.StatusCode, http.StatusUnsupportedMediaType)
-	body, err := ioutil.ReadAll(rsp.Body)
+	body, err := io.ReadAll(rsp.Body)
 	assert.NoError(t, err)
 	assert.Equal(t, string(body), "Content-Type must be [application/x-tar], got random/encoding\n")
 }
@@ -102,20 +102,21 @@ echo "fake-build-result" > %[1]s/build/output/image/disk.img
 	buf := makeTestPost(t, `{"exports": ["tree"], "environments": ["MY=env"]}`, `{"fake": "manifest"}`)
 	rsp, err := http.Post(endpoint, "application/x-tar", buf)
 	assert.NoError(t, err)
-	defer ioutil.ReadAll(rsp.Body)
+	defer io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 
 	assert.Equal(t, rsp.StatusCode, http.StatusCreated)
 	reader := bufio.NewReader(rsp.Body)
+
 	// check that we get the output of osbuild streamed to us
 	expectedContent := fmt.Sprintf(`fake-osbuild --export tree --output-dir %[1]s/build/output --store %[1]s/build/store --json
 ---
 {"fake": "manifest"}`, baseBuildDir)
-	content, err := ioutil.ReadAll(reader)
+	content, err := io.ReadAll(reader)
 	assert.NoError(t, err)
 	assert.Equal(t, string(content), expectedContent)
 	// check log too
-	logFileContent, err := ioutil.ReadFile(filepath.Join(baseBuildDir, "build/build.log"))
+	logFileContent, err := os.ReadFile(filepath.Join(baseBuildDir, "build/build.log"))
 	assert.NoError(t, err)
 	assert.Equal(t, expectedContent, string(logFileContent))
 	// check that the "store" dir got created
@@ -129,7 +130,7 @@ echo "fake-build-result" > %[1]s/build/output/image/disk.img
 	assert.NoError(t, err)
 	defer rsp.Body.Close()
 	assert.Equal(t, http.StatusOK, rsp.StatusCode)
-	body, err := ioutil.ReadAll(rsp.Body)
+	body, err := io.ReadAll(rsp.Body)
 	assert.NoError(t, err)
 	assert.Equal(t, "fake-build-result\n", string(body))
 
@@ -139,7 +140,7 @@ echo "fake-build-result" > %[1]s/build/output/image/disk.img
 	assert.NoError(t, err)
 	defer rsp.Body.Close()
 	assert.Equal(t, http.StatusOK, rsp.StatusCode)
-	body, err = ioutil.ReadAll(rsp.Body)
+	body, err = io.ReadAll(rsp.Body)
 	assert.NoError(t, err)
 	tarPath := filepath.Join(baseBuildDir, "output.tar")
 	assert.NoError(t, os.WriteFile(tarPath, body, 0644))
@@ -164,7 +165,7 @@ echo "fake-build-result" > %[1]s/build/output/image/disk.img
 	rsp, err := http.Post(endpoint, "application/x-tar", buf)
 	assert.NoError(t, err)
 	assert.Equal(t, rsp.StatusCode, http.StatusCreated)
-	defer ioutil.ReadAll(rsp.Body)
+	defer io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 
 	buf = makeTestPost(t, `{"exports": ["tree"]}`, `{"fake": "manifest"}`)
@@ -232,12 +233,12 @@ exit 23
 	buf := makeTestPost(t, `{"exports": ["tree"], "environments": ["MY=env"]}`, `{"fake": "manifest"}`)
 	rsp, err := http.Post(endpoint, "application/x-tar", buf)
 	assert.NoError(t, err)
-	defer ioutil.ReadAll(rsp.Body)
+	defer io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 
 	assert.Equal(t, rsp.StatusCode, http.StatusCreated)
 	reader := bufio.NewReader(rsp.Body)
-	content, err := ioutil.ReadAll(reader)
+	content, err := io.ReadAll(reader)
 	assert.NoError(t, err)
 	expectedContent := `err on stdout
 err on stderr
@@ -251,7 +252,7 @@ cannot run osbuild: exit status 23`
 	defer rsp.Body.Close()
 	assert.Equal(t, http.StatusBadRequest, rsp.StatusCode)
 	reader = bufio.NewReader(rsp.Body)
-	content, err = ioutil.ReadAll(reader)
+	content, err = io.ReadAll(reader)
 	assert.NoError(t, err)
 	assert.Equal(t, "build failed\n"+expectedContent, string(content))
 }
@@ -276,7 +277,7 @@ echo "fake-build-result" > %[1]s/build/output/image/disk.img
 	buf := makeTestPost(t, `{"exports": ["tree"], "environments": ["MY=env"]}`, `{"fake": "manifest"}`)
 	rsp, err := http.Post(endpoint, "application/x-tar", buf)
 	assert.NoError(t, err)
-	defer ioutil.ReadAll(rsp.Body)
+	defer io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 
 	assert.Equal(t, rsp.StatusCode, http.StatusCreated)
@@ -314,7 +315,7 @@ func TestBuildErrorHandlingTar(t *testing.T) {
 	defer rsp.Body.Close()
 	assert.Equal(t, rsp.StatusCode, http.StatusCreated)
 
-	body, err := ioutil.ReadAll(rsp.Body)
+	body, err := io.ReadAll(rsp.Body)
 	assert.NoError(t, err)
 	assert.Contains(t, string(body), "cannot tar output directory:")
 	assert.Contains(t, loggerHook.LastEntry().Message, "cannot tar output directory:")

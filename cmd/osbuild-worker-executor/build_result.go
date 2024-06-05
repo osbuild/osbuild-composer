@@ -1,7 +1,6 @@
 package main
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 )
@@ -20,9 +19,9 @@ func newBuildResult(config *Config) *buildResult {
 
 func (br *buildResult) Mark(err error) error {
 	if err == nil {
-		return ioutil.WriteFile(br.resultGood, nil, 0600)
+		return os.WriteFile(br.resultGood, nil, 0600)
 	} else {
-		return ioutil.WriteFile(br.resultBad, nil, 0600)
+		return os.WriteFile(br.resultBad, nil, 0600)
 	}
 }
 

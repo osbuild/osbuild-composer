@@ -65,7 +65,9 @@ func runTestServer(t *testing.T) (baseURL, buildBaseDir string, loggerHook *logr
 		"-port", port,
 		"-build-path", buildBaseDir,
 	}
-	go main.Run(ctx, args, os.Getenv)
+	go func() {
+		_ = main.Run(ctx, args, os.Getenv)
+	}()
 
 	err := waitReady(ctx, defaultTimeout, baseURL)
 	assert.NoError(t, err)
