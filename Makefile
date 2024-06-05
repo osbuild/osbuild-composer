@@ -118,6 +118,7 @@ man: $(MANPAGES_TROFF)
 build: $(BUILDDIR)/bin/
 	go build -o $<osbuild-composer ./cmd/osbuild-composer/
 	go build -o $<osbuild-worker ./cmd/osbuild-worker/
+	go build -o $<osbuild-worker-executor ./cmd/osbuild-worker-executor/
 	go build -o $<osbuild-upload-azure ./cmd/osbuild-upload-azure/
 	go build -o $<osbuild-upload-aws ./cmd/osbuild-upload-aws/
 	go build -o $<osbuild-upload-gcp ./cmd/osbuild-upload-gcp/
