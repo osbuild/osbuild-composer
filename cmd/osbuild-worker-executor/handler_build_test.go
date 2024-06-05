@@ -15,7 +15,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	main "github.com/osbuild/osbuild-composer/cmd/oaas"
+	main "github.com/osbuild/osbuild-composer/cmd/osbuild-worker-executor"
 )
 
 func TestBuildMustPOST(t *testing.T) {

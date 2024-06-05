@@ -11,7 +11,7 @@ import (
 	logrusTest "github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/assert"
 
-	main "github.com/osbuild/osbuild-composer/cmd/oaas"
+	main "github.com/osbuild/osbuild-composer/cmd/osbuild-worker-executor"
 )
 
 const defaultTimeout = 5 * time.Second
