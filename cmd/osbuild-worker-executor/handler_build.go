@@ -46,8 +46,10 @@ func runOsbuild(buildDir string, control *controlJSON, output io.Writer) (string
 	}
 	// stream output over http
 	wf := writeFlusher{w: output, flusher: flusher}
+	// note that the "filepath.Clean()" is here for gosec:G304
+	logfPath := filepath.Clean(filepath.Join(buildDir, "build.log"))
 	// and also write to our internal log
-	logf, err := os.Create(filepath.Join(buildDir, "build.log"))
+	logf, err := os.Create(logfPath)
 	if err != nil {
 		return "", fmt.Errorf("cannot create log file: %v", err)
 	}
@@ -79,6 +81,7 @@ func runOsbuild(buildDir string, control *controlJSON, output io.Writer) (string
 		return "", err
 	}
 
+	// #nosec G204
 	cmd = exec.Command(
 		"tar",
 		"-Scf",
@@ -152,7 +155,8 @@ func handleManifestJSON(atar *tar.Reader, buildDir string) error {
 	}
 	manifestJSONPath := filepath.Join(buildDir, "manifest.json")
 
-	f, err := os.Create(manifestJSONPath)
+	// note that the filepath.Clean() is here just to appease gosec:G304
+	f, err := os.Create(filepath.Clean(manifestJSONPath))
 	if err != nil {
 		return fmt.Errorf("cannot create manifest.json: %v", err)
 	}
@@ -180,16 +184,19 @@ func handleIncludedSources(atar *tar.Reader, buildDir string) error {
 		}
 
 		// ensure we only allow "store/" things
-		if filepath.Clean(hdr.Name) != strings.TrimSuffix(hdr.Name, "/") {
-			return fmt.Errorf("name not clean: %v != %v", filepath.Clean(hdr.Name), hdr.Name)
+		name := hdr.Name
+		if filepath.Clean(name) != strings.TrimSuffix(name, "/") {
+			return fmt.Errorf("name not clean: %v != %v", filepath.Clean(name), name)
 		}
-		if !strings.HasPrefix(hdr.Name, "store/") {
+		if !strings.HasPrefix(name, "store/") {
 			return fmt.Errorf("expected store/ prefix, got %v", hdr.Name)
 		}
+		// note that the extra filepath.Clean() is just there to
+		// appease gosec G305
+		target := filepath.Join(buildDir, filepath.Clean(name))
 
 		// this assume "well" behaving tars, i.e. all dirs that lead
 		// up to the tar are included etc
-		target := filepath.Join(buildDir, hdr.Name)
 		mode := os.FileMode(hdr.Mode)
 		switch hdr.Typeflag {
 		case tar.TypeDir:
@@ -197,6 +204,12 @@ func handleIncludedSources(atar *tar.Reader, buildDir string) error {
 				return fmt.Errorf("unpack: %w", err)
 			}
 		case tar.TypeReg:
+			// Note that the G304 here is silly, target is carefully
+			// checked (and is no error in the flow above). Mode is
+			// not relevant for an information leak. But it seems
+			// there is no way to get a debug trace from gosec what
+			// exactly is wrong.
+			// #nosec G304
 			f, err := os.OpenFile(target, os.O_RDWR|os.O_CREATE, mode)
 			if err != nil {
 				return fmt.Errorf("unpack: %w", err)

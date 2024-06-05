@@ -23,3 +23,6 @@ issues:
 
   # Maximum count of issues with the same text. Set to 0 to disable. Default is 3.
   max-same-issues: 0
+  exclude-rules:
+    - path: ^cmd/osbuild-worker-executor/.*_test\.go$
+      linters: ["gosec"]
