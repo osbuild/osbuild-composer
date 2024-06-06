@@ -13,6 +13,6 @@ func TestTrivialRootEndpoint(t *testing.T) {
 	endpoint := baseURL
 	resp, err := http.Get(endpoint)
 	assert.NoError(t, err)
-	assert.Equal(t, resp.StatusCode, 200)
-	assert.Equal(t, loggerHook.LastEntry().Message, "/ handler called")
+	assert.Equal(t, 200, resp.StatusCode)
+	assert.Equal(t, "/ handler called", loggerHook.LastEntry().Message)
 }
