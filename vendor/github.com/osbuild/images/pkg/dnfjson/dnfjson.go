@@ -460,10 +460,12 @@ func (s *Solver) makeDepsolveRequest(pkgSets []rpmmd.PackageSet) (*Request, map[
 	if err != nil {
 		return nil, nil, err
 	}
+
 	args := arguments{
-		Repos:        dnfRepoMap,
-		RootDir:      s.rootDir,
-		Transactions: transactions,
+		Repos:            dnfRepoMap,
+		RootDir:          s.rootDir,
+		Transactions:     transactions,
+		OptionalMetadata: s.optionalMetadataForDistro(),
 	}
 
 	req := Request{
@@ -477,6 +479,20 @@ func (s *Solver) makeDepsolveRequest(pkgSets []rpmmd.PackageSet) (*Request, map[
 	}
 
 	return &req, rhsmMap, nil
+}
+
+func (s *Solver) optionalMetadataForDistro() []string {
+	// filelist repo metadata is required when using newer versions of libdnf
+	// with old repositories or packages that specify dependencies on files.
+	// EL10+ and Fedora 40+ packaging guidelines prohibit depending on
+	// filepaths so filelist downloads are disabled by default and are not
+	// required when depsolving for those distros. Explicitly enable the option
+	// for older distro versions in case we are using a newer libdnf.
+	switch s.modulePlatformID {
+	case "platform:f39", "platform:el7", "platform:el8", "platform:el9":
+		return []string{"filelists"}
+	}
+	return nil
 }
 
 // Helper function for creating a dump request payload
@@ -640,6 +656,9 @@ type arguments struct {
 	// Load repository configurations, gpg keys, and vars from an os-root-like
 	// tree.
 	RootDir string `json:"root_dir"`
+
+	// Optional metadata to download for the repositories
+	OptionalMetadata []string `json:"optional-metadata,omitempty"`
 }
 
 type searchArgs struct {
