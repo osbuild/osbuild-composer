@@ -2439,7 +2439,6 @@
             },
             "options": {
               "gpgkeys": [
-                "-----BEGIN PGP PUBLIC KEY BLOCK-----\n\nmQINBGLykg8BEADURjKtgQpQNoluifXia+U3FuqGCTQ1w7iTqx1UvNhLX6tb9Qjy\nl/vjl1iXxucrd2JBnrT/21BdtaABhu2hPy7bpcGEkG8MDinAMZBzcyzHcS/JiGHZ\nd/YmMWQUgbDlApbxFSGWiXMgT0Js5QdcywHI5oiCmV0lkZ+khZ4PkVWmk6uZgYWf\nJOG5wp5TDPnoYXlA4CLb6hu2691aDm9b99XYqEjhbeIzS9bFQrdrQzRMKyzLr8NW\ns8Pq2tgyzu8txlWdBXJyAMKldTPstqtygLL9UUdo7CIQQzWqeDbAnv+WdOmiI/hR\netbbwNV+thkLJz0WD90C2L3JEeUJX5Qa4oPvfNLDeCKmJFEFUTCEdm0AYoQDjLJQ\n3d3q9M09thXO/jYM0cSnJDclssLNsNWfjJAerLadLwNnYRuralw7f74QSLYdJAJU\nSFShBlctWKnlhQ7ehockqtgXtWckkqPZZjGiMXwHde9b9Yyi+VqtUQWxSWny+9g9\n6tcoa3AdnmpqSTHQxYajD0EGXJ0z0NXfqxkI0lo8UxzypEBy4sARZ4XhTU73Zwk0\nLGhEUHlfyxXgRs6RRvM2UIoo+gou2M9rn/RWkhuHJNSfgrM0BmIBCjhjwGiS33Qh\nysLDWJMdch8lsu1fTmLEFQrOB93oieOJQ0Ysi5gQY8TOT+oZvVi9pSMJuwARAQAB\ntDFGZWRvcmEgKDM5KSA8ZmVkb3JhLTM5LXByaW1hcnlAZmVkb3JhcHJvamVjdC5v\ncmc+iQJOBBMBCAA4FiEE6PI5lvIyGGQMtEy+dc9axBi450wFAmLykg8CGw8FCwkI\nBwIGFQoJCAsCBBYCAwECHgECF4AACgkQdc9axBi450yd4w//ZtghbZX5KFstOdBS\nrcbBfCK9zmRvzeejzGl6lPKfqwx7OOHYxFlRa9MYLl8QG7Aq6yRRWzzEHiSb0wJw\nWXz5tbkAmV/fpS4wnb3FDArD44u317UAnaU+UlhgK1g62lwI2dGpvTSvohMBMeBY\nB5aBd+sLi3UtiSRM2XhxvxaWwr/oFLjKDukgrPQzeV3F/XdxGhSz/GZUVFVprcrB\nh/dIo4k0Za7YVRhlVM0coOIcKbcjxAK9CCZ8+jtdIh3/BN5zJ0RFMgqSsrWYWeft\nBI3KWLbyMfRwEtp7xSi17WXbRfsSoqwIVgP+RCSaAdVuiYs/GCRsT3ydYcDvutuJ\nYZoE53yczemM/1HZZFI04zI7KBsKm9NFH0o4K2nBWuowBm59iFvWHFpX6em54cq4\n45NwY01FkSQUqntfqCWFSowwFHAZM4gblOikq2B5zHoIntCiJlPGuaJiVSw9ZpEc\n+IEQfmXJjKGSkMbU9tmNfLR9skVQJizMTtoUQ12DWC+14anxnnR2hxnhUDAabV6y\nJ5dGeb/ArmxQj3IMrajdNwjuk9GMeMSSS2EMY8ryOuYwRbFhBOLhGAnmM5OOSUxv\nA4ipWraXDW0bK/wXI7yHMkc6WYrdV3SIXEqJBTp7npimv3JC+exWEbTLcgvV70FP\nX55M9nDtzUSayJuEcfFP2c9KQCE=\n=J4qZ\n-----END PGP PUBLIC KEY BLOCK-----",
                 "-----BEGIN PGP PUBLIC KEY BLOCK-----\n\nmQINBGLykg8BEADURjKtgQpQNoluifXia+U3FuqGCTQ1w7iTqx1UvNhLX6tb9Qjy\nl/vjl1iXxucrd2JBnrT/21BdtaABhu2hPy7bpcGEkG8MDinAMZBzcyzHcS/JiGHZ\nd/YmMWQUgbDlApbxFSGWiXMgT0Js5QdcywHI5oiCmV0lkZ+khZ4PkVWmk6uZgYWf\nJOG5wp5TDPnoYXlA4CLb6hu2691aDm9b99XYqEjhbeIzS9bFQrdrQzRMKyzLr8NW\ns8Pq2tgyzu8txlWdBXJyAMKldTPstqtygLL9UUdo7CIQQzWqeDbAnv+WdOmiI/hR\netbbwNV+thkLJz0WD90C2L3JEeUJX5Qa4oPvfNLDeCKmJFEFUTCEdm0AYoQDjLJQ\n3d3q9M09thXO/jYM0cSnJDclssLNsNWfjJAerLadLwNnYRuralw7f74QSLYdJAJU\nSFShBlctWKnlhQ7ehockqtgXtWckkqPZZjGiMXwHde9b9Yyi+VqtUQWxSWny+9g9\n6tcoa3AdnmpqSTHQxYajD0EGXJ0z0NXfqxkI0lo8UxzypEBy4sARZ4XhTU73Zwk0\nLGhEUHlfyxXgRs6RRvM2UIoo+gou2M9rn/RWkhuHJNSfgrM0BmIBCjhjwGiS33Qh\nysLDWJMdch8lsu1fTmLEFQrOB93oieOJQ0Ysi5gQY8TOT+oZvVi9pSMJuwARAQAB\ntDFGZWRvcmEgKDM5KSA8ZmVkb3JhLTM5LXByaW1hcnlAZmVkb3JhcHJvamVjdC5v\ncmc+iQJOBBMBCAA4FiEE6PI5lvIyGGQMtEy+dc9axBi450wFAmLykg8CGw8FCwkI\nBwIGFQoJCAsCBBYCAwECHgECF4AACgkQdc9axBi450yd4w//ZtghbZX5KFstOdBS\nrcbBfCK9zmRvzeejzGl6lPKfqwx7OOHYxFlRa9MYLl8QG7Aq6yRRWzzEHiSb0wJw\nWXz5tbkAmV/fpS4wnb3FDArD44u317UAnaU+UlhgK1g62lwI2dGpvTSvohMBMeBY\nB5aBd+sLi3UtiSRM2XhxvxaWwr/oFLjKDukgrPQzeV3F/XdxGhSz/GZUVFVprcrB\nh/dIo4k0Za7YVRhlVM0coOIcKbcjxAK9CCZ8+jtdIh3/BN5zJ0RFMgqSsrWYWeft\nBI3KWLbyMfRwEtp7xSi17WXbRfsSoqwIVgP+RCSaAdVuiYs/GCRsT3ydYcDvutuJ\nYZoE53yczemM/1HZZFI04zI7KBsKm9NFH0o4K2nBWuowBm59iFvWHFpX6em54cq4\n45NwY01FkSQUqntfqCWFSowwFHAZM4gblOikq2B5zHoIntCiJlPGuaJiVSw9ZpEc\n+IEQfmXJjKGSkMbU9tmNfLR9skVQJizMTtoUQ12DWC+14anxnnR2hxnhUDAabV6y\nJ5dGeb/ArmxQj3IMrajdNwjuk9GMeMSSS2EMY8ryOuYwRbFhBOLhGAnmM5OOSUxv\nA4ipWraXDW0bK/wXI7yHMkc6WYrdV3SIXEqJBTp7npimv3JC+exWEbTLcgvV70FP\nX55M9nDtzUSayJuEcfFP2c9KQCE=\n=J4qZ\n-----END PGP PUBLIC KEY BLOCK-----"
               ]
             }
@@ -3076,14 +3075,6 @@
                   },
                   {
                     "id": "sha256:fc48d04a000ef7641c1dc485a804f8398cd60ac91860138fa8e05161f03cf415",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
-                    "id": "sha256:a68d9c135499947f1de73fdaaf50ba37c2289b16e5bcc1c01ac80191767211bf",
                     "options": {
                       "metadata": {
                         "rpm.check_gpg": true
@@ -3788,22 +3779,6 @@
                   },
                   {
                     "id": "sha256:00d6234502885fce8c81e2ea183964b4d43fb7aec4d8629b0fd7869097c45e15",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
-                    "id": "sha256:f0f6697e438230ca5664d2dfb116069d69f4e54dffe790759e17d86f65652319",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
-                    "id": "sha256:e73c81a6d83faa8965ca099a125e814f6d9493ede9372628e5e1bbd67793c703",
                     "options": {
                       "metadata": {
                         "rpm.check_gpg": true
@@ -12491,14 +12466,6 @@
                     }
                   },
                   {
-                    "id": "sha256:6f1dcd72b14f5908e25a732e44fdf62b623ac7bde5ea08de7908a6384bde1eb6",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
                     "id": "sha256:f665b677b629f2a2071a84aaacc43dfd796f4b754bc7d1a6a07c464d1815e723",
                     "options": {
                       "metadata": {
@@ -15755,14 +15722,6 @@
                     }
                   },
                   {
-                    "id": "sha256:5b86773ab02226b9324daa45943867a9ba03a4aa9b911b7fbe692bd45e5bb9d7",
-                    "options": {
-                      "metadata": {
-                        "rpm.check_gpg": true
-                      }
-                    }
-                  },
-                  {
                     "id": "sha256:4bf94708cce3424929c41943fce43d4d53d09c67203684c74664b4a9f23f4368",
                     "options": {
                       "metadata": {
@@ -17383,7 +17342,6 @@
             },
             "options": {
               "gpgkeys": [
-                "-----BEGIN PGP PUBLIC KEY BLOCK-----\n\nmQINBGLykg8BEADURjKtgQpQNoluifXia+U3FuqGCTQ1w7iTqx1UvNhLX6tb9Qjy\nl/vjl1iXxucrd2JBnrT/21BdtaABhu2hPy7bpcGEkG8MDinAMZBzcyzHcS/JiGHZ\nd/YmMWQUgbDlApbxFSGWiXMgT0Js5QdcywHI5oiCmV0lkZ+khZ4PkVWmk6uZgYWf\nJOG5wp5TDPnoYXlA4CLb6hu2691aDm9b99XYqEjhbeIzS9bFQrdrQzRMKyzLr8NW\ns8Pq2tgyzu8txlWdBXJyAMKldTPstqtygLL9UUdo7CIQQzWqeDbAnv+WdOmiI/hR\netbbwNV+thkLJz0WD90C2L3JEeUJX5Qa4oPvfNLDeCKmJFEFUTCEdm0AYoQDjLJQ\n3d3q9M09thXO/jYM0cSnJDclssLNsNWfjJAerLadLwNnYRuralw7f74QSLYdJAJU\nSFShBlctWKnlhQ7ehockqtgXtWckkqPZZjGiMXwHde9b9Yyi+VqtUQWxSWny+9g9\n6tcoa3AdnmpqSTHQxYajD0EGXJ0z0NXfqxkI0lo8UxzypEBy4sARZ4XhTU73Zwk0\nLGhEUHlfyxXgRs6RRvM2UIoo+gou2M9rn/RWkhuHJNSfgrM0BmIBCjhjwGiS33Qh\nysLDWJMdch8lsu1fTmLEFQrOB93oieOJQ0Ysi5gQY8TOT+oZvVi9pSMJuwARAQAB\ntDFGZWRvcmEgKDM5KSA8ZmVkb3JhLTM5LXByaW1hcnlAZmVkb3JhcHJvamVjdC5v\ncmc+iQJOBBMBCAA4FiEE6PI5lvIyGGQMtEy+dc9axBi450wFAmLykg8CGw8FCwkI\nBwIGFQoJCAsCBBYCAwECHgECF4AACgkQdc9axBi450yd4w//ZtghbZX5KFstOdBS\nrcbBfCK9zmRvzeejzGl6lPKfqwx7OOHYxFlRa9MYLl8QG7Aq6yRRWzzEHiSb0wJw\nWXz5tbkAmV/fpS4wnb3FDArD44u317UAnaU+UlhgK1g62lwI2dGpvTSvohMBMeBY\nB5aBd+sLi3UtiSRM2XhxvxaWwr/oFLjKDukgrPQzeV3F/XdxGhSz/GZUVFVprcrB\nh/dIo4k0Za7YVRhlVM0coOIcKbcjxAK9CCZ8+jtdIh3/BN5zJ0RFMgqSsrWYWeft\nBI3KWLbyMfRwEtp7xSi17WXbRfsSoqwIVgP+RCSaAdVuiYs/GCRsT3ydYcDvutuJ\nYZoE53yczemM/1HZZFI04zI7KBsKm9NFH0o4K2nBWuowBm59iFvWHFpX6em54cq4\n45NwY01FkSQUqntfqCWFSowwFHAZM4gblOikq2B5zHoIntCiJlPGuaJiVSw9ZpEc\n+IEQfmXJjKGSkMbU9tmNfLR9skVQJizMTtoUQ12DWC+14anxnnR2hxnhUDAabV6y\nJ5dGeb/ArmxQj3IMrajdNwjuk9GMeMSSS2EMY8ryOuYwRbFhBOLhGAnmM5OOSUxv\nA4ipWraXDW0bK/wXI7yHMkc6WYrdV3SIXEqJBTp7npimv3JC+exWEbTLcgvV70FP\nX55M9nDtzUSayJuEcfFP2c9KQCE=\n=J4qZ\n-----END PGP PUBLIC KEY BLOCK-----",
                 "-----BEGIN PGP PUBLIC KEY BLOCK-----\n\nmQINBGLykg8BEADURjKtgQpQNoluifXia+U3FuqGCTQ1w7iTqx1UvNhLX6tb9Qjy\nl/vjl1iXxucrd2JBnrT/21BdtaABhu2hPy7bpcGEkG8MDinAMZBzcyzHcS/JiGHZ\nd/YmMWQUgbDlApbxFSGWiXMgT0Js5QdcywHI5oiCmV0lkZ+khZ4PkVWmk6uZgYWf\nJOG5wp5TDPnoYXlA4CLb6hu2691aDm9b99XYqEjhbeIzS9bFQrdrQzRMKyzLr8NW\ns8Pq2tgyzu8txlWdBXJyAMKldTPstqtygLL9UUdo7CIQQzWqeDbAnv+WdOmiI/hR\netbbwNV+thkLJz0WD90C2L3JEeUJX5Qa4oPvfNLDeCKmJFEFUTCEdm0AYoQDjLJQ\n3d3q9M09thXO/jYM0cSnJDclssLNsNWfjJAerLadLwNnYRuralw7f74QSLYdJAJU\nSFShBlctWKnlhQ7ehockqtgXtWckkqPZZjGiMXwHde9b9Yyi+VqtUQWxSWny+9g9\n6tcoa3AdnmpqSTHQxYajD0EGXJ0z0NXfqxkI0lo8UxzypEBy4sARZ4XhTU73Zwk0\nLGhEUHlfyxXgRs6RRvM2UIoo+gou2M9rn/RWkhuHJNSfgrM0BmIBCjhjwGiS33Qh\nysLDWJMdch8lsu1fTmLEFQrOB93oieOJQ0Ysi5gQY8TOT+oZvVi9pSMJuwARAQAB\ntDFGZWRvcmEgKDM5KSA8ZmVkb3JhLTM5LXByaW1hcnlAZmVkb3JhcHJvamVjdC5v\ncmc+iQJOBBMBCAA4FiEE6PI5lvIyGGQMtEy+dc9axBi450wFAmLykg8CGw8FCwkI\nBwIGFQoJCAsCBBYCAwECHgECF4AACgkQdc9axBi450yd4w//ZtghbZX5KFstOdBS\nrcbBfCK9zmRvzeejzGl6lPKfqwx7OOHYxFlRa9MYLl8QG7Aq6yRRWzzEHiSb0wJw\nWXz5tbkAmV/fpS4wnb3FDArD44u317UAnaU+UlhgK1g62lwI2dGpvTSvohMBMeBY\nB5aBd+sLi3UtiSRM2XhxvxaWwr/oFLjKDukgrPQzeV3F/XdxGhSz/GZUVFVprcrB\nh/dIo4k0Za7YVRhlVM0coOIcKbcjxAK9CCZ8+jtdIh3/BN5zJ0RFMgqSsrWYWeft\nBI3KWLbyMfRwEtp7xSi17WXbRfsSoqwIVgP+RCSaAdVuiYs/GCRsT3ydYcDvutuJ\nYZoE53yczemM/1HZZFI04zI7KBsKm9NFH0o4K2nBWuowBm59iFvWHFpX6em54cq4\n45NwY01FkSQUqntfqCWFSowwFHAZM4gblOikq2B5zHoIntCiJlPGuaJiVSw9ZpEc\n+IEQfmXJjKGSkMbU9tmNfLR9skVQJizMTtoUQ12DWC+14anxnnR2hxnhUDAabV6y\nJ5dGeb/ArmxQj3IMrajdNwjuk9GMeMSSS2EMY8ryOuYwRbFhBOLhGAnmM5OOSUxv\nA4ipWraXDW0bK/wXI7yHMkc6WYrdV3SIXEqJBTp7npimv3JC+exWEbTLcgvV70FP\nX55M9nDtzUSayJuEcfFP2c9KQCE=\n=J4qZ\n-----END PGP PUBLIC KEY BLOCK-----"
               ]
             }
@@ -17395,7 +17353,7 @@
               "product": "Fedora",
               "version": "39",
               "final": true,
-              "variant": "",
+              "variant": "Workstation",
               "bugurl": ""
             }
           },
@@ -17539,7 +17497,7 @@
             "options": {
               "paths": [
                 {
-                  "path": "LiveOS"
+                  "path": "/LiveOS"
                 }
               ]
             }
@@ -17547,7 +17505,7 @@
           {
             "type": "org.osbuild.truncate",
             "options": {
-              "filename": "LiveOS/rootfs.img",
+              "filename": "/LiveOS/rootfs.img",
               "size": "8589934592"
             }
           },
@@ -17618,13 +17576,13 @@
               "kernel": {
                 "dir": "/images/pxeboot",
                 "opts": [
-                  "root=live:CDLABEL=Fedora-39-BaseOS-x86_64",
+                  "root=live:CDLABEL=Fedora-39-Workstation-x86_64",
                   "rd.live.image",
                   "quiet",
                   "rhgb"
                 ]
               },
-              "isolabel": "Fedora-39-BaseOS-x86_64",
+              "isolabel": "Fedora-39-Workstation-x86_64",
               "architectures": [
                 "X64"
               ],
@@ -17642,10 +17600,10 @@
             "options": {
               "paths": [
                 {
-                  "path": "images"
+                  "path": "/images"
                 },
                 {
-                  "path": "images/pxeboot"
+                  "path": "/images/pxeboot"
                 }
               ]
             }
@@ -17655,7 +17613,7 @@
             "options": {
               "paths": [
                 {
-                  "path": "LiveOS"
+                  "path": "/LiveOS"
                 }
               ]
             }
@@ -17724,7 +17682,7 @@
               "kernel": {
                 "dir": "/images/pxeboot",
                 "opts": [
-                  "root=live:CDLABEL=Fedora-39-BaseOS-x86_64",
+                  "root=live:CDLABEL=Fedora-39-Workstation-x86_64",
                   "rd.live.image",
                   "quiet",
                   "rhgb"
@@ -17770,12 +17728,12 @@
               "paths": [
                 {
                   "from": "input://root-tree/",
-                  "to": "mount://root/"
+                  "to": "mount://-/"
                 }
               ]
             },
             "devices": {
-              "root": {
+              "-": {
                 "type": "org.osbuild.loopback",
                 "options": {
                   "filename": "images/efiboot.img",
@@ -17785,9 +17743,9 @@
             },
             "mounts": [
               {
-                "name": "root",
+                "name": "-",
                 "type": "org.osbuild.fat",
-                "source": "root",
+                "source": "-",
                 "target": "/"
               }
             ]
@@ -17838,7 +17796,7 @@
             },
             "options": {
               "filename": "live-installer.iso",
-              "volid": "Fedora-39-BaseOS-x86_64",
+              "volid": "Fedora-39-Workstation-x86_64",
               "sysid": "LINUX",
               "boot": {
                 "image": "isolinux/isolinux.bin",
@@ -19859,9 +19817,6 @@
           "sha256:5b1cc0bfa5dd2013d0391462ce557a114cdb905b5be334097e38e110187553cd": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-x86_64-rawhide-20230724/Packages/q/qemu-block-ssh-8.0.0-4.fc39.x86_64.rpm"
           },
-          "sha256:5b86773ab02226b9324daa45943867a9ba03a4aa9b911b7fbe692bd45e5bb9d7": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-x86_64-rawhide-20230724/Packages/s/sscg-3.0.5-2.fc39.x86_64.rpm"
-          },
           "sha256:5b9b40cd7c1b86bb5277f5dbb3fe79f045f93902d9c7484e007b4b2cd73204e9": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-x86_64-rawhide-20230724/Packages/l/libmtp-1.1.19-4.fc39.x86_64.rpm"
           },
@@ -20287,9 +20242,6 @@
           },
           "sha256:6eeaf66bd37b454c8419155d54273c176f8cde7378b9f9a2cba6486f130211cf": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-x86_64-rawhide-20230724/Packages/p/perl-TermReadKey-2.38-17.fc39.x86_64.rpm"
-          },
-          "sha256:6f1dcd72b14f5908e25a732e44fdf62b623ac7bde5ea08de7908a6384bde1eb6": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-x86_64-rawhide-20230724/Packages/o/openssl-3.0.8-2.fc39.x86_64.rpm"
           },
           "sha256:6f2bb9559d29ea38116eb2632fd047a44e1259b209b65b59b7e5473e89723944": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-x86_64-rawhide-20230724/Packages/g/gnome-terminal-nautilus-3.48.1-1.fc39.x86_64.rpm"
@@ -21583,9 +21535,6 @@
           },
           "sha256:a685bd9fb4646190c273a39a5a3e824d2ace23d4fd0cb9de8dc4e272fdb2397e": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-x86_64-rawhide-20230724/Packages/l/libiptcdata-1.0.5-14.fc39.x86_64.rpm"
-          },
-          "sha256:a68d9c135499947f1de73fdaaf50ba37c2289b16e5bcc1c01ac80191767211bf": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-x86_64-rawhide-20230724/Packages/a/anaconda-webui-39.26-1.fc39.x86_64.rpm"
           },
           "sha256:a691ddfe8a529bcc51d83243bdb902c90d87f0bddfc8b1cb294fd211fcd09a89": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-x86_64-rawhide-20230724/Packages/l/libreport-web-2.17.11-2.fc39.x86_64.rpm"
@@ -23000,9 +22949,6 @@
           "sha256:e7360034c6bab817881c9966c8d4094d55ed1fcdee06f043a551e59cbff60aed": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-x86_64-rawhide-20230724/Packages/s/sgpio-1.2.0.10-33.fc39.x86_64.rpm"
           },
-          "sha256:e73c81a6d83faa8965ca099a125e814f6d9493ede9372628e5e1bbd67793c703": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-x86_64-rawhide-20230724/Packages/c/cockpit-ws-296-1.fc39.x86_64.rpm"
-          },
           "sha256:e79274ff9b630791d43c1b2791110233d0c9a6dc2e1fb4e918d6a6e8577f4222": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-x86_64-rawhide-20230724/Packages/m/mpage-2.5.7-16.fc39.x86_64.rpm"
           },
@@ -23215,9 +23161,6 @@
           },
           "sha256:f0f2820c30eeb3a4d6eccf6d81f4a242235890bc111f338c0e7d41fcb3e22f91": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-x86_64-rawhide-20230724/Packages/p/perl-if-0.61.000-499.fc39.noarch.rpm"
-          },
-          "sha256:f0f6697e438230ca5664d2dfb116069d69f4e54dffe790759e17d86f65652319": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-x86_64-rawhide-20230724/Packages/c/cockpit-bridge-296-1.fc39.x86_64.rpm"
           },
           "sha256:f1a06b68670225b0c3477194faf2e964bd116fd814e104985ef30020403dd16e": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-x86_64-rawhide-20230724/Packages/p/perl-Exporter-5.77-499.fc39.noarch.rpm"
@@ -24286,16 +24229,6 @@
         "check_gpg": true
       },
       {
-        "name": "anaconda-webui",
-        "epoch": 0,
-        "version": "39.26",
-        "release": "1.fc39",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-x86_64-rawhide-20230724/Packages/a/anaconda-webui-39.26-1.fc39.x86_64.rpm",
-        "checksum": "sha256:a68d9c135499947f1de73fdaaf50ba37c2289b16e5bcc1c01ac80191767211bf",
-        "check_gpg": true
-      },
-      {
         "name": "anaconda-widgets",
         "epoch": 0,
         "version": "39.26",
@@ -25173,26 +25106,6 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-x86_64-rawhide-20230724/Packages/c/clutter-gtk-1.8.4-15.fc38.x86_64.rpm",
         "checksum": "sha256:00d6234502885fce8c81e2ea183964b4d43fb7aec4d8629b0fd7869097c45e15",
-        "check_gpg": true
-      },
-      {
-        "name": "cockpit-bridge",
-        "epoch": 0,
-        "version": "296",
-        "release": "1.fc39",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-x86_64-rawhide-20230724/Packages/c/cockpit-bridge-296-1.fc39.x86_64.rpm",
-        "checksum": "sha256:f0f6697e438230ca5664d2dfb116069d69f4e54dffe790759e17d86f65652319",
-        "check_gpg": true
-      },
-      {
-        "name": "cockpit-ws",
-        "epoch": 0,
-        "version": "296",
-        "release": "1.fc39",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-x86_64-rawhide-20230724/Packages/c/cockpit-ws-296-1.fc39.x86_64.rpm",
-        "checksum": "sha256:e73c81a6d83faa8965ca099a125e814f6d9493ede9372628e5e1bbd67793c703",
         "check_gpg": true
       },
       {
@@ -36046,16 +35959,6 @@
         "check_gpg": true
       },
       {
-        "name": "openssl",
-        "epoch": 1,
-        "version": "3.0.8",
-        "release": "2.fc39",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-x86_64-rawhide-20230724/Packages/o/openssl-3.0.8-2.fc39.x86_64.rpm",
-        "checksum": "sha256:6f1dcd72b14f5908e25a732e44fdf62b623ac7bde5ea08de7908a6384bde1eb6",
-        "check_gpg": true
-      },
-      {
         "name": "openssl-libs",
         "epoch": 1,
         "version": "3.0.8",
@@ -40123,16 +40026,6 @@
         "arch": "x86_64",
         "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-x86_64-rawhide-20230724/Packages/s/srt-libs-1.5.2-1.fc39.x86_64.rpm",
         "checksum": "sha256:6829ebfa51af85084797399b757006596febeb324ec3dbe8b3250972e99f9897",
-        "check_gpg": true
-      },
-      {
-        "name": "sscg",
-        "epoch": 0,
-        "version": "3.0.5",
-        "release": "2.fc39",
-        "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/f39/f39-x86_64-rawhide-20230724/Packages/s/sscg-3.0.5-2.fc39.x86_64.rpm",
-        "checksum": "sha256:5b86773ab02226b9324daa45943867a9ba03a4aa9b911b7fbe692bd45e5bb9d7",
         "check_gpg": true
       },
       {

@@ -1912,7 +1912,6 @@
             },
             "options": {
               "gpgkeys": [
-                "-----BEGIN PGP PUBLIC KEY BLOCK-----\n\nmQINBGLykg8BEADURjKtgQpQNoluifXia+U3FuqGCTQ1w7iTqx1UvNhLX6tb9Qjy\nl/vjl1iXxucrd2JBnrT/21BdtaABhu2hPy7bpcGEkG8MDinAMZBzcyzHcS/JiGHZ\nd/YmMWQUgbDlApbxFSGWiXMgT0Js5QdcywHI5oiCmV0lkZ+khZ4PkVWmk6uZgYWf\nJOG5wp5TDPnoYXlA4CLb6hu2691aDm9b99XYqEjhbeIzS9bFQrdrQzRMKyzLr8NW\ns8Pq2tgyzu8txlWdBXJyAMKldTPstqtygLL9UUdo7CIQQzWqeDbAnv+WdOmiI/hR\netbbwNV+thkLJz0WD90C2L3JEeUJX5Qa4oPvfNLDeCKmJFEFUTCEdm0AYoQDjLJQ\n3d3q9M09thXO/jYM0cSnJDclssLNsNWfjJAerLadLwNnYRuralw7f74QSLYdJAJU\nSFShBlctWKnlhQ7ehockqtgXtWckkqPZZjGiMXwHde9b9Yyi+VqtUQWxSWny+9g9\n6tcoa3AdnmpqSTHQxYajD0EGXJ0z0NXfqxkI0lo8UxzypEBy4sARZ4XhTU73Zwk0\nLGhEUHlfyxXgRs6RRvM2UIoo+gou2M9rn/RWkhuHJNSfgrM0BmIBCjhjwGiS33Qh\nysLDWJMdch8lsu1fTmLEFQrOB93oieOJQ0Ysi5gQY8TOT+oZvVi9pSMJuwARAQAB\ntDFGZWRvcmEgKDM5KSA8ZmVkb3JhLTM5LXByaW1hcnlAZmVkb3JhcHJvamVjdC5v\ncmc+iQJOBBMBCAA4FiEE6PI5lvIyGGQMtEy+dc9axBi450wFAmLykg8CGw8FCwkI\nBwIGFQoJCAsCBBYCAwECHgECF4AACgkQdc9axBi450yd4w//ZtghbZX5KFstOdBS\nrcbBfCK9zmRvzeejzGl6lPKfqwx7OOHYxFlRa9MYLl8QG7Aq6yRRWzzEHiSb0wJw\nWXz5tbkAmV/fpS4wnb3FDArD44u317UAnaU+UlhgK1g62lwI2dGpvTSvohMBMeBY\nB5aBd+sLi3UtiSRM2XhxvxaWwr/oFLjKDukgrPQzeV3F/XdxGhSz/GZUVFVprcrB\nh/dIo4k0Za7YVRhlVM0coOIcKbcjxAK9CCZ8+jtdIh3/BN5zJ0RFMgqSsrWYWeft\nBI3KWLbyMfRwEtp7xSi17WXbRfsSoqwIVgP+RCSaAdVuiYs/GCRsT3ydYcDvutuJ\nYZoE53yczemM/1HZZFI04zI7KBsKm9NFH0o4K2nBWuowBm59iFvWHFpX6em54cq4\n45NwY01FkSQUqntfqCWFSowwFHAZM4gblOikq2B5zHoIntCiJlPGuaJiVSw9ZpEc\n+IEQfmXJjKGSkMbU9tmNfLR9skVQJizMTtoUQ12DWC+14anxnnR2hxnhUDAabV6y\nJ5dGeb/ArmxQj3IMrajdNwjuk9GMeMSSS2EMY8ryOuYwRbFhBOLhGAnmM5OOSUxv\nA4ipWraXDW0bK/wXI7yHMkc6WYrdV3SIXEqJBTp7npimv3JC+exWEbTLcgvV70FP\nX55M9nDtzUSayJuEcfFP2c9KQCE=\n=J4qZ\n-----END PGP PUBLIC KEY BLOCK-----",
                 "-----BEGIN PGP PUBLIC KEY BLOCK-----\n\nmQINBGLykg8BEADURjKtgQpQNoluifXia+U3FuqGCTQ1w7iTqx1UvNhLX6tb9Qjy\nl/vjl1iXxucrd2JBnrT/21BdtaABhu2hPy7bpcGEkG8MDinAMZBzcyzHcS/JiGHZ\nd/YmMWQUgbDlApbxFSGWiXMgT0Js5QdcywHI5oiCmV0lkZ+khZ4PkVWmk6uZgYWf\nJOG5wp5TDPnoYXlA4CLb6hu2691aDm9b99XYqEjhbeIzS9bFQrdrQzRMKyzLr8NW\ns8Pq2tgyzu8txlWdBXJyAMKldTPstqtygLL9UUdo7CIQQzWqeDbAnv+WdOmiI/hR\netbbwNV+thkLJz0WD90C2L3JEeUJX5Qa4oPvfNLDeCKmJFEFUTCEdm0AYoQDjLJQ\n3d3q9M09thXO/jYM0cSnJDclssLNsNWfjJAerLadLwNnYRuralw7f74QSLYdJAJU\nSFShBlctWKnlhQ7ehockqtgXtWckkqPZZjGiMXwHde9b9Yyi+VqtUQWxSWny+9g9\n6tcoa3AdnmpqSTHQxYajD0EGXJ0z0NXfqxkI0lo8UxzypEBy4sARZ4XhTU73Zwk0\nLGhEUHlfyxXgRs6RRvM2UIoo+gou2M9rn/RWkhuHJNSfgrM0BmIBCjhjwGiS33Qh\nysLDWJMdch8lsu1fTmLEFQrOB93oieOJQ0Ysi5gQY8TOT+oZvVi9pSMJuwARAQAB\ntDFGZWRvcmEgKDM5KSA8ZmVkb3JhLTM5LXByaW1hcnlAZmVkb3JhcHJvamVjdC5v\ncmc+iQJOBBMBCAA4FiEE6PI5lvIyGGQMtEy+dc9axBi450wFAmLykg8CGw8FCwkI\nBwIGFQoJCAsCBBYCAwECHgECF4AACgkQdc9axBi450yd4w//ZtghbZX5KFstOdBS\nrcbBfCK9zmRvzeejzGl6lPKfqwx7OOHYxFlRa9MYLl8QG7Aq6yRRWzzEHiSb0wJw\nWXz5tbkAmV/fpS4wnb3FDArD44u317UAnaU+UlhgK1g62lwI2dGpvTSvohMBMeBY\nB5aBd+sLi3UtiSRM2XhxvxaWwr/oFLjKDukgrPQzeV3F/XdxGhSz/GZUVFVprcrB\nh/dIo4k0Za7YVRhlVM0coOIcKbcjxAK9CCZ8+jtdIh3/BN5zJ0RFMgqSsrWYWeft\nBI3KWLbyMfRwEtp7xSi17WXbRfsSoqwIVgP+RCSaAdVuiYs/GCRsT3ydYcDvutuJ\nYZoE53yczemM/1HZZFI04zI7KBsKm9NFH0o4K2nBWuowBm59iFvWHFpX6em54cq4\n45NwY01FkSQUqntfqCWFSowwFHAZM4gblOikq2B5zHoIntCiJlPGuaJiVSw9ZpEc\n+IEQfmXJjKGSkMbU9tmNfLR9skVQJizMTtoUQ12DWC+14anxnnR2hxnhUDAabV6y\nJ5dGeb/ArmxQj3IMrajdNwjuk9GMeMSSS2EMY8ryOuYwRbFhBOLhGAnmM5OOSUxv\nA4ipWraXDW0bK/wXI7yHMkc6WYrdV3SIXEqJBTp7npimv3JC+exWEbTLcgvV70FP\nX55M9nDtzUSayJuEcfFP2c9KQCE=\n=J4qZ\n-----END PGP PUBLIC KEY BLOCK-----"
               ]
             }
@@ -1936,6 +1935,23 @@
             "type": "org.osbuild.ostree.init-fs"
           },
           {
+            "type": "org.osbuild.ostree.os-init",
+            "options": {
+              "osname": "fedora-iot"
+            }
+          },
+          {
+            "type": "org.osbuild.mkdir",
+            "options": {
+              "paths": [
+                {
+                  "path": "/boot/efi",
+                  "mode": 448
+                }
+              ]
+            }
+          },
+          {
             "type": "org.osbuild.ostree.pull",
             "inputs": {
               "commits": {
@@ -1954,23 +1970,6 @@
             }
           },
           {
-            "type": "org.osbuild.ostree.os-init",
-            "options": {
-              "osname": "fedora-iot"
-            }
-          },
-          {
-            "type": "org.osbuild.mkdir",
-            "options": {
-              "paths": [
-                {
-                  "path": "/boot/efi",
-                  "mode": 448
-                }
-              ]
-            }
-          },
-          {
             "type": "org.osbuild.ostree.deploy",
             "options": {
               "osname": "fedora-iot",
@@ -1984,27 +1983,9 @@
                 "label": "root"
               },
               "kernel_opts": [
-                "modprobe.blacklist=vc4",
-                "rw",
-                "coreos.no_persist_ip",
+                "modprobe.blacklist=vc4 rw coreos.no_persist_ip",
                 "ignition.platform.id=metal",
                 "$ignition_firstboot"
-              ]
-            }
-          },
-          {
-            "type": "org.osbuild.ostree.remotes",
-            "options": {
-              "repo": "/ostree/repo",
-              "remotes": [
-                {
-                  "name": "fedora-iot",
-                  "url": "https://ostree.fedoraproject.org/iot",
-                  "contenturl": "mirrorlist=https://ostree.fedoraproject.org/iot/mirrorlist",
-                  "gpgkeypaths": [
-                    "/etc/pki/rpm-gpg/"
-                  ]
-                }
               ]
             }
           },
@@ -2523,7 +2504,7 @@
             "type": "org.osbuild.truncate",
             "options": {
               "filename": "disk.img",
-              "size": "4294967296"
+              "size": "4303355904"
             }
           },
           {
@@ -2534,19 +2515,19 @@
               "partitions": [
                 {
                   "size": 1026048,
-                  "start": 2048,
+                  "start": 18432,
                   "type": "C12A7328-F81F-11D2-BA4B-00A0C93EC93B",
                   "uuid": "68B2905B-DF3E-4FB3-80FA-49D1E773AA33"
                 },
                 {
                   "size": 2097152,
-                  "start": 1028096,
+                  "start": 1044480,
                   "type": "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
                   "uuid": "CB07C243-BC44-4717-853E-28852021225B"
                 },
                 {
                   "size": 5263327,
-                  "start": 3125248,
+                  "start": 3141632,
                   "type": "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
                   "uuid": "6264D520-3FB9-423F-8AB8-7A0A8E3D3562"
                 }
@@ -2572,7 +2553,7 @@
                 "type": "org.osbuild.loopback",
                 "options": {
                   "filename": "disk.img",
-                  "start": 2048,
+                  "start": 18432,
                   "size": 1026048,
                   "lock": true
                 }
@@ -2590,7 +2571,7 @@
                 "type": "org.osbuild.loopback",
                 "options": {
                   "filename": "disk.img",
-                  "start": 1028096,
+                  "start": 1044480,
                   "size": 2097152,
                   "lock": true
                 }
@@ -2608,7 +2589,7 @@
                 "type": "org.osbuild.loopback",
                 "options": {
                   "filename": "disk.img",
-                  "start": 3125248,
+                  "start": 3141632,
                   "size": 5263327,
                   "lock": true
                 }
@@ -2630,41 +2611,41 @@
               "paths": [
                 {
                   "from": "input://root-tree/",
-                  "to": "mount://root/"
+                  "to": "mount://-/"
                 }
               ]
             },
             "devices": {
+              "-": {
+                "type": "org.osbuild.loopback",
+                "options": {
+                  "filename": "disk.img",
+                  "start": 3141632,
+                  "size": 5263327
+                }
+              },
               "boot": {
                 "type": "org.osbuild.loopback",
                 "options": {
                   "filename": "disk.img",
-                  "start": 1028096,
+                  "start": 1044480,
                   "size": 2097152
                 }
               },
-              "boot.efi": {
+              "boot-efi": {
                 "type": "org.osbuild.loopback",
                 "options": {
                   "filename": "disk.img",
-                  "start": 2048,
+                  "start": 18432,
                   "size": 1026048
-                }
-              },
-              "root": {
-                "type": "org.osbuild.loopback",
-                "options": {
-                  "filename": "disk.img",
-                  "start": 3125248,
-                  "size": 5263327
                 }
               }
             },
             "mounts": [
               {
-                "name": "root",
+                "name": "-",
                 "type": "org.osbuild.ext4",
-                "source": "root",
+                "source": "-",
                 "target": "/"
               },
               {
@@ -2674,9 +2655,9 @@
                 "target": "/boot"
               },
               {
-                "name": "boot.efi",
+                "name": "boot-efi",
                 "type": "org.osbuild.fat",
-                "source": "boot.efi",
+                "source": "boot-efi",
                 "target": "/boot/efi"
               }
             ]

@@ -1912,7 +1912,6 @@
             },
             "options": {
               "gpgkeys": [
-                "-----BEGIN PGP PUBLIC KEY BLOCK-----\n\nmQINBGLykg8BEADURjKtgQpQNoluifXia+U3FuqGCTQ1w7iTqx1UvNhLX6tb9Qjy\nl/vjl1iXxucrd2JBnrT/21BdtaABhu2hPy7bpcGEkG8MDinAMZBzcyzHcS/JiGHZ\nd/YmMWQUgbDlApbxFSGWiXMgT0Js5QdcywHI5oiCmV0lkZ+khZ4PkVWmk6uZgYWf\nJOG5wp5TDPnoYXlA4CLb6hu2691aDm9b99XYqEjhbeIzS9bFQrdrQzRMKyzLr8NW\ns8Pq2tgyzu8txlWdBXJyAMKldTPstqtygLL9UUdo7CIQQzWqeDbAnv+WdOmiI/hR\netbbwNV+thkLJz0WD90C2L3JEeUJX5Qa4oPvfNLDeCKmJFEFUTCEdm0AYoQDjLJQ\n3d3q9M09thXO/jYM0cSnJDclssLNsNWfjJAerLadLwNnYRuralw7f74QSLYdJAJU\nSFShBlctWKnlhQ7ehockqtgXtWckkqPZZjGiMXwHde9b9Yyi+VqtUQWxSWny+9g9\n6tcoa3AdnmpqSTHQxYajD0EGXJ0z0NXfqxkI0lo8UxzypEBy4sARZ4XhTU73Zwk0\nLGhEUHlfyxXgRs6RRvM2UIoo+gou2M9rn/RWkhuHJNSfgrM0BmIBCjhjwGiS33Qh\nysLDWJMdch8lsu1fTmLEFQrOB93oieOJQ0Ysi5gQY8TOT+oZvVi9pSMJuwARAQAB\ntDFGZWRvcmEgKDM5KSA8ZmVkb3JhLTM5LXByaW1hcnlAZmVkb3JhcHJvamVjdC5v\ncmc+iQJOBBMBCAA4FiEE6PI5lvIyGGQMtEy+dc9axBi450wFAmLykg8CGw8FCwkI\nBwIGFQoJCAsCBBYCAwECHgECF4AACgkQdc9axBi450yd4w//ZtghbZX5KFstOdBS\nrcbBfCK9zmRvzeejzGl6lPKfqwx7OOHYxFlRa9MYLl8QG7Aq6yRRWzzEHiSb0wJw\nWXz5tbkAmV/fpS4wnb3FDArD44u317UAnaU+UlhgK1g62lwI2dGpvTSvohMBMeBY\nB5aBd+sLi3UtiSRM2XhxvxaWwr/oFLjKDukgrPQzeV3F/XdxGhSz/GZUVFVprcrB\nh/dIo4k0Za7YVRhlVM0coOIcKbcjxAK9CCZ8+jtdIh3/BN5zJ0RFMgqSsrWYWeft\nBI3KWLbyMfRwEtp7xSi17WXbRfsSoqwIVgP+RCSaAdVuiYs/GCRsT3ydYcDvutuJ\nYZoE53yczemM/1HZZFI04zI7KBsKm9NFH0o4K2nBWuowBm59iFvWHFpX6em54cq4\n45NwY01FkSQUqntfqCWFSowwFHAZM4gblOikq2B5zHoIntCiJlPGuaJiVSw9ZpEc\n+IEQfmXJjKGSkMbU9tmNfLR9skVQJizMTtoUQ12DWC+14anxnnR2hxnhUDAabV6y\nJ5dGeb/ArmxQj3IMrajdNwjuk9GMeMSSS2EMY8ryOuYwRbFhBOLhGAnmM5OOSUxv\nA4ipWraXDW0bK/wXI7yHMkc6WYrdV3SIXEqJBTp7npimv3JC+exWEbTLcgvV70FP\nX55M9nDtzUSayJuEcfFP2c9KQCE=\n=J4qZ\n-----END PGP PUBLIC KEY BLOCK-----",
                 "-----BEGIN PGP PUBLIC KEY BLOCK-----\n\nmQINBGLykg8BEADURjKtgQpQNoluifXia+U3FuqGCTQ1w7iTqx1UvNhLX6tb9Qjy\nl/vjl1iXxucrd2JBnrT/21BdtaABhu2hPy7bpcGEkG8MDinAMZBzcyzHcS/JiGHZ\nd/YmMWQUgbDlApbxFSGWiXMgT0Js5QdcywHI5oiCmV0lkZ+khZ4PkVWmk6uZgYWf\nJOG5wp5TDPnoYXlA4CLb6hu2691aDm9b99XYqEjhbeIzS9bFQrdrQzRMKyzLr8NW\ns8Pq2tgyzu8txlWdBXJyAMKldTPstqtygLL9UUdo7CIQQzWqeDbAnv+WdOmiI/hR\netbbwNV+thkLJz0WD90C2L3JEeUJX5Qa4oPvfNLDeCKmJFEFUTCEdm0AYoQDjLJQ\n3d3q9M09thXO/jYM0cSnJDclssLNsNWfjJAerLadLwNnYRuralw7f74QSLYdJAJU\nSFShBlctWKnlhQ7ehockqtgXtWckkqPZZjGiMXwHde9b9Yyi+VqtUQWxSWny+9g9\n6tcoa3AdnmpqSTHQxYajD0EGXJ0z0NXfqxkI0lo8UxzypEBy4sARZ4XhTU73Zwk0\nLGhEUHlfyxXgRs6RRvM2UIoo+gou2M9rn/RWkhuHJNSfgrM0BmIBCjhjwGiS33Qh\nysLDWJMdch8lsu1fTmLEFQrOB93oieOJQ0Ysi5gQY8TOT+oZvVi9pSMJuwARAQAB\ntDFGZWRvcmEgKDM5KSA8ZmVkb3JhLTM5LXByaW1hcnlAZmVkb3JhcHJvamVjdC5v\ncmc+iQJOBBMBCAA4FiEE6PI5lvIyGGQMtEy+dc9axBi450wFAmLykg8CGw8FCwkI\nBwIGFQoJCAsCBBYCAwECHgECF4AACgkQdc9axBi450yd4w//ZtghbZX5KFstOdBS\nrcbBfCK9zmRvzeejzGl6lPKfqwx7OOHYxFlRa9MYLl8QG7Aq6yRRWzzEHiSb0wJw\nWXz5tbkAmV/fpS4wnb3FDArD44u317UAnaU+UlhgK1g62lwI2dGpvTSvohMBMeBY\nB5aBd+sLi3UtiSRM2XhxvxaWwr/oFLjKDukgrPQzeV3F/XdxGhSz/GZUVFVprcrB\nh/dIo4k0Za7YVRhlVM0coOIcKbcjxAK9CCZ8+jtdIh3/BN5zJ0RFMgqSsrWYWeft\nBI3KWLbyMfRwEtp7xSi17WXbRfsSoqwIVgP+RCSaAdVuiYs/GCRsT3ydYcDvutuJ\nYZoE53yczemM/1HZZFI04zI7KBsKm9NFH0o4K2nBWuowBm59iFvWHFpX6em54cq4\n45NwY01FkSQUqntfqCWFSowwFHAZM4gblOikq2B5zHoIntCiJlPGuaJiVSw9ZpEc\n+IEQfmXJjKGSkMbU9tmNfLR9skVQJizMTtoUQ12DWC+14anxnnR2hxnhUDAabV6y\nJ5dGeb/ArmxQj3IMrajdNwjuk9GMeMSSS2EMY8ryOuYwRbFhBOLhGAnmM5OOSUxv\nA4ipWraXDW0bK/wXI7yHMkc6WYrdV3SIXEqJBTp7npimv3JC+exWEbTLcgvV70FP\nX55M9nDtzUSayJuEcfFP2c9KQCE=\n=J4qZ\n-----END PGP PUBLIC KEY BLOCK-----"
               ]
             }
@@ -1936,6 +1935,23 @@
             "type": "org.osbuild.ostree.init-fs"
           },
           {
+            "type": "org.osbuild.ostree.os-init",
+            "options": {
+              "osname": "fedora-iot"
+            }
+          },
+          {
+            "type": "org.osbuild.mkdir",
+            "options": {
+              "paths": [
+                {
+                  "path": "/boot/efi",
+                  "mode": 448
+                }
+              ]
+            }
+          },
+          {
             "type": "org.osbuild.ostree.pull",
             "inputs": {
               "commits": {
@@ -1954,23 +1970,6 @@
             }
           },
           {
-            "type": "org.osbuild.ostree.os-init",
-            "options": {
-              "osname": "fedora-iot"
-            }
-          },
-          {
-            "type": "org.osbuild.mkdir",
-            "options": {
-              "paths": [
-                {
-                  "path": "/boot/efi",
-                  "mode": 448
-                }
-              ]
-            }
-          },
-          {
             "type": "org.osbuild.ostree.deploy",
             "options": {
               "osname": "fedora-iot",
@@ -1984,27 +1983,9 @@
                 "label": "root"
               },
               "kernel_opts": [
-                "modprobe.blacklist=vc4",
-                "rw",
-                "coreos.no_persist_ip",
+                "modprobe.blacklist=vc4 rw coreos.no_persist_ip",
                 "ignition.platform.id=metal",
                 "$ignition_firstboot"
-              ]
-            }
-          },
-          {
-            "type": "org.osbuild.ostree.remotes",
-            "options": {
-              "repo": "/ostree/repo",
-              "remotes": [
-                {
-                  "name": "fedora-iot",
-                  "url": "https://ostree.fedoraproject.org/iot",
-                  "contenturl": "mirrorlist=https://ostree.fedoraproject.org/iot/mirrorlist",
-                  "gpgkeypaths": [
-                    "/etc/pki/rpm-gpg/"
-                  ]
-                }
               ]
             }
           },
@@ -2523,7 +2504,7 @@
             "type": "org.osbuild.truncate",
             "options": {
               "filename": "disk.img",
-              "size": "4294967296"
+              "size": "4302307328"
             }
           },
           {
@@ -2535,17 +2516,17 @@
                 {
                   "bootable": true,
                   "size": 1026048,
-                  "start": 2048,
+                  "start": 18432,
                   "type": "06"
                 },
                 {
                   "size": 2097152,
-                  "start": 1028096,
+                  "start": 1044480,
                   "type": "83"
                 },
                 {
-                  "size": 5263360,
-                  "start": 3125248,
+                  "size": 5261312,
+                  "start": 3141632,
                   "type": "83"
                 }
               ]
@@ -2570,7 +2551,7 @@
                 "type": "org.osbuild.loopback",
                 "options": {
                   "filename": "disk.img",
-                  "start": 2048,
+                  "start": 18432,
                   "size": 1026048,
                   "lock": true
                 }
@@ -2588,7 +2569,7 @@
                 "type": "org.osbuild.loopback",
                 "options": {
                   "filename": "disk.img",
-                  "start": 1028096,
+                  "start": 1044480,
                   "size": 2097152,
                   "lock": true
                 }
@@ -2606,8 +2587,8 @@
                 "type": "org.osbuild.loopback",
                 "options": {
                   "filename": "disk.img",
-                  "start": 3125248,
-                  "size": 5263360,
+                  "start": 3141632,
+                  "size": 5261312,
                   "lock": true
                 }
               }
@@ -2628,41 +2609,41 @@
               "paths": [
                 {
                   "from": "input://root-tree/",
-                  "to": "mount://root/"
+                  "to": "mount://-/"
                 }
               ]
             },
             "devices": {
+              "-": {
+                "type": "org.osbuild.loopback",
+                "options": {
+                  "filename": "disk.img",
+                  "start": 3141632,
+                  "size": 5261312
+                }
+              },
               "boot": {
                 "type": "org.osbuild.loopback",
                 "options": {
                   "filename": "disk.img",
-                  "start": 1028096,
+                  "start": 1044480,
                   "size": 2097152
                 }
               },
-              "boot.efi": {
+              "boot-efi": {
                 "type": "org.osbuild.loopback",
                 "options": {
                   "filename": "disk.img",
-                  "start": 2048,
+                  "start": 18432,
                   "size": 1026048
-                }
-              },
-              "root": {
-                "type": "org.osbuild.loopback",
-                "options": {
-                  "filename": "disk.img",
-                  "start": 3125248,
-                  "size": 5263360
                 }
               }
             },
             "mounts": [
               {
-                "name": "root",
+                "name": "-",
                 "type": "org.osbuild.ext4",
-                "source": "root",
+                "source": "-",
                 "target": "/"
               },
               {
@@ -2672,9 +2653,9 @@
                 "target": "/boot"
               },
               {
-                "name": "boot.efi",
+                "name": "boot-efi",
                 "type": "org.osbuild.fat",
-                "source": "boot.efi",
+                "source": "boot-efi",
                 "target": "/boot/efi"
               }
             ]
@@ -2694,157 +2675,157 @@
               "paths": [
                 {
                   "from": "input://ostree-tree/88a9428978d79e31177c543da1d32a338ec6fd95522f5e50e12f39a4dfd2eae6/usr/lib/ostree-boot/efi/bcm2710-rpi-2-b.dtb",
-                  "to": "mount://root/boot/efi/"
+                  "to": "mount://-/boot/efi/"
                 },
                 {
                   "from": "input://ostree-tree/88a9428978d79e31177c543da1d32a338ec6fd95522f5e50e12f39a4dfd2eae6/usr/lib/ostree-boot/efi/bcm2710-rpi-3-b-plus.dtb",
-                  "to": "mount://root/boot/efi/"
+                  "to": "mount://-/boot/efi/"
                 },
                 {
                   "from": "input://ostree-tree/88a9428978d79e31177c543da1d32a338ec6fd95522f5e50e12f39a4dfd2eae6/usr/lib/ostree-boot/efi/bcm2710-rpi-3-b.dtb",
-                  "to": "mount://root/boot/efi/"
+                  "to": "mount://-/boot/efi/"
                 },
                 {
                   "from": "input://ostree-tree/88a9428978d79e31177c543da1d32a338ec6fd95522f5e50e12f39a4dfd2eae6/usr/lib/ostree-boot/efi/bcm2710-rpi-cm3.dtb",
-                  "to": "mount://root/boot/efi/"
+                  "to": "mount://-/boot/efi/"
                 },
                 {
                   "from": "input://ostree-tree/88a9428978d79e31177c543da1d32a338ec6fd95522f5e50e12f39a4dfd2eae6/usr/lib/ostree-boot/efi/bcm2710-rpi-zero-2-w.dtb",
-                  "to": "mount://root/boot/efi/"
+                  "to": "mount://-/boot/efi/"
                 },
                 {
                   "from": "input://ostree-tree/88a9428978d79e31177c543da1d32a338ec6fd95522f5e50e12f39a4dfd2eae6/usr/lib/ostree-boot/efi/bcm2710-rpi-zero-2.dtb",
-                  "to": "mount://root/boot/efi/"
+                  "to": "mount://-/boot/efi/"
                 },
                 {
                   "from": "input://ostree-tree/88a9428978d79e31177c543da1d32a338ec6fd95522f5e50e12f39a4dfd2eae6/usr/lib/ostree-boot/efi/bcm2711-rpi-4-b.dtb",
-                  "to": "mount://root/boot/efi/"
+                  "to": "mount://-/boot/efi/"
                 },
                 {
                   "from": "input://ostree-tree/88a9428978d79e31177c543da1d32a338ec6fd95522f5e50e12f39a4dfd2eae6/usr/lib/ostree-boot/efi/bcm2711-rpi-400.dtb",
-                  "to": "mount://root/boot/efi/"
+                  "to": "mount://-/boot/efi/"
                 },
                 {
                   "from": "input://ostree-tree/88a9428978d79e31177c543da1d32a338ec6fd95522f5e50e12f39a4dfd2eae6/usr/lib/ostree-boot/efi/bcm2711-rpi-cm4.dtb",
-                  "to": "mount://root/boot/efi/"
+                  "to": "mount://-/boot/efi/"
                 },
                 {
                   "from": "input://ostree-tree/88a9428978d79e31177c543da1d32a338ec6fd95522f5e50e12f39a4dfd2eae6/usr/lib/ostree-boot/efi/bcm2711-rpi-cm4s.dtb",
-                  "to": "mount://root/boot/efi/"
+                  "to": "mount://-/boot/efi/"
                 },
                 {
                   "from": "input://ostree-tree/88a9428978d79e31177c543da1d32a338ec6fd95522f5e50e12f39a4dfd2eae6/usr/lib/ostree-boot/efi/bootcode.bin",
-                  "to": "mount://root/boot/efi/"
+                  "to": "mount://-/boot/efi/"
                 },
                 {
                   "from": "input://ostree-tree/88a9428978d79e31177c543da1d32a338ec6fd95522f5e50e12f39a4dfd2eae6/usr/lib/ostree-boot/efi/config.txt",
-                  "to": "mount://root/boot/efi/config.txt"
+                  "to": "mount://-/boot/efi/config.txt"
                 },
                 {
                   "from": "input://ostree-tree/88a9428978d79e31177c543da1d32a338ec6fd95522f5e50e12f39a4dfd2eae6/usr/lib/ostree-boot/efi/fixup.dat",
-                  "to": "mount://root/boot/efi/"
+                  "to": "mount://-/boot/efi/"
                 },
                 {
                   "from": "input://ostree-tree/88a9428978d79e31177c543da1d32a338ec6fd95522f5e50e12f39a4dfd2eae6/usr/lib/ostree-boot/efi/fixup4.dat",
-                  "to": "mount://root/boot/efi/"
+                  "to": "mount://-/boot/efi/"
                 },
                 {
                   "from": "input://ostree-tree/88a9428978d79e31177c543da1d32a338ec6fd95522f5e50e12f39a4dfd2eae6/usr/lib/ostree-boot/efi/fixup4cd.dat",
-                  "to": "mount://root/boot/efi/"
+                  "to": "mount://-/boot/efi/"
                 },
                 {
                   "from": "input://ostree-tree/88a9428978d79e31177c543da1d32a338ec6fd95522f5e50e12f39a4dfd2eae6/usr/lib/ostree-boot/efi/fixup4db.dat",
-                  "to": "mount://root/boot/efi/"
+                  "to": "mount://-/boot/efi/"
                 },
                 {
                   "from": "input://ostree-tree/88a9428978d79e31177c543da1d32a338ec6fd95522f5e50e12f39a4dfd2eae6/usr/lib/ostree-boot/efi/fixup4x.dat",
-                  "to": "mount://root/boot/efi/"
+                  "to": "mount://-/boot/efi/"
                 },
                 {
                   "from": "input://ostree-tree/88a9428978d79e31177c543da1d32a338ec6fd95522f5e50e12f39a4dfd2eae6/usr/lib/ostree-boot/efi/fixup_cd.dat",
-                  "to": "mount://root/boot/efi/"
+                  "to": "mount://-/boot/efi/"
                 },
                 {
                   "from": "input://ostree-tree/88a9428978d79e31177c543da1d32a338ec6fd95522f5e50e12f39a4dfd2eae6/usr/lib/ostree-boot/efi/fixup_db.dat",
-                  "to": "mount://root/boot/efi/"
+                  "to": "mount://-/boot/efi/"
                 },
                 {
                   "from": "input://ostree-tree/88a9428978d79e31177c543da1d32a338ec6fd95522f5e50e12f39a4dfd2eae6/usr/lib/ostree-boot/efi/fixup_x.dat",
-                  "to": "mount://root/boot/efi/"
+                  "to": "mount://-/boot/efi/"
                 },
                 {
                   "from": "input://ostree-tree/88a9428978d79e31177c543da1d32a338ec6fd95522f5e50e12f39a4dfd2eae6/usr/lib/ostree-boot/efi/overlays",
-                  "to": "mount://root/boot/efi/"
+                  "to": "mount://-/boot/efi/"
                 },
                 {
                   "from": "input://ostree-tree/88a9428978d79e31177c543da1d32a338ec6fd95522f5e50e12f39a4dfd2eae6/usr/share/uboot/rpi_arm64/u-boot.bin",
-                  "to": "mount://root/boot/efi/rpi-u-boot.bin"
+                  "to": "mount://-/boot/efi/rpi-u-boot.bin"
                 },
                 {
                   "from": "input://ostree-tree/88a9428978d79e31177c543da1d32a338ec6fd95522f5e50e12f39a4dfd2eae6/usr/lib/ostree-boot/efi/start.elf",
-                  "to": "mount://root/boot/efi/"
+                  "to": "mount://-/boot/efi/"
                 },
                 {
                   "from": "input://ostree-tree/88a9428978d79e31177c543da1d32a338ec6fd95522f5e50e12f39a4dfd2eae6/usr/lib/ostree-boot/efi/start4.elf",
-                  "to": "mount://root/boot/efi/"
+                  "to": "mount://-/boot/efi/"
                 },
                 {
                   "from": "input://ostree-tree/88a9428978d79e31177c543da1d32a338ec6fd95522f5e50e12f39a4dfd2eae6/usr/lib/ostree-boot/efi/start4cd.elf",
-                  "to": "mount://root/boot/efi/"
+                  "to": "mount://-/boot/efi/"
                 },
                 {
                   "from": "input://ostree-tree/88a9428978d79e31177c543da1d32a338ec6fd95522f5e50e12f39a4dfd2eae6/usr/lib/ostree-boot/efi/start4db.elf",
-                  "to": "mount://root/boot/efi/"
+                  "to": "mount://-/boot/efi/"
                 },
                 {
                   "from": "input://ostree-tree/88a9428978d79e31177c543da1d32a338ec6fd95522f5e50e12f39a4dfd2eae6/usr/lib/ostree-boot/efi/start4x.elf",
-                  "to": "mount://root/boot/efi/"
+                  "to": "mount://-/boot/efi/"
                 },
                 {
                   "from": "input://ostree-tree/88a9428978d79e31177c543da1d32a338ec6fd95522f5e50e12f39a4dfd2eae6/usr/lib/ostree-boot/efi/start_cd.elf",
-                  "to": "mount://root/boot/efi/"
+                  "to": "mount://-/boot/efi/"
                 },
                 {
                   "from": "input://ostree-tree/88a9428978d79e31177c543da1d32a338ec6fd95522f5e50e12f39a4dfd2eae6/usr/lib/ostree-boot/efi/start_db.elf",
-                  "to": "mount://root/boot/efi/"
+                  "to": "mount://-/boot/efi/"
                 },
                 {
                   "from": "input://ostree-tree/88a9428978d79e31177c543da1d32a338ec6fd95522f5e50e12f39a4dfd2eae6/usr/lib/ostree-boot/efi/start_x.elf",
-                  "to": "mount://root/boot/efi/"
+                  "to": "mount://-/boot/efi/"
                 }
               ]
             },
             "devices": {
+              "-": {
+                "type": "org.osbuild.loopback",
+                "options": {
+                  "filename": "disk.img",
+                  "start": 3141632,
+                  "size": 5261312
+                }
+              },
               "boot": {
                 "type": "org.osbuild.loopback",
                 "options": {
                   "filename": "disk.img",
-                  "start": 1028096,
+                  "start": 1044480,
                   "size": 2097152
                 }
               },
-              "boot.efi": {
+              "boot-efi": {
                 "type": "org.osbuild.loopback",
                 "options": {
                   "filename": "disk.img",
-                  "start": 2048,
+                  "start": 18432,
                   "size": 1026048
-                }
-              },
-              "root": {
-                "type": "org.osbuild.loopback",
-                "options": {
-                  "filename": "disk.img",
-                  "start": 3125248,
-                  "size": 5263360
                 }
               }
             },
             "mounts": [
               {
-                "name": "root",
+                "name": "-",
                 "type": "org.osbuild.ext4",
-                "source": "root",
+                "source": "-",
                 "target": "/"
               },
               {
@@ -2854,9 +2835,9 @@
                 "target": "/boot"
               },
               {
-                "name": "boot.efi",
+                "name": "boot-efi",
                 "type": "org.osbuild.fat",
-                "source": "boot.efi",
+                "source": "boot-efi",
                 "target": "/boot/efi"
               }
             ]
