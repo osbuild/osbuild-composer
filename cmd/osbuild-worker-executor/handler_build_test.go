@@ -25,8 +25,8 @@ func TestBuildMustPOST(t *testing.T) {
 	rsp, err := http.Get(endpoint)
 	assert.NoError(t, err)
 	defer rsp.Body.Close()
-	assert.Equal(t, rsp.StatusCode, 405)
-	assert.Equal(t, loggerHook.LastEntry().Message, "handlerBuild called on /api/v1/build")
+	assert.Equal(t, 405, rsp.StatusCode)
+	assert.Equal(t, "handlerBuild called on /api/v1/build", loggerHook.LastEntry().Message)
 }
 
 func writeToTar(atar *tar.Writer, name, content string) error {
@@ -49,10 +49,10 @@ func TestBuildChecksContentType(t *testing.T) {
 	rsp, err := http.Post(endpoint, "random/encoding", nil)
 	assert.NoError(t, err)
 	defer rsp.Body.Close()
-	assert.Equal(t, rsp.StatusCode, http.StatusUnsupportedMediaType)
+	assert.Equal(t, http.StatusUnsupportedMediaType, rsp.StatusCode)
 	body, err := io.ReadAll(rsp.Body)
 	assert.NoError(t, err)
-	assert.Equal(t, string(body), "Content-Type must be [application/x-tar], got random/encoding\n")
+	assert.Equal(t, "Content-Type must be [application/x-tar], got random/encoding\n", string(body))
 }
 
 func makeTestPost(t *testing.T, controlJSON, manifestJSON string) *bytes.Buffer {
@@ -105,7 +105,7 @@ echo "fake-build-result" > %[1]s/build/output/image/disk.img
 	defer func() { _, _ = io.ReadAll(rsp.Body) }()
 	defer rsp.Body.Close()
 
-	assert.Equal(t, rsp.StatusCode, http.StatusCreated)
+	assert.Equal(t, http.StatusCreated, rsp.StatusCode)
 	reader := bufio.NewReader(rsp.Body)
 
 	// check that we get the output of osbuild streamed to us
@@ -114,7 +114,7 @@ echo "fake-build-result" > %[1]s/build/output/image/disk.img
 {"fake": "manifest"}`, baseBuildDir)
 	content, err := io.ReadAll(reader)
 	assert.NoError(t, err)
-	assert.Equal(t, string(content), expectedContent)
+	assert.Equal(t, expectedContent, string(content))
 	// check log too
 	logFileContent, err := os.ReadFile(filepath.Join(baseBuildDir, "build/build.log"))
 	assert.NoError(t, err)
@@ -164,7 +164,7 @@ echo "fake-build-result" > %[1]s/build/output/image/disk.img
 	buf := makeTestPost(t, `{"exports": ["tree"]}`, `{"fake": "manifest"}`)
 	rsp, err := http.Post(endpoint, "application/x-tar", buf)
 	assert.NoError(t, err)
-	assert.Equal(t, rsp.StatusCode, http.StatusCreated)
+	assert.Equal(t, http.StatusCreated, rsp.StatusCode)
 	defer func() { _, _ = io.ReadAll(rsp.Body) }()
 	defer rsp.Body.Close()
 
@@ -172,8 +172,8 @@ echo "fake-build-result" > %[1]s/build/output/image/disk.img
 	rsp, err = http.Post(endpoint, "application/x-tar", buf)
 	assert.NoError(t, err)
 	defer rsp.Body.Close()
-	assert.Equal(t, rsp.StatusCode, http.StatusConflict)
-	assert.Equal(t, loggerHook.LastEntry().Message, main.ErrAlreadyBuilding.Error())
+	assert.Equal(t, http.StatusConflict, rsp.StatusCode)
+	assert.Equal(t, main.ErrAlreadyBuilding.Error(), loggerHook.LastEntry().Message)
 }
 
 func TestHandleIncludedSourcesUnclean(t *testing.T) {
@@ -236,7 +236,7 @@ exit 23
 	defer func() { _, _ = io.ReadAll(rsp.Body) }()
 	defer rsp.Body.Close()
 
-	assert.Equal(t, rsp.StatusCode, http.StatusCreated)
+	assert.Equal(t, http.StatusCreated, rsp.StatusCode)
 	reader := bufio.NewReader(rsp.Body)
 	content, err := io.ReadAll(reader)
 	assert.NoError(t, err)
@@ -280,7 +280,7 @@ echo "fake-build-result" > %[1]s/build/output/image/disk.img
 	defer func() { _, _ = io.ReadAll(rsp.Body) }()
 	defer rsp.Body.Close()
 
-	assert.Equal(t, rsp.StatusCode, http.StatusCreated)
+	assert.Equal(t, http.StatusCreated, rsp.StatusCode)
 	reader := bufio.NewReader(rsp.Body)
 
 	var lineno, seconds, nano int64
