@@ -13,6 +13,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"runtime/debug"
 	"strings"
 
 	"github.com/osbuild/images/pkg/arch"
@@ -373,6 +374,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 	defer func() {
 		if r := recover(); r != nil {
 			logWithId.Errorf("Recovered from panic: %v", r)
+			logWithId.Errorf("%s", debug.Stack())
 
 			osbuildJobResult.JobError = clienterrors.WorkerClientError(
 				clienterrors.ErrorJobPanicked,
