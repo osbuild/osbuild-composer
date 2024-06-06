@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	logrusTest "github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/assert"
 
@@ -57,8 +58,8 @@ func runTestServer(t *testing.T) (baseURL, buildBaseDir string, loggerHook *logr
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
 
-	loggerHook, restore := main.MockLogger()
-	defer restore()
+	logger, loggerHook := logrusTest.NewNullLogger()
+	logger.SetLevel(logrus.DebugLevel)
 
 	args := []string{
 		"-host", host,
@@ -66,7 +67,7 @@ func runTestServer(t *testing.T) (baseURL, buildBaseDir string, loggerHook *logr
 		"-build-path", buildBaseDir,
 	}
 	go func() {
-		_ = main.Run(ctx, args, os.Getenv)
+		_ = main.Run(ctx, args, os.Getenv, logger)
 	}()
 
 	err := waitReady(ctx, defaultTimeout, baseURL)
