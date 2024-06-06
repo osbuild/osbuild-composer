@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	"path/filepath"
+	"sync"
 	"testing"
 
 	"github.com/sirupsen/logrus"
@@ -15,7 +16,12 @@ var (
 	HandleIncludedSources = handleIncludedSources
 )
 
+var logrusNewMu sync.Mutex
+
 func MockLogger() (hook *logrusTest.Hook, restore func()) {
+	logrusNewMu.Lock()
+	defer logrusNewMu.Unlock()
+
 	saved := logrusNew
 	logger, hook := logrusTest.NewNullLogger()
 	logrusNew = func() *logrus.Logger {
@@ -24,6 +30,9 @@ func MockLogger() (hook *logrusTest.Hook, restore func()) {
 	logger.SetLevel(logrus.DebugLevel)
 
 	return hook, func() {
+		logrusNewMu.Lock()
+		defer logrusNewMu.Unlock()
+
 		logrusNew = saved
 	}
 }
