@@ -81,7 +81,7 @@ func makeTestPost(t *testing.T, controlJSON, manifestJSON string) *bytes.Buffer 
 }
 
 func TestBuildIntegration(t *testing.T) {
-	baseURL, baseBuildDir, _ := runTestServer(t)
+	baseURL, baseBuildDir, loggerHook := runTestServer(t)
 	endpoint := baseURL + "api/v1/build"
 
 	// osbuild is called with --export tree and then the manifest.json
@@ -123,6 +123,11 @@ echo "fake-build-result" > %[1]s/build/output/image/disk.img
 	stat, err := os.Stat(filepath.Join(baseBuildDir, "build/store"))
 	assert.NoError(t, err)
 	assert.True(t, stat.IsDir())
+
+	// ensure tar is not generating any warnings
+	for _, entry := range loggerHook.Entries {
+		assert.NotContains(t, entry.Message, "unexpected tar output")
+	}
 
 	// now get the result
 	endpoint = baseURL + "api/v1/result/image/disk.img"

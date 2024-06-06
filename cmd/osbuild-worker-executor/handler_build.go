@@ -84,6 +84,7 @@ func runOsbuild(logger *logrus.Logger, buildDir string, control *controlJSON, ou
 	// #nosec G204
 	cmd = exec.Command(
 		"tar",
+		"--exclude=output/output.tar",
 		"-Scf",
 		filepath.Join(outputDir, "output.tar"),
 		"output",
@@ -96,7 +97,10 @@ func runOsbuild(logger *logrus.Logger, buildDir string, control *controlJSON, ou
 		_, _ = mw.Write([]byte(err.Error()))
 		return "", err
 	}
-	logger.Infof("tar output:\n%s", out)
+	if len(out) > 0 {
+		logger.Warnf("unexpected tar output:\n%s", out)
+	}
+
 	return outputDir, nil
 }
 
