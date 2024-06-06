@@ -120,7 +120,7 @@ func handleBuild(inputArchive, host string) (*osbuild.Result, error) {
 	}
 	inputFile, err := os.Open(inputArchive)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Unable to open inputArchive (%s): %w", inputArchive, err)
 	}
 	defer inputFile.Close()
 
@@ -196,22 +196,22 @@ func (ec2e *awsEC2Executor) RunOSBuild(manifest []byte, store, outputDirectory s
 
 	err := prepareSources(manifest, store, extraEnv, result, errorWriter)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Failed to prepare sources: %w", err)
 	}
 
 	region, err := awscloud.RegionFromInstanceMetadata()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Failed to get region from instance metadata: %w", err)
 	}
 
 	aws, err := awscloud.NewDefault(region)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Failed to get default aws client in %s region: %w", region, err)
 	}
 
 	si, err := aws.RunSecureInstance(ec2e.iamProfile, ec2e.keyName, ec2e.cloudWatchGroup)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Unable to start secure instance: %w", err)
 	}
 	defer func() {
 		err := aws.TerminateSecureInstance(si)
