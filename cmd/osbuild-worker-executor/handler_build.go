@@ -39,7 +39,7 @@ func (wf *writeFlusher) Write(p []byte) (n int, err error) {
 	return n, err
 }
 
-func runOsbuild(buildDir string, control *controlJSON, output io.Writer) (string, error) {
+func runOsbuild(logger *logrus.Logger, buildDir string, control *controlJSON, output io.Writer) (string, error) {
 	flusher, ok := output.(http.Flusher)
 	if !ok {
 		return "", fmt.Errorf("cannot stream the output")
@@ -92,11 +92,11 @@ func runOsbuild(buildDir string, control *controlJSON, output io.Writer) (string
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		err = fmt.Errorf("cannot tar output directory: %w, output:\n%s", err, out)
-		logrus.Errorf(err.Error())
+		logger.Errorf(err.Error())
 		_, _ = mw.Write([]byte(err.Error()))
 		return "", err
 	}
-	logrus.Infof("tar output:\n%s", out)
+	logger.Infof("tar output:\n%s", out)
 	return outputDir, nil
 }
 
@@ -286,7 +286,7 @@ func handleBuild(logger *logrus.Logger, config *Config) http.Handler {
 
 			// run osbuild and stream the output to the client
 			buildResult := newBuildResult(config)
-			_, err = runOsbuild(buildDir, control, w)
+			_, err = runOsbuild(logger, buildDir, control, w)
 			if werr := buildResult.Mark(err); werr != nil {
 				logger.Errorf("cannot write result file %v", werr)
 			}
