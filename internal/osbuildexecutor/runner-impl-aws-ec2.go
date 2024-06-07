@@ -1,6 +1,7 @@
 package osbuildexecutor
 
 import (
+	"archive/tar"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -9,7 +10,10 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"time"
+
+	"golang.org/x/exp/slices"
 
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/sirupsen/logrus"
@@ -176,7 +180,50 @@ func fetchOutputArchive(cacheDir, host string) (string, error) {
 	return file.Name(), nil
 }
 
+func validateOutputArchive(outputTarPath string) error {
+	f, err := os.Open(outputTarPath)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	tr := tar.NewReader(f)
+	for {
+		hdr, err := tr.Next()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return err
+		}
+		// check for directory traversal attacks
+		if filepath.Clean(hdr.Name) != strings.TrimSuffix(hdr.Name, "/") {
+			return fmt.Errorf("name %q not clean, got %q after cleaning", hdr.Name, filepath.Clean(hdr.Name))
+		}
+		if strings.HasPrefix(filepath.Clean(hdr.Name), "/") {
+			return fmt.Errorf("name %q must not start with an absolute path", hdr.Name)
+		}
+		// protect against someone smuggling in eg. device files
+		// XXX: should we support symlinks here?
+		if !slices.Contains([]byte{tar.TypeReg, tar.TypeDir}, hdr.Typeflag) {
+			return fmt.Errorf("name %q must be a file/dir, is header type %q", hdr.Name, hdr.Typeflag)
+		}
+		// protect against executables, this implicitly protects
+		// against suid/sgid (XXX: or should we also check that?)
+		if hdr.Typeflag == tar.TypeReg && hdr.Mode&0111 != 0 {
+			return fmt.Errorf("name %q must not be executable (is mode 0%o)", hdr.Name, hdr.Mode)
+		}
+	}
+
+	return nil
+}
+
 func extractOutputArchive(outputDirectory, outputTar string) error {
+	// validate against directory traversal attacks
+	if err := validateOutputArchive(outputTar); err != nil {
+		return fmt.Errorf("unable to validate output tar: %w", err)
+	}
+
 	cmd := exec.Command("tar",
 		"--strip-components=1",
 		"-C",
