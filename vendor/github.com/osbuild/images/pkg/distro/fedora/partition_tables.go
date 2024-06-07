@@ -431,13 +431,13 @@ var iotSimplifiedInstallerPartitionTables = distro.BasePartitionTableMap{
 		},
 	},
 	arch.ARCH_AARCH64.String(): disk.PartitionTable{
-		UUID: "0xc1748067",
-		Type: "dos",
+		UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
+		Type: "gpt",
 		Partitions: []disk.Partition{
 			{
-				Size:     501 * common.MebiByte,
-				Type:     "06",
-				Bootable: true,
+				Size: 501 * common.MebiByte,
+				Type: disk.EFISystemPartitionGUID,
+				UUID: disk.EFISystemPartitionUUID,
 				Payload: &disk.Filesystem{
 					Type:         "vfat",
 					UUID:         disk.EFIFilesystemUUID,

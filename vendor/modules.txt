@@ -865,7 +865,7 @@ github.com/oracle/oci-go-sdk/v54/identity
 github.com/oracle/oci-go-sdk/v54/objectstorage
 github.com/oracle/oci-go-sdk/v54/objectstorage/transfer
 github.com/oracle/oci-go-sdk/v54/workrequests
-# github.com/osbuild/images v0.63.0
+# github.com/osbuild/images v0.65.0
 ## explicit; go 1.20
 github.com/osbuild/images/internal/common
 github.com/osbuild/images/internal/environment

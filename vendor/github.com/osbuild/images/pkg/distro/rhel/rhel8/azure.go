@@ -256,10 +256,14 @@ func azureRhuiPackageSet(t *rhel.ImageType) rpmmd.PackageSet {
 // Includes the common azure package set, the common SAP packages, and
 // the azure rhui sap package.
 func azureSapPackageSet(t *rhel.ImageType) rpmmd.PackageSet {
+	rhuiPkg := "rhui-azure-rhel8-sap-ha"
+	if t.Arch().Distro().OsVersion() == "8.10" {
+		rhuiPkg = "rhui-azure-rhel8-base-sap-ha"
+	}
 	return rpmmd.PackageSet{
 		Include: []string{
 			"firewalld",
-			"rhui-azure-rhel8-sap-ha",
+			rhuiPkg,
 		},
 	}.Append(azureCommonPackageSet(t)).Append(SapPackageSet(t))
 }

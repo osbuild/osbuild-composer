@@ -23,12 +23,13 @@ const (
 
 type Unit struct {
 	Description              string   `json:"Description,omitempty"`
-	DefaultDependencies      bool     `json:"DefaultDependencies,omitempty"`
+	DefaultDependencies      *bool    `json:"DefaultDependencies,omitempty"`
 	ConditionPathExists      []string `json:"ConditionPathExists,omitempty"`
 	ConditionPathIsDirectory []string `json:"ConditionPathIsDirectory,omitempty"`
 	Requires                 []string `json:"Requires,omitempty"`
 	Wants                    []string `json:"Wants,omitempty"`
 	After                    []string `json:"After,omitempty"`
+	Before                   []string `json:"Before,omitempty"`
 }
 
 type Service struct {
