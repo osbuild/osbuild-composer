@@ -872,7 +872,6 @@ func newDistro(version int) distro.Distro {
 		minimalrawImgType,
 	)
 
-	// iot simplified installer was introduced in F38
 	x86_64.addImageTypes(
 		&platform.X86{
 			BasePlatform: platform.BasePlatform{
@@ -921,62 +920,59 @@ func newDistro(version int) distro.Distro {
 		iotSimplifiedInstallerImgType,
 	)
 
-	if common.VersionGreaterThanOrEqual(rd.Releasever(), "39") {
-		// bootc was introduced in F39
-		x86_64.addImageTypes(
-			&platform.X86{
-				BasePlatform: platform.BasePlatform{
-					FirmwarePackages: []string{
-						"biosdevname",
-						"iwlwifi-dvm-firmware",
-						"iwlwifi-mvm-firmware",
-						"microcode_ctl",
-					},
+	x86_64.addImageTypes(
+		&platform.X86{
+			BasePlatform: platform.BasePlatform{
+				FirmwarePackages: []string{
+					"biosdevname",
+					"iwlwifi-dvm-firmware",
+					"iwlwifi-mvm-firmware",
+					"microcode_ctl",
 				},
-				BIOS:       true,
-				UEFIVendor: "fedora",
 			},
-			iotBootableContainer,
-		)
-		aarch64.addImageTypes(
-			&platform.Aarch64{
-				BasePlatform: platform.BasePlatform{
-					FirmwarePackages: []string{
-						"arm-image-installer",
-						"bcm283x-firmware",
-						"brcmfmac-firmware",
-						"iwlwifi-mvm-firmware",
-						"realtek-firmware",
-						"uboot-images-armv8",
-					},
+			BIOS:       true,
+			UEFIVendor: "fedora",
+		},
+		iotBootableContainer,
+	)
+	aarch64.addImageTypes(
+		&platform.Aarch64{
+			BasePlatform: platform.BasePlatform{
+				FirmwarePackages: []string{
+					"arm-image-installer",
+					"bcm283x-firmware",
+					"brcmfmac-firmware",
+					"iwlwifi-mvm-firmware",
+					"realtek-firmware",
+					"uboot-images-armv8",
 				},
-				UEFIVendor: "fedora",
 			},
-			iotBootableContainer,
-		)
+			UEFIVendor: "fedora",
+		},
+		iotBootableContainer,
+	)
 
-		ppc64le.addImageTypes(
-			&platform.PPC64LE{
-				BIOS: true,
-				BasePlatform: platform.BasePlatform{
-					ImageFormat: platform.FORMAT_QCOW2,
-					QCOW2Compat: "1.1",
-				},
+	ppc64le.addImageTypes(
+		&platform.PPC64LE{
+			BIOS: true,
+			BasePlatform: platform.BasePlatform{
+				ImageFormat: platform.FORMAT_QCOW2,
+				QCOW2Compat: "1.1",
 			},
-			iotBootableContainer,
-		)
+		},
+		iotBootableContainer,
+	)
 
-		s390x.addImageTypes(
-			&platform.S390X{
-				Zipl: true,
-				BasePlatform: platform.BasePlatform{
-					ImageFormat: platform.FORMAT_QCOW2,
-					QCOW2Compat: "1.1",
-				},
+	s390x.addImageTypes(
+		&platform.S390X{
+			Zipl: true,
+			BasePlatform: platform.BasePlatform{
+				ImageFormat: platform.FORMAT_QCOW2,
+				QCOW2Compat: "1.1",
 			},
-			iotBootableContainer,
-		)
-	}
+		},
+		iotBootableContainer,
+	)
 
 	ppc64le.addImageTypes(
 		&platform.PPC64LE{

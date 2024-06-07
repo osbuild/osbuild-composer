@@ -85,14 +85,18 @@ var CustomFilesPolicies = pathpolicy.NewPathPolicies(map[string]pathpolicy.PathP
 // MountpointPolicies for ostree
 var OstreeMountpointPolicies = pathpolicy.NewPathPolicies(map[string]pathpolicy.PathPolicy{
 	"/":             {},
-	"/ostree":       {Deny: true},
-	"/home":         {Deny: true},
+	"/home":         {Deny: true}, // symlink to var/home
+	"/mnt":          {Deny: true}, // symlink to var/mnt
+	"/opt":          {Deny: true}, // symlink to var/opt
+	"/ostree":       {Deny: true}, // symlink to sysroot/ostree
+	"/root":         {Deny: true}, // symlink to var/roothome
+	"/srv":          {Deny: true}, // symlink to var/srv
 	"/var/home":     {Deny: true},
-	"/var/opt":      {Deny: true},
-	"/var/srv":      {Deny: true},
-	"/var/roothome": {Deny: true},
-	"/var/usrlocal": {Deny: true},
 	"/var/mnt":      {Deny: true},
+	"/var/opt":      {Deny: true},
+	"/var/roothome": {Deny: true},
+	"/var/srv":      {Deny: true},
+	"/var/usrlocal": {Deny: true},
 })
 
 // CustomDirectoriesPolicies for ostree
