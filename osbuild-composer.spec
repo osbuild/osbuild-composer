@@ -174,6 +174,11 @@ install -m 0644 -vp repositories/centos-stream-%{centos}*          %{buildroot}%
 %if 0%{?rhel} >= 10
 install -m 0644 -vp repositories/rhel-*                            %{buildroot}%{_datadir}/osbuild-composer/repositories/
 
+# RHEL-8 auxiliary key is signed using SHA-1, which is not enabled by default on RHEL-10 and later
+for REPO_FILE in $(ls repositories/rhel-8*-no-aux-key.json); do
+    install -m 0644 -vp ${REPO_FILE}                               %{buildroot}%{_datadir}/osbuild-composer/repositories/$(basename ${REPO_FILE} | sed 's/-no-aux-key//g')
+done
+
 %else
 # All other RHEL versions support building for the same version
 install -m 0644 -vp repositories/rhel-%{rhel}*                     %{buildroot}%{_datadir}/osbuild-composer/repositories/
