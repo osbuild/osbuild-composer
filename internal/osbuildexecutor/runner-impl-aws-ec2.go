@@ -148,6 +148,11 @@ func handleBuild(inputArchive, host string) (*osbuild.Result, error) {
 		return nil, fmt.Errorf("Unable to decode response body into osbuild result: %w", err)
 	}
 
+	_, err = io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("Unable to wait for executor to close connection: %w", err)
+	}
+
 	return &osbuildResult, nil
 }
 
