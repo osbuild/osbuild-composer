@@ -160,8 +160,32 @@ func TestValidateOutputArchiveHappy(t *testing.T) {
 	testTarPath := makeTestTarfile(t, map[*tar.Header]string{
 		&tar.Header{Name: "file1"}:        "some content",
 		&tar.Header{Name: "path/to/file"}: "other content",
+		&tar.Header{
+			Name:     "path/to/dir",
+			Typeflag: tar.TypeDir,
+		}: "",
 	})
 	err := osbuildexecutor.ValidateOutputArchive(testTarPath)
+	assert.NoError(t, err)
+}
+
+func makeSparseFile(t *testing.T, path string) {
+	output, err := exec.Command("truncate", "-s", "10M", path).CombinedOutput()
+	assert.Equal(t, "", string(output))
+	assert.NoError(t, err)
+}
+
+func TestValidateOutputArchiveHappySparseFile(t *testing.T) {
+	// go tar makes support for sparse files very hard, see also
+	// https://github.com/golang/go/issues/22735
+	tmpdir := t.TempDir()
+	makeSparseFile(t, filepath.Join(tmpdir, "big.img"))
+	testTarPath := filepath.Join(t.TempDir(), "test.tar")
+	output, err := exec.Command("tar", "--strip-components=1", "-C", tmpdir, "-c", "-S", "-f", testTarPath, "big.img").CombinedOutput()
+	assert.Equal(t, "", string(output))
+	assert.NoError(t, err)
+
+	err = osbuildexecutor.ValidateOutputArchive(testTarPath)
 	assert.NoError(t, err)
 }
 

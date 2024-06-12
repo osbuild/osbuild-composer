@@ -210,7 +210,7 @@ func validateOutputArchive(outputTarPath string) error {
 		}
 		// protect against someone smuggling in eg. device files
 		// XXX: should we support symlinks here?
-		if !slices.Contains([]byte{tar.TypeReg, tar.TypeDir}, hdr.Typeflag) {
+		if !slices.Contains([]byte{tar.TypeReg, tar.TypeDir, tar.TypeGNUSparse}, hdr.Typeflag) {
 			return fmt.Errorf("name %q must be a file/dir, is header type %q", hdr.Name, hdr.Typeflag)
 		}
 		// protect against executables, this implicitly protects
