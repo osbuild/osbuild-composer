@@ -68,6 +68,10 @@ func TestWriteInputArchive(t *testing.T) {
 
 func TestHandleBuild(t *testing.T) {
 	buildServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		input, err := io.ReadAll(r.Body)
+		require.NoError(t, err)
+		require.Equal(t, []byte("test"), input)
+
 		w.WriteHeader(http.StatusCreated)
 		osbuildResult := osbuild.Result{
 			Success: true,
