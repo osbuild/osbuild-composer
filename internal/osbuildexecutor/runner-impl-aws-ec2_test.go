@@ -46,7 +46,7 @@ func TestWriteInputArchive(t *testing.T) {
 	require.NoError(t, os.WriteFile(filepath.Join(storeDir, "contents"), []byte("storedata"), 0600))
 	require.NoError(t, os.WriteFile(filepath.Join(storeSubDir, "contents"), []byte("storedata"), 0600))
 
-	archive, err := osbuildexecutor.WriteInputArchive(cacheDir, storeDir, []string{"image"}, []byte("{\"version\": 2}"))
+	archive, err := osbuildexecutor.WriteInputArchive(cacheDir, storeDir, "some-job-id", []string{"image"}, []byte("{\"version\": 2}"))
 	require.NoError(t, err)
 
 	cmd := exec.Command("tar",
@@ -64,6 +64,10 @@ func TestWriteInputArchive(t *testing.T) {
 		"store/contents",
 		"",
 	}, strings.Split(string(out), "\n"))
+
+	output, err := exec.Command("tar", "xOf", archive, "control.json").CombinedOutput()
+	require.NoError(t, err)
+	require.Equal(t, `{"exports":["image"],"job-id":"some-job-id"}`, string(output))
 }
 
 func TestHandleBuild(t *testing.T) {
