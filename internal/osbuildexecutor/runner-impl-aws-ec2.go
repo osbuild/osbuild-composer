@@ -73,15 +73,17 @@ func waitForSI(ctx context.Context, host string) bool {
 	}
 }
 
-func writeInputArchive(cacheDir, store string, exports []string, manifestData []byte) (string, error) {
+func writeInputArchive(cacheDir, store, jobID string, exports []string, manifestData []byte) (string, error) {
 	archive := filepath.Join(cacheDir, "input.tar")
 	control := filepath.Join(cacheDir, "control.json")
 	manifest := filepath.Join(cacheDir, "manifest.json")
 
 	controlData := struct {
 		Exports []string `json:"exports"`
+		JobID   string   `json:"job-id"`
 	}{
 		Exports: exports,
+		JobID:   jobID,
 	}
 	controlDataBytes, err := json.Marshal(controlData)
 	if err != nil {
@@ -287,7 +289,7 @@ func (ec2e *awsEC2Executor) RunOSBuild(manifest []byte, opts *OsbuildOpts, error
 		return nil, fmt.Errorf("Timeout waiting for executor to come online")
 	}
 
-	inputArchive, err := writeInputArchive(ec2e.tmpDir, opts.StoreDir, opts.Exports, manifest)
+	inputArchive, err := writeInputArchive(ec2e.tmpDir, opts.StoreDir, opts.JobID, opts.Exports, manifest)
 	if err != nil {
 		logrus.Errorf("Unable to write input archive: %v", err)
 		return nil, err
