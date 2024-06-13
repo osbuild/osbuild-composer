@@ -317,7 +317,22 @@ func (a *AWS) createOrReplaceLT(hostInstanceID, imageID, sgID, instanceType, iam
 		LaunchTemplateData: &ec2.RequestLaunchTemplateData{
 			ImageId:                           aws.String(imageID),
 			InstanceInitiatedShutdownBehavior: aws.String(ec2.ShutdownBehaviorTerminate),
-			InstanceType:                      aws.String(instanceType),
+			InstanceRequirements: &ec2.InstanceRequirementsRequest{
+				AcceleratorCount: &ec2.AcceleratorCountRequest{
+					Max: aws.Int64(0),
+				},
+				BareMetal: aws.String(ec2.BareMetalExcluded),
+				MemoryMiB: &ec2.MemoryMiBRequest{
+					Min: aws.Int64(4096),
+				},
+				NetworkInterfaceCount: &ec2.NetworkInterfaceCountRequest{
+					Min: aws.Int64(1),
+				},
+				SpotMaxPricePercentageOverLowestPrice: aws.Int64(200),
+				VCpuCount: &ec2.VCpuCountRangeRequest{
+					Min: aws.Int64(2),
+				},
+			},
 			BlockDeviceMappings: []*ec2.LaunchTemplateBlockDeviceMappingRequest{
 				&ec2.LaunchTemplateBlockDeviceMappingRequest{
 					DeviceName: aws.String("/dev/sda1"),
