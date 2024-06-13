@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"golang.org/x/exp/slices"
+	"golang.org/x/sys/unix"
 
 	"github.com/sirupsen/logrus"
 )
@@ -108,6 +109,7 @@ func runOsbuild(logger *logrus.Logger, buildDir string, control *controlJSON, ou
 type controlJSON struct {
 	Environments []string `json:"environments"`
 	Exports      []string `json:"exports"`
+	JobID        string   `json:"job-id"`
 }
 
 func mustRead(atar *tar.Reader, name string) error {
@@ -235,6 +237,15 @@ func handleIncludedSources(atar *tar.Reader, buildDir string) error {
 	}
 }
 
+var unixSethostname = unix.Sethostname
+
+func setHostname(name string) error {
+	if name == "" {
+		return nil
+	}
+	return unixSethostname([]byte(name))
+}
+
 // test for real via:
 // curl -o - --data-binary "@./test.tar" -H "Content-Type: application/x-tar"  -X POST http://localhost:8001/api/v1/build
 func handleBuild(logger *logrus.Logger, config *Config) http.Handler {
@@ -260,6 +271,11 @@ func handleBuild(logger *logrus.Logger, config *Config) http.Handler {
 			if err != nil {
 				logger.Error(err)
 				http.Error(w, "cannot decode control.json", http.StatusBadRequest)
+				return
+			}
+			if err := setHostname(control.JobID); err != nil {
+				logger.Error(err)
+				http.Error(w, "cannot set hostname", http.StatusBadRequest)
 				return
 			}
 
