@@ -68,21 +68,17 @@ init:
 
 .nightly_rules_all:
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9.4-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-8.10-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "8"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9.5-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
 
 .nightly_rules_x86_64:
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9.4-[^ga][\S]+/ && $RUNNER =~ "/^.*(x86_64).*$/" && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-8.10-[^ga][\S]+/ && $RUNNER =~ "/^.*(x86_64).*$/" && $NIGHTLY == "true" && $RHEL_MAJOR == "8"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9.5-[^ga][\S]+/ && $RUNNER =~ "/^.*(x86_64).*$/" && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
 
 
 .RPM_RUNNERS_RHEL: &RPM_RUNNERS_RHEL
   RUNNER:
-    - aws/rhel-8.10-nightly-x86_64
-    - aws/rhel-8.10-nightly-aarch64
-    - aws/rhel-9.4-nightly-x86_64
-    - aws/rhel-9.4-nightly-aarch64
+    - aws/rhel-9.5-nightly-x86_64
+    - aws/rhel-9.5-nightly-aarch64
 
   INTERNAL_NETWORK: ["true"]
 
@@ -164,8 +160,7 @@ Prepare-rhel-internal:
       - RUNNER:
           # NOTE: 1 runner prepares for all arches b/c subsequent jobs download
           # artifacts from all previous jobs and the last one wins
-          - aws/rhel-8.10-nightly-x86_64
-          - aws/rhel-9.4-nightly-x86_64
+          - aws/rhel-9.5-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
 
 Base:
@@ -191,10 +186,8 @@ Base:
           - aws/rhel-9.3-ga-x86_64
           - aws/rhel-9.3-ga-aarch64
       - RUNNER:
-          - aws/rhel-8.10-nightly-x86_64
-          - aws/rhel-8.10-nightly-aarch64
-          - aws/rhel-9.4-nightly-x86_64
-          - aws/rhel-9.4-nightly-aarch64
+          - aws/rhel-9.5-nightly-x86_64
+          - aws/rhel-9.5-nightly-aarch64
           - aws/centos-stream-9-x86_64
           - aws/centos-stream-9-aarch64
         INTERNAL_NETWORK: ["true"]
@@ -222,10 +215,8 @@ Base:
           - aws/rhel-8.9-ga-aarch64
           - aws/rhel-9.3-ga-x86_64
           - aws/rhel-9.3-ga-aarch64
-          - aws/rhel-8.10-nightly-x86_64
-          - aws/rhel-8.10-nightly-aarch64
-          - aws/rhel-9.4-nightly-x86_64
-          - aws/rhel-9.4-nightly-aarch64
+          - aws/rhel-9.5-nightly-x86_64
+          - aws/rhel-9.5-nightly-aarch64
           - aws/centos-stream-9-x86_64
           - aws/centos-stream-9-aarch64
         INTERNAL_NETWORK: ["true"]
@@ -234,8 +225,7 @@ regression-composer-works-behind-satellite-fallback:
   extends: .regression
   rules:
     # BLACKLIST: Skipped on subscribed RHEL machines
-    - if: $RUNNER !~ "/^.*(rhel-.*-ga|centos|fedora).*$/" && $CI_PIPELINE_SOURCE != "schedule"
-    - !reference [.nightly_rules_all, rules]
+    - if: $RUNNER !~ "/^.*(rhel-.*-ga|centos|fedora).*$/" && $RUNNER !~ "/^.*(rhel-9.5).*$/" && $CI_PIPELINE_SOURCE != "schedule"
   variables:
     SCRIPT: regression-composer-works-behind-satellite-fallback.sh
 
@@ -243,8 +233,7 @@ regression-composer-works-behind-satellite:
   extends: .regression
   rules: 
     # BLACKLIST: Skipped on subscribed RHEL machines
-    - if: $RUNNER !~ "/^.*(rhel-.*-ga|centos|fedora).*$/" && $CI_PIPELINE_SOURCE != "schedule"
-    - !reference [.nightly_rules_all, rules]
+    - if: $RUNNER !~ "/^.*(rhel-.*-ga|centos|fedora).*$/" && $RUNNER !~ "/^.*(rhel-9.5).*$/" && $CI_PIPELINE_SOURCE != "schedule"
   variables:
     SCRIPT: regression-composer-works-behind-satellite.sh
 
@@ -309,10 +298,8 @@ Image Tests:
       - RUNNER:
           - aws/rhel-8.4-ga-x86_64
           - aws/rhel-8.4-ga-aarch64
-          - aws/rhel-8.10-nightly-x86_64
-          - aws/rhel-8.10-nightly-aarch64
-          - aws/rhel-9.4-nightly-x86_64
-          - aws/rhel-9.4-nightly-aarch64
+          - aws/rhel-9.5-nightly-x86_64
+          - aws/rhel-9.5-nightly-aarch64
         INTERNAL_NETWORK: ["true"]
 
 Trigger-rhel-edge-ci:
@@ -340,10 +327,8 @@ Trigger-rhel-edge-ci:
       - aws/rhel-8.4-ga-x86_64
       - aws/rhel-8.9-ga-x86_64
       - aws/rhel-9.3-ga-x86_64
-      - aws/rhel-8.10-nightly-x86_64
-      - aws/rhel-8.10-nightly-aarch64
-      - aws/rhel-9.4-nightly-x86_64
-      - aws/rhel-9.4-nightly-aarch64
+      - aws/rhel-9.5-nightly-x86_64
+      - aws/rhel-9.5-nightly-aarch64
       - aws/centos-stream-9-x86_64
     INTERNAL_NETWORK: ["true"]
 
@@ -420,8 +405,7 @@ aws.sh:
   rules:
     # Skip rhel-8.4-ga-x86_64
     - if: '$CI_PIPELINE_SOURCE != "schedule" && $RUNNER !~ /[\S]+rhel-8.4-[\S]+/'
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9.4-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-8.10-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "8"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9.5-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
   variables:
     SCRIPT: aws.sh
 
@@ -442,7 +426,7 @@ OpenShift_Virtualization:
   parallel:
     matrix:
       - RUNNER:
-          - aws/rhel-9.4-nightly-x86_64
+          - aws/rhel-9.5-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
 
 azure.sh:
@@ -535,8 +519,7 @@ API:
         RUNNER:
           - aws/rhel-8.9-ga-x86_64
           - aws/rhel-9.3-ga-x86_64
-          - aws/rhel-8.10-nightly-x86_64
-          - aws/rhel-9.4-nightly-x86_64
+          - aws/rhel-9.5-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
       - IMAGE_TYPE: ["iot-commit"]
         RUNNER:
@@ -595,8 +578,7 @@ API-module-hotfixes:
       - RUNNER:
           - gcp/rhel-8.9-ga-x86_64
           - gcp/rhel-9.3-ga-x86_64
-          - gcp/rhel-8.10-nightly-x86_64
-          - gcp/rhel-9.4-nightly-x86_64
+          - gcp/rhel-9.5-nightly-x86_64
           - gcp/centos-stream-9-x86_64
         INTERNAL_NETWORK: ["true"]
 
@@ -634,14 +616,14 @@ weldr-distro-dot-notation+aliases:
     matrix:
       - RUNNER:
           - aws/rhel-8.8-ga-x86_64
-          - aws/rhel-9.4-nightly-x86_64
+          - aws/rhel-9.5-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
 
 .generic_s3:
   extends: .libvirt_integration
   rules:
     # BLACKLIST
-    - if: $RUNNER !~ "/^.*(rhel-8.10|rhel-9.4).*$/" && $CI_PIPELINE_SOURCE != "schedule" && $NIGHTLY != "true"
+    - if: $RUNNER !~ "/^.*(rhel-9.5).*$/" && $CI_PIPELINE_SOURCE != "schedule" && $NIGHTLY != "true"
     - !reference [.nightly_rules_all, rules]
 
 generic_s3_http.sh:
@@ -699,7 +681,7 @@ Upgrade:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/upgrade8to9.sh
   variables:
-    RUNNER: rhos-01/rhel-9.4-nightly-x86_64-large
+    RUNNER: rhos-01/rhel-9.5-nightly-x86_64-large
 
 NIGHTLY_FAIL:
   stage: finish
@@ -732,8 +714,7 @@ Installer:
   parallel:
     matrix:
       - RUNNER:
-          - rhos-01/rhel-8.10-nightly-x86_64
-          - rhos-01/rhel-9.4-nightly-x86_64
+          - rhos-01/rhel-9.5-nightly-x86_64
           - rhos-01/centos-stream-9-x86_64
 
 ContainerUpload:
@@ -764,10 +745,8 @@ ContainerEmbedding:
       - INTERNAL_NETWORK: "true"
         RUNNER:
         - aws/centos-stream-9-x86_64
-        - aws/rhel-8.10-nightly-x86_64
-        - aws/rhel-8.10-nightly-aarch64
-        - aws/rhel-9.4-nightly-x86_64
-        - aws/rhel-9.4-nightly-aarch64
+        - aws/rhel-9.5-nightly-x86_64
+        - aws/rhel-9.5-nightly-aarch64
 
 WorkerExecutor:
   stage: test

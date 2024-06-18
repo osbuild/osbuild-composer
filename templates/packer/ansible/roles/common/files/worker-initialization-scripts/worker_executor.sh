@@ -33,5 +33,4 @@ EOF
 sudo systemctl enable --now vector
 
 echo "Starting osbuild-jobsite-builder."
-mkdir -p /var/cache/osbuild-builder
-/usr/libexec/osbuild-composer/osbuild-jobsite-builder -builder-host 0.0.0.0 -build-path /var/cache/osbuild-builder
+/usr/libexec/osbuild-composer/osbuild-worker-executor -host 0.0.0.0

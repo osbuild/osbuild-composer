@@ -16,7 +16,7 @@ func TestResultTooEarly(t *testing.T) {
 
 	rsp, err := http.Get(endpoint)
 	assert.NoError(t, err)
-	assert.Equal(t, rsp.StatusCode, http.StatusTooEarly)
+	assert.Equal(t, http.StatusTooEarly, rsp.StatusCode)
 }
 
 func TestResultBad(t *testing.T) {

@@ -474,14 +474,6 @@ func anacondaPackageSet(t *imageType) rpmmd.PackageSet {
 		},
 	})
 
-	if common.VersionLessThan(t.arch.distro.osVersion, "39") {
-		ps = ps.Append(rpmmd.PackageSet{
-			Include: []string{
-				"lklug-fonts", // orphaned, unavailable in F39
-			},
-		})
-	}
-
 	switch t.Arch().Name() {
 	case arch.ARCH_X86_64.String():
 		ps = ps.Append(rpmmd.PackageSet{
@@ -627,14 +619,6 @@ func containerPackageSet(t *imageType) rpmmd.PackageSet {
 		},
 	}
 
-	if common.VersionLessThan(t.arch.distro.osVersion, "39") {
-		ps = ps.Append(rpmmd.PackageSet{
-			Include: []string{
-				"fedora-repos-modular",
-			},
-		})
-	}
-
 	return ps
 }
 
@@ -705,7 +689,8 @@ func iotSimplifiedInstallerPackageSet(t *imageType) rpmmd.PackageSet {
 				"shadow-utils", // includes passwd
 			},
 		})
-	} else if common.VersionLessThan(t.arch.distro.osVersion, "40") {
+	} else {
+		// F39 only
 		ps = ps.Append(rpmmd.PackageSet{
 			Include: []string{
 				"passwd",

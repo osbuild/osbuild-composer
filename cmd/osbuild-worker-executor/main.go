@@ -16,8 +16,6 @@ import (
 // based on the excellent post
 // https://grafana.com/blog/2024/02/09/how-i-write-http-services-in-go-after-13-years/
 
-var logrusNew = logrus.New
-
 func newServer(logger *logrus.Logger, config *Config) http.Handler {
 	mux := http.NewServeMux()
 	addRoutes(mux, logger, config)
@@ -27,11 +25,10 @@ func newServer(logger *logrus.Logger, config *Config) http.Handler {
 	return handler
 }
 
-func run(ctx context.Context, args []string, getenv func(string) string) error {
+func run(ctx context.Context, args []string, getenv func(string) string, logger *logrus.Logger) error {
 	ctx, cancel := signal.NotifyContext(ctx, os.Interrupt)
 	defer cancel()
 
-	logger := logrusNew()
 	config, err := newConfigFromCmdline(args)
 	if err != nil {
 		return err
@@ -75,8 +72,9 @@ func run(ctx context.Context, args []string, getenv func(string) string) error {
 }
 
 func main() {
+	logger := logrus.New()
 	ctx := context.Background()
-	if err := run(ctx, os.Args, os.Getenv); err != nil {
+	if err := run(ctx, os.Args[1:], os.Getenv, logger); err != nil {
 		fmt.Fprintf(os.Stderr, "%s\n", err)
 		os.Exit(1)
 	}

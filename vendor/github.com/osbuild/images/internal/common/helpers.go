@@ -1,8 +1,10 @@
 package common
 
 import (
+	"bytes"
 	"fmt"
 	"io"
+	"os/exec"
 	"regexp"
 	"sort"
 	"strconv"
@@ -84,3 +86,26 @@ type nopSeekCloser struct {
 }
 
 func (nopSeekCloser) Close() error { return nil }
+
+// MountUnitNameFor returns the escaped name of the mount unit for a given
+// mountpoint by calling:
+//
+//	systemd-escape --path --suffix=mount "mountpoint"
+func MountUnitNameFor(mountpoint string) (string, error) {
+	cmd := exec.Command("systemd-escape", "--path", "--suffix=mount", mountpoint)
+	stdout, err := cmd.Output()
+	if err != nil {
+		return "", fmt.Errorf("systemd-escape call failed: %s", ExecError(err))
+	}
+	return strings.TrimSpace(string(stdout)), nil
+}
+
+// ExecError handles the error from an exec.Command().Output() call. It returns
+// a formatted error that includes StdErr when the error is of type
+// exec.ExitError.
+func ExecError(err error) error {
+	if err, ok := err.(*exec.ExitError); ok {
+		return fmt.Errorf("%s [%w]", bytes.TrimSpace(err.Stderr), err)
+	}
+	return err
+}

@@ -5,7 +5,7 @@
 # This test case verifies that distributions can be specified with and without
 # the dot to sepratae the major and minor version (true for RHEL-8 and RHEL-9).
 # It also verifies the behavior of distro name aliases
-# (e.g. "rhel-9" -> "rhel-9.4"). This is done by building a SAP image and
+# (e.g. "rhel-9" -> "rhel-9.5"). This is done by building a SAP image and
 # inspecting it using guestfish. Specifically, the SAP image contains DNF VAR
 # config /etc/dnf/vars/releasever, which contains value "X.Y", which should be
 # the same as the distro release that the alias points to.
@@ -46,7 +46,7 @@ cat <<EOF | tee "${EXTRA_COMPOSER_CONF}"
 # overrides the default rhel-8 alias
 [distro_aliases]
 rhel-8 = "rhel-8.8"
-rhel-9 = "rhel-9.4"
+rhel-9 = "rhel-9.5"
 EOF
 
 # Provision the software under test.

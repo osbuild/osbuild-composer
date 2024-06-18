@@ -13,6 +13,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"runtime/debug"
 	"strings"
 
 	"github.com/osbuild/images/pkg/arch"
@@ -373,6 +374,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 	defer func() {
 		if r := recover(); r != nil {
 			logWithId.Errorf("Recovered from panic: %v", r)
+			logWithId.Errorf("%s", debug.Stack())
 
 			osbuildJobResult.JobError = clienterrors.WorkerClientError(
 				clienterrors.ErrorJobPanicked,
@@ -401,7 +403,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 
 	osbuildVersion, err := osbuild.OSBuildVersion()
 	if err != nil {
-		osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorBuildJob, "Error getting osbuild binary version", err)
+		osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorBuildJob, "Error getting osbuild binary version", err.Error())
 		return err
 	}
 	osbuildJobResult.OSBuildVersion = osbuildVersion
@@ -502,7 +504,18 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 	case "host":
 		executor = osbuildexecutor.NewHostExecutor()
 	case "aws.ec2":
-		executor = osbuildexecutor.NewAWSEC2Executor(impl.OSBuildExecutor.IAMProfile, impl.OSBuildExecutor.KeyName, impl.OSBuildExecutor.CloudWatchGroup)
+		err = os.MkdirAll("/var/tmp/osbuild-composer", 0755)
+		if err != nil {
+			osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidConfig, "Unable to create /var/tmp/osbuild-composer needed to aws.ec2 executor", nil)
+			return err
+		}
+		tmpDir, err := os.MkdirTemp("/var/tmp/osbuild-composer", "")
+		if err != nil {
+			osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidConfig, "Unable to create /var/tmp/osbuild-composer needed to aws.ec2 executor", nil)
+			return err
+		}
+		defer os.RemoveAll(tmpDir)
+		executor = osbuildexecutor.NewAWSEC2Executor(impl.OSBuildExecutor.IAMProfile, impl.OSBuildExecutor.KeyName, impl.OSBuildExecutor.CloudWatchGroup, tmpDir)
 	default:
 		osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidConfig, "No osbuild executor defined", nil)
 		return err
@@ -513,10 +526,19 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 		exportPaths = append(exportPaths, path.Join(jobTarget.OsbuildArtifact.ExportName, jobTarget.OsbuildArtifact.ExportFilename))
 	}
 
-	osbuildJobResult.OSBuildOutput, err = executor.RunOSBuild(jobArgs.Manifest, impl.Store, outputDirectory, exports, exportPaths, nil, extraEnv, true, os.Stderr)
+	opts := &osbuildexecutor.OsbuildOpts{
+		StoreDir:    impl.Store,
+		OutputDir:   outputDirectory,
+		Exports:     exports,
+		ExportPaths: exportPaths,
+		ExtraEnv:    extraEnv,
+		Result:      true,
+		JobID:       job.Id().String(),
+	}
+	osbuildJobResult.OSBuildOutput, err = executor.RunOSBuild(jobArgs.Manifest, opts, os.Stderr)
 	// First handle the case when "running" osbuild failed
 	if err != nil {
-		osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorBuildJob, "osbuild build failed", err)
+		osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorBuildJob, "osbuild build failed", err.Error())
 		return err
 	}
 
@@ -544,13 +566,13 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 
 	// Second handle the case when the build failed, but osbuild finished successfully
 	if !osbuildJobResult.OSBuildOutput.Success {
-		var osbErrors []error
+		var osbErrors []string
 		if osbuildJobResult.OSBuildOutput.Error != nil {
-			osbErrors = append(osbErrors, fmt.Errorf("osbuild error: %s", string(osbuildJobResult.OSBuildOutput.Error)))
+			osbErrors = append(osbErrors, fmt.Sprintf("osbuild error: %s", string(osbuildJobResult.OSBuildOutput.Error)))
 		}
 		if osbuildJobResult.OSBuildOutput.Errors != nil {
 			for _, err := range osbuildJobResult.OSBuildOutput.Errors {
-				osbErrors = append(osbErrors, fmt.Errorf("manifest validation error: %v", err))
+				osbErrors = append(osbErrors, fmt.Sprintf("manifest validation error: %v", err))
 			}
 		}
 		osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorBuildJob, "osbuild build failed", osbErrors)

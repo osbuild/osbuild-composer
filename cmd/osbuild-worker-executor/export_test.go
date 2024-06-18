@@ -4,9 +4,6 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
-
-	"github.com/sirupsen/logrus"
-	logrusTest "github.com/sirupsen/logrus/hooks/test"
 )
 
 var (
@@ -15,16 +12,11 @@ var (
 	HandleIncludedSources = handleIncludedSources
 )
 
-func MockLogger() (hook *logrusTest.Hook, restore func()) {
-	saved := logrusNew
-	logger, hook := logrusTest.NewNullLogger()
-	logrusNew = func() *logrus.Logger {
-		return logger
-	}
-	logger.SetLevel(logrus.DebugLevel)
-
-	return hook, func() {
-		logrusNew = saved
+func MockUnixSethostname(new func([]byte) error) (restore func()) {
+	saved := unixSethostname
+	unixSethostname = new
+	return func() {
+		unixSethostname = saved
 	}
 }
 

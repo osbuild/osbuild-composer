@@ -8,9 +8,12 @@ import (
 
 type hostExecutor struct{}
 
-func (he *hostExecutor) RunOSBuild(manifest []byte, store, outputDirectory string, exports, exportPaths, checkpoints,
-	extraEnv []string, result bool, errorWriter io.Writer) (*osbuild.Result, error) {
-	return osbuild.RunOSBuild(manifest, store, outputDirectory, exports, checkpoints, extraEnv, result, errorWriter)
+func (he *hostExecutor) RunOSBuild(manifest []byte, opts *OsbuildOpts, errorWriter io.Writer) (*osbuild.Result, error) {
+	if opts == nil {
+		opts = &OsbuildOpts{}
+	}
+
+	return osbuild.RunOSBuild(manifest, opts.StoreDir, opts.OutputDir, opts.Exports, opts.Checkpoints, opts.ExtraEnv, opts.Result, errorWriter)
 }
 
 func NewHostExecutor() Executor {

@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"golang.org/x/exp/slices"
+	"golang.org/x/sys/unix"
 
 	"github.com/sirupsen/logrus"
 )
@@ -58,7 +59,7 @@ func runOsbuild(logger *logrus.Logger, buildDir string, control *controlJSON, ou
 	// use multi writer to get same output for stream and log
 	mw := io.MultiWriter(&wf, logf)
 	outputDir := filepath.Join(buildDir, "output")
-	storeDir := filepath.Join(buildDir, "store")
+	storeDir := filepath.Join(buildDir, "osbuild-store")
 	cmd := exec.Command(osbuildBinary)
 	cmd.Stdout = mw
 	cmd.Stderr = mw
@@ -81,6 +82,7 @@ func runOsbuild(logger *logrus.Logger, buildDir string, control *controlJSON, ou
 		return "", err
 	}
 
+	// the result is put into a tar because we get sparse file support for free this way
 	// #nosec G204
 	cmd = exec.Command(
 		"tar",
@@ -107,6 +109,7 @@ func runOsbuild(logger *logrus.Logger, buildDir string, control *controlJSON, ou
 type controlJSON struct {
 	Environments []string `json:"environments"`
 	Exports      []string `json:"exports"`
+	JobID        string   `json:"job-id"`
 }
 
 func mustRead(atar *tar.Reader, name string) error {
@@ -192,8 +195,8 @@ func handleIncludedSources(atar *tar.Reader, buildDir string) error {
 		if filepath.Clean(name) != strings.TrimSuffix(name, "/") {
 			return fmt.Errorf("name not clean: %v != %v", filepath.Clean(name), name)
 		}
-		if !strings.HasPrefix(name, "store/") {
-			return fmt.Errorf("expected store/ prefix, got %v", hdr.Name)
+		if !strings.HasPrefix(name, "osbuild-store/") {
+			return fmt.Errorf("expected osbuild-store/ prefix, got %v", name)
 		}
 		// note that the extra filepath.Clean() is just there to
 		// appease gosec G305
@@ -234,6 +237,15 @@ func handleIncludedSources(atar *tar.Reader, buildDir string) error {
 	}
 }
 
+var unixSethostname = unix.Sethostname
+
+func setHostname(name string) error {
+	if name == "" {
+		return nil
+	}
+	return unixSethostname([]byte(name))
+}
+
 // test for real via:
 // curl -o - --data-binary "@./test.tar" -H "Content-Type: application/x-tar"  -X POST http://localhost:8001/api/v1/build
 func handleBuild(logger *logrus.Logger, config *Config) http.Handler {
@@ -259,6 +271,11 @@ func handleBuild(logger *logrus.Logger, config *Config) http.Handler {
 			if err != nil {
 				logger.Error(err)
 				http.Error(w, "cannot decode control.json", http.StatusBadRequest)
+				return
+			}
+			if err := setHostname(control.JobID); err != nil {
+				logger.Error(err)
+				http.Error(w, "cannot set hostname", http.StatusBadRequest)
 				return
 			}
 
