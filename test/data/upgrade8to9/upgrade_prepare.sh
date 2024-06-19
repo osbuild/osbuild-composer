@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# This upgrades the system to the latest RHEL-9.0
+# This upgrades the system to the latest RHEL-9.x
 set -xeuo pipefail
 
 # Disable gpgcheck for internal repositories
@@ -19,13 +19,13 @@ dnf install -y leapp-upgrade-el8toel9 vdo jq rpmdevtools
 tee /etc/leapp/files/leapp_upgrade_repositories.repo > /dev/null << EOF
 [APPSTREAM]
 name=APPSTREAM
-baseurl=http://download.devel.redhat.com/rhel-9/nightly/RHEL-9/latest-RHEL-9.4.0/compose/AppStream/x86_64/os/
+baseurl=http://download.devel.redhat.com/rhel-9/nightly/RHEL-9/latest-RHEL-9.5.0/compose/AppStream/x86_64/os/
 enabled=0
 gpgcheck=0
 
 [BASEOS]
 name=BASEOS
-baseurl=http://download.devel.redhat.com/rhel-9/nightly/RHEL-9/latest-RHEL-9.4.0/compose/BaseOS/x86_64/os/
+baseurl=http://download.devel.redhat.com/rhel-9/nightly/RHEL-9/latest-RHEL-9.5.0/compose/BaseOS/x86_64/os/
 enabled=0
 gpgcheck=0
 EOF
