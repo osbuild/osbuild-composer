@@ -3,8 +3,10 @@ package main_test
 import (
 	"context"
 	"fmt"
+	"net"
 	"net/http"
 	"os"
+	"strconv"
 	"testing"
 	"time"
 
@@ -49,11 +51,26 @@ func waitReady(ctx context.Context, timeout time.Duration, endpoint string) erro
 	}
 }
 
+// getFreePort() returns a free port.
+// This is racy but better than using a fixed one
+func getFreePort() (int, error) {
+	l, err := net.Listen("tcp", ":0")
+	if err != nil {
+		return 0, err
+	}
+	defer l.Close()
+
+	addr := l.Addr().(*net.TCPAddr)
+	return addr.Port, nil
+}
+
 func runTestServer(t *testing.T) (baseURL, buildBaseDir string, loggerHook *logrusTest.Hook) {
 	host := "localhost"
-	port := "18002"
+	port, err := getFreePort()
+	assert.NoError(t, err, "failed to find a free port on localhost")
+
 	buildBaseDir = t.TempDir()
-	baseURL = fmt.Sprintf("http://%s:%s/", host, port)
+	baseURL = fmt.Sprintf("http://%s:%d/", host, port)
 
 	restore := main.MockUnixSethostname(func([]byte) error {
 		return nil
@@ -68,14 +85,14 @@ func runTestServer(t *testing.T) (baseURL, buildBaseDir string, loggerHook *logr
 
 	args := []string{
 		"-host", host,
-		"-port", port,
+		"-port", strconv.Itoa(port),
 		"-build-path", buildBaseDir,
 	}
 	go func() {
 		_ = main.Run(ctx, args, os.Getenv, logger)
 	}()
 
-	err := waitReady(ctx, defaultTimeout, baseURL)
+	err = waitReady(ctx, defaultTimeout, baseURL)
 	assert.NoError(t, err)
 
 	return baseURL, buildBaseDir, loggerHook
