@@ -14,23 +14,41 @@ import requests
 
 SNAPSHOTS_URL="https://rpmrepo.osbuild.org/v2/enumerate"
 SNAPSHOTS_TIMEOUT = 2 * 60
+RETRY_LIMIT = 3
+RETRY_SLEEP_SEC = 60
 SNAPSHOT_GREP = ["grep", "--color=never", "-or", r"http.*rpmrepo.osbuild.org.*-20[0-9]\+"]
+
 
 def fetch_snapshots_api(url, timeout=SNAPSHOTS_TIMEOUT):
     """Get the list of snapshots from the rpmrepo API"""
-    print(f"Fetching list of snapshots from {url}")
-    start = time.time()
-    try:
-        r = requests.get(url, timeout=timeout)
-    except:
-        return None
-    elapsed = time.time() - start
-    if r.status_code != 200:
-        print(f"HTTP Response {r.status_code} from {url} after {elapsed:0.0f}s: {r.text}")
-        return None
-    print(f"Received snapshot list in {elapsed:0.0f}s")
-    return r.json()
+    retry = 1
+    while retry <= RETRY_LIMIT:
+        print(f"Fetching list of snapshots from {url}, retry #{retry}")
+        start = time.time()
+        try:
+            r = requests.get(url, timeout=timeout)
+        except Exception as e:
+            print(f"Got exception {e}")
+            r = None
 
+        elapsed = time.time() - start
+        if r and r.status_code != 200:
+            print(f"HTTP Response {r.status_code} from {url} after {elapsed:0.0f}s: {r.text}")
+            if r.status_code == 504:
+                # we retry HTTP-504 …
+                r = None
+            else:
+                return None
+        if r:
+            print(f"Received snapshot list in {elapsed:0.0f}s")
+            return r.json()
+
+        print(f"Retrying in {RETRY_SLEEP_SEC} seconds …")
+        time.sleep(RETRY_SLEEP_SEC)
+        retry += 1
+
+    print(f"Giving up after {RETRY_LIMIT} retries")
+    return None
 
 def find_snapshot_urls(directory):
     """grep the directory for rpmrepo snapshot urls
