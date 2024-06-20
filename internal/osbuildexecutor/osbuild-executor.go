@@ -14,9 +14,6 @@ type OsbuildOpts struct {
 	Checkpoints []string
 	ExtraEnv    []string
 	Result      bool
-
-	// not strict a osbuild opt
-	JobID string
 }
 
 type Executor interface {
