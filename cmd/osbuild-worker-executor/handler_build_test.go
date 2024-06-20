@@ -324,30 +324,3 @@ func TestBuildErrorHandlingTar(t *testing.T) {
 	assert.Contains(t, string(body), "cannot tar output directory:")
 	assert.Contains(t, loggerHook.LastEntry().Message, "cannot tar output directory:")
 }
-
-func TestBuildSethostname(t *testing.T) {
-	baseURL, baseBuildDir, _ := runTestServer(t)
-	endpoint := baseURL + "api/v1/build"
-
-	restore := main.MockOsbuildBinary(t, fmt.Sprintf(`#!/bin/sh -e
-# simulate output
-mkdir -p %[1]s/build/output/image
-echo "fake-build-result" > %[1]s/build/output/image/disk.img
-`, baseBuildDir))
-	t.Cleanup(restore)
-
-	var hostnameCalls []string
-	restore = main.MockUnixSethostname(func(hn []byte) error {
-		hostnameCalls = append(hostnameCalls, string(hn))
-		return nil
-	})
-	t.Cleanup(restore)
-
-	buf := makeTestPost(t, `{"exports": ["tree"], "job-id": "1234-56"}`, `{"fake": "manifest"}`)
-	rsp, err := http.Post(endpoint, "application/x-tar", buf)
-	assert.NoError(t, err)
-	defer func() { _, _ = io.ReadAll(rsp.Body) }()
-	defer rsp.Body.Close()
-
-	assert.Equal(t, []string{"1234-56"}, hostnameCalls)
-}

@@ -55,11 +55,6 @@ func runTestServer(t *testing.T) (baseURL, buildBaseDir string, loggerHook *logr
 	buildBaseDir = t.TempDir()
 	baseURL = fmt.Sprintf("http://%s:%s/", host, port)
 
-	restore := main.MockUnixSethostname(func([]byte) error {
-		return nil
-	})
-	t.Cleanup(restore)
-
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
 
