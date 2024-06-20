@@ -12,14 +12,6 @@ var (
 	HandleIncludedSources = handleIncludedSources
 )
 
-func MockUnixSethostname(new func([]byte) error) (restore func()) {
-	saved := unixSethostname
-	unixSethostname = new
-	return func() {
-		unixSethostname = saved
-	}
-}
-
 func MockOsbuildBinary(t *testing.T, new string) (restore func()) {
 	t.Helper()
 
