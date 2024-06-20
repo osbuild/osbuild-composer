@@ -19,14 +19,15 @@ type SecureInstance struct {
 }
 
 // SecureInstanceUserData returns the cloud-init user data for a secure instance.
-func SecureInstanceUserData(CloudWatchGroup string) string {
+func SecureInstanceUserData(cloudWatchGroup, hostname string) string {
 	additionalFiles := ""
 
-	if CloudWatchGroup != "" {
+	if cloudWatchGroup != "" {
 		additionalFiles += fmt.Sprintf(`  - path: /tmp/cloud_init_vars
     content: |
       OSBUILD_EXECUTOR_CLOUDWATCH_GROUP='%s'
-`, CloudWatchGroup)
+      OSBUILD_EXECUTOR_HOSTNAME='%s'
+`, cloudWatchGroup, hostname)
 	}
 
 	return fmt.Sprintf(`#cloud-config
@@ -38,7 +39,7 @@ write_files:
 
 // Runs an instance with a security group that only allows traffic to
 // the host. Will replace resources if they already exists.
-func (a *AWS) RunSecureInstance(iamProfile, keyName, CloudWatchGroup string) (*SecureInstance, error) {
+func (a *AWS) RunSecureInstance(iamProfile, keyName, cloudWatchGroup, hostname string) (*SecureInstance, error) {
 	identity, err := a.ec2metadata.GetInstanceIdentityDocument()
 	if err != nil {
 		logrus.Errorf("Error getting the identity document, %s", err)
@@ -79,7 +80,7 @@ func (a *AWS) RunSecureInstance(iamProfile, keyName, CloudWatchGroup string) (*S
 		return nil, err
 	}
 
-	ltID, err := a.createOrReplaceLT(identity.InstanceID, imageID, sgID, instanceType, iamProfile, keyName, CloudWatchGroup)
+	ltID, err := a.createOrReplaceLT(identity.InstanceID, imageID, sgID, instanceType, iamProfile, keyName, cloudWatchGroup, hostname)
 	if ltID != "" {
 		secureInstance.LTID = ltID
 	}
@@ -294,7 +295,7 @@ func isLaunchTemplateNotFoundError(err error) bool {
 
 }
 
-func (a *AWS) createOrReplaceLT(hostInstanceID, imageID, sgID, instanceType, iamProfile, keyName, CloudWatchGroup string) (string, error) {
+func (a *AWS) createOrReplaceLT(hostInstanceID, imageID, sgID, instanceType, iamProfile, keyName, cloudWatchGroup, hostname string) (string, error) {
 	ltName := fmt.Sprintf("launch-template-for-%s-runner-instance", hostInstanceID)
 	descrLTOutput, err := a.ec2.DescribeLaunchTemplates(&ec2.DescribeLaunchTemplatesInput{
 		LaunchTemplateNames: []*string{
@@ -347,7 +348,7 @@ func (a *AWS) createOrReplaceLT(hostInstanceID, imageID, sgID, instanceType, iam
 			SecurityGroupIds: []*string{
 				aws.String(sgID),
 			},
-			UserData: aws.String(base64.StdEncoding.EncodeToString([]byte(SecureInstanceUserData(CloudWatchGroup)))),
+			UserData: aws.String(base64.StdEncoding.EncodeToString([]byte(SecureInstanceUserData(cloudWatchGroup, hostname)))),
 		},
 		TagSpecifications: []*ec2.TagSpecification{
 			&ec2.TagSpecification{

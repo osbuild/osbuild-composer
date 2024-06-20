@@ -515,7 +515,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			return err
 		}
 		defer os.RemoveAll(tmpDir)
-		executor = osbuildexecutor.NewAWSEC2Executor(impl.OSBuildExecutor.IAMProfile, impl.OSBuildExecutor.KeyName, impl.OSBuildExecutor.CloudWatchGroup, tmpDir)
+		executor = osbuildexecutor.NewAWSEC2Executor(impl.OSBuildExecutor.IAMProfile, impl.OSBuildExecutor.KeyName, impl.OSBuildExecutor.CloudWatchGroup, job.Id().String(), tmpDir)
 	default:
 		osbuildJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidConfig, "No osbuild executor defined", nil)
 		return err
@@ -533,7 +533,6 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 		ExportPaths: exportPaths,
 		ExtraEnv:    extraEnv,
 		Result:      true,
-		JobID:       job.Id().String(),
 	}
 	osbuildJobResult.OSBuildOutput, err = executor.RunOSBuild(jobArgs.Manifest, opts, os.Stderr)
 	// First handle the case when "running" osbuild failed

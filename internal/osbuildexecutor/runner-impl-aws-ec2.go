@@ -25,6 +25,7 @@ type awsEC2Executor struct {
 	iamProfile      string
 	keyName         string
 	cloudWatchGroup string
+	hostname        string
 	tmpDir          string
 }
 
@@ -268,7 +269,7 @@ func (ec2e *awsEC2Executor) RunOSBuild(manifest []byte, opts *OsbuildOpts, error
 		return nil, fmt.Errorf("Failed to get default aws client in %s region: %w", region, err)
 	}
 
-	si, err := aws.RunSecureInstance(ec2e.iamProfile, ec2e.keyName, ec2e.cloudWatchGroup)
+	si, err := aws.RunSecureInstance(ec2e.iamProfile, ec2e.keyName, ec2e.cloudWatchGroup, ec2e.hostname)
 	if err != nil {
 		return nil, fmt.Errorf("Unable to start secure instance: %w", err)
 	}
@@ -317,11 +318,12 @@ func (ec2e *awsEC2Executor) RunOSBuild(manifest []byte, opts *OsbuildOpts, error
 	return osbuildResult, nil
 }
 
-func NewAWSEC2Executor(iamProfile, keyName, cloudWatchGroup, tmpDir string) Executor {
+func NewAWSEC2Executor(iamProfile, keyName, cloudWatchGroup, hostname, tmpDir string) Executor {
 	return &awsEC2Executor{
 		iamProfile,
 		keyName,
 		cloudWatchGroup,
+		hostname,
 		tmpDir,
 	}
 }

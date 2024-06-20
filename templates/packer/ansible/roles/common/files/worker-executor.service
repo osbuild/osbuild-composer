@@ -6,6 +6,7 @@ After=cloud-final.service
 
 [Service]
 Type=oneshot
+ExecStart=/usr/local/libexec/worker-initialization-scripts/set_executor_hostname.sh
 ExecStart=/usr/local/libexec/worker-initialization-scripts/worker_executor.sh
 
 [Install]
