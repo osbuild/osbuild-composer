@@ -19,6 +19,11 @@ SRCDIR ?= .
 
 RST2MAN ?= rst2man
 
+# v1.55 to get golang 1.21 (1.21.3)
+# v1.53 to get golang 1.20 (1.20.5)
+GOLANGCI_LINT_VERSION=v1.53
+GOLANGCI_LINT_CACHE_DIR=$(HOME)/.cache/golangci-lint/$(GOLANGCI_LINT_VERSION)
+GOLANGCI_COMPOSER_IMAGE=composer_golangci
 #
 # Automatic Variables
 #
@@ -82,6 +87,7 @@ help:
 	@echo "    unit-tests:         Run unit tests"
 	@echo "    push-check:         Replicates the github workflow checks as close as possible"
 	@echo "                        (do this before pushing!)"
+	@echo "    lint:               Runs linters as close as github workflow as possible"
 
 $(BUILDDIR)/:
 	mkdir -p "$@"
@@ -89,6 +95,8 @@ $(BUILDDIR)/:
 $(BUILDDIR)/%/:
 	mkdir -p "$@"
 
+$(GOLANGCI_LINT_CACHE_DIR):
+	mkdir -p "$@"
 #
 # Documentation
 #
@@ -156,9 +164,10 @@ install: build
 clean:
 	rm -rf $(BUILDDIR)/bin/
 	rm -rf $(CURDIR)/rpmbuild
+	rm -rf container_composer_golangci_built.info
 
 .PHONY: push-check
-push-check: build unit-tests srpm man
+push-check: lint build unit-tests srpm man
 	./tools/check-runners
 	./tools/check-snapshots --errors-only .
 	rpmlint --config rpmlint.config $(CURDIR)/rpmbuild/SRPMS/*
@@ -275,3 +284,11 @@ scratch: $(RPM_SPECFILE) $(RPM_TARBALL)
 		--nocheck \
 		$(RPM_SPECFILE)
 
+container_composer_golangci_built.info: Makefile Containerfile_golangci_lint tools/apt-install-deps.sh
+	podman build -f Containerfile_golangci_lint -t $(GOLANGCI_COMPOSER_IMAGE) --build-arg "GOLANGCI_LINT_VERSION=$(GOLANGCI_LINT_VERSION)"
+	echo "Image last built on" > $@
+	date >> $@
+
+.PHONY: lint
+lint: $(GOLANGCI_LINT_CACHE_DIR) container_composer_golangci_built.info
+	podman run -t --rm -v $(SRCDIR):/app:z -v $(GOLANGCI_LINT_CACHE_DIR):/root/.cache:z -w /app $(GOLANGCI_COMPOSER_IMAGE) golangci-lint run -v

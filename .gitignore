@@ -13,3 +13,5 @@ __pycache__
 /tools/appsre-ansible/inventory
 
 /docs/osbuild-composer.7
+.cache
+container_composer_golangci_built.info

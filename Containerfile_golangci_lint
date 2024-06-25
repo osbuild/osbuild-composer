@@ -1,0 +1,5 @@
+ARG GOLANGCI_LINT_VERSION
+FROM docker.io/golangci/golangci-lint:${GOLANGCI_LINT_VERSION}
+
+COPY tools/apt-install-deps.sh /usr/local/bin/.
+RUN /usr/local/bin/apt-install-deps.sh

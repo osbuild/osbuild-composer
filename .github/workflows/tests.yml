@@ -122,28 +122,17 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
-      - name: Apt update
-        run: sudo apt-get update
+      - name: Install dependencies
+        run: sudo tools/apt-install-deps.sh
 
-      # This is needed to lint internal/upload/koji package
-      - name: Install kerberos devel package
-        run: sudo apt-get install -y libkrb5-dev
-
-      # This is needed for the container upload dependencies
-      - name: Install libgpgme devel package
-        run: sudo apt-get install -y libgpgme-dev
-
-      # This is needed for the 'github.com/containers/storage' package
-      - name: Install btrfs-progs devel package
-        run: sudo apt-get install -y libbtrfs-dev
-
-      - name: Install libdevmapper devel package
-        run: sudo apt-get install -y libdevmapper-dev
+      - name: Extract golangci-lint version from Makefile
+        id: golangci_lint_version
+        run: echo "GOLANGCI_LINT_VERSION=$(awk -F '=' '/^GOLANGCI_LINT_VERSION *=/{print $2}' Makefile)" >> "$GITHUB_OUTPUT"
 
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v6
         with:
-          version: v1.54.2
+          version: ${{ steps.golangci_lint_version.outputs.GOLANGCI_LINT_VERSION }}
           args: --verbose --timeout 5m0s
 
   packit-config-lint:
