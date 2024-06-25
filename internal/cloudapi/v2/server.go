@@ -86,7 +86,7 @@ func NewServer(workers *worker.Server, distros *distrofactory.Factory, repos *re
 func (s *Server) Handler(path string) http.Handler {
 	e := echo.New()
 	e.Binder = binder{}
-	e.HTTPErrorHandler = s.HTTPErrorHandler
+	e.HTTPErrorHandler = HTTPErrorHandler
 	e.Logger = common.Logger()
 
 	// OperationIDMiddleware - generates OperationID random string and puts it into the contexts
