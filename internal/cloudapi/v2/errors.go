@@ -308,14 +308,14 @@ func HTTPErrorHandler(echoError error, c echo.Context) {
 	he, ok := echoError.(*echo.HTTPError)
 	if !ok {
 		c.Logger().Errorf("ErrorNotHTTPError %v", echoError)
-		doResponse(nil, ErrorNotHTTPError, c, echoError)
+		doResponse(echoError.Error(), ErrorNotHTTPError, c, echoError)
 		return
 	}
 
 	err, ok := he.Message.(detailsError)
 	if !ok {
 		// No service code was set, so Echo threw this error
-		doResponse(nil, apiErrorFromEchoError(he), c, he.Internal)
+		doResponse(he.Error(), apiErrorFromEchoError(he), c, he.Internal)
 		return
 	}
 	doResponse(err.details, err.errorCode, c, he.Internal)
