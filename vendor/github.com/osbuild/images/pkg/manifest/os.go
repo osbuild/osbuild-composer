@@ -246,6 +246,16 @@ func (p *OS) getPackageSetChain(Distro) []rpmmd.PackageSet {
 		}
 	}
 
+	if len(p.Users) > 0 {
+		// org.osbuild.users runs useradd, usermod, passwd, and
+		// mkhomedir_helper in the os tree using chroot. Most image types
+		// should already have the required packages, but some minimal image
+		// types, like 'tar' don't, so let's add them for the stage to run and
+		// to enable user management in the image.
+		packages = append(packages, "shadow-utils", "pam")
+
+	}
+
 	osRepos := append(p.repos, p.ExtraBaseRepos...)
 
 	chain := []rpmmd.PackageSet{
