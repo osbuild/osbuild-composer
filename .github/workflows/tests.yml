@@ -143,7 +143,7 @@ jobs:
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v6
         with:
-          version: v1.54.2
+          version: v1.59.1
           args: --verbose --timeout 5m0s
 
   packit-config-lint:
