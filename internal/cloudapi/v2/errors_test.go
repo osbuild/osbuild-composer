@@ -25,7 +25,7 @@ func TestAPIError(t *testing.T) {
 	for _, se := range getServiceErrors() {
 		ctx := e.NewContext(nil, nil)
 		ctx.Set("operationID", "test-operation-id")
-		apiError := APIError(se.code, nil, ctx, nil)
+		apiError := APIError(&se, ctx, nil)
 		require.Equal(t, fmt.Sprintf("/api/image-builder-composer/v2/errors/%d", se.code), apiError.Href)
 		require.Equal(t, fmt.Sprintf("%d", se.code), apiError.Id)
 		require.Equal(t, "Error", apiError.Kind)
@@ -38,15 +38,15 @@ func TestAPIError(t *testing.T) {
 func TestAPIErrorOperationID(t *testing.T) {
 	ctx := echo.New().NewContext(nil, nil)
 
-	apiError := APIError(ErrorUnauthenticated, nil, ctx, nil)
+	apiError := APIError(find(ErrorUnauthenticated), ctx, nil)
 	require.Equal(t, "IMAGE-BUILDER-COMPOSER-10003", apiError.Code)
 
 	ctx.Set("operationID", 5)
-	apiError = APIError(ErrorUnauthenticated, nil, ctx, nil)
+	apiError = APIError(find(ErrorUnauthenticated), ctx, nil)
 	require.Equal(t, "IMAGE-BUILDER-COMPOSER-10003", apiError.Code)
 
 	ctx.Set("operationID", "test-operation-id")
-	apiError = APIError(ErrorUnauthenticated, nil, ctx, nil)
+	apiError = APIError(find(ErrorUnauthenticated), ctx, nil)
 	require.Equal(t, "IMAGE-BUILDER-COMPOSER-401", apiError.Code)
 }
 
