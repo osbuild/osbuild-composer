@@ -66,6 +66,10 @@ init:
   rules:
     - if: '$CI_PIPELINE_SOURCE != "schedule" && $RUNNER =~ "/^.*(x86_64).*$/" && $RUNNER !~ /[\S]+rhel-[\S]+-(?:(?:ga)|(?:eus))[\S]+/'
 
+.upstream_rules_ga_all:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE != "schedule" && $RUNNER'
+
 .nightly_rules_all:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9.5-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
@@ -270,6 +274,7 @@ regression-include-excluded-packages:
 
 regression-old-worker-new-composer:
   rules:
+    - !reference [.upstream_rules_ga_all, rules]
     - !reference [.ga_rules_all, rules]
   parallel:
     matrix:
@@ -377,6 +382,7 @@ koji.sh (cloud upload):
   stage: test
   extends: .terraform
   rules:
+    - !reference [.upstream_rules_ga_all, rules]
     - !reference [.ga_rules_all, rules]
   script:
     - schutzbot/deploy.sh
@@ -406,7 +412,7 @@ koji.sh (cloudapi):
   extends: .integration
   # Not supported in nightly pipelines
   rules:
-    - !reference [.upstream_rules_all, rules]
+    - !reference [.upstream_rules_ga_all, rules]
     - !reference [.ga_rules_all, rules]
   variables:
     SCRIPT: koji.sh
@@ -528,7 +534,7 @@ API:
   stage: test
   extends: .terraform
   rules:
-    - !reference [.upstream_rules_all, rules]
+    - !reference [.upstream_rules_ga_all, rules]
     - !reference [.ga_rules_all, rules]
     # note: cloud API is not supported for on-prem installations so
     # don't run this test case for nightly trees
@@ -560,7 +566,7 @@ API-module-hotfixes:
   stage: test
   extends: .terraform
   rules:
-    - !reference [.upstream_rules_all, rules]
+    - !reference [.upstream_rules_ga_all, rules]
     - !reference [.ga_rules_all, rules]
     # note: cloud API is not supported for on-prem installations so
     # don't run this test case for nightly trees
@@ -675,7 +681,7 @@ RHEL 9 on 8:
   stage: test
   extends: .terraform
   rules:
-    - !reference [.upstream_rules_all, rules]
+    - !reference [.upstream_rules_ga_all, rules]
     - !reference [.ga_rules_all, rules]
   script:
     - schutzbot/deploy.sh
