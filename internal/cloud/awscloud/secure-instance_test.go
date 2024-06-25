@@ -33,7 +33,28 @@ write_files:
       OSBUILD_EXECUTOR_HOSTNAME='test-hostname'
 `,
 		},
-	}
+		{
+			Hostname: "test-hostname",
+			ExpectedUserData: `#cloud-config
+write_files:
+  - path: /tmp/worker-run-executor-service
+    content: ''
+  - path: /tmp/cloud_init_vars
+    content: |
+      OSBUILD_EXECUTOR_HOSTNAME='test-hostname'
+`,
+		},
+		{
+			CloudWatchGroup: "test-group",
+			ExpectedUserData: `#cloud-config
+write_files:
+  - path: /tmp/worker-run-executor-service
+    content: ''
+  - path: /tmp/cloud_init_vars
+    content: |
+      OSBUILD_EXECUTOR_CLOUDWATCH_GROUP='test-group'
+`,
+		}}
 
 	for idx, tc := range testCases {
 		t.Run(fmt.Sprintf("Test case %d", idx), func(t *testing.T) {
