@@ -275,7 +275,7 @@ func apiErrorFromEchoError(echoError *echo.HTTPError) ServiceErrorCode {
 }
 
 // Convert an echo error into an AOC compliant one so we send a correct json error response
-func (s *Server) HTTPErrorHandler(echoError error, c echo.Context) {
+func HTTPErrorHandler(echoError error, c echo.Context) {
 	doResponse := func(details interface{}, code ServiceErrorCode, c echo.Context, internal error) {
 		if !c.Response().Committed {
 			var err error
