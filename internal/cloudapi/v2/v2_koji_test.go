@@ -597,6 +597,6 @@ func TestKojiJobTypeValidation(t *testing.T) {
 		}
 
 		badID := uuid.New()
-		test.TestRoute(t, handler, false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%s%s", badID, path), ``, http.StatusNotFound, `{"code":"IMAGE-BUILDER-COMPOSER-15", "details": "", "href":"/api/image-builder-composer/v2/errors/15","id":"15","kind":"Error","reason":"Compose with given id not found"}`, `operation_id`)
+		test.TestRoute(t, handler, false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%s%s", badID, path), ``, http.StatusNotFound, `{"code":"IMAGE-BUILDER-COMPOSER-15", "details": "job does not exist", "href":"/api/image-builder-composer/v2/errors/15","id":"15","kind":"Error","reason":"Compose with given id not found"}`, `operation_id`)
 	}
 }

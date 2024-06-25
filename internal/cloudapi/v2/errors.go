@@ -177,8 +177,12 @@ func HTTPError(code ServiceErrorCode) error {
 
 // echo.HTTPError has a message interface{} field, which can be used to include the ServiceErrorCode
 func HTTPErrorWithInternal(code ServiceErrorCode, internalErr error) error {
-	se := find(code)
-	he := echo.NewHTTPError(se.httpStatus, detailsError{code, ""})
+	de := detailsError{code, ""}
+	if internalErr != nil {
+		de.details = internalErr.Error()
+	}
+
+	he := echo.NewHTTPError(find(code).httpStatus, de)
 	if internalErr != nil {
 		he.Internal = internalErr
 	}
@@ -202,28 +206,26 @@ func HTTPErrorWithDetails(code ServiceErrorCode, internalErr error, details stri
 
 // Convert a ServiceErrorCode into an Error as defined in openapi.v2.yml
 // serviceError is optional, prevents multiple find() calls
-func APIError(code ServiceErrorCode, serviceError *serviceError, c echo.Context, details *interface{}) *Error {
-	se := serviceError
-	if se == nil {
-		se = find(code)
-	}
-
+func APIError(serviceError *serviceError, c echo.Context, details interface{}) *Error {
 	operationID, ok := c.Get("operationID").(string)
 	if !ok || operationID == "" {
-		se = find(ErrorMalformedOperationID)
+		serviceError = find(ErrorMalformedOperationID)
 	}
 
-	return &Error{
+	apiErr := &Error{
 		ObjectReference: ObjectReference{
-			Href: fmt.Sprintf("%s/%d", ErrorHREF, se.code),
-			Id:   fmt.Sprintf("%d", se.code),
+			Href: fmt.Sprintf("%s/%d", ErrorHREF, serviceError.code),
+			Id:   fmt.Sprintf("%d", serviceError.code),
 			Kind: "Error",
 		},
-		Code:        fmt.Sprintf("%s%d", ErrorCodePrefix, se.code),
+		Code:        fmt.Sprintf("%s%d", ErrorCodePrefix, serviceError.code),
 		OperationId: operationID, // set operation id from context
-		Reason:      se.reason,
-		Details:     details,
+		Reason:      serviceError.reason,
 	}
+	if details != nil {
+		apiErr.Details = &details
+	}
+	return apiErr
 }
 
 // Helper to make the ErrorList as defined in openapi.v2.yml
@@ -253,7 +255,7 @@ func APIErrorList(page int, pageSize int, c echo.Context) *ErrorList {
 	for _, e := range errs {
 		// Implicit memory alasing doesn't couse any bug in this case
 		/* #nosec G601 */
-		list.Items = append(list.Items, *APIError(e.code, &e, c, nil))
+		list.Items = append(list.Items, *APIError(&e, c, nil))
 	}
 	list.Size = len(list.Items)
 	return list
@@ -274,14 +276,13 @@ func apiErrorFromEchoError(echoError *echo.HTTPError) ServiceErrorCode {
 
 // Convert an echo error into an AOC compliant one so we send a correct json error response
 func (s *Server) HTTPErrorHandler(echoError error, c echo.Context) {
-	doResponse := func(details *interface{}, code ServiceErrorCode, c echo.Context, internal error) {
-		// don't anticipate serviceerrorcode, instead check what type it is
+	doResponse := func(details interface{}, code ServiceErrorCode, c echo.Context, internal error) {
 		if !c.Response().Committed {
 			var err error
-			sec := find(code)
-			apiErr := APIError(code, sec, c, details)
+			se := find(code)
+			apiErr := APIError(se, c, details)
 
-			if sec.httpStatus == http.StatusInternalServerError {
+			if se.httpStatus == http.StatusInternalServerError {
 				errMsg := fmt.Sprintf("Internal server error. Code: %s, OperationId: %s", apiErr.Code, apiErr.OperationId)
 
 				if internal != nil {
@@ -292,9 +293,9 @@ func (s *Server) HTTPErrorHandler(echoError error, c echo.Context) {
 			}
 
 			if c.Request().Method == http.MethodHead {
-				err = c.NoContent(sec.httpStatus)
+				err = c.NoContent(se.httpStatus)
 			} else {
-				err = c.JSON(sec.httpStatus, apiErr)
+				err = c.JSON(se.httpStatus, apiErr)
 			}
 			if err != nil {
 				c.Logger().Errorf("Failed to return error response: %v", err)
@@ -317,9 +318,5 @@ func (s *Server) HTTPErrorHandler(echoError error, c echo.Context) {
 		doResponse(nil, apiErrorFromEchoError(he), c, he.Internal)
 		return
 	}
-	var det *interface{}
-	if err.details != nil {
-		det = &err.details
-	}
-	doResponse(det, err.errorCode, c, he.Internal)
+	doResponse(err.details, err.errorCode, c, he.Internal)
 }
