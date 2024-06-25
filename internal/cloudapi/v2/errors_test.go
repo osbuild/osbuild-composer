@@ -1,7 +1,10 @@
 package v2
 
 import (
+	"encoding/json"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/labstack/echo/v4"
@@ -22,9 +25,10 @@ func TestHTTPErrorReturnsEchoHTTPError(t *testing.T) {
 
 func TestAPIError(t *testing.T) {
 	e := echo.New()
-	for _, se := range getServiceErrors() {
+	for _, svcErr := range getServiceErrors() {
 		ctx := e.NewContext(nil, nil)
 		ctx.Set("operationID", "test-operation-id")
+		se := svcErr // avoid G601
 		apiError := APIError(&se, ctx, nil)
 		require.Equal(t, fmt.Sprintf("/api/image-builder-composer/v2/errors/%d", se.code), apiError.Href)
 		require.Equal(t, fmt.Sprintf("%d", se.code), apiError.Id)
@@ -92,4 +96,109 @@ func TestAPIErrorList(t *testing.T) {
 	require.Equal(t, 0, errs.Size)
 	require.Equal(t, len(getServiceErrors()), errs.Total)
 	require.Equal(t, 1000, errs.Page)
+}
+
+func TestHTTPErrorHandler(t *testing.T) {
+	e := echo.New()
+
+	// HTTPError
+	{
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+		c.Set("operationID", "opid")
+		HTTPErrorHandler(HTTPError(ErrorEnqueueingJob), c)
+		require.Equal(t, find(ErrorEnqueueingJob).httpStatus, rec.Code)
+		var apiErr Error
+		require.NoError(t, json.NewDecoder(rec.Body).Decode(&apiErr))
+		require.NotNil(t, apiErr)
+		require.Equal(t, "opid", apiErr.OperationId)
+		require.Equal(t, find(ErrorEnqueueingJob).reason, apiErr.Reason)
+		require.Empty(t, *apiErr.Details)
+	}
+
+	// HTTPErrorWithInternal
+	{
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+		c.Set("operationID", "opid")
+		err := fmt.Errorf("some more details")
+		HTTPErrorHandler(HTTPErrorWithInternal(ErrorEnqueueingJob, err), c)
+		require.Equal(t, find(ErrorEnqueueingJob).httpStatus, rec.Code)
+		var apiErr Error
+		require.NoError(t, json.NewDecoder(rec.Body).Decode(&apiErr))
+		require.NotNil(t, apiErr)
+		require.Equal(t, "opid", apiErr.OperationId)
+		require.Equal(t, find(ErrorEnqueueingJob).reason, apiErr.Reason)
+		require.Equal(t, err.Error(), *apiErr.Details)
+	}
+
+	// HTTPErrorWithDetails
+	// internalErr gets ignored for explicit details
+	{
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+		c.Set("operationID", "opid")
+		err := fmt.Errorf("some more details")
+		HTTPErrorHandler(HTTPErrorWithDetails(ErrorEnqueueingJob, err, "even more extra details"), c)
+		require.Equal(t, find(ErrorEnqueueingJob).httpStatus, rec.Code)
+		var apiErr Error
+		require.NoError(t, json.NewDecoder(rec.Body).Decode(&apiErr))
+		require.NotNil(t, apiErr)
+		require.Equal(t, "opid", apiErr.OperationId)
+		require.Equal(t, find(ErrorEnqueueingJob).reason, apiErr.Reason)
+		require.Equal(t, "even more extra details", *apiErr.Details)
+	}
+
+	// echo.HTTPError
+	{
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+		c.Set("operationID", "opid")
+		err := fmt.Errorf("some unexpected internal http error")
+		HTTPErrorHandler(echo.NewHTTPError(http.StatusInternalServerError, err), c)
+		require.Equal(t, find(ErrorUnspecified).httpStatus, rec.Code)
+		var apiErr Error
+		require.NoError(t, json.NewDecoder(rec.Body).Decode(&apiErr))
+		require.NotNil(t, apiErr)
+		require.Equal(t, "opid", apiErr.OperationId)
+		require.Equal(t, find(ErrorUnspecified).reason, apiErr.Reason)
+		require.Equal(t, "code=500, message=some unexpected internal http error", *apiErr.Details)
+	}
+
+	// echo.HTTPError and internalErr is nil
+	{
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+		c.Set("operationID", "opid")
+		HTTPErrorHandler(echo.NewHTTPError(http.StatusInternalServerError, nil), c)
+		require.Equal(t, find(ErrorUnspecified).httpStatus, rec.Code)
+		var apiErr Error
+		require.NoError(t, json.NewDecoder(rec.Body).Decode(&apiErr))
+		require.NotNil(t, apiErr)
+		require.Equal(t, "opid", apiErr.OperationId)
+		require.Equal(t, find(ErrorUnspecified).reason, apiErr.Reason)
+		require.Equal(t, "code=500, message=<nil>", *apiErr.Details)
+	}
+
+	// plain error
+	{
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+		c.Set("operationID", "opid")
+		err := fmt.Errorf("some unexpected internal error")
+		HTTPErrorHandler(err, c)
+		require.Equal(t, find(ErrorNotHTTPError).httpStatus, rec.Code)
+		var apiErr Error
+		require.NoError(t, json.NewDecoder(rec.Body).Decode(&apiErr))
+		require.NotNil(t, apiErr)
+		require.Equal(t, "opid", apiErr.OperationId)
+		require.Equal(t, find(ErrorNotHTTPError).reason, apiErr.Reason)
+		require.Equal(t, "some unexpected internal error", *apiErr.Details)
+	}
 }
