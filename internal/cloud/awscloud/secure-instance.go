@@ -22,12 +22,18 @@ type SecureInstance struct {
 func SecureInstanceUserData(cloudWatchGroup, hostname string) string {
 	additionalFiles := ""
 
-	if cloudWatchGroup != "" {
-		additionalFiles += fmt.Sprintf(`  - path: /tmp/cloud_init_vars
+	if cloudWatchGroup != "" || hostname != "" {
+		additionalFiles += `  - path: /tmp/cloud_init_vars
     content: |
-      OSBUILD_EXECUTOR_CLOUDWATCH_GROUP='%s'
-      OSBUILD_EXECUTOR_HOSTNAME='%s'
-`, cloudWatchGroup, hostname)
+`
+	}
+	if cloudWatchGroup != "" {
+		additionalFiles += fmt.Sprintf(`      OSBUILD_EXECUTOR_CLOUDWATCH_GROUP='%s'
+`, cloudWatchGroup)
+	}
+	if hostname != "" {
+		additionalFiles += fmt.Sprintf(`      OSBUILD_EXECUTOR_HOSTNAME='%s'
+`, hostname)
 	}
 
 	return fmt.Sprintf(`#cloud-config
