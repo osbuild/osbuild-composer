@@ -469,11 +469,12 @@ vmware.sh_ova:
   variables:
     SCRIPT: vmware.sh ova
 
-# TODO add fedora runners here
 filesystem.sh:
   extends: .integration
   parallel:
     matrix:
+    - RUNNER:
+      - aws/fedora-40-x86_64
     - *rhel_runners
 
   variables:
