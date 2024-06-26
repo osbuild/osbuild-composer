@@ -2121,7 +2121,7 @@ def _read_inifile_to_dict(config_path):
             parser = configparser.RawConfigParser()
             # prevent conversion of the opion name to lowercase
             parser.optionxform = lambda option: option
-            parser.readfp(f)
+            parser.read_file(f)
 
             for section in parser.sections():
                 section_config = dict(parser.items(section))
