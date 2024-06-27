@@ -16,7 +16,7 @@
       },
       {
         "name": "google-compute-engine",
-        "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/el8-x86_64-google-compute-engine-20230724",
+        "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/el8-x86_64-google-compute-engine-20240626",
         "image_type_tags": [
           "gce",
           "gce-rhui"
@@ -24,7 +24,7 @@
       },
       {
         "name": "google-cloud-sdk",
-        "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/el8-x86_64-google-cloud-sdk-20230724",
+        "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/el8-x86_64-google-cloud-sdk-20240626",
         "image_type_tags": [
           "gce",
           "gce-rhui"
@@ -1911,19 +1911,19 @@
                     "id": "sha256:340b3c65becfca3d39f2afeed9659505a33ee870270c4d115d9fefe8929ff806"
                   },
                   {
-                    "id": "sha256:0adc432393a61bbe6f2f6b47617749d18eb37b9b0316d2064b30aaec4227fb84"
+                    "id": "sha256:02383becab17e0afc84269c92994f5cd62c52cef334c39458b255c56bb7069b5"
                   },
                   {
-                    "id": "sha256:9ddc152465aaa13b065069db2096ab1f53a60fcbab748a5000396b2ff2201fac"
+                    "id": "sha256:ffc3762c5d8501a239f2fdd7555425481368bf941bba50e98fcb74ce5fda3a66"
                   },
                   {
-                    "id": "sha256:c2e832a849ef03c84ad293e24c45123aef52cf73951eb8e1b0900e36f3097d63"
+                    "id": "sha256:0f2d959185544e92ae5c971307318d61b3d70cd32c598c87c285e3dfc9d7e673"
                   },
                   {
-                    "id": "sha256:91137cae7ed84b885061ab4478773c03ac8ea682a1ab333770c3bd8820b2a080"
+                    "id": "sha256:b327c01f409310d3a31d1f7b475faa4e3b03745d5fd9074bd9a8112875fcba36"
                   },
                   {
-                    "id": "sha256:44820c34c86cf2b28e652628550d5d7cfb765d72a5498f4c6927df0d74247521"
+                    "id": "sha256:f4771d3d7b3a68f71e1116a406f4c8e0318fa0c1856d6d5263af31b6119e7c9f"
                   },
                   {
                     "id": "sha256:c1afb73c8c5443c696cff1711ebc7427cdaa009df58cb87df418cc5bb1f690e5"
@@ -2320,6 +2320,9 @@
           "sha256:018409b1eda8be48a11a5b76b95e82ff1d9002569e0644291532d8424dc31edf": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/libyaml-0.1.7-5.el8.x86_64.rpm"
           },
+          "sha256:02383becab17e0afc84269c92994f5cd62c52cef334c39458b255c56bb7069b5": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/el8-x86_64-google-compute-engine-20240626/Packages/02383becab17e0afc84269c92994f5cd62c52cef334c39458b255c56bb7069b5-gce-disk-expand-20221110.00-g1.el8.noarch.rpm"
+          },
           "sha256:0391105afa53c9503b59591615bd7c98e2f7a4cd94ff4fd1451c4234522f3880": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/libedit-3.1-23.20170329cvs.el8.x86_64.rpm"
           },
@@ -2338,9 +2341,6 @@
           "sha256:0aa18121749a7e7056ebaf2a7f588127e2af309ed127b95be75a66b8f2ecc5c5": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/trousers-lib-0.3.15-1.el8.x86_64.rpm"
           },
-          "sha256:0adc432393a61bbe6f2f6b47617749d18eb37b9b0316d2064b30aaec4227fb84": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/el8-x86_64-google-compute-engine-20230724/Packages/0adc432393a61bbe6f2f6b47617749d18eb37b9b0316d2064b30aaec4227fb84-gce-disk-expand-20221110.00-g1.el8.noarch.rpm"
-          },
           "sha256:0b4118e4f4aec595982dbb9f4b48999284e9e51dfd45d251d930f1541d8a8020": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/expat-2.2.5-4.el8.x86_64.rpm"
           },
@@ -2358,6 +2358,9 @@
           },
           "sha256:0ed0d4acf734b0210a37788f138e7f1fe4eb2f8de1f903e0263f3e513864f097": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/openssl-libs-1.1.1k-4.el8.x86_64.rpm"
+          },
+          "sha256:0f2d959185544e92ae5c971307318d61b3d70cd32c598c87c285e3dfc9d7e673": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/el8-x86_64-google-compute-engine-20240626/Packages/0f2d959185544e92ae5c971307318d61b3d70cd32c598c87c285e3dfc9d7e673-google-compute-engine-oslogin-20240415.00-g1.el8.x86_64.rpm"
           },
           "sha256:0fdeaf3c6214dd2c13aa75ef01198e7d792f9bb2fc447af013fc434cba94701d": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/python3-libxml2-2.9.7-9.el8_4.2.x86_64.rpm"
@@ -2658,9 +2661,6 @@
           },
           "sha256:43a4f1c39b2a8b212d50af73d0d510adfdc4ac61be8ecdc6bd718f6cab0e5afc": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/zlib-1.2.11-17.el8.x86_64.rpm"
-          },
-          "sha256:44820c34c86cf2b28e652628550d5d7cfb765d72a5498f4c6927df0d74247521": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/el8-x86_64-google-compute-engine-20230724/Packages/44820c34c86cf2b28e652628550d5d7cfb765d72a5498f4c6927df0d74247521-google-osconfig-agent-20230504.00-g1.el8.x86_64.rpm"
           },
           "sha256:45740507b141cacf5bf5360a9e5823266f878a3c7ce8e212e3d0e7692d8dfc22": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/python3-libselinux-2.9-5.el8.x86_64.rpm"
@@ -3034,9 +3034,6 @@
           "sha256:90406300b99022d9a28db65bb1dd9c0e14654e8a2dd5c02f35426b3714a1d042": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/fuse-libs-2.9.7-12.el8.x86_64.rpm"
           },
-          "sha256:91137cae7ed84b885061ab4478773c03ac8ea682a1ab333770c3bd8820b2a080": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/el8-x86_64-google-compute-engine-20230724/Packages/91137cae7ed84b885061ab4478773c03ac8ea682a1ab333770c3bd8820b2a080-google-guest-agent-20230601.00-g1.el8.x86_64.rpm"
-          },
           "sha256:9137a707b7793567b38e7d8dba78fcf3f70c39320e68a9ee0b745b3a77f182ee": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/teamd-1.31-2.el8.x86_64.rpm"
           },
@@ -3123,9 +3120,6 @@
           },
           "sha256:9d4cee9c7cdbf21fc4f6983ce07105f585310160e31f9a6bb94d3ce4f4ef3513": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/NetworkManager-1.32.10-4.el8.x86_64.rpm"
-          },
-          "sha256:9ddc152465aaa13b065069db2096ab1f53a60fcbab748a5000396b2ff2201fac": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/el8-x86_64-google-compute-engine-20230724/Packages/9ddc152465aaa13b065069db2096ab1f53a60fcbab748a5000396b2ff2201fac-google-compute-engine-20230724.00-g1.el8.noarch.rpm"
           },
           "sha256:9dfef9a2900c658a3379ad843127609d4cbde7718f4f5b223f207288a978254a": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-r8.5-20220504/Packages/libblockdev-mdraid-2.24-7.el8.x86_64.rpm"
@@ -3217,6 +3211,9 @@
           "sha256:b3056b22b99fdf7a10647ab30a5c2af408216cf33c3be56653f51b85ca90cb86": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-r8.5-20220504/Packages/libfastjson-0.99.9-1.el8.x86_64.rpm"
           },
+          "sha256:b327c01f409310d3a31d1f7b475faa4e3b03745d5fd9074bd9a8112875fcba36": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/el8-x86_64-google-compute-engine-20240626/Packages/b327c01f409310d3a31d1f7b475faa4e3b03745d5fd9074bd9a8112875fcba36-google-guest-agent-20240528.00-g1.el8.x86_64.rpm"
+          },
           "sha256:b41c194ecf358e8e6cec46068c4fb6f34780ee2bd65200c367b94170103a8aa9": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/ima-evm-utils-1.3.2-12.el8.x86_64.rpm"
           },
@@ -3287,16 +3284,13 @@
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/ipset-7.1-1.el8.x86_64.rpm"
           },
           "sha256:c1afb73c8c5443c696cff1711ebc7427cdaa009df58cb87df418cc5bb1f690e5": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/el8-x86_64-google-compute-engine-20230724/Packages/c1afb73c8c5443c696cff1711ebc7427cdaa009df58cb87df418cc5bb1f690e5-google-rhui-client-rhel8-4.0-1.noarch.rpm"
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/el8-x86_64-google-compute-engine-20240626/Packages/c1afb73c8c5443c696cff1711ebc7427cdaa009df58cb87df418cc5bb1f690e5-google-rhui-client-rhel8-4.0-1.noarch.rpm"
           },
           "sha256:c291180acc22cec3903e2d6407ec5320813a2fff7bd75e557499123c71975e33": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/bind-export-libs-9.11.26-6.el8.x86_64.rpm"
           },
           "sha256:c2ca16e84cca561fb94b13e4ef72b0c5ea2c463b8710d40aedce83a833c663e5": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/openssl-pkcs11-0.4.10-2.el8.x86_64.rpm"
-          },
-          "sha256:c2e832a849ef03c84ad293e24c45123aef52cf73951eb8e1b0900e36f3097d63": {
-            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/el8-x86_64-google-compute-engine-20230724/Packages/c2e832a849ef03c84ad293e24c45123aef52cf73951eb8e1b0900e36f3097d63-google-compute-engine-oslogin-20221110.00-g1.el8.x86_64.rpm"
           },
           "sha256:c2f85c9746f79cd848329f46d348deca481b09fb4b4bc71cd7ab42b57e1c2a20": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/python3-idna-2.5-5.el8.noarch.rpm"
@@ -3568,6 +3562,9 @@
           "sha256:f40bccf9a279b3f0912599b8f7a063593111e77c63d37f28b3a42d50478ff6cc": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/libsss_sudo-2.5.2-2.el8.x86_64.rpm"
           },
+          "sha256:f4771d3d7b3a68f71e1116a406f4c8e0318fa0c1856d6d5263af31b6119e7c9f": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/el8-x86_64-google-compute-engine-20240626/Packages/f4771d3d7b3a68f71e1116a406f4c8e0318fa0c1856d6d5263af31b6119e7c9f-google-osconfig-agent-20240524.03-g1.el8.x86_64.rpm"
+          },
           "sha256:f52434c2edd4de318b4dde9eb47941de86f805d096145277eb9a2f31e1ebe315": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/squashfs-tools-4.3-20.el8.x86_64.rpm"
           },
@@ -3639,6 +3636,9 @@
           },
           "sha256:fec32d37b2f34c891a64a8c5e2faf3d08de25d144289b6f2b7f5fafdd5eec4d2": {
             "url": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-r8.5-20220504/Packages/parted-3.2-39.el8.x86_64.rpm"
+          },
+          "sha256:ffc3762c5d8501a239f2fdd7555425481368bf941bba50e98fcb74ce5fda3a66": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/el8-x86_64-google-compute-engine-20240626/Packages/ffc3762c5d8501a239f2fdd7555425481368bf941bba50e98fcb74ce5fda3a66-google-compute-engine-20240607.00-g1.el8.noarch.rpm"
           }
         }
       }
@@ -9144,44 +9144,44 @@
         "version": "20221110.00",
         "release": "g1.el8",
         "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/el8-x86_64-google-compute-engine-20230724/Packages/0adc432393a61bbe6f2f6b47617749d18eb37b9b0316d2064b30aaec4227fb84-gce-disk-expand-20221110.00-g1.el8.noarch.rpm",
-        "checksum": "sha256:0adc432393a61bbe6f2f6b47617749d18eb37b9b0316d2064b30aaec4227fb84"
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/el8-x86_64-google-compute-engine-20240626/Packages/02383becab17e0afc84269c92994f5cd62c52cef334c39458b255c56bb7069b5-gce-disk-expand-20221110.00-g1.el8.noarch.rpm",
+        "checksum": "sha256:02383becab17e0afc84269c92994f5cd62c52cef334c39458b255c56bb7069b5"
       },
       {
         "name": "google-compute-engine",
         "epoch": 1,
-        "version": "20230724.00",
+        "version": "20240607.00",
         "release": "g1.el8",
         "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/el8-x86_64-google-compute-engine-20230724/Packages/9ddc152465aaa13b065069db2096ab1f53a60fcbab748a5000396b2ff2201fac-google-compute-engine-20230724.00-g1.el8.noarch.rpm",
-        "checksum": "sha256:9ddc152465aaa13b065069db2096ab1f53a60fcbab748a5000396b2ff2201fac"
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/el8-x86_64-google-compute-engine-20240626/Packages/ffc3762c5d8501a239f2fdd7555425481368bf941bba50e98fcb74ce5fda3a66-google-compute-engine-20240607.00-g1.el8.noarch.rpm",
+        "checksum": "sha256:ffc3762c5d8501a239f2fdd7555425481368bf941bba50e98fcb74ce5fda3a66"
       },
       {
         "name": "google-compute-engine-oslogin",
         "epoch": 1,
-        "version": "20221110.00",
+        "version": "20240415.00",
         "release": "g1.el8",
         "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/el8-x86_64-google-compute-engine-20230724/Packages/c2e832a849ef03c84ad293e24c45123aef52cf73951eb8e1b0900e36f3097d63-google-compute-engine-oslogin-20221110.00-g1.el8.x86_64.rpm",
-        "checksum": "sha256:c2e832a849ef03c84ad293e24c45123aef52cf73951eb8e1b0900e36f3097d63"
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/el8-x86_64-google-compute-engine-20240626/Packages/0f2d959185544e92ae5c971307318d61b3d70cd32c598c87c285e3dfc9d7e673-google-compute-engine-oslogin-20240415.00-g1.el8.x86_64.rpm",
+        "checksum": "sha256:0f2d959185544e92ae5c971307318d61b3d70cd32c598c87c285e3dfc9d7e673"
       },
       {
         "name": "google-guest-agent",
         "epoch": 1,
-        "version": "20230601.00",
+        "version": "20240528.00",
         "release": "g1.el8",
         "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/el8-x86_64-google-compute-engine-20230724/Packages/91137cae7ed84b885061ab4478773c03ac8ea682a1ab333770c3bd8820b2a080-google-guest-agent-20230601.00-g1.el8.x86_64.rpm",
-        "checksum": "sha256:91137cae7ed84b885061ab4478773c03ac8ea682a1ab333770c3bd8820b2a080"
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/el8-x86_64-google-compute-engine-20240626/Packages/b327c01f409310d3a31d1f7b475faa4e3b03745d5fd9074bd9a8112875fcba36-google-guest-agent-20240528.00-g1.el8.x86_64.rpm",
+        "checksum": "sha256:b327c01f409310d3a31d1f7b475faa4e3b03745d5fd9074bd9a8112875fcba36"
       },
       {
         "name": "google-osconfig-agent",
         "epoch": 1,
-        "version": "20230504.00",
+        "version": "20240524.03",
         "release": "g1.el8",
         "arch": "x86_64",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/el8-x86_64-google-compute-engine-20230724/Packages/44820c34c86cf2b28e652628550d5d7cfb765d72a5498f4c6927df0d74247521-google-osconfig-agent-20230504.00-g1.el8.x86_64.rpm",
-        "checksum": "sha256:44820c34c86cf2b28e652628550d5d7cfb765d72a5498f4c6927df0d74247521"
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/el8-x86_64-google-compute-engine-20240626/Packages/f4771d3d7b3a68f71e1116a406f4c8e0318fa0c1856d6d5263af31b6119e7c9f-google-osconfig-agent-20240524.03-g1.el8.x86_64.rpm",
+        "checksum": "sha256:f4771d3d7b3a68f71e1116a406f4c8e0318fa0c1856d6d5263af31b6119e7c9f"
       },
       {
         "name": "google-rhui-client-rhel8",
@@ -9189,7 +9189,7 @@
         "version": "4.0",
         "release": "1",
         "arch": "noarch",
-        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/el8-x86_64-google-compute-engine-20230724/Packages/c1afb73c8c5443c696cff1711ebc7427cdaa009df58cb87df418cc5bb1f690e5-google-rhui-client-rhel8-4.0-1.noarch.rpm",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el8/el8-x86_64-google-compute-engine-20240626/Packages/c1afb73c8c5443c696cff1711ebc7427cdaa009df58cb87df418cc5bb1f690e5-google-rhui-client-rhel8-4.0-1.noarch.rpm",
         "checksum": "sha256:c1afb73c8c5443c696cff1711ebc7427cdaa009df58cb87df418cc5bb1f690e5"
       }
     ]
