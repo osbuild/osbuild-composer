@@ -66,7 +66,7 @@ init:
   rules:
     - if: '$CI_PIPELINE_SOURCE != "schedule" && $RUNNER =~ "/^.*(x86_64).*$/" && $RUNNER !~ /[\S]+rhel-[\S]+-(?:(?:ga)|(?:eus))[\S]+/'
 
-.upstream_rules_ga_all:
+.upstream_and_ga_rules_all:
   rules:
     - if: '$CI_PIPELINE_SOURCE != "schedule" && $RUNNER'
 
@@ -80,12 +80,10 @@ init:
 
 .ga_rules_all:
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-[\S]+-(?:(?:ga)|(?:eus))[\S]+/ && $NIGHTLY== "false"'
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-[\S]+-(?:(?:ga)|(?:eus))[\S]+/ && $NIGHTLY == "false"'
 
 .ga_rules_x86_64:
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-[\S]+-(?:(?:ga)|(?:eus))[\S]+/ && $RUNNER =~ "/^.*(x86_64).*$/" && $NIGHTLY== "false"'
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-[\S]+-(?:(?:ga)|(?:eus))[\S]+/ && $RUNNER =~ "/^.*(x86_64).*$/" && $NIGHTLY == "false"'
 
 
@@ -142,7 +140,7 @@ Container:
   stage: rpmbuild
   extends: .terraform
   rules:
-    - !reference [.upstream_rules_ga_all, rules]
+    - !reference [.upstream_and_ga_rules_all, rules]
     - !reference [.ga_rules_all, rules]
   script:
     - sh "schutzbot/containerbuild.sh"
@@ -155,7 +153,7 @@ Packer:
   stage: test
   extends: .terraform
   rules:
-    - !reference [.upstream_rules_ga_all, rules]
+    - !reference [.upstream_and_ga_rules_all, rules]
     - !reference [.ga_rules_all, rules]
   script:
     - tools/ci-build-worker-packer.sh
@@ -276,7 +274,7 @@ regression-include-excluded-packages:
 
 regression-old-worker-new-composer:
   rules:
-    - !reference [.upstream_rules_ga_all, rules]
+    - !reference [.upstream_and_ga_rules_all, rules]
     - !reference [.ga_rules_all, rules]
   parallel:
     matrix:
@@ -384,7 +382,7 @@ koji.sh (cloud upload):
   stage: test
   extends: .terraform
   rules:
-    - !reference [.upstream_rules_ga_all, rules]
+    - !reference [.upstream_and_ga_rules_all, rules]
     - !reference [.ga_rules_all, rules]
   script:
     - schutzbot/deploy.sh
@@ -414,7 +412,7 @@ koji.sh (cloudapi):
   extends: .integration
   # Not supported in nightly pipelines
   rules:
-    - !reference [.upstream_rules_ga_all, rules]
+    - !reference [.upstream_and_ga_rules_all, rules]
     - !reference [.ga_rules_all, rules]
   variables:
     SCRIPT: koji.sh
@@ -536,7 +534,7 @@ API:
   stage: test
   extends: .terraform
   rules:
-    - !reference [.upstream_rules_ga_all, rules]
+    - !reference [.upstream_and_ga_rules_all, rules]
     - !reference [.ga_rules_all, rules]
     # note: cloud API is not supported for on-prem installations so
     # don't run this test case for nightly trees
@@ -568,7 +566,7 @@ API-module-hotfixes:
   stage: test
   extends: .terraform
   rules:
-    - !reference [.upstream_rules_ga_all, rules]
+    - !reference [.upstream_and_ga_rules_all, rules]
     - !reference [.ga_rules_all, rules]
     # note: cloud API is not supported for on-prem installations so
     # don't run this test case for nightly trees
@@ -683,7 +681,7 @@ RHEL 9 on 8:
   stage: test
   extends: .terraform
   rules:
-    - !reference [.upstream_rules_ga_all, rules]
+    - !reference [.upstream_and_ga_rules_all, rules]
     - !reference [.ga_rules_all, rules]
   script:
     - schutzbot/deploy.sh
