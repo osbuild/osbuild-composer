@@ -142,6 +142,7 @@ Container:
   stage: rpmbuild
   extends: .terraform
   rules:
+    - !reference [.upstream_rules_ga_all, rules]
     - !reference [.ga_rules_all, rules]
   script:
     - sh "schutzbot/containerbuild.sh"
@@ -154,6 +155,7 @@ Packer:
   stage: test
   extends: .terraform
   rules:
+    - !reference [.upstream_rules_ga_all, rules]
     - !reference [.ga_rules_all, rules]
   script:
     - tools/ci-build-worker-packer.sh
