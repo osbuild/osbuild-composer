@@ -440,9 +440,9 @@ export FIREWALL_CUSTOMIZATION_BLOCK
 
 if [ "$TEST_MODULE_HOTFIXES" = "1" ]; then
   if [ "$ARCH" = "x86_64" ]; then
-    NGINX_REPO_URL="https://rpmrepo.osbuild.org/v2/mirror/public/el8/el8-x86_64-nginx-20231207"
+    NGINX_REPO_URL="https://rpmrepo.osbuild.org/v2/mirror/public/el8/el8-x86_64-nginx-20240626"
   else
-    NGINX_REPO_URL="https://rpmrepo.osbuild.org/v2/mirror/public/el8/el8-aarch64-nginx-20231207"
+    NGINX_REPO_URL="https://rpmrepo.osbuild.org/v2/mirror/public/el8/el8-aarch64-nginx-20240626"
   fi
   EXTRA_PAYLOAD_REPOS_BLOCK=$(cat <<EOF
 ,
