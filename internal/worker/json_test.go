@@ -21,22 +21,22 @@ func TestOSBuildJobResultTargetErrors(t *testing.T) {
 				TargetResults: []*target.TargetResult{
 					{
 						Name:        target.TargetNameAWS,
-						TargetError: clienterrors.WorkerClientError(clienterrors.ErrorInvalidTargetConfig, "can't login to AWS", nil),
+						TargetError: clienterrors.New(clienterrors.ErrorInvalidTargetConfig, "can't login to AWS", nil),
 					},
 					{
 						Name:        target.TargetNameVMWare,
-						TargetError: clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, "can't upload image to VMWare", nil),
+						TargetError: clienterrors.New(clienterrors.ErrorUploadingImage, "can't upload image to VMWare", nil),
 					},
 					{
 						Name:        target.TargetNameAWSS3,
-						TargetError: clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, "failed to upload image to AWS S3", nil),
+						TargetError: clienterrors.New(clienterrors.ErrorUploadingImage, "failed to upload image to AWS S3", nil),
 					},
 				},
 			},
 			targetErrors: []*clienterrors.Error{
-				clienterrors.WorkerClientError(clienterrors.ErrorInvalidTargetConfig, "can't login to AWS", target.TargetNameAWS),
-				clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, "can't upload image to VMWare", target.TargetNameVMWare),
-				clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, "failed to upload image to AWS S3", target.TargetNameAWSS3),
+				clienterrors.New(clienterrors.ErrorInvalidTargetConfig, "can't login to AWS", target.TargetNameAWS),
+				clienterrors.New(clienterrors.ErrorUploadingImage, "can't upload image to VMWare", target.TargetNameVMWare),
+				clienterrors.New(clienterrors.ErrorUploadingImage, "failed to upload image to AWS S3", target.TargetNameAWSS3),
 			},
 		},
 		{
@@ -44,20 +44,20 @@ func TestOSBuildJobResultTargetErrors(t *testing.T) {
 				TargetResults: []*target.TargetResult{
 					{
 						Name:        target.TargetNameAWS,
-						TargetError: clienterrors.WorkerClientError(clienterrors.ErrorInvalidTargetConfig, "can't login to AWS", nil),
+						TargetError: clienterrors.New(clienterrors.ErrorInvalidTargetConfig, "can't login to AWS", nil),
 					},
 					{
 						Name: target.TargetNameVMWare,
 					},
 					{
 						Name:        target.TargetNameAWSS3,
-						TargetError: clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, "failed to upload image to AWS S3", nil),
+						TargetError: clienterrors.New(clienterrors.ErrorUploadingImage, "failed to upload image to AWS S3", nil),
 					},
 				},
 			},
 			targetErrors: []*clienterrors.Error{
-				clienterrors.WorkerClientError(clienterrors.ErrorInvalidTargetConfig, "can't login to AWS", target.TargetNameAWS),
-				clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, "failed to upload image to AWS S3", target.TargetNameAWSS3),
+				clienterrors.New(clienterrors.ErrorInvalidTargetConfig, "can't login to AWS", target.TargetNameAWS),
+				clienterrors.New(clienterrors.ErrorUploadingImage, "failed to upload image to AWS S3", target.TargetNameAWSS3),
 			},
 		},
 		{
@@ -99,19 +99,19 @@ func TestOSBuildJobResultTargetResultsByName(t *testing.T) {
 				TargetResults: []*target.TargetResult{
 					{
 						Name:        target.TargetNameAWS,
-						TargetError: clienterrors.WorkerClientError(clienterrors.ErrorInvalidTargetConfig, "can't login to AWS", nil),
+						TargetError: clienterrors.New(clienterrors.ErrorInvalidTargetConfig, "can't login to AWS", nil),
 					},
 					{
 						Name:        target.TargetNameVMWare,
-						TargetError: clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, "can't upload image to VMWare", nil),
+						TargetError: clienterrors.New(clienterrors.ErrorUploadingImage, "can't upload image to VMWare", nil),
 					},
 					{
 						Name:        target.TargetNameVMWare,
-						TargetError: clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, "can't upload image to VMWare", nil),
+						TargetError: clienterrors.New(clienterrors.ErrorUploadingImage, "can't upload image to VMWare", nil),
 					},
 					{
 						Name:        target.TargetNameAWSS3,
-						TargetError: clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, "failed to upload image to AWS S3", nil),
+						TargetError: clienterrors.New(clienterrors.ErrorUploadingImage, "failed to upload image to AWS S3", nil),
 					},
 				},
 			},
@@ -119,7 +119,7 @@ func TestOSBuildJobResultTargetResultsByName(t *testing.T) {
 			targetResults: []*target.TargetResult{
 				{
 					Name:        target.TargetNameAWS,
-					TargetError: clienterrors.WorkerClientError(clienterrors.ErrorInvalidTargetConfig, "can't login to AWS", nil),
+					TargetError: clienterrors.New(clienterrors.ErrorInvalidTargetConfig, "can't login to AWS", nil),
 				},
 			},
 		},
@@ -129,19 +129,19 @@ func TestOSBuildJobResultTargetResultsByName(t *testing.T) {
 				TargetResults: []*target.TargetResult{
 					{
 						Name:        target.TargetNameAWS,
-						TargetError: clienterrors.WorkerClientError(clienterrors.ErrorInvalidTargetConfig, "can't login to AWS", nil),
+						TargetError: clienterrors.New(clienterrors.ErrorInvalidTargetConfig, "can't login to AWS", nil),
 					},
 					{
 						Name:        target.TargetNameVMWare,
-						TargetError: clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, "can't upload image to VMWare", nil),
+						TargetError: clienterrors.New(clienterrors.ErrorUploadingImage, "can't upload image to VMWare", nil),
 					},
 					{
 						Name:        target.TargetNameVMWare,
-						TargetError: clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, "can't upload image to VMWare", nil),
+						TargetError: clienterrors.New(clienterrors.ErrorUploadingImage, "can't upload image to VMWare", nil),
 					},
 					{
 						Name:        target.TargetNameAWSS3,
-						TargetError: clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, "failed to upload image to AWS S3", nil),
+						TargetError: clienterrors.New(clienterrors.ErrorUploadingImage, "failed to upload image to AWS S3", nil),
 					},
 				},
 			},
@@ -149,11 +149,11 @@ func TestOSBuildJobResultTargetResultsByName(t *testing.T) {
 			targetResults: []*target.TargetResult{
 				{
 					Name:        target.TargetNameVMWare,
-					TargetError: clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, "can't upload image to VMWare", nil),
+					TargetError: clienterrors.New(clienterrors.ErrorUploadingImage, "can't upload image to VMWare", nil),
 				},
 				{
 					Name:        target.TargetNameVMWare,
-					TargetError: clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, "can't upload image to VMWare", nil),
+					TargetError: clienterrors.New(clienterrors.ErrorUploadingImage, "can't upload image to VMWare", nil),
 				},
 			},
 		},
@@ -163,19 +163,19 @@ func TestOSBuildJobResultTargetResultsByName(t *testing.T) {
 				TargetResults: []*target.TargetResult{
 					{
 						Name:        target.TargetNameAWS,
-						TargetError: clienterrors.WorkerClientError(clienterrors.ErrorInvalidTargetConfig, "can't login to AWS", nil),
+						TargetError: clienterrors.New(clienterrors.ErrorInvalidTargetConfig, "can't login to AWS", nil),
 					},
 					{
 						Name:        target.TargetNameVMWare,
-						TargetError: clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, "can't upload image to VMWare", nil),
+						TargetError: clienterrors.New(clienterrors.ErrorUploadingImage, "can't upload image to VMWare", nil),
 					},
 					{
 						Name:        target.TargetNameVMWare,
-						TargetError: clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, "can't upload image to VMWare", nil),
+						TargetError: clienterrors.New(clienterrors.ErrorUploadingImage, "can't upload image to VMWare", nil),
 					},
 					{
 						Name:        target.TargetNameAWSS3,
-						TargetError: clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, "failed to upload image to AWS S3", nil),
+						TargetError: clienterrors.New(clienterrors.ErrorUploadingImage, "failed to upload image to AWS S3", nil),
 					},
 				},
 			},
@@ -200,19 +200,19 @@ func TestOSBuildJobResultTargetResultsFilterByName(t *testing.T) {
 				TargetResults: []*target.TargetResult{
 					{
 						Name:        target.TargetNameAWS,
-						TargetError: clienterrors.WorkerClientError(clienterrors.ErrorInvalidTargetConfig, "can't login to AWS", nil),
+						TargetError: clienterrors.New(clienterrors.ErrorInvalidTargetConfig, "can't login to AWS", nil),
 					},
 					{
 						Name:        target.TargetNameVMWare,
-						TargetError: clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, "can't upload image to VMWare", nil),
+						TargetError: clienterrors.New(clienterrors.ErrorUploadingImage, "can't upload image to VMWare", nil),
 					},
 					{
 						Name:        target.TargetNameVMWare,
-						TargetError: clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, "can't upload image to VMWare", nil),
+						TargetError: clienterrors.New(clienterrors.ErrorUploadingImage, "can't upload image to VMWare", nil),
 					},
 					{
 						Name:        target.TargetNameAWSS3,
-						TargetError: clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, "failed to upload image to AWS S3", nil),
+						TargetError: clienterrors.New(clienterrors.ErrorUploadingImage, "failed to upload image to AWS S3", nil),
 					},
 				},
 			},
@@ -222,11 +222,11 @@ func TestOSBuildJobResultTargetResultsFilterByName(t *testing.T) {
 			targetResults: []*target.TargetResult{
 				{
 					Name:        target.TargetNameAWS,
-					TargetError: clienterrors.WorkerClientError(clienterrors.ErrorInvalidTargetConfig, "can't login to AWS", nil),
+					TargetError: clienterrors.New(clienterrors.ErrorInvalidTargetConfig, "can't login to AWS", nil),
 				},
 				{
 					Name:        target.TargetNameAWSS3,
-					TargetError: clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, "failed to upload image to AWS S3", nil),
+					TargetError: clienterrors.New(clienterrors.ErrorUploadingImage, "failed to upload image to AWS S3", nil),
 				},
 			},
 		},
@@ -235,19 +235,19 @@ func TestOSBuildJobResultTargetResultsFilterByName(t *testing.T) {
 				TargetResults: []*target.TargetResult{
 					{
 						Name:        target.TargetNameAWS,
-						TargetError: clienterrors.WorkerClientError(clienterrors.ErrorInvalidTargetConfig, "can't login to AWS", nil),
+						TargetError: clienterrors.New(clienterrors.ErrorInvalidTargetConfig, "can't login to AWS", nil),
 					},
 					{
 						Name:        target.TargetNameVMWare,
-						TargetError: clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, "can't upload image to VMWare", nil),
+						TargetError: clienterrors.New(clienterrors.ErrorUploadingImage, "can't upload image to VMWare", nil),
 					},
 					{
 						Name:        target.TargetNameVMWare,
-						TargetError: clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, "can't upload image to VMWare", nil),
+						TargetError: clienterrors.New(clienterrors.ErrorUploadingImage, "can't upload image to VMWare", nil),
 					},
 					{
 						Name:        target.TargetNameAWSS3,
-						TargetError: clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, "failed to upload image to AWS S3", nil),
+						TargetError: clienterrors.New(clienterrors.ErrorUploadingImage, "failed to upload image to AWS S3", nil),
 					},
 				},
 			},
@@ -258,7 +258,7 @@ func TestOSBuildJobResultTargetResultsFilterByName(t *testing.T) {
 			targetResults: []*target.TargetResult{
 				{
 					Name:        target.TargetNameAWS,
-					TargetError: clienterrors.WorkerClientError(clienterrors.ErrorInvalidTargetConfig, "can't login to AWS", nil),
+					TargetError: clienterrors.New(clienterrors.ErrorInvalidTargetConfig, "can't login to AWS", nil),
 				},
 			},
 		},
@@ -267,19 +267,19 @@ func TestOSBuildJobResultTargetResultsFilterByName(t *testing.T) {
 				TargetResults: []*target.TargetResult{
 					{
 						Name:        target.TargetNameAWS,
-						TargetError: clienterrors.WorkerClientError(clienterrors.ErrorInvalidTargetConfig, "can't login to AWS", nil),
+						TargetError: clienterrors.New(clienterrors.ErrorInvalidTargetConfig, "can't login to AWS", nil),
 					},
 					{
 						Name:        target.TargetNameVMWare,
-						TargetError: clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, "can't upload image to VMWare", nil),
+						TargetError: clienterrors.New(clienterrors.ErrorUploadingImage, "can't upload image to VMWare", nil),
 					},
 					{
 						Name:        target.TargetNameVMWare,
-						TargetError: clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, "can't upload image to VMWare", nil),
+						TargetError: clienterrors.New(clienterrors.ErrorUploadingImage, "can't upload image to VMWare", nil),
 					},
 					{
 						Name:        target.TargetNameAWSS3,
-						TargetError: clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, "failed to upload image to AWS S3", nil),
+						TargetError: clienterrors.New(clienterrors.ErrorUploadingImage, "failed to upload image to AWS S3", nil),
 					},
 				},
 			},
@@ -290,11 +290,11 @@ func TestOSBuildJobResultTargetResultsFilterByName(t *testing.T) {
 			targetResults: []*target.TargetResult{
 				{
 					Name:        target.TargetNameVMWare,
-					TargetError: clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, "can't upload image to VMWare", nil),
+					TargetError: clienterrors.New(clienterrors.ErrorUploadingImage, "can't upload image to VMWare", nil),
 				},
 				{
 					Name:        target.TargetNameVMWare,
-					TargetError: clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, "can't upload image to VMWare", nil),
+					TargetError: clienterrors.New(clienterrors.ErrorUploadingImage, "can't upload image to VMWare", nil),
 				},
 			},
 		},
@@ -303,19 +303,19 @@ func TestOSBuildJobResultTargetResultsFilterByName(t *testing.T) {
 				TargetResults: []*target.TargetResult{
 					{
 						Name:        target.TargetNameAWS,
-						TargetError: clienterrors.WorkerClientError(clienterrors.ErrorInvalidTargetConfig, "can't login to AWS", nil),
+						TargetError: clienterrors.New(clienterrors.ErrorInvalidTargetConfig, "can't login to AWS", nil),
 					},
 					{
 						Name:        target.TargetNameVMWare,
-						TargetError: clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, "can't upload image to VMWare", nil),
+						TargetError: clienterrors.New(clienterrors.ErrorUploadingImage, "can't upload image to VMWare", nil),
 					},
 					{
 						Name:        target.TargetNameVMWare,
-						TargetError: clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, "can't upload image to VMWare", nil),
+						TargetError: clienterrors.New(clienterrors.ErrorUploadingImage, "can't upload image to VMWare", nil),
 					},
 					{
 						Name:        target.TargetNameAWSS3,
-						TargetError: clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, "failed to upload image to AWS S3", nil),
+						TargetError: clienterrors.New(clienterrors.ErrorUploadingImage, "failed to upload image to AWS S3", nil),
 					},
 				},
 			},

@@ -36,31 +36,31 @@ func (impl *AWSEC2CopyJobImpl) Run(job worker.Job) error {
 	var args worker.AWSEC2CopyJob
 	err := job.Args(&args)
 	if err != nil {
-		result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorParsingJobArgs, fmt.Sprintf("Error parsing arguments: %v", err), nil)
+		result.JobError = clienterrors.New(clienterrors.ErrorParsingJobArgs, fmt.Sprintf("Error parsing arguments: %v", err), nil)
 		return err
 	}
 
 	aws, err := getAWS(impl.AWSCreds, args.TargetRegion)
 	if err != nil {
 		logWithId.Errorf("Error creating aws client: %v", err)
-		result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidConfig, "Invalid worker config", nil)
+		result.JobError = clienterrors.New(clienterrors.ErrorInvalidConfig, "Invalid worker config", nil)
 		return err
 	}
 
 	ami, err := aws.CopyImage(args.TargetName, args.Ami, args.SourceRegion)
 	if err != nil {
 		logWithId.Errorf("Error copying ami: %v", err)
-		result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorSharingTarget, fmt.Sprintf("Error copying ami %s", args.Ami), nil)
+		result.JobError = clienterrors.New(clienterrors.ErrorSharingTarget, fmt.Sprintf("Error copying ami %s", args.Ami), nil)
 		if aerr, ok := err.(awserr.Error); ok {
 			switch aerr.Code() {
 			case "InvalidRegion":
-				result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorSharingTarget, fmt.Sprintf("Invalid source region '%s'", args.SourceRegion), nil)
+				result.JobError = clienterrors.New(clienterrors.ErrorSharingTarget, fmt.Sprintf("Invalid source region '%s'", args.SourceRegion), nil)
 			case "InvalidAMIID.Malformed":
-				result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorSharingTarget, fmt.Sprintf("Malformed source ami id '%s'", args.Ami), nil)
+				result.JobError = clienterrors.New(clienterrors.ErrorSharingTarget, fmt.Sprintf("Malformed source ami id '%s'", args.Ami), nil)
 			case "InvalidAMIID.NotFound":
 				fallthrough // CopyImage returns InvalidRequest instead of InvalidAMIID.NotFound
 			case "InvalidRequest":
-				result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorSharingTarget, fmt.Sprintf("Source ami '%s' not found", args.Ami), nil)
+				result.JobError = clienterrors.New(clienterrors.ErrorSharingTarget, fmt.Sprintf("Source ami '%s' not found", args.Ami), nil)
 			}
 		}
 		return err
@@ -89,24 +89,24 @@ func (impl *AWSEC2ShareJobImpl) Run(job worker.Job) error {
 	var args worker.AWSEC2ShareJob
 	err := job.Args(&args)
 	if err != nil {
-		result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorParsingJobArgs, fmt.Sprintf("Error parsing arguments: %v", err), nil)
+		result.JobError = clienterrors.New(clienterrors.ErrorParsingJobArgs, fmt.Sprintf("Error parsing arguments: %v", err), nil)
 		return err
 	}
 
 	if args.Ami == "" || args.Region == "" {
 		if job.NDynamicArgs() != 1 {
 			logWithId.Error("No arguments given and dynamic args empty")
-			result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorNoDynamicArgs, "An ec2 share job should have args or depend on an ec2 copy job", nil)
+			result.JobError = clienterrors.New(clienterrors.ErrorNoDynamicArgs, "An ec2 share job should have args or depend on an ec2 copy job", nil)
 			return nil
 		}
 		var cjResult worker.AWSEC2CopyJobResult
 		err = job.DynamicArgs(0, &cjResult)
 		if err != nil {
-			result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorParsingDynamicArgs, "Error parsing dynamic args as ec2 copy job", nil)
+			result.JobError = clienterrors.New(clienterrors.ErrorParsingDynamicArgs, "Error parsing dynamic args as ec2 copy job", nil)
 			return err
 		}
 		if cjResult.JobError != nil {
-			result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorJobDependency, "AWSEC2CopyJob dependency failed", nil)
+			result.JobError = clienterrors.New(clienterrors.ErrorJobDependency, "AWSEC2CopyJob dependency failed", nil)
 			return nil
 		}
 
@@ -117,22 +117,22 @@ func (impl *AWSEC2ShareJobImpl) Run(job worker.Job) error {
 	aws, err := getAWS(impl.AWSCreds, args.Region)
 	if err != nil {
 		logWithId.Errorf("Error creating aws client: %v", err)
-		result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorInvalidConfig, "Invalid worker config", nil)
+		result.JobError = clienterrors.New(clienterrors.ErrorInvalidConfig, "Invalid worker config", nil)
 		return err
 	}
 
 	err = aws.ShareImage(args.Ami, args.ShareWithAccounts)
 	if err != nil {
 		logWithId.Errorf("Error sharing image: %v", err)
-		result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorSharingTarget, fmt.Sprintf("Error sharing image with target %v", args.ShareWithAccounts), nil)
+		result.JobError = clienterrors.New(clienterrors.ErrorSharingTarget, fmt.Sprintf("Error sharing image with target %v", args.ShareWithAccounts), nil)
 		if aerr, ok := err.(awserr.Error); ok {
 			switch aerr.Code() {
 			case "InvalidAMIID.Malformed":
-				result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorSharingTarget, fmt.Sprintf("Malformed ami id '%s'", args.Ami), nil)
+				result.JobError = clienterrors.New(clienterrors.ErrorSharingTarget, fmt.Sprintf("Malformed ami id '%s'", args.Ami), nil)
 			case "InvalidAMIID.NotFound":
-				result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorSharingTarget, fmt.Sprintf("Ami '%s' not found in region '%s'", args.Ami, args.Region), nil)
+				result.JobError = clienterrors.New(clienterrors.ErrorSharingTarget, fmt.Sprintf("Ami '%s' not found in region '%s'", args.Ami, args.Region), nil)
 			case "InvalidAMIAttributeItemValue":
-				result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorSharingTarget, fmt.Sprintf("Invalid user id to share ami with: %v", args.ShareWithAccounts), nil)
+				result.JobError = clienterrors.New(clienterrors.ErrorSharingTarget, fmt.Sprintf("Invalid user id to share ami with: %v", args.ShareWithAccounts), nil)
 			}
 		}
 		return err

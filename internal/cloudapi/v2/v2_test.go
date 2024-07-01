@@ -73,7 +73,7 @@ func newV2Server(t *testing.T, dir string, depsolveChannels []string, enableJWT 
 			}
 
 			if failDepsolve {
-				dJR.JobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorDNFOtherError, "DNF Error", nil)
+				dJR.JobResult.JobError = clienterrors.New(clienterrors.ErrorDNFOtherError, "DNF Error", nil)
 			}
 
 			rawMsg, err := json.Marshal(dJR)
@@ -112,7 +112,7 @@ func newV2Server(t *testing.T, dir string, depsolveChannels []string, enableJWT 
 			}
 
 			if failDepsolve {
-				oJR.JobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorOSTreeParamsInvalid, "ostree error", nil)
+				oJR.JobResult.JobError = clienterrors.New(clienterrors.ErrorOSTreeParamsInvalid, "ostree error", nil)
 			}
 
 			rawMsg, err := json.Marshal(oJR)
@@ -800,7 +800,7 @@ func TestComposeJobError(t *testing.T) {
 	}`, jobId, jobId))
 
 	jobErr := worker.JobResult{
-		JobError: clienterrors.WorkerClientError(clienterrors.ErrorBuildJob, "Error building image", nil),
+		JobError: clienterrors.New(clienterrors.ErrorBuildJob, "Error building image", nil),
 	}
 	jobResult, err := json.Marshal(worker.OSBuildJobResult{JobResult: jobErr})
 	require.NoError(t, err)
@@ -865,7 +865,7 @@ func TestComposeDependencyError(t *testing.T) {
 	}`, jobId, jobId))
 
 	jobErr := worker.JobResult{
-		JobError: clienterrors.WorkerClientError(clienterrors.ErrorManifestDependency, "Manifest dependency failed", nil),
+		JobError: clienterrors.New(clienterrors.ErrorManifestDependency, "Manifest dependency failed", nil),
 	}
 	jobResult, err := json.Marshal(worker.OSBuildJobResult{JobResult: jobErr})
 	require.NoError(t, err)
@@ -942,12 +942,12 @@ func TestComposeTargetErrors(t *testing.T) {
 			{
 				Name:        "org.osbuild.aws",
 				Options:     target.AWSTargetResultOptions{Ami: "", Region: ""},
-				TargetError: clienterrors.WorkerClientError(clienterrors.ErrorImportingImage, "error importing image", nil),
+				TargetError: clienterrors.New(clienterrors.ErrorImportingImage, "error importing image", nil),
 			},
 		},
 	}
 	jobErr := worker.JobResult{
-		JobError: clienterrors.WorkerClientError(clienterrors.ErrorTargetError, "at least one target failed", oJR.TargetErrors()),
+		JobError: clienterrors.New(clienterrors.ErrorTargetError, "at least one target failed", oJR.TargetErrors()),
 	}
 	oJR.JobResult = jobErr
 	jobResult, err := json.Marshal(oJR)

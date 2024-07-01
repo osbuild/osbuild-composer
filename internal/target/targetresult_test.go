@@ -92,7 +92,7 @@ func TestTargetResultUnmarshal(t *testing.T) {
 			resultJSON: []byte(`{"name":"org.osbuild.aws","target_error":{"id":11,"reason":"failed to uplad image","details":"detail"}}`),
 			expectedResult: &TargetResult{
 				Name:        TargetNameAWS,
-				TargetError: clienterrors.WorkerClientError(clienterrors.ErrorUploadingImage, "failed to uplad image", "detail"),
+				TargetError: clienterrors.New(clienterrors.ErrorUploadingImage, "failed to uplad image", "detail"),
 			},
 		},
 		// unknown target name

@@ -496,7 +496,7 @@ func serializeManifest(ctx context.Context, manifestSource *manifest.Manifest, w
 
 	if len(dynArgs) == 0 {
 		reason := "No dynamic arguments"
-		jobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorNoDynamicArgs, reason, nil)
+		jobResult.JobError = clienterrors.New(clienterrors.ErrorNoDynamicArgs, reason, nil)
 		return
 	}
 
@@ -504,28 +504,28 @@ func serializeManifest(ctx context.Context, manifestSource *manifest.Manifest, w
 	err = json.Unmarshal(dynArgs[0], &depsolveResults)
 	if err != nil {
 		reason := "Error parsing dynamic arguments"
-		jobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorParsingDynamicArgs, reason, nil)
+		jobResult.JobError = clienterrors.New(clienterrors.ErrorParsingDynamicArgs, reason, nil)
 		return
 	}
 
 	_, err = workers.DepsolveJobInfo(depsolveJobID, &depsolveResults)
 	if err != nil {
 		reason := "Error reading depsolve status"
-		jobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorReadingJobStatus, reason, nil)
+		jobResult.JobError = clienterrors.New(clienterrors.ErrorReadingJobStatus, reason, nil)
 		return
 	}
 
 	if jobErr := depsolveResults.JobError; jobErr != nil {
 		if jobErr.ID == clienterrors.ErrorDNFDepsolveError || jobErr.ID == clienterrors.ErrorDNFMarkingErrors {
-			jobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorDepsolveDependency, "Error in depsolve job dependency input, bad package set requested", jobErr.Details)
+			jobResult.JobError = clienterrors.New(clienterrors.ErrorDepsolveDependency, "Error in depsolve job dependency input, bad package set requested", jobErr.Details)
 			return
 		}
-		jobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorDepsolveDependency, "Error in depsolve job dependency", jobErr.Details)
+		jobResult.JobError = clienterrors.New(clienterrors.ErrorDepsolveDependency, "Error in depsolve job dependency", jobErr.Details)
 		return
 	}
 
 	if len(depsolveResults.PackageSpecs) == 0 {
-		jobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorEmptyPackageSpecs, "Received empty package specs", nil)
+		jobResult.JobError = clienterrors.New(clienterrors.ErrorEmptyPackageSpecs, "Received empty package specs", nil)
 		return
 	}
 
@@ -537,12 +537,12 @@ func serializeManifest(ctx context.Context, manifestSource *manifest.Manifest, w
 
 		if err != nil {
 			reason := "Error reading container resolve job status"
-			jobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorReadingJobStatus, reason, nil)
+			jobResult.JobError = clienterrors.New(clienterrors.ErrorReadingJobStatus, reason, nil)
 			return
 		}
 
 		if jobErr := result.JobError; jobErr != nil {
-			jobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorContainerDependency, "Error in container resolve job dependency", nil)
+			jobResult.JobError = clienterrors.New(clienterrors.ErrorContainerDependency, "Error in container resolve job dependency", nil)
 			return
 		}
 
@@ -580,12 +580,12 @@ func serializeManifest(ctx context.Context, manifestSource *manifest.Manifest, w
 		if err != nil {
 			reason := "Error reading ostree resolve job status"
 			logrus.Errorf("%s: %v", reason, err)
-			jobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorReadingJobStatus, reason, nil)
+			jobResult.JobError = clienterrors.New(clienterrors.ErrorReadingJobStatus, reason, nil)
 			return
 		}
 
 		if jobErr := result.JobError; jobErr != nil {
-			jobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorOSTreeDependency, "Error in ostree resolve job dependency", nil)
+			jobResult.JobError = clienterrors.New(clienterrors.ErrorOSTreeDependency, "Error in ostree resolve job dependency", nil)
 			return
 		}
 
@@ -621,7 +621,7 @@ func serializeManifest(ctx context.Context, manifestSource *manifest.Manifest, w
 	ms, err := manifestSource.Serialize(depsolveResults.PackageSpecs, containerSpecs, ostreeCommitSpecs, depsolveResults.RepoConfigs)
 	if err != nil {
 		reason := "Error serializing manifest"
-		jobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorManifestGeneration, reason, nil)
+		jobResult.JobError = clienterrors.New(clienterrors.ErrorManifestGeneration, reason, nil)
 		return
 	}
 

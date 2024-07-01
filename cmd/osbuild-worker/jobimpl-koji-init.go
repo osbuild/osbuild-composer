@@ -57,7 +57,7 @@ func (impl *KojiInitJobImpl) Run(job worker.Job) error {
 	var result worker.KojiInitJobResult
 	result.Token, result.BuildID, err = impl.kojiInit(args.Server, args.Name, args.Version, args.Release)
 	if err != nil {
-		result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorKojiInit, err.Error(), nil)
+		result.JobError = clienterrors.New(clienterrors.ErrorKojiInit, err.Error(), nil)
 	}
 
 	err = job.Update(&result)

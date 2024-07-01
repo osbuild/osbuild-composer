@@ -38,7 +38,7 @@ func (impl *ContainerResolveJobImpl) Run(job worker.Job) error {
 	specs, err := resolver.Finish()
 
 	if err != nil {
-		result.JobError = clienterrors.WorkerClientError(clienterrors.ErrorContainerResolution, err.Error(), nil)
+		result.JobError = clienterrors.New(clienterrors.ErrorContainerResolution, err.Error(), nil)
 	} else {
 		for i, spec := range specs {
 			result.Specs[i] = worker.ContainerSpec{

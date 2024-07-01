@@ -111,7 +111,7 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 
 	err := job.Args(args)
 	if err != nil {
-		kojiFinalizeJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorParsingJobArgs, "Error parsing job args", err.Error())
+		kojiFinalizeJobResult.JobError = clienterrors.New(clienterrors.ErrorParsingJobArgs, "Error parsing job args", err.Error())
 		return err
 	}
 
@@ -124,13 +124,13 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 	var osbuildResults []worker.OSBuildJobResult
 	initArgs, osbuildResults, err = extractDynamicArgs(job)
 	if err != nil {
-		kojiFinalizeJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorParsingDynamicArgs, "Error parsing dynamic args", err.Error())
+		kojiFinalizeJobResult.JobError = clienterrors.New(clienterrors.ErrorParsingDynamicArgs, "Error parsing dynamic args", err.Error())
 		return err
 	}
 
 	// Check the dependencies early.
 	if hasFailedDependency(*initArgs, osbuildResults) {
-		kojiFinalizeJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorKojiFailedDependency, "At least one job dependency failed", nil)
+		kojiFinalizeJobResult.JobError = clienterrors.New(clienterrors.ErrorKojiFailedDependency, "At least one job dependency failed", nil)
 		return nil
 	}
 
@@ -149,7 +149,7 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 		kojiTargetResults := buildResult.TargetResultsByName(target.TargetNameKoji)
 		// Only a single Koji target is allowed per osbuild job
 		if len(kojiTargetResults) != 1 {
-			kojiFinalizeJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorKojiFinalize, "Exactly one Koji target result is expected per osbuild job", nil)
+			kojiFinalizeJobResult.JobError = clienterrors.New(clienterrors.ErrorKojiFinalize, "Exactly one Koji target result is expected per osbuild job", nil)
 			return nil
 		}
 
@@ -301,7 +301,7 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 
 	err = impl.kojiImport(args.Server, build, buildRoots, outputs, args.KojiDirectory, initArgs.Token)
 	if err != nil {
-		kojiFinalizeJobResult.JobError = clienterrors.WorkerClientError(clienterrors.ErrorKojiFinalize, err.Error(), nil)
+		kojiFinalizeJobResult.JobError = clienterrors.New(clienterrors.ErrorKojiFinalize, err.Error(), nil)
 		return err
 	}
 

@@ -48,7 +48,7 @@ func (r *Resolver) Finish() []Spec {
 
 		var resultError *clienterrors.Error
 		if result.err != nil {
-			resultError = clienterrors.WorkerClientError(
+			resultError = clienterrors.New(
 				clienterrors.ErrorRemoteFileResolution,
 				result.err.Error(),
 				result.url,
