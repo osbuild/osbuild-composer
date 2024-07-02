@@ -219,9 +219,11 @@ tee "${TEMPDIR}/resource-file.json" <<EOF
   "instances": [
     {
       "vhd_uri": "${BLOB_URL}",
+      "arch": "${ARCH}",
       "location": "${AZURE_LOCATION}",
       "name": "${IMAGE_KEY}",
-      "hyper_v_generation": "${HYPER_V_GEN}"
+      "hyper_v_generation": "${HYPER_V_GEN}",
+      "storage_account": "${AZURE_STORAGE_ACCOUNT}"
     }
   ]
 }
