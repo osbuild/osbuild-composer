@@ -3,6 +3,7 @@ package rhel
 import (
 	"fmt"
 	"math/rand"
+	"path/filepath"
 
 	"github.com/osbuild/images/internal/workload"
 	"github.com/osbuild/images/pkg/blueprint"
@@ -204,14 +205,11 @@ func osCustomizations(
 			panic("unexpected oscap options for ostree image type")
 		}
 
-		// although the osbuild stage will create this directory,
-		// it's probably better to ensure that it is created here
-		dataDirNode, err := fsnode.NewDirectory(oscapDataDir, nil, nil, nil, true)
+		oscapDataNode, err := fsnode.NewDirectory(oscap.DataDir, nil, nil, nil, true)
 		if err != nil {
-			panic("unexpected error creating OpenSCAP data directory")
+			panic(fmt.Sprintf("unexpected error creating required OpenSCAP directory: %s", oscap.DataDir))
 		}
-
-		osc.Directories = append(osc.Directories, dataDirNode)
+		osc.Directories = append(osc.Directories, oscapDataNode)
 
 		var datastream = oscapConfig.DataStream
 		if datastream == "" {
@@ -221,40 +219,29 @@ func osCustomizations(
 			datastream = *imageConfig.DefaultOSCAPDatastream
 		}
 
-		oscapStageOptions := osbuild.OscapConfig{
-			Datastream:  datastream,
-			ProfileID:   oscapConfig.ProfileID,
-			Compression: true,
+		remediationConfig := oscap.RemediationConfig{
+			Datastream:         datastream,
+			ProfileID:          oscapConfig.ProfileID,
+			CompressionEnabled: true,
 		}
 
+		var tailoringConfig *oscap.TailoringConfig
 		if oscapConfig.Tailoring != nil {
-			newProfile, tailoringFilepath, tailoringDir, err := oscap.GetTailoringFile(oscapConfig.ProfileID)
-			if err != nil {
-				panic(fmt.Sprintf("unexpected error creating tailoring file options: %v", err))
+			remediationConfig.TailoringPath = filepath.Join(oscap.DataDir, "tailoring.xml")
+			tailoringConfig = &oscap.TailoringConfig{
+				RemediationConfig: remediationConfig,
+				TailoredProfileID: fmt.Sprintf("%s_osbuild_tailoring", oscapConfig.ProfileID),
+				Selected:          oscapConfig.Tailoring.Selected,
+				Unselected:        oscapConfig.Tailoring.Unselected,
 			}
-
-			tailoringOptions := osbuild.OscapAutotailorConfig{
-				NewProfile: newProfile,
-				Datastream: datastream,
-				ProfileID:  oscapConfig.ProfileID,
-				Selected:   oscapConfig.Tailoring.Selected,
-				Unselected: oscapConfig.Tailoring.Unselected,
-			}
-
-			osc.OpenSCAPTailorConfig = osbuild.NewOscapAutotailorStageOptions(
-				tailoringFilepath,
-				tailoringOptions,
-			)
-
-			// overwrite the profile id with the new tailoring id
-			oscapStageOptions.ProfileID = newProfile
-			oscapStageOptions.Tailoring = tailoringFilepath
-
-			// add the parent directory for the tailoring file
-			osc.Directories = append(osc.Directories, tailoringDir)
+			// we need to set this after the tailoring config
+			// since the tailoring config needs to know about both
+			// the base profile id and the tailored profile id
+			remediationConfig.ProfileID = tailoringConfig.TailoredProfileID
 		}
 
-		osc.OpenSCAPConfig = osbuild.NewOscapRemediationStageOptions(oscapDataDir, oscapStageOptions)
+		osc.OpenSCAPTailorConfig = tailoringConfig
+		osc.OpenSCAPRemediationConfig = &remediationConfig
 	}
 
 	osc.ShellInit = imageConfig.ShellInit
