@@ -1,0 +1,2 @@
+test: ./test.sh
+duration: 180m
