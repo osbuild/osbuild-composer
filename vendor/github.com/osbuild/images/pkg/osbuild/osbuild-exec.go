@@ -70,6 +70,9 @@ func RunOSBuild(manifest []byte, store, outputDirectory string, exports, checkpo
 
 	if result {
 		// try to decode the output even though the job could have failed
+		if stdoutBuffer.Len() == 0 {
+			return nil, fmt.Errorf("osbuild did not return any output")
+		}
 		decodeErr := json.Unmarshal(stdoutBuffer.Bytes(), &res)
 		if decodeErr != nil {
 			return nil, fmt.Errorf("error decoding osbuild output: %v\nthe raw output:\n%s", decodeErr, stdoutBuffer.String())

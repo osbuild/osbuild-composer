@@ -1,6 +1,10 @@
 package osbuild
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/osbuild/images/pkg/customizations/oscap"
+)
 
 type OscapVerbosityLevel string
 
@@ -72,21 +76,18 @@ func NewOscapRemediationStage(options *OscapRemediationStageOptions) *Stage {
 	}
 }
 
-func NewOscapRemediationStageOptions(dataDir string, options OscapConfig) *OscapRemediationStageOptions {
+func NewOscapRemediationStageOptions(dataDir string, options *oscap.RemediationConfig) *OscapRemediationStageOptions {
+	if options == nil {
+		return nil
+	}
+
 	return &OscapRemediationStageOptions{
 		DataDir: dataDir,
 		Config: OscapConfig{
-			ProfileID:    options.ProfileID,
-			Datastream:   options.Datastream,
-			DatastreamID: options.DatastreamID,
-			Tailoring:    options.Tailoring,
-			XCCDFID:      options.XCCDFID,
-			BenchmarkID:  options.BenchmarkID,
-			ArfResult:    options.ArfResult,
-			HtmlReport:   options.HtmlReport,
-			VerboseLog:   options.VerboseLog,
-			VerboseLevel: options.VerboseLevel,
-			Compression:  options.Compression,
+			ProfileID:   options.ProfileID,
+			Datastream:  options.Datastream,
+			Tailoring:   options.TailoringPath,
+			Compression: options.CompressionEnabled,
 		},
 	}
 }

@@ -6,6 +6,7 @@ import (
 
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/disk"
+	"github.com/osbuild/images/pkg/platform"
 )
 
 type BootupdStageOptionsBios struct {
@@ -38,11 +39,13 @@ func (opts *BootupdStageOptions) validate(devices map[string]Device) error {
 // validateBootupdMounts ensures that all required mounts for the bootup
 // stage are generated. Right now the stage requires root, boot and boot/efi
 // to find all the bootloader configs
-func validateBootupdMounts(mounts []Mount) error {
+func validateBootupdMounts(mounts []Mount, pf platform.Platform) error {
 	requiredMounts := map[string]bool{
-		"/":         true,
-		"/boot":     true,
-		"/boot/efi": true,
+		"/":     true,
+		"/boot": true,
+	}
+	if pf.GetUEFIVendor() != "" {
+		requiredMounts["/boot/efi"] = true
 	}
 	for _, mnt := range mounts {
 		delete(requiredMounts, mnt.Target)
@@ -61,8 +64,8 @@ func validateBootupdMounts(mounts []Mount) error {
 // NewBootupdStage creates a new stage for the org.osbuild.bootupd stage. It
 // requires a mount setup of "/", "/boot" and "/boot/efi" right now so that
 // bootupd can find and install all required bootloader bits.
-func NewBootupdStage(opts *BootupdStageOptions, devices map[string]Device, mounts []Mount) (*Stage, error) {
-	if err := validateBootupdMounts(mounts); err != nil {
+func NewBootupdStage(opts *BootupdStageOptions, devices map[string]Device, mounts []Mount, pltf platform.Platform) (*Stage, error) {
+	if err := validateBootupdMounts(mounts, pltf); err != nil {
 		return nil, err
 	}
 	if err := opts.validate(devices); err != nil {
@@ -108,7 +111,7 @@ func genMountsForBootupd(source string, pt *disk.PartitionTable) ([]Mount, error
 	return mounts, nil
 }
 
-func GenBootupdDevicesMounts(filename string, pt *disk.PartitionTable) (map[string]Device, []Mount, error) {
+func GenBootupdDevicesMounts(filename string, pt *disk.PartitionTable, pltf platform.Platform) (map[string]Device, []Mount, error) {
 	devName := "disk"
 	devices := map[string]Device{
 		devName: Device{
@@ -123,7 +126,7 @@ func GenBootupdDevicesMounts(filename string, pt *disk.PartitionTable) (map[stri
 	if err != nil {
 		return nil, nil, err
 	}
-	if err := validateBootupdMounts(mounts); err != nil {
+	if err := validateBootupdMounts(mounts, pltf); err != nil {
 		return nil, nil, err
 	}
 
