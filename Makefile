@@ -82,6 +82,7 @@ help:
 	@echo "    unit-tests:         Run unit tests"
 	@echo "    push-check:         Replicates the github workflow checks as close as possible"
 	@echo "                        (do this before pushing!)"
+	@echo "    process-templates:  Execute the OpenShift CLI to check the templates"
 
 $(BUILDDIR)/:
 	mkdir -p "$@"
@@ -156,6 +157,7 @@ install: build
 clean:
 	rm -rf $(BUILDDIR)/bin/
 	rm -rf $(CURDIR)/rpmbuild
+	rm -rf $(BUILDDIR)/$(PROCESSED_TEMPLATE_DIR)
 
 .PHONY: push-check
 push-check: build unit-tests srpm man
@@ -275,3 +277,22 @@ scratch: $(RPM_SPECFILE) $(RPM_TARBALL)
 		--nocheck \
 		$(RPM_SPECFILE)
 
+# The OpenShift CLI - maybe get it from https://access.redhat.com/downloads/content/290
+OC_EXECUTABLE ?= oc
+
+OPENSHIFT_TEMPLATES_DIR := templates/openshift
+OPENSHIFT_TEMPLATES := $(notdir $(wildcard $(OPENSHIFT_TEMPLATES_DIR)/*.yml))
+
+PROCESSED_TEMPLATE_DIR := $(BUILDDIR)/processed-templates
+
+$(PROCESSED_TEMPLATE_DIR): $(BUILDDIR)
+	mkdir -p $@
+
+$(PROCESSED_TEMPLATE_DIR)/%.yml: $(PROCESSED_TEMPLATE_DIR) $(OPENSHIFT_TEMPLATES_DIR)/%.yml
+	$(OC_EXECUTABLE) process -f $(OPENSHIFT_TEMPLATES_DIR)/$*.yml \
+          -p IMAGE_TAG=image_tag \
+          --local \
+          -o yaml > $@
+
+.PHONY: process-templates
+process-templates: $(addprefix $(PROCESSED_TEMPLATE_DIR)/, $(OPENSHIFT_TEMPLATES))
