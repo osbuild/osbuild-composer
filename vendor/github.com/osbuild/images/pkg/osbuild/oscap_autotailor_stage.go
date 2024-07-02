@@ -1,6 +1,10 @@
 package osbuild
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/osbuild/images/pkg/customizations/oscap"
+)
 
 type OscapAutotailorStageOptions struct {
 	Filepath string                `json:"filepath"`
@@ -8,11 +12,11 @@ type OscapAutotailorStageOptions struct {
 }
 
 type OscapAutotailorConfig struct {
-	NewProfile string   `json:"new_profile"`
-	Datastream string   `json:"datastream" toml:"datastream"`
-	ProfileID  string   `json:"profile_id" toml:"profile_id"`
-	Selected   []string `json:"selected,omitempty"`
-	Unselected []string `json:"unselected,omitempty"`
+	TailoredProfileID string   `json:"new_profile"`
+	Datastream        string   `json:"datastream"`
+	ProfileID         string   `json:"profile_id"`
+	Selected          []string `json:"selected,omitempty"`
+	Unselected        []string `json:"unselected,omitempty"`
 }
 
 func (OscapAutotailorStageOptions) isStageOptions() {}
@@ -24,7 +28,7 @@ func (c OscapAutotailorConfig) validate() error {
 	if c.ProfileID == "" {
 		return fmt.Errorf("'profile_id' must be specified")
 	}
-	if c.NewProfile == "" {
+	if c.TailoredProfileID == "" {
 		return fmt.Errorf("'new_profile' must be specified")
 	}
 	return nil
@@ -41,15 +45,25 @@ func NewOscapAutotailorStage(options *OscapAutotailorStageOptions) *Stage {
 	}
 }
 
-func NewOscapAutotailorStageOptions(filepath string, autotailorOptions OscapAutotailorConfig) *OscapAutotailorStageOptions {
+func NewOscapAutotailorStageOptions(options *oscap.TailoringConfig) *OscapAutotailorStageOptions {
+	if options == nil {
+		return nil
+	}
+
+	// TODO: don't panic! unfortunately this would involve quite
+	// a big refactor and we still need to be a bit defensive here
+	if options.RemediationConfig.TailoringPath == "" {
+		panic(fmt.Errorf("The tailoring path for the OpenSCAP remediation config cannot be empty, this is a programming error"))
+	}
+
 	return &OscapAutotailorStageOptions{
-		Filepath: filepath,
+		Filepath: options.RemediationConfig.TailoringPath,
 		Config: OscapAutotailorConfig{
-			NewProfile: autotailorOptions.NewProfile,
-			Datastream: autotailorOptions.Datastream,
-			ProfileID:  autotailorOptions.ProfileID,
-			Selected:   autotailorOptions.Selected,
-			Unselected: autotailorOptions.Unselected,
+			TailoredProfileID: options.TailoredProfileID,
+			Datastream:        options.RemediationConfig.Datastream,
+			ProfileID:         options.RemediationConfig.ProfileID,
+			Selected:          options.Selected,
+			Unselected:        options.Unselected,
 		},
 	}
 }

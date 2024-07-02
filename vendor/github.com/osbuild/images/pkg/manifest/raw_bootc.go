@@ -142,11 +142,11 @@ func (p *RawBootcImage) serialize() osbuild.Pipeline {
 	inputs := osbuild.ContainerDeployInputs{
 		Images: osbuild.NewContainersInputForSingleSource(p.containerSpecs[0]),
 	}
-	devices, mounts, err := osbuild.GenBootupdDevicesMounts(p.filename, p.PartitionTable)
+	devices, mounts, err := osbuild.GenBootupdDevicesMounts(p.filename, p.PartitionTable, p.platform)
 	if err != nil {
 		panic(err)
 	}
-	st, err := osbuild.NewBootcInstallToFilesystemStage(opts, inputs, devices, mounts)
+	st, err := osbuild.NewBootcInstallToFilesystemStage(opts, inputs, devices, mounts, p.platform)
 	if err != nil {
 		panic(err)
 	}
@@ -158,7 +158,7 @@ func (p *RawBootcImage) serialize() osbuild.Pipeline {
 
 	// all our customizations work directly on the mounted deployment
 	// root from the image so generate the devices/mounts for all
-	devices, mounts, err = osbuild.GenBootupdDevicesMounts(p.filename, p.PartitionTable)
+	devices, mounts, err = osbuild.GenBootupdDevicesMounts(p.filename, p.PartitionTable, p.platform)
 	if err != nil {
 		panic(fmt.Sprintf("gen devices stage failed %v", err))
 	}
