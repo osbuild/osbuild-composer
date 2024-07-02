@@ -151,7 +151,7 @@ const depsolvePackageNotExistError = `
   "errors": [
     {
       "id": "BlueprintsError",
-      "msg": "test: DNF error occurred: MarkingErrors: Error occurred when marking packages for installation: Problems in request:\nmissing packages: fash"
+      "msg": "test: running osbuild-depsolve-dnf failed:\nDNF error occurred: MarkingErrors: Error occurred when marking packages for installation: Problems in request:\nmissing packages: fash"
     }
   ]
 }
@@ -186,7 +186,7 @@ const depsolveBadError = `
   "errors": [
     {
       "id": "BlueprintsError",
-      "msg": "test: DNF error occurred: DepsolveError: There was a problem depsolving ['go2rpm']: \n Problem: conflicting requests\n  - nothing provides askalono-cli needed by go2rpm-1-4.fc31.noarch"
+      "msg": "test: running osbuild-depsolve-dnf failed:\nDNF error occurred: DepsolveError: There was a problem depsolving ['go2rpm']: \n Problem: conflicting requests\n  - nothing provides askalono-cli needed by go2rpm-1-4.fc31.noarch"
     }
   ]
 }
