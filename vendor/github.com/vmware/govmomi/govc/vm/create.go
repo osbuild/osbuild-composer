@@ -1,11 +1,11 @@
 /*
-Copyright (c) 2014-2016 VMware, Inc. All Rights Reserved.
+Copyright (c) 2014-2024 VMware, Inc. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,8 +20,11 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"io"
 	"strings"
+	"text/tabwriter"
 
+	"github.com/vmware/govmomi/find"
 	"github.com/vmware/govmomi/govc/cli"
 	"github.com/vmware/govmomi/govc/flags"
 	"github.com/vmware/govmomi/object"
@@ -33,10 +36,8 @@ import (
 )
 
 var (
-	FirmwareTypes = []string{
-		string(types.GuestOsDescriptorFirmwareTypeBios),
-		string(types.GuestOsDescriptorFirmwareTypeEfi),
-	}
+	FirmwareTypes = types.GuestOsDescriptorFirmwareType("").Strings()
+
 	FirmwareUsage = fmt.Sprintf("Firmware type [%s]", strings.Join(FirmwareTypes, "|"))
 )
 
@@ -62,10 +63,11 @@ type create struct {
 	annotation string
 	firmware   string
 	version    string
+	place      bool
+	profile    string
 
 	iso              string
 	isoDatastoreFlag *flags.DatastoreFlag
-	isoDatastore     *object.Datastore
 
 	disk              string
 	diskDatastoreFlag *flags.DatastoreFlag
@@ -125,8 +127,11 @@ func (cmd *create) Register(ctx context.Context, f *flag.FlagSet) {
 	f.BoolVar(&cmd.force, "force", false, "Create VM if vmx already exists")
 	f.StringVar(&cmd.controller, "disk.controller", "scsi", "Disk controller type")
 	f.StringVar(&cmd.annotation, "annotation", "", "VM description")
-
 	f.StringVar(&cmd.firmware, "firmware", FirmwareTypes[0], FirmwareUsage)
+	f.StringVar(&cmd.profile, "profile", "", "Storage profile name or ID")
+	if cli.ShowUnreleased() {
+		f.BoolVar(&cmd.place, "place", false, "Place VM without creating")
+	}
 
 	esxiVersions := types.GetESXiVersions()
 	esxiVersionStrings := make([]string, len(esxiVersions))
@@ -197,6 +202,7 @@ https://code.vmware.com/apis/358/vsphere/doc/vim.vm.GuestOsDescriptor.GuestOsIde
 
 Examples:
   govc vm.create -on=false vm-name
+  govc vm.create -iso library:/boot/linux/ubuntu.iso vm-name # Content Library ISO
   govc vm.create -cluster cluster1 vm-name # use compute cluster placement
   govc vm.create -datastore-cluster dscluster vm-name # use datastore cluster placement
   govc vm.create -m 2048 -c 2 -g freebsd64Guest -net.adapter vmxnet3 -disk.controller pvscsi vm-name`
@@ -269,15 +275,11 @@ func (cmd *create) Run(ctx context.Context, f *flag.FlagSet) error {
 
 	// Verify ISO exists
 	if cmd.iso != "" {
-		_, err = cmd.isoDatastoreFlag.Stat(ctx, cmd.iso)
+		iso, err := cmd.isoDatastoreFlag.FileBacking(ctx, cmd.iso, true)
 		if err != nil {
 			return err
 		}
-
-		cmd.isoDatastore, err = cmd.isoDatastoreFlag.Datastore()
-		if err != nil {
-			return err
-		}
+		cmd.iso = iso
 	}
 
 	// Verify disk exists
@@ -305,7 +307,9 @@ func (cmd *create) Run(ctx context.Context, f *flag.FlagSet) error {
 	if err != nil {
 		return err
 	}
-
+	if cmd.place {
+		return nil
+	}
 	info, err := task.WaitForResult(ctx, nil)
 	if err != nil {
 		return err
@@ -326,6 +330,61 @@ func (cmd *create) Run(ctx context.Context, f *flag.FlagSet) error {
 	}
 
 	return nil
+}
+
+type place struct {
+	Spec            types.PlacementSpec           `json:"spec"`
+	Recommendations []types.ClusterRecommendation `json:"recommendations"`
+
+	ctx context.Context
+	cmd *create
+}
+
+func (p *place) Dump() interface{} {
+	return p.Recommendations
+}
+
+func (p *place) action(w io.Writer, r types.ClusterRecommendation, a *types.PlacementAction) error {
+	spec := a.RelocateSpec
+	if spec == nil {
+		return nil
+	}
+
+	fields := []struct {
+		name string
+		moid *types.ManagedObjectReference
+	}{
+		{"Target", r.Target},
+		{"  Folder", spec.Folder},
+		{"  Datastore", spec.Datastore},
+		{"  Pool", spec.Pool},
+		{"  Host", spec.Host},
+	}
+
+	for _, f := range fields {
+		if f.moid == nil {
+			continue
+		}
+		path, err := find.InventoryPath(p.ctx, p.cmd.Client, *f.moid)
+		if err != nil {
+			return err
+		}
+		fmt.Fprintf(w, "%s:\t%s\n", f.name, path)
+	}
+
+	return nil
+}
+
+func (p *place) Write(w io.Writer) error {
+	tw := tabwriter.NewWriter(w, 2, 0, 2, ' ', 0)
+
+	for _, r := range p.Recommendations {
+		for _, a := range r.Action {
+			p.action(tw, r, a.(*types.PlacementAction))
+		}
+	}
+
+	return tw.Flush()
 }
 
 func (cmd *create) createVM(ctx context.Context) (*object.Task, error) {
@@ -350,6 +409,24 @@ func (cmd *create) createVM(ctx context.Context) (*object.Task, error) {
 		Annotation: cmd.annotation,
 		Firmware:   cmd.firmware,
 		Version:    cmd.version,
+	}
+
+	if cmd.profile != "" {
+		c, err := cmd.PbmClient()
+		if err != nil {
+			return nil, err
+		}
+		m, err := c.ProfileMap(ctx)
+		if err != nil {
+			return nil, err
+		}
+		p, ok := m.Name[cmd.profile]
+		if !ok {
+			return nil, fmt.Errorf("profile %q not found", cmd.profile)
+		}
+		spec.VmProfile = []types.BaseVirtualMachineProfileSpec{&types.VirtualMachineDefinedProfileSpec{
+			ProfileId: p.GetPbmProfile().ProfileId.UniqueId,
+		}}
 	}
 
 	devices, err = cmd.addStorage(nil)
@@ -390,6 +467,9 @@ func (cmd *create) createVM(ctx context.Context) (*object.Task, error) {
 		}
 
 		recs := result.Recommendations
+		if cmd.place {
+			return nil, cmd.WriteResult(&place{pspec, recs, ctx, cmd})
+		}
 		if len(recs) == 0 {
 			return nil, fmt.Errorf("no cluster recommendations")
 		}
@@ -507,7 +587,7 @@ func (cmd *create) addStorage(devices object.VirtualDeviceList) (object.VirtualD
 			return nil, err
 		}
 
-		cdrom = devices.InsertIso(cdrom, cmd.isoDatastore.Path(cmd.iso))
+		cdrom = devices.InsertIso(cdrom, cmd.iso)
 		devices = append(devices, cdrom)
 	}
 

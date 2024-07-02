@@ -41,9 +41,6 @@ const (
 
 	// Added kernel command line options for iot-raw-image and iot-qcow2-image types
 	ostreeDeploymentKernelOptions = "modprobe.blacklist=vc4 rw coreos.no_persist_ip"
-
-	// location for saving openscap remediation data
-	oscapDataDir = "/oscap_data"
 )
 
 var (
