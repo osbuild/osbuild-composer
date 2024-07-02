@@ -1,3 +1,6 @@
 package main
 
-var WorkerClientErrorFrom = workerClientErrorFrom
+var (
+	WorkerClientErrorFrom         = workerClientErrorFrom
+	MakeJobErrorFromOsbuildOutput = makeJobErrorFromOsbuildOutput
+)
