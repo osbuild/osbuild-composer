@@ -1,0 +1,137 @@
+summary: Edge test plan
+discover:
+  how: fmf
+  test: edge-test
+execute:
+  how: tmt
+provision:
+  hardware:
+    virtualization:
+      is-supported: true
+    cpu:
+      processors: ">= 2"
+    memory: ">= 6 GB"
+
+/edge-commit:
+  summary: Test edge commit
+  environment+:
+    TEST_CASE: edge-commit
+
+/edge-installer:
+  summary: Test edge installer image
+  environment+:
+    TEST_CASE: edge-installer
+
+/edge-installer-fips:
+  summary: Test edge installer image with fips
+  environment+:
+    TEST_CASE: edge-installer-fips
+  adjust+:
+    - when: distro == cs-9
+      enabled: false
+    - when: distro == fedora
+      enabled: false
+
+/edge-raw-image:
+  summary: Test edge raw image
+  environment+:
+    TEST_CASE: edge-raw-image
+
+/edge-raw-image-fips:
+  summary: Test edge raw image
+  environment+:
+    TEST_CASE: edge-raw-image-fips
+  adjust+:
+    - when: distro == cs-9
+      enabled: false
+    - when: distro == fedora
+      enabled: false
+
+/edge-simplified-installer:
+  summary: Test edge simplified installer image
+  environment+:
+    TEST_CASE: edge-simplified-installer
+  adjust+:
+    - when: distro == fedora
+      enabled: false   
+
+/edge-simplified-installer-fips:
+  summary: Test edge simplified installer image
+  environment+:
+    TEST_CASE: edge-simplified-installer-fips
+  adjust+:
+    - when: distro == cs-9
+      enabled: false
+    - when: distro == fedora
+      enabled: false
+
+/edge-ignition:
+  summary: Test edge ignition feature
+  environment+:
+    TEST_CASE: edge-ignition
+  adjust+:
+    - when: distro == fedora
+      enabled: false
+
+/edge-pulp:
+  summary: Test edge pulp feature
+  environment+:
+    TEST_CASE: edge-pulp
+  adjust+:
+    - when: distro==cs-9
+      enabled: false
+    - when: distro == fedora
+      enabled: false
+
+/edge-ami-image:
+  summary: Test edge ami image
+  environment+:
+    TEST_CASE: edge-ami-image
+  adjust+:
+    - when: distro == fedora
+      enabled: false
+
+/edge-ami-image-fips:
+  summary: Test edge ami image
+  environment+:
+    TEST_CASE: edge-ami-image-fips
+  adjust+:
+    - when: distro==cs-9
+      enabled: false
+    - when: distro == fedora
+      enabled: false
+
+/edge-minimal:
+  summary: Test edge minimal raw image
+  environment+:
+    TEST_CASE: edge-minimal
+
+/edge-vsphere:
+  summary: Test edge vsphere image
+  environment+:
+    TEST_CASE: edge-vsphere
+  adjust+:
+    - when: distro==cs-9
+      enabled: false
+    - when: distro == fedora
+      enabled: false
+
+/edge-vsphere-fips:
+  summary: Test edge vsphere image
+  environment+:
+    TEST_CASE: edge-vsphere-fips
+  adjust+:
+    - when: distro==cs-9
+      enabled: false
+    - when: distro == fedora
+      enabled: false
+
+/edge-qcow2
+  summary: Test edge qcow2 image
+  environment+:
+    TEST_CASE: edge-qcow2
+  adjust+:
+    - when: distro==cs-9
+      enabled: false
+    - when: distro == rhel-9-5
+      enabled: false
