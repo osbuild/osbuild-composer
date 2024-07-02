@@ -1,11 +1,7 @@
 package oscap
 
 import (
-	"fmt"
-	"path/filepath"
 	"strings"
-
-	"github.com/osbuild/images/pkg/customizations/fsnode"
 )
 
 type Profile string
@@ -43,9 +39,23 @@ const (
 	defaultRHEL8Datastream   string = "/usr/share/xml/scap/ssg/content/ssg-rhel8-ds.xml"
 	defaultRHEL9Datastream   string = "/usr/share/xml/scap/ssg/content/ssg-rhel9-ds.xml"
 
-	// tailoring directory path
-	tailoringDirPath string = "/usr/share/xml/osbuild-openscap-data"
+	// oscap related directories
+	DataDir string = "/oscap_data"
 )
+
+type RemediationConfig struct {
+	Datastream         string
+	ProfileID          string
+	TailoringPath      string
+	CompressionEnabled bool
+}
+
+type TailoringConfig struct {
+	RemediationConfig
+	TailoredProfileID string
+	Selected          []string
+	Unselected        []string
+}
 
 func DefaultFedoraDatastream() string {
 	return defaultFedoraDatastream
@@ -79,16 +89,4 @@ func IsProfileAllowed(profile string, allowlist []Profile) bool {
 	}
 
 	return false
-}
-
-func GetTailoringFile(profile string) (string, string, *fsnode.Directory, error) {
-	newProfile := fmt.Sprintf("%s_osbuild_tailoring", profile)
-	path := filepath.Join(tailoringDirPath, "tailoring.xml")
-
-	tailoringDir, err := fsnode.NewDirectory(tailoringDirPath, nil, nil, nil, true)
-	if err != nil {
-		return "", "", nil, err
-	}
-
-	return newProfile, path, tailoringDir, nil
 }
