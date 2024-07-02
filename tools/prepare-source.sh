@@ -2,7 +2,7 @@
 
 set -eux
 
-GO_VERSION=1.20.12
+GO_VERSION=1.21.11
 GO_BINARY=$(go env GOPATH)/bin/go$GO_VERSION
 
 # this is the official way to get a different version of golang
