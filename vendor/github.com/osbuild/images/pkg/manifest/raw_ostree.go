@@ -122,7 +122,7 @@ func (p *RawOSTreeImage) serialize() osbuild.Pipeline {
 func (p *RawOSTreeImage) addBootupdStage(pipeline *osbuild.Pipeline) {
 	pt := p.treePipeline.PartitionTable
 
-	treeBootupdDevices, treeBootupdMounts, err := osbuild.GenBootupdDevicesMounts(p.Filename(), pt)
+	treeBootupdDevices, treeBootupdMounts, err := osbuild.GenBootupdDevicesMounts(p.Filename(), pt, p.platform)
 	if err != nil {
 		panic(err)
 	}
@@ -138,7 +138,7 @@ func (p *RawOSTreeImage) addBootupdStage(pipeline *osbuild.Pipeline) {
 			Device: "disk",
 		}
 	}
-	bootupd, err := osbuild.NewBootupdStage(opts, treeBootupdDevices, treeBootupdMounts)
+	bootupd, err := osbuild.NewBootupdStage(opts, treeBootupdDevices, treeBootupdMounts, p.platform)
 	if err != nil {
 		panic(err)
 	}
