@@ -54,17 +54,21 @@ init:
 
 .build_rules:
   rules:
-    - if: '$CI_PIPELINE_SOURCE != "schedule" && $SKIP_CI == "false"'
-    - if: '$CI_PIPELINE_SOURCE != "schedule" && $SKIP_CI == "true"'
+    - if: '$CI_PIPELINE_SOURCE != "schedule" && $SKIP_CI == "false" && $RUNNER !~ /[\S]+rhel-[\S]+-(?:(?:ga)|(?:eus))[\S]+/'
+    - if: '$CI_PIPELINE_SOURCE != "schedule" && $SKIP_CI == "true" && $RUNNER !~ /[\S]+rhel-[\S]+-(?:(?:ga)|(?:eus))[\S]+/'
       when: manual
 
 .upstream_rules_all:
   rules:
-    - if: '$CI_PIPELINE_SOURCE != "schedule"'
+    - if: '$CI_PIPELINE_SOURCE != "schedule" && $RUNNER !~ /[\S]+rhel-[\S]+-(?:(?:ga)|(?:eus))[\S]+/'
 
 .upstream_rules_x86_64:
   rules:
-    - if: '$CI_PIPELINE_SOURCE != "schedule" && $RUNNER =~ "/^.*(x86_64).*$/"'
+    - if: '$CI_PIPELINE_SOURCE != "schedule" && $RUNNER =~ "/^.*(x86_64).*$/" && $RUNNER !~ /[\S]+rhel-[\S]+-(?:(?:ga)|(?:eus))[\S]+/'
+
+.upstream_and_ga_rules_all:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE != "schedule" && $RUNNER'
 
 .nightly_rules_all:
   rules:
@@ -73,6 +77,14 @@ init:
 .nightly_rules_x86_64:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9.5-[^ga][\S]+/ && $RUNNER =~ "/^.*(x86_64).*$/" && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
+
+.ga_rules_all:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-[\S]+-(?:(?:ga)|(?:eus))[\S]+/ && $NIGHTLY == "false"'
+
+.ga_rules_x86_64:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-[\S]+-(?:(?:ga)|(?:eus))[\S]+/ && $RUNNER =~ "/^.*(x86_64).*$/" && $NIGHTLY == "false"'
 
 
 .RPM_RUNNERS_RHEL: &RPM_RUNNERS_RHEL
@@ -87,6 +99,7 @@ RPM:
   extends: .terraform
   rules:
     - !reference [.build_rules, rules]
+    - !reference [.ga_rules_all, rules]
   script:
     - sh "schutzbot/mockbuild.sh"
   parallel:
@@ -125,7 +138,8 @@ Container:
   stage: rpmbuild
   extends: .terraform
   rules:
-    - !reference [.build_rules, rules]
+    - !reference [.upstream_and_ga_rules_all, rules]
+    - !reference [.ga_rules_all, rules]
   script:
     - sh "schutzbot/containerbuild.sh"
   parallel:
@@ -137,7 +151,8 @@ Packer:
   stage: test
   extends: .terraform
   rules:
-    - if: '$CI_PIPELINE_SOURCE != "schedule"'
+    - !reference [.upstream_and_ga_rules_all, rules]
+    - !reference [.ga_rules_all, rules]
   script:
     - tools/ci-build-worker-packer.sh
   variables:
@@ -169,6 +184,7 @@ Base:
   rules:
     - !reference [.upstream_rules_all, rules]
     - !reference [.nightly_rules_all, rules]
+    - !reference [.ga_rules_all, rules]
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/base_tests.sh
@@ -196,6 +212,7 @@ Base:
   rules:
     - !reference [.upstream_rules_all, rules]
     - !reference [.nightly_rules_all, rules]
+    - !reference [.ga_rules_all, rules]
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/${SCRIPT}
@@ -235,23 +252,28 @@ regression-composer-works-behind-satellite:
 
 regression-excluded-dependency:
   extends: .regression
-  rules: 
-    # WHITELIST
-    - if: $RUNNER =~ "/^.*(rhel-8.*|rhel-9.*|centos-stream-9).*$/" && $CI_PIPELINE_SOURCE != "schedule"
+  rules:
+    # WHITELIST & BLACKLIST: excluding GA runners from the PR pipeline
+    - if: $RUNNER =~ "/^.*(rhel-8.*|rhel-9.*|centos-stream-9).*$/" && $CI_PIPELINE_SOURCE != "schedule" && $RUNNER !~ /[\S]+rhel-[\S]+-(?:(?:ga)|(?:eus))[\S]+/
     - !reference [.nightly_rules_all, rules]
+    - !reference [.ga_rules_all, rules]
   variables:
     SCRIPT: regression-excluded-dependency.sh
 
 regression-include-excluded-packages:
   extends: .regression
   rules: 
-    # BLACKLIST: Skipped on fedora systems
-    - if: $RUNNER !~ "/^.*(fedora).*$/" && $CI_PIPELINE_SOURCE != "schedule"
+    # BLACKLIST: Skipped on fedora systems & excluding GA runners from the PR pipeline
+    - if: $RUNNER !~ "/^.*(fedora).*$/" && $CI_PIPELINE_SOURCE != "schedule" && $RUNNER !~ /[\S]+rhel-[\S]+-(?:(?:ga)|(?:eus))[\S]+/
     - !reference [.nightly_rules_all, rules]
+    - !reference [.ga_rules_all, rules]
   variables:
     SCRIPT: regression-include-excluded-packages.sh
 
 regression-old-worker-new-composer:
+  rules:
+    - !reference [.upstream_and_ga_rules_all, rules]
+    - !reference [.ga_rules_all, rules]
   parallel:
     matrix:
       - RUNNER:
@@ -265,9 +287,10 @@ regression-old-worker-new-composer:
 regression-insecure-repo:
   extends: .regression
   rules:
-    # WHITELIST
-    - if: $RUNNER =~ "/^.*(rhel-*).*$/" && $CI_PIPELINE_SOURCE != "schedule"
+    # WHITELIST & BLACKLIST: excluding GA runners from the PR pipeline
+    - if: $RUNNER =~ "/^.*(rhel-*).*$/" && $CI_PIPELINE_SOURCE != "schedule" && $RUNNER !~ /[\S]+rhel-[\S]+-(?:(?:ga)|(?:eus))[\S]+/
     - !reference [.nightly_rules_all, rules]
+    - !reference [.ga_rules_all, rules]
   variables:
     SCRIPT: regression-insecure-repo.sh
 
@@ -275,9 +298,10 @@ regression-insecure-repo:
 regression-no-explicit-rootfs-definition:
   extends: .regression
   rules: 
-    # BLACKLIST: Skipped on fedora systems
-    - if: $RUNNER !~ "/^.*(fedora).*$/" && $CI_PIPELINE_SOURCE != "schedule"
+    # BLACKLIST: Skipped on fedora systems & excluding GA runners from the PR pipeline
+    - if: $RUNNER !~ "/^.*(fedora).*$/" && $CI_PIPELINE_SOURCE != "schedule" && $RUNNER !~ /[\S]+rhel-[\S]+-(?:(?:ga)|(?:eus))[\S]+/
     - !reference [.nightly_rules_all, rules]
+    - !reference [.ga_rules_all, rules]
   variables:
     SCRIPT: regression-no-explicit-rootfs-definition.sh
 
@@ -314,6 +338,7 @@ Trigger-rhel-edge-ci:
   rules:
     - !reference [.upstream_rules_all, rules]
     - !reference [.nightly_rules_all, rules]
+    - !reference [.ga_rules_all, rules]
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/${SCRIPT}
@@ -355,7 +380,8 @@ koji.sh (cloud upload):
   stage: test
   extends: .terraform
   rules:
-    - !reference [.upstream_rules_all, rules]
+    - !reference [.upstream_and_ga_rules_all, rules]
+    - !reference [.ga_rules_all, rules]
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/koji.sh cloud-upload ${CLOUD_TARGET} ${IMAGE_TYPE}
@@ -384,7 +410,8 @@ koji.sh (cloudapi):
   extends: .integration
   # Not supported in nightly pipelines
   rules:
-    - !reference [.upstream_rules_all, rules]
+    - !reference [.upstream_and_ga_rules_all, rules]
+    - !reference [.ga_rules_all, rules]
   variables:
     SCRIPT: koji.sh
   parallel:
@@ -398,8 +425,7 @@ koji.sh (cloudapi):
 aws.sh:
   extends: .integration
   rules:
-    # Skip rhel-8.4-ga-x86_64
-    - if: '$CI_PIPELINE_SOURCE != "schedule" && $RUNNER !~ /[\S]+rhel-8.4-[\S]+/'
+    - if: '$CI_PIPELINE_SOURCE != "schedule" && $RUNNER !~ /[\S]+rhel-[\S]+-(?:(?:ga)|(?:eus))[\S]+/'
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9.5-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
   variables:
     SCRIPT: aws.sh
@@ -409,6 +435,7 @@ oci.sh:
   rules:
     # Run only on x86_64
     - !reference [.upstream_rules_x86_64, rules]
+    - !reference [.ga_rules_x86_64, rules]
   variables:
     SCRIPT: oci.sh
 
@@ -430,6 +457,7 @@ azure.sh:
     # Run only on x86_64
     - !reference [.upstream_rules_x86_64, rules]
     - !reference [.nightly_rules_x86_64, rules]
+    - !reference [.ga_rules_x86_64, rules]
   variables:
     SCRIPT: azure.sh
 
@@ -439,6 +467,7 @@ azure.sh_hyperv_gen2:
     # Run only on x86_64
     - !reference [.upstream_rules_x86_64, rules]
     - !reference [.nightly_rules_x86_64, rules]
+    - !reference [.ga_rules_x86_64, rules]
   variables:
     SCRIPT: azure_hyperv_gen2.sh
 
@@ -448,6 +477,7 @@ gcp.sh:
   rules: 
     - !reference [.upstream_rules_x86_64, rules]
     - !reference [.nightly_rules_x86_64, rules]
+    - !reference [.ga_rules_x86_64, rules]
   variables:
     SCRIPT: gcp.sh
 
@@ -457,6 +487,7 @@ vmware.sh_vmdk:
     # Run only on x86_64
     - !reference [.upstream_rules_x86_64, rules]
     - !reference [.nightly_rules_x86_64, rules]
+    - !reference [.ga_rules_x86_64, rules]
   variables:
     SCRIPT: vmware.sh vmdk
 
@@ -466,6 +497,7 @@ vmware.sh_ova:
     # Run only on x86_64
     - !reference [.upstream_rules_x86_64, rules]
     - !reference [.nightly_rules_x86_64, rules]
+    - !reference [.ga_rules_x86_64, rules]
   variables:
     SCRIPT: vmware.sh ova
 
@@ -500,7 +532,8 @@ API:
   stage: test
   extends: .terraform
   rules:
-    - !reference [.upstream_rules_all, rules]
+    - !reference [.upstream_and_ga_rules_all, rules]
+    - !reference [.ga_rules_all, rules]
     # note: cloud API is not supported for on-prem installations so
     # don't run this test case for nightly trees
   script:
@@ -531,7 +564,8 @@ API-module-hotfixes:
   stage: test
   extends: .terraform
   rules:
-    - !reference [.upstream_rules_all, rules]
+    - !reference [.upstream_and_ga_rules_all, rules]
+    - !reference [.ga_rules_all, rules]
     # note: cloud API is not supported for on-prem installations so
     # don't run this test case for nightly trees
   script:
@@ -559,6 +593,7 @@ API-module-hotfixes:
   rules:
     - !reference [.upstream_rules_all, rules]
     - !reference [.nightly_rules_all, rules]
+    - !reference [.ga_rules_all, rules]
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/${SCRIPT}
@@ -584,6 +619,7 @@ ubi-wsl.sh:
   rules:
     - !reference [.upstream_rules_all, rules]
     - !reference [.nightly_rules_all, rules]
+    - !reference [.ga_rules_all, rules]
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/ubi-wsl.sh
@@ -600,6 +636,7 @@ weldr-distro-dot-notation+aliases:
   rules:
     - !reference [.upstream_rules_all, rules]
     - !reference [.nightly_rules_all, rules]
+    - !reference [.ga_rules_all, rules]
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/weldr-distro-dot-notation-and-aliases.sh
@@ -614,8 +651,9 @@ weldr-distro-dot-notation+aliases:
   extends: .libvirt_integration
   rules:
     # BLACKLIST
-    - if: $RUNNER !~ "/^.*(rhel-9.5).*$/" && $CI_PIPELINE_SOURCE != "schedule" && $NIGHTLY != "true"
+    - if: $RUNNER !~ "/^.*(rhel-9.5).*$/" && $CI_PIPELINE_SOURCE != "schedule" && $NIGHTLY != "true" && $RUNNER !~ /[\S]+rhel-[\S]+-(?:(?:ga)|(?:eus))[\S]+/
     - !reference [.nightly_rules_all, rules]
+    - !reference [.ga_rules_all, rules]
 
 generic_s3_http.sh:
   extends: .generic_s3
@@ -641,7 +679,8 @@ RHEL 9 on 8:
   stage: test
   extends: .terraform
   rules:
-    - !reference [.upstream_rules_all, rules]
+    - !reference [.upstream_and_ga_rules_all, rules]
+    - !reference [.ga_rules_all, rules]
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/koji.sh
@@ -682,7 +721,7 @@ NIGHTLY_FAIL:
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $NIGHTLY == "true"'
       when: on_failure
   script:
-    - schutzbot/slack_notification.sh FAILED ":big-sad:"
+    - schutzbot/slack_notification.sh FAILED ":big-sad:" nightly
 
 NIGHTLY_SUCCESS:
   stage: finish
@@ -691,7 +730,26 @@ NIGHTLY_SUCCESS:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $NIGHTLY == "true"'
   script:
-    - schutzbot/slack_notification.sh SUCCESS ":partymeow:"
+    - schutzbot/slack_notification.sh SUCCESS ":partymeow:" nightly
+
+GA_FAIL:
+  stage: finish
+  tags:
+    - shell
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $NIGHTLY== "false"'
+      when: on_failure
+  script:
+    - schutzbot/slack_notification.sh FAILED ":big-sad:" ga
+
+GA_SUCCESS:
+  stage: finish
+  tags:
+    - shell
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $NIGHTLY== "false"'
+  script:
+    - schutzbot/slack_notification.sh SUCCESS ":partymeow:" ga
 
 Installer:
   stage: test
@@ -699,6 +757,7 @@ Installer:
   rules:
     - !reference [.upstream_rules_all, rules]
     - !reference [.nightly_rules_all, rules]
+    - !reference [.ga_rules_all, rules]
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/installers.sh
@@ -713,6 +772,7 @@ ContainerUpload:
   extends: .terraform
   rules:
     - !reference [.upstream_rules_all, rules]
+    - !reference [.ga_rules_all, rules]
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/container-upload.sh
@@ -727,6 +787,7 @@ ContainerEmbedding:
   rules:
     - !reference [.upstream_rules_all, rules]
     - !reference [.nightly_rules_all, rules]
+    - !reference [.ga_rules_all, rules]
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/container-embedding.sh
@@ -743,6 +804,7 @@ WorkerExecutor:
   extends: .terraform
   rules:
     - !reference [.upstream_rules_all, rules]
+    - !reference [.ga_rules_all, rules]
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/worker-executor.sh
