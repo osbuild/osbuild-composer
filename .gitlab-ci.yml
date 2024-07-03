@@ -96,8 +96,6 @@ RPM:
           - aws/fedora-39-aarch64
           - aws/fedora-40-x86_64
           - aws/fedora-40-aarch64
-          - aws/rhel-8.4-ga-x86_64
-          - aws/rhel-8.4-ga-aarch64
           - aws/rhel-8.10-ga-x86_64
           - aws/rhel-8.10-ga-aarch64
           - aws/rhel-9.4-ga-x86_64
@@ -177,8 +175,6 @@ Base:
       - RUNNER:
           - aws/fedora-39-x86_64
           - aws/fedora-39-aarch64
-          - aws/rhel-8.4-ga-x86_64
-          - aws/rhel-8.4-ga-aarch64
           - aws/rhel-8.10-ga-x86_64
           - aws/rhel-8.10-ga-aarch64
           - aws/rhel-9.4-ga-x86_64
@@ -205,8 +201,6 @@ Base:
           - aws/fedora-39-x86_64
           - aws/fedora-39-aarch64
       - RUNNER:
-          - aws/rhel-8.4-ga-x86_64
-          - aws/rhel-8.4-ga-aarch64
           - aws/rhel-8.10-ga-x86_64
           - aws/rhel-8.10-ga-aarch64
           - aws/rhel-9.4-ga-x86_64
@@ -292,8 +286,8 @@ Image Tests:
   parallel:
     matrix:
       - RUNNER:
-          - aws/rhel-8.4-ga-x86_64
-          - aws/rhel-8.4-ga-aarch64
+          - aws/rhel-8.10-ga-x86_64
+          - aws/rhel-8.10-ga-aarch64
           - aws/rhel-9.5-nightly-x86_64
           - aws/rhel-9.5-nightly-aarch64
         INTERNAL_NETWORK: ["true"]
@@ -320,7 +314,6 @@ Trigger-rhel-edge-ci:
 
 .rhel_runners: &rhel_runners
     RUNNER:
-      - aws/rhel-8.4-ga-x86_64
       - aws/rhel-8.10-ga-x86_64
       - aws/rhel-9.4-ga-x86_64
       - aws/rhel-9.5-nightly-x86_64
@@ -398,7 +391,6 @@ koji.sh (cloudapi):
 aws.sh:
   extends: .integration
   rules:
-    # Skip rhel-8.4-ga-x86_64
     - if: '$CI_PIPELINE_SOURCE != "schedule" && $RUNNER !~ /[\S]+rhel-8.4-[\S]+/'
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9.5-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
   variables:
