@@ -22,6 +22,9 @@ def composer_repository_to_koji_repository(repository):
     if repository.get("check_gpg", False):
         koji_repository["gpgkey"] = repository["gpgkey"]
 
+    if "cdn.redhat.com" in koji_repository["baseurl"]:
+        koji_repository["rhsm"] = True
+
     return koji_repository
 
 
