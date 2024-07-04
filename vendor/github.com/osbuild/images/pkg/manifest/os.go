@@ -12,6 +12,7 @@ import (
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/customizations/bootc"
 	"github.com/osbuild/images/pkg/customizations/fsnode"
+	"github.com/osbuild/images/pkg/customizations/oscap"
 	"github.com/osbuild/images/pkg/customizations/shell"
 	"github.com/osbuild/images/pkg/customizations/users"
 	"github.com/osbuild/images/pkg/disk"
@@ -96,38 +97,40 @@ type OSCustomizations struct {
 	ShellInit []shell.InitFile
 
 	// TODO: drop osbuild types from the API
-	Firewall             *osbuild.FirewallStageOptions
-	Grub2Config          *osbuild.GRUB2Config
-	Sysconfig            []*osbuild.SysconfigStageOptions
-	SystemdLogind        []*osbuild.SystemdLogindStageOptions
-	CloudInit            []*osbuild.CloudInitStageOptions
-	Modprobe             []*osbuild.ModprobeStageOptions
-	DracutConf           []*osbuild.DracutConfStageOptions
-	SystemdUnit          []*osbuild.SystemdUnitStageOptions
-	Authselect           *osbuild.AuthselectStageOptions
-	SELinuxConfig        *osbuild.SELinuxConfigStageOptions
-	Tuned                *osbuild.TunedStageOptions
-	Tmpfilesd            []*osbuild.TmpfilesdStageOptions
-	PamLimitsConf        []*osbuild.PamLimitsConfStageOptions
-	Sysctld              []*osbuild.SysctldStageOptions
-	DNFConfig            []*osbuild.DNFConfigStageOptions
-	DNFAutomaticConfig   *osbuild.DNFAutomaticConfigStageOptions
-	YUMConfig            *osbuild.YumConfigStageOptions
-	YUMRepos             []*osbuild.YumReposStageOptions
-	SshdConfig           *osbuild.SshdConfigStageOptions
-	GCPGuestAgentConfig  *osbuild.GcpGuestAgentConfigOptions
-	AuthConfig           *osbuild.AuthconfigStageOptions
-	PwQuality            *osbuild.PwqualityConfStageOptions
-	OpenSCAPTailorConfig *osbuild.OscapAutotailorStageOptions
-	OpenSCAPConfig       *osbuild.OscapRemediationStageOptions
-	NTPServers           []osbuild.ChronyConfigServer
-	WAAgentConfig        *osbuild.WAAgentConfStageOptions
-	UdevRules            *osbuild.UdevRulesStageOptions
-	WSLConfig            *osbuild.WSLConfStageOptions
-	LeapSecTZ            *string
-	FactAPIType          *facts.APIType
-	Presets              []osbuild.Preset
-	ContainersStorage    *string
+	Firewall            *osbuild.FirewallStageOptions
+	Grub2Config         *osbuild.GRUB2Config
+	Sysconfig           []*osbuild.SysconfigStageOptions
+	SystemdLogind       []*osbuild.SystemdLogindStageOptions
+	CloudInit           []*osbuild.CloudInitStageOptions
+	Modprobe            []*osbuild.ModprobeStageOptions
+	DracutConf          []*osbuild.DracutConfStageOptions
+	SystemdUnit         []*osbuild.SystemdUnitStageOptions
+	Authselect          *osbuild.AuthselectStageOptions
+	SELinuxConfig       *osbuild.SELinuxConfigStageOptions
+	Tuned               *osbuild.TunedStageOptions
+	Tmpfilesd           []*osbuild.TmpfilesdStageOptions
+	PamLimitsConf       []*osbuild.PamLimitsConfStageOptions
+	Sysctld             []*osbuild.SysctldStageOptions
+	DNFConfig           []*osbuild.DNFConfigStageOptions
+	DNFAutomaticConfig  *osbuild.DNFAutomaticConfigStageOptions
+	YUMConfig           *osbuild.YumConfigStageOptions
+	YUMRepos            []*osbuild.YumReposStageOptions
+	SshdConfig          *osbuild.SshdConfigStageOptions
+	GCPGuestAgentConfig *osbuild.GcpGuestAgentConfigOptions
+	AuthConfig          *osbuild.AuthconfigStageOptions
+	PwQuality           *osbuild.PwqualityConfStageOptions
+	NTPServers          []osbuild.ChronyConfigServer
+	WAAgentConfig       *osbuild.WAAgentConfStageOptions
+	UdevRules           *osbuild.UdevRulesStageOptions
+	WSLConfig           *osbuild.WSLConfStageOptions
+	LeapSecTZ           *string
+	FactAPIType         *facts.APIType
+	Presets             []osbuild.Preset
+	ContainersStorage   *string
+
+	// OpenSCAP config
+	OpenSCAPTailorConfig      *oscap.TailoringConfig
+	OpenSCAPRemediationConfig *oscap.RemediationConfig
 
 	Subscription *subscription.ImageOptions
 	RHSMConfig   map[subscription.RHSMStatus]*osbuild.RHSMStageOptions
@@ -230,7 +233,7 @@ func (p *OS) getPackageSetChain(Distro) []rpmmd.PackageSet {
 		packages = append(packages, fmt.Sprintf("selinux-policy-%s", p.SElinux))
 	}
 
-	if p.OpenSCAPConfig != nil {
+	if p.OpenSCAPRemediationConfig != nil {
 		packages = append(packages, "openscap-scanner", "scap-security-guide", "xz")
 	}
 
@@ -244,6 +247,16 @@ func (p *OS) getPackageSetChain(Distro) []rpmmd.PackageSet {
 		} else if p.Subscription.Insights {
 			packages = append(packages, "insights-client")
 		}
+	}
+
+	if len(p.Users) > 0 {
+		// org.osbuild.users runs useradd, usermod, passwd, and
+		// mkhomedir_helper in the os tree using chroot. Most image types
+		// should already have the required packages, but some minimal image
+		// types, like 'tar' don't, so let's add them for the stage to run and
+		// to enable user management in the image.
+		packages = append(packages, "shadow-utils", "pam")
+
 	}
 
 	osRepos := append(p.repos, p.ExtraBaseRepos...)
@@ -795,19 +808,22 @@ func (p *OS) serialize() osbuild.Pipeline {
 	}
 
 	if p.OpenSCAPTailorConfig != nil {
-		if p.OpenSCAPConfig == nil {
+		if p.OpenSCAPRemediationConfig == nil {
 			// This is a programming error, since it doesn't make sense
 			// to have tailoring configs without openscap config.
 			panic(fmt.Errorf("OpenSCAP autotailoring cannot be set if no OpenSCAP config has been provided"))
 		}
-		pipeline.AddStage(osbuild.NewOscapAutotailorStage(p.OpenSCAPTailorConfig))
+
+		tailoringStageOpts := osbuild.NewOscapAutotailorStageOptions(p.OpenSCAPTailorConfig)
+		pipeline.AddStage(osbuild.NewOscapAutotailorStage(tailoringStageOpts))
 	}
 
 	// NOTE: We need to run the OpenSCAP stages as the last stage before SELinux
 	// since the remediation may change file permissions and other aspects of the
 	// hardened image
-	if p.OpenSCAPConfig != nil {
-		pipeline.AddStage(osbuild.NewOscapRemediationStage(p.OpenSCAPConfig))
+	if p.OpenSCAPRemediationConfig != nil {
+		remediationStageOpts := osbuild.NewOscapRemediationStageOptions(oscap.DataDir, p.OpenSCAPRemediationConfig)
+		pipeline.AddStage(osbuild.NewOscapRemediationStage(remediationStageOpts))
 	}
 
 	if len(p.Presets) != 0 {

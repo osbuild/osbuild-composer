@@ -428,7 +428,6 @@ func anacondaPackageSet(t *imageType) rpmmd.PackageSet {
 			"nss-tools",
 			"openssh-clients",
 			"openssh-server",
-			"oscap-anaconda-addon",
 			"ostree",
 			"pciutils",
 			"perl-interpreter",

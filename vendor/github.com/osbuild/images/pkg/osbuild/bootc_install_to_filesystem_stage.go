@@ -2,6 +2,8 @@ package osbuild
 
 import (
 	"fmt"
+
+	"github.com/osbuild/images/pkg/platform"
 )
 
 type BootcInstallToFilesystemOptions struct {
@@ -24,8 +26,8 @@ func (BootcInstallToFilesystemOptions) isStageOptions() {}
 // bootc/bootupd find and install all required bootloader bits.
 //
 // The mounts input should be generated with GenBootupdDevicesMounts.
-func NewBootcInstallToFilesystemStage(options *BootcInstallToFilesystemOptions, inputs ContainerDeployInputs, devices map[string]Device, mounts []Mount) (*Stage, error) {
-	if err := validateBootupdMounts(mounts); err != nil {
+func NewBootcInstallToFilesystemStage(options *BootcInstallToFilesystemOptions, inputs ContainerDeployInputs, devices map[string]Device, mounts []Mount, pltf platform.Platform) (*Stage, error) {
+	if err := validateBootupdMounts(mounts, pltf); err != nil {
 		return nil, err
 	}
 
