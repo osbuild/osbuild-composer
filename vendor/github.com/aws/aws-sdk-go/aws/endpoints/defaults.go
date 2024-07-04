@@ -14906,6 +14906,18 @@ var awsPartition = partition{
 				},
 			},
 		},
+		"globalaccelerator": service{
+			Endpoints: serviceEndpoints{
+				endpointKey{
+					Region: "fips-us-west-2",
+				}: endpoint{
+					Hostname: "globalaccelerator-fips.us-west-2.amazonaws.com",
+					CredentialScope: credentialScope{
+						Region: "us-west-2",
+					},
+				},
+			},
+		},
 		"glue": service{
 			Endpoints: serviceEndpoints{
 				endpointKey{
@@ -22531,6 +22543,14 @@ var awsPartition = partition{
 					Hostname: "oidc.ca-central-1.amazonaws.com",
 					CredentialScope: credentialScope{
 						Region: "ca-central-1",
+					},
+				},
+				endpointKey{
+					Region: "ca-west-1",
+				}: endpoint{
+					Hostname: "oidc.ca-west-1.amazonaws.com",
+					CredentialScope: credentialScope{
+						Region: "ca-west-1",
 					},
 				},
 				endpointKey{
@@ -36090,6 +36110,21 @@ var awscnPartition = partition{
 			},
 		},
 		"acm": service{
+			Endpoints: serviceEndpoints{
+				endpointKey{
+					Region: "cn-north-1",
+				}: endpoint{},
+				endpointKey{
+					Region: "cn-northwest-1",
+				}: endpoint{},
+			},
+		},
+		"acm-pca": service{
+			Defaults: endpointDefaults{
+				defaultKey{}: endpoint{
+					Protocols: []string{"https"},
+				},
+			},
 			Endpoints: serviceEndpoints{
 				endpointKey{
 					Region: "cn-north-1",
