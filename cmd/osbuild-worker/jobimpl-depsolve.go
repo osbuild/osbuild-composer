@@ -77,23 +77,31 @@ func workerClientErrorFrom(err error) (*clienterrors.Error, error) {
 	switch e := err.(type) {
 	case dnfjson.Error:
 		// Error originates from dnf-json
+		reason := fmt.Sprintf("DNF error occurred: %s", e.Kind)
+		details := e.Reason
 		switch e.Kind {
 		case "DepsolveError":
-			return clienterrors.WorkerClientError(clienterrors.ErrorDNFDepsolveError, err.Error(), e.Reason), nil
+			return clienterrors.WorkerClientError(clienterrors.ErrorDNFDepsolveError, reason, details), nil
 		case "MarkingErrors":
-			return clienterrors.WorkerClientError(clienterrors.ErrorDNFMarkingErrors, err.Error(), e.Reason), nil
+			return clienterrors.WorkerClientError(clienterrors.ErrorDNFMarkingErrors, reason, details), nil
 		case "RepoError":
-			return clienterrors.WorkerClientError(clienterrors.ErrorDNFRepoError, err.Error(), e.Reason), nil
+			return clienterrors.WorkerClientError(clienterrors.ErrorDNFRepoError, reason, details), nil
 		default:
 			err := fmt.Errorf("Unhandled dnf-json error in depsolve job: %v", err)
 			// This still has the kind/reason format but a kind that's returned
 			// by dnf-json and not explicitly handled here.
-			return clienterrors.WorkerClientError(clienterrors.ErrorDNFOtherError, err.Error(), e.Reason), err
+			return clienterrors.WorkerClientError(clienterrors.ErrorDNFOtherError, reason, details), err
 		}
 	default:
-		err := fmt.Errorf("rpmmd error in depsolve job: %v", err)
+		reason := "rpmmd error in depsolve job"
+		details := "<nil>"
+		if err == nil {
+			err = fmt.Errorf("workerClientErrorFrom expected an error to be processed. Not nil")
+		} else {
+			details = err.Error()
+		}
 		// Error originates from internal/rpmmd, not from dnf-json
-		return clienterrors.WorkerClientError(clienterrors.ErrorRPMMDError, err.Error(), nil), err
+		return clienterrors.WorkerClientError(clienterrors.ErrorRPMMDError, reason, details), err
 	}
 }
 
