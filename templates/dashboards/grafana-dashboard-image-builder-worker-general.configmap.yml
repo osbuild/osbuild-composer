@@ -749,11 +749,11 @@ data:
                   },
                   {
                     "color": "dark-purple",
-                    "value": 32
+                    "value": 30
                   },
                   {
                     "color": "dark-purple",
-                    "value": 1792
+                    "value": 2400
                   }
                 ]
               },
@@ -1791,8 +1791,8 @@ data:
           {
             "current": {
               "selected": false,
-              "text": "1792",
-              "value": "1792"
+              "text": "2400",
+              "value": "2400"
             },
             "description": "The duration in seconds 95% of jobs should adhere to.",
             "hide": 0,
@@ -1803,31 +1803,46 @@ data:
             "options": [
               {
                 "selected": false,
-                "text": "32",
-                "value": "32"
+                "text": "30s",
+                "value": "30"
               },
               {
                 "selected": false,
-                "text": "640",
-                "value": "640"
+                "text": "1m",
+                "value": "60"
               },
               {
                 "selected": false,
-                "text": "1536",
-                "value": "1536"
+                "text": "10m",
+                "value": "600"
+              },
+              {
+                "selected": false,
+                "text": "20m",
+                "value": "1200"
+              },
+              {
+                "selected": false,
+                "text": "30m",
+                "value": "1800"
               },
               {
                 "selected": true,
-                "text": "1792",
-                "value": "1792"
+                "text": "40m",
+                "value": "2400"
               },
               {
                 "selected": false,
-                "text": "2049",
-                "value": "2049"
+                "text": "1h",
+                "value": "3600"
+              },
+              {
+                "selected": false,
+                "text": "2h",
+                "value": "7200"
               }
             ],
-            "query": "32, 640, 1536, 1792, 2049",
+            "query": "30m, 60, 600, 1200, 1800, 2400, 3600, 7200",
             "skipUrlSync": false,
             "type": "custom"
           }
@@ -1865,6 +1880,6 @@ data:
       "timezone": "",
       "title": "Image Builder Worker Job Stats",
       "uid": "image-builder-worker",
-      "version": 18,
+      "version": 19,
       "weekStart": ""
     }
