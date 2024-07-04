@@ -203,11 +203,12 @@ function verify_openscap_customization {
   # NOTE: We are only checking the creation of the tailoring file and ensuring it exists
   # since running openscap tests here requires more memory and causes some out-of-memory issues.
   local tailoring_file_content
-  tailoring_file_content=$($_ssh cat /usr/share/xml/osbuild-openscap-data/tailoring.xml \
+  tailoring_file_path="/oscap_data/tailoring.xml"
+  tailoring_file_content=$($_ssh cat "${tailoring_file_path}" \
       | grep 'idref="xccdf_org.ssgproject.content_rule_rpm_verify_permissions" selected="false"' -c
   )
   if [[ "$tailoring_file_content" -eq 0 ]]; then
-    echo "File /usr/share/xml/osbuild-openscap-data/tailoring.xml has wrong content"
+    echo "File ${tailoring_file_path} has wrong content"
     _error=1
   fi
 
