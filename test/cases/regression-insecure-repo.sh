@@ -72,6 +72,8 @@ EOF
 mkdir -p "DUMMYRPMDIR/rpmbuild"
 rpmbuild --quiet --define "_topdir $dummyrpmdir/rpmbuild" -bb "$dummyspecfile"
 rpmsign --addsign "${dummyrpmdir}"/rpmbuild/RPMS/noarch/*.rpm
+# debug
+sha256sum "${dummyrpmdir}"/rpmbuild/RPMS/noarch/*.rpm
 
 mkdir -p "${dummyrpmdir}/repo"
 cp "${dummyrpmdir}"/rpmbuild/RPMS/noarch/*rpm "$dummyrpmdir/repo"
