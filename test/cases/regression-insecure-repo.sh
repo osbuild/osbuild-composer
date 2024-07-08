@@ -156,6 +156,11 @@ if [[ "${dummysourceurl}" != "${expectedurl}" ]]; then
     exit 1
 fi
 
+# Get worker unit file so we can watch the journal.
+WORKER_UNIT=$(sudo systemctl list-units | grep -o -E "osbuild.*worker.*\.service")
+sudo journalctl -af -n 1 -u "${WORKER_UNIT}" &
+WORKER_JOURNAL_PID=$!
+
 sudo composer-cli --json compose start dummy qcow2 | tee "${composestart}"
 composeid=$(get_build_info '.build_id' "${composestart}")
 
@@ -177,6 +182,9 @@ done
 sudo composer-cli compose delete "${composeid}" >/dev/null
 
 jq . "${composeinfo}"
+
+# Kill the journal monitor
+sudo pkill -P ${WORKER_JOURNAL_PID}
 
 # Did the compose finish with success?
 if [[ $composestatus == FINISHED ]]; then
