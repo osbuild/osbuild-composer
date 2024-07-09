@@ -3,6 +3,7 @@ package disk
 import (
 	"fmt"
 	"math/rand"
+	"reflect"
 
 	"github.com/google/uuid"
 
@@ -34,6 +35,14 @@ type LUKSContainer struct {
 	Clevis *ClevisBind
 
 	Payload Entity
+}
+
+func init() {
+	payloadEntityMap["luks"] = reflect.TypeOf(LUKSContainer{})
+}
+
+func (lc *LUKSContainer) EntityName() string {
+	return "luks"
 }
 
 func (lc *LUKSContainer) IsContainer() bool {

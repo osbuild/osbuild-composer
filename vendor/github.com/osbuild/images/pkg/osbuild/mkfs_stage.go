@@ -1,6 +1,7 @@
 package osbuild
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/osbuild/images/pkg/disk"
@@ -12,6 +13,7 @@ import (
 func GenMkfsStages(pt *disk.PartitionTable, filename string) []*Stage {
 	stages := make([]*Stage, 0, len(pt.Partitions))
 
+	processedBtrfsPartitions := make(map[string]bool)
 	genStage := func(mnt disk.Mountable, path []disk.Entity) error {
 		t := mnt.GetFSType()
 		var stage *Stage
@@ -38,9 +40,23 @@ func GenMkfsStages(pt *disk.PartitionTable, filename string) []*Stage {
 			}
 			stage = NewMkfsFATStage(options, stageDevices)
 		case "btrfs":
+			// the disk library allows only subvolumes as Mountable, so we need to find the underlying btrfs partition
+			// and mkfs it
+			btrfsPart := findBtrfsPartition(path)
+			if btrfsPart == nil {
+				panic(fmt.Sprintf("found btrfs subvolume without btrfs partition: %s", mnt.GetMountpoint()))
+			}
+
+			// btrfs partitions can be shared between multiple subvolumes, so we need to make sure we only create
+			// one
+			if processedBtrfsPartitions[btrfsPart.UUID] {
+				return nil
+			}
+			processedBtrfsPartitions[btrfsPart.UUID] = true
+
 			options := &MkfsBtrfsStageOptions{
-				UUID:  fsSpec.UUID,
-				Label: fsSpec.Label,
+				UUID:  btrfsPart.UUID,
+				Label: btrfsPart.Label,
 			}
 			stage = NewMkfsBtrfsStage(options, stageDevices)
 		case "ext4":
@@ -59,4 +75,13 @@ func GenMkfsStages(pt *disk.PartitionTable, filename string) []*Stage {
 
 	_ = pt.ForEachMountable(genStage) // genStage always returns nil
 	return stages
+}
+
+func findBtrfsPartition(path []disk.Entity) *disk.Btrfs {
+	for _, e := range path {
+		if btrfsPartition, ok := e.(*disk.Btrfs); ok {
+			return btrfsPartition
+		}
+	}
+	return nil
 }
