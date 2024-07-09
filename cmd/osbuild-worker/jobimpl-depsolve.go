@@ -73,7 +73,11 @@ func (impl *DepsolveJobImpl) depsolve(packageSets map[string][]rpmmd.PackageSet,
 	return depsolvedSets, repoConfigs, nil
 }
 
-func workerClientErrorFrom(err error) (*clienterrors.Error, error) {
+func workerClientErrorFrom(err error, logWithId *logrus.Entry) *clienterrors.Error {
+	if err == nil {
+		logWithId.Errorf("workerClientErrorFrom expected an error to be processed. Not nil")
+	}
+
 	switch e := err.(type) {
 	case dnfjson.Error:
 		// Error originates from dnf-json
@@ -81,27 +85,27 @@ func workerClientErrorFrom(err error) (*clienterrors.Error, error) {
 		details := e.Reason
 		switch e.Kind {
 		case "DepsolveError":
-			return clienterrors.New(clienterrors.ErrorDNFDepsolveError, reason, details), nil
+			return clienterrors.New(clienterrors.ErrorDNFDepsolveError, reason, details)
 		case "MarkingErrors":
-			return clienterrors.New(clienterrors.ErrorDNFMarkingErrors, reason, details), nil
+			return clienterrors.New(clienterrors.ErrorDNFMarkingErrors, reason, details)
 		case "RepoError":
-			return clienterrors.New(clienterrors.ErrorDNFRepoError, reason, details), nil
+			return clienterrors.New(clienterrors.ErrorDNFRepoError, reason, details)
 		default:
-			err := fmt.Errorf("Unhandled dnf-json error in depsolve job: %v", err)
+			logWithId.Errorf("Unhandled dnf-json error in depsolve job: %v", err)
 			// This still has the kind/reason format but a kind that's returned
 			// by dnf-json and not explicitly handled here.
-			return clienterrors.New(clienterrors.ErrorDNFOtherError, reason, details), err
+			return clienterrors.New(clienterrors.ErrorDNFOtherError, reason, details)
 		}
 	default:
 		reason := "rpmmd error in depsolve job"
-		details := "<nil>"
-		if err == nil {
-			err = fmt.Errorf("workerClientErrorFrom expected an error to be processed. Not nil")
-		} else {
-			details = err.Error()
-		}
+		details := fmt.Sprintf("%v", err)
 		// Error originates from internal/rpmmd, not from dnf-json
-		return clienterrors.New(clienterrors.ErrorRPMMDError, reason, details), err
+		//
+		// XXX: it seems slightly dangerous to assume that any
+		// "error" we get there is coming from rpmmd, can we
+		// generate a more typed error from dnfjson here for
+		// rpmmd errors?
+		return clienterrors.New(clienterrors.ErrorRPMMDError, reason, details)
 	}
 }
 
@@ -138,10 +142,7 @@ func (impl *DepsolveJobImpl) Run(job worker.Job) error {
 
 	result.PackageSpecs, result.RepoConfigs, err = impl.depsolve(args.PackageSets, args.ModulePlatformID, args.Arch, args.Releasever)
 	if err != nil {
-		result.JobError, err = workerClientErrorFrom(err)
-		if err != nil {
-			logWithId.Errorf(err.Error())
-		}
+		result.JobError = workerClientErrorFrom(err, logWithId)
 	}
 	if err := impl.Solver.CleanCache(); err != nil {
 		// log and ignore
