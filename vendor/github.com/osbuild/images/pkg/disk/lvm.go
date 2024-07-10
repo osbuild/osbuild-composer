@@ -2,6 +2,7 @@ package disk
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 
 	"github.com/osbuild/images/internal/common"
@@ -16,6 +17,14 @@ type LVMVolumeGroup struct {
 	Description string
 
 	LogicalVolumes []LVMLogicalVolume
+}
+
+func init() {
+	payloadEntityMap["lvm"] = reflect.TypeOf(LVMVolumeGroup{})
+}
+
+func (vg *LVMVolumeGroup) EntityName() string {
+	return "lvm"
 }
 
 func (vg *LVMVolumeGroup) IsContainer() bool {

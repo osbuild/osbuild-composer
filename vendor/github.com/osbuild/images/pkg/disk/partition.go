@@ -1,7 +1,10 @@
 package disk
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"reflect"
 )
 
 type Partition struct {
@@ -15,7 +18,7 @@ type Partition struct {
 	UUID string
 
 	// If nil, the partition is raw; It doesn't contain a payload.
-	Payload Entity
+	Payload PayloadEntity
 }
 
 func (p *Partition) IsContainer() bool {
@@ -36,7 +39,7 @@ func (p *Partition) Clone() Entity {
 	}
 
 	if p.Payload != nil {
-		partition.Payload = p.Payload.Clone()
+		partition.Payload = p.Payload.Clone().(PayloadEntity)
 	}
 
 	return partition
@@ -84,4 +87,54 @@ func (p *Partition) IsPReP() bool {
 	}
 
 	return p.Type == "41" || p.Type == PRePartitionGUID
+}
+
+func (p *Partition) MarshalJSON() ([]byte, error) {
+	type partAlias Partition
+
+	entityName := "no-payload"
+	if p.Payload != nil {
+		entityName = p.Payload.EntityName()
+	}
+
+	partWithPayloadType := struct {
+		partAlias
+		PayloadType string
+	}{
+		partAlias(*p),
+		entityName,
+	}
+
+	return json.Marshal(partWithPayloadType)
+}
+
+func (p *Partition) UnmarshalJSON(data []byte) error {
+	type partAlias Partition
+	var partWithoutPayload struct {
+		partAlias
+		Payload     json.RawMessage
+		PayloadType string
+	}
+
+	dec := json.NewDecoder(bytes.NewBuffer(data))
+	if err := dec.Decode(&partWithoutPayload); err != nil {
+		return fmt.Errorf("cannot build partition from %q: %w", data, err)
+	}
+	*p = Partition(partWithoutPayload.partAlias)
+	// no payload, e.g. bios partiton
+	if partWithoutPayload.PayloadType == "no-payload" {
+		return nil
+	}
+
+	entType := payloadEntityMap[partWithoutPayload.PayloadType]
+	if entType == nil {
+		return fmt.Errorf("cannot build partition from %q", data)
+	}
+	entValP := reflect.New(entType).Elem().Addr()
+	ent := entValP.Interface()
+	if err := json.Unmarshal(partWithoutPayload.Payload, &ent); err != nil {
+		return err
+	}
+	p.Payload = ent.(PayloadEntity)
+	return nil
 }
