@@ -34,8 +34,7 @@ func TestMakeJobErrorFromOsbuildOutput(t *testing.T) {
 					},
 				},
 			},
-			expected: `Code: 10, Reason: osbuild build failed in stage:
-bad-stage, Details: []`,
+			expected: `Code: 10, Reason: osbuild build failed in stage: "bad-stage", Details: []`,
 		},
 		{
 			inputData: &osbuild.Result{

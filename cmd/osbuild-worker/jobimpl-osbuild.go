@@ -372,8 +372,8 @@ func makeJobErrorFromOsbuildOutput(osbuildOutput *osbuild.Result) *clienterrors.
 	}
 
 	reason := "osbuild build failed"
-	if len(failedStage) > 0 {
-		reason += " in stage:\n" + failedStage
+	if failedStage != "" {
+		reason += fmt.Sprintf(" in stage: %q", failedStage)
 	}
 	return clienterrors.WorkerClientError(clienterrors.ErrorBuildJob, reason, osbErrors)
 }
