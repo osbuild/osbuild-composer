@@ -20,8 +20,11 @@ import (
 	"encoding/hex"
 	"io"
 	"math/rand"
+	"reflect"
+	"strings"
 
 	"github.com/google/uuid"
+	"golang.org/x/exp/slices"
 )
 
 const (
@@ -59,6 +62,15 @@ type Entity interface {
 	// Clone returns a deep copy of the entity.
 	Clone() Entity
 }
+
+type PayloadEntity interface {
+	Entity
+
+	// EntityName is the type name of the Entity, used for marshaling
+	EntityName() string
+}
+
+var payloadEntityMap = map[string]reflect.Type{}
 
 // Container is the interface for entities that can contain other entities.
 // Together with the base Entity interface this allows to model a generic
@@ -141,6 +153,16 @@ type FSTabOptions struct {
 	Freq uint64
 	// The sixth field of fstab(5); fs_passno
 	PassNo uint64
+}
+
+// ReadOnly returns true is the filesystem is mounted read-only
+func (o FSTabOptions) ReadOnly() bool {
+	opts := strings.Split(o.MntOps, ",")
+
+	// filesystem is mounted read-only if:
+	// - there's ro (because rw is the default)
+	// - AND there's no rw (because rw overrides ro)
+	return slices.Contains(opts, "ro") && !slices.Contains(opts, "rw")
 }
 
 // uuid generator helpers

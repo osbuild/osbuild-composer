@@ -85,10 +85,22 @@ func (img *AnacondaTarInstaller) InstantiateManifest(m *manifest.Manifest,
 	buildPipeline := manifest.NewBuild(m, runner, repos, nil)
 	buildPipeline.Checkpoint()
 
-	if img.Kickstart != nil && img.Kickstart.Unattended {
+	if img.Kickstart == nil {
+		img.Kickstart = &kickstart.Options{}
+	}
+
+	if img.Kickstart.Unattended {
 		// if we're building an unattended installer, override the
 		// ISORootKickstart option
 		img.ISORootKickstart = true
+	}
+
+	if img.ISORootKickstart {
+		// kickstart file will be in the iso root and not interactive-defaults,
+		// so let's make sure the kickstart path option is set
+		if img.Kickstart.Path == "" {
+			img.Kickstart.Path = osbuild.KickstartPathOSBuild
+		}
 	}
 
 	anacondaPipeline := manifest.NewAnacondaInstaller(
@@ -109,7 +121,6 @@ func (img *AnacondaTarInstaller) InstantiateManifest(m *manifest.Manifest,
 		anacondaPipeline.InteractiveDefaultsKickstart = &kickstart.Options{
 			Users:  img.Kickstart.Users,
 			Groups: img.Kickstart.Groups,
-			Path:   osbuild.KickstartPathOSBuild,
 		}
 	}
 	anacondaPipeline.Variant = img.Variant
@@ -141,14 +152,9 @@ func (img *AnacondaTarInstaller) InstantiateManifest(m *manifest.Manifest,
 	bootTreePipeline.UEFIVendor = img.Platform.GetUEFIVendor()
 	bootTreePipeline.ISOLabel = img.ISOLabel
 
-	kspath := osbuild.KickstartPathOSBuild
 	kernelOpts := []string{fmt.Sprintf("inst.stage2=hd:LABEL=%s", img.ISOLabel)}
 	if img.ISORootKickstart {
-		ksPath := osbuild.KickstartPathOSBuild
-		if img.Kickstart != nil && img.Kickstart.Path != "" {
-			ksPath = img.Kickstart.Path
-		}
-		kernelOpts = append(kernelOpts, fmt.Sprintf("inst.ks=hd:LABEL=%s:%s", img.ISOLabel, ksPath))
+		kernelOpts = append(kernelOpts, fmt.Sprintf("inst.ks=hd:LABEL=%s:%s", img.ISOLabel, img.Kickstart.Path))
 	}
 	if img.OSCustomizations.FIPS {
 		kernelOpts = append(kernelOpts, "fips=1")
@@ -171,7 +177,7 @@ func (img *AnacondaTarInstaller) InstantiateManifest(m *manifest.Manifest,
 	isoTreePipeline.Kickstart = img.Kickstart
 	isoTreePipeline.PayloadPath = tarPath
 	if img.ISORootKickstart {
-		isoTreePipeline.Kickstart.Path = kspath
+		isoTreePipeline.Kickstart.Path = img.Kickstart.Path
 	}
 
 	isoTreePipeline.SquashfsCompression = img.SquashfsCompression

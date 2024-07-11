@@ -41,8 +41,7 @@ func (opts *BootupdStageOptions) validate(devices map[string]Device) error {
 // to find all the bootloader configs
 func validateBootupdMounts(mounts []Mount, pf platform.Platform) error {
 	requiredMounts := map[string]bool{
-		"/":     true,
-		"/boot": true,
+		"/": true,
 	}
 	if pf.GetUEFIVendor() != "" {
 		requiredMounts["/boot/efi"] = true
@@ -99,6 +98,15 @@ func genMountsForBootupd(source string, pt *disk.PartitionTable) ([]Mount, error
 			}
 			mount.Partition = common.ToPtr(idx + 1)
 			mounts = append(mounts, *mount)
+		case *disk.Btrfs:
+			for i := range payload.Subvolumes {
+				mount, err := genOsbuildMount(source, &payload.Subvolumes[i])
+				if err != nil {
+					return nil, err
+				}
+				mount.Partition = common.ToPtr(idx + 1)
+				mounts = append(mounts, *mount)
+			}
 		default:
 			return nil, fmt.Errorf("type %T not supported by bootupd handling yet", part.Payload)
 		}

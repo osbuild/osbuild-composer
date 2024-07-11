@@ -2,6 +2,7 @@ package disk
 
 import (
 	"math/rand"
+	"reflect"
 
 	"github.com/google/uuid"
 )
@@ -20,6 +21,14 @@ type Filesystem struct {
 	FSTabFreq uint64
 	// The sixth field of fstab(5); fs_passno
 	FSTabPassNo uint64
+}
+
+func init() {
+	payloadEntityMap["filesystem"] = reflect.TypeOf(Filesystem{})
+}
+
+func (fs *Filesystem) EntityName() string {
+	return "filesystem"
 }
 
 func (fs *Filesystem) IsContainer() bool {
