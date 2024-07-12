@@ -13,6 +13,7 @@ package client
 import (
 	"fmt"
 	"os/exec"
+	"runtime"
 	"sort"
 	"strconv"
 	"testing"
@@ -957,6 +958,64 @@ func TestBlueprintDepsolveGlobsV0(t *testing.T) {
 	assert.True(t, common.IsStringInSortedSlice(names, "openssh-clients"))
 	assert.True(t, common.IsStringInSortedSlice(names, "openssh-server"))
 	assert.True(t, common.IsStringInSortedSlice(names, "tmux"))
+}
+
+// depsolve a blueprint with package from 3rd party with module_hotfixes
+func TestBlueprintDepsolveModuleHotfixesV0(t *testing.T) {
+	// Depends on real packages, only run as an integration test
+	if testState.unitTest {
+		t.Skip()
+	}
+	var repo string
+	switch runtime.GOARCH {
+	case "amd64":
+		repo = "https://rpmrepo.osbuild.org/v2/mirror/public/el8/el8-x86_64-nginx-20231207"
+	case "arm64":
+		repo = "https://rpmrepo.osbuild.org/v2/mirror/public/el8/el8-aarch64-nginx-20231207"
+	default:
+		// We don't know how to test for another architectures :)
+		t.Skip()
+	}
+
+	source := fmt.Sprintf(`{
+		"id": "nginx",
+		"name": "nginx disabled modularity filtering",
+		"url": "%s",
+		"type": "yum-baseurl",
+		"check_gpg": true,
+		"gpgkeys": ["https://nginx.org/keys/nginx_signing.key"],
+		"module_hotfixes": true
+	}`, repo)
+
+	respSource, err := PostJSONSourceV1(testState.socket, source)
+	require.NoError(t, err, "POST source failed with a client error")
+	require.True(t, respSource.Status, "POST blueprint failed: %#v", respSource)
+
+	bp := `{
+		"name": "test-deps-blueprint-module-hotfixes-v0",
+		"description": "CheckBlueprintDepsolveModuleHotfixesV0",
+		"version": "0.0.1",
+		"packages": [{"name": "nginx", "version": "*"},
+		{"name": "nginx-module-njs", "version": "*"}]
+	}`
+	t.Log(bp)
+
+	// Push a blueprint
+	resp, err := PostJSONBlueprintV0(testState.socket, bp)
+	require.NoError(t, err, "POST blueprint failed with a client error")
+	require.True(t, resp.Status, "POST blueprint failed: %#v", resp)
+
+	// Depsolve the blueprint
+	deps, api, err := DepsolveBlueprintV0(testState.socket, "test-deps-blueprint-module-hotfixes-v0")
+	require.NoError(t, err, "Depsolve blueprint failed with a client error")
+	require.Nil(t, api, "DepsolveBlueprint failed: %#v", api)
+	require.Equal(t, 0, len(deps.Errors), "Errors occurred during depsolving")
+	require.Greater(t, len(deps.Blueprints), 0, "No blueprint dependencies returned")
+
+	// cleanup the repo
+	resp, err = DeleteSourceV1(testState.socket, "nginx")
+	require.NoError(t, err, "DELETE source failed with a client error")
+	require.True(t, resp.Status, "DELETE source failed: %#v", resp)
 }
 
 // depsolve a non-existent blueprint
