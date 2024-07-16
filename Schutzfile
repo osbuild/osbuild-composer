@@ -292,5 +292,51 @@
         ]
       }
     ]
+  },
+  "centos-stream-10": {
+    "dependencies": {
+      "osbuild": {
+        "commit": "df83c629201f3955dfb07016c31409d85f376a29"
+      }
+    },
+    "repos": [
+      {
+        "file": "/etc/yum.repos.d/centos.repo",
+        "x86_64": [
+          {
+            "title": "baseos",
+            "name": "baseos",
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-x86_64-baseos-20240715"
+          },
+          {
+            "title": "appstream",
+            "name": "appstream",
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-x86_64-appstream-20240715"
+          },
+          {
+            "title": "crb",
+            "name": "crb",
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-x86_64-crb-20240715"
+          }
+        ],
+        "aarch64": [
+          {
+            "title": "baseos",
+            "name": "baseos",
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-baseos-20240715"
+          },
+          {
+            "title": "appstream",
+            "name": "appstream",
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-appstream-20240715"
+          },
+          {
+            "title": "crb",
+            "name": "crb",
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-aarch64-crb-20240715"
+          }
+        ]
+      }
+    ]
   }
 }
