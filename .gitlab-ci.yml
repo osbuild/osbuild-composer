@@ -204,6 +204,8 @@ Base:
           - aws/rhel-9.5-nightly-aarch64
           - aws/centos-stream-9-x86_64
           - aws/centos-stream-9-aarch64
+          - aws/centos-stream-10-x86_64
+          - aws/centos-stream-10-aarch64
         INTERNAL_NETWORK: ["true"]
 
 .regression:
@@ -230,6 +232,8 @@ Base:
           - aws/rhel-9.5-nightly-aarch64
           - aws/centos-stream-9-x86_64
           - aws/centos-stream-9-aarch64
+          - aws/centos-stream-10-x86_64
+          - aws/centos-stream-10-aarch64
         INTERNAL_NETWORK: ["true"]
 
 regression-composer-works-behind-satellite-fallback:
@@ -252,7 +256,7 @@ regression-excluded-dependency:
   extends: .regression
   rules:
     # WHITELIST & BLACKLIST: excluding GA runners from the PR pipeline
-    - if: $RUNNER =~ "/^.*(rhel-8.*|rhel-9.*|centos-stream-9).*$/" && $CI_PIPELINE_SOURCE != "schedule" && $RUNNER !~ /[\S]+rhel-[\S]+-(?:(?:ga)|(?:eus))[\S]+/
+    - if: $RUNNER =~ "/^.*(rhel-8.*|rhel-9.*|centos-stream-*).*$/" && $CI_PIPELINE_SOURCE != "schedule" && $RUNNER !~ /[\S]+rhel-[\S]+-(?:(?:ga)|(?:eus))[\S]+/
     - !reference [.nightly_rules_all, rules]
     - !reference [.ga_rules_all, rules]
   variables:
@@ -348,6 +352,7 @@ Trigger-rhel-edge-ci:
       - aws/rhel-9.5-nightly-x86_64
       - aws/rhel-9.5-nightly-aarch64
       - aws/centos-stream-9-x86_64
+      - aws/centos-stream-10-x86_64
     INTERNAL_NETWORK: ["true"]
 
 .integration_rhel:
@@ -762,6 +767,7 @@ Installer:
       - RUNNER:
           - rhos-01/rhel-9.5-nightly-x86_64
           - rhos-01/centos-stream-9-x86_64
+          - rhos-01/centos-stream-10-x86_64
 
 ContainerUpload:
   stage: test
@@ -792,6 +798,7 @@ ContainerEmbedding:
       - INTERNAL_NETWORK: "true"
         RUNNER:
         - aws/centos-stream-9-x86_64
+        - aws/centos-stream-10-x86_64
         - aws/rhel-9.5-nightly-x86_64
         - aws/rhel-9.5-nightly-aarch64
 
