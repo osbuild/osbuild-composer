@@ -222,7 +222,11 @@ func loadConfigFromEnv(intf interface{}) error {
 			if err != nil {
 				return err
 			}
-			fieldV.Set(reflect.ValueOf(value))
+			// Don't override the whole map, just update the keys that are present in the env.
+			// This is consistent with how loading config from the file works.
+			for k, v := range value {
+				fieldV.SetMapIndex(reflect.ValueOf(k), reflect.ValueOf(v))
+			}
 		case reflect.Struct:
 			err := loadConfigFromEnv(fieldV.Addr().Interface())
 			if err != nil {

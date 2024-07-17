@@ -170,12 +170,12 @@ func TestConfigFromEnv(t *testing.T) {
 		}
 	}()
 
-	os.Setenv("DISTRO_ALIASES", "rhel-7=rhel-7.9,rhel-8=rhel-8.9,rhel-9=rhel-9.3,rhel-10.0=rhel-9.5")
+	os.Setenv("DISTRO_ALIASES", "rhel-7=rhel-7.9,rhel-8=rhel-8.9,rhel-9=rhel-9.3")
 	expectedDistroAliases := map[string]string{
-		"rhel-7":    "rhel-7.9",
-		"rhel-8":    "rhel-8.9",
-		"rhel-9":    "rhel-9.3",
-		"rhel-10.0": "rhel-9.5",
+		"rhel-7":  "rhel-7.9",
+		"rhel-8":  "rhel-8.9",
+		"rhel-9":  "rhel-9.3",
+		"rhel-10": "rhel-10.0", // this value is from the default config
 	}
 
 	config, err := LoadConfig("")
