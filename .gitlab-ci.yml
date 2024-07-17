@@ -178,6 +178,7 @@ Prepare-rhel-internal:
           # NOTE: 1 runner prepares for all arches b/c subsequent jobs download
           # artifacts from all previous jobs and the last one wins
           - aws/rhel-9.5-nightly-x86_64
+          - aws/rhel-10.0-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
 
 Base:
@@ -202,6 +203,8 @@ Base:
       - RUNNER:
           - aws/rhel-9.5-nightly-x86_64
           - aws/rhel-9.5-nightly-aarch64
+          - aws/rhel-10.0-nightly-x86_64
+          - aws/rhel-10.0-nightly-aarch64
           - aws/centos-stream-9-x86_64
           - aws/centos-stream-9-aarch64
           - aws/centos-stream-10-x86_64
@@ -230,6 +233,8 @@ Base:
           - aws/rhel-9.4-ga-aarch64
           - aws/rhel-9.5-nightly-x86_64
           - aws/rhel-9.5-nightly-aarch64
+          - aws/rhel-10.0-nightly-x86_64
+          - aws/rhel-10.0-nightly-aarch64
           - aws/centos-stream-9-x86_64
           - aws/centos-stream-9-aarch64
           - aws/centos-stream-10-x86_64
@@ -322,6 +327,8 @@ Image Tests:
           - aws/rhel-8.10-ga-aarch64
           - aws/rhel-9.5-nightly-x86_64
           - aws/rhel-9.5-nightly-aarch64
+          - aws/rhel-10.0-nightly-x86_64
+          - aws/rhel-10.0-nightly-aarch64
         INTERNAL_NETWORK: ["true"]
 
 Trigger-rhel-edge-ci:
@@ -351,6 +358,7 @@ Trigger-rhel-edge-ci:
       - aws/rhel-9.4-ga-x86_64
       - aws/rhel-9.5-nightly-x86_64
       - aws/rhel-9.5-nightly-aarch64
+      - aws/rhel-10.0-nightly-x86_64
       - aws/centos-stream-9-x86_64
       - aws/centos-stream-10-x86_64
     INTERNAL_NETWORK: ["true"]
@@ -451,6 +459,7 @@ OpenShift_Virtualization:
     matrix:
       - RUNNER:
           - aws/rhel-9.5-nightly-x86_64
+          - aws/rhel-10.0-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
 
 azure.sh:
@@ -548,6 +557,7 @@ API:
           - aws/rhel-8.10-ga-x86_64
           - aws/rhel-9.4-ga-x86_64
           - aws/rhel-9.5-nightly-x86_64
+          - aws/rhel-10.0-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
       - IMAGE_TYPE: ["iot-commit"]
         RUNNER:
@@ -607,6 +617,8 @@ API-module-hotfixes:
           - gcp/rhel-8.10-ga-x86_64
           - gcp/rhel-9.4-ga-x86_64
           - gcp/rhel-9.5-nightly-x86_64
+          # TODO: uncomment when there is el10 GCE image
+          # - gcp/rhel-10.0-nightly-x86_64
           - gcp/centos-stream-9-x86_64
         INTERNAL_NETWORK: ["true"]
 
@@ -647,6 +659,7 @@ weldr-distro-dot-notation+aliases:
       - RUNNER:
           - aws/rhel-8.8-ga-x86_64
           - aws/rhel-9.5-nightly-x86_64
+          - aws/rhel-10.0-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
 
 .generic_s3:
@@ -766,6 +779,7 @@ Installer:
     matrix:
       - RUNNER:
           - rhos-01/rhel-9.5-nightly-x86_64
+          - rhos-01/rhel-10.0-nightly-x86_64
           - rhos-01/centos-stream-9-x86_64
           - rhos-01/centos-stream-10-x86_64
 
@@ -801,6 +815,7 @@ ContainerEmbedding:
         - aws/centos-stream-10-x86_64
         - aws/rhel-9.5-nightly-x86_64
         - aws/rhel-9.5-nightly-aarch64
+        - aws/rhel-10.0-nightly-x86_64
 
 WorkerExecutor:
   stage: test
