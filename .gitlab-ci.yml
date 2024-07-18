@@ -117,6 +117,8 @@ RPM:
           - aws/rhel-9.4-ga-aarch64
           - aws/centos-stream-9-x86_64
           - aws/centos-stream-9-aarch64
+          - aws/centos-stream-10-x86_64
+          - aws/centos-stream-10-aarch64
       - <<: *RPM_RUNNERS_RHEL
 
 Build -tests RPM for RHEL:
