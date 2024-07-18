@@ -47,9 +47,10 @@ func GetTestBlueprint() blueprint.Blueprint {
 	expected.Customizations = &blueprint.Customizations{
 		User: []blueprint.UserCustomization{
 			blueprint.UserCustomization{
-				Name:   "admin",
-				Key:    common.ToPtr("dummy ssh-key"),
-				Groups: []string{"users", "wheel"},
+				Name:     "admin",
+				Key:      common.ToPtr("dummy ssh-key"),
+				Password: common.ToPtr("$6$secret-password"),
+				Groups:   []string{"users", "wheel"},
 			},
 		},
 		Directories: []blueprint.DirectoryCustomization{
@@ -165,9 +166,10 @@ func TestGetBlueprintFromCustomizations(t *testing.T) {
 	cr = ComposeRequest{Customizations: &Customizations{
 		Users: &[]User{
 			User{
-				Name:   "admin",
-				Key:    common.ToPtr("dummy ssh-key"),
-				Groups: &[]string{"users", "wheel"},
+				Name:     "admin",
+				Key:      common.ToPtr("dummy ssh-key"),
+				Password: common.ToPtr("$6$secret-password"),
+				Groups:   &[]string{"users", "wheel"},
 			}},
 		Packages: &[]string{"bash", "tmux"},
 		Containers: &[]Container{
@@ -264,6 +266,25 @@ func TestGetBlueprintFromCustomizations(t *testing.T) {
 	assert.Equal(t, GetTestBlueprint(), bp)
 }
 
+func TestBlueprintFromCustomizationPasswordsHashed(t *testing.T) {
+	// Construct the compose request with customizations
+	plaintextPassword := "secret-password"
+	cr := ComposeRequest{Customizations: &Customizations{
+		Users: &[]User{
+			User{
+				Name:     "admin",
+				Key:      common.ToPtr("dummy ssh-key"),
+				Password: common.ToPtr(plaintextPassword),
+				Groups:   &[]string{"users", "wheel"},
+			}},
+	}}
+
+	bp, err := cr.GetBlueprintFromCustomizations()
+	require.Nil(t, err)
+	// Passwords should be hashed
+	assert.NotEqual(t, plaintextPassword, bp.Customizations.User[0].Password)
+}
+
 func TestGetBlueprintFromCompose(t *testing.T) {
 	// Empty request should return empty blueprint
 	cr := ComposeRequest{}
@@ -300,9 +321,10 @@ func TestGetBlueprintFromCompose(t *testing.T) {
 		Customizations: &BlueprintCustomizations{
 			User: &[]BlueprintUser{
 				{
-					Name:   "admin",
-					Key:    common.ToPtr("dummy ssh-key"),
-					Groups: &[]string{"users", "wheel"},
+					Name:     "admin",
+					Key:      common.ToPtr("dummy ssh-key"),
+					Password: common.ToPtr("$6$secret-password"),
+					Groups:   &[]string{"users", "wheel"},
 				}},
 			Directories: &[]Directory{
 				Directory{
