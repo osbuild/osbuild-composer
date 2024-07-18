@@ -1764,6 +1764,13 @@ components:
         key:
           type: string
           example: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINrGKErMYi+MMUwuHaRAJmRLoIzRf2qD2dD5z0BTx/6x"
+        password:
+          type: string
+          format: password
+          description: |
+            If the password starts with $6$, $5$, or $2b$ it will be stored as
+            an encrypted password. Otherwise it will be treated as a plain text
+            password.
     BlueprintUser:
       type: object
       additionalProperties: false

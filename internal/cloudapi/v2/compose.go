@@ -530,9 +530,10 @@ func (request *ComposeRequest) GetBlueprintFromCustomizations() (blueprint.Bluep
 			}
 			userCustomizations = append(userCustomizations,
 				blueprint.UserCustomization{
-					Name:   user.Name,
-					Key:    user.Key,
-					Groups: groups,
+					Name:     user.Name,
+					Key:      user.Key,
+					Password: user.Password,
+					Groups:   groups,
 				},
 			)
 		}
@@ -898,6 +899,10 @@ func (request *ComposeRequest) GetBlueprintFromCustomizations() (blueprint.Bluep
 		bp.Customizations = nil
 	}
 
+	err = bp.CryptPasswords()
+	if err != nil {
+		return bp, fmt.Errorf("Error hashing passwords: %s", err.Error())
+	}
 	return bp, nil
 }
 
