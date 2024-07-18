@@ -266,7 +266,7 @@ func genOsbuildMount(source string, mnt disk.Mountable) (*Mount, error) {
 	}
 }
 
-// genMountsDevicesFromPt generates osbuild mounts and devices from a disk.PartitionTable
+// GenMountsDevicesFromPT generates osbuild mounts and devices from a disk.PartitionTable
 // filename is the name of the underlying image file (which will get loop-mounted).
 //
 // Returned values:
@@ -274,7 +274,7 @@ func genOsbuildMount(source string, mnt disk.Mountable) (*Mount, error) {
 // 2) generated mounts
 // 3) generated devices
 // 4) error if any
-func genMountsDevicesFromPt(filename string, pt *disk.PartitionTable) (string, []Mount, map[string]Device, error) {
+func GenMountsDevicesFromPT(filename string, pt *disk.PartitionTable) (string, []Mount, map[string]Device, error) {
 	devices := make(map[string]Device, len(pt.Partitions))
 	mounts := make([]Mount, 0, len(pt.Partitions))
 	var fsRootMntName string
