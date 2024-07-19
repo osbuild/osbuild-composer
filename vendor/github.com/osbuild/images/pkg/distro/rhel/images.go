@@ -3,7 +3,6 @@ package rhel
 import (
 	"fmt"
 	"math/rand"
-	"path/filepath"
 
 	"github.com/osbuild/images/internal/workload"
 	"github.com/osbuild/images/pkg/blueprint"
@@ -211,37 +210,13 @@ func osCustomizations(
 		}
 		osc.Directories = append(osc.Directories, oscapDataNode)
 
-		var datastream = oscapConfig.DataStream
-		if datastream == "" {
-			if imageConfig.DefaultOSCAPDatastream == nil {
-				return manifest.OSCustomizations{}, fmt.Errorf("No OSCAP datastream specified and the distro does not have any default set")
-			}
-			datastream = *imageConfig.DefaultOSCAPDatastream
-		}
-
-		remediationConfig := oscap.RemediationConfig{
-			Datastream:         datastream,
-			ProfileID:          oscapConfig.ProfileID,
-			CompressionEnabled: true,
-		}
-
-		var tailoringConfig *oscap.TailoringConfig
-		if oscapConfig.Tailoring != nil {
-			remediationConfig.TailoringPath = filepath.Join(oscap.DataDir, "tailoring.xml")
-			tailoringConfig = &oscap.TailoringConfig{
-				RemediationConfig: remediationConfig,
-				TailoredProfileID: fmt.Sprintf("%s_osbuild_tailoring", oscapConfig.ProfileID),
-				Selected:          oscapConfig.Tailoring.Selected,
-				Unselected:        oscapConfig.Tailoring.Unselected,
-			}
-			// we need to set this after the tailoring config
-			// since the tailoring config needs to know about both
-			// the base profile id and the tailored profile id
-			remediationConfig.ProfileID = tailoringConfig.TailoredProfileID
+		remediationConfig, tailoringConfig, err := oscap.NewConfigs(*oscapConfig, imageConfig.DefaultOSCAPDatastream)
+		if err != nil {
+			panic(fmt.Errorf("error creating OpenSCAP configs: %w", err))
 		}
 
 		osc.OpenSCAPTailorConfig = tailoringConfig
-		osc.OpenSCAPRemediationConfig = &remediationConfig
+		osc.OpenSCAPRemediationConfig = remediationConfig
 	}
 
 	osc.ShellInit = imageConfig.ShellInit

@@ -49,7 +49,7 @@ dario.cat/mergo
 github.com/Azure/azure-sdk-for-go/services/network/mgmt/2019-09-01/network
 github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2019-05-01/resources
 github.com/Azure/azure-sdk-for-go/version
-# github.com/Azure/azure-sdk-for-go/sdk/azcore v1.12.0
+# github.com/Azure/azure-sdk-for-go/sdk/azcore v1.13.0
 ## explicit; go 1.18
 github.com/Azure/azure-sdk-for-go/sdk/azcore
 github.com/Azure/azure-sdk-for-go/sdk/azcore/arm
@@ -76,7 +76,7 @@ github.com/Azure/azure-sdk-for-go/sdk/azcore/tracing
 ## explicit; go 1.18
 github.com/Azure/azure-sdk-for-go/sdk/azidentity
 github.com/Azure/azure-sdk-for-go/sdk/azidentity/internal
-# github.com/Azure/azure-sdk-for-go/sdk/internal v1.9.0
+# github.com/Azure/azure-sdk-for-go/sdk/internal v1.10.0
 ## explicit; go 1.18
 github.com/Azure/azure-sdk-for-go/sdk/internal/diag
 github.com/Azure/azure-sdk-for-go/sdk/internal/errorinfo
@@ -94,7 +94,7 @@ github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources
 # github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage v1.6.0
 ## explicit; go 1.18
 github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage
-# github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.3.2
+# github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.4.0
 ## explicit; go 1.18
 github.com/Azure/azure-sdk-for-go/sdk/storage/azblob
 github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/appendblob
@@ -212,7 +212,7 @@ github.com/acarl005/stripansi
 # github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2
 ## explicit; go 1.13
 github.com/asaskevich/govalidator
-# github.com/aws/aws-sdk-go v1.54.18
+# github.com/aws/aws-sdk-go v1.54.20
 ## explicit; go 1.19
 github.com/aws/aws-sdk-go/aws
 github.com/aws/aws-sdk-go/aws/arn
@@ -293,7 +293,7 @@ github.com/containerd/errdefs
 ## explicit; go 1.19
 github.com/containerd/stargz-snapshotter/estargz
 github.com/containerd/stargz-snapshotter/estargz/errorutil
-# github.com/containers/common v0.59.1
+# github.com/containers/common v0.59.2
 ## explicit; go 1.21
 github.com/containers/common/pkg/retry
 # github.com/containers/image/v5 v5.31.1
@@ -846,7 +846,7 @@ github.com/opencontainers/selinux/go-selinux
 github.com/opencontainers/selinux/go-selinux/label
 github.com/opencontainers/selinux/pkg/pwalk
 github.com/opencontainers/selinux/pkg/pwalkdir
-# github.com/openshift-online/ocm-sdk-go v0.1.429
+# github.com/openshift-online/ocm-sdk-go v0.1.431
 ## explicit; go 1.21
 github.com/openshift-online/ocm-sdk-go/authentication
 github.com/openshift-online/ocm-sdk-go/errors
@@ -862,7 +862,7 @@ github.com/oracle/oci-go-sdk/v54/identity
 github.com/oracle/oci-go-sdk/v54/objectstorage
 github.com/oracle/oci-go-sdk/v54/objectstorage/transfer
 github.com/oracle/oci-go-sdk/v54/workrequests
-# github.com/osbuild/images v0.70.0
+# github.com/osbuild/images v0.71.0
 ## explicit; go 1.21
 github.com/osbuild/images/internal/common
 github.com/osbuild/images/internal/environment
@@ -1172,7 +1172,7 @@ golang.org/x/crypto/sha3
 golang.org/x/exp/constraints
 golang.org/x/exp/maps
 golang.org/x/exp/slices
-# golang.org/x/mod v0.18.0
+# golang.org/x/mod v0.19.0
 ## explicit; go 1.18
 golang.org/x/mod/internal/lazyregexp
 golang.org/x/mod/module
@@ -1233,7 +1233,7 @@ golang.org/x/text/width
 # golang.org/x/time v0.5.0
 ## explicit; go 1.18
 golang.org/x/time/rate
-# golang.org/x/tools v0.22.0
+# golang.org/x/tools v0.23.0
 ## explicit; go 1.19
 golang.org/x/tools/go/ast/astutil
 golang.org/x/tools/imports
