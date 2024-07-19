@@ -12,6 +12,12 @@ if [[ $ID == rhel && ${VERSION_ID%.*} == 9 ]]; then
 
   # default to a nightly tree but respect values passed from ENV so we can test rel-eng composes as well
   COMPOSE_URL="${COMPOSE_URL:-http://download.devel.redhat.com/rhel-9/nightly/RHEL-9/$COMPOSE_ID}"
+
+elif [[ $ID == rhel && ${VERSION_ID%.*} == 10 ]]; then
+  COMPOSE_ID=$(curl -L http://download.devel.redhat.com/rhel-10/nightly/RHEL-10-Public-Beta/latest-RHEL-"${VERSION_ID}"/COMPOSE_ID)
+
+  # default to a nightly tree but respect values passed from ENV so we can test rel-eng composes as well
+  COMPOSE_URL="${COMPOSE_URL:-http://download.devel.redhat.com/rhel-10/nightly/RHEL-10-Public-Beta/$COMPOSE_ID}"
 fi
 
 # in case COMPOSE_URL was defined from the outside refresh COMPOSE_ID file,
