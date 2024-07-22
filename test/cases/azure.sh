@@ -52,6 +52,7 @@ if ! hash az; then
     mkdir "${AZURE_CMD_CREDS_DIR}"
 
     AZURE_CMD="sudo ${CONTAINER_RUNTIME} run --rm \
+        --net=host \
         -v ${AZURE_CMD_CREDS_DIR}:/root/.azure:Z \
         -v ${TEMPDIR}:${TEMPDIR}:Z \
         ${CONTAINER_IMAGE_CLOUD_TOOLS} az"
@@ -240,6 +241,7 @@ cp "${CIV_CONFIG_FILE}" "${TEMPDIR}/civ_config.yml"
 # https://issues.redhat.com/browse/CLOUDX-488
 if nvrGreaterOrEqual "osbuild-composer" "83"; then
     sudo "${CONTAINER_RUNTIME}" run \
+        --net=host \
         -a stdout -a stderr \
         -e ARM_CLIENT_ID="${V2_AZURE_CLIENT_ID}" \
         -e ARM_CLIENT_SECRET="${V2_AZURE_CLIENT_SECRET}" \
