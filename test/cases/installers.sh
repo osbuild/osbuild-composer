@@ -131,6 +131,9 @@ case "${ID}-${VERSION_ID}" in
     centos-9)
         OS_VARIANT="centos-stream9"
         ;;
+    centos-10)
+        OS_VARIANT="centos-stream10"
+        ;;
     *)
         redprint "unsupported distro: ${ID}-${VERSION_ID}"
         exit 1;;
