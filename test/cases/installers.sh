@@ -125,6 +125,9 @@ case "${ID}-${VERSION_ID}" in
     rhel-9*)
         OS_VARIANT="rhel9-unknown"
         ;;
+    rhel-10*)
+        OS_VARIANT="rhel10-unknown"
+        ;;
     centos-8)
         OS_VARIANT="centos8"
         ;;
