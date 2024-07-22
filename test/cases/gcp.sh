@@ -86,6 +86,7 @@ if ! hash gcloud; then
     mkdir "${GCP_CMD_CREDS_DIR}"
 
     GCP_CMD="sudo ${CONTAINER_RUNTIME} run --rm \
+        --net=host \
         -v ${GCP_CMD_CREDS_DIR}:/root/.config/gcloud:Z \
         -v ${GOOGLE_APPLICATION_CREDENTIALS}:${GOOGLE_APPLICATION_CREDENTIALS}:Z \
         -v ${TEMPDIR}:${TEMPDIR}:Z \

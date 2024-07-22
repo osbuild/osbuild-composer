@@ -68,6 +68,7 @@ if ! hash aws; then
         -e AWS_ACCESS_KEY_ID=${V2_AWS_ACCESS_KEY_ID} \
         -e AWS_SECRET_ACCESS_KEY=${V2_AWS_SECRET_ACCESS_KEY} \
         -v ${TEMPDIR}:${TEMPDIR}:Z \
+        --net=host \
         ${CONTAINER_IMAGE_CLOUD_TOOLS} aws --region $AWS_REGION --output json --color on"
 else
     echo "Using pre-installed 'aws' from the system"
@@ -259,6 +260,7 @@ cp "${CIV_CONFIG_FILE}" "${TEMPDIR}/civ_config.yml"
 # https://issues.redhat.com/browse/CLOUDX-488
 if nvrGreaterOrEqual "osbuild-composer" "83"; then
     sudo "${CONTAINER_RUNTIME}" run \
+        --net=host \
         -a stdout -a stderr \
         -e AWS_ACCESS_KEY_ID="${V2_AWS_ACCESS_KEY_ID}" \
         -e AWS_SECRET_ACCESS_KEY="${V2_AWS_SECRET_ACCESS_KEY}" \
