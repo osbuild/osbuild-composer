@@ -61,7 +61,7 @@ func GenCopyFSTreeOptions(inputName, inputPipeline, filename string, pt *disk.Pa
 	[]Mount,
 ) {
 
-	fsRootMntName, mounts, devices, err := genMountsDevicesFromPt(filename, pt)
+	fsRootMntName, mounts, devices, err := GenMountsDevicesFromPT(filename, pt)
 	if err != nil {
 		panic(err)
 	}
