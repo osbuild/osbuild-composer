@@ -979,6 +979,8 @@ components:
           type: string
         tailoring:
           $ref: '#/components/schemas/OpenSCAPTailoring'
+        json_tailoring:
+          $ref: '#/components/schemas/OpenSCAPJSONTailoring'
     BlueprintOpenSCAP:
       type: object
       required:
@@ -990,6 +992,8 @@ components:
           type: string
         tailoring:
           $ref: '#/components/schemas/OpenSCAPTailoring'
+        json_tailoring:
+          $ref: '#/components/schemas/OpenSCAPJSONTailoring'
     OpenSCAPTailoring:
       type: object
       properties:
@@ -1001,6 +1005,16 @@ components:
           type: array
           items:
             type: string
+    OpenSCAPJSONTailoring:
+      type: object
+      required:
+        - profile_id
+        - filepath
+      properties:
+        profile_id:
+          type: string
+        filepath:
+          type: string
     Installer:
       type: object
       properties:
