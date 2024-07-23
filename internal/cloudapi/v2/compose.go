@@ -233,6 +233,9 @@ func (request *ComposeRequest) GetCustomizationsFromBlueprintRequest() (*bluepri
 		if rbpc.Openscap.Datastream != nil {
 			oscap.DataStream = *rbpc.Openscap.Datastream
 		}
+		if rbpc.Openscap.Tailoring != nil && rbpc.Openscap.JsonTailoring != nil {
+			return nil, fmt.Errorf("OpenSCAP customization error: choose one option between OpenSCAP tailoring and OpenSCAP json tailoring")
+		}
 		if tailoring := rbpc.Openscap.Tailoring; tailoring != nil {
 			tc := blueprint.OpenSCAPTailoringCustomizations{}
 			if tailoring.Selected != nil && len(*tailoring.Selected) > 0 {
@@ -242,6 +245,12 @@ func (request *ComposeRequest) GetCustomizationsFromBlueprintRequest() (*bluepri
 				tc.Unselected = append(tc.Unselected, *tailoring.Unselected...)
 			}
 			oscap.Tailoring = &tc
+		}
+		if jsonTailoring := rbpc.Openscap.JsonTailoring; jsonTailoring != nil {
+			oscap.JSONTailoring = &blueprint.OpenSCAPJSONTailoringCustomizations{
+				ProfileID: jsonTailoring.ProfileId,
+				Filepath:  jsonTailoring.Filepath,
+			}
 		}
 		c.OpenSCAP = oscap
 	}
@@ -684,6 +693,9 @@ func (request *ComposeRequest) GetBlueprintFromCustomizations() (blueprint.Bluep
 		openSCAPCustomization := &blueprint.OpenSCAPCustomization{
 			ProfileID: request.Customizations.Openscap.ProfileId,
 		}
+		if request.Customizations.Openscap.Tailoring != nil && request.Customizations.Openscap.JsonTailoring != nil {
+			return bp, fmt.Errorf("OpenSCAP customization error: choose one option between OpenSCAP tailoring and OpenSCAP json tailoring")
+		}
 		if tailoring := request.Customizations.Openscap.Tailoring; tailoring != nil {
 			tailoringCustomizations := blueprint.OpenSCAPTailoringCustomizations{}
 			if tailoring.Selected != nil && len(*tailoring.Selected) > 0 {
@@ -693,6 +705,12 @@ func (request *ComposeRequest) GetBlueprintFromCustomizations() (blueprint.Bluep
 				tailoringCustomizations.Unselected = *tailoring.Unselected
 			}
 			openSCAPCustomization.Tailoring = &tailoringCustomizations
+		}
+		if jsonTailoring := request.Customizations.Openscap.JsonTailoring; jsonTailoring != nil {
+			openSCAPCustomization.JSONTailoring = &blueprint.OpenSCAPJSONTailoringCustomizations{
+				ProfileID: jsonTailoring.ProfileId,
+				Filepath:  jsonTailoring.Filepath,
+			}
 		}
 		bp.Customizations.OpenSCAP = openSCAPCustomization
 	}

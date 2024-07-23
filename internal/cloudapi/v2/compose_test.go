@@ -785,4 +785,47 @@ func TestOpenSCAPTailoringOptions(t *testing.T) {
 	bp, err := cr.GetBlueprintFromCustomizations()
 	assert.NoError(t, err)
 	assert.Equal(t, expectedOscap, bp.Customizations.OpenSCAP)
+
+	cr = ComposeRequest{
+		Customizations: &Customizations{
+			Openscap: &OpenSCAP{
+				ProfileId: "test-123",
+				JsonTailoring: &OpenSCAPJSONTailoring{
+					ProfileId: "test-123-tailoring",
+					Filepath:  "/some/filepath",
+				},
+			},
+		},
+	}
+
+	expectedOscap = &blueprint.OpenSCAPCustomization{
+		ProfileID: "test-123",
+		JSONTailoring: &blueprint.OpenSCAPJSONTailoringCustomizations{
+			ProfileID: "test-123-tailoring",
+			Filepath:  "/some/filepath",
+		},
+	}
+
+	bp, err = cr.GetBlueprintFromCustomizations()
+	assert.NoError(t, err)
+	assert.Equal(t, expectedOscap, bp.Customizations.OpenSCAP)
+
+	cr = ComposeRequest{
+		Customizations: &Customizations{
+			Openscap: &OpenSCAP{
+				ProfileId: "test-123",
+				Tailoring: &OpenSCAPTailoring{
+					Selected:   common.ToPtr([]string{"one", "two", "three"}),
+					Unselected: common.ToPtr([]string{"four", "five", "six"}),
+				},
+				JsonTailoring: &OpenSCAPJSONTailoring{
+					ProfileId: "test-123-tailoring",
+					Filepath:  "/some/filepath",
+				},
+			},
+		},
+	}
+
+	bp, err = cr.GetBlueprintFromCustomizations()
+	assert.Error(t, err)
 }
