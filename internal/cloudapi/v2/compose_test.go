@@ -760,3 +760,29 @@ func TestGetImageRequests_BlueprintDistro(t *testing.T) {
 	assert.Contains(t, got[0].repositories[0].Metalink, "38")
 	assert.Equal(t, got[0].blueprint.Distro, "fedora-38")
 }
+
+func TestOpenSCAPTailoringOptions(t *testing.T) {
+	cr := ComposeRequest{
+		Customizations: &Customizations{
+			Openscap: &OpenSCAP{
+				ProfileId: "test-123",
+				Tailoring: &OpenSCAPTailoring{
+					Selected:   common.ToPtr([]string{"one", "two", "three"}),
+					Unselected: common.ToPtr([]string{"four", "five", "six"}),
+				},
+			},
+		},
+	}
+
+	expectedOscap := &blueprint.OpenSCAPCustomization{
+		ProfileID: "test-123",
+		Tailoring: &blueprint.OpenSCAPTailoringCustomizations{
+			Selected:   []string{"one", "two", "three"},
+			Unselected: []string{"four", "five", "six"},
+		},
+	}
+
+	bp, err := cr.GetBlueprintFromCustomizations()
+	assert.NoError(t, err)
+	assert.Equal(t, expectedOscap, bp.Customizations.OpenSCAP)
+}
