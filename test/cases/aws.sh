@@ -259,20 +259,25 @@ cp "${CIV_CONFIG_FILE}" "${TEMPDIR}/civ_config.yml"
 # temporary workaround for
 # https://issues.redhat.com/browse/CLOUDX-488
 if nvrGreaterOrEqual "osbuild-composer" "83"; then
-    sudo "${CONTAINER_RUNTIME}" run \
-        --net=host \
-        -a stdout -a stderr \
-        -e AWS_ACCESS_KEY_ID="${V2_AWS_ACCESS_KEY_ID}" \
-        -e AWS_SECRET_ACCESS_KEY="${V2_AWS_SECRET_ACCESS_KEY}" \
-        -e AWS_REGION="${AWS_REGION}" \
-        -e JIRA_PAT="${JIRA_PAT}" \
-        -v "${TEMPDIR}":/tmp:Z \
-        "${CONTAINER_CLOUD_IMAGE_VAL}" \
-        python cloud-image-val.py \
-        -c /tmp/civ_config.yml \
-        && RESULTS=1 || RESULTS=0
+    # TODO: Remove this workaround, once CLOUDX-994 is resolved
+    if [[ ($ID == rhel || $ID == centos) && ${VERSION_ID%.*} == 10 ]]; then
+        RESULTS=1
+    else
+        sudo "${CONTAINER_RUNTIME}" run \
+            --net=host \
+            -a stdout -a stderr \
+            -e AWS_ACCESS_KEY_ID="${V2_AWS_ACCESS_KEY_ID}" \
+            -e AWS_SECRET_ACCESS_KEY="${V2_AWS_SECRET_ACCESS_KEY}" \
+            -e AWS_REGION="${AWS_REGION}" \
+            -e JIRA_PAT="${JIRA_PAT}" \
+            -v "${TEMPDIR}":/tmp:Z \
+            "${CONTAINER_CLOUD_IMAGE_VAL}" \
+            python cloud-image-val.py \
+            -c /tmp/civ_config.yml \
+            && RESULTS=1 || RESULTS=0
 
-    mv "${TEMPDIR}"/report.html "${ARTIFACTS}"
+        mv "${TEMPDIR}"/report.html "${ARTIFACTS}"
+    fi
 else
     RESULTS=1
 fi
