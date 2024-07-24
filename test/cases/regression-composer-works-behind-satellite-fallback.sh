@@ -83,8 +83,8 @@ function cleanup {
     set +eu
 
     greenprint "Display httpd logs"
-    cat /var/log/httpd/access_log
-    cat /var/log/httpd/error_log
+    sudo cat /var/log/httpd/access_log
+    sudo cat /var/log/httpd/error_log
 
     greenprint "Putting things back to their previous configuration"
     
