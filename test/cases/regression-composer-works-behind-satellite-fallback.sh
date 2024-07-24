@@ -54,7 +54,7 @@ case "${ID}" in
         fi
 
         case "${VERSION_ID%.*}" in
-            "8" | "9")
+            "8" | "9" | "10")
                 echo "Running on RHEL ${VERSION_ID}"
                 # TODO: remove once the osbuild-composer v100 is in RHEL
                 if ! nvrGreaterOrEqual "osbuild-composer" "100"; then
