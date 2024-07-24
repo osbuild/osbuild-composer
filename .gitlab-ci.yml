@@ -778,9 +778,7 @@ Installer:
     matrix:
       - RUNNER:
           - rhos-01/rhel-9.5-nightly-x86_64
-          - rhos-01/rhel-10.0-nightly-x86_64
           - rhos-01/centos-stream-9-x86_64
-          - rhos-01/centos-stream-10-x86_64
 
 ContainerUpload:
   stage: test
