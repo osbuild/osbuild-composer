@@ -484,7 +484,7 @@ azure.sh_hyperv_gen2:
 # The required GCE image type is not supported on Fedora
 gcp.sh:
   extends: .integration_rhel
-  rules: 
+  rules:
     - !reference [.upstream_rules_x86_64, rules]
     - !reference [.nightly_rules_x86_64, rules]
     - !reference [.ga_rules_x86_64, rules]

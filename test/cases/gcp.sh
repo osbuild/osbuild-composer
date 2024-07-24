@@ -12,6 +12,10 @@ source /usr/libexec/tests/osbuild-composer/shared_lib.sh
 
 set -euo pipefail
 
+if [[ ($ID == rhel || $ID == centos) && ${VERSION_ID%.*} == 10 ]]; then
+    echo "Temporary disabled b/c GCP isn't suported on el10"
+    exit 0
+fi
 
 # Container image used for cloud provider CLI tools
 CONTAINER_IMAGE_CLOUD_TOOLS="quay.io/osbuild/cloud-tools:latest"
