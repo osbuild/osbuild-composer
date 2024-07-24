@@ -556,8 +556,14 @@ API:
           - aws/rhel-8.10-ga-x86_64
           - aws/rhel-9.4-ga-x86_64
           - aws/rhel-9.5-nightly-x86_64
-          - aws/rhel-10.0-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
+      # el10 for now supports only a subset of image types
+      - IMAGE_TYPE:
+          - aws
+          - azure
+          - vsphere
+        RUNNER:
+          - aws/rhel-10.0-nightly-x86_64
       - IMAGE_TYPE: ["iot-commit"]
         RUNNER:
           - aws/fedora-39-x86_64
