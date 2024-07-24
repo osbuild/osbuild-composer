@@ -216,12 +216,18 @@ func azureSapPackageSet(t *rhel.ImageType) rpmmd.PackageSet {
 }
 
 // PARTITION TABLES
-
 func azureRhuiBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
-	// RHEL >= 9.3 needs to have a bigger /boot, see RHEL-7999
-	bootSize := uint64(600) * common.MebiByte
-	if common.VersionLessThan(t.Arch().Distro().OsVersion(), "9.3") && t.IsRHEL() {
+	var bootSize uint64
+	switch {
+	case common.VersionLessThan(t.Arch().Distro().OsVersion(), "9.3") && t.IsRHEL():
+		// RHEL <= 9.2 had only 500 MiB /boot
 		bootSize = 500 * common.MebiByte
+	case common.VersionLessThan(t.Arch().Distro().OsVersion(), "9.4") && t.IsRHEL():
+		// RHEL 9.3 had 600 MiB /boot, see RHEL-7999
+		bootSize = 600 * common.MebiByte
+	default:
+		// RHEL >= 9.4 needs to have even a bigger /boot, see COMPOSER-2155
+		bootSize = 1 * common.GibiByte
 	}
 
 	switch t.Arch().Name() {
