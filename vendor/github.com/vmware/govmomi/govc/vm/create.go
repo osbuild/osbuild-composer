@@ -307,7 +307,7 @@ func (cmd *create) Run(ctx context.Context, f *flag.FlagSet) error {
 	if err != nil {
 		return err
 	}
-	if cmd.place {
+	if cmd.place || cmd.Spec {
 		return nil
 	}
 	info, err := task.WaitForResult(ctx, nil)
@@ -490,7 +490,7 @@ func (cmd *create) createVM(ctx context.Context) (*object.Task, error) {
 		return nil, fmt.Errorf("please provide either a cluster, datastore or datastore-cluster")
 	}
 
-	if !cmd.force {
+	if !cmd.force && !cmd.Spec {
 		vmxPath := fmt.Sprintf("%s/%s.vmx", cmd.name, cmd.name)
 
 		_, err := datastore.Stat(ctx, vmxPath)
@@ -506,6 +506,10 @@ func (cmd *create) createVM(ctx context.Context) (*object.Task, error) {
 		VmPathName: fmt.Sprintf("[%s]", datastore.Name()),
 	}
 
+	if cmd.Spec {
+		return nil, cmd.WriteAny(spec)
+	}
+
 	return folder.CreateVM(ctx, *spec, cmd.ResourcePool, cmd.HostSystem)
 }
 
@@ -519,6 +523,14 @@ func (cmd *create) addStorage(devices object.VirtualDeviceList) (object.VirtualD
 
 			devices = append(devices, nvme)
 			cmd.controller = devices.Name(nvme)
+		} else if cmd.controller == "sata" {
+			sata, err := devices.CreateSATAController()
+			if err != nil {
+				return nil, err
+			}
+
+			devices = append(devices, sata)
+			cmd.controller = devices.Name(sata)
 		} else {
 			scsi, err := devices.CreateSCSIController(cmd.controller)
 			if err != nil {
