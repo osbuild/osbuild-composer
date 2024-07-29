@@ -199,7 +199,7 @@ checkEnv
 function dump_db() {
   # Save the result, including the manifest, for the job, straight from the db
   sudo "${CONTAINER_RUNTIME}" exec "${DB_CONTAINER_NAME}" psql -U postgres -d osbuildcomposer -c "SELECT result FROM jobs WHERE type='manifest-id-only'" \
-    | sudo tee "${ARTIFACTS}/build-result.txt"
+    | sudo tee "${ARTIFACTS}/build-result.txt" > /dev/null
 }
 
 WORKDIR=$(mktemp -d)
