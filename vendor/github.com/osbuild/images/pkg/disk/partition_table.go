@@ -423,6 +423,7 @@ func (pt *PartitionTable) relayout(size uint64) uint64 {
 			continue
 		}
 		partition.Start = start
+		partition.fitTo(partition.Size)
 		partition.Size = pt.AlignUp(partition.Size)
 		start += partition.Size
 	}
@@ -433,6 +434,7 @@ func (pt *PartitionTable) relayout(size uint64) uint64 {
 
 	root := &pt.Partitions[rootIdx]
 	root.Start = start
+	root.fitTo(root.Size)
 
 	// add the extra padding specified in the partition table
 	footer += pt.ExtraPadding

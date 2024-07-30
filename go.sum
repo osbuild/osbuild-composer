@@ -84,8 +84,8 @@ github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d h1:licZJFw2RwpH
 github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d/go.mod h1:asat636LX7Bqt5lYEZ27JNDcqxfjdBQuJ/MM4CN/Lzo=
 github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 h1:DklsrG3dyBCFEj5IhUbnKptjxatkF07cF2ak3yi77so=
 github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2/go.mod h1:WaHUgvxTVq04UNunO+XhnAqY/wQc+bxr74GqbsZ/Jqw=
-github.com/aws/aws-sdk-go v1.55.2 h1:/2OFM8uFfK9e+cqHTw9YPrvTzIXT2XkFGXRM7WbJb7E=
-github.com/aws/aws-sdk-go v1.55.2/go.mod h1:eRwEWoyTWFMVYVQzKMNHWP5/RV4xIUGMQfXQHfHkpNU=
+github.com/aws/aws-sdk-go v1.55.4 h1:u7sFWQQs5ivGuYvCxi7gJI8nN/P9Dq04huLaw39a4lg=
+github.com/aws/aws-sdk-go v1.55.4/go.mod h1:eRwEWoyTWFMVYVQzKMNHWP5/RV4xIUGMQfXQHfHkpNU=
 github.com/aymerick/douceur v0.2.0 h1:Mv+mAeH1Q+n9Fr+oyamOlAkUNPWPlA8PPGR0QAaYuPk=
 github.com/aymerick/douceur v0.2.0/go.mod h1:wlT5vV2O3h55X9m7iVYN0TBM0NH/MmbLnd30/FjWUq4=
 github.com/beorn7/perks v1.0.1 h1:VlbKKnNfV8bJzeqoa4cOKqO6bYr3WgKZxO8Z16+hsOM=
@@ -465,12 +465,12 @@ github.com/opencontainers/runtime-spec v1.2.0 h1:z97+pHb3uELt/yiAWD691HNHQIF07bE
 github.com/opencontainers/runtime-spec v1.2.0/go.mod h1:jwyrGlmzljRJv/Fgzds9SsS/C5hL+LL3ko9hs6T5lQ0=
 github.com/opencontainers/selinux v1.11.0 h1:+5Zbo97w3Lbmb3PeqQtpmTkMwsW5nRI3YaLpt7tQ7oU=
 github.com/opencontainers/selinux v1.11.0/go.mod h1:E5dMC3VPuVvVHDYmi78qvhJp8+M586T4DlDRYpFkyec=
-github.com/openshift-online/ocm-sdk-go v0.1.432 h1:XIlCJKxXXznMP5Usu9lVGZa+UTYVlZ/ZKwqTvtNKhw8=
-github.com/openshift-online/ocm-sdk-go v0.1.432/go.mod h1:CiAu2jwl3ITKOxkeV0Qnhzv4gs35AmpIzVABQLtcI2Y=
+github.com/openshift-online/ocm-sdk-go v0.1.433 h1:8i0Si9KrFkMprMBGR1a4ppmgVezMBjjXXkvhv28OVUk=
+github.com/openshift-online/ocm-sdk-go v0.1.433/go.mod h1:CiAu2jwl3ITKOxkeV0Qnhzv4gs35AmpIzVABQLtcI2Y=
 github.com/oracle/oci-go-sdk/v54 v54.0.0 h1:CDLjeSejv2aDpElAJrhKpi6zvT/zhZCZuXchUUZ+LS4=
 github.com/oracle/oci-go-sdk/v54 v54.0.0/go.mod h1:+t+yvcFGVp+3ZnztnyxqXfQDsMlq8U25faBLa+mqCMc=
-github.com/osbuild/images v0.72.0 h1:WKRXokWCpkS6zusc2yadXbW5jQD4cNvBMHZUV/8L4jM=
-github.com/osbuild/images v0.72.0/go.mod h1:McWtOOsi/2gH2J4tQ8Vnvg+O3jVf44XIj3jUWJZt47E=
+github.com/osbuild/images v0.73.0 h1:2mKFohG1mGh92KFr/rtkmOYTe1Oi6YT0Qdgdz5I20hE=
+github.com/osbuild/images v0.73.0/go.mod h1:5xDxWmKDseAPwsnHS16AsHDM2ytCDJcsPK2uaKfvGvc=
 github.com/osbuild/osbuild-composer/pkg/splunk_logger v0.0.0-20231117174845-e969a9dc3cd1 h1:UFEJIcPa46W8gtWgOYzriRKYyy1t6SWL0BI7fPTuVvc=
 github.com/osbuild/osbuild-composer/pkg/splunk_logger v0.0.0-20231117174845-e969a9dc3cd1/go.mod h1:z+WA+dX6qMwc7fqY5jCzESDIlg4WR2sBQezxsoXv9Ik=
 github.com/osbuild/pulp-client v0.1.0 h1:L0C4ezBJGTamN3BKdv+rKLuq/WxXJbsFwz/Hj7aEmJ8=
