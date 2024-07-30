@@ -248,6 +248,7 @@ objects:
         pattern: ^(${ACL_ACCOUNT_ID_TENANTS})$
     osbuild-composer.toml: |
       log_level = "info"
+      log_format = "json"
       [koji]
       enable_tls = false
       enable_mtls = false
