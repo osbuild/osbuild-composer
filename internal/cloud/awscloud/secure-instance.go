@@ -12,10 +12,11 @@ import (
 )
 
 type SecureInstance struct {
-	FleetID  string
-	SGID     string
-	LTID     string
-	Instance *ec2.Instance
+	FleetID    string
+	SGID       string
+	LTID       string
+	Instance   *ec2.Instance
+	InstanceID string
 }
 
 // SecureInstanceUserData returns the cloud-init user data for a secure instance.
@@ -159,10 +160,10 @@ func (a *AWS) RunSecureInstance(iamProfile, keyName, cloudWatchGroup, hostname s
 	}
 	secureInstance.FleetID = *createFleetOutput.FleetId
 
-	instanceID := createFleetOutput.Instances[0].InstanceIds[0]
+	secureInstance.InstanceID = *createFleetOutput.Instances[0].InstanceIds[0]
 	err = a.ec2.WaitUntilInstanceStatusOk(&ec2.DescribeInstanceStatusInput{
 		InstanceIds: []*string{
-			instanceID,
+			aws.String(secureInstance.InstanceID),
 		},
 	})
 	if err != nil {
@@ -171,17 +172,17 @@ func (a *AWS) RunSecureInstance(iamProfile, keyName, cloudWatchGroup, hostname s
 
 	descrInstOutput, err := a.ec2.DescribeInstances(&ec2.DescribeInstancesInput{
 		InstanceIds: []*string{
-			instanceID,
+			aws.String(secureInstance.InstanceID),
 		},
 	})
 	if err != nil {
 		return nil, err
 	}
 	if len(descrInstOutput.Reservations) != 1 {
-		return nil, fmt.Errorf("Expected exactly 1 reservation for instance: %s, got %d", *instanceID, len(descrInstOutput.Reservations))
+		return nil, fmt.Errorf("Expected exactly 1 reservation for instance: %s, got %d", secureInstance.InstanceID, len(descrInstOutput.Reservations))
 	}
 	if len(descrInstOutput.Reservations[0].Instances) != 1 {
-		return nil, fmt.Errorf("Expected exactly 1 instance for instance: %s, got %d", *instanceID, len(descrInstOutput.Reservations[0].Instances))
+		return nil, fmt.Errorf("Expected exactly 1 instance for instance: %s, got %d", secureInstance.InstanceID, len(descrInstOutput.Reservations[0].Instances))
 	}
 	secureInstance.Instance = descrInstOutput.Reservations[0].Instances[0]
 
@@ -436,15 +437,18 @@ func (a *AWS) deleteFleetIfExists(si *SecureInstance) error {
 		return fmt.Errorf("Deleting fleet unsuccessful")
 	}
 
-	err = a.ec2.WaitUntilInstanceTerminated(&ec2.DescribeInstancesInput{
-		InstanceIds: []*string{
-			si.Instance.InstanceId,
-		},
-	})
-	if err == nil {
+	if si.InstanceID != "" {
+		err = a.ec2.WaitUntilInstanceTerminated(&ec2.DescribeInstancesInput{
+			InstanceIds: []*string{
+				aws.String(si.InstanceID),
+			},
+		})
+		if err != nil {
+			return err
+		}
 		si.FleetID = ""
 	}
-	return err
+	return nil
 }
 
 func (a *AWS) deleteLTIfExists(si *SecureInstance) error {
