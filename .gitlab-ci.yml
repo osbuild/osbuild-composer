@@ -245,7 +245,7 @@ regression-composer-works-behind-satellite-fallback:
   extends: .regression
   rules:
     # BLACKLIST: Skipped on subscribed RHEL machines
-    - if: $RUNNER !~ "/^.*(rhel-.*-ga|centos|fedora).*$/" && $RUNNER !~ "/^.*(rhel-9.5).*$/" && $CI_PIPELINE_SOURCE != "schedule"
+    - if: $RUNNER !~ "/^.*(rhel-.*-ga|centos|fedora).*$/" && $RUNNER !~ "/^.*(rhel-9.5|rhel-10.0).*$/" && $CI_PIPELINE_SOURCE != "schedule"
   variables:
     SCRIPT: regression-composer-works-behind-satellite-fallback.sh
 
@@ -253,7 +253,7 @@ regression-composer-works-behind-satellite:
   extends: .regression
   rules: 
     # BLACKLIST: Skipped on subscribed RHEL machines
-    - if: $RUNNER !~ "/^.*(rhel-.*-ga|centos|fedora).*$/" && $RUNNER !~ "/^.*(rhel-9.5).*$/" && $CI_PIPELINE_SOURCE != "schedule"
+    - if: $RUNNER !~ "/^.*(rhel-.*-ga|centos|fedora).*$/" && $RUNNER !~ "/^.*(rhel-9.5|rhel-10.0).*$/" && $CI_PIPELINE_SOURCE != "schedule"
   variables:
     SCRIPT: regression-composer-works-behind-satellite.sh
 

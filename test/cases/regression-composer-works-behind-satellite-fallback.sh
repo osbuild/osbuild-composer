@@ -50,7 +50,7 @@ case "${ID}" in
         if [[ "$VERSION_ID" == "9.5" || "$VERSION_ID" == "10.0" ]]; then
             # fails eventhough we call update-ca-trust, see previous commit
             echo "This test has been disabled b/c DNF fails with self-signed certificates"
-            exit 0
+            exit 1
         fi
 
         case "${VERSION_ID%.*}" in
