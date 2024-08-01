@@ -1,29 +1,42 @@
 package awscloud
 
 import (
+	"context"
 	"crypto/tls"
 	"fmt"
 	"net/http"
 	"os"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/config"
+	credentialsv2 "github.com/aws/aws-sdk-go-v2/credentials"
+	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	s3types "github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/ec2metadata"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
-	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/exp/slices"
 )
 
 type AWS struct {
-	uploader    *s3manager.Uploader
 	ec2         *ec2.EC2
 	ec2metadata *ec2metadata.EC2Metadata
-	s3          *s3.S3
+	s3          S3
+	s3uploader  S3Manager
+	s3presign   S3Presign
+}
+
+func newForTest(s3cli S3, upldr S3Manager, sign S3Presign) *AWS {
+	return &AWS{
+		s3:         s3cli,
+		s3uploader: upldr,
+		s3presign:  sign,
+	}
 }
 
 // Create a new session from the credentials and the region and returns an *AWS object initialized with it.
@@ -37,11 +50,27 @@ func newAwsFromCreds(creds *credentials.Credentials, region string) (*AWS, error
 		return nil, err
 	}
 
+	credsValue, err := creds.Get()
+	if err != nil {
+		return nil, err
+	}
+	cfg, err := config.LoadDefaultConfig(
+		context.Background(),
+		config.WithRegion(region),
+		config.WithCredentialsProvider(credentialsv2.NewStaticCredentialsProvider(
+			credsValue.AccessKeyID,
+			credsValue.SecretAccessKey,
+			credsValue.SessionToken,
+		)),
+	)
+
+	s3cli := s3.NewFromConfig(cfg)
 	return &AWS{
-		uploader:    s3manager.NewUploader(sess),
 		ec2:         ec2.New(sess),
 		ec2metadata: ec2metadata.New(sess),
-		s3:          s3.New(sess),
+		s3:          s3cli,
+		s3uploader:  manager.NewUploader(s3cli),
+		s3presign:   s3.NewPresignClient(s3cli),
 	}, nil
 }
 
@@ -94,6 +123,19 @@ func newAwsFromCredsWithEndpoint(creds *credentials.Credentials, region, endpoin
 		},
 	}
 
+	credsValue, err := creds.Get()
+	if err != nil {
+		return nil, err
+	}
+	v2OptionFuncs := []func(*config.LoadOptions) error{
+		config.WithRegion(region),
+		config.WithCredentialsProvider(credentialsv2.NewStaticCredentialsProvider(
+			credsValue.AccessKeyID,
+			credsValue.SecretAccessKey,
+			credsValue.SessionToken,
+		)),
+	}
+
 	if caBundle != "" {
 		caBundleReader, err := os.Open(caBundle)
 		if err != nil {
@@ -101,6 +143,7 @@ func newAwsFromCredsWithEndpoint(creds *credentials.Credentials, region, endpoin
 		}
 		defer caBundleReader.Close()
 		sessionOptions.CustomCABundle = caBundleReader
+		v2OptionFuncs = append(v2OptionFuncs, config.WithCustomCABundle(caBundleReader))
 	}
 
 	if skipSSLVerification {
@@ -109,6 +152,9 @@ func newAwsFromCredsWithEndpoint(creds *credentials.Credentials, region, endpoin
 		sessionOptions.Config.HTTPClient = &http.Client{
 			Transport: transport,
 		}
+		v2OptionFuncs = append(v2OptionFuncs, config.WithHTTPClient(&http.Client{
+			Transport: transport,
+		}))
 	}
 
 	sess, err := session.NewSessionWithOptions(sessionOptions)
@@ -116,11 +162,22 @@ func newAwsFromCredsWithEndpoint(creds *credentials.Credentials, region, endpoin
 		return nil, err
 	}
 
+	cfg, err := config.LoadDefaultConfig(
+		context.Background(),
+		v2OptionFuncs...,
+	)
+
+	s3cli := s3.NewFromConfig(cfg, func(options *s3.Options) {
+		options.BaseEndpoint = aws.String(endpoint)
+		options.UsePathStyle = true
+	})
+
 	return &AWS{
-		uploader:    s3manager.NewUploader(sess),
 		ec2:         ec2.New(sess),
 		ec2metadata: ec2metadata.New(sess),
-		s3:          s3.New(sess),
+		s3:          s3cli,
+		s3uploader:  manager.NewUploader(s3cli),
+		s3presign:   s3.NewPresignClient(s3cli),
 	}, nil
 }
 
@@ -142,7 +199,7 @@ func NewForEndpointFromFile(filename, endpoint, region, caBundle string, skipSSL
 	return newAwsFromCredsWithEndpoint(credentials.NewSharedCredentials(filename, "default"), region, endpoint, caBundle, skipSSLVerification)
 }
 
-func (a *AWS) Upload(filename, bucket, key string) (*s3manager.UploadOutput, error) {
+func (a *AWS) Upload(filename, bucket, key string) (*manager.UploadOutput, error) {
 	file, err := os.Open(filename)
 	if err != nil {
 		return nil, err
@@ -156,8 +213,9 @@ func (a *AWS) Upload(filename, bucket, key string) (*s3manager.UploadOutput, err
 	}()
 
 	logrus.Infof("[AWS] 🚀 Uploading image to S3: %s/%s", bucket, key)
-	return a.uploader.Upload(
-		&s3manager.UploadInput{
+	return a.s3uploader.Upload(
+		context.Background(),
+		&s3.PutObjectInput{
 			Bucket: aws.String(bucket),
 			Key:    aws.String(key),
 			Body:   file,
@@ -278,10 +336,13 @@ func (a *AWS) Register(name, bucket, key string, shareWith []string, rpmArch str
 
 	// we no longer need the object in s3, let's just delete it
 	logrus.Infof("[AWS] 🧹 Deleting image from S3: %s/%s", bucket, key)
-	_, err = a.s3.DeleteObject(&s3.DeleteObjectInput{
-		Bucket: aws.String(bucket),
-		Key:    aws.String(key),
-	})
+	_, err = a.s3.DeleteObject(
+		context.Background(),
+		&s3.DeleteObjectInput{
+			Bucket: aws.String(bucket),
+			Key:    aws.String(key),
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -597,30 +658,39 @@ func (a *AWS) DescribeImagesByTag(tagKey, tagValue string) ([]*ec2.Image, error)
 
 func (a *AWS) S3ObjectPresignedURL(bucket, objectKey string) (string, error) {
 	logrus.Infof("[AWS] 📋 Generating Presigned URL for S3 object %s/%s", bucket, objectKey)
-	req, _ := a.s3.GetObjectRequest(&s3.GetObjectInput{
-		Bucket: aws.String(bucket),
-		Key:    aws.String(objectKey),
-	})
-	url, err := req.Presign(7 * 24 * time.Hour) // maximum allowed
+
+	req, err := a.s3presign.PresignGetObject(
+		context.Background(),
+		&s3.GetObjectInput{
+			Bucket: aws.String(bucket),
+			Key:    aws.String(objectKey),
+		},
+		func(opts *s3.PresignOptions) {
+			opts.Expires = time.Duration(7 * 24 * time.Hour)
+		},
+	)
 	if err != nil {
 		return "", err
 	}
+
 	logrus.Info("[AWS] 🎉 S3 Presigned URL ready")
-	return url, nil
+	return req.URL, nil
 }
 
 func (a *AWS) MarkS3ObjectAsPublic(bucket, objectKey string) error {
 	logrus.Infof("[AWS] 👐 Making S3 object public %s/%s", bucket, objectKey)
-	_, err := a.s3.PutObjectAcl(&s3.PutObjectAclInput{
-		Bucket: aws.String(bucket),
-		Key:    aws.String(objectKey),
-		ACL:    aws.String(s3.BucketCannedACLPublicRead),
-	})
+	_, err := a.s3.PutObjectAcl(
+		context.Background(),
+		&s3.PutObjectAclInput{
+			Bucket: aws.String(bucket),
+			Key:    aws.String(objectKey),
+			ACL:    s3types.ObjectCannedACL(s3types.ObjectCannedACLPublicRead),
+		},
+	)
 	if err != nil {
 		return err
 	}
 	logrus.Info("[AWS] ✔️ Making S3 object public successful")
-
 	return nil
 }
 
