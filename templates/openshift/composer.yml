@@ -126,6 +126,8 @@ objects:
                 optional: true
           - name: DISTRO_ALIASES
             value: ${DISTRO_ALIASES}
+          - name: CHANNEL
+            value: ${CHANNEL}
           ports:
           - name: composer-api
             protocol: TCP
@@ -341,3 +343,9 @@ parameters:
   - description: Distro name aliases
     name: DISTRO_ALIASES
     value: "rhel-7=rhel-7.9,rhel-8=rhel-8.10,rhel-9=rhel-9.4,rhel-10=rhel-10.0"
+  - name: CHANNEL
+    value: "local"
+    description: >
+      Channel where this pod is deployed.
+      This is appended to the logs. Usually something like
+      "local", "staging" or "production".

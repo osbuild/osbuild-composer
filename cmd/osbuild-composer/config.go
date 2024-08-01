@@ -12,17 +12,18 @@ import (
 )
 
 type ComposerConfigFile struct {
-	Koji          KojiAPIConfig     `toml:"koji"`
-	Worker        WorkerAPIConfig   `toml:"worker"`
-	WeldrAPI      WeldrAPIConfig    `toml:"weldr_api"`
-	DistroAliases map[string]string `toml:"distro_aliases" env:"DISTRO_ALIASES"`
-	LogLevel      string            `toml:"log_level"`
-	LogFormat     string            `toml:"log_format"`
-	DNFJson       string            `toml:"dnf-json"`
-	SplunkHost    string            `env:"SPLUNK_HEC_HOST"`
-	SplunkPort    string            `env:"SPLUNK_HEC_PORT"`
-	SplunkToken   string            `env:"SPLUNK_HEC_TOKEN"`
-	GlitchTipDSN  string            `env:"GLITCHTIP_DSN"`
+	Koji              KojiAPIConfig     `toml:"koji"`
+	Worker            WorkerAPIConfig   `toml:"worker"`
+	WeldrAPI          WeldrAPIConfig    `toml:"weldr_api"`
+	DistroAliases     map[string]string `toml:"distro_aliases" env:"DISTRO_ALIASES"`
+	LogLevel          string            `toml:"log_level"`
+	LogFormat         string            `toml:"log_format"`
+	DNFJson           string            `toml:"dnf-json"`
+	SplunkHost        string            `env:"SPLUNK_HEC_HOST"`
+	SplunkPort        string            `env:"SPLUNK_HEC_PORT"`
+	SplunkToken       string            `env:"SPLUNK_HEC_TOKEN"`
+	GlitchTipDSN      string            `env:"GLITCHTIP_DSN"`
+	DeploymentChannel string            `env:"CHANNEL"`
 }
 
 type KojiAPIConfig struct {
