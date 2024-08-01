@@ -8,27 +8,24 @@ import (
 	"os"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
-	credentialsv2 "github.com/aws/aws-sdk-go-v2/credentials"
+	"github.com/aws/aws-sdk-go-v2/credentials"
+	"github.com/aws/aws-sdk-go-v2/feature/ec2/imds"
 	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
+	"github.com/aws/aws-sdk-go-v2/service/ec2"
+	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	s3types "github.com/aws/aws-sdk-go-v2/service/s3/types"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/ec2metadata"
-	"github.com/aws/aws-sdk-go/aws/request"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/sirupsen/logrus"
-	"golang.org/x/exp/slices"
 )
 
 type AWS struct {
-	ec2         *ec2.EC2
-	ec2metadata *ec2metadata.EC2Metadata
-	s3          S3
-	s3uploader  S3Manager
-	s3presign   S3Presign
+	ec2        EC2
+	ec2imds    EC2Imds
+	s3         S3
+	s3uploader S3Manager
+	s3presign  S3Presign
 }
 
 func newForTest(s3cli S3, upldr S3Manager, sign S3Presign) *AWS {
@@ -40,43 +37,30 @@ func newForTest(s3cli S3, upldr S3Manager, sign S3Presign) *AWS {
 }
 
 // Create a new session from the credentials and the region and returns an *AWS object initialized with it.
-func newAwsFromCreds(creds *credentials.Credentials, region string) (*AWS, error) {
-	// Create a Session with a custom region
-	sess, err := session.NewSession(&aws.Config{
-		Credentials: creds,
-		Region:      aws.String(region),
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	credsValue, err := creds.Get()
-	if err != nil {
-		return nil, err
-	}
-	cfg, err := config.LoadDefaultConfig(
-		context.Background(),
-		config.WithRegion(region),
-		config.WithCredentialsProvider(credentialsv2.NewStaticCredentialsProvider(
-			credsValue.AccessKeyID,
-			credsValue.SecretAccessKey,
-			credsValue.SessionToken,
-		)),
-	)
-
+// /creds credentials.StaticCredentialsProvider, region string
+func newAwsFromConfig(cfg aws.Config) *AWS {
 	s3cli := s3.NewFromConfig(cfg)
 	return &AWS{
-		ec2:         ec2.New(sess),
-		ec2metadata: ec2metadata.New(sess),
-		s3:          s3cli,
-		s3uploader:  manager.NewUploader(s3cli),
-		s3presign:   s3.NewPresignClient(s3cli),
-	}, nil
+		ec2:        ec2.NewFromConfig(cfg),
+		ec2imds:    imds.NewFromConfig(cfg),
+		s3:         s3cli,
+		s3uploader: manager.NewUploader(s3cli),
+		s3presign:  s3.NewPresignClient(s3cli),
+	}
 }
 
 // Initialize a new AWS object from individual bits. SessionToken is optional
 func New(region string, accessKeyID string, accessKey string, sessionToken string) (*AWS, error) {
-	return newAwsFromCreds(credentials.NewStaticCredentials(accessKeyID, accessKey, sessionToken), region)
+	cfg, err := config.LoadDefaultConfig(
+		context.Background(),
+		config.WithRegion(region),
+		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(accessKeyID, accessKey, sessionToken)),
+	)
+	if err != nil {
+		return nil, err
+	}
+	aws := newAwsFromConfig(cfg)
+	return aws, nil
 }
 
 // Initializes a new AWS object with the credentials info found at filename's location.
@@ -89,21 +73,40 @@ func New(region string, accessKeyID string, accessKey string, sessionToken strin
 // "AWS_SHARED_CREDENTIALS_FILE" env variable or will default to
 // $HOME/.aws/credentials.
 func NewFromFile(filename string, region string) (*AWS, error) {
-	return newAwsFromCreds(credentials.NewSharedCredentials(filename, "default"), region)
+	cfg, err := config.LoadDefaultConfig(
+		context.Background(),
+		config.WithRegion(region),
+		config.WithSharedCredentialsFiles([]string{
+			filename,
+			"default",
+		}),
+	)
+	if err != nil {
+		return nil, err
+	}
+	aws := newAwsFromConfig(cfg)
+	return aws, nil
 }
 
 // Initialize a new AWS object from defaults.
 // Looks for env variables, shared credential file, and EC2 Instance Roles.
 func NewDefault(region string) (*AWS, error) {
-	return newAwsFromCreds(nil, region)
+	cfg, err := config.LoadDefaultConfig(
+		context.Background(),
+		config.WithRegion(region),
+	)
+	if err != nil {
+		return nil, err
+	}
+	aws := newAwsFromConfig(cfg)
+	return aws, nil
 }
 
 func RegionFromInstanceMetadata() (string, error) {
-	sess, err := session.NewSession()
-	if err != nil {
-		return "", err
-	}
-	identity, err := ec2metadata.New(sess).GetInstanceIdentityDocument()
+	identity, err := imds.New(imds.Options{}).GetInstanceIdentityDocument(
+		context.Background(),
+		&imds.GetInstanceIdentityDocumentInput{},
+	)
 	if err != nil {
 		return "", err
 	}
@@ -111,29 +114,11 @@ func RegionFromInstanceMetadata() (string, error) {
 }
 
 // Create a new session from the credentials and the region and returns an *AWS object initialized with it.
-func newAwsFromCredsWithEndpoint(creds *credentials.Credentials, region, endpoint, caBundle string, skipSSLVerification bool) (*AWS, error) {
+func newAwsFromCredsWithEndpoint(creds config.LoadOptionsFunc, region, endpoint, caBundle string, skipSSLVerification bool) (*AWS, error) {
 	// Create a Session with a custom region
-	s3ForcePathStyle := true
-	sessionOptions := session.Options{
-		Config: aws.Config{
-			Credentials:      creds,
-			Region:           aws.String(region),
-			Endpoint:         &endpoint,
-			S3ForcePathStyle: &s3ForcePathStyle,
-		},
-	}
-
-	credsValue, err := creds.Get()
-	if err != nil {
-		return nil, err
-	}
 	v2OptionFuncs := []func(*config.LoadOptions) error{
 		config.WithRegion(region),
-		config.WithCredentialsProvider(credentialsv2.NewStaticCredentialsProvider(
-			credsValue.AccessKeyID,
-			credsValue.SecretAccessKey,
-			credsValue.SessionToken,
-		)),
+		creds,
 	}
 
 	if caBundle != "" {
@@ -142,30 +127,24 @@ func newAwsFromCredsWithEndpoint(creds *credentials.Credentials, region, endpoin
 			return nil, err
 		}
 		defer caBundleReader.Close()
-		sessionOptions.CustomCABundle = caBundleReader
 		v2OptionFuncs = append(v2OptionFuncs, config.WithCustomCABundle(caBundleReader))
 	}
 
 	if skipSSLVerification {
 		transport := http.DefaultTransport.(*http.Transport).Clone()
 		transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true} // #nosec G402
-		sessionOptions.Config.HTTPClient = &http.Client{
-			Transport: transport,
-		}
 		v2OptionFuncs = append(v2OptionFuncs, config.WithHTTPClient(&http.Client{
 			Transport: transport,
 		}))
-	}
-
-	sess, err := session.NewSessionWithOptions(sessionOptions)
-	if err != nil {
-		return nil, err
 	}
 
 	cfg, err := config.LoadDefaultConfig(
 		context.Background(),
 		v2OptionFuncs...,
 	)
+	if err != nil {
+		return nil, err
+	}
 
 	s3cli := s3.NewFromConfig(cfg, func(options *s3.Options) {
 		options.BaseEndpoint = aws.String(endpoint)
@@ -173,17 +152,17 @@ func newAwsFromCredsWithEndpoint(creds *credentials.Credentials, region, endpoin
 	})
 
 	return &AWS{
-		ec2:         ec2.New(sess),
-		ec2metadata: ec2metadata.New(sess),
-		s3:          s3cli,
-		s3uploader:  manager.NewUploader(s3cli),
-		s3presign:   s3.NewPresignClient(s3cli),
+		ec2:        ec2.NewFromConfig(cfg),
+		ec2imds:    imds.NewFromConfig(cfg),
+		s3:         s3cli,
+		s3uploader: manager.NewUploader(s3cli),
+		s3presign:  s3.NewPresignClient(s3cli),
 	}, nil
 }
 
 // Initialize a new AWS object targeting a specific endpoint from individual bits. SessionToken is optional
 func NewForEndpoint(endpoint, region, accessKeyID, accessKey, sessionToken, caBundle string, skipSSLVerification bool) (*AWS, error) {
-	return newAwsFromCredsWithEndpoint(credentials.NewStaticCredentials(accessKeyID, accessKey, sessionToken), region, endpoint, caBundle, skipSSLVerification)
+	return newAwsFromCredsWithEndpoint(config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(accessKeyID, accessKey, sessionToken)), region, endpoint, caBundle, skipSSLVerification)
 }
 
 // Initializes a new AWS object targeting a specific endpoint with the credentials info found at filename's location.
@@ -196,7 +175,7 @@ func NewForEndpoint(endpoint, region, accessKeyID, accessKey, sessionToken, caBu
 // "AWS_SHARED_CREDENTIALS_FILE" env variable or will default to
 // $HOME/.aws/credentials.
 func NewForEndpointFromFile(filename, endpoint, region, caBundle string, skipSSLVerification bool) (*AWS, error) {
-	return newAwsFromCredsWithEndpoint(credentials.NewSharedCredentials(filename, "default"), region, endpoint, caBundle, skipSSLVerification)
+	return newAwsFromCredsWithEndpoint(config.WithSharedCredentialsFiles([]string{filename, "default"}), region, endpoint, caBundle, skipSSLVerification)
 }
 
 func (a *AWS) Upload(filename, bucket, key string) (*manager.UploadOutput, error) {
@@ -223,63 +202,6 @@ func (a *AWS) Upload(filename, bucket, key string) (*manager.UploadOutput, error
 	)
 }
 
-// WaitUntilImportSnapshotCompleted uses the Amazon EC2 API operation
-// DescribeImportSnapshots to wait for a condition to be met before returning.
-// If the condition is not met within the max attempt window, an error will
-// be returned.
-func WaitUntilImportSnapshotTaskCompleted(c *ec2.EC2, input *ec2.DescribeImportSnapshotTasksInput) error {
-	return WaitUntilImportSnapshotTaskCompletedWithContext(c, aws.BackgroundContext(), input)
-}
-
-// WaitUntilImportSnapshotCompletedWithContext is an extended version of
-// WaitUntilImportSnapshotCompleted. With the support for passing in a
-// context and options to configure the Waiter and the underlying request
-// options.
-//
-// The context must be non-nil and will be used for request cancellation. If
-// the context is nil a panic will occur. In the future the SDK may create
-// sub-contexts for http.Requests. See https://golang.org/pkg/context/
-// for more information on using Contexts.
-//
-// NOTE(mhayden): The MaxAttempts is set to zero here so that we will keep
-// checking the status of the image import until it succeeds or fails. This
-// process can take anywhere from 5 to 60+ minutes depending on how quickly
-// AWS can import the snapshot.
-func WaitUntilImportSnapshotTaskCompletedWithContext(c *ec2.EC2, ctx aws.Context, input *ec2.DescribeImportSnapshotTasksInput, opts ...request.WaiterOption) error {
-	w := request.Waiter{
-		Name:        "WaitUntilImportSnapshotTaskCompleted",
-		MaxAttempts: 0,
-		Delay:       request.ConstantWaiterDelay(15 * time.Second),
-		Acceptors: []request.WaiterAcceptor{
-			{
-				State:   request.SuccessWaiterState,
-				Matcher: request.PathAllWaiterMatch, Argument: "ImportSnapshotTasks[].SnapshotTaskDetail.Status",
-				Expected: "completed",
-			},
-			{
-				State:   request.FailureWaiterState,
-				Matcher: request.PathAllWaiterMatch, Argument: "ImportSnapshotTasks[].SnapshotTaskDetail.Status",
-				Expected: "deleted",
-			},
-		},
-		Logger: c.Config.Logger,
-		NewRequest: func(opts []request.Option) (*request.Request, error) {
-			var inCpy *ec2.DescribeImportSnapshotTasksInput
-			if input != nil {
-				tmp := *input
-				inCpy = &tmp
-			}
-			req, _ := c.DescribeImportSnapshotTasksRequest(inCpy)
-			req.SetContext(ctx)
-			req.ApplyOptions(opts...)
-			return req, nil
-		},
-	}
-	w.ApplyOptions(opts...)
-
-	return w.WaitWithContext(ctx)
-}
-
 // Register is a function that imports a snapshot, waits for the snapshot to
 // fully import, tags the snapshot, cleans up the image in S3, and registers
 // an AMI in AWS.
@@ -287,9 +209,9 @@ func WaitUntilImportSnapshotTaskCompletedWithContext(c *ec2.EC2, ctx aws.Context
 // mode is not specified, then the instances launched from this AMI use the
 // default boot mode value of the instance type.
 func (a *AWS) Register(name, bucket, key string, shareWith []string, rpmArch string, bootMode *string) (*string, error) {
-	rpmArchToEC2Arch := map[string]string{
-		"x86_64":  "x86_64",
-		"aarch64": "arm64",
+	rpmArchToEC2Arch := map[string]ec2types.ArchitectureValues{
+		"x86_64":  ec2types.ArchitectureValuesX8664,
+		"aarch64": ec2types.ArchitectureValuesArm64,
 	}
 
 	ec2Arch, validArch := rpmArchToEC2Arch[rpmArch]
@@ -297,19 +219,28 @@ func (a *AWS) Register(name, bucket, key string, shareWith []string, rpmArch str
 		return nil, fmt.Errorf("ec2 doesn't support the following arch: %s", rpmArch)
 	}
 
+	bootModeToEC2BootMode := map[string]ec2types.BootModeValues{
+		string(ec2types.BootModeValuesLegacyBios):    ec2types.BootModeValuesLegacyBios,
+		string(ec2types.BootModeValuesUefi):          ec2types.BootModeValuesUefi,
+		string(ec2types.BootModeValuesUefiPreferred): ec2types.BootModeValuesUefiPreferred,
+	}
+	ec2BootMode := ec2types.BootModeValuesUefiPreferred
 	if bootMode != nil {
-		if !slices.Contains(ec2.BootModeValues_Values(), *bootMode) {
+		bm, validBootMode := bootModeToEC2BootMode[*bootMode]
+		if !validBootMode {
 			return nil, fmt.Errorf("ec2 doesn't support the following boot mode: %s", *bootMode)
 		}
+		ec2BootMode = bm
 	}
 
 	logrus.Infof("[AWS] 📥 Importing snapshot from image: %s/%s", bucket, key)
 	snapshotDescription := fmt.Sprintf("Image Builder AWS Import of %s", name)
 	importTaskOutput, err := a.ec2.ImportSnapshot(
+		context.Background(),
 		&ec2.ImportSnapshotInput{
 			Description: aws.String(snapshotDescription),
-			DiskContainer: &ec2.SnapshotDiskContainer{
-				UserBucket: &ec2.UserBucket{
+			DiskContainer: &ec2types.SnapshotDiskContainer{
+				UserBucket: &ec2types.UserBucket{
 					S3Bucket: aws.String(bucket),
 					S3Key:    aws.String(key),
 				},
@@ -322,16 +253,25 @@ func (a *AWS) Register(name, bucket, key string, shareWith []string, rpmArch str
 	}
 
 	logrus.Infof("[AWS] 🚚 Waiting for snapshot to finish importing: %s", *importTaskOutput.ImportTaskId)
-	err = WaitUntilImportSnapshotTaskCompleted(
-		a.ec2,
+
+	// importTaskOutput.
+	snapWaiter := ec2.NewSnapshotImportedWaiter(a.ec2)
+	snapWaitOutput, err := snapWaiter.WaitForOutput(
+		context.Background(),
 		&ec2.DescribeImportSnapshotTasksInput{
-			ImportTaskIds: []*string{
-				importTaskOutput.ImportTaskId,
+			ImportTaskIds: []string{
+				*importTaskOutput.ImportTaskId,
 			},
 		},
+		time.Hour*24,
 	)
 	if err != nil {
 		return nil, err
+	}
+
+	snapshotTaskStatus := *snapWaitOutput.ImportSnapshotTasks[0].SnapshotTaskDetail.Status
+	if snapshotTaskStatus != "completed" {
+		return nil, fmt.Errorf("Unable to import snapshot, task result: %v, msg: %v", snapshotTaskStatus, *snapWaitOutput.ImportSnapshotTasks[0].SnapshotTaskDetail.StatusMessage)
 	}
 
 	// we no longer need the object in s3, let's just delete it
@@ -347,24 +287,13 @@ func (a *AWS) Register(name, bucket, key string, shareWith []string, rpmArch str
 		return nil, err
 	}
 
-	importOutput, err := a.ec2.DescribeImportSnapshotTasks(
-		&ec2.DescribeImportSnapshotTasksInput{
-			ImportTaskIds: []*string{
-				importTaskOutput.ImportTaskId,
-			},
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	snapshotID := importOutput.ImportSnapshotTasks[0].SnapshotTaskDetail.SnapshotId
-
+	snapshotID := *snapWaitOutput.ImportSnapshotTasks[0].SnapshotTaskDetail.SnapshotId
 	// Tag the snapshot with the image name.
-	req, _ := a.ec2.CreateTagsRequest(
+	_, err = a.ec2.CreateTags(
+		context.Background(),
 		&ec2.CreateTagsInput{
-			Resources: []*string{snapshotID},
-			Tags: []*ec2.Tag{
+			Resources: []string{snapshotID},
+			Tags: []ec2types.Tag{
 				{
 					Key:   aws.String("Name"),
 					Value: aws.String(name),
@@ -372,25 +301,25 @@ func (a *AWS) Register(name, bucket, key string, shareWith []string, rpmArch str
 			},
 		},
 	)
-	err = req.Send()
 	if err != nil {
 		return nil, err
 	}
 
-	logrus.Infof("[AWS] 📋 Registering AMI from imported snapshot: %s", *snapshotID)
+	logrus.Infof("[AWS] 📋 Registering AMI from imported snapshot: %s", snapshotID)
 	registerOutput, err := a.ec2.RegisterImage(
+		context.Background(),
 		&ec2.RegisterImageInput{
-			Architecture:       aws.String(ec2Arch),
-			BootMode:           bootMode,
+			Architecture:       ec2Arch,
+			BootMode:           ec2BootMode,
 			VirtualizationType: aws.String("hvm"),
 			Name:               aws.String(name),
 			RootDeviceName:     aws.String("/dev/sda1"),
 			EnaSupport:         aws.Bool(true),
-			BlockDeviceMappings: []*ec2.BlockDeviceMapping{
+			BlockDeviceMappings: []ec2types.BlockDeviceMapping{
 				{
 					DeviceName: aws.String("/dev/sda1"),
-					Ebs: &ec2.EbsBlockDevice{
-						SnapshotId: snapshotID,
+					Ebs: &ec2types.EbsBlockDevice{
+						SnapshotId: aws.String(snapshotID),
 					},
 				},
 			},
@@ -403,10 +332,11 @@ func (a *AWS) Register(name, bucket, key string, shareWith []string, rpmArch str
 	logrus.Infof("[AWS] 🎉 AMI registered: %s", *registerOutput.ImageId)
 
 	// Tag the image with the image name.
-	req, _ = a.ec2.CreateTagsRequest(
+	_, err = a.ec2.CreateTags(
+		context.Background(),
 		&ec2.CreateTagsInput{
-			Resources: []*string{registerOutput.ImageId},
-			Tags: []*ec2.Tag{
+			Resources: []string{*registerOutput.ImageId},
+			Tags: []ec2types.Tag{
 				{
 					Key:   aws.String("Name"),
 					Value: aws.String(name),
@@ -414,7 +344,6 @@ func (a *AWS) Register(name, bucket, key string, shareWith []string, rpmArch str
 			},
 		},
 	)
-	err = req.Send()
 	if err != nil {
 		return nil, err
 	}
@@ -436,6 +365,7 @@ func (a *AWS) Register(name, bucket, key string, shareWith []string, rpmArch str
 // target region is determined by the region configured in the aws session
 func (a *AWS) CopyImage(name, ami, sourceRegion string) (string, error) {
 	result, err := a.ec2.CopyImage(
+		context.Background(),
 		&ec2.CopyImageInput{
 			Name:          aws.String(name),
 			SourceImageId: aws.String(ami),
@@ -446,61 +376,46 @@ func (a *AWS) CopyImage(name, ami, sourceRegion string) (string, error) {
 		return "", err
 	}
 
-	dIInput := &ec2.DescribeImagesInput{
-		ImageIds: []*string{result.ImageId},
-	}
-
-	// Custom waiter which waits indefinitely until a final state
-	w := request.Waiter{
-		Name:        "WaitUntilImageAvailable",
-		MaxAttempts: 0,
-		Delay:       request.ConstantWaiterDelay(15 * time.Second),
-		Acceptors: []request.WaiterAcceptor{
-			{
-				State:   request.SuccessWaiterState,
-				Matcher: request.PathAllWaiterMatch, Argument: "Images[].State",
-				Expected: "available",
-			},
-			{
-				State:   request.FailureWaiterState,
-				Matcher: request.PathAnyWaiterMatch, Argument: "Images[].State",
-				Expected: "failed",
-			},
+	imgWaiter := ec2.NewImageAvailableWaiter(a.ec2)
+	imgWaitOutput, err := imgWaiter.WaitForOutput(
+		context.Background(),
+		&ec2.DescribeImagesInput{
+			ImageIds: []string{*result.ImageId},
 		},
-		Logger: a.ec2.Config.Logger,
-		NewRequest: func(opts []request.Option) (*request.Request, error) {
-			var inCpy *ec2.DescribeImagesInput
-			if dIInput != nil {
-				tmp := *dIInput
-				inCpy = &tmp
-			}
-			req, _ := a.ec2.DescribeImagesRequest(inCpy)
-			req.SetContext(aws.BackgroundContext())
-			req.ApplyOptions(opts...)
-			return req, nil
-		},
-	}
-	err = w.WaitWithContext(aws.BackgroundContext())
+		time.Hour*24,
+	)
 	if err != nil {
 		return *result.ImageId, err
+	}
+
+	if imgWaitOutput.Images[0].State != ec2types.ImageStateAvailable {
+		return *result.ImageId, fmt.Errorf("Image not available after waiting: %s, Code: %v reason: %v",
+			imgWaitOutput.Images[0].State, *imgWaitOutput.Images[0].StateReason.Code, *imgWaitOutput.Images[0].StateReason.Message)
 	}
 
 	// Tag image with name
-	_, err = a.ec2.CreateTags(&ec2.CreateTagsInput{
-		Resources: []*string{result.ImageId},
-		Tags: []*ec2.Tag{
-			{
-				Key:   aws.String("Name"),
-				Value: aws.String(name),
+	_, err = a.ec2.CreateTags(
+		context.Background(),
+		&ec2.CreateTagsInput{
+			Resources: []string{*result.ImageId},
+			Tags: []ec2types.Tag{
+				{
+					Key:   aws.String("Name"),
+					Value: aws.String(name),
+				},
 			},
 		},
-	})
-
+	)
 	if err != nil {
 		return *result.ImageId, err
 	}
 
-	imgs, err := a.ec2.DescribeImages(dIInput)
+	imgs, err := a.ec2.DescribeImages(
+		context.Background(),
+		&ec2.DescribeImagesInput{
+			ImageIds: []string{*result.ImageId},
+		},
+	)
 	if err != nil {
 		return *result.ImageId, err
 	}
@@ -510,15 +425,17 @@ func (a *AWS) CopyImage(name, ami, sourceRegion string) (string, error) {
 
 	// Tag snapshot with name
 	for _, bdm := range imgs.Images[0].BlockDeviceMappings {
-		_, err = a.ec2.CreateTags(&ec2.CreateTagsInput{
-			Resources: []*string{bdm.Ebs.SnapshotId},
-			Tags: []*ec2.Tag{
-				{
-					Key:   aws.String("Name"),
-					Value: aws.String(name),
+		_, err = a.ec2.CreateTags(
+			context.Background(),
+			&ec2.CreateTagsInput{
+				Resources: []string{*bdm.Ebs.SnapshotId},
+				Tags: []ec2types.Tag{
+					{
+						Key:   aws.String("Name"),
+						Value: aws.String(name),
+					},
 				},
-			},
-		})
+			})
 		if err != nil {
 			return *result.ImageId, err
 		}
@@ -529,8 +446,9 @@ func (a *AWS) CopyImage(name, ami, sourceRegion string) (string, error) {
 
 func (a *AWS) ShareImage(ami string, userIds []string) error {
 	imgs, err := a.ec2.DescribeImages(
+		context.Background(),
 		&ec2.DescribeImagesInput{
-			ImageIds: []*string{aws.String(ami)},
+			ImageIds: []string{ami},
 		},
 	)
 	if err != nil {
@@ -541,7 +459,7 @@ func (a *AWS) ShareImage(ami string, userIds []string) error {
 	}
 
 	for _, bdm := range imgs.Images[0].BlockDeviceMappings {
-		err = a.shareSnapshot(bdm.Ebs.SnapshotId, userIds)
+		err = a.shareSnapshot(*bdm.Ebs.SnapshotId, userIds)
 		if err != nil {
 			return err
 		}
@@ -562,16 +480,17 @@ func (a *AWS) shareImage(ami *string, userIds []string) error {
 	}
 
 	logrus.Info("[AWS] 💿 Sharing ec2 AMI")
-	var launchPerms []*ec2.LaunchPermission
+	var launchPerms []ec2types.LaunchPermission
 	for _, id := range uIds {
-		launchPerms = append(launchPerms, &ec2.LaunchPermission{
+		launchPerms = append(launchPerms, ec2types.LaunchPermission{
 			UserId: id,
 		})
 	}
 	_, err := a.ec2.ModifyImageAttribute(
+		context.Background(),
 		&ec2.ModifyImageAttributeInput{
 			ImageId: ami,
-			LaunchPermission: &ec2.LaunchPermissionModifications{
+			LaunchPermission: &ec2types.LaunchPermissionModifications{
 				Add: launchPerms,
 			},
 		},
@@ -584,18 +503,15 @@ func (a *AWS) shareImage(ami *string, userIds []string) error {
 	return nil
 }
 
-func (a *AWS) shareSnapshot(snapshotId *string, userIds []string) error {
+func (a *AWS) shareSnapshot(snapshotId string, userIds []string) error {
 	logrus.Info("[AWS] 🎥 Sharing ec2 snapshot")
-	var uIds []*string
-	for i := range userIds {
-		uIds = append(uIds, &userIds[i])
-	}
 	_, err := a.ec2.ModifySnapshotAttribute(
+		context.Background(),
 		&ec2.ModifySnapshotAttributeInput{
-			Attribute:     aws.String(ec2.SnapshotAttributeNameCreateVolumePermission),
-			OperationType: aws.String("add"),
-			SnapshotId:    snapshotId,
-			UserIds:       uIds,
+			Attribute:     ec2types.SnapshotAttributeNameCreateVolumePermission,
+			OperationType: ec2types.OperationTypeAdd,
+			SnapshotId:    aws.String(snapshotId),
+			UserIds:       userIds,
 		},
 	)
 	if err != nil {
@@ -606,7 +522,7 @@ func (a *AWS) shareSnapshot(snapshotId *string, userIds []string) error {
 	return nil
 }
 
-func (a *AWS) RemoveSnapshotAndDeregisterImage(image *ec2.Image) error {
+func (a *AWS) RemoveSnapshotAndDeregisterImage(image *ec2types.Image) error {
 	if image == nil {
 		return fmt.Errorf("image is nil")
 	}
@@ -617,6 +533,7 @@ func (a *AWS) RemoveSnapshotAndDeregisterImage(image *ec2.Image) error {
 	}
 
 	_, err := a.ec2.DeregisterImage(
+		context.Background(),
 		&ec2.DeregisterImageInput{
 			ImageId: image.ImageId,
 		},
@@ -627,6 +544,7 @@ func (a *AWS) RemoveSnapshotAndDeregisterImage(image *ec2.Image) error {
 
 	for _, s := range snapshots {
 		_, err = a.ec2.DeleteSnapshot(
+			context.Background(),
 			&ec2.DeleteSnapshotInput{
 				SnapshotId: s,
 			},
@@ -642,13 +560,14 @@ func (a *AWS) RemoveSnapshotAndDeregisterImage(image *ec2.Image) error {
 // For service maintenance images are discovered by the "Name:composer-api-*" tag filter. Currently
 // all image names in the service are generated, so they're guaranteed to be unique as well. If
 // users are ever allowed to name their images, an extra tag should be added.
-func (a *AWS) DescribeImagesByTag(tagKey, tagValue string) ([]*ec2.Image, error) {
+func (a *AWS) DescribeImagesByTag(tagKey, tagValue string) ([]ec2types.Image, error) {
 	imgs, err := a.ec2.DescribeImages(
+		context.Background(),
 		&ec2.DescribeImagesInput{
-			Filters: []*ec2.Filter{
+			Filters: []ec2types.Filter{
 				{
 					Name:   aws.String(fmt.Sprintf("tag:%s", tagKey)),
-					Values: []*string{aws.String(tagValue)},
+					Values: []string{tagValue},
 				},
 			},
 		},
@@ -695,14 +614,14 @@ func (a *AWS) MarkS3ObjectAsPublic(bucket, objectKey string) error {
 }
 
 func (a *AWS) Regions() ([]string, error) {
-	out, err := a.ec2.DescribeRegions(&ec2.DescribeRegionsInput{})
+	out, err := a.ec2.DescribeRegions(context.Background(), &ec2.DescribeRegionsInput{})
 	if err != nil {
 		return nil, err
 	}
 
 	result := []string{}
 	for _, r := range out.Regions {
-		result = append(result, aws.StringValue(r.RegionName))
+		result = append(result, *r.RegionName)
 	}
 	return result, nil
 }
