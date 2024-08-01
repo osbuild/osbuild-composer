@@ -28,8 +28,10 @@ type AWS struct {
 	s3presign  S3Presign
 }
 
-func newForTest(s3cli S3, upldr S3Manager, sign S3Presign) *AWS {
+func newForTest(ec2cli EC2, ec2imds EC2Imds, s3cli S3, upldr S3Manager, sign S3Presign) *AWS {
 	return &AWS{
+		ec2:        ec2cli,
+		ec2imds:    ec2imds,
 		s3:         s3cli,
 		s3uploader: upldr,
 		s3presign:  sign,
