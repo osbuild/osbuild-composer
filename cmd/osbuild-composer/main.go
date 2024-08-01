@@ -110,6 +110,10 @@ func main() {
 		logrus.Warn("GLITCHTIP_DSN not configured, skipping initializing Sentry/Glitchtip")
 	}
 
+	if config.DeploymentChannel != "" {
+		logrus.AddHook(&common.EnvironmentHook{Channel: config.DeploymentChannel})
+	}
+
 	stateDir, ok := os.LookupEnv("STATE_DIRECTORY")
 	if !ok {
 		logrus.Fatal("STATE_DIRECTORY is not set. Is the service file missing StateDirectory=?")
