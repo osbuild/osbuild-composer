@@ -262,6 +262,7 @@ if nvrGreaterOrEqual "osbuild-composer" "83"; then
     # TODO: Remove this workaround, once CLOUDX-994 is resolved
     if [[ ($ID == rhel || $ID == centos) && ${VERSION_ID%.*} == 10 ]]; then
         RESULTS=1
+        yellowprint "WARNING: cloud-image-val currently skipped until CLOUDX-994 is resolved!"
     else
         sudo "${CONTAINER_RUNTIME}" run \
             --net=host \
