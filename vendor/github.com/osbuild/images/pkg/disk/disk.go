@@ -138,6 +138,16 @@ type VolumeContainer interface {
 	// bytes), i.e. the storage space that needs to be reserved for
 	// the container itself, in contrast to the data it contains.
 	MetadataSize() uint64
+
+	// minSize returns the size for the VolumeContainer that is either the
+	// provided desired size value or the sum of all children if that is
+	// larger. It will also add any space required for metadata. The returned
+	// value should, at minimum, be large enough to fit all the children, their
+	// metadata, and the VolumeContainer's metadata. In other words, the
+	// VolumeContainer's size, or its parent size, will be able to hold the
+	// VolumeContainer if it is created with the exact size returned by the
+	// function.
+	minSize(size uint64) uint64
 }
 
 // FSSpec for a filesystem (UUID and Label); the first field of fstab(5)
