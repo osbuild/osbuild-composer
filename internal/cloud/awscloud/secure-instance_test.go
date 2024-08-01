@@ -1,11 +1,15 @@
-package awscloud
+package awscloud_test
 
 import (
 	"fmt"
 	"testing"
+
+	"github.com/stretchr/testify/require"
+
+	"github.com/osbuild/osbuild-composer/internal/cloud/awscloud"
 )
 
-func TestSecureInstanceUserData(t *testing.T) {
+func TestSIUserData(t *testing.T) {
 	type testCase struct {
 		CloudWatchGroup  string
 		Hostname         string
@@ -58,10 +62,23 @@ write_files:
 
 	for idx, tc := range testCases {
 		t.Run(fmt.Sprintf("Test case %d", idx), func(t *testing.T) {
-			userData := SecureInstanceUserData(tc.CloudWatchGroup, tc.Hostname)
+			userData := awscloud.SecureInstanceUserData(tc.CloudWatchGroup, tc.Hostname)
 			if userData != tc.ExpectedUserData {
 				t.Errorf("Expected: %s, got: %s", tc.ExpectedUserData, userData)
 			}
 		})
 	}
+}
+
+func TestSIRunSecureInstance(t *testing.T) {
+	m := newEc2Mock(t)
+	aws := awscloud.NewForTest(m, &ec2imdsmock{t, "instance-id", "region1"}, nil, nil, nil)
+	require.NotNil(t, aws)
+
+	si, err := aws.RunSecureInstance("iam-profile", "key-name", "cw-group", "hostname")
+	require.NoError(t, err)
+	require.NotNil(t, si)
+	require.Equal(t, 1, m.calledFn["CreateFleet"])
+	require.Equal(t, 1, m.calledFn["CreateSecurityGroup"])
+	require.Equal(t, 1, m.calledFn["CreateLaunchTemplate"])
 }
