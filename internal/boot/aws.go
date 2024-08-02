@@ -3,15 +3,17 @@
 package boot
 
 import (
+	"context"
 	"encoding/base64"
 	"errors"
 	"fmt"
 	"os"
+	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/ec2"
+
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/ec2"
+	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/osbuild-composer/internal/cloud/awscloud"
@@ -92,33 +94,19 @@ func wrapErrorf(innerError error, format string, a ...interface{}) error {
 func UploadImageToAWS(c *awsCredentials, imagePath string, imageName string) error {
 	uploader, err := awscloud.New(c.Region, c.AccessKeyId, c.SecretAccessKey, c.sessionToken)
 	if err != nil {
-		return fmt.Errorf("cannot create aws uploader: %v", err)
+		return fmt.Errorf("cannot create aws uploader: %w", err)
 	}
 
 	_, err = uploader.Upload(imagePath, c.Bucket, imageName)
 	if err != nil {
-		return fmt.Errorf("cannot upload the image: %v", err)
+		return fmt.Errorf("cannot upload the image: %w", err)
 	}
 	_, err = uploader.Register(imageName, c.Bucket, imageName, nil, arch.Current().String(), nil)
 	if err != nil {
-		return fmt.Errorf("cannot register the image: %v", err)
+		return fmt.Errorf("cannot register the image: %w", err)
 	}
 
 	return nil
-}
-
-// NewEC2 creates EC2 struct from given credentials
-func NewEC2(c *awsCredentials) (*ec2.EC2, error) {
-	creds := credentials.NewStaticCredentials(c.AccessKeyId, c.SecretAccessKey, "")
-	sess, err := session.NewSession(&aws.Config{
-		Credentials: creds,
-		Region:      aws.String(c.Region),
-	})
-	if err != nil {
-		return nil, fmt.Errorf("cannot create aws session: %v", err)
-	}
-
-	return ec2.New(sess), nil
 }
 
 type imageDescription struct {
@@ -126,23 +114,20 @@ type imageDescription struct {
 	SnapshotId *string
 	// this doesn't support multiple snapshots per one image,
 	// because this feature is not supported in composer
+	Img        *ec2types.Image
 }
 
 // DescribeEC2Image searches for EC2 image by its name and returns
 // its id and snapshot id
-func DescribeEC2Image(e *ec2.EC2, imageName string) (*imageDescription, error) {
-	imageDescriptions, err := e.DescribeImages(&ec2.DescribeImagesInput{
-		Filters: []*ec2.Filter{
-			{
-				Name: aws.String("name"),
-				Values: []*string{
-					aws.String(imageName),
-				},
-			},
-		},
-	})
+func DescribeEC2Image(c *awsCredentials, imageName string) (*imageDescription, error) {
+	awscl, err := awscloud.New(c.Region, c.AccessKeyId, c.SecretAccessKey, c.sessionToken)
 	if err != nil {
-		return nil, fmt.Errorf("cannot describe the image: %v", err)
+		return nil, fmt.Errorf("cannot create aws client: %w", err)
+	}
+
+	imageDescriptions, err := awscl.DescribeImagesByName(imageName)
+	if err != nil {
+		return nil, fmt.Errorf("cannot describe images: %w", err)
 	}
 	imageId := imageDescriptions.Images[0].ImageId
 	snapshotId := imageDescriptions.Images[0].BlockDeviceMappings[0].Ebs.SnapshotId
@@ -150,37 +135,27 @@ func DescribeEC2Image(e *ec2.EC2, imageName string) (*imageDescription, error) {
 	return &imageDescription{
 		Id:         imageId,
 		SnapshotId: snapshotId,
+		Img:        &imageDescriptions.Images[0],
 	}, nil
 }
 
 // DeleteEC2Image deletes the specified image and its associated snapshot
-func DeleteEC2Image(e *ec2.EC2, imageDesc *imageDescription) error {
-	var retErr error
-
-	// firstly, deregister the image
-	_, err := e.DeregisterImage(&ec2.DeregisterImageInput{
-		ImageId: imageDesc.Id,
-	})
-
+func DeleteEC2Image(c *awsCredentials, imageDesc *imageDescription) error {
+	awscl, err := awscloud.New(c.Region, c.AccessKeyId, c.SecretAccessKey, c.sessionToken)
 	if err != nil {
-		retErr = wrapErrorf(retErr, "cannot deregister the image: %v", err)
+		return fmt.Errorf("cannot create aws client: %w", err)
 	}
-
-	// now it's possible to delete the snapshot
-	_, err = e.DeleteSnapshot(&ec2.DeleteSnapshotInput{
-		SnapshotId: imageDesc.SnapshotId,
-	})
-
-	if err != nil {
-		retErr = wrapErrorf(retErr, "cannot delete the snapshot: %v", err)
-	}
-
-	return retErr
+	return awscl.RemoveSnapshotAndDeregisterImage(imageDesc.Img)
 }
 
 // WithBootedImageInEC2 runs the function f in the context of booted
 // image in AWS EC2
-func WithBootedImageInEC2(e *ec2.EC2, securityGroupName string, imageDesc *imageDescription, publicKey string, instanceType string, f func(address string) error) (retErr error) {
+func WithBootedImageInEC2(c *awsCredentials, securityGroupName string, imageDesc *imageDescription, publicKey string, instanceType string, f func(address string) error) (retErr error) {
+	awscl, err := awscloud.New(c.Region, c.AccessKeyId, c.SecretAccessKey, c.sessionToken)
+	if err != nil {
+		return fmt.Errorf("cannot create aws client: %w", err)
+	}
+
 	// generate user data with given public key
 	userData, err := CreateUserData(publicKey)
 	if err != nil {
@@ -190,71 +165,92 @@ func WithBootedImageInEC2(e *ec2.EC2, securityGroupName string, imageDesc *image
 	// Security group must be now generated, because by default
 	// all traffic to EC2 instance is filtered.
 	// Firstly create a security group
-	securityGroup, err := e.CreateSecurityGroup(&ec2.CreateSecurityGroupInput{
-		GroupName:   aws.String(securityGroupName),
-		Description: aws.String("image-tests-security-group"),
-	})
+	securityGroup, err := awscl.EC2ForTestsOnly().CreateSecurityGroup(
+		context.Background(),
+		&ec2.CreateSecurityGroupInput{
+			GroupName:   aws.String(securityGroupName),
+			Description: aws.String("image-tests-security-group"),
+		},
+	)
 	if err != nil {
-		return fmt.Errorf("cannot create a new security group: %v", err)
+		return fmt.Errorf("cannot create a new security group: %w", err)
 	}
 
 	defer func() {
-		_, err = e.DeleteSecurityGroup(&ec2.DeleteSecurityGroupInput{
-			GroupId: securityGroup.GroupId,
-		})
+		_, err = awscl.EC2ForTestsOnly().DeleteSecurityGroup(
+			context.Background(),
+			&ec2.DeleteSecurityGroupInput{
+				GroupId: securityGroup.GroupId,
+			},
+		)
 
 		if err != nil {
-			retErr = wrapErrorf(retErr, "cannot delete the security group: %v", err)
+			retErr = wrapErrorf(retErr, "cannot delete the security group: %w", err)
 		}
 	}()
 
 	// Authorize incoming SSH connections.
-	_, err = e.AuthorizeSecurityGroupIngress(&ec2.AuthorizeSecurityGroupIngressInput{
-		CidrIp:     aws.String("0.0.0.0/0"),
-		GroupId:    securityGroup.GroupId,
-		FromPort:   aws.Int64(22),
-		ToPort:     aws.Int64(22),
-		IpProtocol: aws.String("tcp"),
-	})
+	_, err = awscl.EC2ForTestsOnly().AuthorizeSecurityGroupIngress(
+		context.Background(),
+		&ec2.AuthorizeSecurityGroupIngressInput{
+			CidrIp:     aws.String("0.0.0.0/0"),
+			GroupId:    securityGroup.GroupId,
+			FromPort:   aws.Int32(22),
+			ToPort:     aws.Int32(22),
+			IpProtocol: aws.String("tcp"),
+		},
+	)
 	if err != nil {
-		return fmt.Errorf("canot add a rule to the security group: %v", err)
+		return fmt.Errorf("canot add a rule to the security group: %w", err)
 	}
 
 	// Finally, run the instance from the given image and with the created security group
-	res, err := e.RunInstances(&ec2.RunInstancesInput{
-		MaxCount:         aws.Int64(1),
-		MinCount:         aws.Int64(1),
-		ImageId:          imageDesc.Id,
-		InstanceType:     aws.String(instanceType),
-		SecurityGroupIds: []*string{securityGroup.GroupId},
-		UserData:         aws.String(encodeBase64(userData)),
-	})
+	res, err := awscl.EC2ForTestsOnly().RunInstances(
+		context.Background(),
+		&ec2.RunInstancesInput{
+			MaxCount:         aws.Int32(1),
+			MinCount:         aws.Int32(1),
+			ImageId:          imageDesc.Id,
+			InstanceType:     ec2types.InstanceType(instanceType),
+			SecurityGroupIds: []string{*securityGroup.GroupId},
+			UserData:         aws.String(encodeBase64(userData)),
+		},
+	)
 	if err != nil {
-		return fmt.Errorf("cannot create a new instance: %v", err)
+		return fmt.Errorf("cannot create a new instance: %w", err)
 	}
 
 	describeInstanceInput := &ec2.DescribeInstancesInput{
-		InstanceIds: []*string{
-			res.Instances[0].InstanceId,
+		InstanceIds: []string{
+			*res.Instances[0].InstanceId,
 		},
 	}
 
 	defer func() {
 		// We need to terminate the instance now and wait until the termination is done.
 		// Otherwise, it wouldn't be possible to delete the image.
-		_, err = e.TerminateInstances(&ec2.TerminateInstancesInput{
-			InstanceIds: []*string{
-				res.Instances[0].InstanceId,
+		_, err = awscl.EC2ForTestsOnly().TerminateInstances(
+			context.Background(),
+			&ec2.TerminateInstancesInput{
+				InstanceIds: []string{
+					*res.Instances[0].InstanceId,
+				},
 			},
-		})
+		)
 		if err != nil {
-			retErr = wrapErrorf(retErr, "cannot terminate the instance: %v", err)
+			retErr = wrapErrorf(retErr, "cannot terminate the instance: %w", err)
 			return
 		}
 
-		err = e.WaitUntilInstanceTerminated(describeInstanceInput)
+		instTermWaiter := ec2.NewInstanceTerminatedWaiter(awscl.EC2ForTestsOnly())
+		err = instTermWaiter.Wait(
+			context.Background(),
+			describeInstanceInput,
+			time.Hour,
+		)
 		if err != nil {
-			retErr = wrapErrorf(retErr, "waiting for the instance termination failed: %v", err)
+			retErr = wrapErrorf(retErr, "cannot terminate the instance: %w", err)
+			return
 		}
 	}()
 
@@ -262,15 +258,20 @@ func WithBootedImageInEC2(e *ec2.EC2, securityGroupName string, imageDesc *image
 	// is in the state "EXISTS". However, in this state the instance is not
 	// much usable, therefore wait until "RUNNING" state, in which the instance
 	// actually can do something useful for us.
-	err = e.WaitUntilInstanceRunning(describeInstanceInput)
+	instWaiter := ec2.NewInstanceRunningWaiter(awscl.EC2ForTestsOnly())
+	err = instWaiter.Wait(
+		context.Background(),
+		describeInstanceInput,
+		time.Hour,
+	)
 	if err != nil {
-		return fmt.Errorf("waiting for the instance to be running failed: %v", err)
+		return fmt.Errorf("waiting for the instance to be running failed: %w", err)
 	}
 
 	// By describing the instance, we can get the ip address.
-	out, err := e.DescribeInstances(describeInstanceInput)
+	out, err := awscl.EC2ForTestsOnly().DescribeInstances(context.Background(), describeInstanceInput)
 	if err != nil {
-		return fmt.Errorf("cannot describe the instance: %v", err)
+		return fmt.Errorf("cannot describe the instance: %w", err)
 	}
 
 	return f(*out.Reservations[0].Instances[0].PublicIpAddress)
