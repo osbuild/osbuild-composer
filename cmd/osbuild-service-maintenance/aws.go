@@ -73,7 +73,7 @@ func AWSCleanup(maxConcurrentRequests int, dryRun bool, accessKeyID, accessKey s
 				defer sem.Release(1)
 				defer wg.Done()
 
-				err := a.RemoveSnapshotAndDeregisterImage(images[i])
+				err := a.RemoveSnapshotAndDeregisterImage(&images[i])
 				if err != nil {
 					logrus.Errorf("Cleanup for image %s in region %s failed: %v", *images[i].ImageId, region, err)
 				}
