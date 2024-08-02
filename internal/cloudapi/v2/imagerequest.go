@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/aws/aws-sdk-go/service/ec2"
+	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/google/uuid"
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/distro"
@@ -56,11 +56,11 @@ func newAWSTarget(options UploadOptions, imageType distro.ImageType) (*target.Ta
 	var amiBootMode *string
 	switch imageType.BootMode() {
 	case distro.BOOT_HYBRID:
-		amiBootMode = common.ToPtr(ec2.BootModeValuesUefiPreferred)
+		amiBootMode = common.ToPtr(string(ec2types.BootModeValuesUefiPreferred))
 	case distro.BOOT_UEFI:
-		amiBootMode = common.ToPtr(ec2.BootModeValuesUefi)
+		amiBootMode = common.ToPtr(string(ec2types.BootModeValuesUefi))
 	case distro.BOOT_LEGACY:
-		amiBootMode = common.ToPtr(ec2.BootModeValuesLegacyBios)
+		amiBootMode = common.ToPtr(string(ec2types.BootModeValuesLegacyBios))
 	}
 
 	t := target.NewAWSTarget(&target.AWSTargetOptions{
