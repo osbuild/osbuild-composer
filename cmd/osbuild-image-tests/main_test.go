@@ -328,19 +328,16 @@ func testBootUsingAWS(t *testing.T, imagePath string) {
 	imageName, err := test.GenerateCIArtifactName("osbuild-image-tests-image-")
 	require.NoError(t, err)
 
-	e, err := boot.NewEC2(creds)
-	require.NoError(t, err)
-
 	// the following line should be done by osbuild-composer at some point
 	err = boot.UploadImageToAWS(creds, imagePath, imageName)
 	require.NoErrorf(t, err, "upload to amazon failed, resources could have been leaked")
 
-	imageDesc, err := boot.DescribeEC2Image(e, imageName)
+	imageDesc, err := boot.DescribeEC2Image(creds, imageName)
 	require.NoErrorf(t, err, "cannot describe the ec2 image")
 
 	// delete the image after the test is over
 	defer func() {
-		err = boot.DeleteEC2Image(e, imageDesc)
+		err = boot.DeleteEC2Image(creds, imageDesc)
 		require.NoErrorf(t, err, "cannot delete the ec2 image, resources could have been leaked")
 	}()
 
@@ -359,7 +356,7 @@ func testBootUsingAWS(t *testing.T, imagePath string) {
 
 	// boot the uploaded image and try to connect to it
 	err = boot.WithSSHKeyPair(func(privateKey, publicKey string) error {
-		return boot.WithBootedImageInEC2(e, securityGroupName, imageDesc, publicKey, instanceType, func(address string) error {
+		return boot.WithBootedImageInEC2(creds, securityGroupName, imageDesc, publicKey, instanceType, func(address string) error {
 			testSSH(t, address, privateKey, nil)
 			return nil
 		})
