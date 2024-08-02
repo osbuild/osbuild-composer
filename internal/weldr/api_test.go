@@ -17,7 +17,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/aws/aws-sdk-go/service/ec2"
+	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distro/test_distro"
@@ -1086,7 +1086,7 @@ func TestCompose(t *testing.T) {
 						SecretAccessKey: "secretkey",
 						Bucket:          "clay",
 						Key:             "imagekey",
-						BootMode:        common.ToPtr(ec2.BootModeValuesUefiPreferred),
+						BootMode:        common.ToPtr(string(ec2types.BootModeValuesUefiPreferred)),
 					},
 				},
 			},

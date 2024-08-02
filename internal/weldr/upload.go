@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aws/aws-sdk-go/service/ec2"
+	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/sirupsen/logrus"
@@ -283,11 +283,11 @@ func uploadRequestToTarget(u uploadRequest, imageType distro.ImageType) *target.
 		var amiBootMode *string
 		switch imageType.BootMode() {
 		case distro.BOOT_HYBRID:
-			amiBootMode = common.ToPtr(ec2.BootModeValuesUefiPreferred)
+			amiBootMode = common.ToPtr(string(ec2types.BootModeValuesUefiPreferred))
 		case distro.BOOT_UEFI:
-			amiBootMode = common.ToPtr(ec2.BootModeValuesUefi)
+			amiBootMode = common.ToPtr(string(ec2types.BootModeValuesUefi))
 		case distro.BOOT_LEGACY:
-			amiBootMode = common.ToPtr(ec2.BootModeValuesLegacyBios)
+			amiBootMode = common.ToPtr(string(ec2types.BootModeValuesLegacyBios))
 		}
 
 		t.Options = &target.AWSTargetOptions{
