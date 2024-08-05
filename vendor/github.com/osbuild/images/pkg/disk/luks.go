@@ -109,3 +109,16 @@ func (lc *LUKSContainer) MetadataSize() uint64 {
 	// 16 MiB is the default size for the LUKS2 header
 	return 16 * common.MiB
 }
+
+func (lc *LUKSContainer) minSize(size uint64) uint64 {
+	// since a LUKS container can contain pretty much any payload, but we only
+	// care about the ones that have a size, or contain children with sizes
+	minSize := lc.MetadataSize()
+	switch payload := lc.Payload.(type) {
+	case VolumeContainer:
+		minSize += payload.minSize(size)
+	case Sizeable:
+		minSize += payload.GetSize()
+	}
+	return minSize
+}
