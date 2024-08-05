@@ -149,14 +149,14 @@ func handleBuild(inputArchive, host string) (*osbuild.Result, error) {
 
 	var osbuildResult osbuild.Result
 
-	err = json.NewDecoder(resp.Body).Decode(&osbuildResult)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to decode response body into osbuild result: %w", err)
+		return nil, fmt.Errorf("Unable to read response body: %w", err)
 	}
 
-	_, err = io.ReadAll(resp.Body)
+	err = json.Unmarshal(body, &osbuildResult)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to wait for executor to close connection: %w", err)
+		return nil, fmt.Errorf("Unable to decode response body %q into osbuild result: %w", body, err)
 	}
 
 	return &osbuildResult, nil

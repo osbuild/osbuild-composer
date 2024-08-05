@@ -91,6 +91,24 @@ func TestHandleBuild(t *testing.T) {
 	require.True(t, osbuildResult.Success)
 }
 
+func TestHandleBuildNoJSON(t *testing.T) {
+	buildServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, err := io.ReadAll(r.Body)
+		require.NoError(t, err)
+
+		w.WriteHeader(http.StatusCreated)
+		_, err = w.Write([]byte("bad non-json text"))
+		require.NoError(t, err)
+	}))
+
+	cacheDir := t.TempDir()
+	inputArchive := filepath.Join(cacheDir, "test.tar")
+	require.NoError(t, os.WriteFile(inputArchive, []byte("test"), 0600))
+
+	_, err := osbuildexecutor.HandleBuild(inputArchive, buildServer.URL)
+	require.ErrorContains(t, err, `Unable to decode response body "bad non-json text" into osbuild result:`)
+}
+
 func TestHandleOutputArchive(t *testing.T) {
 	serverDir := t.TempDir()
 	serverOutputDir := filepath.Join(serverDir, "output")
