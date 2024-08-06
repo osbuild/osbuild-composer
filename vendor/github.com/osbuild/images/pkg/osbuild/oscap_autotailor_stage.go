@@ -11,28 +11,56 @@ type OscapAutotailorStageOptions struct {
 	Config   OscapAutotailorConfig `json:"config"`
 }
 
-type OscapAutotailorConfig struct {
-	TailoredProfileID string   `json:"new_profile"`
-	Datastream        string   `json:"datastream"`
-	ProfileID         string   `json:"profile_id"`
-	Selected          []string `json:"selected,omitempty"`
-	Unselected        []string `json:"unselected,omitempty"`
+type OscapAutotailorConfig interface {
+	validate() error
+	isAutotailorConfig()
 }
 
-func (OscapAutotailorStageOptions) isStageOptions() {}
+type AutotailorKeyValueConfig struct {
+	NewProfile string   `json:"new_profile"`
+	Datastream string   `json:"datastream"`
+	ProfileID  string   `json:"profile_id"`
+	Selected   []string `json:"selected,omitempty"`
+	Unselected []string `json:"unselected,omitempty"`
+}
 
-func (c OscapAutotailorConfig) validate() error {
+func (c AutotailorKeyValueConfig) isAutotailorConfig() {}
+
+func (c AutotailorKeyValueConfig) validate() error {
 	if c.Datastream == "" {
 		return fmt.Errorf("'datastream' must be specified")
+	}
+	if c.NewProfile == "" {
+		return fmt.Errorf("'new_profile' must be specified")
 	}
 	if c.ProfileID == "" {
 		return fmt.Errorf("'profile_id' must be specified")
 	}
+	return nil
+}
+
+type AutotailorJSONConfig struct {
+	TailoredProfileID string `json:"tailored_profile_id"`
+	Datastream        string `json:"datastream"`
+	TailoringFile     string `json:"tailoring_file"`
+}
+
+func (c AutotailorJSONConfig) isAutotailorConfig() {}
+
+func (c AutotailorJSONConfig) validate() error {
+	if c.Datastream == "" {
+		return fmt.Errorf("'datastream' must be specified")
+	}
 	if c.TailoredProfileID == "" {
-		return fmt.Errorf("'new_profile' must be specified")
+		return fmt.Errorf("'tailored_profile_id' must be specified")
+	}
+	if c.TailoringFile == "" {
+		return fmt.Errorf("'tailoring_file' must be specified")
 	}
 	return nil
 }
+
+func (OscapAutotailorStageOptions) isStageOptions() {}
 
 func NewOscapAutotailorStage(options *OscapAutotailorStageOptions) *Stage {
 	if err := options.Config.validate(); err != nil {
@@ -45,25 +73,41 @@ func NewOscapAutotailorStage(options *OscapAutotailorStageOptions) *Stage {
 	}
 }
 
-func NewOscapAutotailorStageOptions(options *oscap.TailoringConfig) *OscapAutotailorStageOptions {
+func NewOscapAutotailorStageOptions(options *oscap.RemediationConfig) *OscapAutotailorStageOptions {
 	if options == nil {
+		return nil
+	}
+
+	tailoringConfig := options.TailoringConfig
+	if tailoringConfig == nil {
 		return nil
 	}
 
 	// TODO: don't panic! unfortunately this would involve quite
 	// a big refactor and we still need to be a bit defensive here
-	if options.RemediationConfig.TailoringPath == "" {
+	if tailoringConfig.TailoringPath == "" {
 		panic(fmt.Errorf("The tailoring path for the OpenSCAP remediation config cannot be empty, this is a programming error"))
 	}
 
+	if tailoringConfig.JSONFilepath != "" {
+		return &OscapAutotailorStageOptions{
+			Filepath: tailoringConfig.TailoringPath,
+			Config: AutotailorJSONConfig{
+				Datastream:        options.Datastream,
+				TailoredProfileID: tailoringConfig.TailoredProfileID,
+				TailoringFile:     tailoringConfig.JSONFilepath,
+			},
+		}
+	}
+
 	return &OscapAutotailorStageOptions{
-		Filepath: options.RemediationConfig.TailoringPath,
-		Config: OscapAutotailorConfig{
-			TailoredProfileID: options.TailoredProfileID,
-			Datastream:        options.RemediationConfig.Datastream,
-			ProfileID:         options.RemediationConfig.ProfileID,
-			Selected:          options.Selected,
-			Unselected:        options.Unselected,
+		Filepath: tailoringConfig.TailoringPath,
+		Config: AutotailorKeyValueConfig{
+			Datastream: options.Datastream,
+			ProfileID:  options.ProfileID,
+			NewProfile: tailoringConfig.TailoredProfileID,
+			Selected:   tailoringConfig.Selected,
+			Unselected: tailoringConfig.Unselected,
 		},
 	}
 }

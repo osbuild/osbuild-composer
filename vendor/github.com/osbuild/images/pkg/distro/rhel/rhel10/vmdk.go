@@ -7,7 +7,7 @@ import (
 	"github.com/osbuild/images/pkg/rpmmd"
 )
 
-const vmdkKernelOptions = "ro net.ifnames=0"
+const vmdkKernelOptions = "ro"
 
 func mkVMDKImgType() *rhel.ImageType {
 	it := rhel.NewImageType(

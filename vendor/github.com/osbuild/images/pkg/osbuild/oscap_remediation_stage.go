@@ -81,13 +81,19 @@ func NewOscapRemediationStageOptions(dataDir string, options *oscap.RemediationC
 		return nil
 	}
 
+	config := OscapConfig{
+		ProfileID:   options.ProfileID,
+		Datastream:  options.Datastream,
+		Compression: options.CompressionEnabled,
+	}
+
+	if tc := options.TailoringConfig; tc != nil {
+		config.ProfileID = tc.TailoredProfileID
+		config.Tailoring = tc.TailoringPath
+	}
+
 	return &OscapRemediationStageOptions{
 		DataDir: dataDir,
-		Config: OscapConfig{
-			ProfileID:   options.ProfileID,
-			Datastream:  options.Datastream,
-			Tailoring:   options.TailoringPath,
-			Compression: options.CompressionEnabled,
-		},
+		Config:  config,
 	}
 }

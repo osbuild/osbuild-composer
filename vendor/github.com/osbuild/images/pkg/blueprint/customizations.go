@@ -3,7 +3,10 @@ package blueprint
 import (
 	"fmt"
 	"reflect"
+	"slices"
 	"strings"
+
+	"github.com/osbuild/images/pkg/customizations/anaconda"
 )
 
 type Customizations struct {
@@ -27,6 +30,7 @@ type Customizations struct {
 	FIPS               *bool                          `json:"fips,omitempty" toml:"fips,omitempty"`
 	ContainersStorage  *ContainerStorageCustomization `json:"containers-storage,omitempty" toml:"containers-storage,omitempty"`
 	Installer          *InstallerCustomization        `json:"installer,omitempty" toml:"installer,omitempty"`
+	RPM                *RPMCustomization              `json:"rpm,omitempty" toml:"rpm,omitempty"`
 }
 
 type IgnitionCustomization struct {
@@ -114,10 +118,10 @@ type ServicesCustomization struct {
 }
 
 type OpenSCAPCustomization struct {
-	DataStream   string                              `json:"datastream,omitempty" toml:"datastream,omitempty"`
-	ProfileID    string                              `json:"profile_id,omitempty" toml:"profile_id,omitempty"`
-	Tailoring    *OpenSCAPTailoringCustomizations    `json:"tailoring,omitempty" toml:"tailoring,omitempty"`
-	XMLTailoring *OpenSCAPXMLTailoringCustomizations `json:"xml_tailoring,omitempty" toml:"xml_tailoring,omitempty"`
+	DataStream    string                               `json:"datastream,omitempty" toml:"datastream,omitempty"`
+	ProfileID     string                               `json:"profile_id,omitempty" toml:"profile_id,omitempty"`
+	Tailoring     *OpenSCAPTailoringCustomizations     `json:"tailoring,omitempty" toml:"tailoring,omitempty"`
+	JSONTailoring *OpenSCAPJSONTailoringCustomizations `json:"json_tailoring,omitempty" toml:"json_tailoring,omitempty"`
 }
 
 type OpenSCAPTailoringCustomizations struct {
@@ -125,7 +129,7 @@ type OpenSCAPTailoringCustomizations struct {
 	Unselected []string `json:"unselected,omitempty" toml:"unselected,omitempty"`
 }
 
-type OpenSCAPXMLTailoringCustomizations struct {
+type OpenSCAPJSONTailoringCustomizations struct {
 	ProfileID string `json:"profile_id,omitempty" toml:"profile_id,omitempty"`
 	Filepath  string `json:"filepath,omitempty" toml:"filepath,omitempty"`
 }
@@ -403,12 +407,27 @@ func (c *Customizations) GetInstaller() (*InstallerCustomization, error) {
 	// when the user adds their own kickstart content
 	if c.Installer.Kickstart != nil && len(c.Installer.Kickstart.Contents) > 0 {
 		if c.Installer.Unattended {
-			return nil, fmt.Errorf("installer.unattended is not allowed when adding custom kickstart contents")
+			return nil, fmt.Errorf("installer.unattended is not supported when adding custom kickstart contents")
 		}
 		if len(c.Installer.SudoNopasswd) > 0 {
-			return nil, fmt.Errorf("installer.sudo-nopasswd is not allowed when adding custom kickstart contents")
+			return nil, fmt.Errorf("installer.sudo-nopasswd is not supported when adding custom kickstart contents")
 		}
 	}
 
+	// Disabling the user module isn't supported when users or groups are
+	// defined
+	if c.Installer.Modules != nil &&
+		slices.Contains(c.Installer.Modules.Disable, anaconda.ModuleUsers) &&
+		len(c.User)+len(c.Group) > 0 {
+		return nil, fmt.Errorf("blueprint contains user or group customizations but disables the required Users Anaconda module")
+	}
+
 	return c.Installer, nil
+}
+
+func (c *Customizations) GetRPM() *RPMCustomization {
+	if c == nil {
+		return nil
+	}
+	return c.RPM
 }
