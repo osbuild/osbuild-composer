@@ -101,6 +101,7 @@ type ec2mock struct {
 	snapshotId string
 
 	calledFn map[string]int
+	failFn   map[string]error
 }
 
 func newEc2Mock(t *testing.T) *ec2mock {
@@ -110,6 +111,7 @@ func newEc2Mock(t *testing.T) *ec2mock {
 		imageName:  "image-name",
 		snapshotId: "snapshot-id",
 		calledFn:   make(map[string]int),
+		failFn:     make(map[string]error),
 	}
 }
 
@@ -136,6 +138,11 @@ func (m *ec2mock) AuthorizeSecurityGroupIngress(ctx context.Context, input *ec2.
 
 func (m *ec2mock) CreateSecurityGroup(ctx context.Context, input *ec2.CreateSecurityGroupInput, optfns ...func(*ec2.Options)) (*ec2.CreateSecurityGroupOutput, error) {
 	m.calledFn["CreateSecurityGroup"] += 1
+
+	if err, ok := m.failFn["CreateSecurityGroup"]; ok {
+		return nil, err
+	}
+
 	return &ec2.CreateSecurityGroupOutput{
 		GroupId: aws.String("sg-id"),
 	}, nil
@@ -186,6 +193,11 @@ func (m *ec2mock) DescribeSubnets(ctx context.Context, input *ec2.DescribeSubnet
 
 func (m *ec2mock) CreateLaunchTemplate(ctx context.Context, input *ec2.CreateLaunchTemplateInput, optfns ...func(*ec2.Options)) (*ec2.CreateLaunchTemplateOutput, error) {
 	m.calledFn["CreateLaunchTemplate"] += 1
+
+	if err, ok := m.failFn["CreateLaunchTemplate"]; ok {
+		return nil, err
+	}
+
 	return &ec2.CreateLaunchTemplateOutput{
 		LaunchTemplate: &ec2types.LaunchTemplate{
 			LaunchTemplateId: aws.String("lt-id"),
@@ -273,6 +285,21 @@ func (m *ec2mock) TerminateInstances(ctx context.Context, input *ec2.TerminateIn
 
 func (m *ec2mock) CreateFleet(ctx context.Context, input *ec2.CreateFleetInput, optfns ...func(*ec2.Options)) (*ec2.CreateFleetOutput, error) {
 	m.calledFn["CreateFleet"] += 1
+
+	if err, ok := m.failFn["CreateFleet"]; ok {
+		if err != nil {
+			return nil, err
+		}
+		return &ec2.CreateFleetOutput{
+			Errors: []ec2types.CreateFleetError{
+				{
+					ErrorCode:    aws.String("UnfillableCapacity"),
+					ErrorMessage: aws.String("Msg"),
+				},
+			},
+		}, nil
+	}
+
 	return &ec2.CreateFleetOutput{
 		FleetId: aws.String("fleet-id"),
 		Instances: []ec2types.CreateFleetInstance{
