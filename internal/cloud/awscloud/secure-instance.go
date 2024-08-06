@@ -294,15 +294,17 @@ func (a *AWS) createOrReplaceSG(hostInstanceID, hostIP, vpcID string) (string, e
 	if err != nil && !isInvalidGroupNotFoundErr(err) {
 		return "", err
 	}
-	for _, sg := range descrSGOutput.SecurityGroups {
-		_, err := a.ec2.DeleteSecurityGroup(
-			context.Background(),
-			&ec2.DeleteSecurityGroupInput{
-				GroupId: sg.GroupId,
-			},
-		)
-		if err != nil {
-			return "", err
+	if descrSGOutput != nil {
+		for _, sg := range descrSGOutput.SecurityGroups {
+			_, err := a.ec2.DeleteSecurityGroup(
+				context.Background(),
+				&ec2.DeleteSecurityGroupInput{
+					GroupId: sg.GroupId,
+				},
+			)
+			if err != nil {
+				return "", err
+			}
 		}
 	}
 
@@ -384,7 +386,12 @@ func (a *AWS) createOrReplaceLT(hostInstanceID, imageID, sgID, iamProfile, keyNa
 			},
 		},
 	)
-	if len(descrLTOutput.LaunchTemplates) == 1 {
+
+	if err != nil && !isLaunchTemplateNotFoundError(err) {
+		return "", err
+	}
+
+	if descrLTOutput != nil && len(descrLTOutput.LaunchTemplates) == 1 {
 		_, err := a.ec2.DeleteLaunchTemplate(
 			context.Background(),
 			&ec2.DeleteLaunchTemplateInput{
@@ -394,9 +401,6 @@ func (a *AWS) createOrReplaceLT(hostInstanceID, imageID, sgID, iamProfile, keyNa
 		if err != nil {
 			return "", err
 		}
-	}
-	if err != nil && !isLaunchTemplateNotFoundError(err) {
-		return "", err
 	}
 
 	input := &ec2.CreateLaunchTemplateInput{
