@@ -14,15 +14,11 @@ import (
 	"time"
 
 	"github.com/BurntSushi/toml"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/aws/ec2metadata"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/autoscaling"
 	"github.com/sirupsen/logrus"
 
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/dnfjson"
+	"github.com/osbuild/osbuild-composer/internal/cloud/awscloud"
 	"github.com/osbuild/osbuild-composer/internal/upload/azure"
 	"github.com/osbuild/osbuild-composer/internal/upload/koji"
 	"github.com/osbuild/osbuild-composer/internal/upload/oci"
@@ -96,61 +92,27 @@ func WatchJob(ctx context.Context, job worker.Job) {
 	}
 }
 
-// protect an AWS instance from scaling and/or terminating.
+// Protect an AWS instance from scaling (terminating).
 func setProtection(protected bool) {
-	// create a new session
-	awsSession, err := session.NewSession()
+	// This will fail if the worker isn't running in AWS, so just return with a debug message.
+	region, err := awscloud.RegionFromInstanceMetadata()
 	if err != nil {
-		logrus.Debugf("Error getting an AWS session, %s", err)
+		logrus.Debugf("Error getting the instance region: %v", err)
 		return
 	}
 
-	// get the identity for the instanceID
-	identity, err := ec2metadata.New(awsSession).GetInstanceIdentityDocument()
+	aws, err := awscloud.NewDefault(region)
 	if err != nil {
-		logrus.Debugf("Error getting the identity document, %s", err)
+		logrus.Infof("Unable to get default aws client: %v", err)
 		return
 	}
 
-	svc := autoscaling.New(awsSession, aws.NewConfig().WithRegion(identity.Region))
-
-	// get the autoscaling group info for the auto scaling group name
-	asInstanceInput := &autoscaling.DescribeAutoScalingInstancesInput{
-		InstanceIds: []*string{
-			aws.String(identity.InstanceID),
-		},
-	}
-	asInstanceOutput, err := svc.DescribeAutoScalingInstances(asInstanceInput)
+	err = aws.ASGSetProtectHost(protected)
 	if err != nil {
-		if aerr, ok := err.(awserr.Error); ok {
-			logrus.Warningf("Error getting the Autoscaling instances: %s %s", aerr.Code(), aerr.Error())
-		} else {
-			logrus.Errorf("Error getting the Autoscaling instances: unknown, %s", err)
-		}
-		return
-	}
-	if len(asInstanceOutput.AutoScalingInstances) == 0 {
-		logrus.Info("No Autoscaling instace is defined")
+		logrus.Infof("Unable to protect host, if the host isn't running as part of an autoscaling group, this can safely be ignored: %v", err)
 		return
 	}
 
-	// make the request to protect (or unprotect) the instance
-	input := &autoscaling.SetInstanceProtectionInput{
-		AutoScalingGroupName: asInstanceOutput.AutoScalingInstances[0].AutoScalingGroupName,
-		InstanceIds: []*string{
-			aws.String(identity.InstanceID),
-		},
-		ProtectedFromScaleIn: aws.Bool(protected),
-	}
-	_, err = svc.SetInstanceProtection(input)
-	if err != nil {
-		if aerr, ok := err.(awserr.Error); ok {
-			logrus.Warningf("Error protecting instance: %s %s", aerr.Code(), aerr.Error())
-		} else {
-			logrus.Errorf("Error protecting instance: unknown, %s", err)
-		}
-		return
-	}
 	if protected {
 		logrus.Info("Instance protected")
 	} else {
