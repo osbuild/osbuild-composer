@@ -20,7 +20,8 @@ type SkopeoDestinationOCI struct {
 func (SkopeoDestinationOCI) isSkopeoDestination() {}
 
 type SkopeoStageOptions struct {
-	Destination SkopeoDestination `json:"destination"`
+	Destination      SkopeoDestination `json:"destination"`
+	RemoveSignatures *bool             `json:"remove-signatures,omitempty"`
 }
 
 func (o SkopeoStageOptions) isStageOptions() {}

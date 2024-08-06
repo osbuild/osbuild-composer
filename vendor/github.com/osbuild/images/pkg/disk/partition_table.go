@@ -43,6 +43,60 @@ const (
 	DefaultPartitioningMode PartitioningMode = ""
 )
 
+// NewPartitionTable takes an existing base partition table and some parameters
+// and returns a new version of the base table modified to satisfy the
+// parameters.
+//
+// Mountpoints: New filesystems and minimum partition sizes are defined in
+// mountpoints. By default, if new mountpoints are created, a partition table is
+// automatically converted to LVM (see Partitioning modes below).
+//
+// Image size: The minimum size of the partition table, which in turn will be
+// the size of the disk image. The final size of the image will either be the
+// value of the imageSize argument or the sum of all partitions and their
+// associated metadata, whichever is larger.
+//
+// Partitioning modes: The mode controls how the partition table is modified.
+//
+// - Raw will not convert any partition to LVM or Btrfs.
+//
+// - LVM will convert the partition that contains the root mountpoint '/' to an
+// LVM Volume Group and create a root Logical Volume. Any extra mountpoints,
+// except /boot, will be added to the Volume Group as new Logical Volumes.
+//
+// - Btrfs will convert the partition that contains the root mountpoint '/' to
+// a Btrfs volume and create a root subvolume. Any extra mountpoints, except
+// /boot, will be added to the Btrfs volume as new Btrfs subvolumes.
+//
+// - AutoLVM is the default mode and will convert a raw partition table to an
+// LVM-based one if and only if new mountpoints are added.
+//
+// Directory sizes: The requiredSizes argument defines a map of minimum sizes
+// for specific directories. These indirectly control the minimum sizes of
+// partitions. A directory with a required size will set the minimum size of
+// the partition with the mountpoint that contains the directory. Additional
+// directory requirements are additive, meaning the minimum size for a
+// mountpoint's partition is the sum of all the required directory sizes it
+// will contain. By default, if no requiredSizes are provided, the new
+// partition table will require at least 1 GiB for '/' and 2 GiB for '/usr'. In
+// most cases, this translates to a requirement of 3 GiB for the root
+// partition, Logical Volume, or Btrfs subvolume.
+//
+// General principles:
+//
+// Desired sizes for partitions, partition tables, volumes, directories, etc,
+// are always treated as minimum sizes. This means that very often the full
+// disk image size is larger than the size of the sum of the partitions due to
+// metadata. The function considers that the size of volumes have higher
+// priority than the size of the disk.
+//
+// The partition or volume container that contains '/' is always last in the
+// partition table layout.
+//
+// In the case of raw partitioning (no LVM and no Btrfs), the partition
+// containing the root filesystem is grown to fill any left over space on the
+// partition table. Logical Volumes are not grown to fill the space in the
+// Volume Group since they are trivial to grow on a live system.
 func NewPartitionTable(basePT *PartitionTable, mountpoints []blueprint.FilesystemCustomization, imageSize uint64, mode PartitioningMode, requiredSizes map[string]uint64, rng *rand.Rand) (*PartitionTable, error) {
 	newPT := basePT.Clone().(*PartitionTable)
 
@@ -143,8 +197,8 @@ func (pt *PartitionTable) Clone() Entity {
 	return clone
 }
 
-// AlignUp will align the given bytes to next aligned grain if not already
-// aligned
+// AlignUp will round up the given size value to the default grain if not
+// already aligned.
 func (pt *PartitionTable) AlignUp(size uint64) uint64 {
 	grain := DefaultGrainBytes
 	if size%grain == 0 {
@@ -368,10 +422,10 @@ func (pt *PartitionTable) HeaderSize() uint64 {
 	return header
 }
 
-// Apply filesystem filesystem customization to the partiton table. If create is false
-// will only apply customizations to existing partitions and return unhandled, i.e new
-// ones. An error can only occur if create is set. Conversely, it will only return non
-// empty list of new mountpoints if create is false.
+// Apply filesystem customization to the partition table. If create is false,
+// the function will only apply customizations to existing partitions and
+// return a list of left-over mountpoints (i.e. mountpoints in the input that
+// were not created). An error can only occur if create is set.
 // Does not relayout the table, i.e. a call to relayout might be needed.
 func (pt *PartitionTable) applyCustomization(mountpoints []blueprint.FilesystemCustomization, create bool) ([]blueprint.FilesystemCustomization, error) {
 
@@ -395,10 +449,9 @@ func (pt *PartitionTable) applyCustomization(mountpoints []blueprint.FilesystemC
 }
 
 // Dynamically calculate and update the start point for each of the existing
-// partitions. Adjusts the overall size of image to either the supplied
-// value in `size` or to the sum of all partitions if that is larger.
-// Will grow the root partition if there is any empty space.
-// Returns the updated start point.
+// partitions. Adjusts the overall size of image to either the supplied value
+// in `size` or to the sum of all partitions if that is larger. Will grow the
+// root partition if there is any empty space. Returns the updated start point.
 func (pt *PartitionTable) relayout(size uint64) uint64 {
 	// always reserve one extra sector for the GPT header
 	header := pt.HeaderSize()
@@ -423,6 +476,7 @@ func (pt *PartitionTable) relayout(size uint64) uint64 {
 			continue
 		}
 		partition.Start = start
+		partition.fitTo(partition.Size)
 		partition.Size = pt.AlignUp(partition.Size)
 		start += partition.Size
 	}
@@ -433,6 +487,7 @@ func (pt *PartitionTable) relayout(size uint64) uint64 {
 
 	root := &pt.Partitions[rootIdx]
 	root.Start = start
+	root.fitTo(root.Size)
 
 	// add the extra padding specified in the partition table
 	footer += pt.ExtraPadding

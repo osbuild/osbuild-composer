@@ -10,17 +10,29 @@ import (
 	"github.com/osbuild/images/internal/common"
 )
 
+// Argon2id defines parameters for the key derivation function for LUKS.
 type Argon2id struct {
-	Iterations  uint
-	Memory      uint
+	// Number of iterations to perform.
+	Iterations uint
+
+	// Amount of memory to use (in KiB).
+	Memory uint
+
+	// Degree of parallelism (i.e. number of threads).
 	Parallelism uint
 }
 
+// ClevisBind defines parameters for binding a LUKS device with a given policy.
 type ClevisBind struct {
-	Pin              string
-	Policy           string
+	Pin    string
+	Policy string
+
+	// If enabled, the passphrase will be removed from the LUKS device at the
+	// end of the build (using the org.osbuild.luks2.remove-key stage).
 	RemovePassphrase bool
 }
+
+// LUKSContainer represents a LUKS encrypted volume.
 type LUKSContainer struct {
 	Passphrase string
 	UUID       string
@@ -29,9 +41,10 @@ type LUKSContainer struct {
 	Subsystem  string
 	SectorSize uint64
 
-	// password-based key derivation function
+	// The password-based key derivation function's parameters.
 	PBKDF Argon2id
 
+	// Parameters for binding the LUKS device.
 	Clevis *ClevisBind
 
 	Payload Entity
@@ -108,4 +121,17 @@ func (lc *LUKSContainer) MetadataSize() uint64 {
 
 	// 16 MiB is the default size for the LUKS2 header
 	return 16 * common.MiB
+}
+
+func (lc *LUKSContainer) minSize(size uint64) uint64 {
+	// since a LUKS container can contain pretty much any payload, but we only
+	// care about the ones that have a size, or contain children with sizes
+	minSize := lc.MetadataSize()
+	switch payload := lc.Payload.(type) {
+	case VolumeContainer:
+		minSize += payload.minSize(size)
+	case Sizeable:
+		minSize += payload.GetSize()
+	}
+	return minSize
 }

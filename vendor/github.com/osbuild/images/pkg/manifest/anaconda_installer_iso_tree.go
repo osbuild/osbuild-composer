@@ -35,6 +35,9 @@ type AnacondaInstallerISOTree struct {
 	// The path where the payload (tarball, ostree repo, or container) will be stored.
 	PayloadPath string
 
+	// If set the skopeo stage will remove signatures during copy
+	PayloadRemoveSignatures bool
+
 	isoLabel string
 
 	SquashfsCompression string
@@ -391,10 +394,15 @@ func (p *AnacondaInstallerISOTree) ostreeContainerStages() []*osbuild.Stage {
 	}))
 
 	// copy the container in
-	stages = append(stages, osbuild.NewSkopeoStageWithOCI(
+	skopeoStage := osbuild.NewSkopeoStageWithOCI(
 		p.PayloadPath,
 		image,
-		nil))
+		nil)
+	if p.PayloadRemoveSignatures {
+		opts := skopeoStage.Options.(*osbuild.SkopeoStageOptions)
+		opts.RemoveSignatures = common.ToPtr(true)
+	}
+	stages = append(stages, skopeoStage)
 
 	stages = append(stages, p.bootcInstallerKickstartStages()...)
 	return stages
