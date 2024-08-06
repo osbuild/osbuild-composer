@@ -135,6 +135,22 @@
     echo "installing rpms $COMPOSER_RPMS"
     dnf install -y $COMPOSER_RPMS
 
+# osbuild uses socket.SOCK_SEQPACKET when sending files to the build root. For very large files this
+# can cause EMSGSIZE errors.
+- ansible.posix.sysctl:
+  tags:
+    - always
+  name: net.core.wmem_max
+  value: '4194304'
+  sysctl_set: true
+
+- ansible.posix.sysctl:
+  tags:
+    - always
+  name: net.core.rmem_max
+  value: '4194304'
+  sysctl_set: true
+
 - name: Cleanup rpmbuild dir
   tags:
     - always
