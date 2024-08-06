@@ -1,9 +1,10 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 
-	"github.com/aws/aws-sdk-go/aws/awserr"
+	smithy "github.com/aws/smithy-go"
 	"github.com/sirupsen/logrus"
 
 	"github.com/osbuild/osbuild-composer/internal/cloud/awscloud"
@@ -51,8 +52,10 @@ func (impl *AWSEC2CopyJobImpl) Run(job worker.Job) error {
 	if err != nil {
 		logWithId.Errorf("Error copying ami: %v", err)
 		result.JobError = clienterrors.New(clienterrors.ErrorSharingTarget, fmt.Sprintf("Error copying ami %s", args.Ami), nil)
-		if aerr, ok := err.(awserr.Error); ok {
-			switch aerr.Code() {
+
+		var apiErr smithy.APIError
+		if errors.As(err, &apiErr) {
+			switch apiErr.ErrorCode() {
 			case "InvalidRegion":
 				result.JobError = clienterrors.New(clienterrors.ErrorSharingTarget, fmt.Sprintf("Invalid source region '%s'", args.SourceRegion), nil)
 			case "InvalidAMIID.Malformed":
@@ -62,7 +65,10 @@ func (impl *AWSEC2CopyJobImpl) Run(job worker.Job) error {
 			case "InvalidRequest":
 				result.JobError = clienterrors.New(clienterrors.ErrorSharingTarget, fmt.Sprintf("Source ami '%s' not found", args.Ami), nil)
 			}
+		} else {
+			result.JobError = clienterrors.New(clienterrors.ErrorSharingTarget, fmt.Sprintf("Unknown error copying ami '%s'", args.Ami), err.Error())
 		}
+
 		return err
 	}
 
@@ -125,8 +131,9 @@ func (impl *AWSEC2ShareJobImpl) Run(job worker.Job) error {
 	if err != nil {
 		logWithId.Errorf("Error sharing image: %v", err)
 		result.JobError = clienterrors.New(clienterrors.ErrorSharingTarget, fmt.Sprintf("Error sharing image with target %v", args.ShareWithAccounts), nil)
-		if aerr, ok := err.(awserr.Error); ok {
-			switch aerr.Code() {
+		var apiErr smithy.APIError
+		if errors.As(err, &apiErr) {
+			switch apiErr.ErrorCode() {
 			case "InvalidAMIID.Malformed":
 				result.JobError = clienterrors.New(clienterrors.ErrorSharingTarget, fmt.Sprintf("Malformed ami id '%s'", args.Ami), nil)
 			case "InvalidAMIID.NotFound":
@@ -134,7 +141,10 @@ func (impl *AWSEC2ShareJobImpl) Run(job worker.Job) error {
 			case "InvalidAMIAttributeItemValue":
 				result.JobError = clienterrors.New(clienterrors.ErrorSharingTarget, fmt.Sprintf("Invalid user id to share ami with: %v", args.ShareWithAccounts), nil)
 			}
+		} else {
+			result.JobError = clienterrors.New(clienterrors.ErrorSharingTarget, fmt.Sprintf("Unknown error sharing ami '%s' with %v", args.Ami, args.ShareWithAccounts), err.Error())
 		}
+
 		return err
 	}
 
