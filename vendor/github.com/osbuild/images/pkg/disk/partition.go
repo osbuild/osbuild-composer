@@ -59,6 +59,19 @@ func (p *Partition) GetChild(n uint) Entity {
 	return p.Payload
 }
 
+// fitTo resizes a partition to be either the given the size or the size of its
+// payload if that is larger. The payload can be larger if it is a container
+// with sized children.
+func (p *Partition) fitTo(size uint64) {
+	payload, isVC := p.Payload.(VolumeContainer)
+	if isVC {
+		if payloadMinSize := payload.minSize(size); payloadMinSize > size {
+			size = payloadMinSize
+		}
+	}
+	p.Size = size
+}
+
 func (p *Partition) GetSize() uint64 {
 	return p.Size
 }

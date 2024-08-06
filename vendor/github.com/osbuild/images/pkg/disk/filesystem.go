@@ -88,6 +88,11 @@ func (fs *Filesystem) GetFSTabOptions() FSTabOptions {
 }
 
 func (fs *Filesystem) GenUUID(rng *rand.Rand) {
+	if fs.Type == "vfat" && fs.UUID == "" {
+		// vfat has no uuids, it has "serial numbers" (volume IDs)
+		fs.UUID = NewVolIDFromRand(rng)
+		return
+	}
 	if fs.UUID == "" {
 		fs.UUID = uuid.Must(newRandomUUIDFromReader(rng)).String()
 	}

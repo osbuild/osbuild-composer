@@ -690,6 +690,9 @@ type packageSpecs []PackageSpec
 type depsolveResult struct {
 	Packages packageSpecs          `json:"packages"`
 	Repos    map[string]repoConfig `json:"repos"`
+
+	// (optional) contains the solver used, e.g. "dnf5"
+	Solver string `json:"solver"`
 }
 
 // Package specification

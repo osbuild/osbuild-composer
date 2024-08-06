@@ -174,9 +174,6 @@ func (p *RawBootcImage) serialize() osbuild.Pipeline {
 	// customize the image
 	if len(p.Groups) > 0 {
 		groupsStage := osbuild.GenGroupsStage(p.Groups)
-		if err != nil {
-			panic(fmt.Sprintf("group stage failed %v", err))
-		}
 		groupsStage.Mounts = mounts
 		groupsStage.Devices = devices
 		pipeline.AddStage(groupsStage)

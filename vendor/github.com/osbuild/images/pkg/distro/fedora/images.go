@@ -8,6 +8,7 @@ import (
 	"github.com/osbuild/images/internal/workload"
 	"github.com/osbuild/images/pkg/blueprint"
 	"github.com/osbuild/images/pkg/container"
+	"github.com/osbuild/images/pkg/customizations/anaconda"
 	"github.com/osbuild/images/pkg/customizations/bootc"
 	"github.com/osbuild/images/pkg/customizations/fdo"
 	"github.com/osbuild/images/pkg/customizations/fsnode"
@@ -57,6 +58,10 @@ func osCustomizations(
 	osc.Containers = containers
 
 	osc.GPGKeyFiles = imageConfig.GPGKeyFiles
+	if rpm := c.GetRPM(); rpm != nil && rpm.ImportKeys != nil {
+		osc.GPGKeyFiles = append(osc.GPGKeyFiles, rpm.ImportKeys.Files...)
+	}
+
 	if imageConfig.ExcludeDocs != nil {
 		osc.ExcludeDocs = *imageConfig.ExcludeDocs
 	}
@@ -189,12 +194,11 @@ func osCustomizations(
 		}
 		osc.Directories = append(osc.Directories, oscapDataNode)
 
-		remediationConfig, tailoringConfig, err := oscap.NewConfigs(*oscapConfig, imageConfig.DefaultOSCAPDatastream)
+		remediationConfig, err := oscap.NewConfigs(*oscapConfig, imageConfig.DefaultOSCAPDatastream)
 		if err != nil {
 			panic(fmt.Errorf("error creating OpenSCAP configs: %w", err))
 		}
 
-		osc.OpenSCAPTailorConfig = tailoringConfig
 		osc.OpenSCAPRemediationConfig = remediationConfig
 	}
 
@@ -425,6 +429,15 @@ func imageInstallerImage(workload workload.Workload,
 		img.AdditionalKernelOpts = []string{"inst.text", "inst.noninteractive"}
 	}
 
+	instCust, err := customizations.GetInstaller()
+	if err != nil {
+		return nil, err
+	}
+	if instCust != nil && instCust.Modules != nil {
+		img.AdditionalAnacondaModules = append(img.AdditionalAnacondaModules, instCust.Modules.Enable...)
+		img.DisabledAnacondaModules = append(img.DisabledAnacondaModules, instCust.Modules.Disable...)
+	}
+
 	img.Platform = t.platform
 	img.Workload = workload
 
@@ -624,11 +637,20 @@ func iotInstallerImage(workload workload.Workload,
 	// kickstart though kickstart does support setting them
 	img.Kickstart.Timezone, _ = customizations.GetTimezoneSettings()
 
-	img.AdditionalAnacondaModules = []string{
-		"org.fedoraproject.Anaconda.Modules.Timezone",
-		"org.fedoraproject.Anaconda.Modules.Localization",
-		"org.fedoraproject.Anaconda.Modules.Users",
+	instCust, err := customizations.GetInstaller()
+	if err != nil {
+		return nil, err
 	}
+	if instCust != nil && instCust.Modules != nil {
+		img.AdditionalAnacondaModules = append(img.AdditionalAnacondaModules, instCust.Modules.Enable...)
+		img.DisabledAnacondaModules = append(img.DisabledAnacondaModules, instCust.Modules.Disable...)
+	}
+
+	img.AdditionalAnacondaModules = append(img.AdditionalAnacondaModules, []string{
+		anaconda.ModuleTimezone,
+		anaconda.ModuleLocalization,
+		anaconda.ModuleUsers,
+	}...)
 
 	img.SquashfsCompression = "lz4"
 
