@@ -82,3 +82,25 @@ func TestSIRunSecureInstance(t *testing.T) {
 	require.Equal(t, 1, m.calledFn["CreateSecurityGroup"])
 	require.Equal(t, 1, m.calledFn["CreateLaunchTemplate"])
 }
+
+func TestSITerminateSecureInstance(t *testing.T) {
+	m := newEc2Mock(t)
+	aws := awscloud.NewForTest(m, &ec2imdsmock{t, "instance-id", "region1"}, nil, nil, nil)
+	require.NotNil(t, aws)
+
+	// Small hack, describeinstances returns terminate/running
+	// depending on how many times it was called.
+	m.calledFn["DescribeInstances"] = 1
+
+	err := aws.TerminateSecureInstance(&awscloud.SecureInstance{
+		FleetID:    "fleet-id",
+		SGID:       "sg-id",
+		LTID:       "lt-id",
+		InstanceID: "instance-id",
+	})
+	require.NoError(t, err)
+	require.Equal(t, 1, m.calledFn["DeleteFleets"])
+	require.Equal(t, 1, m.calledFn["DeleteSecurityGroup"])
+	require.Equal(t, 1, m.calledFn["DeleteLaunchTemplate"])
+	require.Equal(t, 2, m.calledFn["DescribeInstances"])
+}
