@@ -262,6 +262,7 @@ func (m *ec2mock) DescribeInstanceStatus(ctx context.Context, input *ec2.Describ
 }
 
 func (m *ec2mock) RunInstances(ctx context.Context, input *ec2.RunInstancesInput, optfns ...func(*ec2.Options)) (*ec2.RunInstancesOutput, error) {
+	m.calledFn["RunInstances"] += 1
 	return nil, nil
 }
 
@@ -286,7 +287,14 @@ func (m *ec2mock) CreateFleet(ctx context.Context, input *ec2.CreateFleetInput, 
 
 func (m *ec2mock) DeleteFleets(ctx context.Context, input *ec2.DeleteFleetsInput, optfns ...func(*ec2.Options)) (*ec2.DeleteFleetsOutput, error) {
 	m.calledFn["DeleteFleets"] += 1
-	return nil, nil
+	return &ec2.DeleteFleetsOutput{
+		UnsuccessfulFleetDeletions: nil,
+		SuccessfulFleetDeletions: []ec2types.DeleteFleetSuccessItem{
+			{
+				FleetId: aws.String("fleet-id"),
+			},
+		},
+	}, nil
 }
 
 func (m *ec2mock) CopyImage(ctx context.Context, input *ec2.CopyImageInput, optfns ...func(*ec2.Options)) (*ec2.CopyImageOutput, error) {
