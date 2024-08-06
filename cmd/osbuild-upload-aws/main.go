@@ -4,8 +4,6 @@ import (
 	"flag"
 	"fmt"
 
-	"github.com/aws/aws-sdk-go/aws"
-
 	"github.com/osbuild/osbuild-composer/internal/cloud/awscloud"
 )
 
@@ -46,7 +44,7 @@ func main() {
 		return
 	}
 
-	fmt.Printf("file uploaded to %s\n", aws.StringValue(&uploadOutput.Location))
+	fmt.Printf("file uploaded to %s\n", uploadOutput.Location)
 
 	var share []string
 	if shareWith != "" {
@@ -64,5 +62,5 @@ func main() {
 		return
 	}
 
-	fmt.Printf("AMI registered: %s\n", aws.StringValue(ami))
+	fmt.Printf("AMI registered: %s\n", *ami)
 }
