@@ -1,5 +1,10 @@
 package osbuild
 
+import (
+	"github.com/osbuild/images/pkg/customizations/anaconda"
+	"golang.org/x/exp/slices"
+)
+
 type AnacondaStageOptions struct {
 	// Kickstart modules to enable
 	KickstartModules []string `json:"kickstart-modules"`
@@ -15,18 +20,47 @@ func NewAnacondaStage(options *AnacondaStageOptions) *Stage {
 	}
 }
 
-func NewAnacondaStageOptions(additionalModules []string) *AnacondaStageOptions {
-	modules := []string{
-		"org.fedoraproject.Anaconda.Modules.Network",
-		"org.fedoraproject.Anaconda.Modules.Payloads",
-		"org.fedoraproject.Anaconda.Modules.Storage",
+func defaultModuleStates() map[string]bool {
+	return map[string]bool{
+		anaconda.ModuleLocalization: false,
+		anaconda.ModuleNetwork:      true,
+		anaconda.ModulePayloads:     true,
+		anaconda.ModuleRuntime:      false,
+		anaconda.ModuleSecurity:     false,
+		anaconda.ModuleServices:     false,
+		anaconda.ModuleStorage:      true,
+		anaconda.ModuleSubscription: false,
+		anaconda.ModuleTimezone:     false,
+		anaconda.ModuleUsers:        false,
 	}
+}
 
-	if len(additionalModules) > 0 {
-		modules = append(modules, additionalModules...)
+func setModuleStates(states map[string]bool, enable, disable []string) {
+	for _, modname := range enable {
+		states[modname] = true
 	}
+	for _, modname := range disable {
+		states[modname] = false
+	}
+}
+
+func filterEnabledModules(moduleStates map[string]bool) []string {
+	enabled := make([]string, 0, len(moduleStates))
+	for modname, state := range moduleStates {
+		if state {
+			enabled = append(enabled, modname)
+		}
+	}
+	// sort the list to guarantee stable manifests
+	slices.Sort(enabled)
+	return enabled
+}
+
+func NewAnacondaStageOptions(enableModules, disableModules []string) *AnacondaStageOptions {
+	states := defaultModuleStates()
+	setModuleStates(states, enableModules, disableModules)
 
 	return &AnacondaStageOptions{
-		KickstartModules: modules,
+		KickstartModules: filterEnabledModules(states),
 	}
 }

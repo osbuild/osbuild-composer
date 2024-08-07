@@ -129,7 +129,6 @@ type OSCustomizations struct {
 	ContainersStorage   *string
 
 	// OpenSCAP config
-	OpenSCAPTailorConfig      *oscap.TailoringConfig
 	OpenSCAPRemediationConfig *oscap.RemediationConfig
 
 	Subscription *subscription.ImageOptions
@@ -324,7 +323,7 @@ func (p *OS) getBuildPackages(distro Distro) []string {
 		packages = append(packages, "skopeo")
 	}
 
-	if p.OpenSCAPTailorConfig != nil {
+	if p.OpenSCAPRemediationConfig != nil && p.OpenSCAPRemediationConfig.TailoringConfig != nil {
 		packages = append(packages, "openscap-utils")
 	}
 
@@ -807,22 +806,15 @@ func (p *OS) serialize() osbuild.Pipeline {
 		}
 	}
 
-	if p.OpenSCAPTailorConfig != nil {
-		if p.OpenSCAPRemediationConfig == nil {
-			// This is a programming error, since it doesn't make sense
-			// to have tailoring configs without openscap config.
-			panic(fmt.Errorf("OpenSCAP autotailoring cannot be set if no OpenSCAP config has been provided"))
-		}
-
-		tailoringStageOpts := osbuild.NewOscapAutotailorStageOptions(p.OpenSCAPTailorConfig)
-		pipeline.AddStage(osbuild.NewOscapAutotailorStage(tailoringStageOpts))
-	}
-
 	// NOTE: We need to run the OpenSCAP stages as the last stage before SELinux
 	// since the remediation may change file permissions and other aspects of the
 	// hardened image
-	if p.OpenSCAPRemediationConfig != nil {
-		remediationStageOpts := osbuild.NewOscapRemediationStageOptions(oscap.DataDir, p.OpenSCAPRemediationConfig)
+	if remediationConfig := p.OpenSCAPRemediationConfig; remediationConfig != nil {
+		if remediationConfig.TailoringConfig != nil {
+			tailoringStageOpts := osbuild.NewOscapAutotailorStageOptions(remediationConfig)
+			pipeline.AddStage(osbuild.NewOscapAutotailorStage(tailoringStageOpts))
+		}
+		remediationStageOpts := osbuild.NewOscapRemediationStageOptions(oscap.DataDir, remediationConfig)
 		pipeline.AddStage(osbuild.NewOscapRemediationStage(remediationStageOpts))
 	}
 

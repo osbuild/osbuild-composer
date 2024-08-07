@@ -1,19 +1,20 @@
-// Disk package contains abstract data-types to define disk-related entities.
+// Package disk contains data types and functions to define and modify
+// disk-related and partition-table-related entities.
 //
 // The disk package is a collection of interfaces and structs that can be used
-// to represent an disk image with its layout. Various concrete types, such as
+// to represent a disk image with its layout. Various concrete types, such as
 // PartitionTable, Partition and Filesystem types are defined to model a given
 // disk layout. These implement a collection of interfaces that can be used to
 // navigate and operate on the various possible combinations of entities in a
 // generic way. The entity data model is very generic so that it can represent
 // all possible layouts, which can be arbitrarily complex, since technologies
-// like logical volume management, LUKS2 container and file systems, that can
-// have sub-volumes, allow for complex layouts.
+// like logical volume management, LUKS2 containers and file systems, that can
+// have sub-volumes, allow for complex and nested layouts.
+//
 // Entity and Container are the two main interfaces that are used to model the
 // tree structure of a disk image layout. The other entity interfaces, such as
 // Sizeable and Mountable, then describe various properties and capabilities
 // of a given entity.
-
 package disk
 
 import (
@@ -31,6 +32,9 @@ const (
 	// Default sector size in bytes
 	DefaultSectorSize = 512
 
+	// Default grain size in bytes. The grain controls how sizes of certain
+	// entities are rounded. For example, by default, partition sizes are
+	// rounded to the next MiB.
 	DefaultGrainBytes = uint64(1048576) // 1 MiB
 
 	// UUIDs
@@ -63,6 +67,7 @@ type Entity interface {
 	Clone() Entity
 }
 
+// PayloadEntity is an entity that can be used as a Payload for a Container.
 type PayloadEntity interface {
 	Entity
 
@@ -138,6 +143,16 @@ type VolumeContainer interface {
 	// bytes), i.e. the storage space that needs to be reserved for
 	// the container itself, in contrast to the data it contains.
 	MetadataSize() uint64
+
+	// minSize returns the size for the VolumeContainer that is either the
+	// provided desired size value or the sum of all children if that is
+	// larger. It will also add any space required for metadata. The returned
+	// value should, at minimum, be large enough to fit all the children, their
+	// metadata, and the VolumeContainer's metadata. In other words, the
+	// VolumeContainer's size, or its parent size, will be able to hold the
+	// VolumeContainer if it is created with the exact size returned by the
+	// function.
+	minSize(size uint64) uint64
 }
 
 // FSSpec for a filesystem (UUID and Label); the first field of fstab(5)
@@ -155,7 +170,7 @@ type FSTabOptions struct {
 	PassNo uint64
 }
 
-// ReadOnly returns true is the filesystem is mounted read-only
+// ReadOnly returns true if the filesystem is mounted read-only.
 func (o FSTabOptions) ReadOnly() bool {
 	opts := strings.Split(o.MntOps, ",")
 
@@ -180,8 +195,8 @@ func newRandomUUIDFromReader(r io.Reader) (uuid.UUID, error) {
 	return id, nil
 }
 
-// NewVolIDFromRand creates a random 32 bit hex string to use as a
-// volume ID for FAT filesystems
+// NewVolIDFromRand creates a random 32 bit hex string to use as a volume ID
+// for FAT filesystems.
 func NewVolIDFromRand(r *rand.Rand) string {
 	volid := make([]byte, 4)
 	len, _ := r.Read(volid)

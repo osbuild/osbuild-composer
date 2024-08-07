@@ -35,19 +35,6 @@ func defaultBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 					},
 				},
 				{
-					Size: 1 * common.GibiByte,
-					Type: disk.XBootLDRPartitionGUID,
-					UUID: disk.FilesystemDataUUID,
-					Payload: &disk.Filesystem{
-						Type:         "xfs",
-						Mountpoint:   "/boot",
-						Label:        "boot",
-						FSTabOptions: "defaults",
-						FSTabFreq:    0,
-						FSTabPassNo:  0,
-					},
-				},
-				{
 					Size: 2 * common.GibiByte,
 					Type: disk.FilesystemDataGUID,
 					UUID: disk.RootPartitionUUID,
@@ -82,19 +69,6 @@ func defaultBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 					},
 				},
 				{
-					Size: 1 * common.GibiByte,
-					Type: disk.XBootLDRPartitionGUID,
-					UUID: disk.FilesystemDataUUID,
-					Payload: &disk.Filesystem{
-						Type:         "xfs",
-						Mountpoint:   "/boot",
-						Label:        "boot",
-						FSTabOptions: "defaults",
-						FSTabFreq:    0,
-						FSTabPassNo:  0,
-					},
-				},
-				{
 					Size: 2 * common.GibiByte,
 					Type: disk.FilesystemDataGUID,
 					UUID: disk.RootPartitionUUID,
@@ -120,17 +94,6 @@ func defaultBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 					Bootable: true,
 				},
 				{
-					Size: 1 * common.GibiByte,
-					Payload: &disk.Filesystem{
-						Type:         "xfs",
-						Mountpoint:   "/boot",
-						Label:        "boot",
-						FSTabOptions: "defaults",
-						FSTabFreq:    0,
-						FSTabPassNo:  0,
-					},
-				},
-				{
 					Size: 2 * common.GibiByte,
 					Payload: &disk.Filesystem{
 						Type:         "xfs",
@@ -148,17 +111,6 @@ func defaultBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 			UUID: "0x14fc63d2",
 			Type: "dos",
 			Partitions: []disk.Partition{
-				{
-					Size: 1 * common.GibiByte,
-					Payload: &disk.Filesystem{
-						Type:         "xfs",
-						Mountpoint:   "/boot",
-						Label:        "boot",
-						FSTabOptions: "defaults",
-						FSTabFreq:    0,
-						FSTabPassNo:  0,
-					},
-				},
 				{
 					Size:     2 * common.GibiByte,
 					Bootable: true,

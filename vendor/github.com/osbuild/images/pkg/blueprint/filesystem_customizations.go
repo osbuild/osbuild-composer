@@ -10,7 +10,7 @@ import (
 
 type FilesystemCustomization struct {
 	Mountpoint string `json:"mountpoint,omitempty" toml:"mountpoint,omitempty"`
-	MinSize    uint64 `json:"minsize,omitempty" toml:"size,omitempty"`
+	MinSize    uint64 `json:"minsize,omitempty" toml:"minsize,omitempty"`
 }
 
 func (fsc *FilesystemCustomization) UnmarshalTOML(data interface{}) error {

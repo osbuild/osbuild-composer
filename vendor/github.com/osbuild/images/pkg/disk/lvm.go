@@ -150,6 +150,20 @@ func (vg *LVMVolumeGroup) MetadataSize() uint64 {
 	return 1 * common.MiB
 }
 
+func (vg *LVMVolumeGroup) minSize(size uint64) uint64 {
+	var lvsum uint64
+	for _, lv := range vg.LogicalVolumes {
+		lvsum += lv.Size
+	}
+	minSize := lvsum + vg.MetadataSize()
+
+	if minSize > size {
+		size = minSize
+	}
+
+	return vg.AlignUp(size)
+}
+
 type LVMLogicalVolume struct {
 	Name    string
 	Size    uint64
