@@ -1,5 +1,10 @@
 package osbuild
 
+import (
+	"github.com/osbuild/images/internal/common"
+	"github.com/osbuild/images/pkg/customizations/subscription"
+)
+
 // RHSMStageOptions describes configuration of the RHSM stage.
 //
 // The RHSM stage allows configuration of Red Hat Subscription Manager (RHSM)
@@ -51,4 +56,62 @@ type SubManConfigRHSMSection struct {
 type SubManConfigRHSMCERTDSection struct {
 	// Automatic system registration
 	AutoRegistration *bool `json:"auto_registration,omitempty"`
+}
+
+func NewRHSMStageOptions(config *subscription.RHSMConfig) *RHSMStageOptions {
+	if config == nil {
+		return nil
+	}
+
+	options := &RHSMStageOptions{}
+
+	dnfPlugProductIdEnabled := config.DnfPlugins.ProductID.Enabled
+	dnfPlugSubManEnabled := config.DnfPlugins.SubscriptionManager.Enabled
+	if dnfPlugProductIdEnabled != nil || dnfPlugSubManEnabled != nil {
+		options.DnfPlugins = &RHSMStageOptionsDnfPlugins{}
+		if dnfPlugProductIdEnabled != nil {
+			options.DnfPlugins.ProductID = &RHSMStageOptionsDnfPlugin{
+				Enabled: *dnfPlugProductIdEnabled,
+			}
+		}
+		if dnfPlugSubManEnabled != nil {
+			options.DnfPlugins.SubscriptionManager = &RHSMStageOptionsDnfPlugin{
+				Enabled: *dnfPlugSubManEnabled,
+			}
+		}
+	}
+
+	yumPlugProductIdEnabled := config.YumPlugins.ProductID.Enabled
+	yumPlugSubManEnabled := config.YumPlugins.SubscriptionManager.Enabled
+	if yumPlugProductIdEnabled != nil || yumPlugSubManEnabled != nil {
+		options.YumPlugins = &RHSMStageOptionsDnfPlugins{}
+		if yumPlugProductIdEnabled != nil {
+			options.YumPlugins.ProductID = &RHSMStageOptionsDnfPlugin{
+				Enabled: *yumPlugProductIdEnabled,
+			}
+		}
+		if yumPlugSubManEnabled != nil {
+			options.YumPlugins.SubscriptionManager = &RHSMStageOptionsDnfPlugin{
+				Enabled: *yumPlugSubManEnabled,
+			}
+		}
+	}
+
+	subManConfRhsmManageRepos := config.SubMan.Rhsm.ManageRepos
+	subManConfRhsmcertdAutoReg := config.SubMan.Rhsmcertd.AutoRegistration
+	if subManConfRhsmcertdAutoReg != nil || subManConfRhsmManageRepos != nil {
+		options.SubMan = &RHSMStageOptionsSubMan{}
+		if subManConfRhsmManageRepos != nil {
+			options.SubMan.Rhsm = &SubManConfigRHSMSection{
+				ManageRepos: common.ToPtr(*subManConfRhsmManageRepos),
+			}
+		}
+		if subManConfRhsmcertdAutoReg != nil {
+			options.SubMan.Rhsmcertd = &SubManConfigRHSMCERTDSection{
+				AutoRegistration: common.ToPtr(*subManConfRhsmcertdAutoReg),
+			}
+		}
+	}
+
+	return options
 }

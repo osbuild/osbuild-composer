@@ -42,6 +42,10 @@ type AnacondaOSTreeInstaller struct {
 	DisabledAnacondaModules   []string
 	AdditionalDrivers         []string
 	FIPS                      bool
+
+	// Uses the old, deprecated, Anaconda config option "kickstart-modules".
+	// Only for RHEL 8.
+	UseLegacyAnacondaConfig bool
 }
 
 func NewAnacondaOSTreeInstaller(commit ostree.SourceSpec) *AnacondaOSTreeInstaller {
@@ -80,6 +84,8 @@ func (img *AnacondaOSTreeInstaller) InstantiateManifest(m *manifest.Manifest,
 	anacondaPipeline.Variant = img.Variant
 	anacondaPipeline.Biosdevname = (img.Platform.GetArch() == arch.ARCH_X86_64)
 	anacondaPipeline.Checkpoint()
+
+	anacondaPipeline.UseLegacyAnacondaConfig = img.UseLegacyAnacondaConfig
 	anacondaPipeline.AdditionalDracutModules = img.AdditionalDracutModules
 	anacondaPipeline.AdditionalAnacondaModules = img.AdditionalAnacondaModules
 	if img.FIPS {
