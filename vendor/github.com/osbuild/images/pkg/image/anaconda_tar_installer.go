@@ -72,6 +72,10 @@ type AnacondaTarInstaller struct {
 	DisabledAnacondaModules   []string
 	AdditionalDracutModules   []string
 	AdditionalDrivers         []string
+
+	// Uses the old, deprecated, Anaconda config option "kickstart-modules".
+	// Only for RHEL 8.
+	UseLegacyAnacondaConfig bool
 }
 
 func NewAnacondaTarInstaller() *AnacondaTarInstaller {
@@ -127,6 +131,8 @@ func (img *AnacondaTarInstaller) InstantiateManifest(m *manifest.Manifest,
 	}
 	anacondaPipeline.Variant = img.Variant
 	anacondaPipeline.Biosdevname = (img.Platform.GetArch() == arch.ARCH_X86_64)
+
+	anacondaPipeline.UseLegacyAnacondaConfig = img.UseLegacyAnacondaConfig
 	anacondaPipeline.AdditionalAnacondaModules = img.AdditionalAnacondaModules
 	if img.OSCustomizations.FIPS {
 		anacondaPipeline.AdditionalAnacondaModules = append(

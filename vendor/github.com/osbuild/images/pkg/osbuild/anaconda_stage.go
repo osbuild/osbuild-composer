@@ -7,7 +7,25 @@ import (
 
 type AnacondaStageOptions struct {
 	// Kickstart modules to enable
-	KickstartModules []string `json:"kickstart-modules"`
+	//
+	// Deprecated:
+	//  RHEL 9:  Available but marked deprecated
+	//  RHEL 10: Removed
+	//  Fedora:  Removed
+	//
+	// https://bugzilla.redhat.com/show_bug.cgi?id=2023855#c10
+	KickstartModules []string `json:"kickstart-modules,omitempty"`
+
+	// Kickstart modules to activate
+	//
+	// Replaced kickstart-modules in newer versions.
+	ActivatableModules []string `json:"activatable-modules,omitempty"`
+
+	// Kickstart modules to forbid
+	ForbiddenModules []string `json:"forbidden-modules,omitempty"`
+
+	// Kickstart modules to activate but are allowed to fail
+	OptionalModules []string `json:"optional-modules,omitempty"`
 }
 
 func (AnacondaStageOptions) isStageOptions() {}
@@ -56,11 +74,20 @@ func filterEnabledModules(moduleStates map[string]bool) []string {
 	return enabled
 }
 
-func NewAnacondaStageOptions(enableModules, disableModules []string) *AnacondaStageOptions {
+func NewAnacondaStageOptionsLegacy(enableModules, disableModules []string) *AnacondaStageOptions {
 	states := defaultModuleStates()
 	setModuleStates(states, enableModules, disableModules)
 
 	return &AnacondaStageOptions{
 		KickstartModules: filterEnabledModules(states),
+	}
+}
+
+func NewAnacondaStageOptions(enableModules, disableModules []string) *AnacondaStageOptions {
+	states := defaultModuleStates()
+	setModuleStates(states, enableModules, disableModules)
+
+	return &AnacondaStageOptions{
+		ActivatableModules: filterEnabledModules(states),
 	}
 }

@@ -2,11 +2,11 @@ package rhel9
 
 import (
 	"github.com/osbuild/images/internal/common"
+	"github.com/osbuild/images/pkg/customizations/subscription"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distro/rhel"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/rpmmd"
-	"github.com/osbuild/images/pkg/subscription"
 )
 
 const gceKernelOptions = "net.ifnames=0 biosdevname=0 scsi_mod.use_blk_mq=Y console=ttyS0,38400n8d"
@@ -160,20 +160,20 @@ func baseGCEImageConfig() *distro.ImageConfig {
 
 func defaultGceRhuiImageConfig() *distro.ImageConfig {
 	ic := &distro.ImageConfig{
-		RHSMConfig: map[subscription.RHSMStatus]*osbuild.RHSMStageOptions{
+		RHSMConfig: map[subscription.RHSMStatus]*subscription.RHSMConfig{
 			subscription.RHSMConfigNoSubscription: {
-				SubMan: &osbuild.RHSMStageOptionsSubMan{
-					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
+				SubMan: subscription.SubManConfig{
+					Rhsmcertd: subscription.SubManRHSMCertdConfig{
 						AutoRegistration: common.ToPtr(true),
 					},
-					Rhsm: &osbuild.SubManConfigRHSMSection{
+					Rhsm: subscription.SubManRHSMConfig{
 						ManageRepos: common.ToPtr(false),
 					},
 				},
 			},
 			subscription.RHSMConfigWithSubscription: {
-				SubMan: &osbuild.RHSMStageOptionsSubMan{
-					Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
+				SubMan: subscription.SubManConfig{
+					Rhsmcertd: subscription.SubManRHSMCertdConfig{
 						AutoRegistration: common.ToPtr(true),
 					},
 					// do not disable the redhat.repo management if the user

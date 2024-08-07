@@ -58,19 +58,6 @@ func baseEc2ImageConfig() *distro.ImageConfig {
 					Networking: true,
 					NoZeroConf: true,
 				},
-				NetworkScripts: &osbuild.NetworkScriptsOptions{
-					IfcfgFiles: map[string]osbuild.IfcfgFile{
-						"eth0": {
-							Device:    "eth0",
-							Bootproto: osbuild.IfcfgBootprotoDHCP,
-							OnBoot:    common.ToPtr(true),
-							Type:      osbuild.IfcfgTypeEthernet,
-							UserCtl:   common.ToPtr(true),
-							PeerDNS:   common.ToPtr(true),
-							IPv6Init:  common.ToPtr(false),
-						},
-					},
-				},
 			},
 		},
 		SystemdLogind: []*osbuild.SystemdLogindStageOptions{

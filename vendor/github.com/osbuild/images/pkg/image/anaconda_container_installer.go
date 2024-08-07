@@ -46,6 +46,10 @@ type AnacondaContainerInstaller struct {
 	Kickstart *kickstart.Options
 
 	UseRHELLoraxTemplates bool
+
+	// Uses the old, deprecated, Anaconda config option "kickstart-modules".
+	// Only for RHEL 8.
+	UseLegacyAnacondaConfig bool
 }
 
 func NewAnacondaContainerInstaller(container container.SourceSpec, ref string) *AnacondaContainerInstaller {
@@ -75,6 +79,7 @@ func (img *AnacondaContainerInstaller) InstantiateManifest(m *manifest.Manifest,
 	)
 
 	anacondaPipeline.UseRHELLoraxTemplates = img.UseRHELLoraxTemplates
+	anacondaPipeline.UseLegacyAnacondaConfig = img.UseLegacyAnacondaConfig
 
 	anacondaPipeline.ExtraPackages = img.ExtraBasePackages.Include
 	anacondaPipeline.ExcludePackages = img.ExtraBasePackages.Exclude
