@@ -566,6 +566,7 @@ API:
           - vsphere
         RUNNER:
           - aws/rhel-10.0-nightly-x86_64
+        INTERNAL_NETWORK: ["true"]
       - IMAGE_TYPE: ["iot-commit"]
         RUNNER:
           - aws/fedora-39-x86_64
