@@ -363,6 +363,14 @@ func Convert(bp Blueprint) iblueprint.Blueprint {
 			}
 			customizations.Installer = &iinst
 		}
+		if rpm := c.RPM; rpm != nil && rpm.ImportKeys != nil {
+			irpm := iblueprint.RPMCustomization{
+				ImportKeys: &iblueprint.RPMImportKeys{
+					Files: rpm.ImportKeys.Files,
+				},
+			}
+			customizations.RPM = &irpm
+		}
 	}
 
 	ibp := iblueprint.Blueprint{
