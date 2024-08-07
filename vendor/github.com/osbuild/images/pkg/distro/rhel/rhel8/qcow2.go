@@ -2,11 +2,10 @@ package rhel8
 
 import (
 	"github.com/osbuild/images/internal/common"
+	"github.com/osbuild/images/pkg/customizations/subscription"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distro/rhel"
-	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/rpmmd"
-	"github.com/osbuild/images/pkg/subscription"
 )
 
 func mkQcow2ImgType(rd *rhel.Distribution) *rhel.ImageType {
@@ -187,14 +186,14 @@ func qcowImageConfig(d *rhel.Distribution) *distro.ImageConfig {
 		DefaultTarget: common.ToPtr("multi-user.target"),
 	}
 	if d.IsRHEL() {
-		ic.RHSMConfig = map[subscription.RHSMStatus]*osbuild.RHSMStageOptions{
+		ic.RHSMConfig = map[subscription.RHSMStatus]*subscription.RHSMConfig{
 			subscription.RHSMConfigNoSubscription: {
-				DnfPlugins: &osbuild.RHSMStageOptionsDnfPlugins{
-					ProductID: &osbuild.RHSMStageOptionsDnfPlugin{
-						Enabled: false,
+				DnfPlugins: subscription.SubManDNFPluginsConfig{
+					ProductID: subscription.DNFPluginConfig{
+						Enabled: common.ToPtr(false),
 					},
-					SubscriptionManager: &osbuild.RHSMStageOptionsDnfPlugin{
-						Enabled: false,
+					SubscriptionManager: subscription.DNFPluginConfig{
+						Enabled: common.ToPtr(false),
 					},
 				},
 			},

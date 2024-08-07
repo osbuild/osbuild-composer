@@ -13,6 +13,7 @@ import (
 	"github.com/osbuild/images/pkg/customizations/ignition"
 	"github.com/osbuild/images/pkg/customizations/kickstart"
 	"github.com/osbuild/images/pkg/customizations/oscap"
+	"github.com/osbuild/images/pkg/customizations/subscription"
 	"github.com/osbuild/images/pkg/customizations/users"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/image"
@@ -223,8 +224,21 @@ func osCustomizations(
 		osc.OpenSCAPRemediationConfig = remediationConfig
 	}
 
-	osc.ShellInit = imageConfig.ShellInit
+	var subscriptionStatus subscription.RHSMStatus
+	if options.Subscription != nil {
+		subscriptionStatus = subscription.RHSMConfigWithSubscription
+	} else {
+		subscriptionStatus = subscription.RHSMConfigNoSubscription
+	}
+	if rhsmConfig, exists := imageConfig.RHSMConfig[subscriptionStatus]; exists {
+		osc.RHSMConfig = rhsmConfig
+	}
 
+	if bpRhsmConfig := subscription.RHSMConfigFromBP(c.GetRHSM()); bpRhsmConfig != nil {
+		osc.RHSMConfig = osc.RHSMConfig.Update(bpRhsmConfig)
+	}
+
+	osc.ShellInit = imageConfig.ShellInit
 	osc.Grub2Config = imageConfig.Grub2Config
 	osc.Sysconfig = imageConfig.Sysconfig
 	osc.SystemdLogind = imageConfig.SystemdLogind
@@ -244,7 +258,6 @@ func osCustomizations(
 	osc.SshdConfig = imageConfig.SshdConfig
 	osc.AuthConfig = imageConfig.Authconfig
 	osc.PwQuality = imageConfig.PwQuality
-	osc.RHSMConfig = imageConfig.RHSMConfig
 	osc.Subscription = options.Subscription
 	osc.WAAgentConfig = imageConfig.WAAgentConfig
 	osc.UdevRules = imageConfig.UdevRules
@@ -455,6 +468,11 @@ func EdgeInstallerImage(workload workload.Workload,
 	img.Platform = t.platform
 	img.ExtraBasePackages = packageSets[InstallerPkgsKey]
 
+	if t.Arch().Distro().Releasever() == "8" {
+		// NOTE: RHEL 8 only supports the older Anaconda configs
+		img.UseLegacyAnacondaConfig = true
+	}
+
 	img.Kickstart, err = kickstart.New(customizations)
 	if err != nil {
 		return nil, err
@@ -652,6 +670,11 @@ func ImageInstallerImage(workload workload.Workload,
 	}
 
 	img.ExtraBasePackages = packageSets[InstallerPkgsKey]
+
+	if t.Arch().Distro().Releasever() == "8" {
+		// NOTE: RHEL 8 only supports the older Anaconda configs
+		img.UseLegacyAnacondaConfig = true
+	}
 
 	img.Kickstart, err = kickstart.New(customizations)
 	if err != nil {
