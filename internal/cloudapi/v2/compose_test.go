@@ -142,6 +142,26 @@ func GetTestBlueprint() blueprint.Blueprint {
 				},
 			},
 		},
+		RHSM: &blueprint.RHSMCustomization{
+			Config: &blueprint.RHSMConfig{
+				DNFPlugins: &blueprint.SubManDNFPluginsConfig{
+					ProductID: &blueprint.DNFPluginConfig{
+						Enabled: common.ToPtr(true),
+					},
+					SubscriptionManager: &blueprint.DNFPluginConfig{
+						Enabled: common.ToPtr(false),
+					},
+				},
+				SubscriptionManager: &blueprint.SubManConfig{
+					RHSMConfig: &blueprint.SubManRHSMConfig{
+						ManageRepos: common.ToPtr(true),
+					},
+					RHSMCertdConfig: &blueprint.SubManRHSMCertdConfig{
+						AutoRegistration: common.ToPtr(false),
+					},
+				},
+			},
+		},
 	}
 
 	return expected
@@ -270,6 +290,26 @@ func TestGetBlueprintFromCustomizations(t *testing.T) {
 			ImportKeys: &ImportKeys{
 				Files: &[]string{
 					"/root/gpg-key",
+				},
+			},
+		},
+		Rhsm: &RHSMCustomization{
+			Config: &RHSMConfig{
+				DnfPlugins: &SubManDNFPluginsConfig{
+					ProductId: &DNFPluginConfig{
+						Enabled: common.ToPtr(true),
+					},
+					SubscriptionManager: &DNFPluginConfig{
+						Enabled: common.ToPtr(false),
+					},
+				},
+				SubscriptionManager: &SubManConfig{
+					Rhsm: &SubManRHSMConfig{
+						ManageRepos: common.ToPtr(true),
+					},
+					Rhsmcertd: &SubManRHSMCertdConfig{
+						AutoRegistration: common.ToPtr(false),
+					},
 				},
 			},
 		},
@@ -424,6 +464,26 @@ func TestGetBlueprintFromCompose(t *testing.T) {
 				ImportKeys: &ImportKeys{
 					Files: &[]string{
 						"/root/gpg-key",
+					},
+				},
+			},
+			Rhsm: &RHSMCustomization{
+				Config: &RHSMConfig{
+					DnfPlugins: &SubManDNFPluginsConfig{
+						ProductId: &DNFPluginConfig{
+							Enabled: common.ToPtr(true),
+						},
+						SubscriptionManager: &DNFPluginConfig{
+							Enabled: common.ToPtr(false),
+						},
+					},
+					SubscriptionManager: &SubManConfig{
+						Rhsm: &SubManRHSMConfig{
+							ManageRepos: common.ToPtr(true),
+						},
+						Rhsmcertd: &SubManRHSMCertdConfig{
+							AutoRegistration: common.ToPtr(false),
+						},
 					},
 				},
 			},
