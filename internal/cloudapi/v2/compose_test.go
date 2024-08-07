@@ -135,6 +135,13 @@ func GetTestBlueprint() blueprint.Blueprint {
 			Unattended:   true,
 			SudoNopasswd: []string{`%wheel`},
 		},
+		RPM: &blueprint.RPMCustomization{
+			ImportKeys: &blueprint.RPMImportKeys{
+				Files: []string{
+					"/root/gpg-key",
+				},
+			},
+		},
 	}
 
 	return expected
@@ -258,6 +265,13 @@ func TestGetBlueprintFromCustomizations(t *testing.T) {
 		Installer: &Installer{
 			Unattended:   common.ToPtr(true),
 			SudoNopasswd: &[]string{`%wheel`},
+		},
+		Rpm: &RPMCustomization{
+			ImportKeys: &ImportKeys{
+				Files: &[]string{
+					"/root/gpg-key",
+				},
+			},
 		},
 	}}
 
@@ -405,6 +419,13 @@ func TestGetBlueprintFromCompose(t *testing.T) {
 			Installer: &Installer{
 				Unattended:   common.ToPtr(true),
 				SudoNopasswd: &[]string{`%wheel`},
+			},
+			Rpm: &RPMCustomization{
+				ImportKeys: &ImportKeys{
+					Files: &[]string{
+						"/root/gpg-key",
+					},
+				},
 			},
 		},
 	}}

@@ -545,11 +545,18 @@ func TestBlueprintsCustomizationInfoToml(t *testing.T) {
         "minsize": 2147483648
       }
     ],
-	"openscap": {
-	    "datastream": "/usr/share/xml/scap/ssg/content/ssg-rhel8-ds.xml",
-		"profile_id": "xccdf_org.ssgproject.content_profile_cis"
-	},
-	"partitioning_mode": "raw"
+    "openscap": {
+      "datastream": "/usr/share/xml/scap/ssg/content/ssg-rhel8-ds.xml",
+      "profile_id": "xccdf_org.ssgproject.content_profile_cis"
+    },
+    "partitioning_mode": "raw",
+    "rpm": {
+      "import_keys": {
+        "files": [
+          "/root/gpg-key"
+        ]
+      }
+    }
   }
 }`
 	resp := test.SendHTTP(api, true, "POST", "/api/v0/blueprints/new", testBlueprint)
@@ -645,6 +652,11 @@ func TestBlueprintsCustomizationInfoToml(t *testing.T) {
 				ProfileID:  "xccdf_org.ssgproject.content_profile_cis",
 			},
 			PartitioningMode: "raw",
+			RPM: &blueprint.RPMCustomization{
+				ImportKeys: &blueprint.RPMImportKeys{
+					Files: []string{"/root/gpg-key"},
+				},
+			},
 		},
 	}
 
