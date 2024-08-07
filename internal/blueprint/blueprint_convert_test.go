@@ -174,6 +174,11 @@ func TestConvert(t *testing.T) {
 						Unattended:   true,
 						SudoNopasswd: []string{"%group", "user"},
 					},
+					RPM: &RPMCustomization{
+						ImportKeys: &RPMImportKeys{
+							Files: []string{"/root/gpg-key"},
+						},
+					},
 				},
 				Distro: "distro",
 			},
@@ -328,6 +333,11 @@ func TestConvert(t *testing.T) {
 					Installer: &iblueprint.InstallerCustomization{
 						Unattended:   true,
 						SudoNopasswd: []string{"%group", "user"},
+					},
+					RPM: &iblueprint.RPMCustomization{
+						ImportKeys: &iblueprint.RPMImportKeys{
+							Files: []string{"/root/gpg-key"},
+						},
 					},
 				},
 				Distro: "distro",

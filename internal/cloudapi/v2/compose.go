@@ -432,6 +432,14 @@ func (request *ComposeRequest) GetCustomizationsFromBlueprintRequest() (*bluepri
 		}
 	}
 
+	if rpm := rbpc.Rpm; rpm != nil && rpm.ImportKeys != nil {
+		c.RPM = &blueprint.RPMCustomization{
+			ImportKeys: &blueprint.RPMImportKeys{
+				Files: *rpm.ImportKeys.Files,
+			},
+		}
+	}
+
 	return c, nil
 }
 
@@ -910,6 +918,14 @@ func (request *ComposeRequest) GetBlueprintFromCustomizations() (blueprint.Bluep
 			installer.SudoNopasswd = *request.Customizations.Installer.SudoNopasswd
 		}
 		bp.Customizations.Installer = installer
+	}
+
+	if request.Customizations.Rpm != nil && request.Customizations.Rpm.ImportKeys != nil {
+		bp.Customizations.RPM = &blueprint.RPMCustomization{
+			ImportKeys: &blueprint.RPMImportKeys{
+				Files: *request.Customizations.Rpm.ImportKeys.Files,
+			},
+		}
 	}
 
 	// Did bp.Customizations get set at all? If not, set it back to nil

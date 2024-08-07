@@ -1024,6 +1024,18 @@ components:
           type: array
           items:
             type: string
+    ImportKeys:
+      type: object
+      properties:
+        files:
+          type: array
+          items:
+            type: string
+    RPMCustomization:
+      type: object
+      properties:
+        import_keys:
+          $ref: '#/components/schemas/ImportKeys'
     UploadTarget:
       type: object
       required:
@@ -1354,6 +1366,8 @@ components:
           description: Enable FIPS mode
         installer:
           $ref: '#/components/schemas/Installer'
+        rpm:
+          $ref: '#/components/schemas/RPMCustomization'
     SSHKey:
       type: object
       additionalProperties: false
@@ -1498,6 +1512,8 @@ components:
           $ref: '#/components/schemas/FIPS'
         installer:
           $ref: '#/components/schemas/Installer'
+        rpm:
+          $ref: '#/components/schemas/RPMCustomization'
     Container:
       type: object
       required:
