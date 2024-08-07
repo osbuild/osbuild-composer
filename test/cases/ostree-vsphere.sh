@@ -112,7 +112,7 @@ EDGE_USER_PASSWORD_SHA512=$(openssl passwd -6 -stdin <<< "${EDGE_USER_PASSWORD}"
 
 DATACENTER_70="Datacenter7.0"
 DATASTORE_70="datastore-80"
-DATACENTER_70_POOL="/Datacenter7.0/host/Automation/Resources"
+DATACENTER_70_POOL="/Datacenter7.0/host/Edge/Resources"
 # Workdaround for creating rhel9 and centos9 on dc67, change guest_id to 8
 case "${ID}-${VERSION_ID}" in
     "rhel-9"* )
