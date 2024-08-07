@@ -179,6 +179,26 @@ func TestConvert(t *testing.T) {
 							Files: []string{"/root/gpg-key"},
 						},
 					},
+					RHSM: &RHSMCustomization{
+						Config: &RHSMConfig{
+							DNFPlugins: &SubManDNFPluginsConfig{
+								ProductID: &DNFPluginConfig{
+									Enabled: common.ToPtr(true),
+								},
+								SubscriptionManager: &DNFPluginConfig{
+									Enabled: common.ToPtr(false),
+								},
+							},
+							SubscriptionManager: &SubManConfig{
+								RHSMConfig: &SubManRHSMConfig{
+									ManageRepos: common.ToPtr(true),
+								},
+								RHSMCertdConfig: &SubManRHSMCertdConfig{
+									AutoRegistration: common.ToPtr(false),
+								},
+							},
+						},
+					},
 				},
 				Distro: "distro",
 			},
@@ -337,6 +357,26 @@ func TestConvert(t *testing.T) {
 					RPM: &iblueprint.RPMCustomization{
 						ImportKeys: &iblueprint.RPMImportKeys{
 							Files: []string{"/root/gpg-key"},
+						},
+					},
+					RHSM: &iblueprint.RHSMCustomization{
+						Config: &iblueprint.RHSMConfig{
+							DNFPlugins: &iblueprint.SubManDNFPluginsConfig{
+								ProductID: &iblueprint.DNFPluginConfig{
+									Enabled: common.ToPtr(true),
+								},
+								SubscriptionManager: &iblueprint.DNFPluginConfig{
+									Enabled: common.ToPtr(false),
+								},
+							},
+							SubscriptionManager: &iblueprint.SubManConfig{
+								RHSMConfig: &iblueprint.SubManRHSMConfig{
+									ManageRepos: common.ToPtr(true),
+								},
+								RHSMCertdConfig: &iblueprint.SubManRHSMCertdConfig{
+									AutoRegistration: common.ToPtr(false),
+								},
+							},
 						},
 					},
 				},

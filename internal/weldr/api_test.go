@@ -556,6 +556,26 @@ func TestBlueprintsCustomizationInfoToml(t *testing.T) {
           "/root/gpg-key"
         ]
       }
+    },
+    "rhsm": {
+      "config": {
+        "dnf_plugins": {
+          "product_id": {
+            "enabled": true
+          },
+          "subscription_manager": {
+            "enabled": false
+          }
+        },
+        "subscription_manager": {
+          "rhsm": {
+            "manage_repos": true
+          },
+          "rhsmcertd": {
+            "auto_registration": false
+          }
+        }
+      }
     }
   }
 }`
@@ -655,6 +675,26 @@ func TestBlueprintsCustomizationInfoToml(t *testing.T) {
 			RPM: &blueprint.RPMCustomization{
 				ImportKeys: &blueprint.RPMImportKeys{
 					Files: []string{"/root/gpg-key"},
+				},
+			},
+			RHSM: &blueprint.RHSMCustomization{
+				Config: &blueprint.RHSMConfig{
+					DNFPlugins: &blueprint.SubManDNFPluginsConfig{
+						ProductID: &blueprint.DNFPluginConfig{
+							Enabled: common.ToPtr(true),
+						},
+						SubscriptionManager: &blueprint.DNFPluginConfig{
+							Enabled: common.ToPtr(false),
+						},
+					},
+					SubscriptionManager: &blueprint.SubManConfig{
+						RHSMConfig: &blueprint.SubManRHSMConfig{
+							ManageRepos: common.ToPtr(true),
+						},
+						RHSMCertdConfig: &blueprint.SubManRHSMCertdConfig{
+							AutoRegistration: common.ToPtr(false),
+						},
+					},
 				},
 			},
 		},

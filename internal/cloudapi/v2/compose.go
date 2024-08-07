@@ -14,6 +14,7 @@ import (
 	"github.com/osbuild/images/pkg/reporegistry"
 	"github.com/osbuild/images/pkg/rhsm/facts"
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
+	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/target"
 )
 
@@ -438,6 +439,43 @@ func (request *ComposeRequest) GetCustomizationsFromBlueprintRequest() (*bluepri
 				Files: *rpm.ImportKeys.Files,
 			},
 		}
+	}
+
+	if rhsm := rbpc.Rhsm; rhsm != nil && rhsm.Config != nil {
+		bpRhsm := &blueprint.RHSMCustomization{
+			Config: &blueprint.RHSMConfig{},
+		}
+
+		conf := rhsm.Config
+		if conf.DnfPlugins != nil {
+			bpRhsm.Config.DNFPlugins = &blueprint.SubManDNFPluginsConfig{}
+			if conf.DnfPlugins.ProductId != nil && conf.DnfPlugins.ProductId.Enabled != nil {
+				bpRhsm.Config.DNFPlugins.ProductID = &blueprint.DNFPluginConfig{
+					Enabled: common.ToPtr(*conf.DnfPlugins.ProductId.Enabled),
+				}
+			}
+			if conf.DnfPlugins.SubscriptionManager != nil && conf.DnfPlugins.SubscriptionManager.Enabled != nil {
+				bpRhsm.Config.DNFPlugins.SubscriptionManager = &blueprint.DNFPluginConfig{
+					Enabled: common.ToPtr(*conf.DnfPlugins.SubscriptionManager.Enabled),
+				}
+			}
+		}
+
+		if conf.SubscriptionManager != nil {
+			bpRhsm.Config.SubscriptionManager = &blueprint.SubManConfig{}
+			if conf.SubscriptionManager.Rhsm != nil && conf.SubscriptionManager.Rhsm.ManageRepos != nil {
+				bpRhsm.Config.SubscriptionManager.RHSMConfig = &blueprint.SubManRHSMConfig{
+					ManageRepos: common.ToPtr(*conf.SubscriptionManager.Rhsm.ManageRepos),
+				}
+			}
+			if conf.SubscriptionManager.Rhsmcertd != nil && conf.SubscriptionManager.Rhsmcertd.AutoRegistration != nil {
+				bpRhsm.Config.SubscriptionManager.RHSMCertdConfig = &blueprint.SubManRHSMCertdConfig{
+					AutoRegistration: common.ToPtr(*conf.SubscriptionManager.Rhsmcertd.AutoRegistration),
+				}
+			}
+		}
+
+		c.RHSM = bpRhsm
 	}
 
 	return c, nil
@@ -926,6 +964,43 @@ func (request *ComposeRequest) GetBlueprintFromCustomizations() (blueprint.Bluep
 				Files: *request.Customizations.Rpm.ImportKeys.Files,
 			},
 		}
+	}
+
+	if rhsm := request.Customizations.Rhsm; rhsm != nil && rhsm.Config != nil {
+		bpRhsm := &blueprint.RHSMCustomization{
+			Config: &blueprint.RHSMConfig{},
+		}
+
+		conf := rhsm.Config
+		if conf.DnfPlugins != nil {
+			bpRhsm.Config.DNFPlugins = &blueprint.SubManDNFPluginsConfig{}
+			if conf.DnfPlugins.ProductId != nil && conf.DnfPlugins.ProductId.Enabled != nil {
+				bpRhsm.Config.DNFPlugins.ProductID = &blueprint.DNFPluginConfig{
+					Enabled: common.ToPtr(*conf.DnfPlugins.ProductId.Enabled),
+				}
+			}
+			if conf.DnfPlugins.SubscriptionManager != nil && conf.DnfPlugins.SubscriptionManager.Enabled != nil {
+				bpRhsm.Config.DNFPlugins.SubscriptionManager = &blueprint.DNFPluginConfig{
+					Enabled: common.ToPtr(*conf.DnfPlugins.SubscriptionManager.Enabled),
+				}
+			}
+		}
+
+		if conf.SubscriptionManager != nil {
+			bpRhsm.Config.SubscriptionManager = &blueprint.SubManConfig{}
+			if conf.SubscriptionManager.Rhsm != nil && conf.SubscriptionManager.Rhsm.ManageRepos != nil {
+				bpRhsm.Config.SubscriptionManager.RHSMConfig = &blueprint.SubManRHSMConfig{
+					ManageRepos: common.ToPtr(*conf.SubscriptionManager.Rhsm.ManageRepos),
+				}
+			}
+			if conf.SubscriptionManager.Rhsmcertd != nil && conf.SubscriptionManager.Rhsmcertd.AutoRegistration != nil {
+				bpRhsm.Config.SubscriptionManager.RHSMCertdConfig = &blueprint.SubManRHSMCertdConfig{
+					AutoRegistration: common.ToPtr(*conf.SubscriptionManager.Rhsmcertd.AutoRegistration),
+				}
+			}
+		}
+
+		bp.Customizations.RHSM = bpRhsm
 	}
 
 	// Did bp.Customizations get set at all? If not, set it back to nil

@@ -30,6 +30,7 @@ type Customizations struct {
 	FIPS               *bool                     `json:"fips,omitempty" toml:"fips,omitempty"`
 	Installer          *InstallerCustomization   `json:"installer,omitempty" toml:"installer,omitempty"`
 	RPM                *RPMCustomization         `json:"rpm,omitempty" toml:"rpm,omitempty"`
+	RHSM               *RHSMCustomization        `json:"rhsm,omitempty" toml:"rhsm,omitempty"`
 }
 
 type IgnitionCustomization struct {

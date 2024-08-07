@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/osbuild/images/pkg/crypt"
+	"github.com/osbuild/osbuild-composer/internal/common"
 
 	"github.com/coreos/go-semver/semver"
 	iblueprint "github.com/osbuild/images/pkg/blueprint"
@@ -370,6 +371,41 @@ func Convert(bp Blueprint) iblueprint.Blueprint {
 				},
 			}
 			customizations.RPM = &irpm
+		}
+		if rhsm := c.RHSM; rhsm != nil && rhsm.Config != nil {
+			irhsm := iblueprint.RHSMCustomization{
+				Config: &iblueprint.RHSMConfig{},
+			}
+
+			if plugins := rhsm.Config.DNFPlugins; plugins != nil {
+				irhsm.Config.DNFPlugins = &iblueprint.SubManDNFPluginsConfig{}
+				if plugins.ProductID != nil && plugins.ProductID.Enabled != nil {
+					irhsm.Config.DNFPlugins.ProductID = &iblueprint.DNFPluginConfig{
+						Enabled: common.ToPtr(*plugins.ProductID.Enabled),
+					}
+				}
+				if plugins.SubscriptionManager != nil && plugins.SubscriptionManager.Enabled != nil {
+					irhsm.Config.DNFPlugins.SubscriptionManager = &iblueprint.DNFPluginConfig{
+						Enabled: common.ToPtr(*plugins.SubscriptionManager.Enabled),
+					}
+				}
+			}
+
+			if subManConf := rhsm.Config.SubscriptionManager; subManConf != nil {
+				irhsm.Config.SubscriptionManager = &iblueprint.SubManConfig{}
+				if subManConf.RHSMConfig != nil && subManConf.RHSMConfig.ManageRepos != nil {
+					irhsm.Config.SubscriptionManager.RHSMConfig = &iblueprint.SubManRHSMConfig{
+						ManageRepos: common.ToPtr(*subManConf.RHSMConfig.ManageRepos),
+					}
+				}
+				if subManConf.RHSMCertdConfig != nil && subManConf.RHSMCertdConfig.AutoRegistration != nil {
+					irhsm.Config.SubscriptionManager.RHSMCertdConfig = &iblueprint.SubManRHSMCertdConfig{
+						AutoRegistration: common.ToPtr(*subManConf.RHSMCertdConfig.AutoRegistration),
+					}
+				}
+			}
+
+			customizations.RHSM = &irhsm
 		}
 	}
 
