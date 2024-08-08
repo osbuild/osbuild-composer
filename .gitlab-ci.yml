@@ -497,7 +497,9 @@ vmware.sh_vmdk:
   extends: .integration_rhel
   rules:
     # Run only on x86_64
-    - !reference [.upstream_rules_x86_64, rules]
+    # Temporarily disabled for RHEL-10 and Centos-10
+    - if: '$CI_PIPELINE_SOURCE != "schedule" && $RUNNER =~ "/^.*(x86_64).*$/" && $RUNNER !~ /[\S]+rhel-[\S]+-(?:(?:ga)|(?:eus))[\S]+/ && $RUNNER !~ "/^.*(rhel-10.0-nightly|centos-stream-10).*$/"'
+    # - !reference [.upstream_rules_x86_64, rules]
     - !reference [.nightly_rules_x86_64, rules]
     - !reference [.ga_rules_x86_64, rules]
   variables:
@@ -507,7 +509,9 @@ vmware.sh_ova:
   extends: .integration_rhel
   rules:
     # Run only on x86_64
-    - !reference [.upstream_rules_x86_64, rules]
+    # Temporarily disabled for RHEL-10 and Centos-10
+    - if: '$CI_PIPELINE_SOURCE != "schedule" && $RUNNER =~ "/^.*(x86_64).*$/" && $RUNNER !~ /[\S]+rhel-[\S]+-(?:(?:ga)|(?:eus))[\S]+/ && $RUNNER !~ "/^.*(rhel-10.0-nightly|centos-stream-10).*$/"'
+    # - !reference [.upstream_rules_x86_64, rules]
     - !reference [.nightly_rules_x86_64, rules]
     - !reference [.ga_rules_x86_64, rules]
   variables:
@@ -563,7 +567,6 @@ API:
       - IMAGE_TYPE:
           - aws
           - azure
-          - vsphere
         RUNNER:
           - aws/rhel-10.0-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
