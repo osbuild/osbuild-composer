@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+#
+# Generate manifests using the gen-manifests tool in github.com/osbuild/images
+#
+# Supports up to three positional arguments:
+# distros: comma-separated list of distribution names to generate manifests for
+# arches: comma-separated list of architectures to generate manifests for
+# images: comma-separated list of image types to generate manifests for
+#
+# All three arguments support globs (fedora-*, *64*, *rhui*).
+
+set -euo pipefail
+
+distros="${1:-*}"
+arches="${2:-*}"
+images="${3:-*}"
+
+workdir="$(pwd)"
+
+# get the version tag of osbuild/images from the go.mod
+images_version="$(go list -m -json -versions -mod=readonly github.com/osbuild/images | jq -r .Version)"
+
+tmpdir="$(mktemp -d)"
+
+cleanup() {
+    rm -rf "${tmpdir}"
+}
+
+trap cleanup EXIT
+
+# shallow clone osbuild/images into a temporary directory to generate the manifests
+echo "Cloning osbuild/images ${images_version}"
+git clone https://github.com/osbuild/images --branch "${images_version}" --depth=1 "${tmpdir}"
+pushd "${tmpdir}"
+
+manifest_dir="${workdir}/test/data/manifests/"
+echo "Generating manifests and storing in ${manifest_dir}"
+export OSBUILD_TESTING_RNG_SEED=0  # set the RNG seed for reproducible UUIDs
+set -x
+go run -tags=exclude_graphdriver_btrfs ./cmd/gen-manifests --output "${manifest_dir}" --distros="${distros}" --arches="${arches}" --images="${images}"

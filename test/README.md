@@ -101,19 +101,27 @@ Each file contains a sample manifest for an image configuration and some
 metadata describing the request that created the manifest and all the content
 (packages, containers, ostree commits).
 
-To (re)generate these test cases use the tool `cmd/gen-manifests`.
-
-```
-go run ./cmd/gen-manifests
-```
-will generate all manifests using the default options.
+To (re)generate these test cases use the tool `./tools/gen-manifests`.
+The tool clones the [osbuild/images](https://github.com/osbuild/images)
+repository at the version specified in the `go.mod` file and runs the
+`cmd/gen-manifests` tool to generate the manifests with the default
+configurations.
 
 Manifest generation can be restricted to only some distributions,
-architectures, or image types using command line flags.
+architectures, or image types using positional arguments:
+- distros: comma-separated list of distribution names to generate manifests for
+- arches: comma-separated list of architectures to generate manifests for
+- images: comma-separated list of image types to generate manifests for
 
-The command uses the configurations in
-`tools/test-case-generators/format-request-map.json` and repositories defined
-in `tools/test-case-generators/repos.json`.
+All three arguments support globs.  For example:
+```
+./tools/gen-manifests `rhel-9.*` `*64*` `*rhui*`
+```
+will generate manifests for all RHEL 9.x versions, for `x86_64` and `aarch64`,
+and only image types that have `rhui` in their name.
+
+See the [relevant documentation in osbuild/images](https://github.com/osbuild/images/blob/b002d250372ff468a2250ba0e44ed7e45a501e54/docs/developer/cmds.md#manifest-generation)
+for more details on the gen-manifests command.
 
 ### Setting up Azure upload tests
 

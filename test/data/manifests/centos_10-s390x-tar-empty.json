@@ -1,0 +1,3559 @@
+{
+  "build-request": {
+    "distro": "centos-10",
+    "arch": "s390x",
+    "image-type": "tar",
+    "repositories": [
+      {
+        "name": "AppStream",
+        "baseurls": [
+          "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-appstream-20240626"
+        ],
+        "check_gpg": false,
+        "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-appstream-20240626"
+      },
+      {
+        "name": "BaseOS",
+        "baseurls": [
+          "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626"
+        ],
+        "check_gpg": false,
+        "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626"
+      }
+    ],
+    "config": {
+      "name": "empty",
+      "blueprint": {
+        "name": "",
+        "description": "",
+        "packages": null,
+        "modules": null,
+        "groups": null,
+        "distro": "",
+        "minimal": false
+      },
+      "options": {
+        "size": 0
+      }
+    }
+  },
+  "manifest": {
+    "version": "2",
+    "pipelines": [
+      {
+        "name": "build",
+        "runner": "org.osbuild.centos10",
+        "stages": [
+          {
+            "type": "org.osbuild.rpm",
+            "inputs": {
+              "packages": {
+                "type": "org.osbuild.files",
+                "origin": "org.osbuild.source",
+                "references": [
+                  {
+                    "id": "sha256:149ca30a5d3d7f92a4736a86b054f81a2c5d473283e3b0ef44c505f23a33d4fe"
+                  },
+                  {
+                    "id": "sha256:d9b3fa4380a0a78af92d38e2ec83a417f93e7f3d3b8693c726781435c5ba51ff"
+                  },
+                  {
+                    "id": "sha256:1e22121fcc343f1e494c8616ae037d84f1ec89feb07db15a6a1e8e7ab966e6f1"
+                  },
+                  {
+                    "id": "sha256:3f17af36f0ca2e3cd8a1eeecbe5907f4058e985d6288eab6d9548183834a77df"
+                  },
+                  {
+                    "id": "sha256:14a57f78280b75bbff5a505bec857a01350311732ce9ca91b2fa575bf3bf616a"
+                  },
+                  {
+                    "id": "sha256:02dfac71e21133262a9b78dff7a9a8f8b161c37c3fa411c203403e9ffce10d6b"
+                  },
+                  {
+                    "id": "sha256:b1e7f2123836e857fb8b57d1c47eacd2ee016f5f57e1285072241b2dd7789448"
+                  },
+                  {
+                    "id": "sha256:c80c391cd28e8e178c1f9d54b52a43ab243edf67bf50dc79a9f90912c497cdff"
+                  },
+                  {
+                    "id": "sha256:6dca305ce6932df1536bf7156b992f2f0cf308ee6495f10207d30d8766ea82a8"
+                  },
+                  {
+                    "id": "sha256:ead6c2b4e3a2477e1ab17ad78cb10a8e12c1ddea86ebc6bc61854fa10c61099c"
+                  },
+                  {
+                    "id": "sha256:7bbaf9a68b64f6ffc695c4c1bb0d5337603f5d0d7301d361798365b27dc3e26f"
+                  },
+                  {
+                    "id": "sha256:7ec4a006bd2f05b07b5c7431f95687384a44ef3c4d0196752f7092de681be7ce"
+                  },
+                  {
+                    "id": "sha256:163103fe89975bd3948f27bcbe02012455c9444701c98ded0d52f58f699cbade"
+                  },
+                  {
+                    "id": "sha256:60f6ae76df571fd4402403935243d3a8821c1df5b0f4d9c06f5653bda7e09386"
+                  },
+                  {
+                    "id": "sha256:d1451250715db33df8311400c298fe4a02fe65838b98fa4906fb8002970b9bc2"
+                  },
+                  {
+                    "id": "sha256:1afa4601cea899d8d9b03a6051c7778224271bd8e36d71112ba4a2cf626ea405"
+                  },
+                  {
+                    "id": "sha256:6b2dfdad9884ee4926ccfa17151122064cae186f438cb8b15789c9ba2b3161fc"
+                  },
+                  {
+                    "id": "sha256:02ccc0a30efa2d5259e65505094deb9601ff9b78ac571755c5df8ea8ccfab573"
+                  },
+                  {
+                    "id": "sha256:b520308143125cbfb04b371b907ea1ca2233f89ca18b51c38a82b52971c0c58c"
+                  },
+                  {
+                    "id": "sha256:7607ae28401e2d9973af3f134c3afec90baf82315c3409b0c37287411cb17d86"
+                  },
+                  {
+                    "id": "sha256:7695f1a830f585f26200a22d07bafdbfdbefe021c2666cb8fdd91480fe2145ea"
+                  },
+                  {
+                    "id": "sha256:6a962f8dd44249e740759a8221a619cd8b5965c8f347828265d07dfd3961d00d"
+                  },
+                  {
+                    "id": "sha256:fbf46337ffdb4749fd566e98fe95f05c5dba2eb16ab1079b49d8bf541adaa046"
+                  },
+                  {
+                    "id": "sha256:ededb441e5d7d7e82e405cafb2271c314220c60d9ab6fea7c439b592c26bd1dd"
+                  },
+                  {
+                    "id": "sha256:fb5e76e62376823f35a6878711566080cac60c62166638fe46d684832b30498f"
+                  },
+                  {
+                    "id": "sha256:2759fb97fb1493024fe76503f1d140caed09f663e71dc7a844cb5000a37d5de9"
+                  },
+                  {
+                    "id": "sha256:6e1b3a35f1900162b10cc93d4eff575a57567706403110b9bec21013f224b1e6"
+                  },
+                  {
+                    "id": "sha256:4ecc638f8060fdd19c5cf55a12ce3878a3f2756cfc0764b1846445fb1eed58d9"
+                  },
+                  {
+                    "id": "sha256:eee9d283f41edc973cabab99bbad861553036ceaf66d7864e65f504afa791d07"
+                  },
+                  {
+                    "id": "sha256:5d02d12705b0281df1bf4e1c2fb9999cc5fb89343af9fd061bc4ef194f1670d1"
+                  },
+                  {
+                    "id": "sha256:eec24737b53a379158de46ab23d83e718ae03977c34b117bd17e05602a4d49db"
+                  },
+                  {
+                    "id": "sha256:14aedac0b6d06e27be32689a7e6b3b23545cb556769ececf9172716003f5a41b"
+                  },
+                  {
+                    "id": "sha256:694aec9dafb7c6087d805a056beada417b7f8a41cdeb8c6aa5a4765d3505ac0b"
+                  },
+                  {
+                    "id": "sha256:dc00d00d37d5ce4dc6d1a066f52c10ad61f5a4c53a8e5dcf9a358019a503b2d3"
+                  },
+                  {
+                    "id": "sha256:e099044a16a2a92155e192d1e1940ad0252db242782da6cfc1a5a730d860edbe"
+                  },
+                  {
+                    "id": "sha256:bcc40f26baca5e0474e48ba7fb5d91be386c007eec2cccae02e25d8c355d7ce5"
+                  },
+                  {
+                    "id": "sha256:6d6049230ab8ac8dfa0d63b54ce92b303f76abb49301af76224ea58f20aff7ca"
+                  },
+                  {
+                    "id": "sha256:8eb4e422d5eeead9c98bb0cac38d71b687a920e86296e3eba0c8cbae343e05d7"
+                  },
+                  {
+                    "id": "sha256:9c8e0faaafd3e2b34346e43c151b27afad067209dec53a23764838d42db2dc34"
+                  },
+                  {
+                    "id": "sha256:54fd6ee515d45e2cbb6a2f93e03d2afdecb5164360b24db492fed237bba0a33d"
+                  },
+                  {
+                    "id": "sha256:15b090cf01eecce9bf43fdc74e0e3a28253064a44c584507155207a3db39ef14"
+                  },
+                  {
+                    "id": "sha256:04a32865f51f979878fe9b21f3bc633c849936398099973c2a81aa8875e48127"
+                  },
+                  {
+                    "id": "sha256:4c7b0ef4de56a30a9fba7ae44889ad92e299b9786cc56dbe774e56c733cf5fa9"
+                  },
+                  {
+                    "id": "sha256:a884102e7c092aee5c94cc706b158192ca8c12e0c1f7afc9e4da117dfc34f49e"
+                  },
+                  {
+                    "id": "sha256:07b48ba78b690d9886d8a37fe179bf63b11a59f8d8ffcc869a76634880596a5d"
+                  },
+                  {
+                    "id": "sha256:3a36eccc2ba52467744249d953760fb77aa6a99121acc89fcb9314264601b499"
+                  },
+                  {
+                    "id": "sha256:e19de28473a770686eb2fbd1716838a5ebea47b0a39115a679449c3dcd201d3d"
+                  },
+                  {
+                    "id": "sha256:90f23ab6c0c65a41d8a5208e1b50e3dabd7475048cc48e28893b6f6e78e58465"
+                  },
+                  {
+                    "id": "sha256:da617ed1683f4b608170bcb42532267b0812adc2d5ec66cb85a662ecb1007c0f"
+                  },
+                  {
+                    "id": "sha256:20684ad84aa3b60b51200e8acbaaadf9e674931c4f7e9d1e3b01739121cf7113"
+                  },
+                  {
+                    "id": "sha256:78bd1aadba052ac2f426185b6480577249fb0d384cfa61682efcffce03111248"
+                  },
+                  {
+                    "id": "sha256:8811fcc901debd0ff0dd158eb5686286c5aa8ecdf3d7564197851eafbc83dc35"
+                  },
+                  {
+                    "id": "sha256:647de586cb61e8e27990ec87d8a027b925d4b3915673e8b166e38ba3c2eac6a4"
+                  },
+                  {
+                    "id": "sha256:288942b5b751616a213e06ad7d33f7da4ebb32b1aeca0c2181acc43f522b708b"
+                  },
+                  {
+                    "id": "sha256:df64f09ce88211578038742f700e36ce696323f7a36a9c0d62042ad37ba0e3c6"
+                  },
+                  {
+                    "id": "sha256:a8ff52a7a6dd43d5a9bf48654fecec079dfc7bf503443f5a4baaaf450ef4fe7a"
+                  },
+                  {
+                    "id": "sha256:cd8d9445814e86cbfebadea62dfdd13059e7797dad82c89ad746c1ae3ad3f5d0"
+                  },
+                  {
+                    "id": "sha256:408e34ab3500b5403951f067ec02486e9c16cbde933114107410f60479926b87"
+                  },
+                  {
+                    "id": "sha256:4400fc5b35b46d9b24c77a510bdf2cda123c09e93a88ffda601732bb63933900"
+                  },
+                  {
+                    "id": "sha256:338ffd2bbd57a568652d9d362a3f3c2311b815ee06c87f1a77bb0bb1604f92d8"
+                  },
+                  {
+                    "id": "sha256:cdbde066bbcb8d2fbae87737b568a43105775aa1915159536272603540e6b7c3"
+                  },
+                  {
+                    "id": "sha256:7d263e22b580a548ab17fcd6d892fcf52edd24ebebdcc8ff932abefd04c0a84d"
+                  },
+                  {
+                    "id": "sha256:62e9dd14321a96a92a2a5aa4f0565ac655a87f556a92de914af6a2221ae4e3d3"
+                  },
+                  {
+                    "id": "sha256:1459751531b890ed41496acc31d47b88d1a80620435adf333e1b99dc226be1d1"
+                  },
+                  {
+                    "id": "sha256:f025262035e7cd16717bdb1471465c9c06b6ac6232a4345b9c250656b6fb0729"
+                  },
+                  {
+                    "id": "sha256:4379b7a0bec9a3016b926d29afe82ed043e39198aac660f892fe18bab9c8eba9"
+                  },
+                  {
+                    "id": "sha256:74cfda57ee5004a4b3f0bdfffc8ffa37d8ff709273cd8ec333cce34823731218"
+                  },
+                  {
+                    "id": "sha256:65e0d87950387a9c6a9ee26a76e3a85e81fe903f38b00d27dbb7c537bfa05c57"
+                  },
+                  {
+                    "id": "sha256:8ebdfb80de2a159fb2d3611474c14c455beff6f61a067bab12967907ac800302"
+                  },
+                  {
+                    "id": "sha256:23208cac41ebb84cdd3a426646ee808fb9686522fce1001019059c7ef63a13af"
+                  },
+                  {
+                    "id": "sha256:9777fba8af80526e13c20408a7baf79ce9c79777a1a9d909e648bb2981ce1d5e"
+                  },
+                  {
+                    "id": "sha256:d25b7353ef6f79dc168232667a95f1b60ce04ceb75981a43d65fa7b09b51297c"
+                  },
+                  {
+                    "id": "sha256:67b2a29f3b40c74e7b12f01921687eefabd3aca5b1ff0e261a46ae0c765952c4"
+                  },
+                  {
+                    "id": "sha256:41fb55af6e7f1dc04c7995f20662b377ac1bf13287717d8af5469881ebdf4d10"
+                  },
+                  {
+                    "id": "sha256:da96cabf5dccc12d86ea7bff90208c3e15a835a5cc59d93d0e0351c872d7eb81"
+                  },
+                  {
+                    "id": "sha256:5471b682059cac2f83456ade5d025d72a341f0e9b46458a4518bdbbccb478020"
+                  },
+                  {
+                    "id": "sha256:e6a6463c89e14111505132120615532f15c71e5e83d815a442bfaf7e57739842"
+                  },
+                  {
+                    "id": "sha256:6c8a2c949731bcb31de8cb74d7199c22de3fcae22b3bae1678a785f8fa637e65"
+                  },
+                  {
+                    "id": "sha256:7dbc8c374e3ae8d44c9f46fa5beab9f59448cdd0f48c1c080a3e10b714822c46"
+                  },
+                  {
+                    "id": "sha256:02af1aa66182eebcd38d1f3913585d49c488f42255854e9eb2d7b380884947e7"
+                  },
+                  {
+                    "id": "sha256:f65585d8d9bfc6f7153368f2a9b572ea08bd5c03703deb5562d17d5bfe996acf"
+                  },
+                  {
+                    "id": "sha256:d8e38a709c534c708b8bde5357c9328f97b12b24065d01b576c606300ebe2080"
+                  },
+                  {
+                    "id": "sha256:5335ae857e6d6176a82e275a21c6f11074ee726176c36fbb336ac839cb2707a4"
+                  },
+                  {
+                    "id": "sha256:de198687e2d36256b0e8e55f8e24df55f7ca3827ceec1b0d79f326250e80e292"
+                  },
+                  {
+                    "id": "sha256:51bc6ffadcd1ce0fbdb8af5e56769b24f86dfbf061ffc552348a0dd10a9b7d11"
+                  },
+                  {
+                    "id": "sha256:c714640e67fc6e788301a3b1ac0b598af1582594ebfb2a19bf8f04e3ed346a56"
+                  },
+                  {
+                    "id": "sha256:61f6f84040537d89aa1e86bba3c5aa8def37cb030cf7926957fc4651f323df0c"
+                  },
+                  {
+                    "id": "sha256:d573d2a50b8374534446637747368e23215055e7fbfe8df5ffbf0a2860e3bfa7"
+                  },
+                  {
+                    "id": "sha256:ace60a59777f7e0c42b574627ef27cf4919008f779208ee27ded27a818cdc442"
+                  },
+                  {
+                    "id": "sha256:1aa35c1deb4805d4c1fedf8185427a73d14d042a82e8052b1266a61e64a028cf"
+                  },
+                  {
+                    "id": "sha256:23df43118595b0a6ba789fbc96dbade860a25a1e3c235f8966b33500610795df"
+                  },
+                  {
+                    "id": "sha256:579d5ab2c9c9caee7381657ef4c71657b5241f2f81471463e315a54614927d31"
+                  },
+                  {
+                    "id": "sha256:54ac4b094bfc36cf384820faf15d061b245c1a025193459f9fb02a03f2123848"
+                  },
+                  {
+                    "id": "sha256:339e702a0c409834c759c3a949f9c7825de8fdcce21d296693ac5622514da8c5"
+                  },
+                  {
+                    "id": "sha256:fe6878bdb6d2bf8f28b6dc26a83b3d8dd34a57b938d23870a3d969456487847b"
+                  },
+                  {
+                    "id": "sha256:d58bc2c7ca44771765af7a93bc12ae7982a84891a16125ac7478138e68af8512"
+                  },
+                  {
+                    "id": "sha256:83651506561d7c2cff0ddddc82728feffde6e1c3f378812386ac97613a11a0c8"
+                  },
+                  {
+                    "id": "sha256:13d01bc363c0a74a19644c6913815818c726213814ff5ebf318dd70e032bde9c"
+                  },
+                  {
+                    "id": "sha256:5de22215f00ec0e3527db00518137175cdafcbe129635cd8e64f3ca18cdac3d6"
+                  },
+                  {
+                    "id": "sha256:36c935eb2bfca2d09b66a726e2abd7da440350797ed4aab580e40c4ab64ac6c1"
+                  },
+                  {
+                    "id": "sha256:4a4e1fe1910326026a9375d130baeea023d35108adf5408dbc26aafd50c9810f"
+                  },
+                  {
+                    "id": "sha256:5efd8011a0cc69f71f1f836b15af3c14cc4d18d6debffeb1bc63c53feaaf88bc"
+                  },
+                  {
+                    "id": "sha256:577739238a96bd2aba1494e0f1a2088c13b8997e3065ff08def5fc9a876621a1"
+                  },
+                  {
+                    "id": "sha256:8956aadaf5082c480e3aa7cf52b5e0c63a0264ac43eb4805674073d8e84f5607"
+                  },
+                  {
+                    "id": "sha256:b9126cbb64ba57c7ef32b6f8c9b3001e5cbd7b30091c4b2ada43fb91e0964cbb"
+                  },
+                  {
+                    "id": "sha256:e85b8b543441673e8fe73a848f61113d39d5c39dc24b9f42e01981db39f9e98c"
+                  },
+                  {
+                    "id": "sha256:3465cf9c9261f72dc8ecdfadf5ea98d56a42aed0a6e09038fc69d9bada766aa6"
+                  },
+                  {
+                    "id": "sha256:08f3cac28e42603c70ee57bf7262619998d467f8658e6a69fdf7b15fcf3bc924"
+                  },
+                  {
+                    "id": "sha256:e8e40f56069e7f9d9fee5d00f2d3471126fb8efcbf1da715c0f6100357d1b1e8"
+                  },
+                  {
+                    "id": "sha256:33f383a707ebe9bedd2feacc70a1a481a3a3fadd2be81a4d8b10a66b0d0baef9"
+                  },
+                  {
+                    "id": "sha256:54b57a99e17873846baedc57588c3e7998e33e40a5e35bfc1ab9fc00586ad422"
+                  },
+                  {
+                    "id": "sha256:f8fc690591e01f34b0247099b291712d8176daf9564b14dcd185910e5e801f8a"
+                  },
+                  {
+                    "id": "sha256:cbae49cd1fb1a85e0f26023262dede98533f9dc25f29cdebd8492804f155d747"
+                  },
+                  {
+                    "id": "sha256:0154da3adf97e784d5c0d9a5cd730db1625dde914987cddfdf23f8093e09ada7"
+                  },
+                  {
+                    "id": "sha256:7cc3f56bf0d3c7648c61bb3bb0b9e406802389cab4d921d0384b5e08ca953cc6"
+                  },
+                  {
+                    "id": "sha256:e85bade5439c3baf511ae25d105fb0aa072bfe1c2059ea6ce1ae91b67481d2be"
+                  },
+                  {
+                    "id": "sha256:42fe06f808bae31ea5ec5e2fc7674bbd79614f9eeca235f762ef7dfb7fd9f1c6"
+                  },
+                  {
+                    "id": "sha256:5fb64623cd3759c3e402b325ed1a88a14d4be72e8bc1a10ba4eb8c2ca555f286"
+                  },
+                  {
+                    "id": "sha256:992cf340bfdf8302fa542bd49cfe0972fcc6f96f8c22ce7c52119e8956cb48c4"
+                  },
+                  {
+                    "id": "sha256:b131e723adccaf330495a43f084e0f9d5c66ffb63725a7cc4ff7121925f7c8df"
+                  },
+                  {
+                    "id": "sha256:2df29003eacb3d8127b6fa7bf9e215963d63d27e225e9554dc048319255d7766"
+                  },
+                  {
+                    "id": "sha256:136a713ec35f5ae88442b87f443fe6fbf1bfb6ca4de6a08f4a1ea335ef3516d8"
+                  },
+                  {
+                    "id": "sha256:72eacdd557867ed623bc1cef329677e31c99610d7053bac49be1f3d474660223"
+                  },
+                  {
+                    "id": "sha256:189b1ae2e8ad8f23745d1d55fc46c82022a3ff3468dccf3f5950aaca5b890ed9"
+                  },
+                  {
+                    "id": "sha256:9a69309fc97f9525aa229aed3b15d760cfe697ae9452438a8060950d5166a31f"
+                  },
+                  {
+                    "id": "sha256:23cf509876523e53da670e29195d0e119fd2322c1c76298e55e5b54ed94383cb"
+                  },
+                  {
+                    "id": "sha256:4ef09c287761a900392cf39fe8cce33aa678430ad37926aafd39068f300527ae"
+                  },
+                  {
+                    "id": "sha256:400f0ff6cb80562e7549fa3e4389a9ef27fb63479d2894a5d50eb031ff9dade2"
+                  },
+                  {
+                    "id": "sha256:75cd5964cd518887a53bb28f11fd3cb87189e2f6015eea10820178a4654df104"
+                  }
+                ]
+              }
+            },
+            "options": {}
+          },
+          {
+            "type": "org.osbuild.selinux",
+            "options": {
+              "file_contexts": "etc/selinux/targeted/contexts/files/file_contexts",
+              "labels": {
+                "/usr/bin/cp": "system_u:object_r:install_exec_t:s0",
+                "/usr/bin/tar": "system_u:object_r:install_exec_t:s0"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "name": "os",
+        "build": "name:build",
+        "stages": [
+          {
+            "type": "org.osbuild.rpm",
+            "inputs": {
+              "packages": {
+                "type": "org.osbuild.files",
+                "origin": "org.osbuild.source",
+                "references": [
+                  {
+                    "id": "sha256:149ca30a5d3d7f92a4736a86b054f81a2c5d473283e3b0ef44c505f23a33d4fe"
+                  },
+                  {
+                    "id": "sha256:d9b3fa4380a0a78af92d38e2ec83a417f93e7f3d3b8693c726781435c5ba51ff"
+                  },
+                  {
+                    "id": "sha256:3f17af36f0ca2e3cd8a1eeecbe5907f4058e985d6288eab6d9548183834a77df"
+                  },
+                  {
+                    "id": "sha256:14a57f78280b75bbff5a505bec857a01350311732ce9ca91b2fa575bf3bf616a"
+                  },
+                  {
+                    "id": "sha256:02dfac71e21133262a9b78dff7a9a8f8b161c37c3fa411c203403e9ffce10d6b"
+                  },
+                  {
+                    "id": "sha256:b1e7f2123836e857fb8b57d1c47eacd2ee016f5f57e1285072241b2dd7789448"
+                  },
+                  {
+                    "id": "sha256:c80c391cd28e8e178c1f9d54b52a43ab243edf67bf50dc79a9f90912c497cdff"
+                  },
+                  {
+                    "id": "sha256:6dca305ce6932df1536bf7156b992f2f0cf308ee6495f10207d30d8766ea82a8"
+                  },
+                  {
+                    "id": "sha256:ead6c2b4e3a2477e1ab17ad78cb10a8e12c1ddea86ebc6bc61854fa10c61099c"
+                  },
+                  {
+                    "id": "sha256:7bbaf9a68b64f6ffc695c4c1bb0d5337603f5d0d7301d361798365b27dc3e26f"
+                  },
+                  {
+                    "id": "sha256:7ec4a006bd2f05b07b5c7431f95687384a44ef3c4d0196752f7092de681be7ce"
+                  },
+                  {
+                    "id": "sha256:163103fe89975bd3948f27bcbe02012455c9444701c98ded0d52f58f699cbade"
+                  },
+                  {
+                    "id": "sha256:60f6ae76df571fd4402403935243d3a8821c1df5b0f4d9c06f5653bda7e09386"
+                  },
+                  {
+                    "id": "sha256:d1451250715db33df8311400c298fe4a02fe65838b98fa4906fb8002970b9bc2"
+                  },
+                  {
+                    "id": "sha256:1afa4601cea899d8d9b03a6051c7778224271bd8e36d71112ba4a2cf626ea405"
+                  },
+                  {
+                    "id": "sha256:6b2dfdad9884ee4926ccfa17151122064cae186f438cb8b15789c9ba2b3161fc"
+                  },
+                  {
+                    "id": "sha256:02ccc0a30efa2d5259e65505094deb9601ff9b78ac571755c5df8ea8ccfab573"
+                  },
+                  {
+                    "id": "sha256:b520308143125cbfb04b371b907ea1ca2233f89ca18b51c38a82b52971c0c58c"
+                  },
+                  {
+                    "id": "sha256:7607ae28401e2d9973af3f134c3afec90baf82315c3409b0c37287411cb17d86"
+                  },
+                  {
+                    "id": "sha256:7695f1a830f585f26200a22d07bafdbfdbefe021c2666cb8fdd91480fe2145ea"
+                  },
+                  {
+                    "id": "sha256:6a962f8dd44249e740759a8221a619cd8b5965c8f347828265d07dfd3961d00d"
+                  },
+                  {
+                    "id": "sha256:fbf46337ffdb4749fd566e98fe95f05c5dba2eb16ab1079b49d8bf541adaa046"
+                  },
+                  {
+                    "id": "sha256:ededb441e5d7d7e82e405cafb2271c314220c60d9ab6fea7c439b592c26bd1dd"
+                  },
+                  {
+                    "id": "sha256:fb5e76e62376823f35a6878711566080cac60c62166638fe46d684832b30498f"
+                  },
+                  {
+                    "id": "sha256:2759fb97fb1493024fe76503f1d140caed09f663e71dc7a844cb5000a37d5de9"
+                  },
+                  {
+                    "id": "sha256:6e1b3a35f1900162b10cc93d4eff575a57567706403110b9bec21013f224b1e6"
+                  },
+                  {
+                    "id": "sha256:4ecc638f8060fdd19c5cf55a12ce3878a3f2756cfc0764b1846445fb1eed58d9"
+                  },
+                  {
+                    "id": "sha256:eee9d283f41edc973cabab99bbad861553036ceaf66d7864e65f504afa791d07"
+                  },
+                  {
+                    "id": "sha256:5d02d12705b0281df1bf4e1c2fb9999cc5fb89343af9fd061bc4ef194f1670d1"
+                  },
+                  {
+                    "id": "sha256:eec24737b53a379158de46ab23d83e718ae03977c34b117bd17e05602a4d49db"
+                  },
+                  {
+                    "id": "sha256:14aedac0b6d06e27be32689a7e6b3b23545cb556769ececf9172716003f5a41b"
+                  },
+                  {
+                    "id": "sha256:694aec9dafb7c6087d805a056beada417b7f8a41cdeb8c6aa5a4765d3505ac0b"
+                  },
+                  {
+                    "id": "sha256:dc00d00d37d5ce4dc6d1a066f52c10ad61f5a4c53a8e5dcf9a358019a503b2d3"
+                  },
+                  {
+                    "id": "sha256:e099044a16a2a92155e192d1e1940ad0252db242782da6cfc1a5a730d860edbe"
+                  },
+                  {
+                    "id": "sha256:bcc40f26baca5e0474e48ba7fb5d91be386c007eec2cccae02e25d8c355d7ce5"
+                  },
+                  {
+                    "id": "sha256:6d6049230ab8ac8dfa0d63b54ce92b303f76abb49301af76224ea58f20aff7ca"
+                  },
+                  {
+                    "id": "sha256:8eb4e422d5eeead9c98bb0cac38d71b687a920e86296e3eba0c8cbae343e05d7"
+                  },
+                  {
+                    "id": "sha256:9c8e0faaafd3e2b34346e43c151b27afad067209dec53a23764838d42db2dc34"
+                  },
+                  {
+                    "id": "sha256:54fd6ee515d45e2cbb6a2f93e03d2afdecb5164360b24db492fed237bba0a33d"
+                  },
+                  {
+                    "id": "sha256:15b090cf01eecce9bf43fdc74e0e3a28253064a44c584507155207a3db39ef14"
+                  },
+                  {
+                    "id": "sha256:04a32865f51f979878fe9b21f3bc633c849936398099973c2a81aa8875e48127"
+                  },
+                  {
+                    "id": "sha256:4c7b0ef4de56a30a9fba7ae44889ad92e299b9786cc56dbe774e56c733cf5fa9"
+                  },
+                  {
+                    "id": "sha256:a884102e7c092aee5c94cc706b158192ca8c12e0c1f7afc9e4da117dfc34f49e"
+                  },
+                  {
+                    "id": "sha256:07b48ba78b690d9886d8a37fe179bf63b11a59f8d8ffcc869a76634880596a5d"
+                  },
+                  {
+                    "id": "sha256:3a36eccc2ba52467744249d953760fb77aa6a99121acc89fcb9314264601b499"
+                  },
+                  {
+                    "id": "sha256:e19de28473a770686eb2fbd1716838a5ebea47b0a39115a679449c3dcd201d3d"
+                  },
+                  {
+                    "id": "sha256:90f23ab6c0c65a41d8a5208e1b50e3dabd7475048cc48e28893b6f6e78e58465"
+                  },
+                  {
+                    "id": "sha256:da617ed1683f4b608170bcb42532267b0812adc2d5ec66cb85a662ecb1007c0f"
+                  },
+                  {
+                    "id": "sha256:20684ad84aa3b60b51200e8acbaaadf9e674931c4f7e9d1e3b01739121cf7113"
+                  },
+                  {
+                    "id": "sha256:78bd1aadba052ac2f426185b6480577249fb0d384cfa61682efcffce03111248"
+                  },
+                  {
+                    "id": "sha256:8811fcc901debd0ff0dd158eb5686286c5aa8ecdf3d7564197851eafbc83dc35"
+                  },
+                  {
+                    "id": "sha256:647de586cb61e8e27990ec87d8a027b925d4b3915673e8b166e38ba3c2eac6a4"
+                  },
+                  {
+                    "id": "sha256:288942b5b751616a213e06ad7d33f7da4ebb32b1aeca0c2181acc43f522b708b"
+                  },
+                  {
+                    "id": "sha256:df64f09ce88211578038742f700e36ce696323f7a36a9c0d62042ad37ba0e3c6"
+                  },
+                  {
+                    "id": "sha256:a8ff52a7a6dd43d5a9bf48654fecec079dfc7bf503443f5a4baaaf450ef4fe7a"
+                  },
+                  {
+                    "id": "sha256:cd8d9445814e86cbfebadea62dfdd13059e7797dad82c89ad746c1ae3ad3f5d0"
+                  },
+                  {
+                    "id": "sha256:408e34ab3500b5403951f067ec02486e9c16cbde933114107410f60479926b87"
+                  },
+                  {
+                    "id": "sha256:4400fc5b35b46d9b24c77a510bdf2cda123c09e93a88ffda601732bb63933900"
+                  },
+                  {
+                    "id": "sha256:338ffd2bbd57a568652d9d362a3f3c2311b815ee06c87f1a77bb0bb1604f92d8"
+                  },
+                  {
+                    "id": "sha256:cdbde066bbcb8d2fbae87737b568a43105775aa1915159536272603540e6b7c3"
+                  },
+                  {
+                    "id": "sha256:7d263e22b580a548ab17fcd6d892fcf52edd24ebebdcc8ff932abefd04c0a84d"
+                  },
+                  {
+                    "id": "sha256:62e9dd14321a96a92a2a5aa4f0565ac655a87f556a92de914af6a2221ae4e3d3"
+                  },
+                  {
+                    "id": "sha256:1459751531b890ed41496acc31d47b88d1a80620435adf333e1b99dc226be1d1"
+                  },
+                  {
+                    "id": "sha256:f025262035e7cd16717bdb1471465c9c06b6ac6232a4345b9c250656b6fb0729"
+                  },
+                  {
+                    "id": "sha256:4379b7a0bec9a3016b926d29afe82ed043e39198aac660f892fe18bab9c8eba9"
+                  },
+                  {
+                    "id": "sha256:74cfda57ee5004a4b3f0bdfffc8ffa37d8ff709273cd8ec333cce34823731218"
+                  },
+                  {
+                    "id": "sha256:65e0d87950387a9c6a9ee26a76e3a85e81fe903f38b00d27dbb7c537bfa05c57"
+                  },
+                  {
+                    "id": "sha256:8ebdfb80de2a159fb2d3611474c14c455beff6f61a067bab12967907ac800302"
+                  },
+                  {
+                    "id": "sha256:23208cac41ebb84cdd3a426646ee808fb9686522fce1001019059c7ef63a13af"
+                  },
+                  {
+                    "id": "sha256:9777fba8af80526e13c20408a7baf79ce9c79777a1a9d909e648bb2981ce1d5e"
+                  },
+                  {
+                    "id": "sha256:d25b7353ef6f79dc168232667a95f1b60ce04ceb75981a43d65fa7b09b51297c"
+                  },
+                  {
+                    "id": "sha256:67b2a29f3b40c74e7b12f01921687eefabd3aca5b1ff0e261a46ae0c765952c4"
+                  },
+                  {
+                    "id": "sha256:41fb55af6e7f1dc04c7995f20662b377ac1bf13287717d8af5469881ebdf4d10"
+                  },
+                  {
+                    "id": "sha256:da96cabf5dccc12d86ea7bff90208c3e15a835a5cc59d93d0e0351c872d7eb81"
+                  },
+                  {
+                    "id": "sha256:5471b682059cac2f83456ade5d025d72a341f0e9b46458a4518bdbbccb478020"
+                  },
+                  {
+                    "id": "sha256:e6a6463c89e14111505132120615532f15c71e5e83d815a442bfaf7e57739842"
+                  },
+                  {
+                    "id": "sha256:6c8a2c949731bcb31de8cb74d7199c22de3fcae22b3bae1678a785f8fa637e65"
+                  },
+                  {
+                    "id": "sha256:7dbc8c374e3ae8d44c9f46fa5beab9f59448cdd0f48c1c080a3e10b714822c46"
+                  },
+                  {
+                    "id": "sha256:02af1aa66182eebcd38d1f3913585d49c488f42255854e9eb2d7b380884947e7"
+                  },
+                  {
+                    "id": "sha256:f65585d8d9bfc6f7153368f2a9b572ea08bd5c03703deb5562d17d5bfe996acf"
+                  },
+                  {
+                    "id": "sha256:d8e38a709c534c708b8bde5357c9328f97b12b24065d01b576c606300ebe2080"
+                  },
+                  {
+                    "id": "sha256:5335ae857e6d6176a82e275a21c6f11074ee726176c36fbb336ac839cb2707a4"
+                  },
+                  {
+                    "id": "sha256:de198687e2d36256b0e8e55f8e24df55f7ca3827ceec1b0d79f326250e80e292"
+                  },
+                  {
+                    "id": "sha256:51bc6ffadcd1ce0fbdb8af5e56769b24f86dfbf061ffc552348a0dd10a9b7d11"
+                  },
+                  {
+                    "id": "sha256:c714640e67fc6e788301a3b1ac0b598af1582594ebfb2a19bf8f04e3ed346a56"
+                  },
+                  {
+                    "id": "sha256:61f6f84040537d89aa1e86bba3c5aa8def37cb030cf7926957fc4651f323df0c"
+                  },
+                  {
+                    "id": "sha256:d573d2a50b8374534446637747368e23215055e7fbfe8df5ffbf0a2860e3bfa7"
+                  },
+                  {
+                    "id": "sha256:ace60a59777f7e0c42b574627ef27cf4919008f779208ee27ded27a818cdc442"
+                  },
+                  {
+                    "id": "sha256:23df43118595b0a6ba789fbc96dbade860a25a1e3c235f8966b33500610795df"
+                  },
+                  {
+                    "id": "sha256:579d5ab2c9c9caee7381657ef4c71657b5241f2f81471463e315a54614927d31"
+                  },
+                  {
+                    "id": "sha256:54ac4b094bfc36cf384820faf15d061b245c1a025193459f9fb02a03f2123848"
+                  },
+                  {
+                    "id": "sha256:339e702a0c409834c759c3a949f9c7825de8fdcce21d296693ac5622514da8c5"
+                  },
+                  {
+                    "id": "sha256:fe6878bdb6d2bf8f28b6dc26a83b3d8dd34a57b938d23870a3d969456487847b"
+                  },
+                  {
+                    "id": "sha256:d58bc2c7ca44771765af7a93bc12ae7982a84891a16125ac7478138e68af8512"
+                  },
+                  {
+                    "id": "sha256:83651506561d7c2cff0ddddc82728feffde6e1c3f378812386ac97613a11a0c8"
+                  },
+                  {
+                    "id": "sha256:13d01bc363c0a74a19644c6913815818c726213814ff5ebf318dd70e032bde9c"
+                  },
+                  {
+                    "id": "sha256:5de22215f00ec0e3527db00518137175cdafcbe129635cd8e64f3ca18cdac3d6"
+                  },
+                  {
+                    "id": "sha256:36c935eb2bfca2d09b66a726e2abd7da440350797ed4aab580e40c4ab64ac6c1"
+                  },
+                  {
+                    "id": "sha256:4a4e1fe1910326026a9375d130baeea023d35108adf5408dbc26aafd50c9810f"
+                  },
+                  {
+                    "id": "sha256:5efd8011a0cc69f71f1f836b15af3c14cc4d18d6debffeb1bc63c53feaaf88bc"
+                  },
+                  {
+                    "id": "sha256:577739238a96bd2aba1494e0f1a2088c13b8997e3065ff08def5fc9a876621a1"
+                  },
+                  {
+                    "id": "sha256:8956aadaf5082c480e3aa7cf52b5e0c63a0264ac43eb4805674073d8e84f5607"
+                  },
+                  {
+                    "id": "sha256:08f3cac28e42603c70ee57bf7262619998d467f8658e6a69fdf7b15fcf3bc924"
+                  },
+                  {
+                    "id": "sha256:e8e40f56069e7f9d9fee5d00f2d3471126fb8efcbf1da715c0f6100357d1b1e8"
+                  },
+                  {
+                    "id": "sha256:33f383a707ebe9bedd2feacc70a1a481a3a3fadd2be81a4d8b10a66b0d0baef9"
+                  },
+                  {
+                    "id": "sha256:54b57a99e17873846baedc57588c3e7998e33e40a5e35bfc1ab9fc00586ad422"
+                  },
+                  {
+                    "id": "sha256:f8fc690591e01f34b0247099b291712d8176daf9564b14dcd185910e5e801f8a"
+                  },
+                  {
+                    "id": "sha256:cbae49cd1fb1a85e0f26023262dede98533f9dc25f29cdebd8492804f155d747"
+                  },
+                  {
+                    "id": "sha256:0154da3adf97e784d5c0d9a5cd730db1625dde914987cddfdf23f8093e09ada7"
+                  },
+                  {
+                    "id": "sha256:7cc3f56bf0d3c7648c61bb3bb0b9e406802389cab4d921d0384b5e08ca953cc6"
+                  },
+                  {
+                    "id": "sha256:e85bade5439c3baf511ae25d105fb0aa072bfe1c2059ea6ce1ae91b67481d2be"
+                  },
+                  {
+                    "id": "sha256:42fe06f808bae31ea5ec5e2fc7674bbd79614f9eeca235f762ef7dfb7fd9f1c6"
+                  },
+                  {
+                    "id": "sha256:5fb64623cd3759c3e402b325ed1a88a14d4be72e8bc1a10ba4eb8c2ca555f286"
+                  },
+                  {
+                    "id": "sha256:992cf340bfdf8302fa542bd49cfe0972fcc6f96f8c22ce7c52119e8956cb48c4"
+                  },
+                  {
+                    "id": "sha256:b131e723adccaf330495a43f084e0f9d5c66ffb63725a7cc4ff7121925f7c8df"
+                  },
+                  {
+                    "id": "sha256:2df29003eacb3d8127b6fa7bf9e215963d63d27e225e9554dc048319255d7766"
+                  },
+                  {
+                    "id": "sha256:136a713ec35f5ae88442b87f443fe6fbf1bfb6ca4de6a08f4a1ea335ef3516d8"
+                  },
+                  {
+                    "id": "sha256:189b1ae2e8ad8f23745d1d55fc46c82022a3ff3468dccf3f5950aaca5b890ed9"
+                  },
+                  {
+                    "id": "sha256:9a69309fc97f9525aa229aed3b15d760cfe697ae9452438a8060950d5166a31f"
+                  },
+                  {
+                    "id": "sha256:23cf509876523e53da670e29195d0e119fd2322c1c76298e55e5b54ed94383cb"
+                  },
+                  {
+                    "id": "sha256:400f0ff6cb80562e7549fa3e4389a9ef27fb63479d2894a5d50eb031ff9dade2"
+                  },
+                  {
+                    "id": "sha256:75cd5964cd518887a53bb28f11fd3cb87189e2f6015eea10820178a4654df104"
+                  }
+                ]
+              }
+            },
+            "options": {}
+          },
+          {
+            "type": "org.osbuild.fix-bls",
+            "options": {}
+          },
+          {
+            "type": "org.osbuild.locale",
+            "options": {
+              "language": "C.UTF-8"
+            }
+          },
+          {
+            "type": "org.osbuild.timezone",
+            "options": {
+              "zone": "America/New_York"
+            }
+          },
+          {
+            "type": "org.osbuild.sysconfig",
+            "options": {
+              "kernel": {
+                "update_default": true,
+                "default_kernel": "kernel"
+              },
+              "network": {
+                "networking": true,
+                "no_zero_conf": true
+              }
+            }
+          },
+          {
+            "type": "org.osbuild.selinux",
+            "options": {
+              "file_contexts": "etc/selinux/targeted/contexts/files/file_contexts"
+            }
+          }
+        ]
+      },
+      {
+        "name": "archive",
+        "build": "name:build",
+        "stages": [
+          {
+            "type": "org.osbuild.tar",
+            "inputs": {
+              "tree": {
+                "type": "org.osbuild.tree",
+                "origin": "org.osbuild.pipeline",
+                "references": [
+                  "name:os"
+                ]
+              }
+            },
+            "options": {
+              "filename": "root.tar.xz"
+            }
+          }
+        ]
+      }
+    ],
+    "sources": {
+      "org.osbuild.curl": {
+        "items": {
+          "sha256:0154da3adf97e784d5c0d9a5cd730db1625dde914987cddfdf23f8093e09ada7": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/sed-4.9-1.el10.s390x.rpm"
+          },
+          "sha256:02af1aa66182eebcd38d1f3913585d49c488f42255854e9eb2d7b380884947e7": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libtool-ltdl-2.4.7-10.el10.s390x.rpm"
+          },
+          "sha256:02ccc0a30efa2d5259e65505094deb9601ff9b78ac571755c5df8ea8ccfab573": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/cracklib-2.9.11-5.el10.s390x.rpm"
+          },
+          "sha256:02dfac71e21133262a9b78dff7a9a8f8b161c37c3fa411c203403e9ffce10d6b": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/audit-libs-4.0-8.el10.s390x.rpm"
+          },
+          "sha256:04a32865f51f979878fe9b21f3bc633c849936398099973c2a81aa8875e48127": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/glibc-gconv-extra-2.39-15.el10.s390x.rpm"
+          },
+          "sha256:07b48ba78b690d9886d8a37fe179bf63b11a59f8d8ffcc869a76634880596a5d": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/grep-3.11-8.el10.s390x.rpm"
+          },
+          "sha256:08f3cac28e42603c70ee57bf7262619998d467f8658e6a69fdf7b15fcf3bc924": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/readline-8.2-8.el10.s390x.rpm"
+          },
+          "sha256:136a713ec35f5ae88442b87f443fe6fbf1bfb6ca4de6a08f4a1ea335ef3516d8": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/systemd-pam-255.3-1.el10.s390x.rpm"
+          },
+          "sha256:13d01bc363c0a74a19644c6913815818c726213814ff5ebf318dd70e032bde9c": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/pam-1.6.1-2.el10.s390x.rpm"
+          },
+          "sha256:1459751531b890ed41496acc31d47b88d1a80620435adf333e1b99dc226be1d1": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libffi-3.4.4-7.el10.s390x.rpm"
+          },
+          "sha256:149ca30a5d3d7f92a4736a86b054f81a2c5d473283e3b0ef44c505f23a33d4fe": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-appstream-20240626/Packages/gawk-all-langpacks-5.3.0-3.el10.s390x.rpm"
+          },
+          "sha256:14a57f78280b75bbff5a505bec857a01350311732ce9ca91b2fa575bf3bf616a": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/alternatives-1.26-3.el10.s390x.rpm"
+          },
+          "sha256:14aedac0b6d06e27be32689a7e6b3b23545cb556769ececf9172716003f5a41b": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/elfutils-libelf-0.191-3.el10.s390x.rpm"
+          },
+          "sha256:15b090cf01eecce9bf43fdc74e0e3a28253064a44c584507155207a3db39ef14": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/glibc-common-2.39-15.el10.s390x.rpm"
+          },
+          "sha256:163103fe89975bd3948f27bcbe02012455c9444701c98ded0d52f58f699cbade": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/centos-gpg-keys-10.0-0.14.el10.noarch.rpm"
+          },
+          "sha256:189b1ae2e8ad8f23745d1d55fc46c82022a3ff3468dccf3f5950aaca5b890ed9": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/tzdata-2024a-3.el10.noarch.rpm"
+          },
+          "sha256:1aa35c1deb4805d4c1fedf8185427a73d14d042a82e8052b1266a61e64a028cf": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/mpdecimal-2.5.1-9.el10.s390x.rpm"
+          },
+          "sha256:1afa4601cea899d8d9b03a6051c7778224271bd8e36d71112ba4a2cf626ea405": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/coreutils-9.4-6.el10.s390x.rpm"
+          },
+          "sha256:1e22121fcc343f1e494c8616ae037d84f1ec89feb07db15a6a1e8e7ab966e6f1": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-appstream-20240626/Packages/python-unversioned-command-3.12.2-7.el10.noarch.rpm"
+          },
+          "sha256:20684ad84aa3b60b51200e8acbaaadf9e674931c4f7e9d1e3b01739121cf7113": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/krb5-libs-1.21.2-5.el10.s390x.rpm"
+          },
+          "sha256:23208cac41ebb84cdd3a426646ee808fb9686522fce1001019059c7ef63a13af": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libpwquality-1.4.5-9.el10.s390x.rpm"
+          },
+          "sha256:23cf509876523e53da670e29195d0e119fd2322c1c76298e55e5b54ed94383cb": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/util-linux-core-2.40.1-4.el10.s390x.rpm"
+          },
+          "sha256:23df43118595b0a6ba789fbc96dbade860a25a1e3c235f8966b33500610795df": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/mpfr-4.2.1-3.el10.s390x.rpm"
+          },
+          "sha256:2759fb97fb1493024fe76503f1d140caed09f663e71dc7a844cb5000a37d5de9": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/dbus-common-1.14.10-3.el10.noarch.rpm"
+          },
+          "sha256:288942b5b751616a213e06ad7d33f7da4ebb32b1aeca0c2181acc43f522b708b": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libblkid-2.40.1-4.el10.s390x.rpm"
+          },
+          "sha256:2df29003eacb3d8127b6fa7bf9e215963d63d27e225e9554dc048319255d7766": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/systemd-libs-255.3-1.el10.s390x.rpm"
+          },
+          "sha256:338ffd2bbd57a568652d9d362a3f3c2311b815ee06c87f1a77bb0bb1604f92d8": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libcurl-8.6.0-6.el10.s390x.rpm"
+          },
+          "sha256:339e702a0c409834c759c3a949f9c7825de8fdcce21d296693ac5622514da8c5": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/openldap-2.6.7-1.el10.s390x.rpm"
+          },
+          "sha256:33f383a707ebe9bedd2feacc70a1a481a3a3fadd2be81a4d8b10a66b0d0baef9": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/rpm-libs-4.19.1.1-1.el10.s390x.rpm"
+          },
+          "sha256:3465cf9c9261f72dc8ecdfadf5ea98d56a42aed0a6e09038fc69d9bada766aa6": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/python3-pip-wheel-23.3.2-2.el10.noarch.rpm"
+          },
+          "sha256:36c935eb2bfca2d09b66a726e2abd7da440350797ed4aab580e40c4ab64ac6c1": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/pcre2-10.42-3.el10.1.s390x.rpm"
+          },
+          "sha256:3a36eccc2ba52467744249d953760fb77aa6a99121acc89fcb9314264601b499": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/gzip-1.13-1.el10.s390x.rpm"
+          },
+          "sha256:3f17af36f0ca2e3cd8a1eeecbe5907f4058e985d6288eab6d9548183834a77df": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-appstream-20240626/Packages/xkeyboard-config-2.41-1.el10.noarch.rpm"
+          },
+          "sha256:400f0ff6cb80562e7549fa3e4389a9ef27fb63479d2894a5d50eb031ff9dade2": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/xz-libs-5.4.6-1.el10.s390x.rpm"
+          },
+          "sha256:408e34ab3500b5403951f067ec02486e9c16cbde933114107410f60479926b87": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libcap-ng-0.8.4-4.el10.s390x.rpm"
+          },
+          "sha256:41fb55af6e7f1dc04c7995f20662b377ac1bf13287717d8af5469881ebdf4d10": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libsemanage-3.6-3.el10.s390x.rpm"
+          },
+          "sha256:42fe06f808bae31ea5ec5e2fc7674bbd79614f9eeca235f762ef7dfb7fd9f1c6": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/setup-2.14.5-2.el10.noarch.rpm"
+          },
+          "sha256:4379b7a0bec9a3016b926d29afe82ed043e39198aac660f892fe18bab9c8eba9": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libidn2-2.3.7-1.el10.s390x.rpm"
+          },
+          "sha256:4400fc5b35b46d9b24c77a510bdf2cda123c09e93a88ffda601732bb63933900": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libcom_err-1.47.0-5.el10.s390x.rpm"
+          },
+          "sha256:4a4e1fe1910326026a9375d130baeea023d35108adf5408dbc26aafd50c9810f": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/pcre2-syntax-10.42-3.el10.1.noarch.rpm"
+          },
+          "sha256:4c7b0ef4de56a30a9fba7ae44889ad92e299b9786cc56dbe774e56c733cf5fa9": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/glibc-minimal-langpack-2.39-15.el10.s390x.rpm"
+          },
+          "sha256:4ecc638f8060fdd19c5cf55a12ce3878a3f2756cfc0764b1846445fb1eed58d9": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/device-mapper-libs-1.02.197-1.el10.s390x.rpm"
+          },
+          "sha256:4ef09c287761a900392cf39fe8cce33aa678430ad37926aafd39068f300527ae": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/xz-5.4.6-1.el10.s390x.rpm"
+          },
+          "sha256:51bc6ffadcd1ce0fbdb8af5e56769b24f86dfbf061ffc552348a0dd10a9b7d11": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libxcrypt-4.4.36-5.el10.s390x.rpm"
+          },
+          "sha256:5335ae857e6d6176a82e275a21c6f11074ee726176c36fbb336ac839cb2707a4": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libuuid-2.40.1-4.el10.s390x.rpm"
+          },
+          "sha256:5471b682059cac2f83456ade5d025d72a341f0e9b46458a4518bdbbccb478020": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libsmartcols-2.40.1-4.el10.s390x.rpm"
+          },
+          "sha256:54ac4b094bfc36cf384820faf15d061b245c1a025193459f9fb02a03f2123848": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/ncurses-libs-6.4-12.20240127.el10.s390x.rpm"
+          },
+          "sha256:54b57a99e17873846baedc57588c3e7998e33e40a5e35bfc1ab9fc00586ad422": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/rpm-plugin-audit-4.19.1.1-1.el10.s390x.rpm"
+          },
+          "sha256:54fd6ee515d45e2cbb6a2f93e03d2afdecb5164360b24db492fed237bba0a33d": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/glibc-2.39-15.el10.s390x.rpm"
+          },
+          "sha256:577739238a96bd2aba1494e0f1a2088c13b8997e3065ff08def5fc9a876621a1": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/popt-1.19-6.el10.s390x.rpm"
+          },
+          "sha256:579d5ab2c9c9caee7381657ef4c71657b5241f2f81471463e315a54614927d31": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/ncurses-base-6.4-12.20240127.el10.noarch.rpm"
+          },
+          "sha256:5d02d12705b0281df1bf4e1c2fb9999cc5fb89343af9fd061bc4ef194f1670d1": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/elfutils-debuginfod-client-0.191-3.el10.s390x.rpm"
+          },
+          "sha256:5de22215f00ec0e3527db00518137175cdafcbe129635cd8e64f3ca18cdac3d6": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/pam-libs-1.6.1-2.el10.s390x.rpm"
+          },
+          "sha256:5efd8011a0cc69f71f1f836b15af3c14cc4d18d6debffeb1bc63c53feaaf88bc": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/policycoreutils-3.6-4.el10.s390x.rpm"
+          },
+          "sha256:5fb64623cd3759c3e402b325ed1a88a14d4be72e8bc1a10ba4eb8c2ca555f286": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/shadow-utils-4.15.0-2.el10.s390x.rpm"
+          },
+          "sha256:60f6ae76df571fd4402403935243d3a8821c1df5b0f4d9c06f5653bda7e09386": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/centos-stream-release-10.0-0.14.el10.noarch.rpm"
+          },
+          "sha256:61f6f84040537d89aa1e86bba3c5aa8def37cb030cf7926957fc4651f323df0c": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libzstd-1.5.5-5.el10.s390x.rpm"
+          },
+          "sha256:62e9dd14321a96a92a2a5aa4f0565ac655a87f556a92de914af6a2221ae4e3d3": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libfdisk-2.40.1-4.el10.s390x.rpm"
+          },
+          "sha256:647de586cb61e8e27990ec87d8a027b925d4b3915673e8b166e38ba3c2eac6a4": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libattr-2.5.2-3.el10.s390x.rpm"
+          },
+          "sha256:65e0d87950387a9c6a9ee26a76e3a85e81fe903f38b00d27dbb7c537bfa05c57": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libnghttp2-1.61.0-1.el10.s390x.rpm"
+          },
+          "sha256:67b2a29f3b40c74e7b12f01921687eefabd3aca5b1ff0e261a46ae0c765952c4": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libselinux-utils-3.6-4.el10.s390x.rpm"
+          },
+          "sha256:694aec9dafb7c6087d805a056beada417b7f8a41cdeb8c6aa5a4765d3505ac0b": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/elfutils-libs-0.191-3.el10.s390x.rpm"
+          },
+          "sha256:6a962f8dd44249e740759a8221a619cd8b5965c8f347828265d07dfd3961d00d": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/curl-8.6.0-6.el10.s390x.rpm"
+          },
+          "sha256:6b2dfdad9884ee4926ccfa17151122064cae186f438cb8b15789c9ba2b3161fc": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/coreutils-common-9.4-6.el10.s390x.rpm"
+          },
+          "sha256:6c8a2c949731bcb31de8cb74d7199c22de3fcae22b3bae1678a785f8fa637e65": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libssh-config-0.10.6-6.el10.noarch.rpm"
+          },
+          "sha256:6d6049230ab8ac8dfa0d63b54ce92b303f76abb49301af76224ea58f20aff7ca": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/gawk-5.3.0-3.el10.s390x.rpm"
+          },
+          "sha256:6dca305ce6932df1536bf7156b992f2f0cf308ee6495f10207d30d8766ea82a8": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/basesystem-11-20.el10.noarch.rpm"
+          },
+          "sha256:6e1b3a35f1900162b10cc93d4eff575a57567706403110b9bec21013f224b1e6": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/device-mapper-1.02.197-1.el10.s390x.rpm"
+          },
+          "sha256:72eacdd557867ed623bc1cef329677e31c99610d7053bac49be1f3d474660223": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/tar-1.35-3.el10.s390x.rpm"
+          },
+          "sha256:74cfda57ee5004a4b3f0bdfffc8ffa37d8ff709273cd8ec333cce34823731218": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libmount-2.40.1-4.el10.s390x.rpm"
+          },
+          "sha256:75cd5964cd518887a53bb28f11fd3cb87189e2f6015eea10820178a4654df104": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/zlib-ng-compat-2.1.6-2.el10.s390x.rpm"
+          },
+          "sha256:7607ae28401e2d9973af3f134c3afec90baf82315c3409b0c37287411cb17d86": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/crypto-policies-20240522-1.git77963ab.el10.noarch.rpm"
+          },
+          "sha256:7695f1a830f585f26200a22d07bafdbfdbefe021c2666cb8fdd91480fe2145ea": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/cryptsetup-libs-2.7.2-2.el10.s390x.rpm"
+          },
+          "sha256:78bd1aadba052ac2f426185b6480577249fb0d384cfa61682efcffce03111248": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libacl-2.3.2-1.el10.s390x.rpm"
+          },
+          "sha256:7bbaf9a68b64f6ffc695c4c1bb0d5337603f5d0d7301d361798365b27dc3e26f": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/bzip2-libs-1.0.8-18.el10.s390x.rpm"
+          },
+          "sha256:7cc3f56bf0d3c7648c61bb3bb0b9e406802389cab4d921d0384b5e08ca953cc6": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/selinux-policy-40.13.3-1.el10.noarch.rpm"
+          },
+          "sha256:7d263e22b580a548ab17fcd6d892fcf52edd24ebebdcc8ff932abefd04c0a84d": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libevent-2.1.12-13.el10.s390x.rpm"
+          },
+          "sha256:7dbc8c374e3ae8d44c9f46fa5beab9f59448cdd0f48c1c080a3e10b714822c46": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libtasn1-4.19.0-6.el10.s390x.rpm"
+          },
+          "sha256:7ec4a006bd2f05b07b5c7431f95687384a44ef3c4d0196752f7092de681be7ce": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/ca-certificates-2023.2.62_v7.0.401-6.el10.noarch.rpm"
+          },
+          "sha256:83651506561d7c2cff0ddddc82728feffde6e1c3f378812386ac97613a11a0c8": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/p11-kit-trust-0.25.3-4.el10.s390x.rpm"
+          },
+          "sha256:8811fcc901debd0ff0dd158eb5686286c5aa8ecdf3d7564197851eafbc83dc35": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libarchive-3.7.2-6.el10.s390x.rpm"
+          },
+          "sha256:8956aadaf5082c480e3aa7cf52b5e0c63a0264ac43eb4805674073d8e84f5607": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/publicsuffix-list-dafsa-20240107-3.el10.noarch.rpm"
+          },
+          "sha256:8eb4e422d5eeead9c98bb0cac38d71b687a920e86296e3eba0c8cbae343e05d7": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/gdbm-1.23-6.el10.s390x.rpm"
+          },
+          "sha256:8ebdfb80de2a159fb2d3611474c14c455beff6f61a067bab12967907ac800302": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libpsl-0.21.5-3.el10.s390x.rpm"
+          },
+          "sha256:90f23ab6c0c65a41d8a5208e1b50e3dabd7475048cc48e28893b6f6e78e58465": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/keyutils-libs-1.6.3-3.el10.s390x.rpm"
+          },
+          "sha256:9777fba8af80526e13c20408a7baf79ce9c79777a1a9d909e648bb2981ce1d5e": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libseccomp-2.5.3-8.el10.s390x.rpm"
+          },
+          "sha256:992cf340bfdf8302fa542bd49cfe0972fcc6f96f8c22ce7c52119e8956cb48c4": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/sqlite-libs-3.45.1-2.el10.s390x.rpm"
+          },
+          "sha256:9a69309fc97f9525aa229aed3b15d760cfe697ae9452438a8060950d5166a31f": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/util-linux-2.40.1-4.el10.s390x.rpm"
+          },
+          "sha256:9c8e0faaafd3e2b34346e43c151b27afad067209dec53a23764838d42db2dc34": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/gdbm-libs-1.23-6.el10.s390x.rpm"
+          },
+          "sha256:a884102e7c092aee5c94cc706b158192ca8c12e0c1f7afc9e4da117dfc34f49e": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/gmp-6.2.1-8.el10.s390x.rpm"
+          },
+          "sha256:a8ff52a7a6dd43d5a9bf48654fecec079dfc7bf503443f5a4baaaf450ef4fe7a": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libbrotli-1.1.0-3.el10.s390x.rpm"
+          },
+          "sha256:ace60a59777f7e0c42b574627ef27cf4919008f779208ee27ded27a818cdc442": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/lz4-libs-1.9.4-6.el10.s390x.rpm"
+          },
+          "sha256:b131e723adccaf330495a43f084e0f9d5c66ffb63725a7cc4ff7121925f7c8df": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/systemd-255.3-1.el10.s390x.rpm"
+          },
+          "sha256:b1e7f2123836e857fb8b57d1c47eacd2ee016f5f57e1285072241b2dd7789448": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/authselect-1.5.0-5.el10.s390x.rpm"
+          },
+          "sha256:b520308143125cbfb04b371b907ea1ca2233f89ca18b51c38a82b52971c0c58c": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/cracklib-dicts-2.9.11-5.el10.s390x.rpm"
+          },
+          "sha256:b9126cbb64ba57c7ef32b6f8c9b3001e5cbd7b30091c4b2ada43fb91e0964cbb": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/python3-3.12.2-7.el10.s390x.rpm"
+          },
+          "sha256:bcc40f26baca5e0474e48ba7fb5d91be386c007eec2cccae02e25d8c355d7ce5": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/findutils-4.9.0-8.el10.s390x.rpm"
+          },
+          "sha256:c714640e67fc6e788301a3b1ac0b598af1582594ebfb2a19bf8f04e3ed346a56": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libxml2-2.12.5-1.el10.s390x.rpm"
+          },
+          "sha256:c80c391cd28e8e178c1f9d54b52a43ab243edf67bf50dc79a9f90912c497cdff": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/authselect-libs-1.5.0-5.el10.s390x.rpm"
+          },
+          "sha256:cbae49cd1fb1a85e0f26023262dede98533f9dc25f29cdebd8492804f155d747": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/rpm-sequoia-1.6.0-2.el10.s390x.rpm"
+          },
+          "sha256:cd8d9445814e86cbfebadea62dfdd13059e7797dad82c89ad746c1ae3ad3f5d0": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libcap-2.69-4.el10.s390x.rpm"
+          },
+          "sha256:cdbde066bbcb8d2fbae87737b568a43105775aa1915159536272603540e6b7c3": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libeconf-0.6.2-2.el10.s390x.rpm"
+          },
+          "sha256:d1451250715db33df8311400c298fe4a02fe65838b98fa4906fb8002970b9bc2": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/centos-stream-repos-10.0-0.14.el10.noarch.rpm"
+          },
+          "sha256:d25b7353ef6f79dc168232667a95f1b60ce04ceb75981a43d65fa7b09b51297c": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libselinux-3.6-4.el10.s390x.rpm"
+          },
+          "sha256:d573d2a50b8374534446637747368e23215055e7fbfe8df5ffbf0a2860e3bfa7": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/lua-libs-5.4.6-5.el10.s390x.rpm"
+          },
+          "sha256:d58bc2c7ca44771765af7a93bc12ae7982a84891a16125ac7478138e68af8512": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/p11-kit-0.25.3-4.el10.s390x.rpm"
+          },
+          "sha256:d8e38a709c534c708b8bde5357c9328f97b12b24065d01b576c606300ebe2080": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libutempter-1.2.1-13.el10.s390x.rpm"
+          },
+          "sha256:d9b3fa4380a0a78af92d38e2ec83a417f93e7f3d3b8693c726781435c5ba51ff": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-appstream-20240626/Packages/libxkbcommon-1.6.0-2.el10.s390x.rpm"
+          },
+          "sha256:da617ed1683f4b608170bcb42532267b0812adc2d5ec66cb85a662ecb1007c0f": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/kmod-libs-31-5.el10.s390x.rpm"
+          },
+          "sha256:da96cabf5dccc12d86ea7bff90208c3e15a835a5cc59d93d0e0351c872d7eb81": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libsepol-3.6-3.el10.s390x.rpm"
+          },
+          "sha256:dc00d00d37d5ce4dc6d1a066f52c10ad61f5a4c53a8e5dcf9a358019a503b2d3": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/expat-2.5.0-5.el10.s390x.rpm"
+          },
+          "sha256:de198687e2d36256b0e8e55f8e24df55f7ca3827ceec1b0d79f326250e80e292": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libverto-0.3.2-8.el10.s390x.rpm"
+          },
+          "sha256:df64f09ce88211578038742f700e36ce696323f7a36a9c0d62042ad37ba0e3c6": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libbpf-1.4.0-2.el10.s390x.rpm"
+          },
+          "sha256:e099044a16a2a92155e192d1e1940ad0252db242782da6cfc1a5a730d860edbe": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/filesystem-3.18-8.el10.s390x.rpm"
+          },
+          "sha256:e19de28473a770686eb2fbd1716838a5ebea47b0a39115a679449c3dcd201d3d": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/json-c-0.17-3.el10.s390x.rpm"
+          },
+          "sha256:e6a6463c89e14111505132120615532f15c71e5e83d815a442bfaf7e57739842": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libssh-0.10.6-6.el10.s390x.rpm"
+          },
+          "sha256:e85b8b543441673e8fe73a848f61113d39d5c39dc24b9f42e01981db39f9e98c": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/python3-libs-3.12.2-7.el10.s390x.rpm"
+          },
+          "sha256:e85bade5439c3baf511ae25d105fb0aa072bfe1c2059ea6ce1ae91b67481d2be": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/selinux-policy-targeted-40.13.3-1.el10.noarch.rpm"
+          },
+          "sha256:e8e40f56069e7f9d9fee5d00f2d3471126fb8efcbf1da715c0f6100357d1b1e8": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/rpm-4.19.1.1-1.el10.s390x.rpm"
+          },
+          "sha256:ead6c2b4e3a2477e1ab17ad78cb10a8e12c1ddea86ebc6bc61854fa10c61099c": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/bash-5.2.26-3.el10.s390x.rpm"
+          },
+          "sha256:ededb441e5d7d7e82e405cafb2271c314220c60d9ab6fea7c439b592c26bd1dd": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/dbus-1.14.10-3.el10.s390x.rpm"
+          },
+          "sha256:eec24737b53a379158de46ab23d83e718ae03977c34b117bd17e05602a4d49db": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/elfutils-default-yama-scope-0.191-3.el10.noarch.rpm"
+          },
+          "sha256:eee9d283f41edc973cabab99bbad861553036ceaf66d7864e65f504afa791d07": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/diffutils-3.10-5.el10.s390x.rpm"
+          },
+          "sha256:f025262035e7cd16717bdb1471465c9c06b6ac6232a4345b9c250656b6fb0729": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libgcc-14.1.1-5.el10.s390x.rpm"
+          },
+          "sha256:f65585d8d9bfc6f7153368f2a9b572ea08bd5c03703deb5562d17d5bfe996acf": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libunistring-1.1-7.el10.s390x.rpm"
+          },
+          "sha256:f8fc690591e01f34b0247099b291712d8176daf9564b14dcd185910e5e801f8a": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/rpm-plugin-selinux-4.19.1.1-1.el10.s390x.rpm"
+          },
+          "sha256:fb5e76e62376823f35a6878711566080cac60c62166638fe46d684832b30498f": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/dbus-broker-35-4.el10.s390x.rpm"
+          },
+          "sha256:fbf46337ffdb4749fd566e98fe95f05c5dba2eb16ab1079b49d8bf541adaa046": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/cyrus-sasl-lib-2.1.28-19.el10.s390x.rpm"
+          },
+          "sha256:fe6878bdb6d2bf8f28b6dc26a83b3d8dd34a57b938d23870a3d969456487847b": {
+            "url": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/openssl-libs-3.2.2-3.el10.s390x.rpm"
+          }
+        }
+      }
+    }
+  },
+  "rpmmd": {
+    "build": [
+      {
+        "name": "gawk-all-langpacks",
+        "epoch": 0,
+        "version": "5.3.0",
+        "release": "3.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-appstream-20240626/Packages/gawk-all-langpacks-5.3.0-3.el10.s390x.rpm",
+        "checksum": "sha256:149ca30a5d3d7f92a4736a86b054f81a2c5d473283e3b0ef44c505f23a33d4fe"
+      },
+      {
+        "name": "libxkbcommon",
+        "epoch": 0,
+        "version": "1.6.0",
+        "release": "2.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-appstream-20240626/Packages/libxkbcommon-1.6.0-2.el10.s390x.rpm",
+        "checksum": "sha256:d9b3fa4380a0a78af92d38e2ec83a417f93e7f3d3b8693c726781435c5ba51ff"
+      },
+      {
+        "name": "python-unversioned-command",
+        "epoch": 0,
+        "version": "3.12.2",
+        "release": "7.el10",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-appstream-20240626/Packages/python-unversioned-command-3.12.2-7.el10.noarch.rpm",
+        "checksum": "sha256:1e22121fcc343f1e494c8616ae037d84f1ec89feb07db15a6a1e8e7ab966e6f1"
+      },
+      {
+        "name": "xkeyboard-config",
+        "epoch": 0,
+        "version": "2.41",
+        "release": "1.el10",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-appstream-20240626/Packages/xkeyboard-config-2.41-1.el10.noarch.rpm",
+        "checksum": "sha256:3f17af36f0ca2e3cd8a1eeecbe5907f4058e985d6288eab6d9548183834a77df"
+      },
+      {
+        "name": "alternatives",
+        "epoch": 0,
+        "version": "1.26",
+        "release": "3.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/alternatives-1.26-3.el10.s390x.rpm",
+        "checksum": "sha256:14a57f78280b75bbff5a505bec857a01350311732ce9ca91b2fa575bf3bf616a"
+      },
+      {
+        "name": "audit-libs",
+        "epoch": 0,
+        "version": "4.0",
+        "release": "8.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/audit-libs-4.0-8.el10.s390x.rpm",
+        "checksum": "sha256:02dfac71e21133262a9b78dff7a9a8f8b161c37c3fa411c203403e9ffce10d6b"
+      },
+      {
+        "name": "authselect",
+        "epoch": 0,
+        "version": "1.5.0",
+        "release": "5.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/authselect-1.5.0-5.el10.s390x.rpm",
+        "checksum": "sha256:b1e7f2123836e857fb8b57d1c47eacd2ee016f5f57e1285072241b2dd7789448"
+      },
+      {
+        "name": "authselect-libs",
+        "epoch": 0,
+        "version": "1.5.0",
+        "release": "5.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/authselect-libs-1.5.0-5.el10.s390x.rpm",
+        "checksum": "sha256:c80c391cd28e8e178c1f9d54b52a43ab243edf67bf50dc79a9f90912c497cdff"
+      },
+      {
+        "name": "basesystem",
+        "epoch": 0,
+        "version": "11",
+        "release": "20.el10",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/basesystem-11-20.el10.noarch.rpm",
+        "checksum": "sha256:6dca305ce6932df1536bf7156b992f2f0cf308ee6495f10207d30d8766ea82a8"
+      },
+      {
+        "name": "bash",
+        "epoch": 0,
+        "version": "5.2.26",
+        "release": "3.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/bash-5.2.26-3.el10.s390x.rpm",
+        "checksum": "sha256:ead6c2b4e3a2477e1ab17ad78cb10a8e12c1ddea86ebc6bc61854fa10c61099c"
+      },
+      {
+        "name": "bzip2-libs",
+        "epoch": 0,
+        "version": "1.0.8",
+        "release": "18.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/bzip2-libs-1.0.8-18.el10.s390x.rpm",
+        "checksum": "sha256:7bbaf9a68b64f6ffc695c4c1bb0d5337603f5d0d7301d361798365b27dc3e26f"
+      },
+      {
+        "name": "ca-certificates",
+        "epoch": 0,
+        "version": "2023.2.62_v7.0.401",
+        "release": "6.el10",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/ca-certificates-2023.2.62_v7.0.401-6.el10.noarch.rpm",
+        "checksum": "sha256:7ec4a006bd2f05b07b5c7431f95687384a44ef3c4d0196752f7092de681be7ce"
+      },
+      {
+        "name": "centos-gpg-keys",
+        "epoch": 0,
+        "version": "10.0",
+        "release": "0.14.el10",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/centos-gpg-keys-10.0-0.14.el10.noarch.rpm",
+        "checksum": "sha256:163103fe89975bd3948f27bcbe02012455c9444701c98ded0d52f58f699cbade"
+      },
+      {
+        "name": "centos-stream-release",
+        "epoch": 0,
+        "version": "10.0",
+        "release": "0.14.el10",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/centos-stream-release-10.0-0.14.el10.noarch.rpm",
+        "checksum": "sha256:60f6ae76df571fd4402403935243d3a8821c1df5b0f4d9c06f5653bda7e09386"
+      },
+      {
+        "name": "centos-stream-repos",
+        "epoch": 0,
+        "version": "10.0",
+        "release": "0.14.el10",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/centos-stream-repos-10.0-0.14.el10.noarch.rpm",
+        "checksum": "sha256:d1451250715db33df8311400c298fe4a02fe65838b98fa4906fb8002970b9bc2"
+      },
+      {
+        "name": "coreutils",
+        "epoch": 0,
+        "version": "9.4",
+        "release": "6.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/coreutils-9.4-6.el10.s390x.rpm",
+        "checksum": "sha256:1afa4601cea899d8d9b03a6051c7778224271bd8e36d71112ba4a2cf626ea405"
+      },
+      {
+        "name": "coreutils-common",
+        "epoch": 0,
+        "version": "9.4",
+        "release": "6.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/coreutils-common-9.4-6.el10.s390x.rpm",
+        "checksum": "sha256:6b2dfdad9884ee4926ccfa17151122064cae186f438cb8b15789c9ba2b3161fc"
+      },
+      {
+        "name": "cracklib",
+        "epoch": 0,
+        "version": "2.9.11",
+        "release": "5.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/cracklib-2.9.11-5.el10.s390x.rpm",
+        "checksum": "sha256:02ccc0a30efa2d5259e65505094deb9601ff9b78ac571755c5df8ea8ccfab573"
+      },
+      {
+        "name": "cracklib-dicts",
+        "epoch": 0,
+        "version": "2.9.11",
+        "release": "5.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/cracklib-dicts-2.9.11-5.el10.s390x.rpm",
+        "checksum": "sha256:b520308143125cbfb04b371b907ea1ca2233f89ca18b51c38a82b52971c0c58c"
+      },
+      {
+        "name": "crypto-policies",
+        "epoch": 0,
+        "version": "20240522",
+        "release": "1.git77963ab.el10",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/crypto-policies-20240522-1.git77963ab.el10.noarch.rpm",
+        "checksum": "sha256:7607ae28401e2d9973af3f134c3afec90baf82315c3409b0c37287411cb17d86"
+      },
+      {
+        "name": "cryptsetup-libs",
+        "epoch": 0,
+        "version": "2.7.2",
+        "release": "2.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/cryptsetup-libs-2.7.2-2.el10.s390x.rpm",
+        "checksum": "sha256:7695f1a830f585f26200a22d07bafdbfdbefe021c2666cb8fdd91480fe2145ea"
+      },
+      {
+        "name": "curl",
+        "epoch": 0,
+        "version": "8.6.0",
+        "release": "6.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/curl-8.6.0-6.el10.s390x.rpm",
+        "checksum": "sha256:6a962f8dd44249e740759a8221a619cd8b5965c8f347828265d07dfd3961d00d"
+      },
+      {
+        "name": "cyrus-sasl-lib",
+        "epoch": 0,
+        "version": "2.1.28",
+        "release": "19.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/cyrus-sasl-lib-2.1.28-19.el10.s390x.rpm",
+        "checksum": "sha256:fbf46337ffdb4749fd566e98fe95f05c5dba2eb16ab1079b49d8bf541adaa046"
+      },
+      {
+        "name": "dbus",
+        "epoch": 1,
+        "version": "1.14.10",
+        "release": "3.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/dbus-1.14.10-3.el10.s390x.rpm",
+        "checksum": "sha256:ededb441e5d7d7e82e405cafb2271c314220c60d9ab6fea7c439b592c26bd1dd"
+      },
+      {
+        "name": "dbus-broker",
+        "epoch": 0,
+        "version": "35",
+        "release": "4.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/dbus-broker-35-4.el10.s390x.rpm",
+        "checksum": "sha256:fb5e76e62376823f35a6878711566080cac60c62166638fe46d684832b30498f"
+      },
+      {
+        "name": "dbus-common",
+        "epoch": 1,
+        "version": "1.14.10",
+        "release": "3.el10",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/dbus-common-1.14.10-3.el10.noarch.rpm",
+        "checksum": "sha256:2759fb97fb1493024fe76503f1d140caed09f663e71dc7a844cb5000a37d5de9"
+      },
+      {
+        "name": "device-mapper",
+        "epoch": 10,
+        "version": "1.02.197",
+        "release": "1.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/device-mapper-1.02.197-1.el10.s390x.rpm",
+        "checksum": "sha256:6e1b3a35f1900162b10cc93d4eff575a57567706403110b9bec21013f224b1e6"
+      },
+      {
+        "name": "device-mapper-libs",
+        "epoch": 10,
+        "version": "1.02.197",
+        "release": "1.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/device-mapper-libs-1.02.197-1.el10.s390x.rpm",
+        "checksum": "sha256:4ecc638f8060fdd19c5cf55a12ce3878a3f2756cfc0764b1846445fb1eed58d9"
+      },
+      {
+        "name": "diffutils",
+        "epoch": 0,
+        "version": "3.10",
+        "release": "5.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/diffutils-3.10-5.el10.s390x.rpm",
+        "checksum": "sha256:eee9d283f41edc973cabab99bbad861553036ceaf66d7864e65f504afa791d07"
+      },
+      {
+        "name": "elfutils-debuginfod-client",
+        "epoch": 0,
+        "version": "0.191",
+        "release": "3.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/elfutils-debuginfod-client-0.191-3.el10.s390x.rpm",
+        "checksum": "sha256:5d02d12705b0281df1bf4e1c2fb9999cc5fb89343af9fd061bc4ef194f1670d1"
+      },
+      {
+        "name": "elfutils-default-yama-scope",
+        "epoch": 0,
+        "version": "0.191",
+        "release": "3.el10",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/elfutils-default-yama-scope-0.191-3.el10.noarch.rpm",
+        "checksum": "sha256:eec24737b53a379158de46ab23d83e718ae03977c34b117bd17e05602a4d49db"
+      },
+      {
+        "name": "elfutils-libelf",
+        "epoch": 0,
+        "version": "0.191",
+        "release": "3.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/elfutils-libelf-0.191-3.el10.s390x.rpm",
+        "checksum": "sha256:14aedac0b6d06e27be32689a7e6b3b23545cb556769ececf9172716003f5a41b"
+      },
+      {
+        "name": "elfutils-libs",
+        "epoch": 0,
+        "version": "0.191",
+        "release": "3.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/elfutils-libs-0.191-3.el10.s390x.rpm",
+        "checksum": "sha256:694aec9dafb7c6087d805a056beada417b7f8a41cdeb8c6aa5a4765d3505ac0b"
+      },
+      {
+        "name": "expat",
+        "epoch": 0,
+        "version": "2.5.0",
+        "release": "5.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/expat-2.5.0-5.el10.s390x.rpm",
+        "checksum": "sha256:dc00d00d37d5ce4dc6d1a066f52c10ad61f5a4c53a8e5dcf9a358019a503b2d3"
+      },
+      {
+        "name": "filesystem",
+        "epoch": 0,
+        "version": "3.18",
+        "release": "8.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/filesystem-3.18-8.el10.s390x.rpm",
+        "checksum": "sha256:e099044a16a2a92155e192d1e1940ad0252db242782da6cfc1a5a730d860edbe"
+      },
+      {
+        "name": "findutils",
+        "epoch": 1,
+        "version": "4.9.0",
+        "release": "8.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/findutils-4.9.0-8.el10.s390x.rpm",
+        "checksum": "sha256:bcc40f26baca5e0474e48ba7fb5d91be386c007eec2cccae02e25d8c355d7ce5"
+      },
+      {
+        "name": "gawk",
+        "epoch": 0,
+        "version": "5.3.0",
+        "release": "3.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/gawk-5.3.0-3.el10.s390x.rpm",
+        "checksum": "sha256:6d6049230ab8ac8dfa0d63b54ce92b303f76abb49301af76224ea58f20aff7ca"
+      },
+      {
+        "name": "gdbm",
+        "epoch": 1,
+        "version": "1.23",
+        "release": "6.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/gdbm-1.23-6.el10.s390x.rpm",
+        "checksum": "sha256:8eb4e422d5eeead9c98bb0cac38d71b687a920e86296e3eba0c8cbae343e05d7"
+      },
+      {
+        "name": "gdbm-libs",
+        "epoch": 1,
+        "version": "1.23",
+        "release": "6.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/gdbm-libs-1.23-6.el10.s390x.rpm",
+        "checksum": "sha256:9c8e0faaafd3e2b34346e43c151b27afad067209dec53a23764838d42db2dc34"
+      },
+      {
+        "name": "glibc",
+        "epoch": 0,
+        "version": "2.39",
+        "release": "15.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/glibc-2.39-15.el10.s390x.rpm",
+        "checksum": "sha256:54fd6ee515d45e2cbb6a2f93e03d2afdecb5164360b24db492fed237bba0a33d"
+      },
+      {
+        "name": "glibc-common",
+        "epoch": 0,
+        "version": "2.39",
+        "release": "15.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/glibc-common-2.39-15.el10.s390x.rpm",
+        "checksum": "sha256:15b090cf01eecce9bf43fdc74e0e3a28253064a44c584507155207a3db39ef14"
+      },
+      {
+        "name": "glibc-gconv-extra",
+        "epoch": 0,
+        "version": "2.39",
+        "release": "15.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/glibc-gconv-extra-2.39-15.el10.s390x.rpm",
+        "checksum": "sha256:04a32865f51f979878fe9b21f3bc633c849936398099973c2a81aa8875e48127"
+      },
+      {
+        "name": "glibc-minimal-langpack",
+        "epoch": 0,
+        "version": "2.39",
+        "release": "15.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/glibc-minimal-langpack-2.39-15.el10.s390x.rpm",
+        "checksum": "sha256:4c7b0ef4de56a30a9fba7ae44889ad92e299b9786cc56dbe774e56c733cf5fa9"
+      },
+      {
+        "name": "gmp",
+        "epoch": 1,
+        "version": "6.2.1",
+        "release": "8.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/gmp-6.2.1-8.el10.s390x.rpm",
+        "checksum": "sha256:a884102e7c092aee5c94cc706b158192ca8c12e0c1f7afc9e4da117dfc34f49e"
+      },
+      {
+        "name": "grep",
+        "epoch": 0,
+        "version": "3.11",
+        "release": "8.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/grep-3.11-8.el10.s390x.rpm",
+        "checksum": "sha256:07b48ba78b690d9886d8a37fe179bf63b11a59f8d8ffcc869a76634880596a5d"
+      },
+      {
+        "name": "gzip",
+        "epoch": 0,
+        "version": "1.13",
+        "release": "1.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/gzip-1.13-1.el10.s390x.rpm",
+        "checksum": "sha256:3a36eccc2ba52467744249d953760fb77aa6a99121acc89fcb9314264601b499"
+      },
+      {
+        "name": "json-c",
+        "epoch": 0,
+        "version": "0.17",
+        "release": "3.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/json-c-0.17-3.el10.s390x.rpm",
+        "checksum": "sha256:e19de28473a770686eb2fbd1716838a5ebea47b0a39115a679449c3dcd201d3d"
+      },
+      {
+        "name": "keyutils-libs",
+        "epoch": 0,
+        "version": "1.6.3",
+        "release": "3.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/keyutils-libs-1.6.3-3.el10.s390x.rpm",
+        "checksum": "sha256:90f23ab6c0c65a41d8a5208e1b50e3dabd7475048cc48e28893b6f6e78e58465"
+      },
+      {
+        "name": "kmod-libs",
+        "epoch": 0,
+        "version": "31",
+        "release": "5.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/kmod-libs-31-5.el10.s390x.rpm",
+        "checksum": "sha256:da617ed1683f4b608170bcb42532267b0812adc2d5ec66cb85a662ecb1007c0f"
+      },
+      {
+        "name": "krb5-libs",
+        "epoch": 0,
+        "version": "1.21.2",
+        "release": "5.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/krb5-libs-1.21.2-5.el10.s390x.rpm",
+        "checksum": "sha256:20684ad84aa3b60b51200e8acbaaadf9e674931c4f7e9d1e3b01739121cf7113"
+      },
+      {
+        "name": "libacl",
+        "epoch": 0,
+        "version": "2.3.2",
+        "release": "1.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libacl-2.3.2-1.el10.s390x.rpm",
+        "checksum": "sha256:78bd1aadba052ac2f426185b6480577249fb0d384cfa61682efcffce03111248"
+      },
+      {
+        "name": "libarchive",
+        "epoch": 0,
+        "version": "3.7.2",
+        "release": "6.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libarchive-3.7.2-6.el10.s390x.rpm",
+        "checksum": "sha256:8811fcc901debd0ff0dd158eb5686286c5aa8ecdf3d7564197851eafbc83dc35"
+      },
+      {
+        "name": "libattr",
+        "epoch": 0,
+        "version": "2.5.2",
+        "release": "3.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libattr-2.5.2-3.el10.s390x.rpm",
+        "checksum": "sha256:647de586cb61e8e27990ec87d8a027b925d4b3915673e8b166e38ba3c2eac6a4"
+      },
+      {
+        "name": "libblkid",
+        "epoch": 0,
+        "version": "2.40.1",
+        "release": "4.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libblkid-2.40.1-4.el10.s390x.rpm",
+        "checksum": "sha256:288942b5b751616a213e06ad7d33f7da4ebb32b1aeca0c2181acc43f522b708b"
+      },
+      {
+        "name": "libbpf",
+        "epoch": 2,
+        "version": "1.4.0",
+        "release": "2.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libbpf-1.4.0-2.el10.s390x.rpm",
+        "checksum": "sha256:df64f09ce88211578038742f700e36ce696323f7a36a9c0d62042ad37ba0e3c6"
+      },
+      {
+        "name": "libbrotli",
+        "epoch": 0,
+        "version": "1.1.0",
+        "release": "3.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libbrotli-1.1.0-3.el10.s390x.rpm",
+        "checksum": "sha256:a8ff52a7a6dd43d5a9bf48654fecec079dfc7bf503443f5a4baaaf450ef4fe7a"
+      },
+      {
+        "name": "libcap",
+        "epoch": 0,
+        "version": "2.69",
+        "release": "4.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libcap-2.69-4.el10.s390x.rpm",
+        "checksum": "sha256:cd8d9445814e86cbfebadea62dfdd13059e7797dad82c89ad746c1ae3ad3f5d0"
+      },
+      {
+        "name": "libcap-ng",
+        "epoch": 0,
+        "version": "0.8.4",
+        "release": "4.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libcap-ng-0.8.4-4.el10.s390x.rpm",
+        "checksum": "sha256:408e34ab3500b5403951f067ec02486e9c16cbde933114107410f60479926b87"
+      },
+      {
+        "name": "libcom_err",
+        "epoch": 0,
+        "version": "1.47.0",
+        "release": "5.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libcom_err-1.47.0-5.el10.s390x.rpm",
+        "checksum": "sha256:4400fc5b35b46d9b24c77a510bdf2cda123c09e93a88ffda601732bb63933900"
+      },
+      {
+        "name": "libcurl",
+        "epoch": 0,
+        "version": "8.6.0",
+        "release": "6.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libcurl-8.6.0-6.el10.s390x.rpm",
+        "checksum": "sha256:338ffd2bbd57a568652d9d362a3f3c2311b815ee06c87f1a77bb0bb1604f92d8"
+      },
+      {
+        "name": "libeconf",
+        "epoch": 0,
+        "version": "0.6.2",
+        "release": "2.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libeconf-0.6.2-2.el10.s390x.rpm",
+        "checksum": "sha256:cdbde066bbcb8d2fbae87737b568a43105775aa1915159536272603540e6b7c3"
+      },
+      {
+        "name": "libevent",
+        "epoch": 0,
+        "version": "2.1.12",
+        "release": "13.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libevent-2.1.12-13.el10.s390x.rpm",
+        "checksum": "sha256:7d263e22b580a548ab17fcd6d892fcf52edd24ebebdcc8ff932abefd04c0a84d"
+      },
+      {
+        "name": "libfdisk",
+        "epoch": 0,
+        "version": "2.40.1",
+        "release": "4.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libfdisk-2.40.1-4.el10.s390x.rpm",
+        "checksum": "sha256:62e9dd14321a96a92a2a5aa4f0565ac655a87f556a92de914af6a2221ae4e3d3"
+      },
+      {
+        "name": "libffi",
+        "epoch": 0,
+        "version": "3.4.4",
+        "release": "7.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libffi-3.4.4-7.el10.s390x.rpm",
+        "checksum": "sha256:1459751531b890ed41496acc31d47b88d1a80620435adf333e1b99dc226be1d1"
+      },
+      {
+        "name": "libgcc",
+        "epoch": 0,
+        "version": "14.1.1",
+        "release": "5.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libgcc-14.1.1-5.el10.s390x.rpm",
+        "checksum": "sha256:f025262035e7cd16717bdb1471465c9c06b6ac6232a4345b9c250656b6fb0729"
+      },
+      {
+        "name": "libidn2",
+        "epoch": 0,
+        "version": "2.3.7",
+        "release": "1.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libidn2-2.3.7-1.el10.s390x.rpm",
+        "checksum": "sha256:4379b7a0bec9a3016b926d29afe82ed043e39198aac660f892fe18bab9c8eba9"
+      },
+      {
+        "name": "libmount",
+        "epoch": 0,
+        "version": "2.40.1",
+        "release": "4.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libmount-2.40.1-4.el10.s390x.rpm",
+        "checksum": "sha256:74cfda57ee5004a4b3f0bdfffc8ffa37d8ff709273cd8ec333cce34823731218"
+      },
+      {
+        "name": "libnghttp2",
+        "epoch": 0,
+        "version": "1.61.0",
+        "release": "1.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libnghttp2-1.61.0-1.el10.s390x.rpm",
+        "checksum": "sha256:65e0d87950387a9c6a9ee26a76e3a85e81fe903f38b00d27dbb7c537bfa05c57"
+      },
+      {
+        "name": "libpsl",
+        "epoch": 0,
+        "version": "0.21.5",
+        "release": "3.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libpsl-0.21.5-3.el10.s390x.rpm",
+        "checksum": "sha256:8ebdfb80de2a159fb2d3611474c14c455beff6f61a067bab12967907ac800302"
+      },
+      {
+        "name": "libpwquality",
+        "epoch": 0,
+        "version": "1.4.5",
+        "release": "9.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libpwquality-1.4.5-9.el10.s390x.rpm",
+        "checksum": "sha256:23208cac41ebb84cdd3a426646ee808fb9686522fce1001019059c7ef63a13af"
+      },
+      {
+        "name": "libseccomp",
+        "epoch": 0,
+        "version": "2.5.3",
+        "release": "8.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libseccomp-2.5.3-8.el10.s390x.rpm",
+        "checksum": "sha256:9777fba8af80526e13c20408a7baf79ce9c79777a1a9d909e648bb2981ce1d5e"
+      },
+      {
+        "name": "libselinux",
+        "epoch": 0,
+        "version": "3.6",
+        "release": "4.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libselinux-3.6-4.el10.s390x.rpm",
+        "checksum": "sha256:d25b7353ef6f79dc168232667a95f1b60ce04ceb75981a43d65fa7b09b51297c"
+      },
+      {
+        "name": "libselinux-utils",
+        "epoch": 0,
+        "version": "3.6",
+        "release": "4.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libselinux-utils-3.6-4.el10.s390x.rpm",
+        "checksum": "sha256:67b2a29f3b40c74e7b12f01921687eefabd3aca5b1ff0e261a46ae0c765952c4"
+      },
+      {
+        "name": "libsemanage",
+        "epoch": 0,
+        "version": "3.6",
+        "release": "3.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libsemanage-3.6-3.el10.s390x.rpm",
+        "checksum": "sha256:41fb55af6e7f1dc04c7995f20662b377ac1bf13287717d8af5469881ebdf4d10"
+      },
+      {
+        "name": "libsepol",
+        "epoch": 0,
+        "version": "3.6",
+        "release": "3.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libsepol-3.6-3.el10.s390x.rpm",
+        "checksum": "sha256:da96cabf5dccc12d86ea7bff90208c3e15a835a5cc59d93d0e0351c872d7eb81"
+      },
+      {
+        "name": "libsmartcols",
+        "epoch": 0,
+        "version": "2.40.1",
+        "release": "4.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libsmartcols-2.40.1-4.el10.s390x.rpm",
+        "checksum": "sha256:5471b682059cac2f83456ade5d025d72a341f0e9b46458a4518bdbbccb478020"
+      },
+      {
+        "name": "libssh",
+        "epoch": 0,
+        "version": "0.10.6",
+        "release": "6.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libssh-0.10.6-6.el10.s390x.rpm",
+        "checksum": "sha256:e6a6463c89e14111505132120615532f15c71e5e83d815a442bfaf7e57739842"
+      },
+      {
+        "name": "libssh-config",
+        "epoch": 0,
+        "version": "0.10.6",
+        "release": "6.el10",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libssh-config-0.10.6-6.el10.noarch.rpm",
+        "checksum": "sha256:6c8a2c949731bcb31de8cb74d7199c22de3fcae22b3bae1678a785f8fa637e65"
+      },
+      {
+        "name": "libtasn1",
+        "epoch": 0,
+        "version": "4.19.0",
+        "release": "6.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libtasn1-4.19.0-6.el10.s390x.rpm",
+        "checksum": "sha256:7dbc8c374e3ae8d44c9f46fa5beab9f59448cdd0f48c1c080a3e10b714822c46"
+      },
+      {
+        "name": "libtool-ltdl",
+        "epoch": 0,
+        "version": "2.4.7",
+        "release": "10.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libtool-ltdl-2.4.7-10.el10.s390x.rpm",
+        "checksum": "sha256:02af1aa66182eebcd38d1f3913585d49c488f42255854e9eb2d7b380884947e7"
+      },
+      {
+        "name": "libunistring",
+        "epoch": 0,
+        "version": "1.1",
+        "release": "7.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libunistring-1.1-7.el10.s390x.rpm",
+        "checksum": "sha256:f65585d8d9bfc6f7153368f2a9b572ea08bd5c03703deb5562d17d5bfe996acf"
+      },
+      {
+        "name": "libutempter",
+        "epoch": 0,
+        "version": "1.2.1",
+        "release": "13.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libutempter-1.2.1-13.el10.s390x.rpm",
+        "checksum": "sha256:d8e38a709c534c708b8bde5357c9328f97b12b24065d01b576c606300ebe2080"
+      },
+      {
+        "name": "libuuid",
+        "epoch": 0,
+        "version": "2.40.1",
+        "release": "4.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libuuid-2.40.1-4.el10.s390x.rpm",
+        "checksum": "sha256:5335ae857e6d6176a82e275a21c6f11074ee726176c36fbb336ac839cb2707a4"
+      },
+      {
+        "name": "libverto",
+        "epoch": 0,
+        "version": "0.3.2",
+        "release": "8.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libverto-0.3.2-8.el10.s390x.rpm",
+        "checksum": "sha256:de198687e2d36256b0e8e55f8e24df55f7ca3827ceec1b0d79f326250e80e292"
+      },
+      {
+        "name": "libxcrypt",
+        "epoch": 0,
+        "version": "4.4.36",
+        "release": "5.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libxcrypt-4.4.36-5.el10.s390x.rpm",
+        "checksum": "sha256:51bc6ffadcd1ce0fbdb8af5e56769b24f86dfbf061ffc552348a0dd10a9b7d11"
+      },
+      {
+        "name": "libxml2",
+        "epoch": 0,
+        "version": "2.12.5",
+        "release": "1.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libxml2-2.12.5-1.el10.s390x.rpm",
+        "checksum": "sha256:c714640e67fc6e788301a3b1ac0b598af1582594ebfb2a19bf8f04e3ed346a56"
+      },
+      {
+        "name": "libzstd",
+        "epoch": 0,
+        "version": "1.5.5",
+        "release": "5.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libzstd-1.5.5-5.el10.s390x.rpm",
+        "checksum": "sha256:61f6f84040537d89aa1e86bba3c5aa8def37cb030cf7926957fc4651f323df0c"
+      },
+      {
+        "name": "lua-libs",
+        "epoch": 0,
+        "version": "5.4.6",
+        "release": "5.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/lua-libs-5.4.6-5.el10.s390x.rpm",
+        "checksum": "sha256:d573d2a50b8374534446637747368e23215055e7fbfe8df5ffbf0a2860e3bfa7"
+      },
+      {
+        "name": "lz4-libs",
+        "epoch": 0,
+        "version": "1.9.4",
+        "release": "6.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/lz4-libs-1.9.4-6.el10.s390x.rpm",
+        "checksum": "sha256:ace60a59777f7e0c42b574627ef27cf4919008f779208ee27ded27a818cdc442"
+      },
+      {
+        "name": "mpdecimal",
+        "epoch": 0,
+        "version": "2.5.1",
+        "release": "9.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/mpdecimal-2.5.1-9.el10.s390x.rpm",
+        "checksum": "sha256:1aa35c1deb4805d4c1fedf8185427a73d14d042a82e8052b1266a61e64a028cf"
+      },
+      {
+        "name": "mpfr",
+        "epoch": 0,
+        "version": "4.2.1",
+        "release": "3.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/mpfr-4.2.1-3.el10.s390x.rpm",
+        "checksum": "sha256:23df43118595b0a6ba789fbc96dbade860a25a1e3c235f8966b33500610795df"
+      },
+      {
+        "name": "ncurses-base",
+        "epoch": 0,
+        "version": "6.4",
+        "release": "12.20240127.el10",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/ncurses-base-6.4-12.20240127.el10.noarch.rpm",
+        "checksum": "sha256:579d5ab2c9c9caee7381657ef4c71657b5241f2f81471463e315a54614927d31"
+      },
+      {
+        "name": "ncurses-libs",
+        "epoch": 0,
+        "version": "6.4",
+        "release": "12.20240127.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/ncurses-libs-6.4-12.20240127.el10.s390x.rpm",
+        "checksum": "sha256:54ac4b094bfc36cf384820faf15d061b245c1a025193459f9fb02a03f2123848"
+      },
+      {
+        "name": "openldap",
+        "epoch": 0,
+        "version": "2.6.7",
+        "release": "1.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/openldap-2.6.7-1.el10.s390x.rpm",
+        "checksum": "sha256:339e702a0c409834c759c3a949f9c7825de8fdcce21d296693ac5622514da8c5"
+      },
+      {
+        "name": "openssl-libs",
+        "epoch": 1,
+        "version": "3.2.2",
+        "release": "3.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/openssl-libs-3.2.2-3.el10.s390x.rpm",
+        "checksum": "sha256:fe6878bdb6d2bf8f28b6dc26a83b3d8dd34a57b938d23870a3d969456487847b"
+      },
+      {
+        "name": "p11-kit",
+        "epoch": 0,
+        "version": "0.25.3",
+        "release": "4.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/p11-kit-0.25.3-4.el10.s390x.rpm",
+        "checksum": "sha256:d58bc2c7ca44771765af7a93bc12ae7982a84891a16125ac7478138e68af8512"
+      },
+      {
+        "name": "p11-kit-trust",
+        "epoch": 0,
+        "version": "0.25.3",
+        "release": "4.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/p11-kit-trust-0.25.3-4.el10.s390x.rpm",
+        "checksum": "sha256:83651506561d7c2cff0ddddc82728feffde6e1c3f378812386ac97613a11a0c8"
+      },
+      {
+        "name": "pam",
+        "epoch": 0,
+        "version": "1.6.1",
+        "release": "2.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/pam-1.6.1-2.el10.s390x.rpm",
+        "checksum": "sha256:13d01bc363c0a74a19644c6913815818c726213814ff5ebf318dd70e032bde9c"
+      },
+      {
+        "name": "pam-libs",
+        "epoch": 0,
+        "version": "1.6.1",
+        "release": "2.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/pam-libs-1.6.1-2.el10.s390x.rpm",
+        "checksum": "sha256:5de22215f00ec0e3527db00518137175cdafcbe129635cd8e64f3ca18cdac3d6"
+      },
+      {
+        "name": "pcre2",
+        "epoch": 0,
+        "version": "10.42",
+        "release": "3.el10.1",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/pcre2-10.42-3.el10.1.s390x.rpm",
+        "checksum": "sha256:36c935eb2bfca2d09b66a726e2abd7da440350797ed4aab580e40c4ab64ac6c1"
+      },
+      {
+        "name": "pcre2-syntax",
+        "epoch": 0,
+        "version": "10.42",
+        "release": "3.el10.1",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/pcre2-syntax-10.42-3.el10.1.noarch.rpm",
+        "checksum": "sha256:4a4e1fe1910326026a9375d130baeea023d35108adf5408dbc26aafd50c9810f"
+      },
+      {
+        "name": "policycoreutils",
+        "epoch": 0,
+        "version": "3.6",
+        "release": "4.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/policycoreutils-3.6-4.el10.s390x.rpm",
+        "checksum": "sha256:5efd8011a0cc69f71f1f836b15af3c14cc4d18d6debffeb1bc63c53feaaf88bc"
+      },
+      {
+        "name": "popt",
+        "epoch": 0,
+        "version": "1.19",
+        "release": "6.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/popt-1.19-6.el10.s390x.rpm",
+        "checksum": "sha256:577739238a96bd2aba1494e0f1a2088c13b8997e3065ff08def5fc9a876621a1"
+      },
+      {
+        "name": "publicsuffix-list-dafsa",
+        "epoch": 0,
+        "version": "20240107",
+        "release": "3.el10",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/publicsuffix-list-dafsa-20240107-3.el10.noarch.rpm",
+        "checksum": "sha256:8956aadaf5082c480e3aa7cf52b5e0c63a0264ac43eb4805674073d8e84f5607"
+      },
+      {
+        "name": "python3",
+        "epoch": 0,
+        "version": "3.12.2",
+        "release": "7.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/python3-3.12.2-7.el10.s390x.rpm",
+        "checksum": "sha256:b9126cbb64ba57c7ef32b6f8c9b3001e5cbd7b30091c4b2ada43fb91e0964cbb"
+      },
+      {
+        "name": "python3-libs",
+        "epoch": 0,
+        "version": "3.12.2",
+        "release": "7.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/python3-libs-3.12.2-7.el10.s390x.rpm",
+        "checksum": "sha256:e85b8b543441673e8fe73a848f61113d39d5c39dc24b9f42e01981db39f9e98c"
+      },
+      {
+        "name": "python3-pip-wheel",
+        "epoch": 0,
+        "version": "23.3.2",
+        "release": "2.el10",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/python3-pip-wheel-23.3.2-2.el10.noarch.rpm",
+        "checksum": "sha256:3465cf9c9261f72dc8ecdfadf5ea98d56a42aed0a6e09038fc69d9bada766aa6"
+      },
+      {
+        "name": "readline",
+        "epoch": 0,
+        "version": "8.2",
+        "release": "8.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/readline-8.2-8.el10.s390x.rpm",
+        "checksum": "sha256:08f3cac28e42603c70ee57bf7262619998d467f8658e6a69fdf7b15fcf3bc924"
+      },
+      {
+        "name": "rpm",
+        "epoch": 0,
+        "version": "4.19.1.1",
+        "release": "1.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/rpm-4.19.1.1-1.el10.s390x.rpm",
+        "checksum": "sha256:e8e40f56069e7f9d9fee5d00f2d3471126fb8efcbf1da715c0f6100357d1b1e8"
+      },
+      {
+        "name": "rpm-libs",
+        "epoch": 0,
+        "version": "4.19.1.1",
+        "release": "1.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/rpm-libs-4.19.1.1-1.el10.s390x.rpm",
+        "checksum": "sha256:33f383a707ebe9bedd2feacc70a1a481a3a3fadd2be81a4d8b10a66b0d0baef9"
+      },
+      {
+        "name": "rpm-plugin-audit",
+        "epoch": 0,
+        "version": "4.19.1.1",
+        "release": "1.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/rpm-plugin-audit-4.19.1.1-1.el10.s390x.rpm",
+        "checksum": "sha256:54b57a99e17873846baedc57588c3e7998e33e40a5e35bfc1ab9fc00586ad422"
+      },
+      {
+        "name": "rpm-plugin-selinux",
+        "epoch": 0,
+        "version": "4.19.1.1",
+        "release": "1.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/rpm-plugin-selinux-4.19.1.1-1.el10.s390x.rpm",
+        "checksum": "sha256:f8fc690591e01f34b0247099b291712d8176daf9564b14dcd185910e5e801f8a"
+      },
+      {
+        "name": "rpm-sequoia",
+        "epoch": 0,
+        "version": "1.6.0",
+        "release": "2.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/rpm-sequoia-1.6.0-2.el10.s390x.rpm",
+        "checksum": "sha256:cbae49cd1fb1a85e0f26023262dede98533f9dc25f29cdebd8492804f155d747"
+      },
+      {
+        "name": "sed",
+        "epoch": 0,
+        "version": "4.9",
+        "release": "1.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/sed-4.9-1.el10.s390x.rpm",
+        "checksum": "sha256:0154da3adf97e784d5c0d9a5cd730db1625dde914987cddfdf23f8093e09ada7"
+      },
+      {
+        "name": "selinux-policy",
+        "epoch": 0,
+        "version": "40.13.3",
+        "release": "1.el10",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/selinux-policy-40.13.3-1.el10.noarch.rpm",
+        "checksum": "sha256:7cc3f56bf0d3c7648c61bb3bb0b9e406802389cab4d921d0384b5e08ca953cc6"
+      },
+      {
+        "name": "selinux-policy-targeted",
+        "epoch": 0,
+        "version": "40.13.3",
+        "release": "1.el10",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/selinux-policy-targeted-40.13.3-1.el10.noarch.rpm",
+        "checksum": "sha256:e85bade5439c3baf511ae25d105fb0aa072bfe1c2059ea6ce1ae91b67481d2be"
+      },
+      {
+        "name": "setup",
+        "epoch": 0,
+        "version": "2.14.5",
+        "release": "2.el10",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/setup-2.14.5-2.el10.noarch.rpm",
+        "checksum": "sha256:42fe06f808bae31ea5ec5e2fc7674bbd79614f9eeca235f762ef7dfb7fd9f1c6"
+      },
+      {
+        "name": "shadow-utils",
+        "epoch": 2,
+        "version": "4.15.0",
+        "release": "2.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/shadow-utils-4.15.0-2.el10.s390x.rpm",
+        "checksum": "sha256:5fb64623cd3759c3e402b325ed1a88a14d4be72e8bc1a10ba4eb8c2ca555f286"
+      },
+      {
+        "name": "sqlite-libs",
+        "epoch": 0,
+        "version": "3.45.1",
+        "release": "2.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/sqlite-libs-3.45.1-2.el10.s390x.rpm",
+        "checksum": "sha256:992cf340bfdf8302fa542bd49cfe0972fcc6f96f8c22ce7c52119e8956cb48c4"
+      },
+      {
+        "name": "systemd",
+        "epoch": 0,
+        "version": "255.3",
+        "release": "1.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/systemd-255.3-1.el10.s390x.rpm",
+        "checksum": "sha256:b131e723adccaf330495a43f084e0f9d5c66ffb63725a7cc4ff7121925f7c8df"
+      },
+      {
+        "name": "systemd-libs",
+        "epoch": 0,
+        "version": "255.3",
+        "release": "1.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/systemd-libs-255.3-1.el10.s390x.rpm",
+        "checksum": "sha256:2df29003eacb3d8127b6fa7bf9e215963d63d27e225e9554dc048319255d7766"
+      },
+      {
+        "name": "systemd-pam",
+        "epoch": 0,
+        "version": "255.3",
+        "release": "1.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/systemd-pam-255.3-1.el10.s390x.rpm",
+        "checksum": "sha256:136a713ec35f5ae88442b87f443fe6fbf1bfb6ca4de6a08f4a1ea335ef3516d8"
+      },
+      {
+        "name": "tar",
+        "epoch": 2,
+        "version": "1.35",
+        "release": "3.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/tar-1.35-3.el10.s390x.rpm",
+        "checksum": "sha256:72eacdd557867ed623bc1cef329677e31c99610d7053bac49be1f3d474660223"
+      },
+      {
+        "name": "tzdata",
+        "epoch": 0,
+        "version": "2024a",
+        "release": "3.el10",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/tzdata-2024a-3.el10.noarch.rpm",
+        "checksum": "sha256:189b1ae2e8ad8f23745d1d55fc46c82022a3ff3468dccf3f5950aaca5b890ed9"
+      },
+      {
+        "name": "util-linux",
+        "epoch": 0,
+        "version": "2.40.1",
+        "release": "4.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/util-linux-2.40.1-4.el10.s390x.rpm",
+        "checksum": "sha256:9a69309fc97f9525aa229aed3b15d760cfe697ae9452438a8060950d5166a31f"
+      },
+      {
+        "name": "util-linux-core",
+        "epoch": 0,
+        "version": "2.40.1",
+        "release": "4.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/util-linux-core-2.40.1-4.el10.s390x.rpm",
+        "checksum": "sha256:23cf509876523e53da670e29195d0e119fd2322c1c76298e55e5b54ed94383cb"
+      },
+      {
+        "name": "xz",
+        "epoch": 0,
+        "version": "5.4.6",
+        "release": "1.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/xz-5.4.6-1.el10.s390x.rpm",
+        "checksum": "sha256:4ef09c287761a900392cf39fe8cce33aa678430ad37926aafd39068f300527ae"
+      },
+      {
+        "name": "xz-libs",
+        "epoch": 0,
+        "version": "5.4.6",
+        "release": "1.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/xz-libs-5.4.6-1.el10.s390x.rpm",
+        "checksum": "sha256:400f0ff6cb80562e7549fa3e4389a9ef27fb63479d2894a5d50eb031ff9dade2"
+      },
+      {
+        "name": "zlib-ng-compat",
+        "epoch": 0,
+        "version": "2.1.6",
+        "release": "2.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/zlib-ng-compat-2.1.6-2.el10.s390x.rpm",
+        "checksum": "sha256:75cd5964cd518887a53bb28f11fd3cb87189e2f6015eea10820178a4654df104"
+      }
+    ],
+    "os": [
+      {
+        "name": "gawk-all-langpacks",
+        "epoch": 0,
+        "version": "5.3.0",
+        "release": "3.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-appstream-20240626/Packages/gawk-all-langpacks-5.3.0-3.el10.s390x.rpm",
+        "checksum": "sha256:149ca30a5d3d7f92a4736a86b054f81a2c5d473283e3b0ef44c505f23a33d4fe"
+      },
+      {
+        "name": "libxkbcommon",
+        "epoch": 0,
+        "version": "1.6.0",
+        "release": "2.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-appstream-20240626/Packages/libxkbcommon-1.6.0-2.el10.s390x.rpm",
+        "checksum": "sha256:d9b3fa4380a0a78af92d38e2ec83a417f93e7f3d3b8693c726781435c5ba51ff"
+      },
+      {
+        "name": "xkeyboard-config",
+        "epoch": 0,
+        "version": "2.41",
+        "release": "1.el10",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-appstream-20240626/Packages/xkeyboard-config-2.41-1.el10.noarch.rpm",
+        "checksum": "sha256:3f17af36f0ca2e3cd8a1eeecbe5907f4058e985d6288eab6d9548183834a77df"
+      },
+      {
+        "name": "alternatives",
+        "epoch": 0,
+        "version": "1.26",
+        "release": "3.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/alternatives-1.26-3.el10.s390x.rpm",
+        "checksum": "sha256:14a57f78280b75bbff5a505bec857a01350311732ce9ca91b2fa575bf3bf616a"
+      },
+      {
+        "name": "audit-libs",
+        "epoch": 0,
+        "version": "4.0",
+        "release": "8.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/audit-libs-4.0-8.el10.s390x.rpm",
+        "checksum": "sha256:02dfac71e21133262a9b78dff7a9a8f8b161c37c3fa411c203403e9ffce10d6b"
+      },
+      {
+        "name": "authselect",
+        "epoch": 0,
+        "version": "1.5.0",
+        "release": "5.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/authselect-1.5.0-5.el10.s390x.rpm",
+        "checksum": "sha256:b1e7f2123836e857fb8b57d1c47eacd2ee016f5f57e1285072241b2dd7789448"
+      },
+      {
+        "name": "authselect-libs",
+        "epoch": 0,
+        "version": "1.5.0",
+        "release": "5.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/authselect-libs-1.5.0-5.el10.s390x.rpm",
+        "checksum": "sha256:c80c391cd28e8e178c1f9d54b52a43ab243edf67bf50dc79a9f90912c497cdff"
+      },
+      {
+        "name": "basesystem",
+        "epoch": 0,
+        "version": "11",
+        "release": "20.el10",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/basesystem-11-20.el10.noarch.rpm",
+        "checksum": "sha256:6dca305ce6932df1536bf7156b992f2f0cf308ee6495f10207d30d8766ea82a8"
+      },
+      {
+        "name": "bash",
+        "epoch": 0,
+        "version": "5.2.26",
+        "release": "3.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/bash-5.2.26-3.el10.s390x.rpm",
+        "checksum": "sha256:ead6c2b4e3a2477e1ab17ad78cb10a8e12c1ddea86ebc6bc61854fa10c61099c"
+      },
+      {
+        "name": "bzip2-libs",
+        "epoch": 0,
+        "version": "1.0.8",
+        "release": "18.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/bzip2-libs-1.0.8-18.el10.s390x.rpm",
+        "checksum": "sha256:7bbaf9a68b64f6ffc695c4c1bb0d5337603f5d0d7301d361798365b27dc3e26f"
+      },
+      {
+        "name": "ca-certificates",
+        "epoch": 0,
+        "version": "2023.2.62_v7.0.401",
+        "release": "6.el10",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/ca-certificates-2023.2.62_v7.0.401-6.el10.noarch.rpm",
+        "checksum": "sha256:7ec4a006bd2f05b07b5c7431f95687384a44ef3c4d0196752f7092de681be7ce"
+      },
+      {
+        "name": "centos-gpg-keys",
+        "epoch": 0,
+        "version": "10.0",
+        "release": "0.14.el10",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/centos-gpg-keys-10.0-0.14.el10.noarch.rpm",
+        "checksum": "sha256:163103fe89975bd3948f27bcbe02012455c9444701c98ded0d52f58f699cbade"
+      },
+      {
+        "name": "centos-stream-release",
+        "epoch": 0,
+        "version": "10.0",
+        "release": "0.14.el10",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/centos-stream-release-10.0-0.14.el10.noarch.rpm",
+        "checksum": "sha256:60f6ae76df571fd4402403935243d3a8821c1df5b0f4d9c06f5653bda7e09386"
+      },
+      {
+        "name": "centos-stream-repos",
+        "epoch": 0,
+        "version": "10.0",
+        "release": "0.14.el10",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/centos-stream-repos-10.0-0.14.el10.noarch.rpm",
+        "checksum": "sha256:d1451250715db33df8311400c298fe4a02fe65838b98fa4906fb8002970b9bc2"
+      },
+      {
+        "name": "coreutils",
+        "epoch": 0,
+        "version": "9.4",
+        "release": "6.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/coreutils-9.4-6.el10.s390x.rpm",
+        "checksum": "sha256:1afa4601cea899d8d9b03a6051c7778224271bd8e36d71112ba4a2cf626ea405"
+      },
+      {
+        "name": "coreutils-common",
+        "epoch": 0,
+        "version": "9.4",
+        "release": "6.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/coreutils-common-9.4-6.el10.s390x.rpm",
+        "checksum": "sha256:6b2dfdad9884ee4926ccfa17151122064cae186f438cb8b15789c9ba2b3161fc"
+      },
+      {
+        "name": "cracklib",
+        "epoch": 0,
+        "version": "2.9.11",
+        "release": "5.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/cracklib-2.9.11-5.el10.s390x.rpm",
+        "checksum": "sha256:02ccc0a30efa2d5259e65505094deb9601ff9b78ac571755c5df8ea8ccfab573"
+      },
+      {
+        "name": "cracklib-dicts",
+        "epoch": 0,
+        "version": "2.9.11",
+        "release": "5.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/cracklib-dicts-2.9.11-5.el10.s390x.rpm",
+        "checksum": "sha256:b520308143125cbfb04b371b907ea1ca2233f89ca18b51c38a82b52971c0c58c"
+      },
+      {
+        "name": "crypto-policies",
+        "epoch": 0,
+        "version": "20240522",
+        "release": "1.git77963ab.el10",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/crypto-policies-20240522-1.git77963ab.el10.noarch.rpm",
+        "checksum": "sha256:7607ae28401e2d9973af3f134c3afec90baf82315c3409b0c37287411cb17d86"
+      },
+      {
+        "name": "cryptsetup-libs",
+        "epoch": 0,
+        "version": "2.7.2",
+        "release": "2.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/cryptsetup-libs-2.7.2-2.el10.s390x.rpm",
+        "checksum": "sha256:7695f1a830f585f26200a22d07bafdbfdbefe021c2666cb8fdd91480fe2145ea"
+      },
+      {
+        "name": "curl",
+        "epoch": 0,
+        "version": "8.6.0",
+        "release": "6.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/curl-8.6.0-6.el10.s390x.rpm",
+        "checksum": "sha256:6a962f8dd44249e740759a8221a619cd8b5965c8f347828265d07dfd3961d00d"
+      },
+      {
+        "name": "cyrus-sasl-lib",
+        "epoch": 0,
+        "version": "2.1.28",
+        "release": "19.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/cyrus-sasl-lib-2.1.28-19.el10.s390x.rpm",
+        "checksum": "sha256:fbf46337ffdb4749fd566e98fe95f05c5dba2eb16ab1079b49d8bf541adaa046"
+      },
+      {
+        "name": "dbus",
+        "epoch": 1,
+        "version": "1.14.10",
+        "release": "3.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/dbus-1.14.10-3.el10.s390x.rpm",
+        "checksum": "sha256:ededb441e5d7d7e82e405cafb2271c314220c60d9ab6fea7c439b592c26bd1dd"
+      },
+      {
+        "name": "dbus-broker",
+        "epoch": 0,
+        "version": "35",
+        "release": "4.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/dbus-broker-35-4.el10.s390x.rpm",
+        "checksum": "sha256:fb5e76e62376823f35a6878711566080cac60c62166638fe46d684832b30498f"
+      },
+      {
+        "name": "dbus-common",
+        "epoch": 1,
+        "version": "1.14.10",
+        "release": "3.el10",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/dbus-common-1.14.10-3.el10.noarch.rpm",
+        "checksum": "sha256:2759fb97fb1493024fe76503f1d140caed09f663e71dc7a844cb5000a37d5de9"
+      },
+      {
+        "name": "device-mapper",
+        "epoch": 10,
+        "version": "1.02.197",
+        "release": "1.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/device-mapper-1.02.197-1.el10.s390x.rpm",
+        "checksum": "sha256:6e1b3a35f1900162b10cc93d4eff575a57567706403110b9bec21013f224b1e6"
+      },
+      {
+        "name": "device-mapper-libs",
+        "epoch": 10,
+        "version": "1.02.197",
+        "release": "1.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/device-mapper-libs-1.02.197-1.el10.s390x.rpm",
+        "checksum": "sha256:4ecc638f8060fdd19c5cf55a12ce3878a3f2756cfc0764b1846445fb1eed58d9"
+      },
+      {
+        "name": "diffutils",
+        "epoch": 0,
+        "version": "3.10",
+        "release": "5.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/diffutils-3.10-5.el10.s390x.rpm",
+        "checksum": "sha256:eee9d283f41edc973cabab99bbad861553036ceaf66d7864e65f504afa791d07"
+      },
+      {
+        "name": "elfutils-debuginfod-client",
+        "epoch": 0,
+        "version": "0.191",
+        "release": "3.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/elfutils-debuginfod-client-0.191-3.el10.s390x.rpm",
+        "checksum": "sha256:5d02d12705b0281df1bf4e1c2fb9999cc5fb89343af9fd061bc4ef194f1670d1"
+      },
+      {
+        "name": "elfutils-default-yama-scope",
+        "epoch": 0,
+        "version": "0.191",
+        "release": "3.el10",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/elfutils-default-yama-scope-0.191-3.el10.noarch.rpm",
+        "checksum": "sha256:eec24737b53a379158de46ab23d83e718ae03977c34b117bd17e05602a4d49db"
+      },
+      {
+        "name": "elfutils-libelf",
+        "epoch": 0,
+        "version": "0.191",
+        "release": "3.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/elfutils-libelf-0.191-3.el10.s390x.rpm",
+        "checksum": "sha256:14aedac0b6d06e27be32689a7e6b3b23545cb556769ececf9172716003f5a41b"
+      },
+      {
+        "name": "elfutils-libs",
+        "epoch": 0,
+        "version": "0.191",
+        "release": "3.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/elfutils-libs-0.191-3.el10.s390x.rpm",
+        "checksum": "sha256:694aec9dafb7c6087d805a056beada417b7f8a41cdeb8c6aa5a4765d3505ac0b"
+      },
+      {
+        "name": "expat",
+        "epoch": 0,
+        "version": "2.5.0",
+        "release": "5.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/expat-2.5.0-5.el10.s390x.rpm",
+        "checksum": "sha256:dc00d00d37d5ce4dc6d1a066f52c10ad61f5a4c53a8e5dcf9a358019a503b2d3"
+      },
+      {
+        "name": "filesystem",
+        "epoch": 0,
+        "version": "3.18",
+        "release": "8.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/filesystem-3.18-8.el10.s390x.rpm",
+        "checksum": "sha256:e099044a16a2a92155e192d1e1940ad0252db242782da6cfc1a5a730d860edbe"
+      },
+      {
+        "name": "findutils",
+        "epoch": 1,
+        "version": "4.9.0",
+        "release": "8.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/findutils-4.9.0-8.el10.s390x.rpm",
+        "checksum": "sha256:bcc40f26baca5e0474e48ba7fb5d91be386c007eec2cccae02e25d8c355d7ce5"
+      },
+      {
+        "name": "gawk",
+        "epoch": 0,
+        "version": "5.3.0",
+        "release": "3.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/gawk-5.3.0-3.el10.s390x.rpm",
+        "checksum": "sha256:6d6049230ab8ac8dfa0d63b54ce92b303f76abb49301af76224ea58f20aff7ca"
+      },
+      {
+        "name": "gdbm",
+        "epoch": 1,
+        "version": "1.23",
+        "release": "6.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/gdbm-1.23-6.el10.s390x.rpm",
+        "checksum": "sha256:8eb4e422d5eeead9c98bb0cac38d71b687a920e86296e3eba0c8cbae343e05d7"
+      },
+      {
+        "name": "gdbm-libs",
+        "epoch": 1,
+        "version": "1.23",
+        "release": "6.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/gdbm-libs-1.23-6.el10.s390x.rpm",
+        "checksum": "sha256:9c8e0faaafd3e2b34346e43c151b27afad067209dec53a23764838d42db2dc34"
+      },
+      {
+        "name": "glibc",
+        "epoch": 0,
+        "version": "2.39",
+        "release": "15.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/glibc-2.39-15.el10.s390x.rpm",
+        "checksum": "sha256:54fd6ee515d45e2cbb6a2f93e03d2afdecb5164360b24db492fed237bba0a33d"
+      },
+      {
+        "name": "glibc-common",
+        "epoch": 0,
+        "version": "2.39",
+        "release": "15.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/glibc-common-2.39-15.el10.s390x.rpm",
+        "checksum": "sha256:15b090cf01eecce9bf43fdc74e0e3a28253064a44c584507155207a3db39ef14"
+      },
+      {
+        "name": "glibc-gconv-extra",
+        "epoch": 0,
+        "version": "2.39",
+        "release": "15.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/glibc-gconv-extra-2.39-15.el10.s390x.rpm",
+        "checksum": "sha256:04a32865f51f979878fe9b21f3bc633c849936398099973c2a81aa8875e48127"
+      },
+      {
+        "name": "glibc-minimal-langpack",
+        "epoch": 0,
+        "version": "2.39",
+        "release": "15.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/glibc-minimal-langpack-2.39-15.el10.s390x.rpm",
+        "checksum": "sha256:4c7b0ef4de56a30a9fba7ae44889ad92e299b9786cc56dbe774e56c733cf5fa9"
+      },
+      {
+        "name": "gmp",
+        "epoch": 1,
+        "version": "6.2.1",
+        "release": "8.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/gmp-6.2.1-8.el10.s390x.rpm",
+        "checksum": "sha256:a884102e7c092aee5c94cc706b158192ca8c12e0c1f7afc9e4da117dfc34f49e"
+      },
+      {
+        "name": "grep",
+        "epoch": 0,
+        "version": "3.11",
+        "release": "8.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/grep-3.11-8.el10.s390x.rpm",
+        "checksum": "sha256:07b48ba78b690d9886d8a37fe179bf63b11a59f8d8ffcc869a76634880596a5d"
+      },
+      {
+        "name": "gzip",
+        "epoch": 0,
+        "version": "1.13",
+        "release": "1.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/gzip-1.13-1.el10.s390x.rpm",
+        "checksum": "sha256:3a36eccc2ba52467744249d953760fb77aa6a99121acc89fcb9314264601b499"
+      },
+      {
+        "name": "json-c",
+        "epoch": 0,
+        "version": "0.17",
+        "release": "3.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/json-c-0.17-3.el10.s390x.rpm",
+        "checksum": "sha256:e19de28473a770686eb2fbd1716838a5ebea47b0a39115a679449c3dcd201d3d"
+      },
+      {
+        "name": "keyutils-libs",
+        "epoch": 0,
+        "version": "1.6.3",
+        "release": "3.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/keyutils-libs-1.6.3-3.el10.s390x.rpm",
+        "checksum": "sha256:90f23ab6c0c65a41d8a5208e1b50e3dabd7475048cc48e28893b6f6e78e58465"
+      },
+      {
+        "name": "kmod-libs",
+        "epoch": 0,
+        "version": "31",
+        "release": "5.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/kmod-libs-31-5.el10.s390x.rpm",
+        "checksum": "sha256:da617ed1683f4b608170bcb42532267b0812adc2d5ec66cb85a662ecb1007c0f"
+      },
+      {
+        "name": "krb5-libs",
+        "epoch": 0,
+        "version": "1.21.2",
+        "release": "5.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/krb5-libs-1.21.2-5.el10.s390x.rpm",
+        "checksum": "sha256:20684ad84aa3b60b51200e8acbaaadf9e674931c4f7e9d1e3b01739121cf7113"
+      },
+      {
+        "name": "libacl",
+        "epoch": 0,
+        "version": "2.3.2",
+        "release": "1.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libacl-2.3.2-1.el10.s390x.rpm",
+        "checksum": "sha256:78bd1aadba052ac2f426185b6480577249fb0d384cfa61682efcffce03111248"
+      },
+      {
+        "name": "libarchive",
+        "epoch": 0,
+        "version": "3.7.2",
+        "release": "6.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libarchive-3.7.2-6.el10.s390x.rpm",
+        "checksum": "sha256:8811fcc901debd0ff0dd158eb5686286c5aa8ecdf3d7564197851eafbc83dc35"
+      },
+      {
+        "name": "libattr",
+        "epoch": 0,
+        "version": "2.5.2",
+        "release": "3.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libattr-2.5.2-3.el10.s390x.rpm",
+        "checksum": "sha256:647de586cb61e8e27990ec87d8a027b925d4b3915673e8b166e38ba3c2eac6a4"
+      },
+      {
+        "name": "libblkid",
+        "epoch": 0,
+        "version": "2.40.1",
+        "release": "4.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libblkid-2.40.1-4.el10.s390x.rpm",
+        "checksum": "sha256:288942b5b751616a213e06ad7d33f7da4ebb32b1aeca0c2181acc43f522b708b"
+      },
+      {
+        "name": "libbpf",
+        "epoch": 2,
+        "version": "1.4.0",
+        "release": "2.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libbpf-1.4.0-2.el10.s390x.rpm",
+        "checksum": "sha256:df64f09ce88211578038742f700e36ce696323f7a36a9c0d62042ad37ba0e3c6"
+      },
+      {
+        "name": "libbrotli",
+        "epoch": 0,
+        "version": "1.1.0",
+        "release": "3.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libbrotli-1.1.0-3.el10.s390x.rpm",
+        "checksum": "sha256:a8ff52a7a6dd43d5a9bf48654fecec079dfc7bf503443f5a4baaaf450ef4fe7a"
+      },
+      {
+        "name": "libcap",
+        "epoch": 0,
+        "version": "2.69",
+        "release": "4.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libcap-2.69-4.el10.s390x.rpm",
+        "checksum": "sha256:cd8d9445814e86cbfebadea62dfdd13059e7797dad82c89ad746c1ae3ad3f5d0"
+      },
+      {
+        "name": "libcap-ng",
+        "epoch": 0,
+        "version": "0.8.4",
+        "release": "4.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libcap-ng-0.8.4-4.el10.s390x.rpm",
+        "checksum": "sha256:408e34ab3500b5403951f067ec02486e9c16cbde933114107410f60479926b87"
+      },
+      {
+        "name": "libcom_err",
+        "epoch": 0,
+        "version": "1.47.0",
+        "release": "5.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libcom_err-1.47.0-5.el10.s390x.rpm",
+        "checksum": "sha256:4400fc5b35b46d9b24c77a510bdf2cda123c09e93a88ffda601732bb63933900"
+      },
+      {
+        "name": "libcurl",
+        "epoch": 0,
+        "version": "8.6.0",
+        "release": "6.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libcurl-8.6.0-6.el10.s390x.rpm",
+        "checksum": "sha256:338ffd2bbd57a568652d9d362a3f3c2311b815ee06c87f1a77bb0bb1604f92d8"
+      },
+      {
+        "name": "libeconf",
+        "epoch": 0,
+        "version": "0.6.2",
+        "release": "2.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libeconf-0.6.2-2.el10.s390x.rpm",
+        "checksum": "sha256:cdbde066bbcb8d2fbae87737b568a43105775aa1915159536272603540e6b7c3"
+      },
+      {
+        "name": "libevent",
+        "epoch": 0,
+        "version": "2.1.12",
+        "release": "13.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libevent-2.1.12-13.el10.s390x.rpm",
+        "checksum": "sha256:7d263e22b580a548ab17fcd6d892fcf52edd24ebebdcc8ff932abefd04c0a84d"
+      },
+      {
+        "name": "libfdisk",
+        "epoch": 0,
+        "version": "2.40.1",
+        "release": "4.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libfdisk-2.40.1-4.el10.s390x.rpm",
+        "checksum": "sha256:62e9dd14321a96a92a2a5aa4f0565ac655a87f556a92de914af6a2221ae4e3d3"
+      },
+      {
+        "name": "libffi",
+        "epoch": 0,
+        "version": "3.4.4",
+        "release": "7.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libffi-3.4.4-7.el10.s390x.rpm",
+        "checksum": "sha256:1459751531b890ed41496acc31d47b88d1a80620435adf333e1b99dc226be1d1"
+      },
+      {
+        "name": "libgcc",
+        "epoch": 0,
+        "version": "14.1.1",
+        "release": "5.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libgcc-14.1.1-5.el10.s390x.rpm",
+        "checksum": "sha256:f025262035e7cd16717bdb1471465c9c06b6ac6232a4345b9c250656b6fb0729"
+      },
+      {
+        "name": "libidn2",
+        "epoch": 0,
+        "version": "2.3.7",
+        "release": "1.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libidn2-2.3.7-1.el10.s390x.rpm",
+        "checksum": "sha256:4379b7a0bec9a3016b926d29afe82ed043e39198aac660f892fe18bab9c8eba9"
+      },
+      {
+        "name": "libmount",
+        "epoch": 0,
+        "version": "2.40.1",
+        "release": "4.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libmount-2.40.1-4.el10.s390x.rpm",
+        "checksum": "sha256:74cfda57ee5004a4b3f0bdfffc8ffa37d8ff709273cd8ec333cce34823731218"
+      },
+      {
+        "name": "libnghttp2",
+        "epoch": 0,
+        "version": "1.61.0",
+        "release": "1.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libnghttp2-1.61.0-1.el10.s390x.rpm",
+        "checksum": "sha256:65e0d87950387a9c6a9ee26a76e3a85e81fe903f38b00d27dbb7c537bfa05c57"
+      },
+      {
+        "name": "libpsl",
+        "epoch": 0,
+        "version": "0.21.5",
+        "release": "3.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libpsl-0.21.5-3.el10.s390x.rpm",
+        "checksum": "sha256:8ebdfb80de2a159fb2d3611474c14c455beff6f61a067bab12967907ac800302"
+      },
+      {
+        "name": "libpwquality",
+        "epoch": 0,
+        "version": "1.4.5",
+        "release": "9.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libpwquality-1.4.5-9.el10.s390x.rpm",
+        "checksum": "sha256:23208cac41ebb84cdd3a426646ee808fb9686522fce1001019059c7ef63a13af"
+      },
+      {
+        "name": "libseccomp",
+        "epoch": 0,
+        "version": "2.5.3",
+        "release": "8.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libseccomp-2.5.3-8.el10.s390x.rpm",
+        "checksum": "sha256:9777fba8af80526e13c20408a7baf79ce9c79777a1a9d909e648bb2981ce1d5e"
+      },
+      {
+        "name": "libselinux",
+        "epoch": 0,
+        "version": "3.6",
+        "release": "4.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libselinux-3.6-4.el10.s390x.rpm",
+        "checksum": "sha256:d25b7353ef6f79dc168232667a95f1b60ce04ceb75981a43d65fa7b09b51297c"
+      },
+      {
+        "name": "libselinux-utils",
+        "epoch": 0,
+        "version": "3.6",
+        "release": "4.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libselinux-utils-3.6-4.el10.s390x.rpm",
+        "checksum": "sha256:67b2a29f3b40c74e7b12f01921687eefabd3aca5b1ff0e261a46ae0c765952c4"
+      },
+      {
+        "name": "libsemanage",
+        "epoch": 0,
+        "version": "3.6",
+        "release": "3.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libsemanage-3.6-3.el10.s390x.rpm",
+        "checksum": "sha256:41fb55af6e7f1dc04c7995f20662b377ac1bf13287717d8af5469881ebdf4d10"
+      },
+      {
+        "name": "libsepol",
+        "epoch": 0,
+        "version": "3.6",
+        "release": "3.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libsepol-3.6-3.el10.s390x.rpm",
+        "checksum": "sha256:da96cabf5dccc12d86ea7bff90208c3e15a835a5cc59d93d0e0351c872d7eb81"
+      },
+      {
+        "name": "libsmartcols",
+        "epoch": 0,
+        "version": "2.40.1",
+        "release": "4.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libsmartcols-2.40.1-4.el10.s390x.rpm",
+        "checksum": "sha256:5471b682059cac2f83456ade5d025d72a341f0e9b46458a4518bdbbccb478020"
+      },
+      {
+        "name": "libssh",
+        "epoch": 0,
+        "version": "0.10.6",
+        "release": "6.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libssh-0.10.6-6.el10.s390x.rpm",
+        "checksum": "sha256:e6a6463c89e14111505132120615532f15c71e5e83d815a442bfaf7e57739842"
+      },
+      {
+        "name": "libssh-config",
+        "epoch": 0,
+        "version": "0.10.6",
+        "release": "6.el10",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libssh-config-0.10.6-6.el10.noarch.rpm",
+        "checksum": "sha256:6c8a2c949731bcb31de8cb74d7199c22de3fcae22b3bae1678a785f8fa637e65"
+      },
+      {
+        "name": "libtasn1",
+        "epoch": 0,
+        "version": "4.19.0",
+        "release": "6.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libtasn1-4.19.0-6.el10.s390x.rpm",
+        "checksum": "sha256:7dbc8c374e3ae8d44c9f46fa5beab9f59448cdd0f48c1c080a3e10b714822c46"
+      },
+      {
+        "name": "libtool-ltdl",
+        "epoch": 0,
+        "version": "2.4.7",
+        "release": "10.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libtool-ltdl-2.4.7-10.el10.s390x.rpm",
+        "checksum": "sha256:02af1aa66182eebcd38d1f3913585d49c488f42255854e9eb2d7b380884947e7"
+      },
+      {
+        "name": "libunistring",
+        "epoch": 0,
+        "version": "1.1",
+        "release": "7.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libunistring-1.1-7.el10.s390x.rpm",
+        "checksum": "sha256:f65585d8d9bfc6f7153368f2a9b572ea08bd5c03703deb5562d17d5bfe996acf"
+      },
+      {
+        "name": "libutempter",
+        "epoch": 0,
+        "version": "1.2.1",
+        "release": "13.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libutempter-1.2.1-13.el10.s390x.rpm",
+        "checksum": "sha256:d8e38a709c534c708b8bde5357c9328f97b12b24065d01b576c606300ebe2080"
+      },
+      {
+        "name": "libuuid",
+        "epoch": 0,
+        "version": "2.40.1",
+        "release": "4.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libuuid-2.40.1-4.el10.s390x.rpm",
+        "checksum": "sha256:5335ae857e6d6176a82e275a21c6f11074ee726176c36fbb336ac839cb2707a4"
+      },
+      {
+        "name": "libverto",
+        "epoch": 0,
+        "version": "0.3.2",
+        "release": "8.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libverto-0.3.2-8.el10.s390x.rpm",
+        "checksum": "sha256:de198687e2d36256b0e8e55f8e24df55f7ca3827ceec1b0d79f326250e80e292"
+      },
+      {
+        "name": "libxcrypt",
+        "epoch": 0,
+        "version": "4.4.36",
+        "release": "5.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libxcrypt-4.4.36-5.el10.s390x.rpm",
+        "checksum": "sha256:51bc6ffadcd1ce0fbdb8af5e56769b24f86dfbf061ffc552348a0dd10a9b7d11"
+      },
+      {
+        "name": "libxml2",
+        "epoch": 0,
+        "version": "2.12.5",
+        "release": "1.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libxml2-2.12.5-1.el10.s390x.rpm",
+        "checksum": "sha256:c714640e67fc6e788301a3b1ac0b598af1582594ebfb2a19bf8f04e3ed346a56"
+      },
+      {
+        "name": "libzstd",
+        "epoch": 0,
+        "version": "1.5.5",
+        "release": "5.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/libzstd-1.5.5-5.el10.s390x.rpm",
+        "checksum": "sha256:61f6f84040537d89aa1e86bba3c5aa8def37cb030cf7926957fc4651f323df0c"
+      },
+      {
+        "name": "lua-libs",
+        "epoch": 0,
+        "version": "5.4.6",
+        "release": "5.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/lua-libs-5.4.6-5.el10.s390x.rpm",
+        "checksum": "sha256:d573d2a50b8374534446637747368e23215055e7fbfe8df5ffbf0a2860e3bfa7"
+      },
+      {
+        "name": "lz4-libs",
+        "epoch": 0,
+        "version": "1.9.4",
+        "release": "6.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/lz4-libs-1.9.4-6.el10.s390x.rpm",
+        "checksum": "sha256:ace60a59777f7e0c42b574627ef27cf4919008f779208ee27ded27a818cdc442"
+      },
+      {
+        "name": "mpfr",
+        "epoch": 0,
+        "version": "4.2.1",
+        "release": "3.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/mpfr-4.2.1-3.el10.s390x.rpm",
+        "checksum": "sha256:23df43118595b0a6ba789fbc96dbade860a25a1e3c235f8966b33500610795df"
+      },
+      {
+        "name": "ncurses-base",
+        "epoch": 0,
+        "version": "6.4",
+        "release": "12.20240127.el10",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/ncurses-base-6.4-12.20240127.el10.noarch.rpm",
+        "checksum": "sha256:579d5ab2c9c9caee7381657ef4c71657b5241f2f81471463e315a54614927d31"
+      },
+      {
+        "name": "ncurses-libs",
+        "epoch": 0,
+        "version": "6.4",
+        "release": "12.20240127.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/ncurses-libs-6.4-12.20240127.el10.s390x.rpm",
+        "checksum": "sha256:54ac4b094bfc36cf384820faf15d061b245c1a025193459f9fb02a03f2123848"
+      },
+      {
+        "name": "openldap",
+        "epoch": 0,
+        "version": "2.6.7",
+        "release": "1.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/openldap-2.6.7-1.el10.s390x.rpm",
+        "checksum": "sha256:339e702a0c409834c759c3a949f9c7825de8fdcce21d296693ac5622514da8c5"
+      },
+      {
+        "name": "openssl-libs",
+        "epoch": 1,
+        "version": "3.2.2",
+        "release": "3.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/openssl-libs-3.2.2-3.el10.s390x.rpm",
+        "checksum": "sha256:fe6878bdb6d2bf8f28b6dc26a83b3d8dd34a57b938d23870a3d969456487847b"
+      },
+      {
+        "name": "p11-kit",
+        "epoch": 0,
+        "version": "0.25.3",
+        "release": "4.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/p11-kit-0.25.3-4.el10.s390x.rpm",
+        "checksum": "sha256:d58bc2c7ca44771765af7a93bc12ae7982a84891a16125ac7478138e68af8512"
+      },
+      {
+        "name": "p11-kit-trust",
+        "epoch": 0,
+        "version": "0.25.3",
+        "release": "4.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/p11-kit-trust-0.25.3-4.el10.s390x.rpm",
+        "checksum": "sha256:83651506561d7c2cff0ddddc82728feffde6e1c3f378812386ac97613a11a0c8"
+      },
+      {
+        "name": "pam",
+        "epoch": 0,
+        "version": "1.6.1",
+        "release": "2.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/pam-1.6.1-2.el10.s390x.rpm",
+        "checksum": "sha256:13d01bc363c0a74a19644c6913815818c726213814ff5ebf318dd70e032bde9c"
+      },
+      {
+        "name": "pam-libs",
+        "epoch": 0,
+        "version": "1.6.1",
+        "release": "2.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/pam-libs-1.6.1-2.el10.s390x.rpm",
+        "checksum": "sha256:5de22215f00ec0e3527db00518137175cdafcbe129635cd8e64f3ca18cdac3d6"
+      },
+      {
+        "name": "pcre2",
+        "epoch": 0,
+        "version": "10.42",
+        "release": "3.el10.1",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/pcre2-10.42-3.el10.1.s390x.rpm",
+        "checksum": "sha256:36c935eb2bfca2d09b66a726e2abd7da440350797ed4aab580e40c4ab64ac6c1"
+      },
+      {
+        "name": "pcre2-syntax",
+        "epoch": 0,
+        "version": "10.42",
+        "release": "3.el10.1",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/pcre2-syntax-10.42-3.el10.1.noarch.rpm",
+        "checksum": "sha256:4a4e1fe1910326026a9375d130baeea023d35108adf5408dbc26aafd50c9810f"
+      },
+      {
+        "name": "policycoreutils",
+        "epoch": 0,
+        "version": "3.6",
+        "release": "4.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/policycoreutils-3.6-4.el10.s390x.rpm",
+        "checksum": "sha256:5efd8011a0cc69f71f1f836b15af3c14cc4d18d6debffeb1bc63c53feaaf88bc"
+      },
+      {
+        "name": "popt",
+        "epoch": 0,
+        "version": "1.19",
+        "release": "6.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/popt-1.19-6.el10.s390x.rpm",
+        "checksum": "sha256:577739238a96bd2aba1494e0f1a2088c13b8997e3065ff08def5fc9a876621a1"
+      },
+      {
+        "name": "publicsuffix-list-dafsa",
+        "epoch": 0,
+        "version": "20240107",
+        "release": "3.el10",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/publicsuffix-list-dafsa-20240107-3.el10.noarch.rpm",
+        "checksum": "sha256:8956aadaf5082c480e3aa7cf52b5e0c63a0264ac43eb4805674073d8e84f5607"
+      },
+      {
+        "name": "readline",
+        "epoch": 0,
+        "version": "8.2",
+        "release": "8.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/readline-8.2-8.el10.s390x.rpm",
+        "checksum": "sha256:08f3cac28e42603c70ee57bf7262619998d467f8658e6a69fdf7b15fcf3bc924"
+      },
+      {
+        "name": "rpm",
+        "epoch": 0,
+        "version": "4.19.1.1",
+        "release": "1.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/rpm-4.19.1.1-1.el10.s390x.rpm",
+        "checksum": "sha256:e8e40f56069e7f9d9fee5d00f2d3471126fb8efcbf1da715c0f6100357d1b1e8"
+      },
+      {
+        "name": "rpm-libs",
+        "epoch": 0,
+        "version": "4.19.1.1",
+        "release": "1.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/rpm-libs-4.19.1.1-1.el10.s390x.rpm",
+        "checksum": "sha256:33f383a707ebe9bedd2feacc70a1a481a3a3fadd2be81a4d8b10a66b0d0baef9"
+      },
+      {
+        "name": "rpm-plugin-audit",
+        "epoch": 0,
+        "version": "4.19.1.1",
+        "release": "1.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/rpm-plugin-audit-4.19.1.1-1.el10.s390x.rpm",
+        "checksum": "sha256:54b57a99e17873846baedc57588c3e7998e33e40a5e35bfc1ab9fc00586ad422"
+      },
+      {
+        "name": "rpm-plugin-selinux",
+        "epoch": 0,
+        "version": "4.19.1.1",
+        "release": "1.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/rpm-plugin-selinux-4.19.1.1-1.el10.s390x.rpm",
+        "checksum": "sha256:f8fc690591e01f34b0247099b291712d8176daf9564b14dcd185910e5e801f8a"
+      },
+      {
+        "name": "rpm-sequoia",
+        "epoch": 0,
+        "version": "1.6.0",
+        "release": "2.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/rpm-sequoia-1.6.0-2.el10.s390x.rpm",
+        "checksum": "sha256:cbae49cd1fb1a85e0f26023262dede98533f9dc25f29cdebd8492804f155d747"
+      },
+      {
+        "name": "sed",
+        "epoch": 0,
+        "version": "4.9",
+        "release": "1.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/sed-4.9-1.el10.s390x.rpm",
+        "checksum": "sha256:0154da3adf97e784d5c0d9a5cd730db1625dde914987cddfdf23f8093e09ada7"
+      },
+      {
+        "name": "selinux-policy",
+        "epoch": 0,
+        "version": "40.13.3",
+        "release": "1.el10",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/selinux-policy-40.13.3-1.el10.noarch.rpm",
+        "checksum": "sha256:7cc3f56bf0d3c7648c61bb3bb0b9e406802389cab4d921d0384b5e08ca953cc6"
+      },
+      {
+        "name": "selinux-policy-targeted",
+        "epoch": 0,
+        "version": "40.13.3",
+        "release": "1.el10",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/selinux-policy-targeted-40.13.3-1.el10.noarch.rpm",
+        "checksum": "sha256:e85bade5439c3baf511ae25d105fb0aa072bfe1c2059ea6ce1ae91b67481d2be"
+      },
+      {
+        "name": "setup",
+        "epoch": 0,
+        "version": "2.14.5",
+        "release": "2.el10",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/setup-2.14.5-2.el10.noarch.rpm",
+        "checksum": "sha256:42fe06f808bae31ea5ec5e2fc7674bbd79614f9eeca235f762ef7dfb7fd9f1c6"
+      },
+      {
+        "name": "shadow-utils",
+        "epoch": 2,
+        "version": "4.15.0",
+        "release": "2.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/shadow-utils-4.15.0-2.el10.s390x.rpm",
+        "checksum": "sha256:5fb64623cd3759c3e402b325ed1a88a14d4be72e8bc1a10ba4eb8c2ca555f286"
+      },
+      {
+        "name": "sqlite-libs",
+        "epoch": 0,
+        "version": "3.45.1",
+        "release": "2.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/sqlite-libs-3.45.1-2.el10.s390x.rpm",
+        "checksum": "sha256:992cf340bfdf8302fa542bd49cfe0972fcc6f96f8c22ce7c52119e8956cb48c4"
+      },
+      {
+        "name": "systemd",
+        "epoch": 0,
+        "version": "255.3",
+        "release": "1.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/systemd-255.3-1.el10.s390x.rpm",
+        "checksum": "sha256:b131e723adccaf330495a43f084e0f9d5c66ffb63725a7cc4ff7121925f7c8df"
+      },
+      {
+        "name": "systemd-libs",
+        "epoch": 0,
+        "version": "255.3",
+        "release": "1.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/systemd-libs-255.3-1.el10.s390x.rpm",
+        "checksum": "sha256:2df29003eacb3d8127b6fa7bf9e215963d63d27e225e9554dc048319255d7766"
+      },
+      {
+        "name": "systemd-pam",
+        "epoch": 0,
+        "version": "255.3",
+        "release": "1.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/systemd-pam-255.3-1.el10.s390x.rpm",
+        "checksum": "sha256:136a713ec35f5ae88442b87f443fe6fbf1bfb6ca4de6a08f4a1ea335ef3516d8"
+      },
+      {
+        "name": "tzdata",
+        "epoch": 0,
+        "version": "2024a",
+        "release": "3.el10",
+        "arch": "noarch",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/tzdata-2024a-3.el10.noarch.rpm",
+        "checksum": "sha256:189b1ae2e8ad8f23745d1d55fc46c82022a3ff3468dccf3f5950aaca5b890ed9"
+      },
+      {
+        "name": "util-linux",
+        "epoch": 0,
+        "version": "2.40.1",
+        "release": "4.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/util-linux-2.40.1-4.el10.s390x.rpm",
+        "checksum": "sha256:9a69309fc97f9525aa229aed3b15d760cfe697ae9452438a8060950d5166a31f"
+      },
+      {
+        "name": "util-linux-core",
+        "epoch": 0,
+        "version": "2.40.1",
+        "release": "4.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/util-linux-core-2.40.1-4.el10.s390x.rpm",
+        "checksum": "sha256:23cf509876523e53da670e29195d0e119fd2322c1c76298e55e5b54ed94383cb"
+      },
+      {
+        "name": "xz-libs",
+        "epoch": 0,
+        "version": "5.4.6",
+        "release": "1.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/xz-libs-5.4.6-1.el10.s390x.rpm",
+        "checksum": "sha256:400f0ff6cb80562e7549fa3e4389a9ef27fb63479d2894a5d50eb031ff9dade2"
+      },
+      {
+        "name": "zlib-ng-compat",
+        "epoch": 0,
+        "version": "2.1.6",
+        "release": "2.el10",
+        "arch": "s390x",
+        "remote_location": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/cs10-s390x-baseos-20240626/Packages/zlib-ng-compat-2.1.6-2.el10.s390x.rpm",
+        "checksum": "sha256:75cd5964cd518887a53bb28f11fd3cb87189e2f6015eea10820178a4654df104"
+      }
+    ]
+  },
+  "no-image-info": true
+}
