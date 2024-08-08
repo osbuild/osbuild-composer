@@ -633,8 +633,9 @@ API-module-hotfixes:
           - gcp/rhel-8.10-ga-x86_64
           - gcp/rhel-9.4-ga-x86_64
           - gcp/rhel-9.5-nightly-x86_64
-          # TODO: uncomment when there is el10 GCE image
+          # TODO: replace the rhos-01 runner with this gcp runner once it's available
           # - gcp/rhel-10.0-nightly-x86_64
+          - rhos-01/rhel-10.0-nightly-x86_64
           - gcp/centos-stream-9-x86_64
         INTERNAL_NETWORK: ["true"]
 
