@@ -311,6 +311,58 @@ func targetResultToUploadStatus(t *target.TargetResult) (*UploadStatus, error) {
 	return us, nil
 }
 
+// GetComposeList returns a list of the root job UUIDs
+func (h *apiHandlers) GetComposeList(ctx echo.Context) error {
+	jobs, err := h.server.workers.AllRootJobIDs()
+	if err != nil {
+		return HTTPErrorWithInternal(ErrorGettingComposeList, err)
+	}
+
+	return ctx.JSON(http.StatusOK, jobs)
+}
+
+// DeleteCompose deletes a compose by UUID
+func (h *apiHandlers) DeleteCompose(ctx echo.Context, id string) error {
+	return h.server.EnsureJobChannel(h.deleteComposeImpl)(ctx, id)
+}
+
+func (h *apiHandlers) deleteComposeImpl(ctx echo.Context, id string) error {
+	var jobId uuid.UUID
+	jobId, err := uuid.Parse(id)
+	if err != nil {
+		return HTTPError(ErrorInvalidComposeId)
+	}
+	_, err = h.server.workers.JobType(jobId)
+	if err != nil {
+		return HTTPError(ErrorComposeNotFound)
+	}
+
+	// Is it possible to remove this job? It has to be: success or failure
+	status, err := h.getJobIDComposeStatus(jobId)
+	if err != nil {
+		return err
+	}
+	if status.Status != ComposeStatusValueSuccess && status.Status != ComposeStatusValueFailure {
+		return HTTPError(ErrorComposeRunning)
+	}
+
+	err = h.server.workers.RemoveJob(jobId)
+	if err != nil {
+		return HTTPErrorWithInternal(ErrorRemovingJob, err)
+	}
+
+	err = h.server.workers.CleanupArtifacts()
+	if err != nil {
+		return HTTPErrorWithInternal(ErrorRemovingArtifacts, err)
+	}
+
+	return ctx.JSON(http.StatusOK, ComposeDeleteStatus{
+		Href: fmt.Sprintf("/api/image-builder-composer/v2/composes/delete/%v", jobId),
+		Id:   jobId.String(),
+		Kind: "ComposeDeleteStatus",
+	})
+}
+
 func (h *apiHandlers) GetComposeStatus(ctx echo.Context, id string) error {
 	return h.server.EnsureJobChannel(h.getComposeStatusImpl)(ctx, id)
 }
@@ -321,21 +373,31 @@ func (h *apiHandlers) getComposeStatusImpl(ctx echo.Context, id string) error {
 		return HTTPError(ErrorInvalidComposeId)
 	}
 
+	response, err := h.getJobIDComposeStatus(jobId)
+	if err != nil {
+		return err
+	}
+	return ctx.JSON(http.StatusOK, response)
+}
+
+// getJobIDComposeStatus returns the ComposeStatus for the job
+// or an HTTPError
+func (h *apiHandlers) getJobIDComposeStatus(jobId uuid.UUID) (ComposeStatus, error) {
 	jobType, err := h.server.workers.JobType(jobId)
 	if err != nil {
-		return HTTPError(ErrorComposeNotFound)
+		return ComposeStatus{}, HTTPError(ErrorComposeNotFound)
 	}
 
 	if jobType == worker.JobTypeOSBuild {
 		var result worker.OSBuildJobResult
 		jobInfo, err := h.server.workers.OSBuildJobInfo(jobId, &result)
 		if err != nil {
-			return HTTPError(ErrorMalformedOSBuildJobResult)
+			return ComposeStatus{}, HTTPError(ErrorMalformedOSBuildJobResult)
 		}
 
 		jobError, err := h.server.workers.JobDependencyChainErrors(jobId)
 		if err != nil {
-			return HTTPError(ErrorGettingBuildDependencyStatus)
+			return ComposeStatus{}, HTTPError(ErrorGettingBuildDependencyStatus)
 		}
 
 		var uploadStatuses *[]UploadStatus
@@ -346,7 +408,7 @@ func (h *apiHandlers) getComposeStatusImpl(ctx echo.Context, id string) error {
 				tr := result.TargetResults[idx]
 				us, err := targetResultToUploadStatus(tr)
 				if err != nil {
-					return HTTPError(ErrorUnknownUploadTarget)
+					return ComposeStatus{}, HTTPError(ErrorUnknownUploadTarget)
 				}
 				us.Status = uploadStatusFromJobStatus(jobInfo.JobStatus, result.JobError)
 				statuses[idx] = *us
@@ -360,7 +422,7 @@ func (h *apiHandlers) getComposeStatusImpl(ctx echo.Context, id string) error {
 			}
 		}
 
-		return ctx.JSON(http.StatusOK, ComposeStatus{
+		return ComposeStatus{
 			ObjectReference: ObjectReference{
 				Href: fmt.Sprintf("/api/image-builder-composer/v2/composes/%v", jobId),
 				Id:   jobId.String(),
@@ -373,20 +435,20 @@ func (h *apiHandlers) getComposeStatusImpl(ctx echo.Context, id string) error {
 				UploadStatus:   us0, // add the first upload status to the old top-level field
 				UploadStatuses: uploadStatuses,
 			},
-		})
+		}, nil
 	} else if jobType == worker.JobTypeKojiFinalize {
 		var result worker.KojiFinalizeJobResult
 		finalizeInfo, err := h.server.workers.KojiFinalizeJobInfo(jobId, &result)
 		if err != nil {
-			return HTTPError(ErrorMalformedOSBuildJobResult)
+			return ComposeStatus{}, HTTPError(ErrorMalformedOSBuildJobResult)
 		}
 		if len(finalizeInfo.Deps) < 2 {
-			return HTTPError(ErrorUnexpectedNumberOfImageBuilds)
+			return ComposeStatus{}, HTTPError(ErrorUnexpectedNumberOfImageBuilds)
 		}
 		var initResult worker.KojiInitJobResult
 		_, err = h.server.workers.KojiInitJobInfo(finalizeInfo.Deps[0], &initResult)
 		if err != nil {
-			return HTTPError(ErrorMalformedOSBuildJobResult)
+			return ComposeStatus{}, HTTPError(ErrorMalformedOSBuildJobResult)
 		}
 		var buildJobResults []worker.OSBuildJobResult
 		var buildJobStatuses []ImageStatus
@@ -394,11 +456,11 @@ func (h *apiHandlers) getComposeStatusImpl(ctx echo.Context, id string) error {
 			var buildJobResult worker.OSBuildJobResult
 			buildInfo, err := h.server.workers.OSBuildJobInfo(finalizeInfo.Deps[i], &buildJobResult)
 			if err != nil {
-				return HTTPError(ErrorMalformedOSBuildJobResult)
+				return ComposeStatus{}, HTTPError(ErrorMalformedOSBuildJobResult)
 			}
 			buildJobError, err := h.server.workers.JobDependencyChainErrors(finalizeInfo.Deps[i])
 			if err != nil {
-				return HTTPError(ErrorGettingBuildDependencyStatus)
+				return ComposeStatus{}, HTTPError(ErrorGettingBuildDependencyStatus)
 			}
 
 			var uploadStatuses *[]UploadStatus
@@ -411,7 +473,7 @@ func (h *apiHandlers) getComposeStatusImpl(ctx echo.Context, id string) error {
 					if tr.Name != target.TargetNameKoji {
 						us, err := targetResultToUploadStatus(tr)
 						if err != nil {
-							return HTTPError(ErrorUnknownUploadTarget)
+							return ComposeStatus{}, HTTPError(ErrorUnknownUploadTarget)
 						}
 						us.Status = uploadStatusFromJobStatus(buildInfo.JobStatus, result.JobError)
 						statuses = append(statuses, *us)
@@ -449,9 +511,9 @@ func (h *apiHandlers) getComposeStatusImpl(ctx echo.Context, id string) error {
 		if buildID != 0 {
 			response.KojiStatus.BuildId = &buildID
 		}
-		return ctx.JSON(http.StatusOK, response)
+		return response, nil
 	} else {
-		return HTTPError(ErrorInvalidJobType)
+		return ComposeStatus{}, HTTPError(ErrorInvalidJobType)
 	}
 }
 
