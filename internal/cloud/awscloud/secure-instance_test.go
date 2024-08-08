@@ -1,11 +1,15 @@
-package awscloud
+package awscloud_test
 
 import (
 	"fmt"
 	"testing"
+
+	"github.com/stretchr/testify/require"
+
+	"github.com/osbuild/osbuild-composer/internal/cloud/awscloud"
 )
 
-func TestSecureInstanceUserData(t *testing.T) {
+func TestSIUserData(t *testing.T) {
 	type testCase struct {
 		CloudWatchGroup  string
 		Hostname         string
@@ -58,10 +62,105 @@ write_files:
 
 	for idx, tc := range testCases {
 		t.Run(fmt.Sprintf("Test case %d", idx), func(t *testing.T) {
-			userData := SecureInstanceUserData(tc.CloudWatchGroup, tc.Hostname)
+			userData := awscloud.SecureInstanceUserData(tc.CloudWatchGroup, tc.Hostname)
 			if userData != tc.ExpectedUserData {
 				t.Errorf("Expected: %s, got: %s", tc.ExpectedUserData, userData)
 			}
 		})
 	}
+}
+
+func TestSIRunSecureInstance(t *testing.T) {
+	m := newEc2Mock(t)
+	aws := awscloud.NewForTest(m, &ec2imdsmock{t, "instance-id", "region1"}, nil, nil, nil)
+	require.NotNil(t, aws)
+
+	si, err := aws.RunSecureInstance("iam-profile", "key-name", "cw-group", "hostname")
+	require.NoError(t, err)
+	require.NotNil(t, si)
+	require.Equal(t, 1, m.calledFn["CreateFleet"])
+	require.Equal(t, 1, m.calledFn["CreateSecurityGroup"])
+	require.Equal(t, 1, m.calledFn["CreateLaunchTemplate"])
+}
+
+func TestSITerminateSecureInstance(t *testing.T) {
+	m := newEc2Mock(t)
+	aws := awscloud.NewForTest(m, &ec2imdsmock{t, "instance-id", "region1"}, nil, nil, nil)
+	require.NotNil(t, aws)
+
+	// Small hack, describeinstances returns terminate/running
+	// depending on how many times it was called.
+	m.calledFn["DescribeInstances"] = 1
+
+	err := aws.TerminateSecureInstance(&awscloud.SecureInstance{
+		FleetID:    "fleet-id",
+		SGID:       "sg-id",
+		LTID:       "lt-id",
+		InstanceID: "instance-id",
+	})
+	require.NoError(t, err)
+	require.Equal(t, 1, m.calledFn["DeleteFleets"])
+	require.Equal(t, 1, m.calledFn["DeleteSecurityGroup"])
+	require.Equal(t, 1, m.calledFn["DeleteLaunchTemplate"])
+	require.Equal(t, 2, m.calledFn["DescribeInstances"])
+}
+
+func TestSICreateSGFailures(t *testing.T) {
+	m := newEc2Mock(t)
+	aws := awscloud.NewForTest(m, &ec2imdsmock{t, "instance-id", "region1"}, nil, nil, nil)
+	require.NotNil(t, aws)
+
+	m.failFn["CreateSecurityGroup"] = fmt.Errorf("some-error")
+	si, err := aws.RunSecureInstance("iam-profile", "key-name", "cw-group", "hostname")
+	require.Error(t, err)
+	require.Nil(t, si)
+	require.Equal(t, 1, m.calledFn["CreateSecurityGroup"])
+	require.Equal(t, 1, m.calledFn["DeleteSecurityGroup"])
+	require.Equal(t, 0, m.calledFn["CreateFleet"])
+	require.Equal(t, 0, m.calledFn["CreateLaunchTemplate"])
+	require.Equal(t, 0, m.calledFn["DeleteLaunchTemplate"])
+}
+
+func TestSICreateLTFailures(t *testing.T) {
+	m := newEc2Mock(t)
+	aws := awscloud.NewForTest(m, &ec2imdsmock{t, "instance-id", "region1"}, nil, nil, nil)
+	require.NotNil(t, aws)
+
+	m.failFn["CreateLaunchTemplate"] = fmt.Errorf("some-error")
+	si, err := aws.RunSecureInstance("iam-profile", "key-name", "cw-group", "hostname")
+	require.Error(t, err)
+	require.Nil(t, si)
+	require.Equal(t, 1, m.calledFn["CreateSecurityGroup"])
+	require.Equal(t, 2, m.calledFn["DeleteSecurityGroup"])
+	require.Equal(t, 1, m.calledFn["CreateLaunchTemplate"])
+	require.Equal(t, 1, m.calledFn["DeleteLaunchTemplate"])
+	require.Equal(t, 0, m.calledFn["CreateFleet"])
+}
+
+func TestSICreateFleetFailures(t *testing.T) {
+	m := newEc2Mock(t)
+	aws := awscloud.NewForTest(m, &ec2imdsmock{t, "instance-id", "region1"}, nil, nil, nil)
+	require.NotNil(t, aws)
+
+	// unfillable capacity should call create fleet twice
+	m.failFn["CreateFleet"] = nil
+	si, err := aws.RunSecureInstance("iam-profile", "key-name", "cw-group", "hostname")
+	require.Error(t, err)
+	require.Nil(t, si)
+	require.Equal(t, 2, m.calledFn["CreateFleet"])
+	require.Equal(t, 1, m.calledFn["CreateSecurityGroup"])
+	require.Equal(t, 1, m.calledFn["CreateLaunchTemplate"])
+	require.Equal(t, 2, m.calledFn["DeleteSecurityGroup"])
+	require.Equal(t, 2, m.calledFn["DeleteLaunchTemplate"])
+
+	// other errors should just fail immediately
+	m.failFn["CreateFleet"] = fmt.Errorf("random error")
+	si, err = aws.RunSecureInstance("iam-profile", "key-name", "cw-group", "hostname")
+	require.Error(t, err)
+	require.Nil(t, si)
+	require.Equal(t, 3, m.calledFn["CreateFleet"])
+	require.Equal(t, 2, m.calledFn["CreateSecurityGroup"])
+	require.Equal(t, 2, m.calledFn["CreateLaunchTemplate"])
+	require.Equal(t, 4, m.calledFn["DeleteSecurityGroup"])
+	require.Equal(t, 4, m.calledFn["DeleteLaunchTemplate"])
 }
