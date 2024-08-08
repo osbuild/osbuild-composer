@@ -300,6 +300,18 @@ else
             NVRAM_TEMPLATE="firmware.feature0.name=secure-boot,firmware.feature0.enabled=no"
             OS_VARIANT="centos-stream9"
             ;;
+        # TODO: Update the variants once available
+        "rhel-10"*)
+            MIN_RAM="1536"
+            NVRAM_TEMPLATE=""
+            OS_VARIANT="rhel9-unknown"
+            ;;
+        "centos-10")
+            MIN_RAM="1536"
+            # Disable secure boot for CS9 due to bug bz#2108646
+            NVRAM_TEMPLATE="firmware.feature0.name=secure-boot,firmware.feature0.enabled=no"
+            OS_VARIANT="centos-stream9"
+            ;;
         "fedora"*)
             MIN_RAM="1536"
             NVRAM_TEMPLATE=""
