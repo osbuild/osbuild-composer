@@ -73,10 +73,12 @@ init:
 .nightly_rules_all:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9.5-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-10.0-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "10"'
 
 .nightly_rules_x86_64:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9.5-[^ga][\S]+/ && $RUNNER =~ "/^.*(x86_64).*$/" && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-10.0-[^ga][\S]+/ && $RUNNER =~ "/^.*(x86_64).*$/" && $NIGHTLY == "true" && $RHEL_MAJOR == "10"'
 
 .ga_rules_all:
   rules:
@@ -487,8 +489,9 @@ gcp.sh:
   rules:
     # Temporarily disabled for RHEL-10 and Centos-10
     - if: '$CI_PIPELINE_SOURCE != "schedule" && $RUNNER =~ "/^.*(x86_64).*$/" && $RUNNER !~ /[\S]+rhel-[\S]+-(?:(?:ga)|(?:eus))[\S]+/ && $RUNNER !~ "/^.*(rhel-10.0-nightly|centos-stream-10).*$/"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9.5-[^ga][\S]+/ && $RUNNER =~ "/^.*(x86_64).*$/" && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
     # - !reference [.upstream_rules_x86_64, rules]
-    - !reference [.nightly_rules_x86_64, rules]
+    # - !reference [.nightly_rules_x86_64, rules]
     - !reference [.ga_rules_x86_64, rules]
   variables:
     SCRIPT: gcp.sh
@@ -499,8 +502,9 @@ vmware.sh_vmdk:
     # Run only on x86_64
     # Temporarily disabled for RHEL-10 and Centos-10
     - if: '$CI_PIPELINE_SOURCE != "schedule" && $RUNNER =~ "/^.*(x86_64).*$/" && $RUNNER !~ /[\S]+rhel-[\S]+-(?:(?:ga)|(?:eus))[\S]+/ && $RUNNER !~ "/^.*(rhel-10.0-nightly|centos-stream-10).*$/"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9.5-[^ga][\S]+/ && $RUNNER =~ "/^.*(x86_64).*$/" && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
     # - !reference [.upstream_rules_x86_64, rules]
-    - !reference [.nightly_rules_x86_64, rules]
+    # - !reference [.nightly_rules_x86_64, rules]
     - !reference [.ga_rules_x86_64, rules]
   variables:
     SCRIPT: vmware.sh vmdk
@@ -512,7 +516,8 @@ vmware.sh_ova:
     # Temporarily disabled for RHEL-10 and Centos-10
     - if: '$CI_PIPELINE_SOURCE != "schedule" && $RUNNER =~ "/^.*(x86_64).*$/" && $RUNNER !~ /[\S]+rhel-[\S]+-(?:(?:ga)|(?:eus))[\S]+/ && $RUNNER !~ "/^.*(rhel-10.0-nightly|centos-stream-10).*$/"'
     # - !reference [.upstream_rules_x86_64, rules]
-    - !reference [.nightly_rules_x86_64, rules]
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9.5-[^ga][\S]+/ && $RUNNER =~ "/^.*(x86_64).*$/" && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
+    # - !reference [.nightly_rules_x86_64, rules]
     - !reference [.ga_rules_x86_64, rules]
   variables:
     SCRIPT: vmware.sh ova
