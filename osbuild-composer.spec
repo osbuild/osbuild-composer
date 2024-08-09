@@ -172,7 +172,9 @@ install -m 0644 -vp repositories/centos-stream-%{centos}*          %{buildroot}%
 %if 0%{?rhel}
 # RHEL 10 supports building all RHEL versions
 %if 0%{?rhel} >= 10
-install -m 0644 -vp repositories/rhel-*                            %{buildroot}%{_datadir}/osbuild-composer/repositories/
+for REPO_FILE in $(ls repositories/rhel-* | grep -v 'no-aux-key'); do
+    install -m 0644 -vp ${REPO_FILE}                               %{buildroot}%{_datadir}/osbuild-composer/repositories/$(basename ${REPO_FILE})
+done
 
 # RHEL-8 auxiliary key is signed using SHA-1, which is not enabled by default on RHEL-10 and later
 for REPO_FILE in $(ls repositories/rhel-8*-no-aux-key.json); do
@@ -181,11 +183,15 @@ done
 
 %else
 # All other RHEL versions support building for the same version
-install -m 0644 -vp repositories/rhel-%{rhel}*                     %{buildroot}%{_datadir}/osbuild-composer/repositories/
+for REPO_FILE in $(ls repositories/rhel-%{rhel}* | grep -v 'no-aux-key'); do
+    install -m 0644 -vp ${REPO_FILE}                               %{buildroot}%{_datadir}/osbuild-composer/repositories/$(basename ${REPO_FILE})
+done
 
 # RHEL 9 supports building also for RHEL 8
 %if 0%{?rhel} == 9
-install -m 0644 -vp repositories/rhel-8*                           %{buildroot}%{_datadir}/osbuild-composer/repositories/
+for REPO_FILE in $(ls repositories/rhel-8* | grep -v 'no-aux-key'); do
+    install -m 0644 -vp ${REPO_FILE}                               %{buildroot}%{_datadir}/osbuild-composer/repositories/$(basename ${REPO_FILE})
+done
 %endif
 
 %endif

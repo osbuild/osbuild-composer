@@ -38,6 +38,10 @@ function greenprint {
     echo -e "\033[1;32m[$(date -Isecond)] ${1}\033[0m"
 }
 
+function yellowprint {
+    echo -e "\033[1;33m[$(date -Isecond)] ${1}\033[0m"
+}
+
 function redprint {
     echo -e "\033[1;31m[$(date -Isecond)] ${1}\033[0m"
 }

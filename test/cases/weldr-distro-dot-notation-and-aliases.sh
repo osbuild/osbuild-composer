@@ -61,7 +61,7 @@ REPO_OVERRIDES_DIR=/etc/osbuild-composer/repositories
 REPO_SHIPPED_DIR="/usr/share/osbuild-composer/repositories"
 # path for repositories shipped with osbuild-composer tests, intended for
 # use as part of tests.
-REPO_TEST_DIR="/usr/share/tests/osbuild-composer/repositories/"
+REPO_TEST_DIR="/usr/share/tests/osbuild-composer/repositories"
 
 DISTRO="${ID}-${VERSION_ID}"
 DISTRO_WITHOUT_DOT="${ID}-${VERSION_ID//./}"

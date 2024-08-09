@@ -12,6 +12,10 @@ source /usr/libexec/tests/osbuild-composer/shared_lib.sh
 
 set -euo pipefail
 
+if [[ ($ID == rhel || $ID == centos) && ${VERSION_ID%.*} == 10 ]]; then
+    echo "Temporary disabled b/c GCP isn't suported on el10"
+    exit 1
+fi
 
 # Container image used for cloud provider CLI tools
 CONTAINER_IMAGE_CLOUD_TOOLS="quay.io/osbuild/cloud-tools:latest"
@@ -86,6 +90,7 @@ if ! hash gcloud; then
     mkdir "${GCP_CMD_CREDS_DIR}"
 
     GCP_CMD="sudo ${CONTAINER_RUNTIME} run --rm \
+        --net=host \
         -v ${GCP_CMD_CREDS_DIR}:/root/.config/gcloud:Z \
         -v ${GOOGLE_APPLICATION_CREDENTIALS}:${GOOGLE_APPLICATION_CREDENTIALS}:Z \
         -v ${TEMPDIR}:${TEMPDIR}:Z \

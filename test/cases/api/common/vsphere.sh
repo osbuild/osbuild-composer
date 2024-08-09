@@ -25,7 +25,7 @@ function installClientVSphere() {
 }
 
 function checkEnvVSphere() {
-    printenv GOVMOMI_USERNAME GOVMOMI_PASSWORD GOVMOMI_URL GOVMOMI_CLUSTER GOVC_DATACENTER GOVMOMI_DATASTORE GOVMOMI_FOLDER GOVMOMI_NETWORK  > /dev/null
+    printenv GOVMOMI_USERNAME GOVMOMI_PASSWORD GOVMOMI_URL GOVMOMI_CLUSTER GOVMOMI_DATACENTER GOVMOMI_DATASTORE GOVMOMI_FOLDER GOVMOMI_NETWORK  > /dev/null
 }
 
 # Create a cloud-int user-data file
@@ -136,7 +136,7 @@ function verifyInVSphere() {
     $GOVC_CMD import.vmdk \
         -u "${GOVMOMI_USERNAME}:${GOVMOMI_PASSWORD}@${GOVMOMI_URL}" \
         -k=true \
-        -dc="${GOVC_DATACENTER}" \
+        -dc="${GOVMOMI_DATACENTER}" \
         -pool="${GOVMOMI_CLUSTER}"/Resources \
         -ds="${GOVMOMI_DATASTORE}" \
         "${WORKDIR}/${VSPHERE_IMAGE_NAME}" \
@@ -147,7 +147,7 @@ function verifyInVSphere() {
     $GOVC_CMD vm.create \
         -u "${GOVMOMI_USERNAME}:${GOVMOMI_PASSWORD}@${GOVMOMI_URL}" \
         -k=true \
-        -dc="${GOVC_DATACENTER}" \
+        -dc="${GOVMOMI_DATACENTER}" \
         -pool="${GOVMOMI_CLUSTER}"/Resources \
         -ds="${GOVMOMI_DATASTORE}" \
         -folder="${GOVMOMI_FOLDER}" \
@@ -172,7 +172,7 @@ function verifyInVSphere() {
     $GOVC_CMD datastore.upload \
         -u "${GOVMOMI_USERNAME}:${GOVMOMI_PASSWORD}@${GOVMOMI_URL}" \
         -k=true \
-        -dc="${GOVC_DATACENTER}" \
+        -dc="${GOVMOMI_DATACENTER}" \
         -ds="${GOVMOMI_DATASTORE}" \
         "${_ci_iso_path}" \
         "${VSPHERE_CIDATA_ISO_PATH}"
@@ -182,14 +182,14 @@ function verifyInVSphere() {
     _cdrom_device="$($GOVC_CMD device.cdrom.add \
         -u "${GOVMOMI_USERNAME}:${GOVMOMI_PASSWORD}@${GOVMOMI_URL}" \
         -k=true \
-        -dc="${GOVC_DATACENTER}" \
+        -dc="${GOVMOMI_DATACENTER}" \
         -vm "${VSPHERE_VM_NAME}")"
 
     greenprint "💿 Inserting the cloud-init ISO into the CD-ROM device"
     $GOVC_CMD device.cdrom.insert \
         -u "${GOVMOMI_USERNAME}:${GOVMOMI_PASSWORD}@${GOVMOMI_URL}" \
         -k=true \
-        -dc="${GOVC_DATACENTER}" \
+        -dc="${GOVMOMI_DATACENTER}" \
         -ds="${GOVMOMI_DATASTORE}" \
         -vm "${VSPHERE_VM_NAME}" \
         -device "${_cdrom_device}" \
@@ -200,14 +200,14 @@ function verifyInVSphere() {
     $GOVC_CMD vm.power \
         -u "${GOVMOMI_USERNAME}:${GOVMOMI_PASSWORD}@${GOVMOMI_URL}" \
         -k=true \
-        -dc="${GOVC_DATACENTER}" \
+        -dc="${GOVMOMI_DATACENTER}" \
         -on "${VSPHERE_VM_NAME}"
 
     HOST=$($GOVC_CMD vm.ip \
         -u "${GOVMOMI_USERNAME}:${GOVMOMI_PASSWORD}@${GOVMOMI_URL}" \
         -k=true \
         -v4=true \
-        -dc="${GOVC_DATACENTER}" \
+        -dc="${GOVMOMI_DATACENTER}" \
         "${VSPHERE_VM_NAME}")
     greenprint "⏱ Waiting for the VSphere VM to respond to ssh"
     _instanceWaitSSH "${HOST}"
@@ -228,14 +228,14 @@ function cleanupVSphere() {
     $GOVC_CMD vm.destroy \
         -u "${GOVMOMI_USERNAME}:${GOVMOMI_PASSWORD}@${GOVMOMI_URL}" \
         -k=true \
-        -dc="${GOVC_DATACENTER}" \
+        -dc="${GOVMOMI_DATACENTER}" \
         "${VSPHERE_VM_NAME}"
 
     greenprint "🧹 Cleaning up the VSphere Datastore"
     $GOVC_CMD datastore.rm \
         -u "${GOVMOMI_USERNAME}:${GOVMOMI_PASSWORD}@${GOVMOMI_URL}" \
         -k=true \
-        -dc="${GOVC_DATACENTER}" \
+        -dc="${GOVMOMI_DATACENTER}" \
         -ds="${GOVMOMI_DATASTORE}" \
         -f \
         "${VSPHERE_CIDATA_ISO_PATH}"
@@ -243,7 +243,7 @@ function cleanupVSphere() {
     $GOVC_CMD datastore.rm \
         -u "${GOVMOMI_USERNAME}:${GOVMOMI_PASSWORD}@${GOVMOMI_URL}" \
         -k=true \
-        -dc="${GOVC_DATACENTER}" \
+        -dc="${GOVMOMI_DATACENTER}" \
         -ds="${GOVMOMI_DATASTORE}" \
         -f \
         "${VSPHERE_VM_NAME}"

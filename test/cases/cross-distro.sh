@@ -115,7 +115,7 @@ fi
 # ALL_EXPECTED_DISTROS - all distros matching host pattern
 # ALL_REMAINDERS - all the unrecognized distros
 # Filter out beta and centos-stream, see GH issue #2257
-ALL_DISTROS=$(find "$REPO_PATH" -name '*.json' -printf '%P\n' | awk -F "." '{ print $1 }')
+ALL_DISTROS=$(find "$REPO_PATH" -name '*.json' -printf '%P\n' | grep -v 'no-aux-key' | awk -F "." '{ print $1 }')
 ALL_EXPECTED_DISTROS=$(echo "$ALL_DISTROS" | grep -E "$PATTERN" | grep -Ev 'beta|stream' | sort)
 # Warning: filter out the remaining distros by matching whole words to avoid matching
 # the value rhel-9X by the pattern rhel-9!

@@ -73,10 +73,12 @@ init:
 .nightly_rules_all:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9.5-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-10.0-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "10"'
 
 .nightly_rules_x86_64:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9.5-[^ga][\S]+/ && $RUNNER =~ "/^.*(x86_64).*$/" && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-10.0-[^ga][\S]+/ && $RUNNER =~ "/^.*(x86_64).*$/" && $NIGHTLY == "true" && $RHEL_MAJOR == "10"'
 
 .ga_rules_all:
   rules:
@@ -178,6 +180,7 @@ Prepare-rhel-internal:
           # NOTE: 1 runner prepares for all arches b/c subsequent jobs download
           # artifacts from all previous jobs and the last one wins
           - aws/rhel-9.5-nightly-x86_64
+          - aws/rhel-10.0-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
 
 Base:
@@ -202,8 +205,12 @@ Base:
       - RUNNER:
           - aws/rhel-9.5-nightly-x86_64
           - aws/rhel-9.5-nightly-aarch64
+          - aws/rhel-10.0-nightly-x86_64
+          - aws/rhel-10.0-nightly-aarch64
           - aws/centos-stream-9-x86_64
           - aws/centos-stream-9-aarch64
+          - aws/centos-stream-10-x86_64
+          - aws/centos-stream-10-aarch64
         INTERNAL_NETWORK: ["true"]
 
 .regression:
@@ -228,15 +235,19 @@ Base:
           - aws/rhel-9.4-ga-aarch64
           - aws/rhel-9.5-nightly-x86_64
           - aws/rhel-9.5-nightly-aarch64
+          - aws/rhel-10.0-nightly-x86_64
+          - aws/rhel-10.0-nightly-aarch64
           - aws/centos-stream-9-x86_64
           - aws/centos-stream-9-aarch64
+          - aws/centos-stream-10-x86_64
+          - aws/centos-stream-10-aarch64
         INTERNAL_NETWORK: ["true"]
 
 regression-composer-works-behind-satellite-fallback:
   extends: .regression
   rules:
     # BLACKLIST: Skipped on subscribed RHEL machines
-    - if: $RUNNER !~ "/^.*(rhel-.*-ga|centos|fedora).*$/" && $RUNNER !~ "/^.*(rhel-9.5).*$/" && $CI_PIPELINE_SOURCE != "schedule"
+    - if: $RUNNER !~ "/^.*(rhel-.*-ga|centos|fedora).*$/" && $RUNNER !~ "/^.*(rhel-9.5|rhel-10.0).*$/" && $CI_PIPELINE_SOURCE != "schedule"
   variables:
     SCRIPT: regression-composer-works-behind-satellite-fallback.sh
 
@@ -244,7 +255,7 @@ regression-composer-works-behind-satellite:
   extends: .regression
   rules: 
     # BLACKLIST: Skipped on subscribed RHEL machines
-    - if: $RUNNER !~ "/^.*(rhel-.*-ga|centos|fedora).*$/" && $RUNNER !~ "/^.*(rhel-9.5).*$/" && $CI_PIPELINE_SOURCE != "schedule"
+    - if: $RUNNER !~ "/^.*(rhel-.*-ga|centos|fedora).*$/" && $RUNNER !~ "/^.*(rhel-9.5|rhel-10.0).*$/" && $CI_PIPELINE_SOURCE != "schedule"
   variables:
     SCRIPT: regression-composer-works-behind-satellite.sh
 
@@ -252,7 +263,7 @@ regression-excluded-dependency:
   extends: .regression
   rules:
     # WHITELIST & BLACKLIST: excluding GA runners from the PR pipeline
-    - if: $RUNNER =~ "/^.*(rhel-8.*|rhel-9.*|centos-stream-9).*$/" && $CI_PIPELINE_SOURCE != "schedule" && $RUNNER !~ /[\S]+rhel-[\S]+-(?:(?:ga)|(?:eus))[\S]+/
+    - if: $RUNNER =~ "/^.*(rhel-8.*|rhel-9.*|centos-stream-*).*$/" && $CI_PIPELINE_SOURCE != "schedule" && $RUNNER !~ /[\S]+rhel-[\S]+-(?:(?:ga)|(?:eus))[\S]+/
     - !reference [.nightly_rules_all, rules]
     - !reference [.ga_rules_all, rules]
   variables:
@@ -318,6 +329,9 @@ Image Tests:
           - aws/rhel-8.10-ga-aarch64
           - aws/rhel-9.5-nightly-x86_64
           - aws/rhel-9.5-nightly-aarch64
+          # TODO: enable once COMPOSER-2334 is resolved
+          # - aws/rhel-10.0-nightly-x86_64
+          # - aws/rhel-10.0-nightly-aarch64
         INTERNAL_NETWORK: ["true"]
 
 Trigger-rhel-edge-ci:
@@ -346,8 +360,9 @@ Trigger-rhel-edge-ci:
       - aws/rhel-8.10-ga-x86_64
       - aws/rhel-9.4-ga-x86_64
       - aws/rhel-9.5-nightly-x86_64
-      - aws/rhel-9.5-nightly-aarch64
+      - aws/rhel-10.0-nightly-x86_64
       - aws/centos-stream-9-x86_64
+      - aws/centos-stream-10-x86_64
     INTERNAL_NETWORK: ["true"]
 
 .integration_rhel:
@@ -446,6 +461,7 @@ OpenShift_Virtualization:
     matrix:
       - RUNNER:
           - aws/rhel-9.5-nightly-x86_64
+          - aws/rhel-10.0-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
 
 azure.sh:
@@ -471,9 +487,12 @@ azure.sh_hyperv_gen2:
 # The required GCE image type is not supported on Fedora
 gcp.sh:
   extends: .integration_rhel
-  rules: 
-    - !reference [.upstream_rules_x86_64, rules]
-    - !reference [.nightly_rules_x86_64, rules]
+  rules:
+    # Temporarily disabled for RHEL-10 and Centos-10
+    - if: '$CI_PIPELINE_SOURCE != "schedule" && $RUNNER =~ "/^.*(x86_64).*$/" && $RUNNER !~ /[\S]+rhel-[\S]+-(?:(?:ga)|(?:eus))[\S]+/ && $RUNNER !~ "/^.*(rhel-10.0-nightly|centos-stream-10).*$/"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9.5-[^ga][\S]+/ && $RUNNER =~ "/^.*(x86_64).*$/" && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
+    # - !reference [.upstream_rules_x86_64, rules]
+    # - !reference [.nightly_rules_x86_64, rules]
     - !reference [.ga_rules_x86_64, rules]
   variables:
     SCRIPT: gcp.sh
@@ -482,8 +501,11 @@ vmware.sh_vmdk:
   extends: .integration_rhel
   rules:
     # Run only on x86_64
-    - !reference [.upstream_rules_x86_64, rules]
-    - !reference [.nightly_rules_x86_64, rules]
+    # Temporarily disabled for RHEL-10 and Centos-10
+    - if: '$CI_PIPELINE_SOURCE != "schedule" && $RUNNER =~ "/^.*(x86_64).*$/" && $RUNNER !~ /[\S]+rhel-[\S]+-(?:(?:ga)|(?:eus))[\S]+/ && $RUNNER !~ "/^.*(rhel-10.0-nightly|centos-stream-10).*$/"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9.5-[^ga][\S]+/ && $RUNNER =~ "/^.*(x86_64).*$/" && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
+    # - !reference [.upstream_rules_x86_64, rules]
+    # - !reference [.nightly_rules_x86_64, rules]
     - !reference [.ga_rules_x86_64, rules]
   variables:
     SCRIPT: vmware.sh vmdk
@@ -492,8 +514,11 @@ vmware.sh_ova:
   extends: .integration_rhel
   rules:
     # Run only on x86_64
-    - !reference [.upstream_rules_x86_64, rules]
-    - !reference [.nightly_rules_x86_64, rules]
+    # Temporarily disabled for RHEL-10 and Centos-10
+    - if: '$CI_PIPELINE_SOURCE != "schedule" && $RUNNER =~ "/^.*(x86_64).*$/" && $RUNNER !~ /[\S]+rhel-[\S]+-(?:(?:ga)|(?:eus))[\S]+/ && $RUNNER !~ "/^.*(rhel-10.0-nightly|centos-stream-10).*$/"'
+    # - !reference [.upstream_rules_x86_64, rules]
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9.5-[^ga][\S]+/ && $RUNNER =~ "/^.*(x86_64).*$/" && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
+    # - !reference [.nightly_rules_x86_64, rules]
     - !reference [.ga_rules_x86_64, rules]
   variables:
     SCRIPT: vmware.sh ova
@@ -543,6 +568,13 @@ API:
           - aws/rhel-8.10-ga-x86_64
           - aws/rhel-9.4-ga-x86_64
           - aws/rhel-9.5-nightly-x86_64
+        INTERNAL_NETWORK: ["true"]
+      # el10 for now supports only a subset of image types
+      - IMAGE_TYPE:
+          - aws
+          - azure
+        RUNNER:
+          - aws/rhel-10.0-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
       - IMAGE_TYPE: ["iot-commit"]
         RUNNER:
@@ -602,6 +634,9 @@ API-module-hotfixes:
           - gcp/rhel-8.10-ga-x86_64
           - gcp/rhel-9.4-ga-x86_64
           - gcp/rhel-9.5-nightly-x86_64
+          # TODO: replace the rhos-01 runner with this gcp runner once it's available
+          # - gcp/rhel-10.0-nightly-x86_64
+          - rhos-01/rhel-10.0-nightly-x86_64
           - gcp/centos-stream-9-x86_64
         INTERNAL_NETWORK: ["true"]
 
@@ -792,8 +827,9 @@ ContainerEmbedding:
       - INTERNAL_NETWORK: "true"
         RUNNER:
         - aws/centos-stream-9-x86_64
+        - aws/centos-stream-10-x86_64
         - aws/rhel-9.5-nightly-x86_64
-        - aws/rhel-9.5-nightly-aarch64
+        - aws/rhel-10.0-nightly-x86_64
 
 WorkerExecutor:
   stage: test

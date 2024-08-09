@@ -78,14 +78,14 @@ case "${ID}" in
     "rhel")
         echo "Running on RHEL"
 
-        if [[ "$VERSION_ID" == "9.5" ]]; then
+        if [[ "$VERSION_ID" == "9.5" || "$VERSION_ID" == "10.0" ]]; then
             # fails eventhough we call update-ca-trust, see previous commit
             echo "This test has been disabled b/c DNF fails with self-signed certificates"
-            exit 0
+            exit 1
         fi
 
         case "${VERSION_ID%.*}" in
-            "8" | "9")
+            "8" | "9" | "10")
                 echo "Running on RHEL ${VERSION_ID}"
                 # TODO: remove once the osbuild-composer v100 is in RHEL
                 if ! nvrGreaterOrEqual "osbuild-composer" "100"; then

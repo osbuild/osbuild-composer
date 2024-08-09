@@ -12,10 +12,16 @@ function greenprint {
 }
 source /etc/os-release
 # s3cmd is in epel, add if it's not present
-if [[ $ID == rhel || $ID == centos ]] && ! rpm -q epel-release; then
+# TODO: Adjust this condition, once EPEL-10 is enabled
+if [[ ($ID == rhel || $ID == centos) && ${VERSION_ID%.*} -lt 10 ]] && ! rpm -q epel-release; then
     curl -Ls --retry 5 --output /tmp/epel.rpm \
         https://dl.fedoraproject.org/pub/epel/epel-release-latest-"${VERSION_ID%.*}".noarch.rpm
     sudo rpm -Uvh /tmp/epel.rpm
+fi
+
+# TODO: Remove this workaround, once EPEL-10 is enabled
+if [[ ($ID == rhel || $ID == centos) && ${VERSION_ID%.*} == 10 ]]; then
+    sudo dnf copr enable -y @osbuild/centpkg "centos-stream-10-$(uname -m)"
 fi
 
 sudo dnf -y install s3cmd

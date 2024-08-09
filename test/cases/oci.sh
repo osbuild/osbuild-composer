@@ -91,6 +91,7 @@ if ! hash oci; then
 
     # OCI_CLI_AUTH
     OCI_CMD="sudo ${CONTAINER_RUNTIME} run --rm \
+        --net=host \
         -e OCI_AUTH_TOKEN=${OCI_AUTH_TOKEN} \
         -v ${TEMPDIR}:${TEMPDIR}:Z \
         -v ${SSH_DATA_DIR}:${SSH_DATA_DIR}:Z \
