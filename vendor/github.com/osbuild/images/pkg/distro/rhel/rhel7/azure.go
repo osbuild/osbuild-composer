@@ -3,12 +3,12 @@ package rhel7
 import (
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/arch"
+	"github.com/osbuild/images/pkg/customizations/subscription"
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distro/rhel"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/rpmmd"
-	"github.com/osbuild/images/pkg/subscription"
 )
 
 func mkAzureRhuiImgType() *rhel.ImageType {
@@ -161,25 +161,25 @@ var azureDefaultImgConfig = &distro.ImageConfig{
 			RDEnableSwap: common.ToPtr(false),
 		},
 	},
-	RHSMConfig: map[subscription.RHSMStatus]*osbuild.RHSMStageOptions{
+	RHSMConfig: map[subscription.RHSMStatus]*subscription.RHSMConfig{
 		subscription.RHSMConfigNoSubscription: {
-			YumPlugins: &osbuild.RHSMStageOptionsDnfPlugins{
-				SubscriptionManager: &osbuild.RHSMStageOptionsDnfPlugin{
-					Enabled: false,
+			YumPlugins: subscription.SubManDNFPluginsConfig{
+				SubscriptionManager: subscription.DNFPluginConfig{
+					Enabled: common.ToPtr(false),
 				},
 			},
-			SubMan: &osbuild.RHSMStageOptionsSubMan{
-				Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
+			SubMan: subscription.SubManConfig{
+				Rhsmcertd: subscription.SubManRHSMCertdConfig{
 					AutoRegistration: common.ToPtr(true),
 				},
-				Rhsm: &osbuild.SubManConfigRHSMSection{
+				Rhsm: subscription.SubManRHSMConfig{
 					ManageRepos: common.ToPtr(false),
 				},
 			},
 		},
 		subscription.RHSMConfigWithSubscription: {
-			SubMan: &osbuild.RHSMStageOptionsSubMan{
-				Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
+			SubMan: subscription.SubManConfig{
+				Rhsmcertd: subscription.SubManRHSMCertdConfig{
 					AutoRegistration: common.ToPtr(true),
 				},
 				// do not disable the redhat.repo management if the user

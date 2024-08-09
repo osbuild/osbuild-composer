@@ -3,10 +3,10 @@ package v2
 import (
 	"testing"
 
+	"github.com/osbuild/images/pkg/customizations/subscription"
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/distrofactory"
 	"github.com/osbuild/images/pkg/reporegistry"
-	"github.com/osbuild/images/pkg/subscription"
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/target"
@@ -135,6 +135,33 @@ func GetTestBlueprint() blueprint.Blueprint {
 			Unattended:   true,
 			SudoNopasswd: []string{`%wheel`},
 		},
+		RPM: &blueprint.RPMCustomization{
+			ImportKeys: &blueprint.RPMImportKeys{
+				Files: []string{
+					"/root/gpg-key",
+				},
+			},
+		},
+		RHSM: &blueprint.RHSMCustomization{
+			Config: &blueprint.RHSMConfig{
+				DNFPlugins: &blueprint.SubManDNFPluginsConfig{
+					ProductID: &blueprint.DNFPluginConfig{
+						Enabled: common.ToPtr(true),
+					},
+					SubscriptionManager: &blueprint.DNFPluginConfig{
+						Enabled: common.ToPtr(false),
+					},
+				},
+				SubscriptionManager: &blueprint.SubManConfig{
+					RHSMConfig: &blueprint.SubManRHSMConfig{
+						ManageRepos: common.ToPtr(true),
+					},
+					RHSMCertdConfig: &blueprint.SubManRHSMCertdConfig{
+						AutoRegistration: common.ToPtr(false),
+					},
+				},
+			},
+		},
 	}
 
 	return expected
@@ -258,6 +285,33 @@ func TestGetBlueprintFromCustomizations(t *testing.T) {
 		Installer: &Installer{
 			Unattended:   common.ToPtr(true),
 			SudoNopasswd: &[]string{`%wheel`},
+		},
+		Rpm: &RPMCustomization{
+			ImportKeys: &ImportKeys{
+				Files: &[]string{
+					"/root/gpg-key",
+				},
+			},
+		},
+		Rhsm: &RHSMCustomization{
+			Config: &RHSMConfig{
+				DnfPlugins: &SubManDNFPluginsConfig{
+					ProductId: &DNFPluginConfig{
+						Enabled: common.ToPtr(true),
+					},
+					SubscriptionManager: &DNFPluginConfig{
+						Enabled: common.ToPtr(false),
+					},
+				},
+				SubscriptionManager: &SubManConfig{
+					Rhsm: &SubManRHSMConfig{
+						ManageRepos: common.ToPtr(true),
+					},
+					Rhsmcertd: &SubManRHSMCertdConfig{
+						AutoRegistration: common.ToPtr(false),
+					},
+				},
+			},
 		},
 	}}
 
@@ -405,6 +459,33 @@ func TestGetBlueprintFromCompose(t *testing.T) {
 			Installer: &Installer{
 				Unattended:   common.ToPtr(true),
 				SudoNopasswd: &[]string{`%wheel`},
+			},
+			Rpm: &RPMCustomization{
+				ImportKeys: &ImportKeys{
+					Files: &[]string{
+						"/root/gpg-key",
+					},
+				},
+			},
+			Rhsm: &RHSMCustomization{
+				Config: &RHSMConfig{
+					DnfPlugins: &SubManDNFPluginsConfig{
+						ProductId: &DNFPluginConfig{
+							Enabled: common.ToPtr(true),
+						},
+						SubscriptionManager: &DNFPluginConfig{
+							Enabled: common.ToPtr(false),
+						},
+					},
+					SubscriptionManager: &SubManConfig{
+						Rhsm: &SubManRHSMConfig{
+							ManageRepos: common.ToPtr(true),
+						},
+						Rhsmcertd: &SubManRHSMCertdConfig{
+							AutoRegistration: common.ToPtr(false),
+						},
+					},
+				},
 			},
 		},
 	}}

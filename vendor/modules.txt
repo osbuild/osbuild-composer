@@ -861,7 +861,7 @@ github.com/oracle/oci-go-sdk/v54/identity
 github.com/oracle/oci-go-sdk/v54/objectstorage
 github.com/oracle/oci-go-sdk/v54/objectstorage/transfer
 github.com/oracle/oci-go-sdk/v54/workrequests
-# github.com/osbuild/images v0.74.0
+# github.com/osbuild/images v0.75.0
 ## explicit; go 1.21.0
 github.com/osbuild/images/internal/common
 github.com/osbuild/images/internal/environment
@@ -880,6 +880,7 @@ github.com/osbuild/images/pkg/customizations/ignition
 github.com/osbuild/images/pkg/customizations/kickstart
 github.com/osbuild/images/pkg/customizations/oscap
 github.com/osbuild/images/pkg/customizations/shell
+github.com/osbuild/images/pkg/customizations/subscription
 github.com/osbuild/images/pkg/customizations/users
 github.com/osbuild/images/pkg/disk
 github.com/osbuild/images/pkg/distro
@@ -905,7 +906,6 @@ github.com/osbuild/images/pkg/rhsm
 github.com/osbuild/images/pkg/rhsm/facts
 github.com/osbuild/images/pkg/rpmmd
 github.com/osbuild/images/pkg/runner
-github.com/osbuild/images/pkg/subscription
 # github.com/osbuild/osbuild-composer/pkg/splunk_logger v0.0.0-20231117174845-e969a9dc3cd1
 ## explicit; go 1.19
 github.com/osbuild/osbuild-composer/pkg/splunk_logger
@@ -1141,7 +1141,7 @@ go.opentelemetry.io/otel/metric/noop
 ## explicit; go 1.20
 go.opentelemetry.io/otel/trace
 go.opentelemetry.io/otel/trace/embedded
-# golang.org/x/crypto v0.25.0
+# golang.org/x/crypto v0.26.0
 ## explicit; go 1.20
 golang.org/x/crypto/acme
 golang.org/x/crypto/acme/autocert
@@ -1172,12 +1172,12 @@ golang.org/x/crypto/sha3
 golang.org/x/exp/constraints
 golang.org/x/exp/maps
 golang.org/x/exp/slices
-# golang.org/x/mod v0.19.0
+# golang.org/x/mod v0.20.0
 ## explicit; go 1.18
 golang.org/x/mod/internal/lazyregexp
 golang.org/x/mod/module
 golang.org/x/mod/semver
-# golang.org/x/net v0.27.0
+# golang.org/x/net v0.28.0
 ## explicit; go 1.18
 golang.org/x/net/html
 golang.org/x/net/html/atom
@@ -1188,7 +1188,7 @@ golang.org/x/net/http2/hpack
 golang.org/x/net/idna
 golang.org/x/net/internal/timeseries
 golang.org/x/net/trace
-# golang.org/x/oauth2 v0.21.0
+# golang.org/x/oauth2 v0.22.0
 ## explicit; go 1.18
 golang.org/x/oauth2
 golang.org/x/oauth2/authhandler
@@ -1200,11 +1200,11 @@ golang.org/x/oauth2/google/internal/stsexchange
 golang.org/x/oauth2/internal
 golang.org/x/oauth2/jws
 golang.org/x/oauth2/jwt
-# golang.org/x/sync v0.7.0
+# golang.org/x/sync v0.8.0
 ## explicit; go 1.18
 golang.org/x/sync/errgroup
 golang.org/x/sync/semaphore
-# golang.org/x/sys v0.22.0
+# golang.org/x/sys v0.23.0
 ## explicit; go 1.18
 golang.org/x/sys/cpu
 golang.org/x/sys/execabs
@@ -1212,10 +1212,10 @@ golang.org/x/sys/plan9
 golang.org/x/sys/unix
 golang.org/x/sys/windows
 golang.org/x/sys/windows/registry
-# golang.org/x/term v0.22.0
+# golang.org/x/term v0.23.0
 ## explicit; go 1.18
 golang.org/x/term
-# golang.org/x/text v0.16.0
+# golang.org/x/text v0.17.0
 ## explicit; go 1.18
 golang.org/x/text/cases
 golang.org/x/text/internal
@@ -1233,7 +1233,7 @@ golang.org/x/text/width
 # golang.org/x/time v0.5.0
 ## explicit; go 1.18
 golang.org/x/time/rate
-# golang.org/x/tools v0.23.0
+# golang.org/x/tools v0.24.0
 ## explicit; go 1.19
 golang.org/x/tools/go/ast/astutil
 golang.org/x/tools/imports

@@ -438,6 +438,43 @@ EOF
 )
 export FIREWALL_CUSTOMIZATION_BLOCK
 
+RPM_CUSTOMIZATION_BLOCK=$(cat <<EOF
+,
+    "rpm": {
+      "import_keys": {
+        "files": ["/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-beta"]
+      }
+    }
+EOF
+)
+export RPM_CUSTOMIZATION_BLOCK
+
+RHSM_CUSTOMIZATION_BLOCK=$(cat <<EOF
+,
+    "rhsm": {
+      "config": {
+        "dnf_plugins": {
+          "product_id": {
+            "enabled": true
+          },
+          "subscription_manager": {
+            "enabled": false
+          }
+        },
+        "subscription_manager": {
+          "rhsm": {
+            "manage_repos": true
+          },
+          "rhsmcertd": {
+            "auto_registration": false
+          }
+        }
+      }
+    }
+EOF
+)
+export RHSM_CUSTOMIZATION_BLOCK
+
 if [ "$TEST_MODULE_HOTFIXES" = "1" ]; then
   if [ "$ARCH" = "x86_64" ]; then
     NGINX_REPO_URL="https://rpmrepo.osbuild.org/v2/mirror/public/el8/el8-x86_64-nginx-20240626"

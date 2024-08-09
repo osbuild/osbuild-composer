@@ -545,11 +545,38 @@ func TestBlueprintsCustomizationInfoToml(t *testing.T) {
         "minsize": 2147483648
       }
     ],
-	"openscap": {
-	    "datastream": "/usr/share/xml/scap/ssg/content/ssg-rhel8-ds.xml",
-		"profile_id": "xccdf_org.ssgproject.content_profile_cis"
-	},
-	"partitioning_mode": "raw"
+    "openscap": {
+      "datastream": "/usr/share/xml/scap/ssg/content/ssg-rhel8-ds.xml",
+      "profile_id": "xccdf_org.ssgproject.content_profile_cis"
+    },
+    "partitioning_mode": "raw",
+    "rpm": {
+      "import_keys": {
+        "files": [
+          "/root/gpg-key"
+        ]
+      }
+    },
+    "rhsm": {
+      "config": {
+        "dnf_plugins": {
+          "product_id": {
+            "enabled": true
+          },
+          "subscription_manager": {
+            "enabled": false
+          }
+        },
+        "subscription_manager": {
+          "rhsm": {
+            "manage_repos": true
+          },
+          "rhsmcertd": {
+            "auto_registration": false
+          }
+        }
+      }
+    }
   }
 }`
 	resp := test.SendHTTP(api, true, "POST", "/api/v0/blueprints/new", testBlueprint)
@@ -645,6 +672,31 @@ func TestBlueprintsCustomizationInfoToml(t *testing.T) {
 				ProfileID:  "xccdf_org.ssgproject.content_profile_cis",
 			},
 			PartitioningMode: "raw",
+			RPM: &blueprint.RPMCustomization{
+				ImportKeys: &blueprint.RPMImportKeys{
+					Files: []string{"/root/gpg-key"},
+				},
+			},
+			RHSM: &blueprint.RHSMCustomization{
+				Config: &blueprint.RHSMConfig{
+					DNFPlugins: &blueprint.SubManDNFPluginsConfig{
+						ProductID: &blueprint.DNFPluginConfig{
+							Enabled: common.ToPtr(true),
+						},
+						SubscriptionManager: &blueprint.DNFPluginConfig{
+							Enabled: common.ToPtr(false),
+						},
+					},
+					SubscriptionManager: &blueprint.SubManConfig{
+						RHSMConfig: &blueprint.SubManRHSMConfig{
+							ManageRepos: common.ToPtr(true),
+						},
+						RHSMCertdConfig: &blueprint.SubManRHSMCertdConfig{
+							AutoRegistration: common.ToPtr(false),
+						},
+					},
+				},
+			},
 		},
 	}
 

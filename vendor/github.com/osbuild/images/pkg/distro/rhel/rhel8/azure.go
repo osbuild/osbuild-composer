@@ -4,12 +4,12 @@ import (
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/customizations/shell"
+	"github.com/osbuild/images/pkg/customizations/subscription"
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distro/rhel"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/rpmmd"
-	"github.com/osbuild/images/pkg/subscription"
 )
 
 // use loglevel=3 as described in the RHEL documentation and used in existing RHEL images built by MSFT
@@ -671,25 +671,25 @@ var defaultAzureRhuiImageConfig = &distro.ImageConfig{
 		"/etc/pki/rpm-gpg/RPM-GPG-KEY-microsoft-azure-release",
 		"/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release",
 	},
-	RHSMConfig: map[subscription.RHSMStatus]*osbuild.RHSMStageOptions{
+	RHSMConfig: map[subscription.RHSMStatus]*subscription.RHSMConfig{
 		subscription.RHSMConfigNoSubscription: {
-			DnfPlugins: &osbuild.RHSMStageOptionsDnfPlugins{
-				SubscriptionManager: &osbuild.RHSMStageOptionsDnfPlugin{
-					Enabled: false,
+			DnfPlugins: subscription.SubManDNFPluginsConfig{
+				SubscriptionManager: subscription.DNFPluginConfig{
+					Enabled: common.ToPtr(false),
 				},
 			},
-			SubMan: &osbuild.RHSMStageOptionsSubMan{
-				Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
+			SubMan: subscription.SubManConfig{
+				Rhsmcertd: subscription.SubManRHSMCertdConfig{
 					AutoRegistration: common.ToPtr(true),
 				},
-				Rhsm: &osbuild.SubManConfigRHSMSection{
+				Rhsm: subscription.SubManRHSMConfig{
 					ManageRepos: common.ToPtr(false),
 				},
 			},
 		},
 		subscription.RHSMConfigWithSubscription: {
-			SubMan: &osbuild.RHSMStageOptionsSubMan{
-				Rhsmcertd: &osbuild.SubManConfigRHSMCERTDSection{
+			SubMan: subscription.SubManConfig{
+				Rhsmcertd: subscription.SubManRHSMCertdConfig{
 					AutoRegistration: common.ToPtr(true),
 				},
 				// do not disable the redhat.repo management if the user

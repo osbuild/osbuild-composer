@@ -80,6 +80,10 @@ type AnacondaInstaller struct {
 
 	// Temporary
 	UseRHELLoraxTemplates bool
+
+	// Uses the old, deprecated, Anaconda config option "kickstart-modules".
+	// Only for RHEL 8.
+	UseLegacyAnacondaConfig bool
 }
 
 func NewAnacondaInstaller(installerType AnacondaInstallerType,
@@ -271,7 +275,14 @@ func (p *AnacondaInstaller) payloadStages() []*osbuild.Stage {
 		LoraxPath = "99-generic/runtime-postinstall.tmpl"
 	}
 
-	stages = append(stages, osbuild.NewAnacondaStage(osbuild.NewAnacondaStageOptions(p.AdditionalAnacondaModules, p.DisabledAnacondaModules)))
+	var anacondaStageOptions *osbuild.AnacondaStageOptions
+	if p.UseLegacyAnacondaConfig {
+		anacondaStageOptions = osbuild.NewAnacondaStageOptionsLegacy(p.AdditionalAnacondaModules, p.DisabledAnacondaModules)
+	} else {
+		anacondaStageOptions = osbuild.NewAnacondaStageOptions(p.AdditionalAnacondaModules, p.DisabledAnacondaModules)
+	}
+	stages = append(stages, osbuild.NewAnacondaStage(anacondaStageOptions))
+
 	stages = append(stages, osbuild.NewLoraxScriptStage(&osbuild.LoraxScriptStageOptions{
 		Path:     LoraxPath,
 		BaseArch: p.platform.GetArch().String(),

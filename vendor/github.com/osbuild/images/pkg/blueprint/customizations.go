@@ -31,6 +31,7 @@ type Customizations struct {
 	ContainersStorage  *ContainerStorageCustomization `json:"containers-storage,omitempty" toml:"containers-storage,omitempty"`
 	Installer          *InstallerCustomization        `json:"installer,omitempty" toml:"installer,omitempty"`
 	RPM                *RPMCustomization              `json:"rpm,omitempty" toml:"rpm,omitempty"`
+	RHSM               *RHSMCustomization             `json:"rhsm,omitempty" toml:"rhsm,omitempty"`
 }
 
 type IgnitionCustomization struct {
@@ -430,4 +431,11 @@ func (c *Customizations) GetRPM() *RPMCustomization {
 		return nil
 	}
 	return c.RPM
+}
+
+func (c *Customizations) GetRHSM() *RHSMCustomization {
+	if c == nil {
+		return nil
+	}
+	return c.RHSM
 }

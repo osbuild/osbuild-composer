@@ -6,8 +6,8 @@ import (
 
 	"github.com/osbuild/images/pkg/customizations/fsnode"
 	"github.com/osbuild/images/pkg/customizations/shell"
+	"github.com/osbuild/images/pkg/customizations/subscription"
 	"github.com/osbuild/images/pkg/osbuild"
-	"github.com/osbuild/images/pkg/subscription"
 )
 
 // ImageConfig represents a (default) configuration applied to the image payload.
@@ -39,7 +39,7 @@ type ImageConfig struct {
 
 	// for RHSM configuration, we need to potentially distinguish the case
 	// when the user want the image to be subscribed on first boot and when not
-	RHSMConfig          map[subscription.RHSMStatus]*osbuild.RHSMStageOptions
+	RHSMConfig          map[subscription.RHSMStatus]*subscription.RHSMConfig
 	SystemdLogind       []*osbuild.SystemdLogindStageOptions
 	CloudInit           []*osbuild.CloudInitStageOptions
 	Modprobe            []*osbuild.ModprobeStageOptions

@@ -2,11 +2,11 @@ package rhel7
 
 import (
 	"github.com/osbuild/images/internal/common"
+	"github.com/osbuild/images/pkg/customizations/subscription"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distro/rhel"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/rpmmd"
-	"github.com/osbuild/images/pkg/subscription"
 )
 
 func mkQcow2ImgType() *rhel.ImageType {
@@ -63,14 +63,14 @@ var qcow2DefaultImgConfig = &distro.ImageConfig{
 			},
 		},
 	},
-	RHSMConfig: map[subscription.RHSMStatus]*osbuild.RHSMStageOptions{
+	RHSMConfig: map[subscription.RHSMStatus]*subscription.RHSMConfig{
 		subscription.RHSMConfigNoSubscription: {
-			YumPlugins: &osbuild.RHSMStageOptionsDnfPlugins{
-				ProductID: &osbuild.RHSMStageOptionsDnfPlugin{
-					Enabled: false,
+			YumPlugins: subscription.SubManDNFPluginsConfig{
+				ProductID: subscription.DNFPluginConfig{
+					Enabled: common.ToPtr(false),
 				},
-				SubscriptionManager: &osbuild.RHSMStageOptionsDnfPlugin{
-					Enabled: false,
+				SubscriptionManager: subscription.DNFPluginConfig{
+					Enabled: common.ToPtr(false),
 				},
 			},
 		},
