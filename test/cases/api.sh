@@ -454,6 +454,11 @@ RPM_CUSTOMIZATION_BLOCK=$(cat <<EOF
     }
 EOF
 )
+# TODO: Remove once the RPM-GPG-KEY-redhat-beta does not use SHA-1
+if [[ ($ID == rhel || $ID == centos) && ${VERSION_ID%.*} == 10 ]]; then
+  yellowprint "RPM-GPG-KEY-redhat-beta uses SHA-1, which is not supported on ${ID}-${VERSION_ID}. No rpm customization applied!"
+  RPM_CUSTOMIZATION_BLOCK=
+fi
 export RPM_CUSTOMIZATION_BLOCK
 
 RHSM_CUSTOMIZATION_BLOCK=$(cat <<EOF
