@@ -3,7 +3,7 @@ package osbuild
 import (
 	"fmt"
 
-	"golang.org/x/exp/slices"
+	"slices"
 )
 
 type CloudInitStageOptions struct {

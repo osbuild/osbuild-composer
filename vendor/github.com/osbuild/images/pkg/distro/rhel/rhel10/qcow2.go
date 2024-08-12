@@ -54,31 +54,6 @@ func mkOCIImgType(d *rhel.Distribution) *rhel.ImageType {
 	return it
 }
 
-func mkOpenstackImgType() *rhel.ImageType {
-	it := rhel.NewImageType(
-		"openstack",
-		"disk.qcow2",
-		"application/x-qemu-disk",
-		map[string]rhel.PackageSetFunc{
-			rhel.OSPkgsKey: openstackCommonPackageSet,
-		},
-		rhel.DiskImage,
-		[]string{"build"},
-		[]string{"os", "image", "qcow2"},
-		[]string{"qcow2"},
-	)
-
-	it.DefaultImageConfig = &distro.ImageConfig{
-		Locale: common.ToPtr("en_US.UTF-8"),
-	}
-	it.KernelOptions = "ro"
-	it.DefaultSize = 4 * common.GibiByte
-	it.Bootable = true
-	it.BasePartitionTables = defaultBasePartitionTables
-
-	return it
-}
-
 func qcow2CommonPackageSet(t *rhel.ImageType) rpmmd.PackageSet {
 	ps := rpmmd.PackageSet{
 		Include: []string{
@@ -149,28 +124,6 @@ func qcow2CommonPackageSet(t *rhel.ImageType) rpmmd.PackageSet {
 				"subscription-manager-cockpit",
 			},
 		})
-	}
-
-	return ps
-}
-
-func openstackCommonPackageSet(t *rhel.ImageType) rpmmd.PackageSet {
-	ps := rpmmd.PackageSet{
-		Include: []string{
-			// Defaults
-			"@core",
-			"langpacks-en",
-			"tuned",
-
-			// From the lorax kickstart
-			"cloud-init",
-			"qemu-guest-agent",
-			"spice-vdagent",
-		},
-		Exclude: []string{
-			"dracut-config-rescue",
-			"rng-tools",
-		},
 	}
 
 	return ps

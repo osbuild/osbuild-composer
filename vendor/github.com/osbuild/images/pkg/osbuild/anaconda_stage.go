@@ -1,8 +1,9 @@
 package osbuild
 
 import (
+	"slices"
+
 	"github.com/osbuild/images/pkg/customizations/anaconda"
-	"golang.org/x/exp/slices"
 )
 
 type AnacondaStageOptions struct {

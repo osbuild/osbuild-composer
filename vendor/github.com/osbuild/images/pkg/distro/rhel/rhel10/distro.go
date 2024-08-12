@@ -87,17 +87,6 @@ func newDistro(name string, major, minor int) *rhel.Distribution {
 			BIOS:       true,
 			UEFIVendor: rd.Vendor(),
 			BasePlatform: platform.BasePlatform{
-				ImageFormat: platform.FORMAT_QCOW2,
-			},
-		},
-		mkOpenstackImgType(),
-	)
-
-	x86_64.AddImageTypes(
-		&platform.X86{
-			BIOS:       true,
-			UEFIVendor: rd.Vendor(),
-			BasePlatform: platform.BasePlatform{
 				ImageFormat: platform.FORMAT_VMDK,
 			},
 		},
@@ -119,16 +108,6 @@ func newDistro(name string, major, minor int) *rhel.Distribution {
 		&platform.X86{},
 		mkTarImgType(),
 		mkWSLImgType(),
-	)
-
-	aarch64.AddImageTypes(
-		&platform.Aarch64{
-			UEFIVendor: rd.Vendor(),
-			BasePlatform: platform.BasePlatform{
-				ImageFormat: platform.FORMAT_QCOW2,
-			},
-		},
-		mkOpenstackImgType(),
 	)
 
 	aarch64.AddImageTypes(
