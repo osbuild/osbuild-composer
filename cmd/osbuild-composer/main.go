@@ -84,6 +84,10 @@ func main() {
 		logrus.Fatalf("Error printing configuration: %v", err)
 	}
 
+	if config.DeploymentChannel != "" {
+		logrus.AddHook(&common.EnvironmentHook{Channel: config.DeploymentChannel})
+	}
+
 	if config.SplunkHost != "" {
 		hook, err := slogger.NewSplunkHook(context.Background(), config.SplunkHost, config.SplunkPort, config.SplunkToken, "osbuild-composer")
 
@@ -108,10 +112,6 @@ func main() {
 
 	} else {
 		logrus.Warn("GLITCHTIP_DSN not configured, skipping initializing Sentry/Glitchtip")
-	}
-
-	if config.DeploymentChannel != "" {
-		logrus.AddHook(&common.EnvironmentHook{Channel: config.DeploymentChannel})
 	}
 
 	stateDir, ok := os.LookupEnv("STATE_DIRECTORY")
