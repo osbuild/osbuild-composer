@@ -5,7 +5,7 @@ import (
 	"log"
 	"strings"
 
-	"golang.org/x/exp/slices"
+	"slices"
 
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/blueprint"

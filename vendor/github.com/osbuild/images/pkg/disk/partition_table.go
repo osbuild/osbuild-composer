@@ -37,7 +37,7 @@ const (
 	RawPartitioningMode PartitioningMode = "raw"
 
 	// BtrfsPartitioningMode creates a btrfs layout.
-	BtfrsPartitioningMode PartitioningMode = "btrfs"
+	BtrfsPartitioningMode PartitioningMode = "btrfs"
 
 	// DefaultPartitioningMode is AutoLVMPartitioningMode and is the empty state
 	DefaultPartitioningMode PartitioningMode = ""
@@ -100,7 +100,7 @@ const (
 func NewPartitionTable(basePT *PartitionTable, mountpoints []blueprint.FilesystemCustomization, imageSize uint64, mode PartitioningMode, requiredSizes map[string]uint64, rng *rand.Rand) (*PartitionTable, error) {
 	newPT := basePT.Clone().(*PartitionTable)
 
-	if basePT.features().LVM && (mode == RawPartitioningMode || mode == BtfrsPartitioningMode) {
+	if basePT.features().LVM && (mode == RawPartitioningMode || mode == BtrfsPartitioningMode) {
 		return nil, fmt.Errorf("%s partitioning mode set for a base partition table with LVM, this is unsupported", mode)
 	}
 
@@ -115,7 +115,7 @@ func NewPartitionTable(basePT *PartitionTable, mountpoints []blueprint.Filesyste
 		ensureLVM = false
 	case DefaultPartitioningMode, AutoLVMPartitioningMode:
 		ensureLVM = len(newMountpoints) > 0
-	case BtfrsPartitioningMode:
+	case BtrfsPartitioningMode:
 		ensureBtrfs = true
 	default:
 		return nil, fmt.Errorf("unsupported partitioning mode %q", mode)

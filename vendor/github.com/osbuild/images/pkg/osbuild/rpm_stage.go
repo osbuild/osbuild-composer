@@ -1,8 +1,9 @@
 package osbuild
 
 import (
+	"slices"
+
 	"github.com/osbuild/images/pkg/rpmmd"
-	"golang.org/x/exp/slices"
 )
 
 type RPMStageOptions struct {

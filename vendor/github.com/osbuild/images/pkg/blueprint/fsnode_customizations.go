@@ -11,8 +11,8 @@ import (
 	"strings"
 
 	"github.com/osbuild/images/internal/common"
-	"github.com/osbuild/images/internal/pathpolicy"
 	"github.com/osbuild/images/pkg/customizations/fsnode"
+	"github.com/osbuild/images/pkg/pathpolicy"
 )
 
 // validateModeString checks that the given string is a valid mode octal number

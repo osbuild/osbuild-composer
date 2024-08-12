@@ -3,6 +3,8 @@ package osbuild
 import (
 	"fmt"
 
+	"slices"
+
 	"github.com/osbuild/images/pkg/platform"
 )
 
@@ -35,11 +37,22 @@ func NewBootcInstallToFilesystemStage(options *BootcInstallToFilesystemOptions, 
 		return nil, fmt.Errorf("expected exactly one container input but got: %v (%v)", len(inputs.Images.References), inputs.Images.References)
 	}
 
+	// Don't mount any custom mountpoints.
+	// Only mount the minimum required mounts for bootc:
+	//   /, /boot, and /boot/efi, if they are already defined.
+	requiredMountpoints := []string{"/", "/boot", "/boot/efi"}
+	reqMounts := make([]Mount, 0, len(mounts))
+	for _, mount := range mounts {
+		if slices.Contains(requiredMountpoints, mount.Target) {
+			reqMounts = append(reqMounts, mount)
+		}
+	}
+
 	return &Stage{
 		Type:    "org.osbuild.bootc.install-to-filesystem",
 		Options: options,
 		Inputs:  inputs,
 		Devices: devices,
-		Mounts:  mounts,
+		Mounts:  reqMounts,
 	}, nil
 }

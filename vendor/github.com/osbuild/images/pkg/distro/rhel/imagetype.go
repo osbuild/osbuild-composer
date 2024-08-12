@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 
-	"golang.org/x/exp/slices"
+	"slices"
 
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/internal/environment"

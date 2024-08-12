@@ -24,8 +24,9 @@ import (
 	"reflect"
 	"strings"
 
+	"slices"
+
 	"github.com/google/uuid"
-	"golang.org/x/exp/slices"
 )
 
 const (

@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/osbuild/images/internal/common"
-	"github.com/osbuild/images/internal/pathpolicy"
+	"github.com/osbuild/images/pkg/pathpolicy"
 )
 
 type FilesystemCustomization struct {
