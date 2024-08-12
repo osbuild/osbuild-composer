@@ -339,6 +339,13 @@
       }
     ]
   },
+  "centos-10": {
+    "dependencies": {
+      "osbuild": {
+        "commit": "df83c629201f3955dfb07016c31409d85f376a29"
+      }
+    }
+  },
   "centos-stream-10": {
     "dependencies": {
       "osbuild": {
