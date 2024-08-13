@@ -845,7 +845,7 @@ github.com/opencontainers/runtime-spec/specs-go
 github.com/opencontainers/selinux/go-selinux
 github.com/opencontainers/selinux/go-selinux/label
 github.com/opencontainers/selinux/pkg/pwalkdir
-# github.com/openshift-online/ocm-sdk-go v0.1.432
+# github.com/openshift-online/ocm-sdk-go v0.1.436
 ## explicit; go 1.21
 github.com/openshift-online/ocm-sdk-go/authentication
 github.com/openshift-online/ocm-sdk-go/errors
@@ -1031,7 +1031,7 @@ github.com/vbauerster/mpb/v8
 github.com/vbauerster/mpb/v8/cwriter
 github.com/vbauerster/mpb/v8/decor
 github.com/vbauerster/mpb/v8/internal
-# github.com/vmware/govmomi v0.39.0
+# github.com/vmware/govmomi v0.40.0
 ## explicit; go 1.21
 github.com/vmware/govmomi
 github.com/vmware/govmomi/cns
