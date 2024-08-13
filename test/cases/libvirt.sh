@@ -15,7 +15,8 @@ source /usr/libexec/osbuild-composer-test/set-env-variables.sh
 /usr/libexec/osbuild-composer-test/libvirt_test.sh qcow2
 
 # Fedora's openstack image is an alias of qcow2, we don't need to test it separately
-if [[ "$ID" != "fedora" ]] ; then
+# el10 / c10s no longer has an openstack image type
+if [[ ("$ID" == "rhel" || "$ID" == "centos") && ${VERSION_ID%.*} -lt 10 ]] ; then
     /usr/libexec/osbuild-composer-test/libvirt_test.sh openstack
 fi
 
