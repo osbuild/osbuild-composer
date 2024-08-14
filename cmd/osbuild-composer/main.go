@@ -85,7 +85,7 @@ func main() {
 	}
 
 	if config.DeploymentChannel != "" {
-		logrus.AddHook(&common.EnvironmentHook{Channel: config.DeploymentChannel})
+		logrus.AddHook(&slogger.EnvironmentHook{Channel: config.DeploymentChannel})
 	}
 
 	if config.SplunkHost != "" {
