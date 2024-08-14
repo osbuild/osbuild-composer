@@ -234,8 +234,13 @@ worker-key-pair: ca
 	rm /etc/osbuild-composer/worker-csr.pem
 
 .PHONY: unit-tests
+.ONESHELL:
 unit-tests:
-	go test -race ./...
+	go test -race -covermode=atomic -coverprofile=coverage.txt -coverpkg=$$(go list ./... | grep -v rpmmd/test$ | tr "\n" ",") ./...
+	# go modules with go.mod in subdirs are not tested automatically
+	cd pkg/splunk_logger
+	go test -race -covermode=atomic -coverprofile=../../coverage_splunk_logger.txt -coverpkg=$$(go list ./... | grep -v rpmmd/test$ | tr "\n" ",") ./...
+
 
 #
 # Building packages
