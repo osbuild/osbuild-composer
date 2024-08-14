@@ -90,6 +90,7 @@ help:
 	@echo "                        (do this before pushing!)"
 	@echo "    lint:               Runs linters as close as github workflow as possible"
 	@echo "    process-templates:  Execute the OpenShift CLI to check the templates"
+	@echo "    coverage-report:    Run unit tests and generate HTML coverage reports"
 
 $(BUILDDIR)/:
 	mkdir -p "$@"
@@ -241,6 +242,10 @@ unit-tests:
 	cd pkg/splunk_logger
 	go test -race -covermode=atomic -coverprofile=../../coverage_splunk_logger.txt -coverpkg=$$(go list ./... | grep -v rpmmd/test$ | tr "\n" ",") ./...
 
+.PHONY: coverage-report
+coverage-report: unit-tests
+	go tool cover -o coverage.html -html coverage.txt
+	go tool cover -o coverage_splunk_logger.html -html coverage_splunk_logger.txt
 
 #
 # Building packages
