@@ -18,5 +18,7 @@ container_composer_golangci_built.info
 processed-templates
 
 coverage.txt
+coverage.html
 
 coverage_splunk_logger.txt
+coverage_splunk_logger.html
