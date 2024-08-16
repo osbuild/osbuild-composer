@@ -99,14 +99,8 @@ case "${ID}-${VERSION_ID}" in
         OS_VARIANT="centos-stream9"
         BOOT_ARGS="uefi,firmware.feature0.name=secure-boot,firmware.feature0.enabled=no"
         ;;
-    "fedora-37")
-        OS_VARIANT="fedora37"
-        ;;
-    "fedora-38")
+    "fedora-40")
         OS_VARIANT="fedora-unknown"
-        ;;
-    "fedora-39")
-        OS_VARIANT="fedora-rawhide"
         ;;
     *)
         redprint "unsupported distro: ${ID}-${VERSION_ID}"
@@ -240,6 +234,11 @@ groups = []
 
 [[packages]]
 name = "python3"
+version = "*"
+
+# Fix https://github.com/virt-s1/rhel-edge/issues/3531
+[[packages]]
+name = "python3-dnf"
 version = "*"
 
 [[packages]]

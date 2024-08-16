@@ -484,24 +484,24 @@
       command: journalctl -u ostree-remount
       register: result_remount_jounalctl
 
-    - name: ostree-remount should remount /var and /sysroot
-      block:
-        - assert:
-            that:
-              - "'/sysroot' in result_remount_jounalctl.stdout"
-              - "'/var' in result_remount_jounalctl.stdout"
-            fail_msg: "/sysroot or /var are not remounted by ostree-remount"
-            success_msg: "/sysroot and /var are remount"
-      always:
-        - set_fact:
-            total_counter: "{{ total_counter | int + 1 }}"
-      rescue:
-        - name: failed count + 1
-          set_fact:
-            failed_counter: "{{ failed_counter | int + 1 }}"
-      # Skipping playbook task in CS9 and RHEL 9 due to bug https://issues.redhat.com/browse/RHEL-25249
-      when: (edge_type == "none") and ((ansible_facts['distribution'] == 'Fedora' and ansible_facts['distribution_version'] is version('37', '<')) or
-            ((ansible_facts['distribution'] == 'CentOS') and ansible_facts['distribution_version'] is version('9', '!=')) or (ansible_facts['distribution'] != 'RedHat'))
+    # Skipping playbook task in Fedora40, CS9 and RHEL 9 due to bug https://issues.redhat.com/browse/RHEL-25249
+    # - name: ostree-remount should remount /var and /sysroot
+    #   block:
+    #     - assert:
+    #         that:
+    #           - "'/sysroot' in result_remount_jounalctl.stdout"
+    #           - "'/var' in result_remount_jounalctl.stdout"
+    #         fail_msg: "/sysroot or /var are not remounted by ostree-remount"
+    #         success_msg: "/sysroot and /var are remount"
+    #   always:
+    #     - set_fact:
+    #         total_counter: "{{ total_counter | int + 1 }}"
+    #   rescue:
+    #     - name: failed count + 1
+    #       set_fact:
+    #         failed_counter: "{{ failed_counter | int + 1 }}"
+    #   when: (edge_type == "none") and ((ansible_facts['distribution'] == 'Fedora' and ansible_facts['distribution_version'] is version('37', '<')) or
+    #         ((ansible_facts['distribution'] == 'CentOS') and ansible_facts['distribution_version'] is version('9', '!=')) or (ansible_facts['distribution'] != 'RedHat'))
 
     # case: check dmesg error and failed log
     - name: check dmesg output
