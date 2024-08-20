@@ -2,6 +2,7 @@ package blueprint
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/osbuild/images/internal/common"
@@ -73,16 +74,15 @@ func (fsc *FilesystemCustomization) UnmarshalJSON(data []byte) error {
 
 // CheckMountpointsPolicy checks if the mountpoints are allowed by the policy
 func CheckMountpointsPolicy(mountpoints []FilesystemCustomization, mountpointAllowList *pathpolicy.PathPolicies) error {
-	invalidMountpoints := []string{}
+	var errs []error
 	for _, m := range mountpoints {
-		err := mountpointAllowList.Check(m.Mountpoint)
-		if err != nil {
-			invalidMountpoints = append(invalidMountpoints, m.Mountpoint)
+		if err := mountpointAllowList.Check(m.Mountpoint); err != nil {
+			errs = append(errs, err)
 		}
 	}
 
-	if len(invalidMountpoints) > 0 {
-		return fmt.Errorf("The following custom mountpoints are not supported %+q", invalidMountpoints)
+	if len(errs) > 0 {
+		return fmt.Errorf("The following errors occurred while setting up custom mountpoints:\n%w", errors.Join(errs...))
 	}
 
 	return nil

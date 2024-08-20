@@ -56,11 +56,14 @@ func (options *FSTabStageOptions) AddFilesystem(id string, vfsType string, path 
 	})
 }
 
-func NewFSTabStageOptions(pt *disk.PartitionTable) *FSTabStageOptions {
+func NewFSTabStageOptions(pt *disk.PartitionTable) (*FSTabStageOptions, error) {
 	var options FSTabStageOptions
 	genOption := func(mnt disk.Mountable, path []disk.Entity) error {
 		fsSpec := mnt.GetFSSpec()
-		fsOptions := mnt.GetFSTabOptions()
+		fsOptions, err := mnt.GetFSTabOptions()
+		if err != nil {
+			return err
+		}
 		options.AddFilesystem(fsSpec.UUID, mnt.GetFSType(), mnt.GetMountpoint(), fsOptions.MntOps, fsOptions.Freq, fsOptions.PassNo)
 		return nil
 	}
@@ -69,10 +72,14 @@ func NewFSTabStageOptions(pt *disk.PartitionTable) *FSTabStageOptions {
 		return fmt.Sprintf("%d%s", fs.PassNo, fs.Path)
 	}
 
-	_ = pt.ForEachMountable(genOption) // genOption always returns nil
+	err := pt.ForEachMountable(genOption)
+	if err != nil {
+		return nil, err
+	}
+
 	// sort the entries by PassNo to maintain backward compatibility
 	sort.Slice(options.FileSystems, func(i, j int) bool {
 		return key(options.FileSystems[i]) < key(options.FileSystems[j])
 	})
-	return &options
+	return &options, nil
 }
