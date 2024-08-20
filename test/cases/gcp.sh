@@ -12,11 +12,6 @@ source /usr/libexec/tests/osbuild-composer/shared_lib.sh
 
 set -euo pipefail
 
-if [[ ($ID == rhel || $ID == centos) && ${VERSION_ID%.*} == 10 ]]; then
-    echo "Temporary disabled b/c GCP isn't suported on el10"
-    exit 1
-fi
-
 # Container image used for cloud provider CLI tools
 CONTAINER_IMAGE_CLOUD_TOOLS="quay.io/osbuild/cloud-tools:latest"
 
@@ -117,6 +112,15 @@ function verifyInGCP() {
     GCP_SSH_KEY="$TEMPDIR/id_google_compute_engine"
     ssh-keygen -t rsa-sha2-512 -f "$GCP_SSH_KEY" -C "$SSH_USER" -N ""
 
+    # TODO: remove this once el10 / c10s image moves to oslogin
+    GCP_METADATA_OPTION=
+    # On el10 / c10s, we need to temporarily set the metadata key to "ssh-keys", because there is no "oslogin" feature
+    if [[ ($ID == rhel || $ID == centos) && ${VERSION_ID%.*} == 10 ]]; then
+        GCP_SSH_METADATA_FILE="$TEMPDIR/gcp-ssh-keys-metadata"
+        echo "${SSH_USER}:$(cat "$GCP_SSH_KEY".pub)" > "$GCP_SSH_METADATA_FILE"
+        GCP_METADATA_OPTION="--metadata-from-file=ssh-keys=$GCP_SSH_METADATA_FILE"
+    fi
+
     # create the instance
     # resource ID can have max 62 characters, the $GCP_TEST_ID_HASH contains 56 characters
     GCP_INSTANCE_NAME="vm-$GCP_TEST_ID_HASH"
@@ -134,12 +138,13 @@ function verifyInGCP() {
     local GCP_MACHINE_TYPE
     GCP_MACHINE_TYPE=$($GCP_CMD compute machine-types list --filter="zone=$GCP_ZONE AND name~^n\d-standard-\d$" | jq -r '.[].name' | sort | head -1)
 
+    # shellcheck disable=SC2086
     $GCP_CMD compute instances create "$GCP_INSTANCE_NAME" \
         --zone="$GCP_ZONE" \
         --image-project="$GCP_PROJECT" \
         --image="$GCP_IMAGE_NAME" \
         --machine-type="$GCP_MACHINE_TYPE" \
-        --labels=gitlab-ci-test=true
+        $GCP_METADATA_OPTION --labels=gitlab-ci-test=true
 
     HOST=$($GCP_CMD compute instances describe "$GCP_INSTANCE_NAME" --zone="$GCP_ZONE" --format='get(networkInterfaces[0].accessConfigs[0].natIP)')
 
@@ -148,6 +153,13 @@ function verifyInGCP() {
 
     # Verify image
     _ssh="$GCP_CMD compute ssh --strict-host-key-checking=no --ssh-key-file=$GCP_SSH_KEY --zone=$GCP_ZONE --quiet $SSH_USER@$GCP_INSTANCE_NAME --"
+
+    # TODO: remove this once el10 / c10s image moves to oslogin
+    # On el10 / c10s, we need to ssh directly, because there is no "oslogin" feature
+    if [[ ($ID == rhel || $ID == centos) && ${VERSION_ID%.*} == 10 ]]; then
+        _ssh="ssh -oStrictHostKeyChecking=no -i $GCP_SSH_KEY $SSH_USER@$HOST"
+    fi
+
     _instanceCheck "$_ssh"
 }
 
