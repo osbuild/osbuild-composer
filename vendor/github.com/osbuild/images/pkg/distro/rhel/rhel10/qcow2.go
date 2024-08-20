@@ -110,7 +110,6 @@ func qcow2CommonPackageSet(t *rhel.ImageType) rpmmd.PackageSet {
 			"langpacks-*",
 			"langpacks-en",
 			"libertas-sd8787-firmware",
-			"nss",
 			"plymouth",
 			"rng-tools",
 			"udisks2",

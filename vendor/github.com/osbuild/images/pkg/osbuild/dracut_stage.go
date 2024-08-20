@@ -30,7 +30,7 @@ type DracutStageOptions struct {
 
 	// Add custom files to the initramfs
 	// What (keys) to include where (values)
-	Include map[string]string `json:"include,omitempty"`
+	Include []map[string]string `json:"include,omitempty"`
 
 	// Install the specified files
 	Install []string `json:"install,omitempty"`
