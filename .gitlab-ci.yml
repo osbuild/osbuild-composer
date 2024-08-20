@@ -488,7 +488,7 @@ gcp.sh:
   extends: .integration_rhel
   rules:
     # Temporarily disabled for RHEL-10 and Centos-10
-    - if: '$CI_PIPELINE_SOURCE != "schedule" && $RUNNER =~ "/^.*(x86_64).*$/" && $RUNNER !~ /[\S]+rhel-[\S]+-(?:(?:ga)|(?:eus))[\S]+/ && $RUNNER !~ "/^.*(rhel-10.0-nightly|centos-stream-10).*$/"'
+    - if: '$CI_PIPELINE_SOURCE != "schedule" && $RUNNER =~ "/^.*(x86_64).*$/" && $RUNNER !~ /[\S]+rhel-[\S]+-(?:(?:ga)|(?:eus))[\S]+/'
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9.5-[^ga][\S]+/ && $RUNNER =~ "/^.*(x86_64).*$/" && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
     # - !reference [.upstream_rules_x86_64, rules]
     # - !reference [.nightly_rules_x86_64, rules]
@@ -572,6 +572,7 @@ API:
       - IMAGE_TYPE:
           - aws
           - azure
+          - gcp
         RUNNER:
           - aws/rhel-10.0-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
