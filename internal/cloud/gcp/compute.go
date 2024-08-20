@@ -50,6 +50,9 @@ var GuestOsFeaturesRHEL90 []*computepb.GuestOsFeature = []*computepb.GuestOsFeat
 	{Type: common.ToPtr(computepb.GuestOsFeature_GVNIC.String())},
 }
 
+// Guest OS Features for RHEL-10 images.
+var GuestOsFeaturesRHEL10 []*computepb.GuestOsFeature = GuestOsFeaturesRHEL9
+
 // GuestOsFeaturesByDistro returns the the list of Guest OS Features, which
 // should be used when importing an image of the specified distribution.
 //
@@ -62,14 +65,21 @@ func GuestOsFeaturesByDistro(distroName string) []*computepb.GuestOsFeature {
 	case strings.HasPrefix(distroName, "rhel-8"):
 		return GuestOsFeaturesRHEL8
 
+	// TODO: this should be updated for the dot-notation
 	case distroName == "rhel-90":
 		return GuestOsFeaturesRHEL90
+	// TODO: this should be updated for the dot-notation
 	case distroName == "rhel-91":
 		return GuestOsFeaturesRHEL91
 	case strings.HasPrefix(distroName, "centos-9"):
 		fallthrough
 	case strings.HasPrefix(distroName, "rhel-9"):
 		return GuestOsFeaturesRHEL9
+
+	case strings.HasPrefix(distroName, "centos-10"):
+		fallthrough
+	case strings.HasPrefix(distroName, "rhel-10"):
+		return GuestOsFeaturesRHEL10
 
 	default:
 		return nil
