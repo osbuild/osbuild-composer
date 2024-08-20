@@ -126,7 +126,8 @@ case "${ID}-${VERSION_ID}" in
         OS_VARIANT="rhel9-unknown"
         ;;
     rhel-10*)
-        OS_VARIANT="rhel10-unknown"
+        # TODO: change to rhel10-unknown once it's available
+        OS_VARIANT="rhel-unknown"
         ;;
     centos-8)
         OS_VARIANT="centos8"
@@ -135,7 +136,8 @@ case "${ID}-${VERSION_ID}" in
         OS_VARIANT="centos-stream9"
         ;;
     centos-10)
-        OS_VARIANT="centos-stream10"
+        # TODO: change to centos-stream10 once it's available
+        OS_VARIANT="rhel-unknown"
         ;;
     *)
         redprint "unsupported distro: ${ID}-${VERSION_ID}"
