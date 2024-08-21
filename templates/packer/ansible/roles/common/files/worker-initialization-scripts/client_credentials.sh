@@ -20,6 +20,7 @@ jq -r ".client_secret" /tmp/client-credentials.json > /etc/osbuild-worker/client
 rm -f /tmp/client-credentials.json
 
 sudo tee -a /etc/osbuild-worker/osbuild-worker.toml > /dev/null << EOF
+deployment_channel = "${CHANNEL:-local}"
 [authentication]
 oauth_url = "${TOKEN_URL:-https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token}"
 client_id = "${CLIENT_ID}"

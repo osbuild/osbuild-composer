@@ -7,6 +7,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	slogger "github.com/osbuild/osbuild-composer/pkg/splunk_logger"
 	"net/url"
 	"os"
 	"path"
@@ -191,6 +192,10 @@ func main() {
 	err = encoder.Encode(&config)
 	if err != nil {
 		logrus.Fatalf("Could not print config: %v", err)
+	}
+
+	if config.DeploymentChannel != "" {
+		logrus.AddHook(&slogger.EnvironmentHook{Channel: config.DeploymentChannel})
 	}
 
 	cacheDirectory, ok := os.LookupEnv("CACHE_DIRECTORY")

@@ -136,6 +136,7 @@ cloudwatch_group = "osbuild-worker"
 					Credentials: "/etc/osbuild-worker/pulp-creds",
 					ServerURL:   "https://example.com/pulp",
 				},
+				DeploymentChannel: "local",
 			},
 		},
 		{
@@ -146,6 +147,18 @@ cloudwatch_group = "osbuild-worker"
 				OSBuildExecutor: &executorConfig{
 					Type: "host",
 				},
+				DeploymentChannel: "local",
+			},
+		},
+		{
+			name:   "set_channel",
+			config: `deployment_channel = "staging"`,
+			want: &workerConfig{
+				BasePath: "/api/worker/v1",
+				OSBuildExecutor: &executorConfig{
+					Type: "host",
+				},
+				DeploymentChannel: "staging",
 			},
 		},
 	}
