@@ -572,6 +572,6 @@ func TestComposeUnsupportedMountPointV0(t *testing.T) {
 	require.NoError(t, err, "failed with a client error")
 	require.NotNil(t, resp)
 	require.Equal(t, "ManifestCreationFailed", resp.Errors[0].ID)
-	require.Contains(t, resp.Errors[0].Msg, "The following custom mountpoints are not supported")
+	require.Contains(t, resp.Errors[0].Msg, "path \"/etc\" is not allowed")
 	require.Equal(t, 0, len(body))
 }
