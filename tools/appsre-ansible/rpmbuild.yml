@@ -29,6 +29,9 @@
 
   # RHEL mock templates don't work on RHUI, they use the CDN repos
   - name: Subscribe
+    register: result
+    retries: 5
+    until: result is success
     community.general.redhat_subscription:
       activationkey: "{{ RH_ACTIVATION_KEY }}"
       org_id: "{{ RH_ORG_ID }}"
@@ -167,3 +170,10 @@
       mode: pull
       src: /home/ec2-user/rpmbuild/RPMS
       dest: /osbuild-composer/templates/packer/ansible/roles/common/files/rpmbuild/{{ ansible_architecture }}
+
+  - name: Unsubscribe
+    register: result
+    retries: 5
+    until: result is success
+    community.general.redhat_subscription:
+      state: absent
