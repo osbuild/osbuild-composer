@@ -76,15 +76,15 @@ func (fs *Filesystem) GetFSSpec() FSSpec {
 	}
 }
 
-func (fs *Filesystem) GetFSTabOptions() FSTabOptions {
+func (fs *Filesystem) GetFSTabOptions() (FSTabOptions, error) {
 	if fs == nil {
-		return FSTabOptions{}
+		return FSTabOptions{}, nil
 	}
 	return FSTabOptions{
 		MntOps: fs.FSTabOptions,
 		Freq:   fs.FSTabFreq,
 		PassNo: fs.FSTabPassNo,
-	}
+	}, nil
 }
 
 func (fs *Filesystem) GenUUID(rng *rand.Rand) {

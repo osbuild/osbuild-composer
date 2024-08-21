@@ -678,7 +678,11 @@ func (p *OS) serialize() osbuild.Pipeline {
 			pipeline = prependKernelCmdlineStage(pipeline, strings.Join(kernelOptions, " "), pt)
 		}
 
-		pipeline.AddStage(osbuild.NewFSTabStage(osbuild.NewFSTabStageOptions(pt)))
+		opts, err := osbuild.NewFSTabStageOptions(pt)
+		if err != nil {
+			panic(err)
+		}
+		pipeline.AddStage(osbuild.NewFSTabStage(opts))
 
 		var bootloader *osbuild.Stage
 		switch p.platform.GetArch() {
