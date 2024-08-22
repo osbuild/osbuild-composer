@@ -828,7 +828,7 @@ func TestGetImageRequests_BlueprintDistro(t *testing.T) {
 		},
 		Blueprint: &Blueprint{
 			Name:   "distro-test",
-			Distro: common.ToPtr("fedora-38"),
+			Distro: common.ToPtr("fedora-39"),
 		},
 	}
 	// NOTE: current directory is the location of this file, back up so it can use ./repositories/
@@ -838,8 +838,8 @@ func TestGetImageRequests_BlueprintDistro(t *testing.T) {
 	assert.NoError(t, err)
 	require.Len(t, got, 1)
 	require.Greater(t, len(got[0].repositories), 0)
-	assert.Contains(t, got[0].repositories[0].Metalink, "38")
-	assert.Equal(t, got[0].blueprint.Distro, "fedora-38")
+	assert.Contains(t, got[0].repositories[0].Metalink, "39")
+	assert.Equal(t, got[0].blueprint.Distro, "fedora-39")
 }
 
 func TestOpenSCAPTailoringOptions(t *testing.T) {
