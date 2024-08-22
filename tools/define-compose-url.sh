@@ -7,6 +7,13 @@ if [[ $ID != rhel ]]; then
   return 0
 fi
 
+# This section serves to define target repos for rhel-upgrade test
+# Need to check that it's actually a number passed as this script is
+# being sources from a script that already has arguments passed
+if [[ $# -gt 0 ]] && [[ "$1" =~ ^[0-9]+(\.[0-9]+)?$ ]]; then
+    VERSION_ID=$1
+fi
+
 if [[ $ID == rhel && ${VERSION_ID%.*} == 9 ]]; then
   COMPOSE_ID=$(curl -L http://download.devel.redhat.com/rhel-9/nightly/RHEL-9/latest-RHEL-"${VERSION_ID}"/COMPOSE_ID)
 
