@@ -330,7 +330,10 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 	configStage.MountOSTree(p.osName, ref, 0)
 	pipeline.AddStage(configStage)
 
-	fstabOptions := osbuild.NewFSTabStageOptions(p.PartitionTable)
+	fstabOptions, err := osbuild.NewFSTabStageOptions(p.PartitionTable)
+	if err != nil {
+		panic(err)
+	}
 	fstabStage := osbuild.NewFSTabStage(fstabOptions)
 	fstabStage.MountOSTree(p.osName, ref, 0)
 	pipeline.AddStage(fstabStage)

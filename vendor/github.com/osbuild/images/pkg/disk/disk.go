@@ -114,7 +114,7 @@ type Mountable interface {
 	GetFSSpec() FSSpec
 
 	// GetFSTabOptions returns options for mounting the entity.
-	GetFSTabOptions() FSTabOptions
+	GetFSTabOptions() (FSTabOptions, error)
 }
 
 // A MountpointCreator is a container that is able to create new volumes.
