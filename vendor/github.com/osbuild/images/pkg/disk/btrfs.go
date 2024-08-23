@@ -177,13 +177,13 @@ func (bs *BtrfsSubvolume) GetFSSpec() FSSpec {
 	}
 }
 
-func (bs *BtrfsSubvolume) GetFSTabOptions() FSTabOptions {
+func (bs *BtrfsSubvolume) GetFSTabOptions() (FSTabOptions, error) {
 	if bs == nil {
-		return FSTabOptions{}
+		return FSTabOptions{}, nil
 	}
 
 	if bs.Name == "" {
-		panic(fmt.Errorf("internal error: BtrfsSubvolume.GetFSTabOptions() for %+v called without a name", bs))
+		return FSTabOptions{}, fmt.Errorf("internal error: BtrfsSubvolume.GetFSTabOptions() for %+v called without a name", bs)
 	}
 	ops := fmt.Sprintf("subvol=%s", bs.Name)
 	if bs.Compress != "" {
@@ -196,5 +196,5 @@ func (bs *BtrfsSubvolume) GetFSTabOptions() FSTabOptions {
 		MntOps: ops,
 		Freq:   0,
 		PassNo: 0,
-	}
+	}, nil
 }

@@ -166,7 +166,11 @@ func (p *RawBootcImage) serialize() osbuild.Pipeline {
 	mounts = append(mounts, *osbuild.NewBindMount("bind-ostree-deployment-to-tree", "mount://", "tree://"))
 
 	// we always include the fstab stage
-	fstabStage := osbuild.NewFSTabStage(osbuild.NewFSTabStageOptions(pt))
+	fstabOpts, err := osbuild.NewFSTabStageOptions(pt)
+	if err != nil {
+		panic(err)
+	}
+	fstabStage := osbuild.NewFSTabStage(fstabOpts)
 	fstabStage.Mounts = mounts
 	fstabStage.Devices = devices
 	pipeline.AddStage(fstabStage)

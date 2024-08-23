@@ -4,8 +4,6 @@ import (
 	"github.com/osbuild/images/pkg/arch"
 )
 
-type X86BootLoader uint64
-
 type X86 struct {
 	BasePlatform
 	BIOS       bool
