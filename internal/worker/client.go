@@ -121,9 +121,17 @@ func NewClient(conf ClientConfig) (*Client, error) {
 		clientId:     conf.ClientId,
 		clientSecret: conf.ClientSecret,
 	}
-	err = client.registerWorker()
+
+	// get a token first to avoid an "unauthorized" reply
+	// essentially saving one request on startup
+	err = client.refreshAccessToken()
 	if err != nil {
-		return client, err
+		logrus.Warnf("Error getting access token on startup, %v. Trying again later…", err)
+	} else {
+		err = client.registerWorker()
+		if err != nil {
+			logrus.Warnf("Error registering worker on startup, %v. Trying again later…", err)
+		}
 	}
 	go client.workerHeartbeat()
 	return client, nil
@@ -152,9 +160,14 @@ func NewClientUnix(conf ClientConfig) *Client {
 		serverURL: serverURL,
 		requester: requester,
 	}
-	err = client.registerWorker()
+	err = client.refreshAccessToken()
 	if err != nil {
-		panic(err)
+		logrus.Warnf("Error getting access token on startup, %v. Trying again later…", err)
+	} else {
+		err = client.registerWorker()
+		if err != nil {
+			logrus.Warnf("Error registering worker on startup, %v. Trying again later…", err)
+		}
 	}
 	go client.workerHeartbeat()
 	return client

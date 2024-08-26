@@ -1,6 +1,7 @@
 package worker_test
 
 import (
+	"fmt"
 	"io"
 	"net"
 	"net/http"
@@ -48,7 +49,9 @@ func appendHostToXForwardHeader(header http.Header, host string) {
 // Don't use it in production. Also don't use it for https.
 type proxy struct {
 	// number of calls that were made through the proxy
-	calls int
+	calls                  int
+	paths                  []string
+	registrationSuccessful bool
 }
 
 func (p *proxy) ServeHTTP(wr http.ResponseWriter, req *http.Request) {
@@ -72,11 +75,30 @@ func (p *proxy) ServeHTTP(wr http.ResponseWriter, req *http.Request) {
 		appendHostToXForwardHeader(req.Header, clientIP)
 	}
 
+	bodyBytes, err := io.ReadAll(req.Body)
+	if err != nil {
+		http.Error(wr, "Cant' read request body: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	bodyString := string(bodyBytes)
+
+	req.Body = io.NopCloser(strings.NewReader(bodyString))
+
 	resp, err := client.Do(req)
 	if err != nil {
 		http.Error(wr, "Server Error", http.StatusInternalServerError)
 	}
-	defer resp.Body.Close()
+	if resp.Body != nil {
+		defer resp.Body.Close()
+	}
+	p.paths = append(p.paths, fmt.Sprintf("%d: %s (%s) Body: %s (Response: %s)", p.calls, req.URL.Path, req.Method, strings.TrimSpace(bodyString), resp.Status))
+
+	if req.URL.Path == "/api/image-builder-worker/v1/workers" &&
+		req.Method == "POST" &&
+		resp.StatusCode == 201 {
+		p.registrationSuccessful = true
+	}
 
 	delHopHeaders(resp.Header)
 
