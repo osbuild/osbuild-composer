@@ -228,8 +228,7 @@ func (c *Client) workerHeartbeat() {
 			continue
 		}
 
-		var buf bytes.Buffer
-		resp, err := c.NewRequest("POST", url.String(), map[string]string{"Content-Type": "application/json"}, bytes.NewReader(buf.Bytes()))
+		resp, err := c.NewRequest("POST", url.String(), map[string]string{"Content-Type": "application/json"}, nil)
 		if err != nil {
 			logrus.Errorf("Error updating worker status: %v", err)
 			continue
