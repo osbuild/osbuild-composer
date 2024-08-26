@@ -75,13 +75,12 @@ type tokenResponse struct {
 }
 
 func NewClient(conf ClientConfig) (*Client, error) {
+	api.BasePath = conf.BasePath
+
 	serverURL, err := url.Parse(conf.BaseURL)
 	if err != nil {
 		return nil, err
 	}
-
-	api.BasePath = conf.BasePath
-
 	serverURL, err = serverURL.Parse(api.BasePath + "/")
 	if err != nil {
 		panic(err)
@@ -131,13 +130,12 @@ func NewClient(conf ClientConfig) (*Client, error) {
 }
 
 func NewClientUnix(conf ClientConfig) *Client {
+	api.BasePath = conf.BasePath
+
 	serverURL, err := url.Parse("http://localhost/")
 	if err != nil {
 		panic(err)
 	}
-
-	api.BasePath = conf.BasePath
-
 	serverURL, err = serverURL.Parse(api.BasePath + "/")
 	if err != nil {
 		panic(err)
