@@ -90,8 +90,6 @@ func NewServer(logger *log.Logger, jobs jobqueue.JobQueue, config Config) *Serve
 		s.config.WorkerWatchFreq = time.Second * 300
 	}
 
-	api.BasePath = config.BasePath
-
 	go s.WatchHeartbeats()
 	go s.WatchWorkers()
 	return s
@@ -103,7 +101,7 @@ func (s *Server) Handler() http.Handler {
 	e.Logger = common.Logger()
 
 	// log errors returned from handlers
-	e.HTTPErrorHandler = api.HTTPErrorHandler
+	e.HTTPErrorHandler = api.MakeHTTPErrorHandler(s.config.BasePath)
 	e.Use(middleware.Recover())
 	e.Pre(common.OperationIDMiddleware)
 	handler := apiHandlers{
@@ -117,7 +115,7 @@ func (s *Server) Handler() http.Handler {
 		mws = append(mws, auth.TenantChannelMiddleware(s.config.TenantProviderFields, api.HTTPError(api.ErrorTenantNotFound)))
 	}
 	mws = append(mws, prometheus.HTTPDurationMiddleware(prometheus.WorkerSubsystem))
-	api.RegisterHandlers(e.Group(api.BasePath, mws...), &handler)
+	api.RegisterHandlers(e.Group(s.config.BasePath, mws...), &handler)
 
 	return e
 }
@@ -863,7 +861,7 @@ func (h *apiHandlers) GetOpenapi(ctx echo.Context) error {
 func (h *apiHandlers) GetStatus(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, &api.StatusResponse{
 		ObjectReference: api.ObjectReference{
-			Href: fmt.Sprintf("%s/status", api.BasePath),
+			Href: fmt.Sprintf("%s/status", h.server.config.BasePath),
 			Id:   "status",
 			Kind: "Status",
 		},
@@ -877,7 +875,7 @@ func (h *apiHandlers) GetError(ctx echo.Context, id string) error {
 		return api.HTTPErrorWithInternal(api.ErrorInvalidErrorId, err)
 	}
 
-	apiError := api.APIError(api.ServiceErrorCode(errorId), nil, ctx)
+	apiError := api.APIError(h.server.config.BasePath, api.ServiceErrorCode(errorId), nil, ctx)
 	// If the service error wasn't found, it's a 404 in this instance
 	if apiError.Id == fmt.Sprintf("%d", api.ErrorServiceErrorNotFound) {
 		return api.HTTPError(api.ErrorErrorNotFound)
@@ -916,7 +914,7 @@ func (h *apiHandlers) RequestJob(ctx echo.Context) error {
 	if err != nil {
 		if err == jobqueue.ErrDequeueTimeout {
 			return ctx.JSON(http.StatusNoContent, api.ObjectReference{
-				Href: fmt.Sprintf("%s/jobs", api.BasePath),
+				Href: fmt.Sprintf("%s/jobs", h.server.config.BasePath),
 				Id:   uuid.Nil.String(),
 				Kind: "RequestJob",
 			})
@@ -938,12 +936,12 @@ func (h *apiHandlers) RequestJob(ctx echo.Context) error {
 
 	response := api.RequestJobResponse{
 		ObjectReference: api.ObjectReference{
-			Href: fmt.Sprintf("%s/jobs", api.BasePath),
+			Href: fmt.Sprintf("%s/jobs", h.server.config.BasePath),
 			Id:   jobId.String(),
 			Kind: "RequestJob",
 		},
-		Location:         fmt.Sprintf("%s/jobs/%v", api.BasePath, jobToken),
-		ArtifactLocation: fmt.Sprintf("%s/jobs/%v/artifacts/", api.BasePath, jobToken),
+		Location:         fmt.Sprintf("%s/jobs/%v", h.server.config.BasePath, jobToken),
+		ArtifactLocation: fmt.Sprintf("%s/jobs/%v/artifacts/", h.server.config.BasePath, jobToken),
 		Type:             jobType,
 		Args:             respArgs,
 		DynamicArgs:      respDynArgs,
@@ -970,7 +968,7 @@ func (h *apiHandlers) GetJob(ctx echo.Context, tokenstr string) error {
 	if jobId == uuid.Nil {
 		return ctx.JSON(http.StatusOK, api.GetJobResponse{
 			ObjectReference: api.ObjectReference{
-				Href: fmt.Sprintf("%s/jobs/%v", api.BasePath, token),
+				Href: fmt.Sprintf("%s/jobs/%v", h.server.config.BasePath, token),
 				Id:   token.String(),
 				Kind: "JobStatus",
 			},
@@ -987,7 +985,7 @@ func (h *apiHandlers) GetJob(ctx echo.Context, tokenstr string) error {
 
 	return ctx.JSON(http.StatusOK, api.GetJobResponse{
 		ObjectReference: api.ObjectReference{
-			Href: fmt.Sprintf("%s/jobs/%v", api.BasePath, token),
+			Href: fmt.Sprintf("%s/jobs/%v", h.server.config.BasePath, token),
 			Id:   token.String(),
 			Kind: "JobStatus",
 		},
@@ -1020,7 +1018,7 @@ func (h *apiHandlers) UpdateJob(ctx echo.Context, idstr string) error {
 	}
 
 	return ctx.JSON(http.StatusOK, api.UpdateJobResponse{
-		Href: fmt.Sprintf("%s/jobs/%v", api.BasePath, token),
+		Href: fmt.Sprintf("%s/jobs/%v", h.server.config.BasePath, token),
 		Id:   token.String(),
 		Kind: "UpdateJobResponse",
 	})
@@ -1077,7 +1075,7 @@ func (h *apiHandlers) PostWorkers(ctx echo.Context) error {
 
 	return ctx.JSON(http.StatusCreated, api.PostWorkersResponse{
 		ObjectReference: api.ObjectReference{
-			Href: fmt.Sprintf("%s/workers", api.BasePath),
+			Href: fmt.Sprintf("%s/workers", h.server.config.BasePath),
 			Id:   workerID.String(),
 			Kind: "WorkerID",
 		},

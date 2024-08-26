@@ -117,7 +117,7 @@ func HTTPErrorWithInternal(code ServiceErrorCode, internalErr error) error {
 
 // Convert a ServiceErrorCode into an Error as defined in openapi.v2.yml
 // serviceError is optional, prevents multiple find() calls
-func APIError(code ServiceErrorCode, serviceError *serviceError, c echo.Context) *Error {
+func APIError(basePath string, code ServiceErrorCode, serviceError *serviceError, c echo.Context) *Error {
 	se := serviceError
 	if se == nil {
 		se = find(code)
@@ -131,7 +131,7 @@ func APIError(code ServiceErrorCode, serviceError *serviceError, c echo.Context)
 
 	return &Error{
 		ObjectReference: ObjectReference{
-			Href: fmt.Sprintf("%s/errors/%d", BasePath, se.code),
+			Href: fmt.Sprintf("%s/errors/%d", basePath, se.code),
 			Id:   fmt.Sprintf("%d", se.code),
 			Kind: "Error",
 		},
@@ -156,43 +156,45 @@ func apiErrorFromEchoError(echoError *echo.HTTPError) ServiceErrorCode {
 }
 
 // Convert an echo error into an AOC compliant one so we send a correct json error response
-func HTTPErrorHandler(echoError error, c echo.Context) {
-	doResponse := func(code ServiceErrorCode, c echo.Context, internal error) {
-		if !c.Response().Committed {
-			var err error
-			sec := find(code)
-			apiErr := APIError(code, sec, c)
+func MakeHTTPErrorHandler(basePath string) func(error, echo.Context) {
+	return func(echoError error, c echo.Context) {
+		doResponse := func(code ServiceErrorCode, c echo.Context, internal error) {
+			if !c.Response().Committed {
+				var err error
+				sec := find(code)
+				apiErr := APIError(basePath, code, sec, c)
 
-			if sec.httpStatus == http.StatusInternalServerError {
-				c.Logger().Errorf("Internal server error. Internal: %v, Code: %s, OperationId: %s",
-					internal, apiErr.Code, apiErr.OperationId)
-			} else {
-				c.Logger().Infof("Code: %s, OperationId: %s, Internal: %v",
-					apiErr.Code, apiErr.OperationId, internal)
-			}
+				if sec.httpStatus == http.StatusInternalServerError {
+					c.Logger().Errorf("Internal server error. Internal: %v, Code: %s, OperationId: %s",
+						internal, apiErr.Code, apiErr.OperationId)
+				} else {
+					c.Logger().Infof("Code: %s, OperationId: %s, Internal: %v",
+						apiErr.Code, apiErr.OperationId, internal)
+				}
 
-			if c.Request().Method == http.MethodHead {
-				err = c.NoContent(sec.httpStatus)
-			} else {
-				err = c.JSON(sec.httpStatus, apiErr)
-			}
-			if err != nil {
-				c.Logger().Errorf("Failed to return error response: %v", err)
+				if c.Request().Method == http.MethodHead {
+					err = c.NoContent(sec.httpStatus)
+				} else {
+					err = c.JSON(sec.httpStatus, apiErr)
+				}
+				if err != nil {
+					c.Logger().Errorf("Failed to return error response: %v", err)
+				}
 			}
 		}
-	}
 
-	he, ok := echoError.(*echo.HTTPError)
-	if !ok {
-		doResponse(ErrorNotHTTPError, c, echoError)
-		return
-	}
+		he, ok := echoError.(*echo.HTTPError)
+		if !ok {
+			doResponse(ErrorNotHTTPError, c, echoError)
+			return
+		}
 
-	sec, ok := he.Message.(ServiceErrorCode)
-	if !ok {
-		// No service code was set, so Echo threw this error
-		doResponse(apiErrorFromEchoError(he), c, he.Internal)
-		return
+		sec, ok := he.Message.(ServiceErrorCode)
+		if !ok {
+			// No service code was set, so Echo threw this error
+			doResponse(apiErrorFromEchoError(he), c, he.Internal)
+			return
+		}
+		doResponse(sec, c, he.Internal)
 	}
-	doResponse(sec, c, he.Internal)
 }

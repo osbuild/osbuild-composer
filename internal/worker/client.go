@@ -80,9 +80,7 @@ func NewClient(conf ClientConfig) (*Client, error) {
 		return nil, err
 	}
 
-	api.BasePath = conf.BasePath
-
-	serverURL, err = serverURL.Parse(api.BasePath + "/")
+	serverURL, err = serverURL.Parse(conf.BasePath + "/")
 	if err != nil {
 		panic(err)
 	}
@@ -136,9 +134,7 @@ func NewClientUnix(conf ClientConfig) *Client {
 		panic(err)
 	}
 
-	api.BasePath = conf.BasePath
-
-	serverURL, err = serverURL.Parse(api.BasePath + "/")
+	serverURL, err = serverURL.Parse(conf.BasePath + "/")
 	if err != nil {
 		panic(err)
 	}
