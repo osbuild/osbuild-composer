@@ -171,9 +171,10 @@
       src: /home/ec2-user/rpmbuild/RPMS
       dest: /osbuild-composer/templates/packer/ansible/roles/common/files/rpmbuild/{{ ansible_architecture }}
 
-  - name: Unsubscribe
-    register: result
+  - name: Unregister
     retries: 5
+    delay: 20
+    register: result
     until: result is success
-    community.general.redhat_subscription:
-      state: absent
+    shell: >-
+      subscription-manager unregister
