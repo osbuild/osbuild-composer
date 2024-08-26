@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 
@@ -149,5 +150,20 @@ func TestNewServerURL(t *testing.T) {
 	// (the code is written this way and if we would change it it would
 	//  potentially break compatibility)
 	require.Equal(t, "http://localhost:8080/api/image-builder-worker/v42/", serverURL.String())
+}
 
+func mustParse(u string) *url.URL {
+	url, err := url.Parse(u)
+	if err != nil {
+		panic(err)
+	}
+	return url
+}
+
+func TestClientEndpointURL(t *testing.T) {
+	client := &worker.Client{}
+	client.SetServerURL(client, mustParse("http://localhost:8080/api/v42"))
+
+	url := client.Endpoint("workers")
+	require.Equal(t, "http://localhost:8080/api/v42/workers", url)
 }

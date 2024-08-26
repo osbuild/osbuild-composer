@@ -167,17 +167,16 @@ func NewClientUnix(conf ClientConfig) *Client {
 	return client
 }
 
+func (c *Client) endpoint(endpoint ...string) string {
+	return c.serverURL.JoinPath(endpoint...).String()
+}
+
 func (c *Client) registerWorker() error {
 	c.workerIDMu.Lock()
 	defer c.workerIDMu.Unlock()
 
-	url, err := c.serverURL.Parse("workers")
-	if err != nil {
-		return err
-	}
-
 	var buf bytes.Buffer
-	err = json.NewEncoder(&buf).Encode(api.PostWorkersRequest{
+	err := json.NewEncoder(&buf).Encode(api.PostWorkersRequest{
 		Arch: arch.Current().String(),
 	})
 	if err != nil {
@@ -185,7 +184,7 @@ func (c *Client) registerWorker() error {
 		return err
 	}
 
-	resp, err := c.NewRequest("POST", url.String(), map[string]string{"Content-Type": "application/json"}, bytes.NewReader(buf.Bytes()))
+	resp, err := c.NewRequest("POST", c.endpoint("workers"), map[string]string{"Content-Type": "application/json"}, bytes.NewReader(buf.Bytes()))
 	if err != nil {
 		logrus.Errorf("Unable to register worker: %v", err)
 		return err
@@ -227,13 +226,8 @@ func (c *Client) workerHeartbeat() {
 			}
 		}
 
-		url, err := c.serverURL.Parse(fmt.Sprintf("workers/%s/status", workerID()))
-		if err != nil {
-			logrus.Errorf("Error parsing worker status: %v", err)
-			continue
-		}
-
-		resp, err := c.NewRequest("POST", url.String(), map[string]string{"Content-Type": "application/json"}, nil)
+		url := c.endpoint("workers", workerID().String(), "status")
+		resp, err := c.NewRequest("POST", url, map[string]string{"Content-Type": "application/json"}, nil)
 		if err != nil {
 			logrus.Errorf("Error updating worker status: %v", err)
 			continue
@@ -340,12 +334,6 @@ func (c *Client) NewRequest(method, url string, headers map[string]string, body 
 }
 
 func (c *Client) RequestJob(types []string, arch string) (Job, error) {
-	url, err := c.serverURL.Parse("jobs")
-	if err != nil {
-		// This only happens when "jobs" cannot be parsed.
-		panic(err)
-	}
-
 	reqBody := api.RequestJobJSONRequestBody{
 		Types: types,
 		Arch:  arch,
@@ -362,12 +350,12 @@ func (c *Client) RequestJob(types []string, arch string) (Job, error) {
 	}
 
 	var buf bytes.Buffer
-	err = json.NewEncoder(&buf).Encode(reqBody)
+	err := json.NewEncoder(&buf).Encode(reqBody)
 	if err != nil {
 		panic(err)
 	}
 
-	response, err := c.NewRequest("POST", url.String(), map[string]string{"Content-Type": "application/json"}, bytes.NewReader(buf.Bytes()))
+	response, err := c.NewRequest("POST", c.endpoint("jobs"), map[string]string{"Content-Type": "application/json"}, bytes.NewReader(buf.Bytes()))
 	if err != nil {
 		return nil, err
 	}
@@ -386,11 +374,12 @@ func (c *Client) RequestJob(types []string, arch string) (Job, error) {
 		return nil, fmt.Errorf("error parsing response: %v", err)
 	}
 
+	// XXX: use endpoint() here if we know they are relative to the basePath of serverURL
 	location, err := c.serverURL.Parse(jr.Location)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing location url in response: %v", err)
 	}
-
+	// XXX: use endpoint() here if we know they are relative to the basePath of serverURL
 	artifactLocation, err := c.serverURL.Parse(jr.ArtifactLocation)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing artifact location url in response: %v", err)
