@@ -23,7 +23,7 @@ import (
 )
 
 type Client struct {
-	server       *url.URL
+	serverURL    *url.URL
 	requester    *http.Client
 	offlineToken string
 	oAuthURL     string
@@ -75,14 +75,14 @@ type tokenResponse struct {
 }
 
 func NewClient(conf ClientConfig) (*Client, error) {
-	server, err := url.Parse(conf.BaseURL)
+	serverURL, err := url.Parse(conf.BaseURL)
 	if err != nil {
 		return nil, err
 	}
 
 	api.BasePath = conf.BasePath
 
-	server, err = server.Parse(api.BasePath + "/")
+	serverURL, err = serverURL.Parse(api.BasePath + "/")
 	if err != nil {
 		panic(err)
 	}
@@ -115,7 +115,7 @@ func NewClient(conf ClientConfig) (*Client, error) {
 	requester.Transport = transport
 
 	client := &Client{
-		server:       server,
+		serverURL:    serverURL,
 		requester:    requester,
 		offlineToken: conf.OfflineToken,
 		oAuthURL:     conf.OAuthURL,
@@ -131,14 +131,14 @@ func NewClient(conf ClientConfig) (*Client, error) {
 }
 
 func NewClientUnix(conf ClientConfig) *Client {
-	server, err := url.Parse("http://localhost/")
+	serverURL, err := url.Parse("http://localhost/")
 	if err != nil {
 		panic(err)
 	}
 
 	api.BasePath = conf.BasePath
 
-	server, err = server.Parse(api.BasePath + "/")
+	serverURL, err = serverURL.Parse(api.BasePath + "/")
 	if err != nil {
 		panic(err)
 	}
@@ -151,7 +151,7 @@ func NewClientUnix(conf ClientConfig) *Client {
 		},
 	}
 	client := &Client{
-		server:    server,
+		serverURL: serverURL,
 		requester: requester,
 	}
 	err = client.registerWorker()
@@ -166,7 +166,7 @@ func (c *Client) registerWorker() error {
 	c.workerIDMu.Lock()
 	defer c.workerIDMu.Unlock()
 
-	url, err := c.server.Parse("workers")
+	url, err := c.serverURL.Parse("workers")
 	if err != nil {
 		return err
 	}
@@ -222,7 +222,7 @@ func (c *Client) workerHeartbeat() {
 			}
 		}
 
-		url, err := c.server.Parse(fmt.Sprintf("workers/%s/status", workerID()))
+		url, err := c.serverURL.Parse(fmt.Sprintf("workers/%s/status", workerID()))
 		if err != nil {
 			logrus.Errorf("Error parsing worker status: %v", err)
 			continue
@@ -336,7 +336,7 @@ func (c *Client) NewRequest(method, url string, headers map[string]string, body 
 }
 
 func (c *Client) RequestJob(types []string, arch string) (Job, error) {
-	url, err := c.server.Parse("jobs")
+	url, err := c.serverURL.Parse("jobs")
 	if err != nil {
 		// This only happens when "jobs" cannot be parsed.
 		panic(err)
@@ -382,12 +382,12 @@ func (c *Client) RequestJob(types []string, arch string) (Job, error) {
 		return nil, fmt.Errorf("error parsing response: %v", err)
 	}
 
-	location, err := c.server.Parse(jr.Location)
+	location, err := c.serverURL.Parse(jr.Location)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing location url in response: %v", err)
 	}
 
-	artifactLocation, err := c.server.Parse(jr.ArtifactLocation)
+	artifactLocation, err := c.serverURL.Parse(jr.ArtifactLocation)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing artifact location url in response: %v", err)
 	}
