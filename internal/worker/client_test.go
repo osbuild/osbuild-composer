@@ -137,3 +137,17 @@ func TestProxy(t *testing.T) {
 	// - cancel
 	require.Equal(t, 6, proxy.calls)
 }
+
+func TestNewServerURL(t *testing.T) {
+	conf := worker.ClientConfig{
+		BaseURL:  "http://localhost:8080/base/",
+		BasePath: "/api/image-builder-worker/v42",
+	}
+	serverURL, err := worker.NewServerURL(conf)
+	require.NoError(t, err)
+	// Note that the "/base" is intentionally discarded by NewServerURL
+	// (the code is written this way and if we would change it it would
+	//  potentially break compatibility)
+	require.Equal(t, "http://localhost:8080/api/image-builder-worker/v42/", serverURL.String())
+
+}

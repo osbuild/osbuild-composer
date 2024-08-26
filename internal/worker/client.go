@@ -74,16 +74,26 @@ type tokenResponse struct {
 	AccessToken string `json:"access_token"`
 }
 
-func NewClient(conf ClientConfig) (*Client, error) {
-	api.BasePath = conf.BasePath
-
+func newServerURL(conf ClientConfig) (*url.URL, error) {
 	serverURL, err := url.Parse(conf.BaseURL)
 	if err != nil {
 		return nil, err
 	}
-	serverURL, err = serverURL.Parse(api.BasePath + "/")
+	// It would be nicer to use "serverURL.JoinPath()" here but that
+	// would break compatibility see client_test.go:TestNewServerURL
+	serverURL, err = serverURL.Parse(conf.BasePath + "/")
 	if err != nil {
-		panic(err)
+		return nil, err
+	}
+	return serverURL, nil
+}
+
+func NewClient(conf ClientConfig) (*Client, error) {
+	api.BasePath = conf.BasePath
+
+	serverURL, err := newServerURL(conf)
+	if err != nil {
+		return nil, err
 	}
 
 	if conf.OAuthURL != "" {
@@ -132,11 +142,8 @@ func NewClient(conf ClientConfig) (*Client, error) {
 func NewClientUnix(conf ClientConfig) *Client {
 	api.BasePath = conf.BasePath
 
-	serverURL, err := url.Parse("http://localhost/")
-	if err != nil {
-		panic(err)
-	}
-	serverURL, err = serverURL.Parse(api.BasePath + "/")
+	conf.BaseURL = "http://localhost/"
+	serverURL, err := newServerURL(conf)
 	if err != nil {
 		panic(err)
 	}
