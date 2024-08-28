@@ -1,5 +1,7 @@
 package target
 
+import "cloud.google.com/go/compute/apiv1/computepb"
+
 const TargetNameGCP TargetName = "org.osbuild.gcp"
 
 type GCPTargetOptions struct {
@@ -13,6 +15,9 @@ type GCPTargetOptions struct {
 	// to GCP. If not provided, the worker will try to authenticate using the
 	// credentials from worker's configuration.
 	Credentials []byte `json:"credentials,omitempty"`
+
+	// The list of Guest OS Features to specify for the image being imported.
+	GuestOsFeatures []*computepb.GuestOsFeature `json:"guestOsFeatures,omitempty"`
 }
 
 func (GCPTargetOptions) isTargetOptions() {}

@@ -807,9 +807,17 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				break
 			}
 
+			guestOSFeatures := targetOptions.GuestOsFeatures
+			// TODO: Remove this after "some time"
+			// This is just a backward compatibility for the old composer versions,
+			// which did not set the guest OS features in the target options.
+			if len(guestOSFeatures) == 0 {
+				guestOSFeatures = gcp.GuestOsFeaturesByDistro(targetOptions.Os)
+			}
+
 			logWithId.Infof("[GCP] 📥 Importing image into Compute Engine as '%s'", jobTarget.ImageName)
 
-			_, importErr := g.ComputeImageInsert(ctx, bucket, targetOptions.Object, jobTarget.ImageName, []string{targetOptions.Region}, gcp.GuestOsFeaturesByDistro(targetOptions.Os))
+			_, importErr := g.ComputeImageInsert(ctx, bucket, targetOptions.Object, jobTarget.ImageName, []string{targetOptions.Region}, guestOSFeatures)
 			if importErr == nil {
 				logWithId.Infof("[GCP] 🎉 Image import finished successfully")
 			}
