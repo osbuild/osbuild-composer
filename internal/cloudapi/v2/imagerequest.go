@@ -11,6 +11,7 @@ import (
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/ostree"
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
+	"github.com/osbuild/osbuild-composer/internal/cloud/gcp"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/target"
 )
@@ -153,13 +154,15 @@ func newGCPTarget(options UploadOptions, imageType distro.ImageType) (*target.Ta
 	if gcpUploadOptions.Bucket != nil {
 		bucket = *gcpUploadOptions.Bucket
 	}
+	osName := imageType.Arch().Distro().Name()
 	t := target.NewGCPTarget(&target.GCPTargetOptions{
 		Region: gcpUploadOptions.Region,
-		Os:     imageType.Arch().Distro().Name(), // not exposed in cloudapi
+		Os:     osName, // not exposed in cloudapi
 		Bucket: bucket,
 		// the uploaded object must have a valid extension
 		Object:            fmt.Sprintf("%s.tar.gz", imageName),
 		ShareWithAccounts: share,
+		GuestOsFeatures:   gcp.GuestOsFeaturesByDistro(osName), // not exposed in cloudapi
 	})
 	// Import will fail if an image with this name already exists
 	if gcpUploadOptions.ImageName != nil {

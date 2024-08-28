@@ -10,6 +10,7 @@ import (
 
 	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/osbuild/images/pkg/distro"
+	"github.com/osbuild/osbuild-composer/internal/cloud/gcp"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/sirupsen/logrus"
 
@@ -346,12 +347,15 @@ func uploadRequestToTarget(u uploadRequest, imageType distro.ImageType) *target.
 			logrus.Infof("[GCP] object name must end with '.tar.gz', using %q as the object name", objectName)
 		}
 
+		osName := imageType.Arch().Distro().Name()
+
 		t.Options = &target.GCPTargetOptions{
-			Region:      options.Region,
-			Os:          imageType.Arch().Distro().Name(),
-			Bucket:      options.Bucket,
-			Object:      objectName,
-			Credentials: gcpCredentials,
+			Region:          options.Region,
+			Os:              osName,
+			Bucket:          options.Bucket,
+			Object:          objectName,
+			Credentials:     gcpCredentials,
+			GuestOsFeatures: gcp.GuestOsFeaturesByDistro(osName),
 		}
 	case *vmwareUploadSettings:
 		t.Name = target.TargetNameVMWare

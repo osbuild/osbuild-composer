@@ -131,6 +131,13 @@ function verify() {
     exit 1
   fi
 
+  # Verify that the image has guestOsFeatures set
+  GCP_IMAGE_GUEST_OS_FEATURES_LEN=$($GCP_CMD compute images describe --project="$GCP_PROJECT" --format="json" "$GCP_IMAGE_NAME" | jq -r '.guestOsFeatures | length')
+  if [ "$GCP_IMAGE_GUEST_OS_FEATURES_LEN" -eq 0 ]; then
+    echo "❌ Image does not have guestOsFeatures set"
+    exit 1
+  fi
+
   # Verify that the image boots and have customizations applied
   # Create SSH keys to use
   GCP_SSH_KEY="$WORKDIR/id_google_compute_engine"
