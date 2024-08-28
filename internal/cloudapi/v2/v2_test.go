@@ -78,9 +78,12 @@ func newV2Server(t *testing.T, dir string, depsolveChannels []string, enableJWT 
 	distros := distrofactory.NewTestDefault()
 	require.NotNil(t, distros)
 
-	repos, err := reporegistry.New([]string{"../../../test/data"})
+	// The path is relative to the running test
+	testReposPath := []string{"../../../test/data"}
+	repos, err := reporegistry.New(testReposPath)
 	require.Nil(t, err)
 	require.NotNil(t, repos)
+	require.Greater(t, len(repos.ListDistros()), 0)
 
 	solver := dnfjson.NewBaseSolver("") // test solver doesn't need a cache dir
 	require.NotNil(t, solver)
