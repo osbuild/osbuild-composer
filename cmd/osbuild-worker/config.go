@@ -103,6 +103,8 @@ type workerConfig struct {
 	// default value: &{ Type: host }
 	OSBuildExecutor      *executorConfig       `toml:"osbuild_executor"`
 	RepositoryMTLSConfig *repositoryMTLSConfig `toml:"repository_mtls"`
+	// something like "production" or "staging" to be added to logging
+	DeploymentChannel string `toml:"deployment_channel"`
 }
 
 func parseConfig(file string) (*workerConfig, error) {
@@ -112,6 +114,7 @@ func parseConfig(file string) (*workerConfig, error) {
 		OSBuildExecutor: &executorConfig{
 			Type: "host",
 		},
+		DeploymentChannel: "local",
 	}
 
 	_, err := toml.DecodeFile(file, &config)

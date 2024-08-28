@@ -989,8 +989,8 @@ github.com/osbuild/images/pkg/rhsm
 github.com/osbuild/images/pkg/rhsm/facts
 github.com/osbuild/images/pkg/rpmmd
 github.com/osbuild/images/pkg/runner
-# github.com/osbuild/osbuild-composer/pkg/splunk_logger v0.0.0-20231117174845-e969a9dc3cd1
-## explicit; go 1.19
+# github.com/osbuild/osbuild-composer/pkg/splunk_logger v0.0.0-20240814102216-0239db53236d
+## explicit; go 1.21
 github.com/osbuild/osbuild-composer/pkg/splunk_logger
 # github.com/osbuild/pulp-client v0.1.0
 ## explicit; go 1.19
