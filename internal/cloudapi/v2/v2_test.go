@@ -80,6 +80,7 @@ func newV2Server(t *testing.T, dir string, depsolveChannels []string, enableJWT 
 	repos, err := reporegistry.New([]string{"../../../test/data"})
 	require.Nil(t, err)
 	require.NotNil(t, repos)
+	require.Greater(t, len(repos.ListDistros()), 0)
 
 	config := v2.ServerConfig{
 		JWTEnabled:           enableJWT,
