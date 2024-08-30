@@ -15,11 +15,11 @@ import boto3
 arch_info = {}
 arch_info["x86_64"] = {
     "ImageId": "ami-0f7c7d22de9e097ea",
-    "InstanceType": "c5.large"
+    "InstanceType": "m7a.large"
 }
 arch_info["aarch64"] = {
     "ImageId": "ami-019ece25c0f135889",
-    "InstanceType": "c6g.large"
+    "InstanceType": "m7g.large"
 }
 
 
