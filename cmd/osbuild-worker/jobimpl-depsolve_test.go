@@ -26,6 +26,11 @@ func TestWorkerClientErrorFromDnfJson(t *testing.T) {
 	entry, hook := makeMockEntry()
 	clientErr := worker.WorkerClientErrorFrom(dnfJsonErr, entry)
 	assert.Equal(t, `Code: 20, Reason: DNF error occurred: DepsolveError, Details: something is terribly wrong`, clientErr.String())
+
+	wrappedErr := fmt.Errorf("Wrap the error: %w", dnfJsonErr)
+	clientErr = worker.WorkerClientErrorFrom(wrappedErr, entry)
+	assert.Equal(t, `Code: 20, Reason: DNF error occurred: DepsolveError, Details: something is terribly wrong`, clientErr.String())
+
 	assert.Equal(t, 0, len(hook.AllEntries()))
 }
 
