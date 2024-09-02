@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"net/url"
 	"strings"
@@ -78,12 +79,12 @@ func workerClientErrorFrom(err error, logWithId *logrus.Entry) *clienterrors.Err
 		logWithId.Errorf("workerClientErrorFrom expected an error to be processed. Not nil")
 	}
 
-	switch e := err.(type) {
-	case dnfjson.Error:
+	var dnfjsonErr dnfjson.Error
+	if errors.As(err, &dnfjsonErr) {
 		// Error originates from dnf-json
-		reason := fmt.Sprintf("DNF error occurred: %s", e.Kind)
-		details := e.Reason
-		switch e.Kind {
+		reason := fmt.Sprintf("DNF error occurred: %s", dnfjsonErr.Kind)
+		details := dnfjsonErr.Reason
+		switch dnfjsonErr.Kind {
 		case "DepsolveError":
 			return clienterrors.New(clienterrors.ErrorDNFDepsolveError, reason, details)
 		case "MarkingErrors":
@@ -96,7 +97,7 @@ func workerClientErrorFrom(err error, logWithId *logrus.Entry) *clienterrors.Err
 			// by dnf-json and not explicitly handled here.
 			return clienterrors.New(clienterrors.ErrorDNFOtherError, reason, details)
 		}
-	default:
+	} else {
 		reason := "rpmmd error in depsolve job"
 		details := fmt.Sprintf("%v", err)
 		// Error originates from internal/rpmmd, not from dnf-json
