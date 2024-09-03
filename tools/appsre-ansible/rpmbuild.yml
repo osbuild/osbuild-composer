@@ -25,7 +25,13 @@
     shell: >-
       dnf config-manager \
         --set-disabled rhel-9-baseos-rhui-rpms \
-        --set-disabled rhel-9-appstream-rhui-rpms
+        --set-disabled rhel-9-appstream-rhui-rpms \
+        --set-disabled rhui-client-config-server-9
+
+  - name: Enable rhsm repository management
+    become: yes
+    shell: >-
+        subscription-manager config --rhsm.manage_repos 1
 
   # RHEL mock templates don't work on RHUI, they use the CDN repos
   - name: Subscribe
