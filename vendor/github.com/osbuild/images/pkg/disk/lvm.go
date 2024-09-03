@@ -27,10 +27,6 @@ func (vg *LVMVolumeGroup) EntityName() string {
 	return "lvm"
 }
 
-func (vg *LVMVolumeGroup) IsContainer() bool {
-	return true
-}
-
 func (vg *LVMVolumeGroup) Clone() Entity {
 	if vg == nil {
 		return nil
@@ -168,10 +164,6 @@ type LVMLogicalVolume struct {
 	Name    string
 	Size    uint64
 	Payload Entity
-}
-
-func (lv *LVMLogicalVolume) IsContainer() bool {
-	return true
 }
 
 func (lv *LVMLogicalVolume) Clone() Entity {

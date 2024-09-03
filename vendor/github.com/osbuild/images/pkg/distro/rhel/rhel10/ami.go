@@ -163,7 +163,6 @@ func ec2CommonPackageSet(t *rhel.ImageType) rpmmd.PackageSet {
 			"dhcpcd",
 			"yum-utils",
 			"dracut-config-generic",
-			"gdisk",
 			"grub2",
 			"langpacks-en",
 			"NetworkManager-cloud-setup",

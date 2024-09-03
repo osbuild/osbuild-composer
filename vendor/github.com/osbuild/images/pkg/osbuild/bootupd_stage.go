@@ -89,7 +89,7 @@ func genMountsForBootupd(source string, pt *disk.PartitionTable) ([]Mount, error
 			continue
 		}
 
-		// TODO: support things like LVM here via supporting "disk.Container"
+		// TODO: support things like LUKS here via supporting "disk.Container"?
 		switch payload := part.Payload.(type) {
 		case disk.Mountable:
 			mount, err := genOsbuildMount(source, payload)
@@ -107,6 +107,20 @@ func genMountsForBootupd(source string, pt *disk.PartitionTable) ([]Mount, error
 				mount.Partition = common.ToPtr(idx + 1)
 				mounts = append(mounts, *mount)
 			}
+		case *disk.LVMVolumeGroup:
+			for i := range payload.LogicalVolumes {
+				lv := &payload.LogicalVolumes[i]
+				mountable, ok := lv.Payload.(disk.Mountable)
+				if !ok {
+					return nil, fmt.Errorf("expected LV payload %+[1]v to be mountable, got %[1]T", lv.Payload)
+				}
+				mount, err := genOsbuildMount(lv.Name, mountable)
+				if err != nil {
+					return nil, err
+				}
+				mount.Source = lv.Name
+				mounts = append(mounts, *mount)
+			}
 		default:
 			return nil, fmt.Errorf("type %T not supported by bootupd handling yet", part.Payload)
 		}
@@ -119,8 +133,7 @@ func genMountsForBootupd(source string, pt *disk.PartitionTable) ([]Mount, error
 	return mounts, nil
 }
 
-func GenBootupdDevicesMounts(filename string, pt *disk.PartitionTable, pltf platform.Platform) (map[string]Device, []Mount, error) {
-	devName := "disk"
+func genDevicesForBootupd(filename, devName string, pt *disk.PartitionTable) (map[string]Device, error) {
 	devices := map[string]Device{
 		devName: Device{
 			Type: "org.osbuild.loopback",
@@ -129,6 +142,28 @@ func GenBootupdDevicesMounts(filename string, pt *disk.PartitionTable, pltf plat
 				Partscan: true,
 			},
 		},
+	}
+	for idx, part := range pt.Partitions {
+		switch payload := part.Payload.(type) {
+		case *disk.LVMVolumeGroup:
+			for _, lv := range payload.LogicalVolumes {
+				// partitions start with "1", so add "1"
+				partNum := idx + 1
+				devices[lv.Name] = *NewLVM2LVDevice(devName, &LVM2LVDeviceOptions{Volume: lv.Name, VGPartnum: common.ToPtr(partNum)})
+			}
+		default:
+			// nothing
+		}
+	}
+
+	return devices, nil
+}
+
+func GenBootupdDevicesMounts(filename string, pt *disk.PartitionTable, pltf platform.Platform) (map[string]Device, []Mount, error) {
+	devName := "disk"
+	devices, err := genDevicesForBootupd(filename, devName, pt)
+	if err != nil {
+		return nil, nil, err
 	}
 	mounts, err := genMountsForBootupd(devName, pt)
 	if err != nil {

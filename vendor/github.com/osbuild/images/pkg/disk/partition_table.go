@@ -160,10 +160,6 @@ func NewPartitionTable(basePT *PartitionTable, mountpoints []blueprint.Filesyste
 	return newPT, nil
 }
 
-func (pt *PartitionTable) IsContainer() bool {
-	return true
-}
-
 func (pt *PartitionTable) Clone() Entity {
 	if pt == nil {
 		return nil
@@ -785,6 +781,7 @@ func (pt *PartitionTable) ensureBtrfs() error {
 					Mountpoint: "/",
 					Compress:   DefaultBtrfsCompression,
 					ReadOnly:   opts.ReadOnly(),
+					Size:       part.Size,
 				},
 			},
 		}

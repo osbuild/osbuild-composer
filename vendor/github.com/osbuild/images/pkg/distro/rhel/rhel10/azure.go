@@ -68,7 +68,6 @@ func azureCommonPackageSet(t *rhel.ImageType) rpmmd.PackageSet {
 			"cloud-utils-growpart",
 			"dracut-config-generic",
 			"efibootmgr",
-			"gdisk",
 			"hyperv-daemons",
 			"kernel-core",
 			"kernel-modules",

@@ -21,10 +21,6 @@ type Partition struct {
 	Payload PayloadEntity
 }
 
-func (p *Partition) IsContainer() bool {
-	return true
-}
-
 func (p *Partition) Clone() Entity {
 	if p == nil {
 		return nil

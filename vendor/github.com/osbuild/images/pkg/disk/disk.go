@@ -60,10 +60,6 @@ const (
 
 // Entity is the base interface for all disk-related entities.
 type Entity interface {
-	// IsContainer indicates if the implementing type can
-	// contain any other entities.
-	IsContainer() bool
-
 	// Clone returns a deep copy of the entity.
 	Clone() Entity
 }
