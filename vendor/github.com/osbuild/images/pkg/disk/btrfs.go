@@ -25,10 +25,6 @@ func (b *Btrfs) EntityName() string {
 	return "btrfs"
 }
 
-func (b *Btrfs) IsContainer() bool {
-	return true
-}
-
 func (b *Btrfs) Clone() Entity {
 	if b == nil {
 		return nil
@@ -120,10 +116,6 @@ type BtrfsSubvolume struct {
 
 	// UUID of the parent volume
 	UUID string
-}
-
-func (subvol *BtrfsSubvolume) IsContainer() bool {
-	return false
 }
 
 func (bs *BtrfsSubvolume) Clone() Entity {

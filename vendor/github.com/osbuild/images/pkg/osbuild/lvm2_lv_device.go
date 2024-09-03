@@ -5,6 +5,8 @@ package osbuild
 type LVM2LVDeviceOptions struct {
 	// Logical volume to activate
 	Volume string `json:"volume"`
+	// The partition the volume group is located on
+	VGPartnum *int `json:"vg_partnum,omitempty"`
 }
 
 func (LVM2LVDeviceOptions) isDeviceOptions() {}
