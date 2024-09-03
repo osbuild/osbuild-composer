@@ -155,7 +155,8 @@ func gceCommonPackageSet(t *rhel.ImageType) rpmmd.PackageSet {
 			// the el9 version depends on libboost_regex.so.1.75.0()(64bit), which is not available on el10
 			//"google-compute-engine",
 			"google-osconfig-agent",
-			"gce-disk-expand",
+			// Requires gdisk which was removed late in the RHEL 10 development cycle
+			// "gce-disk-expand",
 			// cloud-init is a replacement for "google-compute-engine", remove once the package is available
 			"cloud-init",
 

@@ -228,7 +228,7 @@ func (c *Customizations) GetTimezoneSettings() (*string, []string) {
 }
 
 func (c *Customizations) GetUsers() []UserCustomization {
-	if c == nil {
+	if c == nil || (c.SSHKey == nil && c.User == nil) {
 		return nil
 	}
 
