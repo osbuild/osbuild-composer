@@ -31,7 +31,7 @@ sudo virsh list --all > /dev/null
 
 # define custom network for libvirt
 if ! sudo virsh net-info integration > /dev/null 2>&1; then
-    sudo virsh net-define /usr/share/tests/osbuild-composer/upgrade8to9/integration.xml
+    sudo virsh net-define /usr/share/tests/osbuild-composer/rhel-upgrade/integration.xml
     sudo virsh net-start integration
 fi
 
@@ -133,7 +133,7 @@ wait_for_vm
 sudo pkill -P "$CONSOLE_PID"
 
 # copy over next phases of the test and run the first one
-sudo scp "${SSH_OPTIONS[@]}" -q -i "${SSH_KEY}" /usr/share/tests/osbuild-composer/upgrade8to9/*.sh root@"$INSTANCE_ADDRESS":
+sudo scp "${SSH_OPTIONS[@]}" -q -i "${SSH_KEY}" /usr/share/tests/osbuild-composer/rhel-upgrade/*.sh root@"$INSTANCE_ADDRESS":
 sudo scp "${SSH_OPTIONS[@]}" -q -i "${SSH_KEY}" /usr/libexec/tests/osbuild-composer/shared_lib.sh root@"$INSTANCE_ADDRESS":
 sudo scp "${SSH_OPTIONS[@]}" -q -i "${SSH_KEY}" /usr/libexec/osbuild-composer-test/define-compose-url.sh root@"$INSTANCE_ADDRESS":
 # Put comment in sshd_config to keep root login after upgrade
