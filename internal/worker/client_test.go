@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -81,6 +80,13 @@ func newTestWorkerServer(t *testing.T) (string, string, string) {
 }
 
 func TestOAuth(t *testing.T) {
+	captureLogrus(t)
+
+	logrus.AddHook(&LogCheckerHook{
+		t:         t,
+		checkMsgs: []string{"Worker (x86_64) registered"},
+	})
+
 	workerURL, oauthURL, offlineToken := newTestWorkerServer(t)
 
 	client, err := worker.NewClient(worker.ClientConfig{
@@ -113,6 +119,13 @@ func TestProxy(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			captureLogrus(t)
+
+			logrus.AddHook(&LogCheckerHook{
+				t:         t,
+				checkMsgs: []string{"Worker (x86_64) registered"},
+			})
+
 			workerURL, oauthURL, offlineToken := newTestWorkerServer(t)
 
 			// initialize a test proxy server
@@ -185,14 +198,7 @@ func (h *LogCheckerHook) Fire(e *logrus.Entry) error {
 	return nil
 }
 
-func muteLogrusDuringTest(t *testing.T) {
-	// avoid having errors on stdout - as this is expected
-	oldOut := logrus.StandardLogger().Out
-	logrus.SetOutput(io.Discard)
-	t.Cleanup(func() {
-		logrus.SetOutput(oldOut)
-	})
-
+func captureLogrus(t *testing.T) {
 	newHooks := make(logrus.LevelHooks)
 	originalHooks := logrus.StandardLogger().ReplaceHooks(newHooks)
 	t.Cleanup(func() {
@@ -201,7 +207,7 @@ func muteLogrusDuringTest(t *testing.T) {
 }
 
 func TestFailedInitialToken(t *testing.T) {
-	muteLogrusDuringTest(t)
+	captureLogrus(t)
 
 	workerURL, _, offlineToken := newTestWorkerServer(t)
 
@@ -223,7 +229,7 @@ func TestFailedInitialToken(t *testing.T) {
 }
 
 func TestFailedInitialRegisterWorker(t *testing.T) {
-	muteLogrusDuringTest(t)
+	captureLogrus(t)
 
 	_, oauthURL, offlineToken := newTestWorkerServer(t)
 
