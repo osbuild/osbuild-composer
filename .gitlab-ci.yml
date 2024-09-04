@@ -740,9 +740,12 @@ Upgrade:
     - !reference [.nightly_rules_all, rules]
   script:
     - schutzbot/deploy.sh
-    - /usr/libexec/tests/osbuild-composer/upgrade8to9.sh
-  variables:
-    RUNNER: rhos-01/rhel-9.5-nightly-x86_64-large
+    - /usr/libexec/tests/osbuild-composer/rhel-upgrade.sh
+  parallel:
+    matrix:
+      - RUNNER:
+          - rhos-01/rhel-9.5-nightly-x86_64-large
+          - rhos-01/rhel-10.0-nightly-x86_64-large
 
 NIGHTLY_FAIL:
   stage: finish

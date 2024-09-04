@@ -285,8 +285,8 @@ install -m 0644 -vp test/data/x509/*                               %{buildroot}%
 install -m 0755 -vd                                                %{buildroot}%{_datadir}/tests/osbuild-composer/schemas
 install -m 0644 -vp pkg/jobqueue/dbjobqueue/schemas/*              %{buildroot}%{_datadir}/tests/osbuild-composer/schemas/
 
-install -m 0755 -vd                                               %{buildroot}%{_datadir}/tests/osbuild-composer/upgrade8to9
-install -m 0644 -vp test/data/upgrade8to9/*                       %{buildroot}%{_datadir}/tests/osbuild-composer/upgrade8to9/
+install -m 0755 -vd                                                %{buildroot}%{_datadir}/tests/osbuild-composer/rhel-upgrade
+install -m 0644 -vp test/data/rhel-upgrade/*                       %{buildroot}%{_datadir}/tests/osbuild-composer/rhel-upgrade/
 
 %endif
 
