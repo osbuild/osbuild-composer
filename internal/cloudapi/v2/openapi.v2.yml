@@ -975,6 +975,12 @@ components:
       required:
         - profile_id
       properties:
+        policy_id:
+          type: string
+          format: uuid
+          description: |
+            Puts a specified policy ID in the RHSM facts, so that any instances registered to
+            insights will be automatically connected to the compliance policy in the console.
         profile_id:
           type: string
         tailoring:
@@ -986,6 +992,12 @@ components:
       required:
         - profile_id
       properties:
+        policy_id:
+          type: string
+          format: uuid
+          description: |
+            Puts a specified policy ID in the RHSM facts, so that any instances registered to
+            insights will be automatically connected to the compliance policy in the console.
         profile_id:
           type: string
         datastream:

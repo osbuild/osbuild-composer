@@ -8,6 +8,8 @@ import (
 	"math/big"
 	"reflect"
 
+	"github.com/google/uuid"
+
 	"github.com/osbuild/images/pkg/customizations/subscription"
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/distrofactory"
@@ -231,6 +233,11 @@ func (request *ComposeRequest) GetCustomizationsFromBlueprintRequest() (*bluepri
 		oscap := &blueprint.OpenSCAPCustomization{
 			ProfileID: rbpc.Openscap.ProfileId,
 		}
+
+		if rbpc.Openscap.PolicyId != nil {
+			oscap.PolicyID = *rbpc.Openscap.PolicyId
+		}
+
 		if rbpc.Openscap.Datastream != nil {
 			oscap.DataStream = *rbpc.Openscap.Datastream
 		}
@@ -739,6 +746,11 @@ func (request *ComposeRequest) GetBlueprintFromCustomizations() (blueprint.Bluep
 		openSCAPCustomization := &blueprint.OpenSCAPCustomization{
 			ProfileID: request.Customizations.Openscap.ProfileId,
 		}
+
+		if request.Customizations.Openscap.PolicyId != nil {
+			openSCAPCustomization.PolicyID = *request.Customizations.Openscap.PolicyId
+		}
+
 		if request.Customizations.Openscap.Tailoring != nil && request.Customizations.Openscap.JsonTailoring != nil {
 			return bp, fmt.Errorf("OpenSCAP customization error: choose one option between OpenSCAP tailoring and OpenSCAP json tailoring")
 		}
@@ -1162,6 +1174,19 @@ func (request *ComposeRequest) GetImageRequests(distroFactory *distrofactory.Fac
 		if request.Koji == nil {
 			imageOptions.Facts = &facts.ImageOptions{
 				APIType: facts.CLOUDV2_APITYPE,
+			}
+			oscap := bp.Customizations.GetOpenSCAP()
+			if oscap != nil {
+				if oscap.ProfileID != "" {
+					imageOptions.Facts.OpenSCAPProfileID = oscap.ProfileID
+				}
+				if oscap.PolicyID != "" {
+					policyID, err := uuid.Parse(oscap.PolicyID)
+					if err != nil {
+						return nil, fmt.Errorf("Unable to parse %s as a uuid: %w", oscap.PolicyID, err)
+					}
+					imageOptions.Facts.CompliancePolicyID = policyID
+				}
 			}
 		}
 

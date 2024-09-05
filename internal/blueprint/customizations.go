@@ -122,6 +122,7 @@ type OpenSCAPCustomization struct {
 	ProfileID     string                               `json:"profile_id,omitempty" toml:"profile_id,omitempty"`
 	Tailoring     *OpenSCAPTailoringCustomizations     `json:"tailoring,omitempty" toml:"tailoring,omitempty"`
 	JSONTailoring *OpenSCAPJSONTailoringCustomizations `json:"json_tailoring,omitempty" toml:"json_tailoring,omitempty"`
+	PolicyID      string                               `json:"policy_id,omitempty" toml:"policy_id,omitempty"`
 }
 
 type OpenSCAPTailoringCustomizations struct {
