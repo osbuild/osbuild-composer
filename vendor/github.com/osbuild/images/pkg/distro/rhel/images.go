@@ -145,7 +145,7 @@ func osCustomizations(
 	}
 
 	if t.IsRHEL() && options.Facts != nil {
-		osc.FactAPIType = &options.Facts.APIType
+		osc.RHSMFacts = options.Facts
 	}
 
 	var err error
@@ -467,6 +467,7 @@ func EdgeInstallerImage(workload workload.Workload,
 
 	img.Platform = t.platform
 	img.ExtraBasePackages = packageSets[InstallerPkgsKey]
+	img.Subscription = options.Subscription
 
 	if t.Arch().Distro().Releasever() == "8" {
 		// NOTE: RHEL 8 only supports the older Anaconda configs
