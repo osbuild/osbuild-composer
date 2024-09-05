@@ -40,9 +40,22 @@ function _instanceCheck() {
 
     FACTS=$($_ssh sudo subscription-manager facts)
     if ! grep -q "image-builder.osbuild-composer.api-type: cloudapi-v2" <<< "$FACTS"; then
-        echo "System doesn't contain the expected osbuild facts"
+        echo "System doesn't contain the expected image-builder.osbuild-composer facts"
         echo "$FACTS" | grep image-builder
         exit 1
+    fi
+
+    if [ -n "$OPENSCAP_CUSTOMIZATION_BLOCK" ]; then
+        if ! grep -q "image-builder.insights.openscap-profile-id: pci-dss" <<< "$FACTS"; then
+            echo "System doesn't contain the expected image-builder.insights facts (profile-id)"
+            echo "$FACTS"| grep image-builder
+            exit 1
+        fi
+        if ! grep -q "image-builder.insights.compliance-policy-id: 1af6cced-581c-452c-89cd-33b7bddb816a" <<< "$FACTS"; then
+            echo "System doesn't contain the expected image-builder.insights facts (policy-id)"
+            echo "$FACTS"| grep image-builder
+            exit 1
+        fi
     fi
 
     # Unregister subscription

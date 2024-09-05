@@ -409,6 +409,7 @@ case "${IMAGE_TYPE}" in
 ,
     "openscap": {
         "profile_id": "pci-dss",
+        "policy_id": "1af6cced-581c-452c-89cd-33b7bddb816a",
         "tailoring": {
           "unselected": [ "rpm_verify_permissions" ]
         }
