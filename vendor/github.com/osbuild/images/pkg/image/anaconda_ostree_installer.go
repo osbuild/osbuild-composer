@@ -9,6 +9,7 @@ import (
 	"github.com/osbuild/images/pkg/artifact"
 	"github.com/osbuild/images/pkg/customizations/anaconda"
 	"github.com/osbuild/images/pkg/customizations/kickstart"
+	"github.com/osbuild/images/pkg/customizations/subscription"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/ostree"
@@ -23,6 +24,9 @@ type AnacondaOSTreeInstaller struct {
 	ExtraBasePackages rpmmd.PackageSet
 
 	Kickstart *kickstart.Options
+
+	// Subscription options to include
+	Subscription *subscription.ImageOptions
 
 	SquashfsCompression string
 
@@ -119,6 +123,12 @@ func (img *AnacondaOSTreeInstaller) InstantiateManifest(m *manifest.Manifest,
 	// enable ISOLinux on x86_64 only
 	isoLinuxEnabled := img.Platform.GetArch() == arch.ARCH_X86_64
 
+	var subscriptionPipeline *manifest.Subscription
+	if img.Subscription != nil {
+		// pipeline that will create subscription service and key file to be copied out
+		subscriptionPipeline = manifest.NewSubscription(buildPipeline, img.Subscription)
+	}
+
 	isoTreePipeline := manifest.NewAnacondaInstallerISOTree(buildPipeline, anacondaPipeline, rootfsImagePipeline, bootTreePipeline)
 	isoTreePipeline.PartitionTable = efiBootPartitionTable(rng)
 	isoTreePipeline.Release = img.Release
@@ -132,6 +142,7 @@ func (img *AnacondaOSTreeInstaller) InstantiateManifest(m *manifest.Manifest,
 	if img.FIPS {
 		isoTreePipeline.KernelOpts = append(isoTreePipeline.KernelOpts, "fips=1")
 	}
+	isoTreePipeline.SubscriptionPipeline = subscriptionPipeline
 
 	isoPipeline := manifest.NewISO(buildPipeline, isoTreePipeline, img.ISOLabel)
 	isoPipeline.SetFilename(img.Filename)

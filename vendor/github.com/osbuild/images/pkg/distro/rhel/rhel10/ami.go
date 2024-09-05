@@ -96,15 +96,6 @@ func baseEc2ImageConfig() *distro.ImageConfig {
 				},
 			},
 		},
-		// COMPOSER-1807
-		DracutConf: []*osbuild.DracutConfStageOptions{
-			{
-				Filename: "sgdisk.conf",
-				Config: osbuild.DracutConfigFile{
-					Install: []string{"sgdisk"},
-				},
-			},
-		},
 		SystemdUnit: []*osbuild.SystemdUnitStageOptions{
 			// RHBZ#1822863
 			{
