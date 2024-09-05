@@ -19,6 +19,20 @@ function _instanceCheck() {
   echo "✔️ Instance checking"
   local _ssh="$1"
 
+  # Retry loop to wait for instance to be ready
+  # This is here especially because of gcp test
+  RETRIES=10
+  for i in $(seq 1 $RETRIES); do
+    echo "Attempt $i of $RETRIES: Checking instance status..."
+    if eval "$_ssh true"; then
+      echo "Instance is up and ready!"
+      break
+    else
+      echo "Instance is still booting or SSH key not propagated, retrying in 30 seconds..."
+      sleep 30
+    fi
+  done
+
   # Check if postgres is installed
   $_ssh rpm -q postgresql dummy
 
