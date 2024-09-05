@@ -2,10 +2,13 @@ package worker_test
 
 import (
 	"fmt"
+	"github.com/stretchr/testify/require"
 	"io"
 	"net"
 	"net/http"
+	"regexp"
 	"strings"
+	"testing"
 )
 
 // Hop-by-hop headers. These are removed when sent to the backend.
@@ -45,17 +48,44 @@ func appendHostToXForwardHeader(header http.Header, host string) {
 	header.Set("X-Forwarded-For", host)
 }
 
+// details of the request
+// (not testing the response here)
+type callDetails struct {
+	path   string
+	method string
+	body   string
+}
+
+// helper for "equality" in tests
+// as the expected body is only to be contained in the actual request
+// and path can be regex in the "expected" struct
+func (expected callDetails) Equals(t *testing.T, actual callDetails) bool {
+	if !(strings.Contains(actual.body, expected.body) && expected.method == actual.method) {
+		return false
+	}
+
+	re, err := regexp.Compile(expected.path)
+	require.NoError(t, err)
+
+	if err != nil {
+		return false
+	}
+
+	// Check if other.Field2 matches the regex stored in m.Field2
+	return re.MatchString(actual.path)
+}
+
 // proxy is a simple http-only proxy implementation.
 // Don't use it in production. Also don't use it for https.
 type proxy struct {
 	// number of calls that were made through the proxy
-	calls                  int
+	calls                  []callDetails
 	paths                  []string
 	registrationSuccessful bool
 }
 
 func (p *proxy) ServeHTTP(wr http.ResponseWriter, req *http.Request) {
-	p.calls++
+	p.calls = append(p.calls, callDetails{path: req.URL.Path, method: req.Method})
 
 	if req.URL.Scheme != "http" && req.URL.Scheme != "https" {
 		msg := "unsupported protocol scheme " + req.URL.Scheme
@@ -82,6 +112,7 @@ func (p *proxy) ServeHTTP(wr http.ResponseWriter, req *http.Request) {
 	}
 
 	bodyString := string(bodyBytes)
+	p.calls[len(p.calls)-1].body = bodyString
 
 	req.Body = io.NopCloser(strings.NewReader(bodyString))
 
@@ -92,7 +123,7 @@ func (p *proxy) ServeHTTP(wr http.ResponseWriter, req *http.Request) {
 	if resp.Body != nil {
 		defer resp.Body.Close()
 	}
-	p.paths = append(p.paths, fmt.Sprintf("%d: %s (%s) Body: %s (Response: %s)", p.calls, req.URL.Path, req.Method, strings.TrimSpace(bodyString), resp.Status))
+	p.paths = append(p.paths, fmt.Sprintf("%d: %s (%s) Body: %s (Response: %s)", len(p.calls), req.URL.Path, req.Method, strings.TrimSpace(bodyString), resp.Status))
 
 	if req.URL.Path == "/api/image-builder-worker/v1/workers" &&
 		req.Method == "POST" &&

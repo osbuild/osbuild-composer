@@ -107,15 +107,38 @@ func TestOAuth(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestProxy(t *testing.T) {
+var oauthCall = callDetails{path: "/", method: "POST", body: "grant_type=refresh_token"}
+var registerCall = callDetails{path: "/api/image-builder-worker/v1/workers", method: "POST", body: "{\"arch\":\"x86_64\"}"}
+var requestJobCall = callDetails{path: "/api/image-builder-worker/v1/jobs", method: "POST", body: "{\"arch\":\"arch\",\"types\":[\"osbuild\"],\"worker_id\":"}
+var uploadArtifactCall = callDetails{path: "/api/image-builder-worker/v1/jobs/[a-f0-9-]+/artifacts/some-artifact", method: "PUT"}
+var cancelBuildCall = callDetails{path: "/api/image-builder-worker/v1/jobs/[a-f0-9-]+", method: "GET"}
 
+func TestProxy(t *testing.T) {
 	testCases := []struct {
 		name                string
 		resetAuthentication bool
-		expectedCalls       int
+		expectedCalls       []callDetails
 	}{
-		{"Test normal startup", false, 5},
-		{"Test loosing authentication", true, 7},
+
+		// we expect 5 or 7 calls to go through the proxy
+		// depending, if we "loose" authentication or not
+
+		{"Test normal startup", false, []callDetails{
+			oauthCall,
+			registerCall,
+			requestJobCall,
+			uploadArtifactCall,
+			cancelBuildCall,
+		}},
+		{"Test loosing authentication", true, []callDetails{
+			oauthCall,
+			registerCall,
+			requestJobCall, // authentication lost - this call fails
+			oauthCall,
+			requestJobCall,
+			uploadArtifactCall,
+			cancelBuildCall,
+		}},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -156,18 +179,13 @@ func TestProxy(t *testing.T) {
 			require.False(t, c)
 			require.NoError(t, err)
 
-			// we expect 5 or 7 calls to go through the proxy:
-			// depending, if we "loose" authentication or not
-			// * oauth call
-			// * register worker
-			// --- second testcase SNIP
-			// * request job (401 unauthorized)
-			// * oauth call
-			// ---
-			// * request job
-			// * upload artifact
-			// * cancel
-			require.Equal(t, tc.expectedCalls, proxy.calls, "We got those:\n"+strings.Join(proxy.paths, "\n"))
+			require.Equal(t, len(proxy.paths), len(proxy.calls), "Error in test execution all calls should get a response")
+
+			for i, call := range tc.expectedCalls {
+				require.True(t, call.Equals(t, proxy.calls[i]), "Call idx %d does not match the expected sequence (got %v)", i, proxy.calls[i])
+			}
+
+			require.Equal(t, len(tc.expectedCalls), len(proxy.calls), "There are more calls than expected:\n"+strings.Join(proxy.paths, "\n"))
 
 			require.True(t, proxy.registrationSuccessful)
 		})
