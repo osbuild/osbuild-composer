@@ -2,6 +2,8 @@ package reporegistry
 
 import (
 	"fmt"
+	"path/filepath"
+	"runtime"
 
 	"github.com/osbuild/images/pkg/distroidparser"
 	"github.com/osbuild/images/pkg/rpmmd"
@@ -21,6 +23,9 @@ func New(repoConfigPaths []string) (*RepoRegistry, error) {
 	if err != nil {
 		return nil, err
 	}
+	if len(repositories) == 0 {
+		return nil, fmt.Errorf("no repositories found in the given paths: %v", repoConfigPaths)
+	}
 
 	return &RepoRegistry{repositories}, nil
 }
@@ -28,7 +33,13 @@ func New(repoConfigPaths []string) (*RepoRegistry, error) {
 // NewTestedDefault returns a new RepoRegistry instance with the data
 // loaded from the default test repositories
 func NewTestedDefault() (*RepoRegistry, error) {
-	testReposPath := []string{"./test/data"}
+	_, callerSrc, _, ok := runtime.Caller(0)
+	var testReposPath []string
+	if !ok {
+		testReposPath = append(testReposPath, "../../test/data")
+	} else {
+		testReposPath = append(testReposPath, filepath.Join(filepath.Dir(callerSrc), "../../test/data"))
+	}
 	return New(testReposPath)
 }
 

@@ -42,6 +42,7 @@ import (
 	"github.com/osbuild/images/pkg/reporegistry"
 	"github.com/osbuild/images/pkg/rhsm/facts"
 	"github.com/osbuild/images/pkg/rpmmd"
+	"github.com/osbuild/images/pkg/sbom"
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/store"
@@ -326,7 +327,7 @@ func (api *API) PreloadMetadata() {
 			}
 
 			solver := api.solver.NewWithConfig(d.ModulePlatformID(), d.Releasever(), api.hostArch, d.Name())
-			_, _, err = solver.Depsolve([]rpmmd.PackageSet{{Include: []string{"filesystem"}, Repositories: repos}})
+			_, err = solver.Depsolve([]rpmmd.PackageSet{{Include: []string{"filesystem"}, Repositories: repos}}, sbom.StandardTypeNone)
 			if err != nil {
 				log.Printf("Problem preloading distro metadata for %s: %s", distro, err)
 			}
@@ -1290,7 +1291,7 @@ func (api *API) modulesInfoHandler(writer http.ResponseWriter, request *http.Req
 		solver := api.solver.NewWithConfig(d.ModulePlatformID(), d.Releasever(), archName, d.Name())
 		for i := range packageInfos {
 			pkgName := packageInfos[i].Name
-			solved, _, err := solver.Depsolve([]rpmmd.PackageSet{{Include: []string{pkgName}, Repositories: repos}})
+			res, err := solver.Depsolve([]rpmmd.PackageSet{{Include: []string{pkgName}, Repositories: repos}}, sbom.StandardTypeNone)
 			if err != nil {
 				errors := responseError{
 					ID:  errorId,
@@ -1299,7 +1300,7 @@ func (api *API) modulesInfoHandler(writer http.ResponseWriter, request *http.Req
 				statusResponseError(writer, http.StatusBadRequest, errors)
 				return
 			}
-			packageInfos[i].Dependencies = solved
+			packageInfos[i].Dependencies = res.Packages
 		}
 		if err := solver.CleanCache(); err != nil {
 			// log and ignore
@@ -1377,7 +1378,7 @@ func (api *API) projectsDepsolveHandler(writer http.ResponseWriter, request *htt
 	}
 
 	solver := api.solver.NewWithConfig(d.ModulePlatformID(), d.Releasever(), archName, d.Name())
-	deps, _, err := solver.Depsolve([]rpmmd.PackageSet{{Include: names, Repositories: repos}})
+	res, err := solver.Depsolve([]rpmmd.PackageSet{{Include: names, Repositories: repos}}, sbom.StandardTypeNone)
 	if err != nil {
 		errors := responseError{
 			ID:  "ProjectsError",
@@ -1390,7 +1391,7 @@ func (api *API) projectsDepsolveHandler(writer http.ResponseWriter, request *htt
 		// log and ignore
 		log.Printf("Error during rpm repo cache cleanup: %s", err.Error())
 	}
-	err = json.NewEncoder(writer).Encode(reply{Projects: deps})
+	err = json.NewEncoder(writer).Encode(reply{Projects: res.Packages})
 	common.PanicOnError(err)
 }
 
@@ -2294,12 +2295,13 @@ func (api *API) depsolve(packageSets map[string][]rpmmd.PackageSet, distroName s
 	repoConfigs := make(map[string][]rpmmd.RepoConfig)
 
 	for name, pkgSet := range packageSets {
-		res, repos, err := solver.Depsolve(pkgSet)
+		// TODO: SBOM support could be added here
+		res, err := solver.Depsolve(pkgSet, sbom.StandardTypeNone)
 		if err != nil {
 			return nil, nil, err
 		}
-		depsolvedSets[name] = res
-		repoConfigs[name] = repos
+		depsolvedSets[name] = res.Packages
+		repoConfigs[name] = res.Repos
 	}
 	if err := solver.CleanCache(); err != nil {
 		// log and ignore
@@ -3611,7 +3613,7 @@ func (api *API) depsolveBlueprint(bp blueprint.Blueprint) ([]rpmmd.PackageSpec, 
 	}
 
 	solver := api.solver.NewWithConfig(d.ModulePlatformID(), d.Releasever(), arch, d.Name())
-	solved, _, err := solver.Depsolve([]rpmmd.PackageSet{{Include: bp.GetPackages(), Repositories: repos}})
+	res, err := solver.Depsolve([]rpmmd.PackageSet{{Include: bp.GetPackages(), Repositories: repos}}, sbom.StandardTypeNone)
 	if err != nil {
 		return nil, err
 	}
@@ -3620,7 +3622,7 @@ func (api *API) depsolveBlueprint(bp blueprint.Blueprint) ([]rpmmd.PackageSpec, 
 		// log and ignore
 		log.Printf("Error during rpm repo cache cleanup: %s", err.Error())
 	}
-	return solved, nil
+	return res.Packages, nil
 }
 
 func (api *API) uploadsScheduleHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {

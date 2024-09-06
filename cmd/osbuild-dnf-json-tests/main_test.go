@@ -18,6 +18,7 @@ import (
 	"github.com/osbuild/images/pkg/ostree"
 	"github.com/osbuild/images/pkg/reporegistry"
 	"github.com/osbuild/images/pkg/rpmmd"
+	"github.com/osbuild/images/pkg/sbom"
 )
 
 // This test loads all the repositories available in /repositories directory
@@ -67,7 +68,7 @@ func TestCrossArchDepsolve(t *testing.T) {
 					assert.NoError(t, err)
 
 					for _, set := range manifest.GetPackageSetChains() {
-						_, _, err = solver.Depsolve(set)
+						_, err = solver.Depsolve(set, sbom.StandardTypeNone)
 						assert.NoError(t, err)
 					}
 				})
@@ -109,12 +110,12 @@ func TestDepsolvePackageSets(t *testing.T) {
 	gotPackageSpecsSets := make(map[string][]rpmmd.PackageSpec, len(imagePkgSets))
 	gotRepoConfigs := make(map[string][]rpmmd.RepoConfig, len(imagePkgSets))
 	for name, pkgSet := range imagePkgSets {
-		res, repos, err := solver.Depsolve(pkgSet)
+		res, err := solver.Depsolve(pkgSet, sbom.StandardTypeNone)
 		if err != nil {
 			require.Nil(t, err)
 		}
-		gotPackageSpecsSets[name] = res
-		gotRepoConfigs[name] = repos
+		gotPackageSpecsSets[name] = res.Packages
+		gotRepoConfigs[name] = res.Repos
 	}
 	expectedPackageSpecsSetNames := []string{"build", "os"}
 	require.EqualValues(t, len(expectedPackageSpecsSetNames), len(gotPackageSpecsSets))
