@@ -203,16 +203,18 @@ func (c *Client) registerWorker() error {
 	return nil
 }
 
+func (c *Client) getWorkerID() uuid.UUID {
+	c.workerIDMu.RLock()
+	defer c.workerIDMu.RUnlock()
+	return c.workerID
+}
+
 func (c *Client) workerHeartbeat() {
 	//nolint:staticcheck // avoid SA1015, this is an endless function
 	for range time.Tick(time.Minute * 1) {
-		workerID := func() uuid.UUID {
-			c.workerIDMu.RLock()
-			defer c.workerIDMu.RUnlock()
-			return c.workerID
-		}
+		workerID := c.getWorkerID()
 
-		if workerID() == uuid.Nil {
+		if workerID == uuid.Nil {
 			err := c.registerWorker()
 			if err != nil {
 				logrus.Errorf("Error registering worker, %v", err)
@@ -220,7 +222,7 @@ func (c *Client) workerHeartbeat() {
 			}
 		}
 
-		url, err := c.serverURL.Parse(fmt.Sprintf("workers/%s/status", workerID()))
+		url, err := c.serverURL.Parse(fmt.Sprintf("workers/%s/status", workerID))
 		if err != nil {
 			logrus.Errorf("Error parsing worker status: %v", err)
 			continue
@@ -344,12 +346,7 @@ func (c *Client) RequestJob(types []string, arch string) (Job, error) {
 		Arch:  arch,
 	}
 
-	workerID := func() uuid.UUID {
-		c.workerIDMu.RLock()
-		defer c.workerIDMu.RUnlock()
-		return c.workerID
-	}()
-
+	workerID := c.getWorkerID()
 	if workerID != uuid.Nil {
 		reqBody.WorkerId = common.ToPtr(workerID.String())
 	}
