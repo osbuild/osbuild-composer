@@ -111,7 +111,8 @@ func (ac Client) CreateStorageAccount(ctx context.Context, resourceGroup, name, 
 			tag.Name: &tag.Value,
 		},
 		Properties: &armstorage.AccountPropertiesCreateParameters{
-			MinimumTLSVersion: common.ToPtr(armstorage.MinimumTLSVersionTLS12),
+			AllowBlobPublicAccess: common.ToPtr(false),
+			MinimumTLSVersion:     common.ToPtr(armstorage.MinimumTLSVersionTLS12),
 		},
 	}, nil)
 	if err != nil {
