@@ -35,7 +35,7 @@ func newV2Server(t *testing.T, dir string, depsolveChannels []string, enableJWT 
 	distros := distrofactory.NewTestDefault()
 	require.NotNil(t, distros)
 
-	repos, err := reporegistry.NewTestedDefault()
+	repos, err := reporegistry.New([]string{"../../../test/data"})
 	require.Nil(t, err)
 	require.NotNil(t, repos)
 

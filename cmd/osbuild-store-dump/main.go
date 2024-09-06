@@ -17,6 +17,7 @@ import (
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/reporegistry"
 	"github.com/osbuild/images/pkg/rpmmd"
+	"github.com/osbuild/images/pkg/sbom"
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/store"
 	"github.com/osbuild/osbuild-composer/internal/target"
@@ -32,12 +33,12 @@ func getManifest(bp blueprint.Blueprint, t distro.ImageType, a distro.Arch, d di
 	repoConfigs := make(map[string][]rpmmd.RepoConfig)
 	solver := dnfjson.NewSolver(d.ModulePlatformID(), d.Releasever(), a.Name(), d.Name(), cacheDir)
 	for name, packages := range manifest.GetPackageSetChains() {
-		res, repos, err := solver.Depsolve(packages)
+		res, err := solver.Depsolve(packages, sbom.StandardTypeNone)
 		if err != nil {
 			panic(err)
 		}
-		pkgSpecSets[name] = res
-		repoConfigs[name] = repos
+		pkgSpecSets[name] = res.Packages
+		repoConfigs[name] = res.Repos
 	}
 
 	mf, err := manifest.Serialize(pkgSpecSets, nil, nil, repoConfigs)

@@ -10,6 +10,7 @@ import (
 
 	"github.com/osbuild/images/pkg/dnfjson"
 	"github.com/osbuild/images/pkg/rpmmd"
+	"github.com/osbuild/images/pkg/sbom"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
 )
@@ -63,12 +64,12 @@ func (impl *DepsolveJobImpl) depsolve(packageSets map[string][]rpmmd.PackageSet,
 	depsolvedSets := make(map[string][]rpmmd.PackageSpec)
 	repoConfigs := make(map[string][]rpmmd.RepoConfig)
 	for name, pkgSet := range packageSets {
-		res, repos, err := solver.Depsolve(pkgSet)
+		res, err := solver.Depsolve(pkgSet, sbom.StandardTypeNone)
 		if err != nil {
 			return nil, nil, err
 		}
-		depsolvedSets[name] = res
-		repoConfigs[name] = repos
+		depsolvedSets[name] = res.Packages
+		repoConfigs[name] = res.Repos
 	}
 
 	return depsolvedSets, repoConfigs, nil

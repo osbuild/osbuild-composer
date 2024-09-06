@@ -132,9 +132,6 @@ type ImageType interface {
 	// Returns the package set names safe to install custom packages via custom repositories.
 	PayloadPackageSets() []string
 
-	// Returns named arrays of package set names which should be depsolved in a chain.
-	PackageSetsChains() map[string][]string
-
 	// Returns the names of the stages that will produce the build output.
 	Exports() []string
 

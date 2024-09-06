@@ -26,6 +26,7 @@ import (
 	"github.com/osbuild/images/pkg/ostree"
 	"github.com/osbuild/images/pkg/rhsm/facts"
 	"github.com/osbuild/images/pkg/rpmmd"
+	"github.com/osbuild/images/pkg/sbom"
 
 	"github.com/osbuild/images/pkg/dnfjson"
 )
@@ -326,12 +327,12 @@ func depsolve(cacheDir string, packageSets map[string][]rpmmd.PackageSet, d dist
 	depsolvedSets := make(map[string][]rpmmd.PackageSpec)
 	repoConfigs := make(map[string][]rpmmd.RepoConfig)
 	for name, pkgSet := range packageSets {
-		res, repos, err := solver.Depsolve(pkgSet)
+		res, err := solver.Depsolve(pkgSet, sbom.StandardTypeNone)
 		if err != nil {
 			return nil, nil, err
 		}
-		depsolvedSets[name] = res
-		repoConfigs[name] = repos
+		depsolvedSets[name] = res.Packages
+		repoConfigs[name] = res.Repos
 	}
 	return depsolvedSets, repoConfigs, nil
 }

@@ -6,6 +6,8 @@ linters-settings:
 
   gomoddirectives:
     replace-local: false
+    replace-allow-list:
+      - "github.com/osbuild/images"
 
 linters:
   enable:

@@ -226,12 +226,6 @@ func (t *TestImageType) PayloadPackageSets() []string {
 	return []string{blueprintPkgsKey}
 }
 
-func (t *TestImageType) PackageSetsChains() map[string][]string {
-	return map[string][]string{
-		osPkgsKey: {osPkgsKey, blueprintPkgsKey},
-	}
-}
-
 func (t *TestImageType) Exports() []string {
 	return distro.ExportsFallback()
 }
