@@ -1,3 +1,11 @@
+# v1.43.7 (2024-09-04)
+
+* No change notes available for this release.
+
+# v1.43.6 (2024-09-03)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
 # v1.43.5 (2024-08-22)
 
 * **Documentation**: Amazon EC2 Auto Scaling now provides EBS health check to manage EC2 instance replacement
