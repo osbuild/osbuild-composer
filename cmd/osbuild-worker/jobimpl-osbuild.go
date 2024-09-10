@@ -14,12 +14,14 @@ import (
 	"path"
 	"path/filepath"
 	"runtime/debug"
+	"slices"
 	"strings"
 
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/osbuild"
+	"github.com/osbuild/images/pkg/sbom"
 
 	"github.com/osbuild/osbuild-composer/internal/upload/oci"
 	"github.com/osbuild/osbuild-composer/internal/upload/pulp"
@@ -1086,6 +1088,57 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				}
 			}
 
+			var sbomDocsInfo []target.KojiOutputInfo
+			if jobArgs.DepsolveDynArgsIdx != nil {
+				depsolveJRIdx := *jobArgs.DepsolveDynArgsIdx
+				if depsolveJRIdx > job.NDynamicArgs()-1 {
+					targetResult.TargetError = clienterrors.New(clienterrors.ErrorParsingDynamicArgs, "DepsolveDynArgsIdx is out of range of the number of dynamic job arguments", nil)
+					break
+				}
+
+				var depsolveJR worker.DepsolveJobResult
+				err = job.DynamicArgs(depsolveJRIdx, &depsolveJR)
+				if err != nil {
+					targetResult.TargetError = clienterrors.New(clienterrors.ErrorParsingDynamicArgs, "Error parsing DepsolveJobResult from dynamic args", nil)
+					break
+				}
+
+				logWithId.Info("[Koji] ⬆ Uploading SBOM documents")
+				for pipelineName, sbomDoc := range depsolveJR.SbomDocs {
+					var pipelinePurpose string
+					if slices.Contains(jobArgs.PipelineNames.Payload, pipelineName) {
+						pipelinePurpose = "image"
+					}
+					if slices.Contains(jobArgs.PipelineNames.Build, pipelineName) {
+						pipelinePurpose = "buildroot"
+					}
+
+					var sbomDocExtension string
+					if sbomDoc.DocType == sbom.StandardTypeSpdx {
+						sbomDocExtension = "spdx.json"
+					} else {
+						targetResult.TargetError = clienterrors.New(clienterrors.ErrorInvalidConfig, fmt.Sprintf("Unsupported SBOM document type: %s", sbomDoc.DocType), nil)
+						break
+					}
+
+					reader := bytes.NewReader(sbomDoc.Document)
+					sbomDocOutputFilename := fmt.Sprintf("%s.%s-%s.%s", jobTarget.ImageName, pipelinePurpose, pipelineName, sbomDocExtension)
+					sbomDocOutputHash, sbomDocOutputSize, err := kojiAPI.Upload(reader, targetOptions.UploadDirectory, sbomDocOutputFilename)
+					if err != nil {
+						logWithId.Warnf("[Koji] ⬆ upload failed: %v", err)
+						targetResult.TargetError = clienterrors.New(clienterrors.ErrorUploadingImage, err.Error(), nil)
+						break
+					}
+					sbomDocsInfo = append(sbomDocsInfo, target.KojiOutputInfo{
+						Filename:     sbomDocOutputFilename,
+						ChecksumType: target.ChecksumTypeMD5,
+						Checksum:     sbomDocOutputHash,
+						Size:         sbomDocOutputSize,
+					})
+				}
+				logWithId.Info("[Koji] 🎉 SBOM documents successfully uploaded")
+			}
+
 			targetResult.Options = &target.KojiTargetResultOptions{
 				Image: &target.KojiOutputInfo{
 					Filename:     jobTarget.ImageName,
@@ -1106,6 +1159,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 					Size:         osbuildOutputSize,
 				},
 				OSBuildManifestInfo: kojiManifestInfo,
+				SbomDocs:            sbomDocsInfo,
 			}
 
 		case *target.OCITargetOptions:
