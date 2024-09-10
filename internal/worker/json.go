@@ -9,6 +9,7 @@ import (
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/rpmmd"
+	"github.com/osbuild/images/pkg/sbom"
 	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
 	"golang.org/x/exp/slices"
@@ -180,6 +181,10 @@ type DepsolveJob struct {
 	ModulePlatformID string                        `json:"module_platform_id"`
 	Arch             string                        `json:"arch"`
 	Releasever       string                        `json:"releasever"`
+
+	// NB: for now, the worker supports only a single SBOM type, but keep the options
+	// open for the future by passing the actual type and not just bool.
+	SbomType sbom.StandardType `json:"sbom_type,omitempty"`
 }
 
 type ErrorType string
@@ -189,8 +194,15 @@ const (
 	OtherErrorType    ErrorType = "other"
 )
 
+// SbomDoc represents a single SBOM document result.
+type SbomDoc struct {
+	DocType  sbom.StandardType `json:"type"`
+	Document json.RawMessage   `json:"document"`
+}
+
 type DepsolveJobResult struct {
 	PackageSpecs map[string][]rpmmd.PackageSpec `json:"package_specs"`
+	SbomDocs     map[string]SbomDoc             `json:"sbom_docs,omitempty"`
 	RepoConfigs  map[string][]rpmmd.RepoConfig  `json:"repo_configs"`
 	Error        string                         `json:"error"`
 	ErrorType    ErrorType                      `json:"error_type"`
