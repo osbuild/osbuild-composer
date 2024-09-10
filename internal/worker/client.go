@@ -123,7 +123,8 @@ func NewClient(conf ClientConfig) (*Client, error) {
 	}
 	err = client.registerWorker()
 	if err != nil {
-		return client, err
+		// workerHeartbeat below will periodically retry to register
+		logrus.Warnf("Error registering worker on startup, %v. Trying again later…", err)
 	}
 	go client.workerHeartbeat()
 	return client, nil
