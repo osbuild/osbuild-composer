@@ -21,10 +21,18 @@ import (
 
 type OSBuildJob struct {
 	Manifest manifest.OSBuildManifest `json:"manifest,omitempty"`
+
 	// Index of the ManifestJobByIDResult instance in the job's dynamic arguments slice
-	ManifestDynArgsIdx *int             `json:"manifest_dyn_args_idx,omitempty"`
-	Targets            []*target.Target `json:"targets,omitempty"`
-	PipelineNames      *PipelineNames   `json:"pipeline_names,omitempty"`
+	ManifestDynArgsIdx *int `json:"manifest_dyn_args_idx,omitempty"`
+
+	// Index of the DepsolveJobResult instance in the job's dynamic arguments slice
+	// This is used only for Koji composes, which need to have access to SBOMs produced
+	// as part of the depsolve job, so that they can be uploaded to Koji.
+	DepsolveDynArgsIdx *int `json:"depsolve_dyn_args_idx,omitempty"`
+
+	Targets       []*target.Target `json:"targets,omitempty"`
+	PipelineNames *PipelineNames   `json:"pipeline_names,omitempty"`
+
 	// The ImageBootMode is just copied to the result by the worker, so that
 	// the value can be accessed job which depend on it.
 	// (string representation of distro.BootMode values)
