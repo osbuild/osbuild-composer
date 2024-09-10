@@ -58,10 +58,11 @@ type ManifestInfo struct {
 }
 
 type KojiTargetResultOptions struct {
-	Image               *KojiOutputInfo `json:"image"`
-	Log                 *KojiOutputInfo `json:"log,omitempty"`
-	OSBuildManifest     *KojiOutputInfo `json:"osbuild_manifest,omitempty"`
-	OSBuildManifestInfo *ManifestInfo   `json:"osbuild_manifest_info,omitempty"`
+	Image               *KojiOutputInfo  `json:"image"`
+	Log                 *KojiOutputInfo  `json:"log,omitempty"`
+	OSBuildManifest     *KojiOutputInfo  `json:"osbuild_manifest,omitempty"`
+	OSBuildManifestInfo *ManifestInfo    `json:"osbuild_manifest_info,omitempty"`
+	SbomDocs            []KojiOutputInfo `json:"sbom_docs,omitempty"`
 }
 
 func (o *KojiTargetResultOptions) UnmarshalJSON(data []byte) error {
