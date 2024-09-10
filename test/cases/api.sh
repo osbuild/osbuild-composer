@@ -419,11 +419,6 @@ EOF
   ;;
 esac
 
-# TODO: Remove once Openscap works on el-10
-if [[ ($ID == rhel || $ID == centos) && ${VERSION_ID%.*} == 10 ]]; then
-  yellowprint "OpenSCAP not supported on ${ID}-${VERSION_ID} now. No openscap profile applied!"
-  OPENSCAP_CUSTOMIZATION_BLOCK=
-fi
 export OPENSCAP_CUSTOMIZATION_BLOCK
 
 TIMEZONE_CUSTOMIZATION_BLOCK=$(cat <<EOF
