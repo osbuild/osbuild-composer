@@ -159,7 +159,6 @@ type KojiFinalizeJobResult struct {
 
 // PipelineNames is used to provide two pieces of information related to a job:
 // 1. A categorization of each pipeline into one of two groups
-// // 2. A pipeline ordering when the lists are concatenated: build -> os
 // 2. A pipeline ordering when the lists are concatenated: build -> os
 type PipelineNames struct {
 	Build   []string `json:"build"`
