@@ -82,12 +82,7 @@ function _instanceCheck() {
   verify_dirs_files_customization "$_ssh"
 
   verify_repository_customization "$_ssh"
-# TODO: Remove once Openscap works on el-10
-  if [[ ($ID == rhel || $ID == centos) && ${VERSION_ID%.*} == 10 ]]; then
-    yellowprint "OpenSCAP not supported on ${ID}-${VERSION_ID} now. No verification made!"
-  else
-    verify_openscap_customization "$_ssh"
-  fi
+  verify_openscap_customization "$_ssh"
 
   echo "✔️ Checking timezone customization"
   TZ=$($_ssh timedatectl show  -p Timezone --value)
