@@ -52,27 +52,34 @@ type DepsolveJobImpl struct {
 // in repos are used for all package sets, whereas the repositories in
 // packageSetsRepos are only used for the package set with the same name
 // (matching map keys).
-func (impl *DepsolveJobImpl) depsolve(packageSets map[string][]rpmmd.PackageSet, modulePlatformID, arch, releasever string) (map[string][]rpmmd.PackageSpec, map[string][]rpmmd.RepoConfig, error) {
+func (impl *DepsolveJobImpl) depsolve(packageSets map[string][]rpmmd.PackageSet, modulePlatformID, arch, releasever string, sbomType sbom.StandardType) (map[string][]rpmmd.PackageSpec, map[string][]rpmmd.RepoConfig, map[string]worker.SbomDoc, error) {
 	solver := impl.Solver.NewWithConfig(modulePlatformID, releasever, arch, "")
 	if impl.RepositoryMTLSConfig != nil && impl.RepositoryMTLSConfig.Proxy != nil {
 		err := solver.SetProxy(impl.RepositoryMTLSConfig.Proxy.String())
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, nil, err
 		}
 	}
 
 	depsolvedSets := make(map[string][]rpmmd.PackageSpec)
 	repoConfigs := make(map[string][]rpmmd.RepoConfig)
+	var sbomDocs map[string]worker.SbomDoc
+	if sbomType != sbom.StandardTypeNone {
+		sbomDocs = make(map[string]worker.SbomDoc)
+	}
 	for name, pkgSet := range packageSets {
-		res, err := solver.Depsolve(pkgSet, sbom.StandardTypeNone)
+		res, err := solver.Depsolve(pkgSet, sbomType)
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, nil, err
 		}
 		depsolvedSets[name] = res.Packages
 		repoConfigs[name] = res.Repos
+		if sbomType != sbom.StandardTypeNone {
+			sbomDocs[name] = worker.SbomDoc(*res.SBOM)
+		}
 	}
 
-	return depsolvedSets, repoConfigs, nil
+	return depsolvedSets, repoConfigs, sbomDocs, nil
 }
 
 func workerClientErrorFrom(err error, logWithId *logrus.Entry) *clienterrors.Error {
@@ -142,7 +149,7 @@ func (impl *DepsolveJobImpl) Run(job worker.Job) error {
 		}
 	}
 
-	result.PackageSpecs, result.RepoConfigs, err = impl.depsolve(args.PackageSets, args.ModulePlatformID, args.Arch, args.Releasever)
+	result.PackageSpecs, result.RepoConfigs, result.SbomDocs, err = impl.depsolve(args.PackageSets, args.ModulePlatformID, args.Arch, args.Releasever, args.SbomType)
 	if err != nil {
 		result.JobError = workerClientErrorFrom(err, logWithId)
 	}
