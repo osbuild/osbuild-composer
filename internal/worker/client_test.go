@@ -1,12 +1,14 @@
 package worker_test
 
 import (
+	"bytes"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 
 	"github.com/osbuild/osbuild-composer/internal/jobqueue/fsjobqueue"
@@ -136,4 +138,29 @@ func TestProxy(t *testing.T) {
 	// - upload artifact
 	// - cancel
 	require.Equal(t, 6, proxy.calls)
+}
+
+func TestNewClientWorkerNoErrorOnRegisterWorkerFailure(t *testing.T) {
+	logrusOutput := bytes.NewBuffer(nil)
+	logrus.SetOutput(logrusOutput)
+
+	apiCalls := 0
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		apiCalls++
+
+		require.Equal(t, "/api/image-builder-worker/v1/workers", req.URL.Path)
+		w.WriteHeader(400)
+		_, err := w.Write([]byte(`{"reason":"reason", "details": "details"}`))
+		require.NoError(t, err)
+	}))
+	defer srv.Close()
+
+	client, err := worker.NewClient(worker.ClientConfig{
+		BaseURL:  srv.URL,
+		BasePath: "/api/image-builder-worker/v1",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, client)
+	require.Equal(t, 1, apiCalls)
+	require.Contains(t, logrusOutput.String(), `Error registering worker on startup, error registering worker: 400`)
 }
