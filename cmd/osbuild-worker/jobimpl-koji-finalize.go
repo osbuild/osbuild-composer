@@ -281,6 +281,28 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 				Type:         koji.BuildOutputTypeLog,
 			})
 		}
+
+		// SBOM documents output
+		if len(kojiTargetOptions.SbomDocs) > 0 {
+			for _, sbomDoc := range kojiTargetOptions.SbomDocs {
+				outputs = append(outputs, koji.BuildOutput{
+					BuildRootID:  uint64(i),
+					Filename:     sbomDoc.Filename,
+					FileSize:     sbomDoc.Size,
+					Arch:         buildResult.Arch,
+					ChecksumType: koji.ChecksumType(sbomDoc.ChecksumType),
+					Checksum:     sbomDoc.Checksum,
+					Type:         koji.BuildOutputTypeSbomDoc,
+					// NB: The extra metadata are not added to the build extra metadata
+					// because it does not contain any useful information for SBOM documents.
+					Extra: &koji.BuildOutputExtra{
+						ImageOutput: koji.SbomDocExtraInfo{
+							Arch: buildResult.Arch,
+						},
+					},
+				})
+			}
+		}
 	}
 
 	build := koji.Build{

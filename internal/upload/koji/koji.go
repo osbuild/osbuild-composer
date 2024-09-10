@@ -159,6 +159,12 @@ type ManifestExtraInfo struct {
 
 func (ManifestExtraInfo) isImageOutputTypeMD() {}
 
+type SbomDocExtraInfo struct {
+	Arch string `json:"arch"`
+}
+
+func (SbomDocExtraInfo) isImageOutputTypeMD() {}
+
 // BuildOutputExtra holds extra metadata associated with the build output.
 type BuildOutputExtra struct {
 	// ImageOutput holds extra metadata about a single "image" output.
@@ -176,6 +182,7 @@ const (
 	BuildOutputTypeImage    BuildOutputType = "image"
 	BuildOutputTypeLog      BuildOutputType = "log"
 	BuildOutputTypeManifest BuildOutputType = "osbuild-manifest"
+	BuildOutputTypeSbomDoc  BuildOutputType = "sbom-doc"
 )
 
 // ChecksumType represents the type of a checksum used for a BuildOutput.
