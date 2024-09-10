@@ -26,6 +26,7 @@ import (
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/ostree"
 	"github.com/osbuild/images/pkg/reporegistry"
+	"github.com/osbuild/images/pkg/sbom"
 	"github.com/osbuild/osbuild-composer/internal/auth"
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
@@ -170,6 +171,7 @@ func (s *Server) enqueueCompose(irs []imageRequest, channel string) (uuid.UUID, 
 		ModulePlatformID: distribution.ModulePlatformID(),
 		Arch:             arch.Name(),
 		Releasever:       distribution.Releasever(),
+		SbomType:         sbom.StandardTypeSpdx,
 	}, channel)
 	if err != nil {
 		return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
@@ -297,6 +299,7 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 			ModulePlatformID: distribution.ModulePlatformID(),
 			Arch:             arch.Name(),
 			Releasever:       distribution.Releasever(),
+			SbomType:         sbom.StandardTypeSpdx,
 		}, channel)
 		if err != nil {
 			return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
