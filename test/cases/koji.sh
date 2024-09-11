@@ -185,11 +185,21 @@ function verify_buildinfo() {
     fi
 
     local outputs_manifests
-    outputs_manifests="$(koji -s "${KOJI_HUB_URL}" --noauth call --json listArchives "${buildid}" | jq -r 'map(select(.btype == "image" and .type_name == "json"))')"
+    outputs_manifests="$(koji -s "${KOJI_HUB_URL}" --noauth call --json listArchives "${buildid}" | jq -r 'map(select(.btype == "image" and .type_name == "json" and (.filename | contains(".manifest."))))')"
     local outputs_manifests_count
     outputs_manifests_count="$(echo "${outputs_manifests}" | jq 'length')"
     if [ "${outputs_manifests_count}" -ne "${outputs_images_count}" ]; then
         echo "Mismatch between the number of image archives and image manifests in the buildinfo"
+        exit 1
+    fi
+
+    local outputs_sboms
+    outputs_sboms="$(koji -s "${KOJI_HUB_URL}" --noauth call --json listArchives "${buildid}" | jq -r 'map(select(.btype == "image" and .type_name == "json" and (.filename | contains(".spdx."))))')"
+    local outputs_sboms_count
+    outputs_sboms_count="$(echo "${outputs_sboms}" | jq 'length')"
+    # there should be two SPDX files for each image, one for the image payload and one for the buildroot
+    if [ "${outputs_sboms_count}" -ne $((outputs_images_count * 2)) ]; then
+        echo "Mismatch between the number of image archives and SPDX SBOM files in the buildinfo"
         exit 1
     fi
 
