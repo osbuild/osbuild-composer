@@ -106,11 +106,22 @@ def create_ec2_instances(cleanup_actions, args, keypair):
             }
         ]
 
+        img = ec2.describe_images(ImageIds=[arch_info[a]["ImageId"]])
         instance = ec2.create_instances(
             ImageId=arch_info[a]["ImageId"],
             MinCount=1,
             MaxCount=1,
             InstanceType=arch_info[a]["InstanceType"],
+            BlockDeviceMappings=[
+                {
+                    "DeviceName": img['Images'][0]['RootDeviceName'],
+                    "Ebs": {
+                        "VolumeSize": 20,
+                        "DeleteOnTermination": True,
+                        "VolumeType": "gp2",
+                    },
+                },
+            ],
             KeyName=keypair,
             TagSpecifications=tags
         )
