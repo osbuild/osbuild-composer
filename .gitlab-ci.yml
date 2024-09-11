@@ -707,7 +707,7 @@ aws_s3.sh:
   variables:
     SCRIPT: aws_s3.sh
 
-RHEL 9 on 8:
+RHEL 8 on 9 (Koji):
   stage: test
   extends: .terraform
   rules:
@@ -717,9 +717,9 @@ RHEL 9 on 8:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/koji.sh
   variables:
-    RUNNER: aws/rhel-8.10-ga-x86_64
+    RUNNER: aws/rhel-9.4-ga-x86_64
     INTERNAL_NETWORK: "true"
-    DISTRO_CODE: rhel-91
+    DISTRO_CODE: rhel-8.10
 
 Multi-tenancy:
   stage: test
