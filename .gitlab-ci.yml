@@ -399,19 +399,16 @@ koji.sh (cloud upload):
   parallel:
     matrix:
       - RUNNER:
-          - aws/rhel-8.10-ga-x86_64
           - aws/rhel-9.4-ga-x86_64
         INTERNAL_NETWORK: ["true"]
         CLOUD_TARGET: aws
         IMAGE_TYPE: aws-rhui
       - RUNNER:
-          - aws/rhel-8.10-ga-x86_64
           - aws/rhel-9.4-ga-x86_64
         INTERNAL_NETWORK: ["true"]
         CLOUD_TARGET: azure
         IMAGE_TYPE: azure-rhui
       - RUNNER:
-          - aws/rhel-8.10-ga-x86_64
           - aws/rhel-9.4-ga-x86_64
         INTERNAL_NETWORK: ["true"]
         CLOUD_TARGET: gcp
@@ -429,7 +426,6 @@ koji.sh (cloudapi):
     matrix:
       - *fedora_runners
       - RUNNER:
-          - aws/rhel-8.10-ga-x86_64
           - aws/rhel-9.4-ga-x86_64
         INTERNAL_NETWORK: ["true"]
 
