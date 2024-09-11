@@ -86,6 +86,7 @@ def create_keypair(cleanup_actions):
 
 def create_ec2_instances(cleanup_actions, args, keypair):
     ec2 = boto3.resource('ec2')
+    ec2cli = boto3.client('ec2')
 
     instances = []
     for a in args.arch:
@@ -106,7 +107,7 @@ def create_ec2_instances(cleanup_actions, args, keypair):
             }
         ]
 
-        img = ec2.describe_images(ImageIds=[arch_info[a]["ImageId"]])
+        img = ec2cli.describe_images(ImageIds=[arch_info[a]["ImageId"]])
         instance = ec2.create_instances(
             ImageId=arch_info[a]["ImageId"],
             MinCount=1,
