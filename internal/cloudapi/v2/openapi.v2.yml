@@ -397,6 +397,50 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
+  /depsolve/blueprint:
+    post:
+      operationId: postDepsolveBlueprint
+      summary: Depsolve one or more blueprints
+      security:
+        - Bearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DepsolveRequest'
+      responses:
+        '200':
+          description: Depsolved package list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DepsolveResponse'
+        '400':
+          description: Invalid depsolve request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Auth token is invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Unauthorized to perform operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Unexpected error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
   /errors/{id}:
     get:
       operationId: getError
@@ -830,6 +874,10 @@ components:
           type: string
         signature:
           type: string
+        checksum:
+          type: string
+          description: 'Optional package checksum using ALGO:HASH form'
+          example: 'sha256:525788de3dd44497c27d4172568366b20380a6b6707f0a1970473e4d97046a4f'
 
     ComposeRequest:
       additionalProperties: false
@@ -2191,6 +2239,29 @@ components:
       allOf:
       - $ref: '#/components/schemas/ObjectReference'
       - $ref: '#/components/schemas/UploadStatus'
+
+    DepsolveRequest:
+      additionalProperties: false
+      required:
+        - blueprint
+      properties:
+        repositories:
+          type: array
+          items:
+            $ref: '#/components/schemas/Repository'
+        blueprint:
+          $ref: '#/components/schemas/Blueprint'
+
+    DepsolveResponse:
+      type: object
+      required:
+        - packages
+      properties:
+        packages:
+          type: array
+          items:
+            $ref: '#/components/schemas/PackageMetadata'
+          description: 'Package list including NEVRA'
 
   parameters:
     page:
