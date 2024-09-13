@@ -236,13 +236,11 @@ func TestConvert(t *testing.T) {
 						Name:   "kernel-name",
 						Append: "kernel-append",
 					},
-					SSHKey: []iblueprint.SSHKeyCustomization{
-						{
-							User: "ssh-user",
-							Key:  "ssh-key",
-						},
-					},
 					User: []iblueprint.UserCustomization{
+						{
+							Name: "ssh-user", // converted from sshkey
+							Key:  common.ToPtr("ssh-key"),
+						},
 						{
 							Name:        "user-name",
 							Description: common.ToPtr("user-desc"),
