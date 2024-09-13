@@ -1354,3 +1354,46 @@ func uploadStatusFromJobStatus(js *worker.JobStatus, je *clienterrors.Error) Upl
 	}
 	return UploadStatusValueSuccess
 }
+
+// PostDepsolveBlueprint depsolves the packages in a blueprint and returns
+// the results as a list of rpmmd.PackageSpecs
+func (h *apiHandlers) PostDepsolveBlueprint(ctx echo.Context) error {
+	var request DepsolveRequest
+	err := ctx.Bind(&request)
+	if err != nil {
+		return err
+	}
+
+	deps, err := request.DepsolveBlueprint(h.server.distros, h.server.repos, h.server.solver)
+	if err != nil {
+		return err
+	}
+
+	return ctx.JSON(http.StatusOK,
+		DepsolveResponse{
+			Packages: packageSpecToPackageMetadata(deps),
+		})
+}
+
+func packageSpecToPackageMetadata(pkgspecs []rpmmd.PackageSpec) []PackageMetadata {
+	packages := make([]PackageMetadata, 0)
+	for _, rpm := range pkgspecs {
+		// Set epoch if it is not 0
+		var epoch *string
+		if rpm.Epoch > 0 {
+			epoch = common.ToPtr(strconv.FormatUint(uint64(rpm.Epoch), 10))
+		}
+		packages = append(packages,
+			PackageMetadata{
+				Type:     "rpm",
+				Name:     rpm.Name,
+				Version:  rpm.Version,
+				Release:  rpm.Release,
+				Epoch:    epoch,
+				Arch:     rpm.Arch,
+				Checksum: common.ToPtr(rpm.Checksum),
+			},
+		)
+	}
+	return packages
+}

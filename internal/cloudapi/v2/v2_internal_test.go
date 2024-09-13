@@ -351,3 +351,57 @@ func TestStagesToPackageMetadata(t *testing.T) {
 		assert.Equal(tc.pkgs, stagesToPackageMetadata(tc.stages), "mismatch in test case %d", idx)
 	}
 }
+
+func TestPackageSpecToPackageMetadata(t *testing.T) {
+	assert := assert.New(t)
+	type testCase struct {
+		specs []rpmmd.PackageSpec
+		pkgs  []PackageMetadata
+	}
+	testCases := []testCase{
+		{
+			specs: []rpmmd.PackageSpec{
+				{
+					Name:     "vim-minimal",
+					Version:  "8.0.1763",
+					Release:  "15.el8",
+					Epoch:    2,
+					Arch:     "x86_64",
+					Checksum: "sha256:HASH",
+				},
+				{
+					Name:     "unique",
+					Version:  "1.90",
+					Release:  "10",
+					Epoch:    0,
+					Arch:     "aarch64",
+					Checksum: "sha256:HASH",
+				},
+			},
+			pkgs: []PackageMetadata{
+				{
+					Type:     "rpm",
+					Name:     "vim-minimal",
+					Version:  "8.0.1763",
+					Release:  "15.el8",
+					Epoch:    common.ToPtr("2"),
+					Arch:     "x86_64",
+					Checksum: common.ToPtr("sha256:HASH"),
+				},
+				{
+					Type:     "rpm",
+					Name:     "unique",
+					Version:  "1.90",
+					Release:  "10",
+					Epoch:    nil,
+					Arch:     "aarch64",
+					Checksum: common.ToPtr("sha256:HASH"),
+				},
+			},
+		},
+	}
+
+	for idx, tc := range testCases {
+		assert.Equal(tc.pkgs, packageSpecToPackageMetadata(tc.specs), "mismatch in test case %d", idx)
+	}
+}
