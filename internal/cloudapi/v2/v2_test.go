@@ -5,6 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
+	"os/exec"
+	"path/filepath"
 	"sync"
 	"testing"
 
@@ -23,6 +26,7 @@ import (
 	"github.com/osbuild/images/pkg/sbom"
 	v2 "github.com/osbuild/osbuild-composer/internal/cloudapi/v2"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue/fsjobqueue"
+	mock_dnfjson "github.com/osbuild/osbuild-composer/internal/mocks/dnfjson"
 	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/test"
 	"github.com/osbuild/osbuild-composer/internal/worker"
@@ -70,6 +74,23 @@ var sbomDoc = json.RawMessage(`{
   ]
 }`)
 
+var dnfjsonPath string
+
+// setupDNFJSON compiles the mock-dnf-json binary and sets the 'dnfjsonPath' variable
+// to point to it for use with the Solver
+func setupDNFJSON() {
+	// compile the mock-dnf-json binary to speed up tests
+	tmpdir, err := os.MkdirTemp("", "")
+	if err != nil {
+		panic(err)
+	}
+	dnfjsonPath = filepath.Join(tmpdir, "mock-dnf-json")
+	cmd := exec.Command("go", "build", "-o", dnfjsonPath, "../../../cmd/mock-dnf-json")
+	if err := cmd.Run(); err != nil {
+		panic(err)
+	}
+}
+
 func newV2Server(t *testing.T, dir string, depsolveChannels []string, enableJWT bool, failDepsolve bool) (*v2.Server, *worker.Server, jobqueue.JobQueue, context.CancelFunc) {
 	q, err := fsjobqueue.New(dir)
 	require.NoError(t, err)
@@ -87,6 +108,10 @@ func newV2Server(t *testing.T, dir string, depsolveChannels []string, enableJWT 
 
 	solver := dnfjson.NewBaseSolver("") // test solver doesn't need a cache dir
 	require.NotNil(t, solver)
+
+	// Just use the base mock dnfjson response file for these tests
+	respfile := mock_dnfjson.Base(dir)
+	solver.SetDNFJSONPath(dnfjsonPath, respfile)
 
 	config := v2.ServerConfig{
 		JWTEnabled:           enableJWT,
@@ -1550,4 +1575,57 @@ func TestImageFromCompose(t *testing.T) {
 			"region": "eu-central-2"
 		}
 	}`, imgJobId, imgJobId))
+}
+
+func TestDepsolveBlueprint(t *testing.T) {
+	srv, _, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false, false)
+	defer cancel()
+
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST",
+		"/api/image-builder-composer/v2/depsolve/blueprint", fmt.Sprintf(`
+		{"blueprint": {
+			"name": "deptest1",
+			"version": "0.0.1",
+			"distro": "%s",
+			"architecture": "%s",
+			"packages": [
+				{ "name": "dep-package", "version": "*" }
+			]}
+		}`, test_distro.TestDistro1Name, test_distro.TestArchName),
+		http.StatusOK,
+		`{
+			"packages": [
+                { 
+                  	"name": "dep-package3",
+                  	"type": "rpm",
+                  	"epoch": "7",
+                  	"version": "3.0.3",
+                  	"release": "1.fc30",
+					"arch": "x86_64",
+                  	"checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720"
+                }, {
+                    "name": "dep-package1",
+                    "type": "rpm",
+                    "version": "1.33",
+                    "release": "2.fc30",
+                    "arch": "x86_64",
+                    "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893"
+                }, {
+                    "name": "dep-package2",
+                    "type": "rpm",
+                    "version": "2.9",
+                    "release": "1.fc30",
+                    "arch": "x86_64",
+                    "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2"
+				}
+			]
+		}`)
+}
+
+// TestMain builds the mock dnf json binary and cleans it up on exit
+func TestMain(m *testing.M) {
+	setupDNFJSON()
+	defer os.RemoveAll(dnfjsonPath)
+	code := m.Run()
+	os.Exit(code)
 }
