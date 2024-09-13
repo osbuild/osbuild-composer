@@ -232,13 +232,8 @@ func newDistro(name string, major, minor int) *rhel.Distribution {
 		},
 	}
 
-	if rd.IsRHEL() { // RHEL-only (non-CentOS) image types
-		x86_64.AddImageTypes(azureX64Platform, mkAzureByosImgType(rd))
-		aarch64.AddImageTypes(azureAarch64Platform, mkAzureByosImgType(rd))
-	} else {
-		x86_64.AddImageTypes(azureX64Platform, mkAzureImgType())
-		aarch64.AddImageTypes(azureAarch64Platform, mkAzureImgType())
-	}
+	x86_64.AddImageTypes(azureX64Platform, mkAzureImgType(rd))
+	aarch64.AddImageTypes(azureAarch64Platform, mkAzureImgType(rd))
 
 	gceX86Platform := &platform.X86{
 		UEFIVendor: rd.Vendor(),
@@ -337,10 +332,10 @@ func newDistro(name string, major, minor int) *rhel.Distribution {
 	)
 
 	if rd.IsRHEL() { // RHEL-only (non-CentOS) image types
-		x86_64.AddImageTypes(azureX64Platform, mkAzureRhuiImgType(), mkAzureByosImgType(rd))
-		aarch64.AddImageTypes(azureAarch64Platform, mkAzureRhuiImgType(), mkAzureByosImgType(rd))
+		x86_64.AddImageTypes(azureX64Platform, mkAzureInternalImgType(rd))
+		aarch64.AddImageTypes(azureAarch64Platform, mkAzureInternalImgType(rd))
 
-		x86_64.AddImageTypes(azureX64Platform, mkAzureSapRhuiImgType(rd))
+		x86_64.AddImageTypes(azureX64Platform, mkAzureSapInternalImgType(rd))
 
 		// keep the RHEL EC2 x86_64 images before 9.3 BIOS-only for backward compatibility
 		if common.VersionLessThan(rd.OsVersion(), "9.3") {
@@ -353,7 +348,7 @@ func newDistro(name string, major, minor int) *rhel.Distribution {
 		}
 
 		// add ec2 image types to RHEL distro only
-		x86_64.AddImageTypes(ec2X86Platform, mkEc2ImgTypeX86_64(rd.OsVersion(), rd.IsRHEL()), mkEc2HaImgTypeX86_64(rd.OsVersion(), rd.IsRHEL()), mkEC2SapImgTypeX86_64(rd.OsVersion(), rd.IsRHEL()))
+		x86_64.AddImageTypes(ec2X86Platform, mkEc2ImgTypeX86_64(), mkEc2HaImgTypeX86_64(), mkEC2SapImgTypeX86_64(rd.OsVersion()))
 
 		aarch64.AddImageTypes(
 			&platform.Aarch64{
@@ -362,11 +357,8 @@ func newDistro(name string, major, minor int) *rhel.Distribution {
 					ImageFormat: platform.FORMAT_RAW,
 				},
 			},
-			mkEC2ImgTypeAarch64(rd.OsVersion(), rd.IsRHEL()),
+			mkEC2ImgTypeAarch64(),
 		)
-
-		// add GCE RHUI image to RHEL only
-		x86_64.AddImageTypes(gceX86Platform, mkGCERHUIImageType())
 	}
 
 	rd.AddArches(x86_64, aarch64, ppc64le, s390x)

@@ -2,7 +2,6 @@ package rhel9
 
 import (
 	"github.com/osbuild/images/internal/common"
-	"github.com/osbuild/images/pkg/customizations/subscription"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distro/rhel"
 	"github.com/osbuild/images/pkg/osbuild"
@@ -13,7 +12,7 @@ import (
 const amiKernelOptions = "console=tty0 console=ttyS0,115200n8 net.ifnames=0 nvme_core.io_timeout=4294967295"
 
 // default EC2 images config (common for all architectures)
-func baseEc2ImageConfig() *distro.ImageConfig {
+func defaultEc2ImageConfig() *distro.ImageConfig {
 	return &distro.ImageConfig{
 		Locale:   common.ToPtr("en_US.UTF-8"),
 		Timezone: common.ToPtr("UTC"),
@@ -142,49 +141,27 @@ func baseEc2ImageConfig() *distro.ImageConfig {
 	}
 }
 
-func defaultEc2ImageConfig(osVersion string, rhsm bool) *distro.ImageConfig {
-	ic := baseEc2ImageConfig()
-	if rhsm && common.VersionLessThan(osVersion, "9.1") {
-		ic = appendRHSM(ic)
-		// Disable RHSM redhat.repo management
-		rhsmConf := ic.RHSMConfig[subscription.RHSMConfigNoSubscription]
-		rhsmConf.SubMan.Rhsm = subscription.SubManRHSMConfig{ManageRepos: common.ToPtr(false)}
-		ic.RHSMConfig[subscription.RHSMConfigNoSubscription] = rhsmConf
-	}
+func appendEC2DracutX86_64(ic *distro.ImageConfig) *distro.ImageConfig {
+	ic.DracutConf = append(ic.DracutConf,
+		&osbuild.DracutConfStageOptions{
+			Filename: "ec2.conf",
+			Config: osbuild.DracutConfigFile{
+				AddDrivers: []string{
+					"nvme",
+					"xen-blkfront",
+				},
+			},
+		})
 	return ic
 }
 
-func defaultEc2ImageConfigX86_64(osVersion string, rhsm bool) *distro.ImageConfig {
-	ic := defaultEc2ImageConfig(osVersion, rhsm)
+func defaultEc2ImageConfigX86_64() *distro.ImageConfig {
+	ic := defaultEc2ImageConfig()
 	return appendEC2DracutX86_64(ic)
 }
 
-// Default AMI (custom image built by users) images config.
-// The configuration does not touch the RHSM configuration at all.
-// https://issues.redhat.com/browse/COMPOSER-2157
-func defaultAMIImageConfig() *distro.ImageConfig {
-	return baseEc2ImageConfig()
-}
-
-// Default AMI x86_64 (custom image built by users) images config.
-// The configuration does not touch the RHSM configuration at all.
-// https://issues.redhat.com/browse/COMPOSER-2157
-func defaultAMIImageConfigX86_64() *distro.ImageConfig {
-	ic := defaultAMIImageConfig()
-	return appendEC2DracutX86_64(ic)
-}
-
-// common ec2 image build package set
-func ec2BuildPackageSet(t *rhel.ImageType) rpmmd.PackageSet {
-	return distroBuildPackageSet(t).Append(
-		rpmmd.PackageSet{
-			Include: []string{
-				"python3-pyyaml",
-			},
-		})
-}
-
-func ec2CommonPackageSet(t *rhel.ImageType) rpmmd.PackageSet {
+// common ec2 image package set, which is the minimal super set of all ec2 image types
+func ec2BasePackageSet(t *rhel.ImageType) rpmmd.PackageSet {
 	ps := rpmmd.PackageSet{
 		Include: []string{
 			"@core",
@@ -243,23 +220,10 @@ func ec2CommonPackageSet(t *rhel.ImageType) rpmmd.PackageSet {
 	return ps
 }
 
-// common rhel ec2 RHUI image package set
-func rhelEc2CommonPackageSet(t *rhel.ImageType) rpmmd.PackageSet {
-	ps := ec2CommonPackageSet(t)
-	// Include "redhat-cloud-client-configuration" on 9.1+ (COMPOSER-1805)
-	if common.VersionGreaterThanOrEqual(t.Arch().Distro().OsVersion(), "9.1") {
-		ps.Include = append(ps.Include, "redhat-cloud-client-configuration")
-	}
-	return ps
-}
-
-// rhel-ec2 image package set
-func rhelEc2PackageSet(t *rhel.ImageType) rpmmd.PackageSet {
-	ec2PackageSet := rhelEc2CommonPackageSet(t)
+// plain ec2 image package set
+func ec2PackageSet(t *rhel.ImageType) rpmmd.PackageSet {
+	ec2PackageSet := ec2BasePackageSet(t)
 	ec2PackageSet = ec2PackageSet.Append(rpmmd.PackageSet{
-		Include: []string{
-			"rh-amazon-rhui-client",
-		},
 		Exclude: []string{
 			"alsa-lib",
 		},
@@ -269,16 +233,12 @@ func rhelEc2PackageSet(t *rhel.ImageType) rpmmd.PackageSet {
 
 // rhel-ha-ec2 image package set
 func rhelEc2HaPackageSet(t *rhel.ImageType) rpmmd.PackageSet {
-	ec2HaPackageSet := rhelEc2CommonPackageSet(t)
+	ec2HaPackageSet := ec2PackageSet(t)
 	ec2HaPackageSet = ec2HaPackageSet.Append(rpmmd.PackageSet{
 		Include: []string{
 			"fence-agents-all",
 			"pacemaker",
 			"pcs",
-			"rh-amazon-rhui-client-ha",
-		},
-		Exclude: []string{
-			"alsa-lib",
 		},
 	})
 	return ec2HaPackageSet
@@ -290,23 +250,22 @@ func rhelEc2HaPackageSet(t *rhel.ImageType) rpmmd.PackageSet {
 func rhelEc2SapPackageSet(t *rhel.ImageType) rpmmd.PackageSet {
 	return rpmmd.PackageSet{
 		Include: []string{
-			"rh-amazon-rhui-client-sap-bundle-e4s",
 			"libcanberra-gtk2",
 		},
 		Exclude: []string{
 			// COMPOSER-1829
 			"firewalld",
 		},
-	}.Append(rhelEc2CommonPackageSet(t)).Append(SapPackageSet(t))
+	}.Append(ec2BasePackageSet(t)).Append(SapPackageSet(t))
 }
 
-func mkEc2ImgTypeX86_64(osVersion string, rhsm bool) *rhel.ImageType {
+func mkEc2ImgTypeX86_64() *rhel.ImageType {
 	it := rhel.NewImageType(
 		"ec2",
 		"image.raw.xz",
 		"application/xz",
 		map[string]rhel.PackageSetFunc{
-			rhel.OSPkgsKey: rhelEc2PackageSet,
+			rhel.OSPkgsKey: ec2PackageSet,
 		},
 		rhel.DiskImage,
 		[]string{"build"},
@@ -318,7 +277,7 @@ func mkEc2ImgTypeX86_64(osVersion string, rhsm bool) *rhel.ImageType {
 	it.KernelOptions = amiKernelOptions
 	it.Bootable = true
 	it.DefaultSize = 10 * common.GibiByte
-	it.DefaultImageConfig = defaultEc2ImageConfigX86_64(osVersion, rhsm)
+	it.DefaultImageConfig = defaultEc2ImageConfigX86_64()
 	it.BasePartitionTables = defaultBasePartitionTables
 
 	return it
@@ -330,7 +289,7 @@ func mkAMIImgTypeX86_64() *rhel.ImageType {
 		"image.raw",
 		"application/octet-stream",
 		map[string]rhel.PackageSetFunc{
-			rhel.OSPkgsKey: ec2CommonPackageSet,
+			rhel.OSPkgsKey: ec2PackageSet,
 		},
 		rhel.DiskImage,
 		[]string{"build"},
@@ -341,20 +300,19 @@ func mkAMIImgTypeX86_64() *rhel.ImageType {
 	it.KernelOptions = amiKernelOptions
 	it.Bootable = true
 	it.DefaultSize = 10 * common.GibiByte
-	it.DefaultImageConfig = defaultAMIImageConfigX86_64()
+	it.DefaultImageConfig = defaultEc2ImageConfigX86_64()
 	it.BasePartitionTables = defaultBasePartitionTables
 
 	return it
 }
 
-func mkEC2SapImgTypeX86_64(osVersion string, rhsm bool) *rhel.ImageType {
+func mkEC2SapImgTypeX86_64(osVersion string) *rhel.ImageType {
 	it := rhel.NewImageType(
 		"ec2-sap",
 		"image.raw.xz",
 		"application/xz",
 		map[string]rhel.PackageSetFunc{
-			rhel.BuildPkgsKey: ec2BuildPackageSet,
-			rhel.OSPkgsKey:    rhelEc2SapPackageSet,
+			rhel.OSPkgsKey: rhelEc2SapPackageSet,
 		},
 		rhel.DiskImage,
 		[]string{"build"},
@@ -366,20 +324,19 @@ func mkEC2SapImgTypeX86_64(osVersion string, rhsm bool) *rhel.ImageType {
 	it.KernelOptions = "console=ttyS0,115200n8 console=tty0 net.ifnames=0 nvme_core.io_timeout=4294967295 processor.max_cstate=1 intel_idle.max_cstate=1"
 	it.Bootable = true
 	it.DefaultSize = 10 * common.GibiByte
-	it.DefaultImageConfig = sapImageConfig(osVersion).InheritFrom(defaultEc2ImageConfigX86_64(osVersion, rhsm))
+	it.DefaultImageConfig = sapImageConfig(osVersion).InheritFrom(defaultEc2ImageConfigX86_64())
 	it.BasePartitionTables = defaultBasePartitionTables
 
 	return it
 }
 
-func mkEc2HaImgTypeX86_64(osVersion string, rhsm bool) *rhel.ImageType {
+func mkEc2HaImgTypeX86_64() *rhel.ImageType {
 	it := rhel.NewImageType(
 		"ec2-ha",
 		"image.raw.xz",
 		"application/xz",
 		map[string]rhel.PackageSetFunc{
-			rhel.BuildPkgsKey: ec2BuildPackageSet,
-			rhel.OSPkgsKey:    rhelEc2HaPackageSet,
+			rhel.OSPkgsKey: rhelEc2HaPackageSet,
 		},
 		rhel.DiskImage,
 		[]string{"build"},
@@ -391,7 +348,7 @@ func mkEc2HaImgTypeX86_64(osVersion string, rhsm bool) *rhel.ImageType {
 	it.KernelOptions = amiKernelOptions
 	it.Bootable = true
 	it.DefaultSize = 10 * common.GibiByte
-	it.DefaultImageConfig = defaultEc2ImageConfigX86_64(osVersion, rhsm)
+	it.DefaultImageConfig = defaultEc2ImageConfigX86_64()
 	it.BasePartitionTables = defaultBasePartitionTables
 
 	return it
@@ -403,8 +360,7 @@ func mkAMIImgTypeAarch64() *rhel.ImageType {
 		"image.raw",
 		"application/octet-stream",
 		map[string]rhel.PackageSetFunc{
-			rhel.BuildPkgsKey: ec2BuildPackageSet,
-			rhel.OSPkgsKey:    ec2CommonPackageSet,
+			rhel.OSPkgsKey: ec2PackageSet,
 		},
 		rhel.DiskImage,
 		[]string{"build"},
@@ -415,20 +371,19 @@ func mkAMIImgTypeAarch64() *rhel.ImageType {
 	it.KernelOptions = "console=ttyS0,115200n8 console=tty0 net.ifnames=0 nvme_core.io_timeout=4294967295 iommu.strict=0"
 	it.Bootable = true
 	it.DefaultSize = 10 * common.GibiByte
-	it.DefaultImageConfig = defaultAMIImageConfig()
+	it.DefaultImageConfig = defaultEc2ImageConfig()
 	it.BasePartitionTables = defaultBasePartitionTables
 
 	return it
 }
 
-func mkEC2ImgTypeAarch64(osVersion string, rhsm bool) *rhel.ImageType {
+func mkEC2ImgTypeAarch64() *rhel.ImageType {
 	it := rhel.NewImageType(
 		"ec2",
 		"image.raw.xz",
 		"application/xz",
 		map[string]rhel.PackageSetFunc{
-			rhel.BuildPkgsKey: ec2BuildPackageSet,
-			rhel.OSPkgsKey:    rhelEc2PackageSet,
+			rhel.OSPkgsKey: ec2PackageSet,
 		},
 		rhel.DiskImage,
 		[]string{"build"},
@@ -440,57 +395,8 @@ func mkEC2ImgTypeAarch64(osVersion string, rhsm bool) *rhel.ImageType {
 	it.KernelOptions = "console=ttyS0,115200n8 console=tty0 net.ifnames=0 nvme_core.io_timeout=4294967295 iommu.strict=0"
 	it.Bootable = true
 	it.DefaultSize = 10 * common.GibiByte
-	it.DefaultImageConfig = defaultEc2ImageConfig(osVersion, rhsm)
+	it.DefaultImageConfig = defaultEc2ImageConfig()
 	it.BasePartitionTables = defaultBasePartitionTables
 
 	return it
-}
-
-// Add RHSM config options to ImageConfig.
-// Used for RHEL distros.
-func appendRHSM(ic *distro.ImageConfig) *distro.ImageConfig {
-	rhsm := &distro.ImageConfig{
-		RHSMConfig: map[subscription.RHSMStatus]*subscription.RHSMConfig{
-			subscription.RHSMConfigNoSubscription: {
-				// RHBZ#1932802
-				SubMan: subscription.SubManConfig{
-					Rhsmcertd: subscription.SubManRHSMCertdConfig{
-						AutoRegistration: common.ToPtr(true),
-					},
-					// Don't disable RHSM redhat.repo management on the AMI
-					// image, which is BYOS and does not use RHUI for content.
-					// Otherwise subscribing the system manually after booting
-					// it would result in empty redhat.repo. Without RHUI, such
-					// system would have no way to get Red Hat content, but
-					// enable the repo management manually, which would be very
-					// confusing.
-				},
-			},
-			subscription.RHSMConfigWithSubscription: {
-				// RHBZ#1932802
-				SubMan: subscription.SubManConfig{
-					Rhsmcertd: subscription.SubManRHSMCertdConfig{
-						AutoRegistration: common.ToPtr(true),
-					},
-					// do not disable the redhat.repo management if the user
-					// explicitly request the system to be subscribed
-				},
-			},
-		},
-	}
-	return rhsm.InheritFrom(ic)
-}
-
-func appendEC2DracutX86_64(ic *distro.ImageConfig) *distro.ImageConfig {
-	ic.DracutConf = append(ic.DracutConf,
-		&osbuild.DracutConfStageOptions{
-			Filename: "ec2.conf",
-			Config: osbuild.DracutConfigFile{
-				AddDrivers: []string{
-					"nvme",
-					"xen-blkfront",
-				},
-			},
-		})
-	return ic
 }
