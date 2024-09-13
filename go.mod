@@ -57,9 +57,9 @@ require (
 	github.com/ubccr/kerby v0.0.0-20170626144437-201a958fc453
 	github.com/vmware/govmomi v0.42.0
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56
-	golang.org/x/oauth2 v0.22.0
+	golang.org/x/oauth2 v0.23.0
 	golang.org/x/sync v0.8.0
-	golang.org/x/sys v0.24.0
+	golang.org/x/sys v0.25.0
 	google.golang.org/api v0.195.0
 )
 
@@ -240,3 +240,5 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+replace github.com/osbuild/images => github.com/achilleas-k/images v0.0.0-20240913132934-e7c477f72c93

@@ -9,6 +9,7 @@ import (
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/ostree"
+	"github.com/osbuild/images/pkg/platform"
 	"github.com/osbuild/images/pkg/policies"
 	"github.com/osbuild/images/pkg/rpmmd"
 )
@@ -210,8 +211,8 @@ func (t *TestImageType) PartitionType() string {
 	return ""
 }
 
-func (t *TestImageType) BootMode() distro.BootMode {
-	return distro.BOOT_HYBRID
+func (t *TestImageType) BootMode() platform.BootMode {
+	return platform.BOOT_HYBRID
 }
 
 func (t *TestImageType) BuildPipelines() []string {

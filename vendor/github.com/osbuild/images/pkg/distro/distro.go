@@ -6,35 +6,15 @@ import (
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/ostree"
+	"github.com/osbuild/images/pkg/platform"
 	"github.com/osbuild/images/pkg/rhsm/facts"
 	"github.com/osbuild/images/pkg/rpmmd"
 )
 
-type BootMode uint64
-
 const (
-	BOOT_NONE BootMode = iota
-	BOOT_LEGACY
-	BOOT_UEFI
-	BOOT_HYBRID
 	UnsupportedCustomizationError = "unsupported blueprint customizations found for image type %q: (allowed: %s)"
 	NoCustomizationsAllowedError  = "image type %q does not support customizations"
 )
-
-func (m BootMode) String() string {
-	switch m {
-	case BOOT_NONE:
-		return "none"
-	case BOOT_LEGACY:
-		return "legacy"
-	case BOOT_UEFI:
-		return "uefi"
-	case BOOT_HYBRID:
-		return "hybrid"
-	default:
-		panic("invalid boot mode")
-	}
-}
 
 // A Distro represents composer's notion of what a given distribution is.
 type Distro interface {
@@ -121,7 +101,7 @@ type ImageType interface {
 	PartitionType() string
 
 	// Returns the corresponding boot mode ("legacy", "uefi", "hybrid") or "none"
-	BootMode() BootMode
+	BootMode() platform.BootMode
 
 	// Returns the names of the pipelines that set up the build environment (buildroot).
 	BuildPipelines() []string

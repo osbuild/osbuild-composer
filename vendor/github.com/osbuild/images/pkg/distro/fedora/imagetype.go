@@ -129,19 +129,19 @@ func (t *imageType) Exports() []string {
 	return []string{"assembler"}
 }
 
-func (t *imageType) BootMode() distro.BootMode {
+func (t *imageType) BootMode() platform.BootMode {
 	if t.platform.GetUEFIVendor() != "" && t.platform.GetBIOSPlatform() != "" {
-		return distro.BOOT_HYBRID
+		return platform.BOOT_HYBRID
 	} else if t.platform.GetUEFIVendor() != "" {
-		return distro.BOOT_UEFI
+		return platform.BOOT_UEFI
 	} else if t.platform.GetBIOSPlatform() != "" || t.platform.GetZiplSupport() {
-		return distro.BOOT_LEGACY
+		return platform.BOOT_LEGACY
 	}
-	return distro.BOOT_NONE
+	return platform.BOOT_NONE
 }
 
 func (t *imageType) getPartitionTable(
-	mountpoints []blueprint.FilesystemCustomization,
+	customizations *blueprint.Customizations,
 	options distro.ImageOptions,
 	rng *rand.Rand,
 ) (*disk.PartitionTable, error) {
@@ -151,6 +151,24 @@ func (t *imageType) getPartitionTable(
 	}
 
 	imageSize := t.Size(options.Size)
+	partitioning := customizations.GetPartitioning()
+	if partitioning != nil {
+		// Use the new custom partition table to create a PT fully based on the user's customizations.
+		// This overrides FilesystemCustomizations, but we should never have both defined.
+		if options.Size > 0 {
+			// user specified a size on the command line, so let's override the
+			// customization with the calculated/rounded imageSize
+			partitioning.MinSize = imageSize
+		}
+
+		partOptions := &disk.CustomPartitionTableOptions{
+			PartitionTableType: basePartitionTable.Type, // copy from image type base
+			BootMode:           t.BootMode(),
+			DefaultFSType:      disk.FS_EXT4, // default fs type for Fedora (when not btrfs)
+			RequiredSizes:      t.requiredPartitionSizes,
+		}
+		return disk.NewCustomPartitionTable(partitioning, partOptions, rng)
+	}
 
 	partitioningMode := options.PartitioningMode
 	if t.rpmOstree {
@@ -163,6 +181,7 @@ func (t *imageType) getPartitionTable(
 		partitioningMode = disk.AutoLVMPartitioningMode
 	}
 
+	mountpoints := customizations.GetFilesystems()
 	return disk.NewPartitionTable(&basePartitionTable, mountpoints, imageSize, partitioningMode, t.requiredPartitionSizes, rng)
 }
 
@@ -358,13 +377,22 @@ func (t *imageType) checkOptions(bp *blueprint.Blueprint, options distro.ImageOp
 	}
 
 	mountpoints := customizations.GetFilesystems()
-
-	if mountpoints != nil && t.rpmOstree {
-		return nil, fmt.Errorf("Custom mountpoints are not supported for ostree types")
+	partitioning := customizations.GetPartitioning()
+	if (len(mountpoints) > 0 || partitioning != nil) && t.rpmOstree {
+		return nil, fmt.Errorf("Custom mountpoints and partitioning are not supported for ostree types")
+	}
+	if len(mountpoints) > 0 && partitioning != nil {
+		return nil, fmt.Errorf("partitioning customizations cannot be used with custom filesystems (mountpoints)")
 	}
 
-	err := blueprint.CheckMountpointsPolicy(mountpoints, policies.MountpointPolicies)
-	if err != nil {
+	if err := partitioning.Validate(); err != nil {
+		return nil, err
+	}
+
+	if err := blueprint.CheckMountpointsPolicy(mountpoints, policies.MountpointPolicies); err != nil {
+		return nil, err
+	}
+	if err := blueprint.CheckPartitioningPolicy(partitioning, policies.MountpointPolicies); err != nil {
 		return nil, err
 	}
 
@@ -385,7 +413,7 @@ func (t *imageType) checkOptions(bp *blueprint.Blueprint, options distro.ImageOp
 	dc := customizations.GetDirectories()
 	fc := customizations.GetFiles()
 
-	err = blueprint.ValidateDirFileCustomizations(dc, fc)
+	err := blueprint.ValidateDirFileCustomizations(dc, fc)
 	if err != nil {
 		return nil, err
 	}

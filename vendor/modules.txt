@@ -947,7 +947,7 @@ github.com/oracle/oci-go-sdk/v54/identity
 github.com/oracle/oci-go-sdk/v54/objectstorage
 github.com/oracle/oci-go-sdk/v54/objectstorage/transfer
 github.com/oracle/oci-go-sdk/v54/workrequests
-# github.com/osbuild/images v0.83.0
+# github.com/osbuild/images v0.83.0 => github.com/achilleas-k/images v0.0.0-20240913132934-e7c477f72c93
 ## explicit; go 1.21.0
 github.com/osbuild/images/internal/common
 github.com/osbuild/images/internal/environment
@@ -1277,7 +1277,7 @@ golang.org/x/net/http2/hpack
 golang.org/x/net/idna
 golang.org/x/net/internal/timeseries
 golang.org/x/net/trace
-# golang.org/x/oauth2 v0.22.0
+# golang.org/x/oauth2 v0.23.0
 ## explicit; go 1.18
 golang.org/x/oauth2
 golang.org/x/oauth2/authhandler
@@ -1293,7 +1293,7 @@ golang.org/x/oauth2/jwt
 ## explicit; go 1.18
 golang.org/x/sync/errgroup
 golang.org/x/sync/semaphore
-# golang.org/x/sys v0.24.0
+# golang.org/x/sys v0.25.0
 ## explicit; go 1.18
 golang.org/x/sys/cpu
 golang.org/x/sys/execabs
@@ -1483,3 +1483,4 @@ gopkg.in/yaml.v2
 # gopkg.in/yaml.v3 v3.0.1
 ## explicit
 gopkg.in/yaml.v3
+# github.com/osbuild/images => github.com/achilleas-k/images v0.0.0-20240913132934-e7c477f72c93

@@ -19,6 +19,7 @@ package disk
 
 import (
 	"encoding/hex"
+	"fmt"
 	"io"
 	"math/rand"
 	"reflect"
@@ -57,6 +58,54 @@ const (
 	// Extended Boot Loader Partition
 	XBootLDRPartitionGUID = "BC13C2FF-59E6-4262-A352-B275FD6F7172"
 )
+
+// FSType is the filesystem type enum.
+//
+// There should always be one value for each filesystem type supported by
+// osbuild stages (stages/org.osbuild.mkfs.*) and the unset/none value.
+type FSType uint64
+
+const (
+	FS_NONE FSType = iota
+	FS_VFAT
+	FS_EXT4
+	FS_XFS
+	FS_BTRFS
+)
+
+func (f FSType) String() string {
+	switch f {
+	case FS_NONE:
+		return ""
+	case FS_VFAT:
+		return "vfat"
+	case FS_EXT4:
+		return "ext4"
+	case FS_XFS:
+		return "xfs"
+	case FS_BTRFS:
+		return "btrfs"
+	default:
+		panic(fmt.Sprintf("unknown or unsupported filesystem type with enum value %d", f))
+	}
+}
+
+func FSTypeFromString(s string) (FSType, error) {
+	switch s {
+	case "":
+		return FS_NONE, nil
+	case "vfat":
+		return FS_VFAT, nil
+	case "ext4":
+		return FS_EXT4, nil
+	case "xfs":
+		return FS_XFS, nil
+	case "btrfs":
+		return FS_BTRFS, nil
+	default:
+		return FS_NONE, fmt.Errorf("unknown or unsupported filesystem type name: %s", s)
+	}
+}
 
 // Entity is the base interface for all disk-related entities.
 type Entity interface {

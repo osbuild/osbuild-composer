@@ -81,20 +81,20 @@ func (vg *LVMVolumeGroup) CreateMountpoint(mountpoint string, size uint64) (Enti
 		FSTabPassNo:  0,
 	}
 
-	return vg.CreateLogicalVolume(mountpoint, size, &filesystem)
+	// leave lv name empty to autogenerate based on mountpoint
+	return vg.CreateLogicalVolume("", size, &filesystem)
 }
 
-func (vg *LVMVolumeGroup) CreateLogicalVolume(lvName string, size uint64, payload Entity) (Entity, error) {
-	if vg == nil {
-		panic("LVMVolumeGroup.CreateLogicalVolume: nil entity")
-	}
-
+// genLVName generates a valid logical volume name from a mountpoint or base
+// that does not conflict with existing ones.
+func (vg *LVMVolumeGroup) genLVName(base string) (string, error) {
 	names := make(map[string]bool, len(vg.LogicalVolumes))
 	for _, lv := range vg.LogicalVolumes {
 		names[lv.Name] = true
 	}
 
-	base := lvname(lvName)
+	base = lvname(base) // if the mountpoint is used (i.e. if the base contains /), sanitize it and append 'lv'
+
 	var exists bool
 	name := base
 
@@ -111,11 +111,35 @@ func (vg *LVMVolumeGroup) CreateLogicalVolume(lvName string, size uint64, payloa
 	}
 
 	if exists {
-		return nil, fmt.Errorf("could not create logical volume: name collision")
+		return "", fmt.Errorf("could not create logical volume: name collision")
+	}
+	return name, nil
+}
+
+// CreateLogicalVolume creates a new logical volume on the volume group. If a
+// name is not provided, a valid one is generated based on the payload
+// mountpoint. If a name is provided, it is used directly without validating.
+func (vg *LVMVolumeGroup) CreateLogicalVolume(lvName string, size uint64, payload Entity) (*LVMLogicalVolume, error) {
+	if vg == nil {
+		panic("LVMVolumeGroup.CreateLogicalVolume: nil entity")
+	}
+
+	if lvName == "" {
+		// generate a name based on the payload's mountpoint
+		mntble, ok := payload.(Mountable)
+		if !ok {
+			return nil, fmt.Errorf("could not create logical volume: no name provided and payload is not mountable")
+		}
+		mountpoint := mntble.GetMountpoint()
+		autoName, err := vg.genLVName(mountpoint)
+		if err != nil {
+			return nil, err
+		}
+		lvName = autoName
 	}
 
 	lv := LVMLogicalVolume{
-		Name:    name,
+		Name:    lvName,
 		Size:    vg.AlignUp(size),
 		Payload: payload,
 	}
