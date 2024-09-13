@@ -313,13 +313,10 @@ func Convert(bp Blueprint) iblueprint.Blueprint {
 			}
 			customizations.Group = igroups
 		}
-		if fs := c.Filesystem; fs != nil {
-			ifs := make([]iblueprint.FilesystemCustomization, len(fs))
-			for idx := range fs {
-				ifs[idx] = iblueprint.FilesystemCustomization(fs[idx])
-			}
-			customizations.Filesystem = ifs
-		}
+
+		customizations.Filesystem = convertFilesystems(c.Filesystem)
+		customizations.Partitioning = convertPartitioning(c.Partitioning)
+
 		if tz := c.Timezone; tz != nil {
 			itz := iblueprint.TimezoneCustomization(*tz)
 			customizations.Timezone = &itz
@@ -422,4 +419,122 @@ func Convert(bp Blueprint) iblueprint.Blueprint {
 	}
 
 	return ibp
+}
+
+func convertPartitioning(partitioning *PartitioningCustomization) *iblueprint.PartitioningCustomization {
+	if partitioning == nil {
+		return nil
+	}
+
+	ip := iblueprint.PartitioningCustomization{
+		MinSize: partitioning.MinSize,
+		Plain:   convertPlainPartitioning(partitioning.Plain),
+		LVM:     convertLVMPartitioning(partitioning.LVM),
+		Btrfs:   convertBtrfsPartitioning(partitioning.Btrfs),
+	}
+	return &ip
+}
+
+func convertFilesystems(filesystems []FilesystemCustomization) []iblueprint.FilesystemCustomization {
+	if filesystems == nil {
+		return nil
+	}
+	ifs := make([]iblueprint.FilesystemCustomization, len(filesystems))
+	for idx := range filesystems {
+		ifs[idx] = iblueprint.FilesystemCustomization(filesystems[idx])
+	}
+	return ifs
+}
+
+func convertPlainPartitioning(plain *PlainFilesystemCustomization) *iblueprint.PlainFilesystemCustomization {
+	if plain == nil {
+		return nil
+	}
+	return &iblueprint.PlainFilesystemCustomization{
+		Filesystems: convertFilesystems(plain.Filesystems),
+	}
+}
+
+func convertLVMPartitioning(lvm *LVMCustomization) *iblueprint.LVMCustomization {
+	if lvm == nil {
+		return nil
+	}
+	return &iblueprint.LVMCustomization{
+		VolumeGroups: convertVolumeGroups(lvm.VolumeGroups),
+	}
+}
+
+func convertVolumeGroups(vgs []VGCustomization) []iblueprint.VGCustomization {
+	if len(vgs) == 0 {
+		return nil
+	}
+	ivgs := make([]iblueprint.VGCustomization, len(vgs))
+	for idx := range vgs {
+		ivgs[idx] = convertVolumeGroup(vgs[idx])
+	}
+	return ivgs
+}
+
+func convertVolumeGroup(vg VGCustomization) iblueprint.VGCustomization {
+	return iblueprint.VGCustomization{
+		Name:           vg.Name,
+		MinSize:        vg.MinSize,
+		LogicalVolumes: convertLogicalVolumes(vg.LogicalVolumes),
+	}
+}
+
+func convertLogicalVolumes(lvs []LVCustomization) []iblueprint.LVCustomization {
+	if len(lvs) == 0 {
+		return nil
+	}
+	ilvs := make([]iblueprint.LVCustomization, len(lvs))
+	for idx := range lvs {
+		ilvs[idx] = convertLogicalVolume(lvs[idx])
+	}
+	return ilvs
+}
+
+func convertLogicalVolume(lv LVCustomization) iblueprint.LVCustomization {
+	return iblueprint.LVCustomization{
+		Name:                    lv.Name,
+		FilesystemCustomization: iblueprint.FilesystemCustomization(lv.FilesystemCustomization),
+	}
+}
+
+func convertBtrfsPartitioning(btrfs *BtrfsCustomization) *iblueprint.BtrfsCustomization {
+	if btrfs == nil {
+		return nil
+	}
+	return &iblueprint.BtrfsCustomization{
+		Volumes: convertBtrfsVolumes(btrfs.Volumes),
+	}
+}
+
+func convertBtrfsVolumes(vols []BtrfsVolumeCustomization) []iblueprint.BtrfsVolumeCustomization {
+	if len(vols) == 0 {
+		return nil
+	}
+	ivols := make([]iblueprint.BtrfsVolumeCustomization, len(vols))
+	for idx := range vols {
+		ivols[idx] = convertBtrfsVolume(vols[idx])
+	}
+	return ivols
+}
+
+func convertBtrfsVolume(vol BtrfsVolumeCustomization) iblueprint.BtrfsVolumeCustomization {
+	return iblueprint.BtrfsVolumeCustomization{
+		MinSize:    vol.MinSize,
+		Subvolumes: convertBtrfsSubvolumes(vol.Subvolumes),
+	}
+}
+
+func convertBtrfsSubvolumes(subvols []BtrfsSubvolumeCustomization) []iblueprint.BtrfsSubvolumeCustomization {
+	if len(subvols) == 0 {
+		return nil
+	}
+	isubvols := make([]iblueprint.BtrfsSubvolumeCustomization, len(subvols))
+	for idx := range subvols {
+		isubvols[idx] = iblueprint.BtrfsSubvolumeCustomization(subvols[idx])
+	}
+	return isubvols
 }
