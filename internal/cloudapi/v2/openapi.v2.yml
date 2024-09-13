@@ -215,6 +215,42 @@ paths:
               schema:
                 type: string
 
+  '/composes/{id}/sboms':
+    get:
+      operationId: getComposeSBOMs
+      summary: Get the SBOMs for a compose.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+            format: uuid
+            example: 123e4567-e89b-12d3-a456-426655440000
+          required: true
+          description: ID of compose for which to get SBOMs
+      description: |-
+        Returns a set of SBOM documents for each image in the request.
+        SBOM documents are in the SPDX format.
+      responses:
+        '200':
+          description: The SBOMs for the given compose.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComposeSBOMs'
+        '400':
+          description: Invalid compose id
+          content:
+            text/plain:
+              schema:
+                type: string
+        '404':
+          description: Unknown compose id
+          content:
+            text/plain:
+              schema:
+                type: string
+
   /composes/{id}/clone:
     post:
       operationId: postCloneCompose
@@ -571,6 +607,56 @@ components:
             items:
               type: object
               x-go-type: interface{}
+    ImageSBOM:
+      required:
+        - sbom
+        - sbom_type
+        - pipeline_name
+        - pipeline_purpose
+      properties:
+        sbom:
+          type: object
+          x-go-type: interface{}
+          description: |-
+            The SBOM document in the 'sbom_type' format.
+        sbom_type:
+          type: string
+          enum: ["spdx"]
+          description: |-
+            The type of the SBOM document. Currently only SPDX is supported.
+        pipeline_name:
+          type: string
+          description: |-
+            The name of the osbuild pipeline which has the packages described
+            in the SBOM installed.
+        pipeline_purpose:
+          type: string
+          enum: ["buildroot", "image"]
+          description: |-
+            The purpose of the pipeline. The `buildroot` pipeline was used for
+            the build environment dueing the image build. The `image` pipeline
+            represents the actual content of the image. Due to the nature of
+            some image types, there may be multiple pipelines of the same
+            purpose.
+    ComposeSBOMs:
+      allOf:
+      - $ref: '#/components/schemas/ObjectReference'
+      - type: object
+        required:
+          - items
+        properties:
+          items:
+            type: array
+            description: |-
+              The SBOM documents for each image built in the compose.
+            items:
+              type: array
+              description: |-
+                The SBOM documents for the given image. Each image usually has
+                at least two SBOMs, one for the build environment and one for the
+                actual content of the image.
+              items:
+                $ref: '#/components/schemas/ImageSBOM'
     ImageStatus:
       required:
        - status
