@@ -35,18 +35,18 @@ func (bcpm BlueprintCustomizationsPartitioningMode) String() string {
 	}
 }
 
-// GetCustomizationsFromBlueprintRequest populates a blueprint customization struct
-// with the data from the blueprint section of a ComposeRequest, which is similar but
+// GetCustomizationsFromBlueprint populates a blueprint customization struct
+// with the data from request Blueprint, which is similar but
 // slightly different from the Cloudapi's Customizations section
 // This starts with a new empty blueprint.Customization object
 // If there are no customizations, it returns nil
-func (request *ComposeRequest) GetCustomizationsFromBlueprintRequest() (*blueprint.Customizations, error) {
-	if request.Blueprint.Customizations == nil {
+func (rbp *Blueprint) GetCustomizationsFromBlueprintRequest() (*blueprint.Customizations, error) {
+	if rbp.Customizations == nil {
 		return nil, nil
 	}
 
 	c := &blueprint.Customizations{}
-	rbpc := request.Blueprint.Customizations
+	rbpc := rbp.Customizations
 
 	if rbpc.Hostname != nil {
 		c.Hostname = rbpc.Hostname
@@ -499,8 +499,12 @@ func (request *ComposeRequest) GetBlueprintFromCompose() (blueprint.Blueprint, e
 		return bp, err
 	}
 
+	return ConvertRequestBP(*request.Blueprint)
+}
+
+// ConvertRequestBP takes a request Blueprint and returns a composer blueprint.Blueprint
+func ConvertRequestBP(rbp Blueprint) (blueprint.Blueprint, error) {
 	var bp blueprint.Blueprint
-	rbp := request.Blueprint
 
 	// Copy all the parts from the OpenAPI Blueprint into a blueprint.Blueprint
 	// NOTE: Openapi fields may be nil, test for that first.
@@ -553,7 +557,7 @@ func (request *ComposeRequest) GetBlueprintFromCompose() (blueprint.Blueprint, e
 		}
 	}
 
-	customizations, err := request.GetCustomizationsFromBlueprintRequest()
+	customizations, err := rbp.GetCustomizationsFromBlueprintRequest()
 	if err != nil {
 		return bp, err
 	}
