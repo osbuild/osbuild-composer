@@ -19,6 +19,7 @@ import (
 	"github.com/osbuild/images/pkg/ostree/mock_ostree_repo"
 	"github.com/osbuild/images/pkg/reporegistry"
 	"github.com/osbuild/images/pkg/rpmmd"
+	"github.com/osbuild/images/pkg/sbom"
 	v2 "github.com/osbuild/osbuild-composer/internal/cloudapi/v2"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue/fsjobqueue"
 	"github.com/osbuild/osbuild-composer/internal/target"
@@ -26,6 +27,47 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/worker"
 	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
 )
+
+var sbomDoc = json.RawMessage(`{
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "creationInfo": {
+    "created": "2024-09-06T08:12:28Z",
+    "creators": [
+      "Tool: osbuild-128"
+    ]
+  },
+  "dataLicense": "CC0-1.0",
+  "name": "sbom-by-osbuild-128",
+  "spdxVersion": "SPDX-2.3",
+  "documentNamespace": "https://osbuild.org/spdxdocs/sbom-by-osbuild-128-6bb434da-523a-463f-bc4c-69460af00040",
+  "packages": [
+    {
+      "SPDXID": "SPDXRef-356f4620-c03e-3830-b013-ddbfee6665aa",
+      "name": "pkg1",
+      "downloadLocation": "http://example.org/pkg1",
+      "filesAnalyzed": false,
+      "versionInfo": "1",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "e50ddb78a37f5851d1a5c37a4c77d59123153c156e628e064b9daa378f45a2fe"
+        }
+      ],
+      "sourceInfo": "pkg1.src",
+      "licenseDeclared": "MIT",
+      "summary": "pkg1 summary",
+      "description": "pkg1 description",
+      "builtDate": "2024-01-23T00:11:15Z"
+    }
+  ],
+  "relationships": [
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relationshipType": "DESCRIBES",
+      "relatedSpdxElement": "SPDXRef-356f4620-c03e-3830-b013-ddbfee6665aa"
+    }
+  ]
+}`)
 
 func newV2Server(t *testing.T, dir string, depsolveChannels []string, enableJWT bool, failDepsolve bool) (*v2.Server, *worker.Server, jobqueue.JobQueue, context.CancelFunc) {
 	q, err := fsjobqueue.New(dir)
@@ -64,10 +106,30 @@ func newV2Server(t *testing.T, dir string, depsolveChannels []string, enableJWT 
 				continue
 			}
 			dJR := &worker.DepsolveJobResult{
-				PackageSpecs: map[string][]rpmmd.PackageSpec{"build": {{
-					Name:     "pkg1",
-					Checksum: "sha256:e50ddb78a37f5851d1a5c37a4c77d59123153c156e628e064b9daa378f45a2fe",
-				}}},
+				PackageSpecs: map[string][]rpmmd.PackageSpec{
+					"build": {
+						{
+							Name:     "pkg1",
+							Checksum: "sha256:e50ddb78a37f5851d1a5c37a4c77d59123153c156e628e064b9daa378f45a2fe",
+						},
+					},
+					"os": {
+						{
+							Name:     "pkg1",
+							Checksum: "sha256:e50ddb78a37f5851d1a5c37a4c77d59123153c156e628e064b9daa378f45a2fe",
+						},
+					},
+				},
+				SbomDocs: map[string]worker.SbomDoc{
+					"build": {
+						DocType:  sbom.StandardTypeSpdx,
+						Document: sbomDoc,
+					},
+					"os": {
+						DocType:  sbom.StandardTypeSpdx,
+						Document: sbomDoc,
+					},
+				},
 				Error:     "",
 				ErrorType: worker.ErrorType(""),
 			}
@@ -689,6 +751,29 @@ func TestComposeStatusSuccess(t *testing.T) {
 			%s
 		]
 	}`, jobId, jobId, emptyManifest), "details")
+
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%v/sboms", jobId), ``, http.StatusOK, fmt.Sprintf(`
+	{
+		"href": "/api/image-builder-composer/v2/composes/%v/sboms",
+		"id": "%v",
+		"kind": "ComposeSBOMs",
+		"items": [
+			[
+				{
+					"pipeline_name": "build",
+					"pipeline_purpose": "buildroot",
+					"sbom": %[3]s,
+					"sbom_type": %[4]q
+				},
+				{
+					"pipeline_name": "os",
+					"pipeline_purpose": "image",
+					"sbom": %[3]s,
+					"sbom_type": %[4]q
+				}
+			]
+		]
+	}`, jobId, jobId, sbomDoc, v2.ImageSBOMSbomTypeSpdx), "details")
 }
 
 func TestComposeStatusFailure(t *testing.T) {
