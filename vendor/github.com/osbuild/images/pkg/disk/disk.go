@@ -56,6 +56,9 @@ const (
 
 	// Extended Boot Loader Partition
 	XBootLDRPartitionGUID = "BC13C2FF-59E6-4262-A352-B275FD6F7172"
+
+	// DosFat16B used for the ESP-System partition
+	DosFat16B = "06"
 )
 
 // Entity is the base interface for all disk-related entities.

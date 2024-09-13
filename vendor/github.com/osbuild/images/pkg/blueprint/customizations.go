@@ -12,7 +12,6 @@ import (
 type Customizations struct {
 	Hostname           *string                        `json:"hostname,omitempty" toml:"hostname,omitempty"`
 	Kernel             *KernelCustomization           `json:"kernel,omitempty" toml:"kernel,omitempty"`
-	SSHKey             []SSHKeyCustomization          `json:"sshkey,omitempty" toml:"sshkey,omitempty"`
 	User               []UserCustomization            `json:"user,omitempty" toml:"user,omitempty"`
 	Group              []GroupCustomization           `json:"group,omitempty" toml:"group,omitempty"`
 	Timezone           *TimezoneCustomization         `json:"timezone,omitempty" toml:"timezone,omitempty"`
@@ -228,24 +227,11 @@ func (c *Customizations) GetTimezoneSettings() (*string, []string) {
 }
 
 func (c *Customizations) GetUsers() []UserCustomization {
-	if c == nil || (c.SSHKey == nil && c.User == nil) {
+	if c == nil || c.User == nil {
 		return nil
 	}
 
-	users := []UserCustomization{}
-
-	// prepend sshkey for backwards compat (overridden by users)
-	if len(c.SSHKey) > 0 {
-		for idx := range c.SSHKey {
-			keyc := c.SSHKey[idx]
-			users = append(users, UserCustomization{
-				Name: keyc.User,
-				Key:  &keyc.Key,
-			})
-		}
-	}
-
-	users = append(users, c.User...)
+	users := c.User
 
 	// sanitize user home directory in blueprint: if it has a trailing slash,
 	// it might lead to the directory not getting the correct selinux labels

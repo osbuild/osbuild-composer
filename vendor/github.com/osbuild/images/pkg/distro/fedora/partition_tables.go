@@ -224,7 +224,7 @@ var minimalrawPartitionTables = distro.BasePartitionTableMap{
 		Partitions: []disk.Partition{
 			{
 				Size:     200 * common.MebiByte,
-				Type:     "06",
+				Type:     disk.DosFat16B,
 				Bootable: true,
 				Payload: &disk.Filesystem{
 					Type:         "vfat",
@@ -319,7 +319,7 @@ var iotBasePartitionTables = distro.BasePartitionTableMap{
 		Partitions: []disk.Partition{
 			{
 				Size:     501 * common.MebiByte,
-				Type:     "06",
+				Type:     disk.DosFat16B,
 				Bootable: true,
 				Payload: &disk.Filesystem{
 					Type:         "vfat",
