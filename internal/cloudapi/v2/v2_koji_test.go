@@ -514,6 +514,44 @@ func TestKojiCompose(t *testing.T) {
 
 			// get the logs
 			test.TestRoute(t, handler, false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%v/logs", finalizeID), ``, http.StatusOK, `{"kind":"ComposeLogs"}`, `koji`, `image_builds`, `href`, `id`)
+
+			// get the SBOMs
+			test.TestRoute(t, handler, false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%v/sboms", finalizeID), ``, http.StatusOK, fmt.Sprintf(`
+	{
+		"href": "/api/image-builder-composer/v2/composes/%v/sboms",
+		"id": "%v",
+		"kind": "ComposeSBOMs",
+		"items": [
+			[
+				{
+					"pipeline_name": "build",
+					"pipeline_purpose": "buildroot",
+					"sbom": %[3]s,
+					"sbom_type": %[4]q
+				},
+				{
+					"pipeline_name": "os",
+					"pipeline_purpose": "image",
+					"sbom": %[3]s,
+					"sbom_type": %[4]q
+				}
+			],
+			[
+				{
+					"pipeline_name": "build",
+					"pipeline_purpose": "buildroot",
+					"sbom": %[3]s,
+					"sbom_type": %[4]q
+				},
+				{
+					"pipeline_name": "os",
+					"pipeline_purpose": "image",
+					"sbom": %[3]s,
+					"sbom_type": %[4]q
+				}
+			]
+		]
+	}`, finalizeID, finalizeID, sbomDoc, v2.ImageSBOMSbomTypeSpdx), "details")
 		})
 	}
 }
