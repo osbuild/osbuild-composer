@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"slices"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -16,6 +18,7 @@ import (
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/rpmmd"
+	"github.com/osbuild/images/pkg/sbom"
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/target"
@@ -883,6 +886,169 @@ func (h *apiHandlers) getComposeManifestsImpl(ctx echo.Context, id string) error
 			Kind: "ComposeManifests",
 		},
 		Manifests: manifestBlobs,
+	}
+
+	return ctx.JSON(http.StatusOK, resp)
+}
+
+// sbomsFromOSBuildJob extracts SBOM documents from dependencies of an OSBuild job.
+func sbomsFromOSBuildJob(w *worker.Server, osbuildJobUUID uuid.UUID) ([]ImageSBOM, error) {
+	var osbuildJobResult worker.OSBuildJobResult
+	osbuildJobInfo, err := w.OSBuildJobInfo(osbuildJobUUID, &osbuildJobResult)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to get results for OSBuild job %q: %v", osbuildJobUUID, err)
+	}
+
+	pipelineNameToPurpose := func(pipelineName string) (ImageSBOMPipelinePurpose, error) {
+		if slices.Contains(osbuildJobResult.PipelineNames.Payload, pipelineName) {
+			return ImageSBOMPipelinePurposeImage, nil
+		}
+		if slices.Contains(osbuildJobResult.PipelineNames.Build, pipelineName) {
+			return ImageSBOMPipelinePurposeBuildroot, nil
+		}
+		return "", fmt.Errorf("Pipeline %q is not listed as either a payload or build pipeline", pipelineName)
+	}
+
+	// SBOMs are attached to the depsolve job results.
+	// Depsolve jobs are dependencies of Manifest job.
+	// Manifest job is a dependency of OSBuild job.
+	manifesJobInfo, _, err := manifestJobResultsFromJobDeps(w, osbuildJobInfo.Deps)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to get manifest job info for OSBuild job %q: %v", osbuildJobUUID, err)
+	}
+
+	var imageSBOMs []ImageSBOM
+	for _, manifestDepUUID := range manifesJobInfo.Deps {
+		depJobType, err := w.JobType(manifestDepUUID)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to get job type for dependency %q: %v", manifestDepUUID, err)
+		}
+
+		if depJobType != worker.JobTypeDepsolve {
+			continue
+		}
+
+		var depsolveJobResult worker.DepsolveJobResult
+		_, err = w.DepsolveJobInfo(manifestDepUUID, &depsolveJobResult)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to get results for depsolve job %q: %v", manifestDepUUID, err)
+		}
+
+		if depsolveJobResult.SbomDocs == nil {
+			return nil, fmt.Errorf("depsolve job %q: missing SBOMs", manifestDepUUID)
+		}
+
+		for pipelineName, sbomDoc := range depsolveJobResult.SbomDocs {
+			purpose, err := pipelineNameToPurpose(pipelineName)
+			if err != nil {
+				return nil, fmt.Errorf("Failed to determine purpose for pipeline %q: %v", pipelineName, err)
+			}
+
+			var sbomType ImageSBOMSbomType
+			switch sbomDoc.DocType {
+			case sbom.StandardTypeSpdx:
+				sbomType = ImageSBOMSbomTypeSpdx
+			default:
+				return nil, fmt.Errorf("Unknown SBOM type %q attached to depsolve job %q", sbomDoc.DocType, manifestDepUUID)
+			}
+
+			imageSBOMs = append(imageSBOMs, ImageSBOM{
+				PipelineName:    pipelineName,
+				PipelinePurpose: purpose,
+				Sbom:            sbomDoc.Document,
+				SbomType:        sbomType,
+			})
+		}
+
+		// There should be only one depsolve job per OSBuild job
+		break
+	}
+
+	if len(imageSBOMs) == 0 {
+		return nil, fmt.Errorf("OSBuild job %q: manifest job dependency is missing depsolve job dependency", osbuildJobUUID)
+	}
+
+	// Sort the SBOMs by pipeline name to ensure consistent ordering.
+	// The SBOM documents are attached to the depsolve job results, in a map where the key is the pipeline name.
+	// The order of the keys in the map is not guaranteed to be consistent across different runs.
+	sort.Slice(imageSBOMs, func(i, j int) bool {
+		return imageSBOMs[i].PipelineName < imageSBOMs[j].PipelineName
+	})
+
+	return imageSBOMs, nil
+}
+
+// GetComposeSBOMs returns the SBOM documents for a given Compose (multiple SBOMs for each image).
+func (h *apiHandlers) GetComposeSBOMs(ctx echo.Context, id string) error {
+	return h.server.EnsureJobChannel(h.getComposeSBOMsImpl)(ctx, id)
+}
+
+func (h *apiHandlers) getComposeSBOMsImpl(ctx echo.Context, id string) error {
+	jobId, err := uuid.Parse(id)
+	if err != nil {
+		return HTTPError(ErrorInvalidComposeId)
+	}
+
+	jobType, err := h.server.workers.JobType(jobId)
+	if err != nil {
+		return HTTPError(ErrorComposeNotFound)
+	}
+
+	var items [][]ImageSBOM
+
+	switch jobType {
+	// Koji compose
+	case worker.JobTypeKojiFinalize:
+		var finalizeResult worker.KojiFinalizeJobResult
+		finalizeInfo, err := h.server.workers.KojiFinalizeJobInfo(jobId, &finalizeResult)
+		if err != nil {
+			return HTTPErrorWithInternal(ErrorComposeNotFound, err)
+		}
+
+		for _, kojiFinalizeDepUUID := range finalizeInfo.Deps {
+			buildJobType, err := h.server.workers.JobType(kojiFinalizeDepUUID)
+			if err != nil {
+				return HTTPErrorWithInternal(ErrorComposeNotFound, err)
+			}
+
+			switch buildJobType {
+			case worker.JobTypeKojiInit:
+				continue
+
+			case worker.JobTypeOSBuild:
+				imageSBOMs, err := sbomsFromOSBuildJob(h.server.workers, kojiFinalizeDepUUID)
+				if err != nil {
+					return HTTPErrorWithInternal(ErrorComposeNotFound,
+						fmt.Errorf("Failed to get SBOMs for OSBuild job %q: %v", kojiFinalizeDepUUID, err))
+				}
+				items = append(items, imageSBOMs)
+
+			default:
+				return HTTPErrorWithInternal(ErrorInvalidJobType,
+					fmt.Errorf("unexpected job type in koji compose dependencies: %q", buildJobType))
+			}
+		}
+
+	// non-Koji compose
+	case worker.JobTypeOSBuild:
+		imageSBOMs, err := sbomsFromOSBuildJob(h.server.workers, jobId)
+		if err != nil {
+			return HTTPErrorWithInternal(ErrorComposeNotFound,
+				fmt.Errorf("Failed to get SBOMs for OSBuild job %q: %v", jobId, err))
+		}
+		items = append(items, imageSBOMs)
+
+	default:
+		return HTTPError(ErrorInvalidJobType)
+	}
+
+	resp := &ComposeSBOMs{
+		ObjectReference: ObjectReference{
+			Href: fmt.Sprintf("/api/image-builder-composer/v2/composes/%v/sboms", jobId),
+			Id:   jobId.String(),
+			Kind: "ComposeSBOMs",
+		},
+		Items: items,
 	}
 
 	return ctx.JSON(http.StatusOK, resp)
