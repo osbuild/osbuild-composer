@@ -766,24 +766,24 @@ func (h *apiHandlers) getComposeLogsImpl(ctx echo.Context, id string) error {
 	return ctx.JSON(http.StatusOK, resp)
 }
 
-func manifestJobResultsFromJobDeps(w *worker.Server, deps []uuid.UUID) (*worker.ManifestJobByIDResult, error) {
+func manifestJobResultsFromJobDeps(w *worker.Server, deps []uuid.UUID) (*worker.JobInfo, *worker.ManifestJobByIDResult, error) {
 	var manifestResult worker.ManifestJobByIDResult
 
 	for i := 0; i < len(deps); i++ {
 		depType, err := w.JobType(deps[i])
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		if depType == worker.JobTypeManifestIDOnly {
-			_, err = w.ManifestJobInfo(deps[i], &manifestResult)
+			manifestJobInfo, err := w.ManifestJobInfo(deps[i], &manifestResult)
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
-			return &manifestResult, nil
+			return manifestJobInfo, &manifestResult, nil
 		}
 	}
 
-	return nil, fmt.Errorf("no %q job found in the dependencies", worker.JobTypeManifestIDOnly)
+	return nil, nil, fmt.Errorf("no %q job found in the dependencies", worker.JobTypeManifestIDOnly)
 }
 
 // GetComposeIdManifests returns the Manifests for a given Compose (one for each image).
@@ -835,7 +835,7 @@ func (h *apiHandlers) getComposeManifestsImpl(ctx echo.Context, id string) error
 					if err != nil {
 						return HTTPErrorWithInternal(ErrorComposeNotFound, err)
 					}
-					manifestResult, err := manifestJobResultsFromJobDeps(h.server.workers, buildInfo.Deps)
+					_, manifestResult, err := manifestJobResultsFromJobDeps(h.server.workers, buildInfo.Deps)
 					if err != nil {
 						return HTTPErrorWithInternal(ErrorComposeNotFound, fmt.Errorf("job %q: %v", jobId, err))
 					}
@@ -864,7 +864,7 @@ func (h *apiHandlers) getComposeManifestsImpl(ctx echo.Context, id string) error
 			if err != nil {
 				return HTTPErrorWithInternal(ErrorComposeNotFound, err)
 			}
-			manifestResult, err := manifestJobResultsFromJobDeps(h.server.workers, buildInfo.Deps)
+			_, manifestResult, err := manifestJobResultsFromJobDeps(h.server.workers, buildInfo.Deps)
 			if err != nil {
 				return HTTPErrorWithInternal(ErrorComposeNotFound, fmt.Errorf("job %q: %v", jobId, err))
 			}
