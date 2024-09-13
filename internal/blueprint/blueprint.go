@@ -292,14 +292,7 @@ func Convert(bp Blueprint) iblueprint.Blueprint {
 			ikernel := iblueprint.KernelCustomization(*kernel)
 			customizations.Kernel = &ikernel
 		}
-		if sshkeys := c.SSHKey; sshkeys != nil {
-			isshkeys := make([]iblueprint.SSHKeyCustomization, len(sshkeys))
-			for idx := range sshkeys {
-				isshkeys[idx] = iblueprint.SSHKeyCustomization(sshkeys[idx])
-			}
-			customizations.SSHKey = isshkeys
-		}
-		if users := c.User; users != nil {
+		if users := c.GetUsers(); users != nil { // contains both user customizations and converted sshkey customizations
 			iusers := make([]iblueprint.UserCustomization, len(users))
 			for idx := range users {
 				iusers[idx] = iblueprint.UserCustomization(users[idx])
