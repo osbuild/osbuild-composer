@@ -147,6 +147,21 @@ func (s *Server) Shutdown() {
 	s.goroutinesGroup.Wait()
 }
 
+func (s *Server) enqueueBootcCompose(imageType string, arch string, imageRef string, channel string) (uuid.UUID, error) {
+	var id uuid.UUID
+	job := worker.BootcImageBuilderJob{
+		ImageType: imageType,
+		Arch:      arch,
+		ImageRef:  imageRef,
+		TLSVerify: false,
+	}
+	id, err := s.workers.EnqueueBootcImageBuilderJob(&job, channel)
+	if err != nil {
+		return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
+	}
+	return id, nil
+}
+
 func (s *Server) enqueueCompose(irs []imageRequest, channel string) (uuid.UUID, error) {
 	var id uuid.UUID
 	if len(irs) != 1 {

@@ -1215,6 +1215,7 @@ func (request *ComposeRequest) GetImageRequests(distroFactory *distrofactory.Fac
 			targets:      irTargets,
 			blueprint:    bp,
 			manifestSeed: manifestSeed,
+			imageRef:     *ir.ImageRef,
 		})
 	}
 	return irs, nil

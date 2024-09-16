@@ -304,6 +304,18 @@ type OSTreeResolveJobResult struct {
 	JobResult
 }
 
+type BootcImageBuilderJob struct {
+	ImageType string `json:"image_type"` // 'ami' or 'qcow2'
+	Arch      string `json:"arch"`       // Architecture, e.g., 'x86_64'
+	ImageRef  string `json:"image_ref"`  // The bootable container image reference
+	Chown     string `json:"chown,omitempty"`
+	TLSVerify bool   `json:"tls_verify,omitempty"`
+}
+
+type BootcImageBuilderJobResult struct {
+	JobResult
+}
+
 type AWSEC2ShareJob struct {
 	Ami               string   `json:"ami"`
 	Region            string   `json:"region"`

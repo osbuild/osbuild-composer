@@ -31,10 +31,6 @@ func (fs *Filesystem) EntityName() string {
 	return "filesystem"
 }
 
-func (fs *Filesystem) IsContainer() bool {
-	return false
-}
-
 // Clone the filesystem structure
 func (fs *Filesystem) Clone() Entity {
 	if fs == nil {

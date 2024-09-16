@@ -5,20 +5,21 @@ import (
 	"regexp"
 )
 
-type serviceType string
-type unitPath string
+type SystemdServiceType string
+type SystemdUnitPath string
 
 const (
-	Simple              serviceType = "simple"
-	Exec                serviceType = "exec"
-	Forking             serviceType = "forking"
-	Oneshot             serviceType = "oneshot"
-	Dbus                serviceType = "dbus"
-	Notify              serviceType = "notify"
-	NotifyReloadservice serviceType = "notify-reload"
-	Idle                serviceType = "idle"
-	Etc                 unitPath    = "etc"
-	Usr                 unitPath    = "usr"
+	SimpleServiceType       SystemdServiceType = "simple"
+	ExecServiceType         SystemdServiceType = "exec"
+	ForkingServiceType      SystemdServiceType = "forking"
+	OneshotServiceType      SystemdServiceType = "oneshot"
+	DbusServiceType         SystemdServiceType = "dbus"
+	NotifyServiceType       SystemdServiceType = "notify"
+	NotifyReloadServiceType SystemdServiceType = "notify-reload"
+	IdleServiceType         SystemdServiceType = "idle"
+
+	EtcUnitPath SystemdUnitPath = "etc"
+	UsrUnitPath SystemdUnitPath = "usr"
 )
 
 type Unit struct {
@@ -33,7 +34,7 @@ type Unit struct {
 }
 
 type Service struct {
-	Type            serviceType           `json:"Type,omitempty"`
+	Type            SystemdServiceType    `json:"Type,omitempty"`
 	RemainAfterExit bool                  `json:"RemainAfterExit,omitempty"`
 	ExecStartPre    []string              `json:"ExecStartPre,omitempty"`
 	ExecStopPost    []string              `json:"ExecStopPost,omitempty"`
@@ -56,7 +57,7 @@ type SystemdServiceUnit struct {
 type SystemdUnitCreateStageOptions struct {
 	Filename string             `json:"filename"`
 	UnitType unitType           `json:"unit-type,omitempty"` // unitType defined in ./systemd_unit_stage.go
-	UnitPath unitPath           `json:"unit-path,omitempty"`
+	UnitPath SystemdUnitPath    `json:"unit-path,omitempty"`
 	Config   SystemdServiceUnit `json:"config"`
 }
 

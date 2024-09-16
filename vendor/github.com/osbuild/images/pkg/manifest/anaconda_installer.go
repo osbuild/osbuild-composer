@@ -84,6 +84,11 @@ type AnacondaInstaller struct {
 	// Uses the old, deprecated, Anaconda config option "kickstart-modules".
 	// Only for RHEL 8.
 	UseLegacyAnacondaConfig bool
+
+	// SELinux policy, when set it enables the labeling of the installer
+	// tree with the selected profile and selects the required package
+	// for depsolving
+	SElinux string
 }
 
 func NewAnacondaInstaller(installerType AnacondaInstallerType,
@@ -159,14 +164,24 @@ func (p *AnacondaInstaller) getBuildPackages(Distro) []string {
 		)
 	}
 
+	if p.SElinux != "" {
+		packages = append(packages, "policycoreutils", fmt.Sprintf("selinux-policy-%s", p.SElinux))
+	}
+
 	return packages
 }
 
 func (p *AnacondaInstaller) getPackageSetChain(Distro) []rpmmd.PackageSet {
 	packages := p.anacondaBootPackageSet()
+
 	if p.Biosdevname {
 		packages = append(packages, "biosdevname")
 	}
+
+	if p.SElinux != "" {
+		packages = append(packages, fmt.Sprintf("selinux-policy-%s", p.SElinux))
+	}
+
 	return []rpmmd.PackageSet{
 		{
 			Include:         append(packages, p.ExtraPackages...),
@@ -306,6 +321,13 @@ func (p *AnacondaInstaller) payloadStages() []*osbuild.Stage {
 
 	stages = append(stages, osbuild.NewSELinuxConfigStage(&osbuild.SELinuxConfigStageOptions{State: osbuild.SELinuxStatePermissive}))
 
+	// SElinux is not supported on the non-live-installers (see the previous
+	// stage setting SELinux to permissive. It's an error to set it to anything
+	// that isn't an empty string
+	if p.SElinux != "" {
+		panic("payload installers do not support SELinux policies")
+	}
+
 	if p.InteractiveDefaults != nil {
 		var ksUsers []users.User
 		var ksGroups []users.Group
@@ -370,7 +392,11 @@ func (p *AnacondaInstaller) liveStages() []*osbuild.Stage {
 	dracutOptions.AddDrivers = p.AdditionalDrivers
 	stages = append(stages, osbuild.NewDracutStage(dracutOptions))
 
-	stages = append(stages, osbuild.NewSELinuxConfigStage(&osbuild.SELinuxConfigStageOptions{State: osbuild.SELinuxStatePermissive}))
+	if p.SElinux != "" {
+		stages = append(stages, osbuild.NewSELinuxStage(&osbuild.SELinuxStageOptions{
+			FileContexts: fmt.Sprintf("etc/selinux/%s/contexts/files/file_contexts", p.SElinux),
+		}))
+	}
 
 	return stages
 }

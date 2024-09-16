@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/google/uuid"
+
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/internal/environment"
 	"github.com/osbuild/images/internal/workload"
@@ -124,7 +126,6 @@ type OSCustomizations struct {
 	UdevRules           *osbuild.UdevRulesStageOptions
 	WSLConfig           *osbuild.WSLConfStageOptions
 	LeapSecTZ           *string
-	FactAPIType         *facts.APIType
 	Presets             []osbuild.Preset
 	ContainersStorage   *string
 
@@ -134,6 +135,7 @@ type OSCustomizations struct {
 	Subscription *subscription.ImageOptions
 	// The final RHSM config to be applied to the image
 	RHSMConfig *subscription.RHSMConfig
+	RHSMFacts  *facts.ImageOptions
 
 	// Custom directories and files to create in the image
 	Directories []*fsnode.Directory
@@ -424,6 +426,13 @@ func (p *OS) serialize() osbuild.Pipeline {
 	if p.OSTreeRef != "" {
 		rpmOptions.OSTreeBooted = common.ToPtr(true)
 		rpmOptions.DBPath = "/usr/share/rpm"
+		// The dracut-config-rescue package will create a rescue kernel when
+		// installed. This creates an issue with ostree-based images because
+		// rpm-ostree requires that only one kernel exists in the image.
+		// Disabling dracut for ostree-based systems resolves this issue.
+		// Dracut will be run by rpm-ostree itself while composing the image.
+		// https://github.com/osbuild/images/issues/624
+		rpmOptions.DisableDracut = true
 	}
 	pipeline.AddStage(osbuild.NewRPMStage(rpmOptions, osbuild.NewRpmStageSourceFilesInputs(p.packageSpecs)))
 
@@ -580,74 +589,15 @@ func (p *OS) serialize() osbuild.Pipeline {
 		pipeline.AddStage(osbuild.NewPwqualityConfStage(p.PwQuality))
 	}
 
-	// If subscription settings are included there are 3 possible setups:
-	// - Register the system with rhc and enable Insights
-	// - Register with subscription-manager, no Insights or rhc
-	// - Register with subscription-manager and enable Insights, no rhc
 	if p.Subscription != nil {
-		// Write a key file that will contain the org ID and activation key to be sourced in the systemd service.
-		// The file will also act as the ConditionFirstBoot file.
-		subkeyFilepath := "/etc/osbuild-subscription-register.env"
-		subkeyContent := fmt.Sprintf("ORG_ID=%s\nACTIVATION_KEY=%s", p.Subscription.Organization, p.Subscription.ActivationKey)
-		if subkeyFile, err := fsnode.NewFile(subkeyFilepath, nil, "root", "root", []byte(subkeyContent)); err == nil {
-			p.Files = append(p.Files, subkeyFile)
-		} else {
+		subStage, subDirs, subFiles, subServices, err := subscriptionService(*p.Subscription, &subscriptionServiceOptions{InsightsOnBoot: p.OSTreeRef != ""})
+		if err != nil {
 			panic(err)
 		}
-
-		var commands []string
-		if p.Subscription.Rhc {
-			// TODO: replace org ID and activation key with env vars
-			// Use rhc for registration instead of subscription manager
-			commands = []string{fmt.Sprintf("/usr/bin/rhc connect --organization=${ORG_ID} --activation-key=${ACTIVATION_KEY} --server %s", p.Subscription.ServerUrl)}
-			// insights-client creates the .gnupg directory during boot process, and is labeled incorrectly
-			commands = append(commands, "restorecon -R /root/.gnupg")
-			// execute the rhc post install script as the selinuxenabled check doesn't work in the buildroot container
-			commands = append(commands, "/usr/sbin/semanage permissive --add rhcd_t")
-			if p.OSTreeRef != "" {
-				p.runInsightsClientOnBoot()
-			}
-		} else {
-			commands = []string{fmt.Sprintf("/usr/sbin/subscription-manager register --org=${ORG_ID} --activationkey=${ACTIVATION_KEY} --serverurl %s --baseurl %s", p.Subscription.ServerUrl, p.Subscription.BaseUrl)}
-
-			// Insights is optional when using subscription-manager
-			if p.Subscription.Insights {
-				commands = append(commands, "/usr/bin/insights-client --register")
-				// insights-client creates the .gnupg directory during boot process, and is labeled incorrectly
-				commands = append(commands, "restorecon -R /root/.gnupg")
-				if p.OSTreeRef != "" {
-					p.runInsightsClientOnBoot()
-				}
-			}
-		}
-
-		commands = append(commands, fmt.Sprintf("/usr/bin/rm %s", subkeyFilepath))
-
-		subscribeServiceFile := "osbuild-subscription-register.service"
-		regServiceStageOptions := &osbuild.SystemdUnitCreateStageOptions{
-			Filename: subscribeServiceFile,
-			UnitType: "system",
-			UnitPath: osbuild.Usr,
-			Config: osbuild.SystemdServiceUnit{
-				Unit: &osbuild.Unit{
-					Description:         "First-boot service for registering with Red Hat subscription manager and/or insights",
-					ConditionPathExists: []string{subkeyFilepath},
-					Wants:               []string{"network-online.target"},
-					After:               []string{"network-online.target"},
-				},
-				Service: &osbuild.Service{
-					Type:            osbuild.Oneshot,
-					RemainAfterExit: false,
-					ExecStart:       commands,
-					EnvironmentFile: []string{subkeyFilepath},
-				},
-				Install: &osbuild.Install{
-					WantedBy: []string{"default.target"},
-				},
-			},
-		}
-		pipeline.AddStage(osbuild.NewSystemdUnitCreateStage(regServiceStageOptions))
-		p.EnabledServices = append(p.EnabledServices, subscribeServiceFile)
+		pipeline.AddStage(subStage)
+		p.Directories = append(p.Directories, subDirs...)
+		p.Files = append(p.Files, subFiles...)
+		p.EnabledServices = append(p.EnabledServices, subServices...)
 	}
 
 	if p.RHSMConfig != nil {
@@ -740,11 +690,21 @@ func (p *OS) serialize() osbuild.Pipeline {
 		pipeline.AddStage(bootloader)
 	}
 
-	if p.FactAPIType != nil {
+	if p.RHSMFacts != nil {
+		rhsmFacts := osbuild.RHSMFacts{
+			ApiType: p.RHSMFacts.APIType.String(),
+		}
+
+		if p.RHSMFacts.OpenSCAPProfileID != "" {
+			rhsmFacts.OpenSCAPProfileID = p.RHSMFacts.OpenSCAPProfileID
+		}
+
+		if p.RHSMFacts.CompliancePolicyID != uuid.Nil {
+			rhsmFacts.CompliancePolicyID = p.RHSMFacts.CompliancePolicyID.String()
+		}
+
 		pipeline.AddStage(osbuild.NewRHSMFactsStage(&osbuild.RHSMFactsStageOptions{
-			Facts: osbuild.RHSMFacts{
-				ApiType: p.FactAPIType.String(),
-			},
+			Facts: rhsmFacts,
 		}))
 	}
 
@@ -918,44 +878,4 @@ func (p *OS) getInline() []string {
 	}
 
 	return inlineData
-}
-
-// For ostree-based systems, creates a drop-in file for the insights-client
-// service to run on boot and enables the service. This is only meant for
-// ostree-based systems.
-func (p *OS) runInsightsClientOnBoot() {
-	// Insights-client collection must occur at boot time  so
-	// that the current ostree commit hash can be reflected
-	// after upgrade. Otherwise, the upgrade shows as failed in
-	// the console UI.
-	// Add a drop-in file that enables insights-client.service to
-	// run on successful boot.
-	// See https://issues.redhat.com/browse/HMS-4031
-	//
-	// NOTE(akoutsou): drop-in files can normally be created with the
-	// org.osbuild.systemd.unit stage but the stage doesn't support
-	// all the options we need. This is a temporary workaround
-	// until we get the stage updated to support everything we need.
-	icDropinFilepath, icDropinContents := insightsClientDropin()
-	if icDropinDirectory, err := fsnode.NewDirectory(filepath.Dir(icDropinFilepath), nil, "root", "root", true); err == nil {
-		p.Directories = append(p.Directories, icDropinDirectory)
-	}
-	if icDropinFile, err := fsnode.NewFile(icDropinFilepath, nil, "root", "root", []byte(icDropinContents)); err == nil {
-		p.Files = append(p.Files, icDropinFile)
-	} else {
-		panic(err)
-	}
-	// Enable the service now that it's "enable-able"
-	p.EnabledServices = append(p.EnabledServices, "insights-client.service")
-}
-
-// Filename and contents for the insights-client service drop-in.
-// This is a temporary workaround until the org.osbuild.systemd.unit stage
-// gains support for all the options we need.
-func insightsClientDropin() (string, string) {
-	return "/etc/systemd/system/insights-client.service.d/override.conf", `[Unit]
-Requisite=greenboot-healthcheck.service
-After=network-online.target greenboot-healthcheck.service osbuild-first-boot.service
-[Install]
-WantedBy=multi-user.target`
 }

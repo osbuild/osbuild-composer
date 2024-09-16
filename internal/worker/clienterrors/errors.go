@@ -44,6 +44,9 @@ const (
 	ErrorJobPanicked          ClientErrorCode = 37
 	ErrorGeneratingSignedURL  ClientErrorCode = 38
 	ErrorInvalidRepositoryURL ClientErrorCode = 39
+	ErrorBootcExecution       ClientErrorCode = 40
+	ErrorInvalidImageType     ClientErrorCode = 41
+	ErrorInvalidArguments     ClientErrorCode = 42
 )
 
 type ClientErrorCode int

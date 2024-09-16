@@ -7,12 +7,13 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	slogger "github.com/osbuild/osbuild-composer/pkg/splunk_logger"
 	"net/url"
 	"os"
 	"path"
 	"strings"
 	"time"
+
+	slogger "github.com/osbuild/osbuild-composer/pkg/splunk_logger"
 
 	"github.com/BurntSushi/toml"
 	"github.com/sirupsen/logrus"
@@ -516,6 +517,7 @@ func main() {
 		worker.JobTypeAWSEC2Share: &AWSEC2ShareJobImpl{
 			AWSCreds: awsCredentials,
 		},
+		worker.JobTypeBootableContainer: &BootcImageBuilderJobImpl{},
 	}
 
 	acceptedJobTypes := []string{}

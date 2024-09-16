@@ -138,6 +138,7 @@ type imageRequest struct {
 	targets      []*target.Target
 	blueprint    blueprint.Blueprint
 	manifestSeed int64
+	imageRef     string
 }
 
 func (h *apiHandlers) PostCompose(ctx echo.Context) error {
@@ -146,28 +147,39 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 	if err != nil {
 		return err
 	}
+	ctx.Logger().Infof("Received compose request: %v", request)
 
 	// channel is empty if JWT is not enabled
 	channel, err := h.server.getTenantChannel(ctx)
 	if err != nil {
 		return HTTPErrorWithInternal(ErrorTenantNotFound, err)
 	}
-
-	irs, err := request.GetImageRequests(h.server.distros, h.server.repos)
-	if err != nil {
-		return err
-	}
+	ctx.Logger().Infof("Using channel %s", channel)
 
 	var id uuid.UUID
-	if request.Koji != nil {
-		id, err = h.server.enqueueKojiCompose(uint64(request.Koji.TaskId), request.Koji.Server, request.Koji.Name, request.Koji.Version, request.Koji.Release, irs, channel)
+	ir := request.ImageRequest
+
+	if *request.ImageRequest.ImageRef != "" {
+		id, err = h.server.enqueueBootcCompose(string(ir.ImageType), ir.Architecture, *ir.ImageRef, channel)
 		if err != nil {
 			return err
 		}
 	} else {
-		id, err = h.server.enqueueCompose(irs, channel)
+		irs, err := request.GetImageRequests(h.server.distros, h.server.repos)
 		if err != nil {
 			return err
+		}
+
+		if request.Koji != nil {
+			id, err = h.server.enqueueKojiCompose(uint64(request.Koji.TaskId), request.Koji.Server, request.Koji.Name, request.Koji.Version, request.Koji.Release, irs, channel)
+			if err != nil {
+				return err
+			}
+		} else {
+			id, err = h.server.enqueueCompose(irs, channel)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
@@ -186,6 +198,8 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 func imageTypeFromApiImageType(it ImageTypes, arch distro.Arch) string {
 	switch it {
 	case ImageTypesAws:
+		return "ami"
+	case ImageTypesAwsBootc:
 		return "ami"
 	case ImageTypesAwsRhui:
 		return "ec2"
@@ -206,6 +220,8 @@ func imageTypeFromApiImageType(it ImageTypes, arch distro.Arch) string {
 	case ImageTypesAzureSapRhui:
 		return "azure-sap-rhui"
 	case ImageTypesGuestImage:
+		return "qcow2"
+	case ImageTypesGuestImageBootc:
 		return "qcow2"
 	case ImageTypesVsphere:
 		return "vmdk"

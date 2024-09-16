@@ -58,10 +58,6 @@ func (lc *LUKSContainer) EntityName() string {
 	return "luks"
 }
 
-func (lc *LUKSContainer) IsContainer() bool {
-	return true
-}
-
 func (lc *LUKSContainer) GetItemCount() uint {
 	if lc.Payload == nil {
 		return 0

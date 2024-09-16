@@ -29,16 +29,17 @@ import (
 )
 
 const (
-	JobTypeOSBuild          string = "osbuild"
-	JobTypeKojiInit         string = "koji-init"
-	JobTypeKojiFinalize     string = "koji-finalize"
-	JobTypeDepsolve         string = "depsolve"
-	JobTypeManifestIDOnly   string = "manifest-id-only"
-	JobTypeContainerResolve string = "container-resolve"
-	JobTypeFileResolve      string = "file-resolve"
-	JobTypeOSTreeResolve    string = "ostree-resolve"
-	JobTypeAWSEC2Copy       string = "aws-ec2-copy"
-	JobTypeAWSEC2Share      string = "aws-ec2-share"
+	JobTypeOSBuild           string = "osbuild"
+	JobTypeKojiInit          string = "koji-init"
+	JobTypeKojiFinalize      string = "koji-finalize"
+	JobTypeDepsolve          string = "depsolve"
+	JobTypeManifestIDOnly    string = "manifest-id-only"
+	JobTypeContainerResolve  string = "container-resolve"
+	JobTypeFileResolve       string = "file-resolve"
+	JobTypeOSTreeResolve     string = "ostree-resolve"
+	JobTypeAWSEC2Copy        string = "aws-ec2-copy"
+	JobTypeAWSEC2Share       string = "aws-ec2-share"
+	JobTypeBootableContainer string = "bootable-container"
 )
 
 type Server struct {
@@ -220,6 +221,10 @@ func (s *Server) EnqueueAWSEC2ShareJob(job *AWSEC2ShareJob, parent uuid.UUID, ch
 	return s.enqueue(JobTypeAWSEC2Share, job, []uuid.UUID{parent}, channel)
 }
 
+func (s *Server) EnqueueBootcImageBuilderJob(job *BootcImageBuilderJob, channel string) (uuid.UUID, error) {
+	return s.enqueue(JobTypeBootableContainer, job, nil, channel)
+}
+
 func (s *Server) enqueue(jobType string, job interface{}, dependencies []uuid.UUID, channel string) (uuid.UUID, error) {
 	prometheus.EnqueueJobMetrics(strings.Split(jobType, ":")[0], channel)
 	return s.jobs.Enqueue(jobType, job, dependencies, channel)
@@ -297,6 +302,13 @@ func (s *Server) JobDependencyChainErrors(id uuid.UUID) (*clienterrors.Error, er
 			return nil, err
 		}
 		jobResult = &ostreeResolveJR.JobResult
+	case JobTypeBootableContainer:
+		var bootcJR BootcImageBuilderJobResult
+		jobInfo, err = s.BootcImageBuilderJobInfo(id, &bootcJR)
+		if err != nil {
+			return nil, err
+		}
+		jobResult = &bootcJR.JobResult
 
 	default:
 		return nil, fmt.Errorf("unexpected job type: %s", jobType)
@@ -489,6 +501,17 @@ func (s *Server) AWSEC2ShareJobInfo(id uuid.UUID, result *AWSEC2ShareJobResult) 
 	return jobInfo, nil
 }
 
+func (s *Server) BootcImageBuilderJobInfo(id uuid.UUID, result *BootcImageBuilderJobResult) (*JobInfo, error) {
+	jobInfo, err := s.jobInfo(id, result)
+	if err != nil {
+		return nil, err
+	}
+	if jobInfo.JobType != JobTypeBootableContainer {
+		return nil, fmt.Errorf("expected %q, found %q job instead", JobTypeBootableContainer, jobInfo.JobType)
+	}
+	return jobInfo, nil
+}
+
 func (s *Server) jobInfo(id uuid.UUID, result interface{}) (*JobInfo, error) {
 	jobType, channel, rawResult, queued, started, finished, canceled, deps, dependents, err := s.jobs.JobStatus(id)
 	if err != nil {
@@ -643,12 +666,16 @@ func (s *Server) requestJob(ctx context.Context, arch string, jobTypes []string,
 
 	var depIDs []uuid.UUID
 	if requestedJobId != uuid.Nil {
+
 		jobId = requestedJobId
+		logrus.Info("Dequeueing job by ID")
 		token, depIDs, jobType, args, err = s.jobs.DequeueByID(dequeueCtx, requestedJobId, workerID)
 	} else {
+		logrus.Info("Dequeueing job")
 		jobId, token, depIDs, jobType, args, err = s.jobs.Dequeue(dequeueCtx, workerID, jts, channels)
 	}
 	if err != nil {
+		logrus.Errorf("dequeuing job failed: %v", err)
 		if err != jobqueue.ErrDequeueTimeout && err != jobqueue.ErrNotPending {
 			logrus.Errorf("dequeuing job failed: %v", err)
 		}
@@ -656,6 +683,12 @@ func (s *Server) requestJob(ctx context.Context, arch string, jobTypes []string,
 	}
 
 	jobInfo, err := s.jobInfo(jobId, nil)
+	logrus.Infof("Dequeued job id %s", jobId)
+	logrus.Infof("Dequeued job type %s", jobInfo.JobType)
+	logrus.Infof("Dequeued job channel %s", jobInfo.Channel)
+	logrus.Infof("job info: %v", jobInfo)
+	logrus.Infof("job args: %v", args)
+
 	if err != nil {
 		logrus.Errorf("error retrieving job status: %v", err)
 	}
@@ -802,6 +835,13 @@ func (s *Server) RequeueOrFinishJob(token uuid.UUID, maxRetries uint64, result j
 			return err
 		}
 		jobResult = &ostreeResolveJR.JobResult
+	case JobTypeBootableContainer:
+		var bootcImageBuilderJR BootcImageBuilderJobResult
+		jobInfo, err = s.BootcImageBuilderJobInfo(jobId, &bootcImageBuilderJR)
+		if err != nil {
+			return err
+		}
+		jobResult = &bootcImageBuilderJR.JobResult
 
 	default:
 		return fmt.Errorf("unexpected job type: %s", jobType)

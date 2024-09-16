@@ -3,9 +3,11 @@ ENV GOBIN=/opt/app-root/src/go/bin
 # extra packages are needed
 # to compile osbuild
 RUN dnf install -y golang \
-  krb5-devel \
-  gpgme-devel \
-  libassuan-devel
+    krb5-devel \
+    gpgme-devel \
+    libassuan-devel \
+    podman \
+    runc \
 
 ARG USE_BTRFS=no
 RUN if [[ "$USE_BTRFS" == "yes" ]]; then dnf install -y btrfs-progs-devel device-mapper-devel; fi
@@ -19,20 +21,23 @@ RUN go env -w GOPROXY=$GOPROXY
 
 ARG GOMODARGS=""
 ARG GCFLAGS=""
-
 RUN go install $GOMODARGS $GCFLAGS ./cmd/osbuild-worker
 
 FROM osbuild_devel
 
-RUN dnf install -y delve
+RUN dnf install -y delve runc
 
-RUN mkdir -p "/usr/libexec/osbuild-composer"
-RUN mkdir -p "/etc/osbuild-composer/"
-RUN mkdir -p "/run/osbuild-composer/"
-RUN mkdir -p "/var/cache/osbuild-worker/"
-RUN mkdir -p "/var/lib/osbuild-composer/"
-RUN mkdir -p "/var/cache/osbuild-composer/output"
+RUN mkdir -p "/usr/libexec/osbuild-composer" \
+    && mkdir -p "/etc/osbuild-composer/" \
+    && mkdir -p "/run/osbuild-composer/" \
+    && mkdir -p "/var/cache/osbuild-worker/" \
+    && mkdir -p "/var/lib/osbuild-composer/" \
+    && mkdir -p "/var/cache/osbuild-composer/output"
+
 COPY --from=builder /opt/app-root/src/go/bin/osbuild-worker /usr/libexec/osbuild-composer/
 COPY distribution/osbuild-worker-entrypoint.sh /usr/libexec/osbuild-composer/
 
+# create the storage.conf for containers/image
+RUN mkdir -p /etc/containers \
+    && printf "[storage]\ndriver = \"vfs\"\nrunroot = \"/var/run/containers/storage\"\ngraphroot = \"/var/lib/containers/storage\"\n" > /etc/containers/storage.conf
 ENTRYPOINT ["/usr/libexec/osbuild-composer/osbuild-worker-entrypoint.sh"]

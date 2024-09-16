@@ -1,6 +1,10 @@
 package facts
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/google/uuid"
+)
 
 type APIType uint64
 
@@ -25,5 +29,7 @@ const (
 // The ImageOptions specify things to be stored into the Insights facts
 // storage. This mostly relates to how the build of the image was performed.
 type ImageOptions struct {
-	APIType APIType
+	APIType            APIType
+	OpenSCAPProfileID  string
+	CompliancePolicyID uuid.UUID
 }

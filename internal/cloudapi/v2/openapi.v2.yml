@@ -776,6 +776,9 @@ components:
         architecture:
           type: string
           example: 'x86_64'
+        image_ref:
+          type: string
+          example: 'quay.io/myaccount/osbuild:latest'  
         image_type:
           $ref: '#/components/schemas/ImageTypes'
         repositories:
@@ -813,6 +816,7 @@ components:
         - aws-ha-rhui
         - aws-rhui
         - aws-sap-rhui
+        - aws-bootc
         - azure
         - azure-eap7-rhui
         - azure-rhui
@@ -823,6 +827,7 @@ components:
         - gcp
         - gcp-rhui
         - guest-image
+        - guest-image-bootc
         - image-installer
         - iot-bootable-container
         - iot-commit

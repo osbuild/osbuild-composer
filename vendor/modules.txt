@@ -31,7 +31,7 @@ cloud.google.com/go/compute/internal
 # cloud.google.com/go/compute/metadata v0.5.0
 ## explicit; go 1.20
 cloud.google.com/go/compute/metadata
-# cloud.google.com/go/iam v1.1.12
+# cloud.google.com/go/iam v1.1.13
 ## explicit; go 1.20
 cloud.google.com/go/iam
 cloud.google.com/go/iam/apiv1/iampb
@@ -947,7 +947,7 @@ github.com/oracle/oci-go-sdk/v54/identity
 github.com/oracle/oci-go-sdk/v54/objectstorage
 github.com/oracle/oci-go-sdk/v54/objectstorage/transfer
 github.com/oracle/oci-go-sdk/v54/workrequests
-# github.com/osbuild/images v0.80.0
+# github.com/osbuild/images v0.80.0 => ../images
 ## explicit; go 1.21.0
 github.com/osbuild/images/internal/common
 github.com/osbuild/images/internal/environment
@@ -992,10 +992,10 @@ github.com/osbuild/images/pkg/rhsm
 github.com/osbuild/images/pkg/rhsm/facts
 github.com/osbuild/images/pkg/rpmmd
 github.com/osbuild/images/pkg/runner
-# github.com/osbuild/osbuild-composer/pkg/splunk_logger v0.0.0-20240814102216-0239db53236d
+# github.com/osbuild/osbuild-composer/pkg/splunk_logger v0.0.0-20240814102216-0239db53236d => ./pkg/splunk_logger
 ## explicit; go 1.21
 github.com/osbuild/osbuild-composer/pkg/splunk_logger
-# github.com/osbuild/pulp-client v0.1.0
+# github.com/osbuild/pulp-client v0.1.0 => ../pulp-client
 ## explicit; go 1.19
 github.com/osbuild/pulp-client/pulpclient
 # github.com/ostreedev/ostree-go v0.0.0-20210805093236-719684c64e4f
@@ -1334,7 +1334,7 @@ golang.org/x/tools/internal/gocommand
 golang.org/x/tools/internal/gopathwalk
 golang.org/x/tools/internal/imports
 golang.org/x/tools/internal/stdlib
-# google.golang.org/api v0.194.0
+# google.golang.org/api v0.195.0
 ## explicit; go 1.21
 google.golang.org/api/googleapi
 google.golang.org/api/googleapi/transport
@@ -1352,7 +1352,7 @@ google.golang.org/api/transport
 google.golang.org/api/transport/grpc
 google.golang.org/api/transport/http
 google.golang.org/api/transport/http/internal/propagation
-# google.golang.org/genproto v0.0.0-20240814211410-ddb44dafa142
+# google.golang.org/genproto v0.0.0-20240823204242-4ba0660f739c
 ## explicit; go 1.21
 google.golang.org/genproto/googleapis/cloud/extendedops
 google.golang.org/genproto/googleapis/type/date
@@ -1361,7 +1361,7 @@ google.golang.org/genproto/googleapis/type/expr
 ## explicit; go 1.21
 google.golang.org/genproto/googleapis/api
 google.golang.org/genproto/googleapis/api/annotations
-# google.golang.org/genproto/googleapis/rpc v0.0.0-20240814211410-ddb44dafa142
+# google.golang.org/genproto/googleapis/rpc v0.0.0-20240823204242-4ba0660f739c
 ## explicit; go 1.21
 google.golang.org/genproto/googleapis/rpc/code
 google.golang.org/genproto/googleapis/rpc/errdetails
@@ -1483,3 +1483,6 @@ gopkg.in/yaml.v2
 # gopkg.in/yaml.v3 v3.0.1
 ## explicit
 gopkg.in/yaml.v3
+# github.com/osbuild/images => ../images
+# github.com/osbuild/pulp-client => ../pulp-client
+# github.com/osbuild/osbuild-composer/pkg/splunk_logger => ./pkg/splunk_logger
