@@ -1,3 +1,15 @@
+# v1.177.3 (2024-09-10)
+
+* No change notes available for this release.
+
+# v1.177.2 (2024-09-04)
+
+* No change notes available for this release.
+
+# v1.177.1 (2024-09-03)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
 # v1.177.0 (2024-08-28)
 
 * **Feature**: Amazon VPC IP Address Manager (IPAM) now allows customers to provision IPv4 CIDR blocks and allocate Elastic IP Addresses directly from IPAM pools with public IPv4 space
