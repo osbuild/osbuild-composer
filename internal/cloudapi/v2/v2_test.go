@@ -15,6 +15,7 @@ import (
 
 	"github.com/osbuild/images/pkg/distro/test_distro"
 	"github.com/osbuild/images/pkg/distrofactory"
+	"github.com/osbuild/images/pkg/dnfjson"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/ostree/mock_ostree_repo"
 	"github.com/osbuild/images/pkg/reporegistry"
@@ -81,11 +82,14 @@ func newV2Server(t *testing.T, dir string, depsolveChannels []string, enableJWT 
 	require.Nil(t, err)
 	require.NotNil(t, repos)
 
+	solver := dnfjson.NewBaseSolver("") // test solver doesn't need a cache dir
+	require.NotNil(t, solver)
+
 	config := v2.ServerConfig{
 		JWTEnabled:           enableJWT,
 		TenantProviderFields: []string{"rh-org-id", "account_id"},
 	}
-	v2Server := v2.NewServer(workerServer, distros, repos, config)
+	v2Server := v2.NewServer(workerServer, distros, repos, solver, config)
 	require.NotNil(t, v2Server)
 	t.Cleanup(v2Server.Shutdown)
 

@@ -173,7 +173,7 @@ func (c *Composer) InitAPI(cert, key string, enableTLS bool, enableMTLS bool, en
 		TenantProviderFields: c.config.Koji.JWTTenantProviderFields,
 	}
 
-	c.api = cloudapi.NewServer(c.workers, c.distros, c.repos, config)
+	c.api = cloudapi.NewServer(c.workers, c.distros, c.repos, c.solver, config)
 
 	if !enableTLS {
 		c.apiListener = l
