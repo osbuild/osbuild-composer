@@ -23,6 +23,7 @@ import (
 
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/distrofactory"
+	"github.com/osbuild/images/pkg/dnfjson"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/ostree"
 	"github.com/osbuild/images/pkg/reporegistry"
@@ -43,6 +44,7 @@ type Server struct {
 	repos   *reporegistry.RepoRegistry
 	config  ServerConfig
 	router  routers.Router
+	solver  *dnfjson.BaseSolver
 
 	goroutinesCtx       context.Context
 	goroutinesCtxCancel context.CancelFunc
@@ -54,7 +56,7 @@ type ServerConfig struct {
 	JWTEnabled           bool
 }
 
-func NewServer(workers *worker.Server, distros *distrofactory.Factory, repos *reporegistry.RepoRegistry, config ServerConfig) *Server {
+func NewServer(workers *worker.Server, distros *distrofactory.Factory, repos *reporegistry.RepoRegistry, solver *dnfjson.BaseSolver, config ServerConfig) *Server {
 	ctx, cancel := context.WithCancel(context.Background())
 	spec, err := GetSwagger()
 	if err != nil {
@@ -77,6 +79,7 @@ func NewServer(workers *worker.Server, distros *distrofactory.Factory, repos *re
 		repos:   repos,
 		config:  config,
 		router:  router,
+		solver:  solver,
 
 		goroutinesCtx:       ctx,
 		goroutinesCtxCancel: cancel,

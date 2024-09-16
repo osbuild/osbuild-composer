@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/osbuild/images/pkg/distrofactory"
+	"github.com/osbuild/images/pkg/dnfjson"
 	"github.com/osbuild/images/pkg/reporegistry"
 
 	v2 "github.com/osbuild/osbuild-composer/internal/cloudapi/v2"
@@ -14,9 +15,9 @@ type Server struct {
 	v2 *v2.Server
 }
 
-func NewServer(workers *worker.Server, distros *distrofactory.Factory, repos *reporegistry.RepoRegistry, config v2.ServerConfig) *Server {
+func NewServer(workers *worker.Server, distros *distrofactory.Factory, repos *reporegistry.RepoRegistry, solver *dnfjson.BaseSolver, config v2.ServerConfig) *Server {
 	server := &Server{
-		v2: v2.NewServer(workers, distros, repos, config),
+		v2: v2.NewServer(workers, distros, repos, solver, config),
 	}
 	return server
 }
