@@ -1400,6 +1400,12 @@ components:
           description: |
             The distribution to use for the compose. If left empty the host
             distro will be used.
+        architecture:
+          type: string
+          example: 'x86_64'
+          description: |
+            Architecture to use for the compose. If left empty the host arch
+            will be used.
         packages:
           type: array
           description: Packages to be installed

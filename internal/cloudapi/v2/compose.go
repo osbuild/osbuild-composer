@@ -514,6 +514,9 @@ func (request *ComposeRequest) GetBlueprintFromCompose() (blueprint.Blueprint, e
 	if rbp.Distro != nil {
 		bp.Distro = *rbp.Distro
 	}
+	if rbp.Architecture != nil {
+		bp.Arch = *rbp.Architecture
+	}
 
 	if rbp.Packages != nil {
 		for _, pkg := range *rbp.Packages {
@@ -1144,7 +1147,12 @@ func (request *ComposeRequest) GetImageRequests(distroFactory *distrofactory.Fac
 	}
 	var irs []imageRequest
 	for _, ir := range *request.ImageRequests {
-		arch, err := distribution.GetArch(ir.Architecture)
+		reqArch := ir.Architecture
+		// If there is an architecture in the blueprint it overrides the request's arch
+		if len(bp.Arch) > 0 {
+			reqArch = bp.Arch
+		}
+		arch, err := distribution.GetArch(reqArch)
 		if err != nil {
 			return nil, HTTPError(ErrorUnsupportedArchitecture)
 		}
