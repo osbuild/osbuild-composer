@@ -518,6 +518,9 @@ func ConvertRequestBP(rbp Blueprint) (blueprint.Blueprint, error) {
 	if rbp.Distro != nil {
 		bp.Distro = *rbp.Distro
 	}
+	if rbp.Architecture != nil {
+		bp.Arch = *rbp.Architecture
+	}
 
 	if rbp.Packages != nil {
 		for _, pkg := range *rbp.Packages {
@@ -1154,6 +1157,10 @@ func (request *ComposeRequest) GetImageRequests(distroFactory *distrofactory.Fac
 	}
 	var irs []imageRequest
 	for _, ir := range *request.ImageRequests {
+		// If there is an architecture in the blueprint it must match the request's arch
+		if len(bp.Arch) > 0 && ir.Architecture != bp.Arch {
+			return nil, HTTPError(ErrorMismatchedArchitecture)
+		}
 		arch, err := distribution.GetArch(ir.Architecture)
 		if err != nil {
 			return nil, HTTPError(ErrorUnsupportedArchitecture)
