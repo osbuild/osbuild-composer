@@ -848,6 +848,81 @@ func TestGetImageRequests_BlueprintDistro(t *testing.T) {
 	assert.Equal(t, got[0].blueprint.Distro, "fedora-39")
 }
 
+// TestGetImageRequests_BlueprintArchEmpty test blueprint with no arch
+func TestGetImageRequests_BlueprintArchEmpty(t *testing.T) {
+	uo := UploadOptions(struct{}{})
+	request := &ComposeRequest{
+		Distribution: "fedora-40",
+		ImageRequest: &ImageRequest{
+			Architecture:  "x86_64",
+			ImageType:     ImageTypesAws,
+			UploadOptions: &uo,
+			Repositories:  []Repository{},
+		},
+		Blueprint: &Blueprint{
+			Name: "arch-test",
+		},
+	}
+	// NOTE: current directory is the location of this file, back up so it can use ./repositories/
+	rr, err := reporegistry.New([]string{"../../../"})
+	require.NoError(t, err)
+	got, err := request.GetImageRequests(distrofactory.NewDefault(), rr)
+	assert.NoError(t, err)
+	require.Len(t, got, 1)
+	require.Greater(t, len(got[0].repositories), 0)
+	assert.Equal(t, got[0].imageType.Arch().Name(), "x86_64")
+}
+
+// TestGetImageRequests_BlueprintArch test to make sure matching arch works
+func TestGetImageRequests_BlueprintArch(t *testing.T) {
+	uo := UploadOptions(struct{}{})
+	request := &ComposeRequest{
+		Distribution: "fedora-40",
+		ImageRequest: &ImageRequest{
+			Architecture:  "x86_64",
+			ImageType:     ImageTypesAws,
+			UploadOptions: &uo,
+			Repositories:  []Repository{},
+		},
+		Blueprint: &Blueprint{
+			Name:         "arch-test",
+			Architecture: common.ToPtr("x86_64"),
+		},
+	}
+	// NOTE: current directory is the location of this file, back up so it can use ./repositories/
+	rr, err := reporegistry.New([]string{"../../../"})
+	require.NoError(t, err)
+	got, err := request.GetImageRequests(distrofactory.NewDefault(), rr)
+	assert.NoError(t, err)
+	require.Len(t, got, 1)
+	require.Greater(t, len(got[0].repositories), 0)
+	assert.Equal(t, got[0].imageType.Arch().Name(), "x86_64")
+}
+
+// TestGetImageRequests_BlueprintArchError test to make sure mismatched arch returns error
+func TestGetImageRequests_BlueprintArchError(t *testing.T) {
+	uo := UploadOptions(struct{}{})
+	request := &ComposeRequest{
+		Distribution: "fedora-40",
+		ImageRequest: &ImageRequest{
+			Architecture:  "x86_64",
+			ImageType:     ImageTypesAws,
+			UploadOptions: &uo,
+			Repositories:  []Repository{},
+		},
+		Blueprint: &Blueprint{
+			Name:         "arch-test",
+			Architecture: common.ToPtr("aarch64"),
+		},
+	}
+	// NOTE: current directory is the location of this file, back up so it can use ./repositories/
+	rr, err := reporegistry.New([]string{"../../../"})
+	require.NoError(t, err)
+	_, err = request.GetImageRequests(distrofactory.NewDefault(), rr)
+	require.Error(t, err)
+	assert.Equal(t, HTTPError(ErrorMismatchedArchitecture), err)
+}
+
 func TestOpenSCAPTailoringOptions(t *testing.T) {
 	cr := ComposeRequest{
 		Customizations: &Customizations{
