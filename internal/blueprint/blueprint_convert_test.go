@@ -110,6 +110,72 @@ func TestConvert(t *testing.T) {
 						{
 							Mountpoint: "/usr",
 							MinSize:    1024,
+							Label:      "usr",
+							Type:       "ext4",
+						},
+					},
+					Partitioning: &PartitioningCustomization{
+						MinSize: 1999,
+						Plain: &PlainFilesystemCustomization{
+							Filesystems: []FilesystemCustomization{
+								{
+									Mountpoint: "/data",
+									MinSize:    100,
+									Label:      "data",
+									Type:       "xfs",
+								},
+								{
+									Mountpoint: "/backup",
+									MinSize:    1400,
+									Label:      "backup",
+									Type:       "xfs",
+								},
+							},
+						},
+						LVM: &LVMCustomization{
+							VolumeGroups: []VGCustomization{
+								{
+									Name:    "root-volume-group",
+									MinSize: 444,
+									LogicalVolumes: []LVCustomization{
+										{
+											Name: "root-logical-volume",
+											FilesystemCustomization: FilesystemCustomization{
+												Mountpoint: "/",
+												MinSize:    42,
+												Label:      "rewt",
+												Type:       "ext4",
+											},
+										},
+										{
+											Name: "home-logical-volume",
+											FilesystemCustomization: FilesystemCustomization{
+												Mountpoint: "/home",
+												MinSize:    43,
+												Label:      "home-sweet-home",
+												Type:       "ext4",
+											},
+										},
+									},
+								},
+							},
+						},
+						Btrfs: &BtrfsCustomization{
+							Volumes: []BtrfsVolumeCustomization{
+								{
+									MinSize: 9900,
+									Subvolumes: []BtrfsSubvolumeCustomization{
+										{
+											Name:       "subvol/games",
+											Mountpoint: "/games",
+										},
+										{
+											Name:       "subvol/ai-training-data",
+											Mountpoint: "/data/training",
+										},
+									},
+								},
+							},
 						},
 					},
 					InstallationDevice: "/dev/sda",
@@ -290,6 +356,72 @@ func TestConvert(t *testing.T) {
 						{
 							Mountpoint: "/usr",
 							MinSize:    1024,
+							Label:      "usr",
+							Type:       "ext4",
+						},
+					},
+					Partitioning: &iblueprint.PartitioningCustomization{
+						MinSize: 1999,
+						Plain: &iblueprint.PlainFilesystemCustomization{
+							Filesystems: []iblueprint.FilesystemCustomization{
+								{
+									Mountpoint: "/data",
+									MinSize:    100,
+									Label:      "data",
+									Type:       "xfs",
+								},
+								{
+									Mountpoint: "/backup",
+									MinSize:    1400,
+									Label:      "backup",
+									Type:       "xfs",
+								},
+							},
+						},
+						LVM: &iblueprint.LVMCustomization{
+							VolumeGroups: []iblueprint.VGCustomization{
+								{
+									Name:    "root-volume-group",
+									MinSize: 444,
+									LogicalVolumes: []iblueprint.LVCustomization{
+										{
+											Name: "root-logical-volume",
+											FilesystemCustomization: iblueprint.FilesystemCustomization{
+												Mountpoint: "/",
+												MinSize:    42,
+												Label:      "rewt",
+												Type:       "ext4",
+											},
+										},
+										{
+											Name: "home-logical-volume",
+											FilesystemCustomization: iblueprint.FilesystemCustomization{
+												Mountpoint: "/home",
+												MinSize:    43,
+												Label:      "home-sweet-home",
+												Type:       "ext4",
+											},
+										},
+									},
+								},
+							},
+						},
+						Btrfs: &iblueprint.BtrfsCustomization{
+							Volumes: []iblueprint.BtrfsVolumeCustomization{
+								{
+									MinSize: 9900,
+									Subvolumes: []iblueprint.BtrfsSubvolumeCustomization{
+										{
+											Name:       "subvol/games",
+											Mountpoint: "/games",
+										},
+										{
+											Name:       "subvol/ai-training-data",
+											Mountpoint: "/data/training",
+										},
+									},
+								},
+							},
 						},
 					},
 					InstallationDevice: "/dev/sda",

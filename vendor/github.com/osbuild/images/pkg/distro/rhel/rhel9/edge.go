@@ -670,7 +670,6 @@ func edgeCommitPackageSet(t *rhel.ImageType) rpmmd.PackageSet {
 			"NetworkManager-wifi",
 			"NetworkManager-wwan",
 			"wpa_supplicant",
-			"dnsmasq",
 			"traceroute",
 			"hostname",
 			"iproute",
@@ -723,6 +722,11 @@ func edgeCommitPackageSet(t *rhel.ImageType) rpmmd.PackageSet {
 
 	if common.VersionGreaterThanOrEqual(t.Arch().Distro().OsVersion(), "9.2") || !t.IsRHEL() {
 		ps.Include = append(ps.Include, "ignition", "ignition-edge", "ssh-key-dir")
+	}
+
+	if common.VersionLessThan(t.Arch().Distro().OsVersion(), "9.6") {
+		// dnsmasq removed in 9.6+ but kept in older versions
+		ps.Include = append(ps.Include, "dnsmasq")
 	}
 
 	return ps

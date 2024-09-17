@@ -75,6 +75,9 @@ func (img *BootcDiskImage) InstantiateManifestFromContainers(m *manifest.Manifes
 	vmdkPipeline := manifest.NewVMDK(hostPipeline, rawImage)
 	vmdkPipeline.SetFilename(fmt.Sprintf("%s.vmdk", fileBasename))
 
+	vhdPipeline := manifest.NewVPC(hostPipeline, rawImage)
+	vhdPipeline.SetFilename(fmt.Sprintf("%s.vhd", fileBasename))
+
 	ovfPipeline := manifest.NewOVF(hostPipeline, vmdkPipeline)
 	tarPipeline := manifest.NewTar(hostPipeline, ovfPipeline, "archive")
 	tarPipeline.Format = osbuild.TarArchiveFormatUstar
@@ -84,6 +87,7 @@ func (img *BootcDiskImage) InstantiateManifestFromContainers(m *manifest.Manifes
 		fmt.Sprintf("%s.ovf", fileBasename),
 		fmt.Sprintf("%s.mf", fileBasename),
 		fmt.Sprintf("%s.vmdk", fileBasename),
+		fmt.Sprintf("%s.vhd", fileBasename),
 	}
 	return nil
 }

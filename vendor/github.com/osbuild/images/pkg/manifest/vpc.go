@@ -5,14 +5,14 @@ import (
 	"github.com/osbuild/images/pkg/osbuild"
 )
 
-// A VPC turns a raw image file into qemu-based image format, such as qcow2.
+// A VPC turns a raw image file into qemu-based image format, such as vhd.
 type VPC struct {
 	Base
 	filename string
 
 	ForceSize *bool
 
-	imgPipeline *RawImage
+	imgPipeline FilePipeline
 }
 
 func (p VPC) Filename() string {
@@ -26,13 +26,18 @@ func (p *VPC) SetFilename(filename string) {
 // NewVPC createsa new Qemu pipeline. imgPipeline is the pipeline producing the
 // raw image. The pipeline name is the name of the new pipeline. Filename is the name
 // of the produced image.
-func NewVPC(buildPipeline Build, imgPipeline *RawImage) *VPC {
+func NewVPC(buildPipeline Build, imgPipeline FilePipeline) *VPC {
 	p := &VPC{
 		Base:        NewBase("vpc", buildPipeline),
 		imgPipeline: imgPipeline,
 		filename:    "image.vhd",
 	}
-	buildPipeline.addDependent(p)
+	// vpc can run outside the build pipeline for e.g. "bib"
+	if buildPipeline != nil {
+		buildPipeline.addDependent(p)
+	} else {
+		imgPipeline.Manifest().addPipeline(p)
+	}
 	return p
 }
 

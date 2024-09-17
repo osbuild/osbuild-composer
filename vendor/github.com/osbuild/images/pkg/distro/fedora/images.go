@@ -329,7 +329,7 @@ func diskImage(workload workload.Workload,
 		img.InstallWeakDeps = common.ToPtr(false)
 	}
 	// TODO: move generation into LiveImage
-	pt, err := t.getPartitionTable(bp.Customizations.GetFilesystems(), options, rng)
+	pt, err := t.getPartitionTable(bp.Customizations, options, rng)
 	if err != nil {
 		return nil, err
 	}
@@ -700,7 +700,7 @@ func iotImage(workload workload.Workload,
 	img.OSName = "fedora-iot"
 
 	// TODO: move generation into LiveImage
-	pt, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
+	pt, err := t.getPartitionTable(customizations, options, rng)
 	if err != nil {
 		return nil, err
 	}
@@ -741,7 +741,7 @@ func iotSimplifiedInstallerImage(workload workload.Workload,
 	rawImg.OSName = "fedora"
 
 	// TODO: move generation into LiveImage
-	pt, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
+	pt, err := t.getPartitionTable(customizations, options, rng)
 	if err != nil {
 		return nil, err
 	}

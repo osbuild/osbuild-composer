@@ -20,6 +20,7 @@ type Customizations struct {
 	Firewall           *FirewallCustomization         `json:"firewall,omitempty" toml:"firewall,omitempty"`
 	Services           *ServicesCustomization         `json:"services,omitempty" toml:"services,omitempty"`
 	Filesystem         []FilesystemCustomization      `json:"filesystem,omitempty" toml:"filesystem,omitempty"`
+	Partitioning       *PartitioningCustomization     `json:"partitioning,omitempty" toml:"partitioning,omitempty"`
 	InstallationDevice string                         `json:"installation_device,omitempty" toml:"installation_device,omitempty"`
 	FDO                *FDOCustomization              `json:"fdo,omitempty" toml:"fdo,omitempty"`
 	OpenSCAP           *OpenSCAPCustomization         `json:"openscap,omitempty" toml:"openscap,omitempty"`
@@ -309,20 +310,11 @@ func (c *Customizations) GetFilesystems() []FilesystemCustomization {
 	return c.Filesystem
 }
 
-func (c *Customizations) GetFilesystemsMinSize() uint64 {
+func (c *Customizations) GetPartitioning() *PartitioningCustomization {
 	if c == nil {
-		return 0
+		return nil
 	}
-	var agg uint64
-	for _, m := range c.Filesystem {
-		agg += m.MinSize
-	}
-	// This ensures that file system customization `size` is a multiple of
-	// sector size (512)
-	if agg%512 != 0 {
-		agg = (agg/512 + 1) * 512
-	}
-	return agg
+	return c.Partitioning
 }
 
 func (c *Customizations) GetInstallationDevice() string {
