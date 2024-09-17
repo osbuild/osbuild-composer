@@ -133,6 +133,7 @@ jobs:
         uses: golangci/golangci-lint-action@v6
         with:
           version: ${{ steps.golangci_lint_version.outputs.GOLANGCI_LINT_VERSION }}
+          skip-cache: true
           args: --verbose --timeout 5m0s
 
   packit-config-lint:
