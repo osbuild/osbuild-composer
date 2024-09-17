@@ -60,7 +60,7 @@ function _instanceCheck() {
     fi
 
     if [ -n "$OPENSCAP_CUSTOMIZATION_BLOCK" ]; then
-        if ! grep -q "image-builder.insights.openscap-profile-id: pci-dss" <<< "$FACTS"; then
+        if ! grep -q "image-builder.insights.compliance-profile-id: pci-dss" <<< "$FACTS"; then
             echo "System doesn't contain the expected image-builder.insights facts (profile-id)"
             echo "$FACTS"| grep image-builder
             exit 1
