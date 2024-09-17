@@ -85,6 +85,32 @@
       }
     ]
   },
+  "fedora-41": {
+    "dependencies": {
+      "osbuild": {
+        "commit": "69625505cfdb569d46adf912128d22485ce3595b"
+      }
+    },
+    "repos": [
+      {
+        "file": "/etc/yum.repos.d/fedora.repo",
+        "x86_64": [
+          {
+            "title": "fedora",
+            "name": "fedora",
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f41/f41-x86_64-branched-20240918"
+          }
+        ],
+        "aarch64": [
+          {
+            "title": "fedora",
+            "name": "fedora",
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f41/f41-aarch64-branched-20240918"
+          }
+        ]
+      }
+    ]
+  },
   "rhel-8.4": {
     "dependencies": {
       "osbuild": {
