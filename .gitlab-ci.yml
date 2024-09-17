@@ -113,6 +113,8 @@ RPM:
           - aws/fedora-39-aarch64
           - aws/fedora-40-x86_64
           - aws/fedora-40-aarch64
+          - aws/fedora-41-x86_64
+          - aws/fedora-41-aarch64
           - aws/rhel-8.10-ga-x86_64
           - aws/rhel-8.10-ga-aarch64
           - aws/rhel-9.4-ga-x86_64
@@ -198,6 +200,8 @@ Base:
       - RUNNER:
           - aws/fedora-39-x86_64
           - aws/fedora-39-aarch64
+          - aws/fedora-41-x86_64
+          - aws/fedora-41-aarch64
           - aws/rhel-8.10-ga-x86_64
           - aws/rhel-8.10-ga-aarch64
           - aws/rhel-9.4-ga-x86_64
