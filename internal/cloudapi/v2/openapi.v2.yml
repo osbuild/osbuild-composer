@@ -812,7 +812,6 @@ components:
         - version
         - release
         - arch
-        - sigmd5
       properties:
         type:
           type: string
