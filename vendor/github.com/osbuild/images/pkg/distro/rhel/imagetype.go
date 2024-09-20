@@ -161,10 +161,6 @@ func (t *ImageType) PayloadPackageSets() []string {
 	return []string{BlueprintPkgsKey}
 }
 
-func (t *ImageType) PackageSetsChains() map[string][]string {
-	return nil
-}
-
 func (t *ImageType) Exports() []string {
 	if len(t.exports) > 0 {
 		return t.exports

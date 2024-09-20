@@ -152,7 +152,10 @@ func ResolveRef(location, ref string, consumerCerts bool, subs *rhsm.Subscriptio
 	if consumerCerts {
 		if subs == nil {
 			subs, err = rhsm.LoadSystemSubscriptions()
-			if subs.Consumer == nil || err != nil {
+			if err != nil {
+				return "", NewResolveRefError("error adding rhsm certificates when resolving ref: %s", err)
+			}
+			if subs.Consumer == nil {
 				return "", NewResolveRefError("error adding rhsm certificates when resolving ref")
 			}
 		}
