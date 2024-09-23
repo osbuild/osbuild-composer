@@ -57,7 +57,14 @@ sudo mkdir -p /etc/osbuild-worker
 # interacting with cloud providers are configured directly in the worker. In addition,
 # no certificates need to be generated, because they are not used anywhere in this
 # scenario.
+#
+# Moreover, there should be no repositories configured in the Service scenario, because
+# these are expected to be provided with the compose request.
 if [[ "$AUTH_METHOD" != "$AUTH_METHOD_NONE" ]]; then
+    # Remove the repositories, because it is not used in the Service scenario
+    sudo rm -rf /etc/osbuild-composer/repositories
+    sudo rm -f /usr/share/osbuild-composer/repositories/*
+
     # Generate all X.509 certificates for the tests
     # The whole generation is done in a $CADIR to better represent how osbuild-ca
     # it.
