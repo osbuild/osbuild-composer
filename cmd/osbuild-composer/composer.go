@@ -77,10 +77,11 @@ func NewComposer(config *ComposerConfigFile, stateDir, cacheDir string) (*Compos
 		return nil, fmt.Errorf("failed to configure distro aliases: %v", err)
 	}
 
-	c.repos, err = reporegistry.New(repositoryConfigs)
+	repoConfigs, err := reporegistry.LoadAllRepositories(repositoryConfigs)
 	if err != nil {
 		return nil, fmt.Errorf("error loading repository definitions: %v", err)
 	}
+	c.repos = reporegistry.NewFromDistrosRepoConfigs(repoConfigs)
 
 	c.solver = dnfjson.NewBaseSolver(path.Join(c.cacheDir, "rpmmd"))
 	c.solver.SetDNFJSONPath(c.config.DNFJson)
