@@ -569,6 +569,7 @@ API:
           - aws
           - azure
           - gcp
+          - oci
         RUNNER:
           - aws/rhel-10.0-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
