@@ -432,8 +432,9 @@ koji.sh (cloudapi):
 aws.sh:
   extends: .integration
   rules:
-    - if: '$CI_PIPELINE_SOURCE != "schedule" && $RUNNER !~ /[\S]+rhel-[\S]+-(?:(?:ga)|(?:eus))[\S]+/'
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9.5-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
+    - !reference [.upstream_rules_all, rules]
+    - !reference [.nightly_rules_all, rules]
+    - !reference [.ga_rules_all, rules]
   variables:
     SCRIPT: aws.sh
 
@@ -483,11 +484,8 @@ azure.sh_hyperv_gen2:
 gcp.sh:
   extends: .integration_rhel
   rules:
-    # Temporarily disabled for RHEL-10 and Centos-10
-    - if: '$CI_PIPELINE_SOURCE != "schedule" && $RUNNER =~ "/^.*(x86_64).*$/" && $RUNNER !~ /[\S]+rhel-[\S]+-(?:(?:ga)|(?:eus))[\S]+/'
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9.5-[^ga][\S]+/ && $RUNNER =~ "/^.*(x86_64).*$/" && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
-    # - !reference [.upstream_rules_x86_64, rules]
-    # - !reference [.nightly_rules_x86_64, rules]
+    - !reference [.upstream_rules_x86_64, rules]
+    - !reference [.nightly_rules_x86_64, rules]
     - !reference [.ga_rules_x86_64, rules]
   variables:
     SCRIPT: gcp.sh
