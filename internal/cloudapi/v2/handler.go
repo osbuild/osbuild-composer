@@ -1354,3 +1354,38 @@ func uploadStatusFromJobStatus(js *worker.JobStatus, je *clienterrors.Error) Upl
 	}
 	return UploadStatusValueSuccess
 }
+
+// GetDistributionList returns the list of all supported distribution repositories
+// It is arranged by distro name -> architecture -> image type
+func (h *apiHandlers) GetDistributionList(ctx echo.Context) error {
+	distros := make(map[string]map[string]map[string][]rpmmd.RepoConfig)
+	distroNames := h.server.repos.ListDistros()
+	sort.Strings(distroNames)
+	for _, distroName := range distroNames {
+		distro := h.server.distros.GetDistro(distroName)
+		if distro == nil {
+			continue
+		}
+
+		for _, archName := range distro.ListArches() {
+			arch, _ := distro.GetArch(archName)
+			for _, imageType := range arch.ListImageTypes() {
+				repos, err := h.server.repos.ReposByImageTypeName(distroName, archName, imageType)
+				if err != nil {
+					continue
+				}
+
+				if _, ok := distros[distroName]; !ok {
+					distros[distroName] = make(map[string]map[string][]rpmmd.RepoConfig)
+				}
+				if _, ok := distros[distroName][archName]; !ok {
+					distros[distroName][archName] = make(map[string][]rpmmd.RepoConfig)
+				}
+
+				distros[distroName][archName][imageType] = repos
+			}
+		}
+	}
+
+	return ctx.JSON(http.StatusOK, distros)
+}
