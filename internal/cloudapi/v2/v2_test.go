@@ -1623,6 +1623,73 @@ func TestDepsolveBlueprint(t *testing.T) {
 		}`)
 }
 
+func TestPackagesSearch(t *testing.T) {
+	srv, _, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false, false)
+	defer cancel()
+
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST",
+		"/api/image-builder-composer/v2/packages/search", fmt.Sprintf(`
+		{"blueprint": {
+			"name": "searchtest1",
+			"version": "0.0.1",
+			"distro": "%s",
+			"architecture": "%s",
+			"packages": [
+				{ "name": "package1" }
+			]}
+		}`, test_distro.TestDistro1Name, test_distro.TestArchName),
+		http.StatusOK,
+		`{
+			"packages": [
+				{
+					"description": "pkg1 desc",
+					"homepage": "https://pkg1.example.com",
+					"name": "package1",
+					"summary": "pkg1 sum",
+					"builds": [
+					{
+						"arch": "x86_64",
+						"build_time": "2006-02-02T15:04:05",
+						"release": "1.fc30",
+						"source": {
+							"license": "MIT",
+							"version":  "1.0"
+						}
+					},
+					{
+						"arch": "x86_64",
+						"build_time": "2006-02-03T15:04:05",
+						"release": "1.fc30",
+						"source": {
+							"license": "MIT",
+							"version":  "1.1"
+						}
+					}]
+				}]
+		}`)
+}
+
+func TestPackagesSearchError(t *testing.T) {
+	srv, _, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false, false)
+	defer cancel()
+
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST",
+		"/api/image-builder-composer/v2/packages/search", fmt.Sprintf(`
+		{"blueprint": {
+			"name": "searchtest2",
+			"version": "0.0.1",
+			"distro": "%s",
+			"architecture": "%s",
+			"packages": [
+				{ "name": "nonexistingpkg" }
+			]}
+		}`, test_distro.TestDistro1Name, test_distro.TestArchName),
+		http.StatusOK,
+		`{
+			"packages": []
+		}`)
+}
+
 // TestMain builds the mock dnf json binary and cleans it up on exit
 func TestMain(m *testing.M) {
 	setupDNFJSON()

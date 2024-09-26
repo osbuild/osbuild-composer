@@ -405,3 +405,59 @@ func TestPackageSpecToPackageMetadata(t *testing.T) {
 		assert.Equal(tc.pkgs, packageSpecToPackageMetadata(tc.specs), "mismatch in test case %d", idx)
 	}
 }
+
+func TestPackageInfoToPackageInfo(t *testing.T) {
+	assert := assert.New(t)
+	type testCase struct {
+		pkgs []rpmmd.PackageInfo
+		info []PackageInfo
+	}
+	testCases := []testCase{
+		{
+			pkgs: []rpmmd.PackageInfo{
+				{
+					Name:        "vim-enhanced",
+					Summary:     "A version of the VIM editor which includes recent enhancements",
+					Description: "VIM (VIsual editor iMproved) is an updated and improved ...",
+					Homepage:    "http://www.vim.org/",
+					Builds: []rpmmd.PackageBuild{
+						{
+							Arch:      "x86_64",
+							BuildTime: "2024-09-06T16:14:20",
+							Epoch:     2,
+							Release:   "1.fc40",
+							Source: rpmmd.PackageSource{
+								Version: "9.1.719",
+								License: "Vim AND LGPL-2.1-or-later AND ...",
+							},
+						},
+					},
+				},
+			},
+			info: []PackageInfo{
+				{
+					Name:        "vim-enhanced",
+					Summary:     "A version of the VIM editor which includes recent enhancements",
+					Description: common.ToPtr("VIM (VIsual editor iMproved) is an updated and improved ..."),
+					Homepage:    common.ToPtr("http://www.vim.org/"),
+					Builds: &[]PackageBuild{
+						{
+							Arch:      "x86_64",
+							BuildTime: common.ToPtr("2024-09-06T16:14:20"),
+							Epoch:     common.ToPtr("2"),
+							Release:   "1.fc40",
+							Source: PackageSource{
+								Version: "9.1.719",
+								License: "Vim AND LGPL-2.1-or-later AND ...",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for idx, tc := range testCases {
+		assert.Equal(tc.info, packageInfoToPackageInfo(tc.pkgs), "mismatch in test case %d", idx)
+	}
+}

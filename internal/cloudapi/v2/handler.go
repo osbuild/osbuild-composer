@@ -1397,3 +1397,67 @@ func packageSpecToPackageMetadata(pkgspecs []rpmmd.PackageSpec) []PackageMetadat
 	}
 	return packages
 }
+
+// PostPackageSearch searches for one or more packages and returns their details
+// as a list of PackageDetails
+func (h *apiHandlers) PostPackageSearch(ctx echo.Context) error {
+	var request PackageSearchRequest
+	err := ctx.Bind(&request)
+	if err != nil {
+		return err
+	}
+
+	pkgs, err := request.PackageSearch(h.server.distros, h.server.repos, h.server.solver)
+	if err != nil {
+		return err
+	}
+
+	return ctx.JSON(http.StatusOK,
+		PackageSearchResponse{
+			Packages: packageInfoToPackageInfo(pkgs),
+		})
+}
+
+// packageInfoToPackageInfo converts []rpmmd.PackageInfo to []PackageInfo
+func packageInfoToPackageInfo(pkgs []rpmmd.PackageInfo) []PackageInfo {
+	info := []PackageInfo{}
+	for _, p := range pkgs {
+		i := PackageInfo{
+			Name:    p.Name,
+			Summary: p.Summary,
+		}
+		if len(p.Description) > 0 {
+			i.Description = common.ToPtr(p.Description)
+		}
+		if len(p.Homepage) > 0 {
+			i.Homepage = common.ToPtr(p.Homepage)
+		}
+		var builds []PackageBuild
+		if len(p.Builds) > 0 {
+			for _, b := range p.Builds {
+				build := PackageBuild{
+					Arch:    b.Arch,
+					Release: b.Release,
+					Source: PackageSource{
+						License: b.Source.License,
+						Version: b.Source.Version,
+					},
+				}
+				if b.Epoch > 0 {
+					build.Epoch = common.ToPtr(strconv.FormatUint(uint64(b.Epoch), 10))
+				}
+				if len(b.BuildTime) > 0 {
+					build.BuildTime = common.ToPtr(b.BuildTime)
+				}
+
+				builds = append(builds, build)
+			}
+
+			i.Builds = &builds
+		}
+
+		info = append(info, i)
+	}
+
+	return info
+}
