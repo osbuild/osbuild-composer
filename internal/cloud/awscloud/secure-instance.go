@@ -547,8 +547,8 @@ func (a *AWS) createFleet(input *ec2.CreateFleetInput) (*ec2.CreateFleetOutput, 
 		return nil, fmt.Errorf("Unable to create spot fleet: %w", err)
 	}
 
-	if len(createFleetOutput.Errors) > 0 && *createFleetOutput.Errors[0].ErrorCode == "UnfillableCapacity" {
-		logrus.Warn("Received UnfillableCapacity from CreateFleet, retrying CreateFleet with OnDemand instance")
+	if len(createFleetOutput.Errors) > 0 && *createFleetOutput.Errors[0].ErrorCode == "UnfulfillableCapacity" {
+		logrus.Warn("Received UnfulfillableCapacity from CreateFleet, retrying CreateFleet with OnDemand instance")
 		input.SpotOptions = nil
 		createFleetOutput, err = a.ec2.CreateFleet(context.Background(), input)
 	}

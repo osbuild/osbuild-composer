@@ -293,7 +293,7 @@ func (m *ec2mock) CreateFleet(ctx context.Context, input *ec2.CreateFleetInput, 
 		return &ec2.CreateFleetOutput{
 			Errors: []ec2types.CreateFleetError{
 				{
-					ErrorCode:    aws.String("UnfillableCapacity"),
+					ErrorCode:    aws.String("UnfulfillableCapacity"),
 					ErrorMessage: aws.String("Msg"),
 				},
 			},
