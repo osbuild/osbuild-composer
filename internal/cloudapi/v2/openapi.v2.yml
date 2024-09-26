@@ -441,6 +441,51 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
+  /packages/search:
+    post:
+      operationId: postPackageSearch
+      summary: |-
+        Return the package details for one or more packages
+      security:
+        - Bearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PackageSearchRequest'
+      responses:
+        '200':
+          description: Package details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PackageSearchResponse'
+        '400':
+          description: Invalid package search request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Auth token is invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Unauthorized to perform operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Unexpected error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
   /errors/{id}:
     get:
       operationId: getError
@@ -591,6 +636,73 @@ components:
             type: array
             items:
               $ref: '#/components/schemas/Error'
+
+    PackageSearchRequest:
+      additionalProperties: false
+      required:
+        - blueprint
+      properties:
+        repositories:
+          type: array
+          items:
+            $ref: '#/components/schemas/Repository'
+        blueprint:
+          $ref: '#/components/schemas/Blueprint'
+
+    PackageSearchResponse:
+      type: object
+      required:
+        - packages
+      properties:
+        packages:
+          type: array
+          items:
+            $ref: '#/components/schemas/PackageInfo'
+
+    PackageInfo:
+      required:
+        - name
+        - summary
+      properties:
+        name:
+          type: string
+        summary:
+          type: string
+        description:
+          type: string
+        homepage:
+          type: string
+        builds:
+          type: array
+          items:
+            $ref: '#/components/schemas/PackageBuild'
+
+    PackageBuild:
+      required:
+        - release
+        - arch
+        - source
+      properties:
+        source:
+          $ref: '#/components/schemas/PackageSource'
+        release:
+          type: string
+        arch:
+          type: string
+        epoch:
+          type: string
+        build_time:
+          type: string
+
+    PackageSource:
+      required:
+        - version
+        - license
+      properties:
+        version:
+          type: string
+        license:
+          type: string
 
     ComposeStatus:
       allOf:
