@@ -15,17 +15,21 @@ function generate_certificates {
     sudo openssl genrsa -out ca.key
     # Create and self-sign root certificate
     sudo openssl req -new -subj "/C=GB/CN=ca" -addext "subjectAltName = DNS:localhost" -key ca.key -out ca.csr
-    sudo openssl x509 -req -sha256 -days 365 -in ca.csr -signkey ca.key -out ca.crt
+    # Create config for v3 certs
+    sudo tee v3_ca.cnf > /dev/null << EOF
+basicConstraints = CA:TRUE
+EOF
+    sudo openssl x509 -req -sha256 -days 365 -in ca.csr -signkey ca.key -out ca.crt -extfile v3_ca.cnf
     # Key for the server
     sudo openssl genrsa -out server.key
     # Certificate for the server
     sudo openssl req -new -subj "/C=GB/CN=localhost" -sha256 -key server.key -out server.csr
-    sudo openssl x509 -req -in server.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out server.crt -days 365 -sha256
+    sudo openssl x509 -req -in server.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out server.crt -days 365 -sha256 -extfile v3_ca.cnf
     # Key for the client
     sudo openssl genrsa -out client.key
     # Certificate for the client
     sudo openssl req -new -subj "/C=GB/CN=localhost" -sha256 -key client.key -out client.csr
-    sudo openssl x509 -req -in client.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out client.crt -days 365 -sha256
+    sudo openssl x509 -req -in client.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out client.crt -days 365 -sha256 -extfile v3_ca.cnf
 
     # add the certificate authority to the system trust stores
     sudo cp ca.crt "/etc/pki/ca-trust/source/anchors/ca-$(uuidgen).crt"
@@ -77,13 +81,6 @@ case "${ID}" in
         ;;
     "rhel")
         echo "Running on RHEL"
-
-        if [[ "$VERSION_ID" == "9.5" || "$VERSION_ID" == "10.0" ]]; then
-            # fails eventhough we call update-ca-trust, see previous commit
-            echo "This test has been disabled b/c DNF fails with self-signed certificates"
-            exit 1
-        fi
-
         case "${VERSION_ID%.*}" in
             "8" | "9" | "10")
                 echo "Running on RHEL ${VERSION_ID}"
