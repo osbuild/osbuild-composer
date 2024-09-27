@@ -13,6 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	smithy "github.com/aws/smithy-go"
+	"github.com/osbuild/osbuild-composer/internal/prometheus"
 	"github.com/sirupsen/logrus"
 )
 
@@ -52,6 +53,9 @@ write_files:
 // Runs an instance with a security group that only allows traffic to
 // the host. Will replace resources if they already exists.
 func (a *AWS) RunSecureInstance(iamProfile, keyName, cloudWatchGroup, hostname string) (*SecureInstance, error) {
+	pt := prometheus.RunSecureImageObserver()
+	defer pt()
+
 	identity, err := a.ec2imds.GetInstanceIdentityDocument(context.Background(), &imds.GetInstanceIdentityDocumentInput{})
 	if err != nil {
 		logrus.Errorf("Error getting the identity document, %s", err)
@@ -206,6 +210,9 @@ func (a *AWS) RunSecureInstance(iamProfile, keyName, cloudWatchGroup, hostname s
 }
 
 func (a *AWS) TerminateSecureInstance(si *SecureInstance) error {
+	pt := prometheus.TerminateSecureImageObserver()
+	defer pt()
+
 	if err := a.deleteFleetIfExists(si); err != nil {
 		return err
 	}
@@ -542,17 +549,22 @@ func (a *AWS) deleteSGIfExists(si *SecureInstance) error {
 }
 
 func (a *AWS) createFleet(input *ec2.CreateFleetInput) (*ec2.CreateFleetOutput, error) {
+	itype := "spot"
 	createFleetOutput, err := a.ec2.CreateFleet(context.Background(), input)
 	if err != nil {
+		prometheus.CreatedFleets.WithLabelValues("warning", itype).Inc()
 		return nil, fmt.Errorf("Unable to create spot fleet: %w", err)
 	}
 
 	if len(createFleetOutput.Errors) > 0 && *createFleetOutput.Errors[0].ErrorCode == "UnfulfillableCapacity" {
+		prometheus.CreatedFleets.WithLabelValues("unfulfillable", itype).Inc()
 		logrus.Warn("Received UnfulfillableCapacity from CreateFleet, retrying CreateFleet with OnDemand instance")
 		input.SpotOptions = nil
+		itype = "ondemand"
 		createFleetOutput, err = a.ec2.CreateFleet(context.Background(), input)
 	}
 	if err != nil {
+		prometheus.CreatedFleets.WithLabelValues("error", itype).Inc()
 		return nil, fmt.Errorf("Unable to create on-demand fleet: %w", err)
 	}
 
@@ -561,14 +573,19 @@ func (a *AWS) createFleet(input *ec2.CreateFleetInput) (*ec2.CreateFleetOutput, 
 		for _, fleetErr := range createFleetOutput.Errors {
 			fleetErrs = append(fleetErrs, *fleetErr.ErrorMessage)
 		}
+		prometheus.CreatedFleets.WithLabelValues("error", itype).Inc()
 		return nil, fmt.Errorf("Unable to create fleet: %v", strings.Join(fleetErrs, "; "))
 	}
 
 	if len(createFleetOutput.Instances) != 1 {
+		prometheus.CreatedFleets.WithLabelValues("error", itype).Inc()
 		return nil, fmt.Errorf("Unable to create fleet with exactly one instance, got %d instances", len(createFleetOutput.Instances))
 	}
 	if len(createFleetOutput.Instances[0].InstanceIds) != 1 {
+		prometheus.CreatedFleets.WithLabelValues("error", itype).Inc()
 		return nil, fmt.Errorf("Expected exactly one instance ID on fleet, got %d", len(createFleetOutput.Instances[0].InstanceIds))
 	}
+
+	prometheus.CreatedFleets.WithLabelValues("success", itype).Inc()
 	return createFleetOutput, nil
 }

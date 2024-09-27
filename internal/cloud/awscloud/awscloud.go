@@ -18,6 +18,7 @@ import (
 	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	s3types "github.com/aws/aws-sdk-go-v2/service/s3/types"
+	"github.com/osbuild/osbuild-composer/internal/prometheus"
 	"github.com/sirupsen/logrus"
 )
 
@@ -193,8 +194,10 @@ func (a *AWS) EC2ForTestsOnly() EC2 {
 func (a *AWS) Upload(filename, bucket, key string) (*manager.UploadOutput, error) {
 	file, err := os.Open(filename)
 	if err != nil {
+		prometheus.UploadedS3Files.WithLabelValues("error").Inc()
 		return nil, err
 	}
+	prometheus.UploadedS3Files.WithLabelValues("success").Inc()
 
 	defer func() {
 		err := file.Close()
@@ -221,6 +224,9 @@ func (a *AWS) Upload(filename, bucket, key string) (*manager.UploadOutput, error
 // mode is not specified, then the instances launched from this AMI use the
 // default boot mode value of the instance type.
 func (a *AWS) Register(name, bucket, key string, shareWith []string, rpmArch string, bootMode *string) (*string, error) {
+	pt := prometheus.ObserveRegisterImportSnapshot()
+	defer pt()
+
 	rpmArchToEC2Arch := map[string]ec2types.ArchitectureValues{
 		"x86_64":  ec2types.ArchitectureValuesX8664,
 		"aarch64": ec2types.ArchitectureValuesArm64,
@@ -376,6 +382,9 @@ func (a *AWS) Register(name, bucket, key string, shareWith []string, rpmArch str
 
 // target region is determined by the region configured in the aws session
 func (a *AWS) CopyImage(name, ami, sourceRegion string) (string, error) {
+	pt := prometheus.ObserverCopyImage()
+	defer pt()
+
 	result, err := a.ec2.CopyImage(
 		context.Background(),
 		&ec2.CopyImageInput{
@@ -457,6 +466,9 @@ func (a *AWS) CopyImage(name, ami, sourceRegion string) (string, error) {
 }
 
 func (a *AWS) ShareImage(ami string, userIds []string) error {
+	pt := prometheus.ShareImageObserver()
+	defer pt()
+
 	imgs, err := a.ec2.DescribeImages(
 		context.Background(),
 		&ec2.DescribeImagesInput{
@@ -535,6 +547,9 @@ func (a *AWS) shareSnapshot(snapshotId string, userIds []string) error {
 }
 
 func (a *AWS) RemoveSnapshotAndDeregisterImage(image *ec2types.Image) error {
+	pt := prometheus.RemoveImageObserver()
+	defer pt()
+
 	if image == nil {
 		return fmt.Errorf("image is nil")
 	}

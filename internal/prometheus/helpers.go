@@ -3,7 +3,10 @@ package prometheus
 import (
 	"regexp"
 	"strings"
+	"time"
 )
+
+type ObserveFunc func() time.Duration
 
 func pathLabel(path string) string {
 	r := regexp.MustCompile(":(.*)")
