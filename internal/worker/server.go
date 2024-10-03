@@ -566,6 +566,20 @@ func (s *Server) Cancel(id uuid.UUID) error {
 	return s.jobs.CancelJob(id)
 }
 
+// SetFailed sets the given job id to "failed" with the given error
+func (s *Server) SetFailed(id uuid.UUID, error *clienterrors.Error) error {
+	FailedJobErrorResult := JobResult{
+		JobError: error,
+	}
+
+	res, err := json.Marshal(FailedJobErrorResult)
+	if err != nil {
+		logrus.Errorf("error marshalling the error: %v", err)
+		return nil
+	}
+	return s.jobs.FailJob(id, res)
+}
+
 // Provides access to artifacts of a job. Returns an io.Reader for the artifact
 // and the artifact's size.
 func (s *Server) JobArtifact(id uuid.UUID, name string) (io.Reader, int64, error) {

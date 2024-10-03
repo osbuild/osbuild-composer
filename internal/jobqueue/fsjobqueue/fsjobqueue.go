@@ -403,6 +403,40 @@ func (q *fsJobQueue) CancelJob(id uuid.UUID) error {
 	return nil
 }
 
+func (q *fsJobQueue) FailJob(id uuid.UUID, result interface{}) error {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+
+	j, err := q.readJob(id)
+	if err != nil {
+		return err
+	}
+
+	if !j.FinishedAt.IsZero() {
+		return jobqueue.ErrFinished
+	}
+
+	if !j.StartedAt.IsZero() {
+		return jobqueue.ErrRunning
+	}
+
+	j.Result, err = json.Marshal(result)
+	if err != nil {
+		return err
+	}
+
+	j.StartedAt = time.Now()
+	j.FinishedAt = time.Now()
+	j.Token = uuid.New()
+
+	err = q.db.Write(id.String(), j)
+	if err != nil {
+		return fmt.Errorf("error writing job %s: %v", id, err)
+	}
+
+	return nil
+}
+
 func (q *fsJobQueue) JobStatus(id uuid.UUID) (jobType string, channel string, result json.RawMessage, queued, started, finished time.Time, canceled bool, deps []uuid.UUID, dependents []uuid.UUID, err error) {
 	j, err := q.readJob(id)
 	if err != nil {

@@ -3,6 +3,7 @@ package v2
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -263,7 +264,7 @@ func (s *Server) enqueueCompose(irs []imageRequest, channel string) (uuid.UUID, 
 
 	s.goroutinesGroup.Add(1)
 	go func() {
-		serializeManifest(s.goroutinesCtx, manifestSource, s.workers, depsolveJobID, containerResolveJobID, ostreeResolveJobID, manifestJobID, ir.manifestSeed)
+		serializeManifest(s.goroutinesCtx, manifestSource, s.workers, depsolveJobID, containerResolveJobID, ostreeResolveJobID, manifestJobID, id, ir.manifestSeed)
 		defer s.goroutinesGroup.Done()
 	}()
 
@@ -423,7 +424,7 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 		// copy the image request while passing it into the goroutine to prevent data races
 		s.goroutinesGroup.Add(1)
 		go func(ir imageRequest) {
-			serializeManifest(s.goroutinesCtx, manifestSource, s.workers, depsolveJobID, containerResolveJobID, ostreeResolveJobID, manifestJobID, ir.manifestSeed)
+			serializeManifest(s.goroutinesCtx, manifestSource, s.workers, depsolveJobID, containerResolveJobID, ostreeResolveJobID, manifestJobID, buildID, ir.manifestSeed)
 			defer s.goroutinesGroup.Done()
 		}(ir)
 	}
@@ -444,23 +445,80 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 	return id, nil
 }
 
-func serializeManifest(ctx context.Context, manifestSource *manifest.Manifest, workers *worker.Server, depsolveJobID, containerResolveJobID, ostreeResolveJobID, manifestJobID uuid.UUID, seed int64) {
-	ctx, cancel := context.WithTimeout(ctx, time.Minute*5)
+func serializeManifest(ctx context.Context, manifestSource *manifest.Manifest, workers *worker.Server, depsolveJobID, containerResolveJobID, ostreeResolveJobID, manifestJobID, osbuildJobID uuid.UUID, seed int64) {
+	// prepared to become a config variable
+	const depsolveTimeout = 5
+	ctx, cancel := context.WithTimeout(ctx, time.Minute*depsolveTimeout)
 	defer cancel()
 
-	// wait until job is in a pending state
-	var token uuid.UUID
+	jobResult := &worker.ManifestJobByIDResult{
+		Manifest: nil,
+		ManifestInfo: worker.ManifestInfo{
+			OSBuildComposerVersion: common.BuildVersion(),
+		},
+	}
+
 	var dynArgs []json.RawMessage
 	var err error
+	token := uuid.Nil
 	logWithId := logrus.WithField("jobId", manifestJobID)
+
+	defer func() {
+		// token == uuid.Nil indicates that no worker even started processing
+		if token == uuid.Nil {
+			if jobResult.JobError != nil {
+				// set all jobs to "failed"
+				jobs := map[string]uuid.UUID{
+					"depsolve":         depsolveJobID,
+					"containerResolve": containerResolveJobID,
+					"ostreeResolve":    ostreeResolveJobID,
+					"manifest":         manifestJobID,
+					"osbuild":          osbuildJobID,
+				}
+
+				for jobName, jobID := range jobs {
+					if jobID != uuid.Nil {
+						err := workers.SetFailed(jobID, jobResult.JobError)
+						if err != nil {
+							logWithId.Errorf("Error failing %s job: %v", jobName, err)
+						}
+					}
+				}
+
+			} else {
+				logWithId.Errorf("Internal error, no worker started depsolve but we didn't get a reason.")
+			}
+		} else {
+			result, err := json.Marshal(jobResult)
+			if err != nil {
+				logWithId.Errorf("Error marshalling manifest job results: %v", err)
+			}
+			err = workers.FinishJob(token, result)
+			if err != nil {
+				logWithId.Errorf("Error finishing manifest job: %v", err)
+			}
+			if jobResult.JobError != nil {
+				logWithId.Errorf("Error in manifest job %v: %v", jobResult.JobError.Reason, err)
+			}
+		}
+	}()
+
+	// wait until job is in a pending state
 	for {
 		_, token, _, _, dynArgs, err = workers.RequestJobById(ctx, "", manifestJobID)
-		if err == jobqueue.ErrNotPending {
+		if errors.Is(err, jobqueue.ErrNotPending) {
 			logWithId.Debug("Manifest job not pending, waiting for depsolve job to finish")
 			time.Sleep(time.Millisecond * 50)
 			select {
 			case <-ctx.Done():
-				logWithId.Warning("Manifest job dependencies took longer than 5 minutes to finish, or the server is shutting down, returning to avoid dangling routines")
+				logWithId.Warning(fmt.Sprintf("Manifest job dependencies took longer than %d minutes to finish,"+
+					" or the server is shutting down, returning to avoid dangling routines", depsolveTimeout))
+
+				jobResult.JobError = clienterrors.New(clienterrors.ErrorDepsolveTimeout,
+					"Timeout while waiting for package dependency resolution",
+					"There may be a temporary issue with compute resources. "+
+						"We’re looking into it, please try again later.",
+				)
 				break
 			default:
 				continue
@@ -473,13 +531,6 @@ func serializeManifest(ctx context.Context, manifestSource *manifest.Manifest, w
 		break
 	}
 
-	jobResult := &worker.ManifestJobByIDResult{
-		Manifest: nil,
-		ManifestInfo: worker.ManifestInfo{
-			OSBuildComposerVersion: common.BuildVersion(),
-		},
-	}
-
 	// add osbuild/images dependency info to job result
 	osbuildImagesDep, err := common.GetDepModuleInfoByPath(common.OSBuildImagesModulePath)
 	if err != nil {
@@ -490,22 +541,6 @@ func serializeManifest(ctx context.Context, manifestSource *manifest.Manifest, w
 		osbuildImagesDepModule := worker.ComposerDepModuleFromDebugModule(osbuildImagesDep)
 		jobResult.ManifestInfo.OSBuildComposerDeps = append(jobResult.ManifestInfo.OSBuildComposerDeps, osbuildImagesDepModule)
 	}
-
-	defer func() {
-		if jobResult.JobError != nil {
-			logWithId.Errorf("Error in manifest job %v: %v", jobResult.JobError.Reason, err)
-		}
-
-		result, err := json.Marshal(jobResult)
-		if err != nil {
-			logWithId.Errorf("Error marshalling manifest job results: %v", err)
-		}
-
-		err = workers.FinishJob(token, result)
-		if err != nil {
-			logWithId.Errorf("Error finishing manifest job: %v", err)
-		}
-	}()
 
 	if len(dynArgs) == 0 {
 		reason := "No dynamic arguments"
