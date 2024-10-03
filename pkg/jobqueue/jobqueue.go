@@ -59,6 +59,9 @@ type JobQueue interface {
 	// Cancel a job. Does nothing if the job has already finished.
 	CancelJob(id uuid.UUID) error
 
+	// Fail a job that didn't even start (e.g. no worker available)
+	FailJob(id uuid.UUID, result interface{}) error
+
 	// If the job has finished, returns the result as raw JSON.
 	//
 	// Returns the current status of the job, in the form of three times:
@@ -114,6 +117,8 @@ var (
 	ErrDequeueTimeout = errors.New("dequeue context timed out or was canceled")
 	ErrActiveJobs     = errors.New("worker has active jobs associated with it")
 	ErrWorkerNotExist = errors.New("worker does not exist")
+	ErrRunning        = errors.New("job is running, but wasn't expected to be")
+	ErrFinished       = errors.New("job is finished, but wasn't expected to be")
 )
 
 type Worker struct {

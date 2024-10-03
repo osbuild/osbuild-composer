@@ -44,6 +44,7 @@ const (
 	ErrorJobPanicked          ClientErrorCode = 37
 	ErrorGeneratingSignedURL  ClientErrorCode = 38
 	ErrorInvalidRepositoryURL ClientErrorCode = 39
+	ErrorDepsolveTimeout      ClientErrorCode = 40
 )
 
 type ClientErrorCode int
