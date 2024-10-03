@@ -94,6 +94,12 @@ const (
 		WHERE id = $1 AND finished_at IS NULL
 		RETURNING type, started_at`
 
+	sqlFailJob = `
+		UPDATE jobs
+		SET token = $2, started_at = now(), finished_at = now(), result = $3
+		WHERE id = $1 AND finished_at IS NULL AND started_at IS NULL AND token IS NULL
+		RETURNING id, type`
+
 	sqlInsertHeartbeat = `
 		INSERT INTO heartbeats(token, id, heartbeat)
 		VALUES ($1, $2, now())`
@@ -588,6 +594,32 @@ func (q *DBJobQueue) CancelJob(id uuid.UUID) error {
 	}
 
 	q.logger.Info("Cancelled job", "job_type", jobType, "job_id", id.String())
+
+	return nil
+}
+
+func (q *DBJobQueue) FailJob(id uuid.UUID, result interface{}) error {
+	conn, err := q.pool.Acquire(context.Background())
+	if err != nil {
+		return fmt.Errorf("error connecting to database: %w", err)
+	}
+	defer conn.Release()
+
+	var jobType string
+	var resultId uuid.UUID
+	dummyToken := uuid.New()
+	err = conn.QueryRow(context.Background(), sqlFailJob, id, dummyToken, result).Scan(&resultId, &jobType)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return jobqueue.ErrNotRunning
+	}
+	if err != nil {
+		return fmt.Errorf("error failing job %s: %w", id, err)
+	}
+	if id != resultId {
+		return fmt.Errorf("that should never happen, I wanted to set %s to failed but got %s back from DB", id, resultId)
+	}
+
+	q.logger.Info("Job set to failed", "job_type", jobType, "job_id", id.String())
 
 	return nil
 }

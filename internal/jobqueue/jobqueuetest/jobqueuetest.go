@@ -7,6 +7,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/osbuild/osbuild-composer/internal/worker"
+	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
 	"os"
 	"sync"
 	"testing"
@@ -55,6 +57,7 @@ func TestJobQueue(t *testing.T, makeJobQueue MakeJobQueue) {
 	t.Run("multiple-channels", wrap(testMultipleChannels))
 	t.Run("100-dequeuers", wrap(test100dequeuers))
 	t.Run("workers", wrap(testWorkers))
+	t.Run("fail", wrap(testFail))
 }
 
 func pushTestJob(t *testing.T, q jobqueue.JobQueue, jobType string, args interface{}, dependencies []uuid.UUID, channel string) uuid.UUID {
@@ -761,4 +764,57 @@ func testWorkers(t *testing.T, q jobqueue.JobQueue) {
 
 	err = q.DeleteWorker(w2)
 	require.NoError(t, err)
+}
+
+func testFail(t *testing.T, q jobqueue.JobQueue) {
+	startTime := time.Now()
+
+	FailedJobErrorResult := worker.JobResult{
+		JobError: clienterrors.New(clienterrors.ErrorDepsolveTimeout,
+			"Test timeout reason",
+			"Test timeout details",
+		),
+	}
+
+	testReason, err := json.Marshal(FailedJobErrorResult)
+	require.NoError(t, err)
+
+	// set a non-existing job to failed
+	err = q.FailJob(uuid.New(), testReason)
+	require.Error(t, err)
+
+	// Cancel a pending job
+	id := pushTestJob(t, q, "coralreef", nil, nil, "testchannel")
+	require.NotEmpty(t, id)
+
+	err = q.FailJob(id, testReason)
+	require.NoError(t, err)
+
+	//nolint:golint,ineffassign
+	jobType, channel, result, queued, started, finished, canceled, _, _, err := q.JobStatus(id)
+	require.NoError(t, err)
+
+	endTime := time.Now()
+	type JobResult struct {
+		JobError *clienterrors.Error `json:"job_error"`
+	}
+	var r1 JobResult
+	err = json.Unmarshal(result, &r1)
+	require.NoError(t, err)
+
+	require.NotNil(t, r1)
+	require.Equal(t, "Test timeout reason", r1.JobError.Reason)
+	require.Equal(t, "Test timeout details", r1.JobError.Details)
+	require.Equal(t, clienterrors.ErrorDepsolveTimeout, r1.JobError.ID)
+	require.Equal(t, "testchannel", channel)
+	require.Equal(t, "coralreef", jobType)
+	require.Equal(t, false, canceled)
+
+	allTimings := []time.Time{queued, started, finished}
+
+	for _, tmr := range allTimings {
+		require.Less(t, startTime, tmr)
+		require.Greater(t, endTime, tmr)
+	}
+
 }
