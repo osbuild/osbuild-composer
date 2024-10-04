@@ -2419,7 +2419,8 @@ type CreateFleetInstance struct {
 	// Instance.
 	Lifecycle InstanceLifecycle
 
-	// The value is Windows for Windows instances. Otherwise, the value is blank.
+	// The value is windows for Windows instances in an EC2 Fleet. Otherwise, the
+	// value is blank.
 	Platform PlatformValues
 
 	noSmithyDocumentSerde
@@ -2958,7 +2959,8 @@ type DescribeFleetsInstances struct {
 	// Instance.
 	Lifecycle InstanceLifecycle
 
-	// The value is Windows for Windows instances. Otherwise, the value is blank.
+	// The value is windows for Windows instances in an EC2 Fleet. Otherwise, the
+	// value is blank.
 	Platform PlatformValues
 
 	noSmithyDocumentSerde
@@ -15761,7 +15763,7 @@ type SnapshotRecycleBinInfo struct {
 // Details about the import snapshot task.
 type SnapshotTaskDetail struct {
 
-	// The description of the snapshot.
+	// The description of the disk image being imported.
 	Description *string
 
 	// The size of the disk in the snapshot, in GiB.
