@@ -144,7 +144,7 @@ size = "125 MiB"
 
 [[customizations.filesystem]]
 mountpoint = "/usr"
-size = 2147483648
+size = 4294967296
 
 [[customizations.filesystem]]
 mountpoint = "/tmp"
