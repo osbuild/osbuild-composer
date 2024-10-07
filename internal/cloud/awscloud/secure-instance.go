@@ -552,8 +552,15 @@ func (a *AWS) createFleet(input *ec2.CreateFleetInput) (*ec2.CreateFleetOutput, 
 		input.SpotOptions = nil
 		createFleetOutput, err = a.ec2.CreateFleet(context.Background(), input)
 	}
+
+	if len(createFleetOutput.Errors) > 0 && *createFleetOutput.Errors[0].ErrorCode == "UnfulfillableCapacity" {
+		logrus.Warn("Received UnfulfillableCapacity from CreateFleet with OnDemand instance option, retrying across availability zones")
+		input.LaunchTemplateConfigs[0].Overrides = nil
+		createFleetOutput, err = a.ec2.CreateFleet(context.Background(), input)
+	}
+
 	if err != nil {
-		return nil, fmt.Errorf("Unable to create on-demand fleet: %w", err)
+		return nil, fmt.Errorf("Unable to create fleet, tried on-demand and across AZs: %w", err)
 	}
 
 	if len(createFleetOutput.Errors) > 0 {
