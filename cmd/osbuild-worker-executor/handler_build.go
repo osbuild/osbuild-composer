@@ -95,7 +95,7 @@ func runOsbuild(logger *logrus.Logger, buildDir string, control *controlJSON, ou
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		err = fmt.Errorf("cannot tar output directory: %w, output:\n%s", err, out)
-		logger.Errorf(err.Error())
+		logger.Errorf("%s", err.Error())
 		_, _ = mw.Write([]byte(err.Error()))
 		return "", err
 	}
