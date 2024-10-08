@@ -403,7 +403,7 @@ func (pt *PartitionTable) HeaderSize() uint64 {
 	}
 
 	// calculate the space we need for
-	parts := len(pt.Partitions)
+	parts := uint64(len(pt.Partitions))
 
 	// reserve a minimum of 128 partition entires
 	if parts < 128 {
@@ -413,7 +413,7 @@ func (pt *PartitionTable) HeaderSize() uint64 {
 	// Assume that each partition entry is 128 bytes
 	// which might not be the case if the partition
 	// name exceeds 72 bytes
-	header += uint64(parts * 128)
+	header += parts * 128
 
 	return header
 }
@@ -531,7 +531,7 @@ func (pt *PartitionTable) createFilesystem(mountpoint string, size uint64) error
 
 	newVol, err := vc.CreateMountpoint(mountpoint, 0)
 	if err != nil {
-		return fmt.Errorf("failed creating volume: " + err.Error())
+		return fmt.Errorf("failed creating volume: %w", err)
 	}
 	vcPath := append([]Entity{newVol}, rootPath[idx:]...)
 	size = alignEntityBranch(vcPath, size)

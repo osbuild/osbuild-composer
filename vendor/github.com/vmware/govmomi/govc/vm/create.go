@@ -51,6 +51,7 @@ type create struct {
 	*flags.HostSystemFlag
 	*flags.NetworkFlag
 	*flags.FolderFlag
+	*flags.StorageProfileFlag
 
 	name       string
 	memory     int
@@ -60,11 +61,12 @@ type create struct {
 	on         bool
 	force      bool
 	controller string
+	eager      bool
+	thick      bool
 	annotation string
 	firmware   string
 	version    string
 	place      bool
-	profile    string
 
 	iso              string
 	isoDatastoreFlag *flags.DatastoreFlag
@@ -119,6 +121,9 @@ func (cmd *create) Register(ctx context.Context, f *flag.FlagSet) {
 	cmd.FolderFlag, ctx = flags.NewFolderFlag(ctx)
 	cmd.FolderFlag.Register(ctx, f)
 
+	cmd.StorageProfileFlag, ctx = flags.NewStorageProfileFlag(ctx)
+	cmd.StorageProfileFlag.Register(ctx, f)
+
 	f.IntVar(&cmd.memory, "m", 1024, "Size in MB of memory")
 	f.IntVar(&cmd.cpus, "c", 1, "Number of CPUs")
 	f.StringVar(&cmd.guestID, "g", "otherGuest", "Guest OS ID")
@@ -126,9 +131,10 @@ func (cmd *create) Register(ctx context.Context, f *flag.FlagSet) {
 	f.BoolVar(&cmd.on, "on", true, "Power on VM")
 	f.BoolVar(&cmd.force, "force", false, "Create VM if vmx already exists")
 	f.StringVar(&cmd.controller, "disk.controller", "scsi", "Disk controller type")
+	f.BoolVar(&cmd.eager, "disk.eager", false, "Eagerly scrub new disk")
+	f.BoolVar(&cmd.thick, "disk.thick", false, "Thick provision new disk")
 	f.StringVar(&cmd.annotation, "annotation", "", "VM description")
 	f.StringVar(&cmd.firmware, "firmware", FirmwareTypes[0], FirmwareUsage)
-	f.StringVar(&cmd.profile, "profile", "", "Storage profile name or ID")
 	if cli.ShowUnreleased() {
 		f.BoolVar(&cmd.place, "place", false, "Place VM without creating")
 	}
@@ -176,6 +182,9 @@ func (cmd *create) Process(ctx context.Context) error {
 		return err
 	}
 	if err := cmd.FolderFlag.Process(ctx); err != nil {
+		return err
+	}
+	if err := cmd.StorageProfileFlag.Process(ctx); err != nil {
 		return err
 	}
 
@@ -411,22 +420,9 @@ func (cmd *create) createVM(ctx context.Context) (*object.Task, error) {
 		Version:    cmd.version,
 	}
 
-	if cmd.profile != "" {
-		c, err := cmd.PbmClient()
-		if err != nil {
-			return nil, err
-		}
-		m, err := c.ProfileMap(ctx)
-		if err != nil {
-			return nil, err
-		}
-		p, ok := m.Name[cmd.profile]
-		if !ok {
-			return nil, fmt.Errorf("profile %q not found", cmd.profile)
-		}
-		spec.VmProfile = []types.BaseVirtualMachineProfileSpec{&types.VirtualMachineDefinedProfileSpec{
-			ProfileId: p.GetPbmProfile().ProfileId.UniqueId,
-		}}
+	spec.VmProfile, err = cmd.StorageProfileSpec(ctx)
+	if err != nil {
+		return nil, err
 	}
 
 	devices, err = cmd.addStorage(nil)
@@ -558,13 +554,17 @@ func (cmd *create) addStorage(devices object.VirtualDeviceList) (object.VirtualD
 			return nil, err
 		}
 
+		backing := &types.VirtualDiskFlatVer2BackingInfo{
+			DiskMode:        string(types.VirtualDiskModePersistent),
+			ThinProvisioned: types.NewBool(!cmd.thick),
+		}
+		if cmd.thick {
+			backing.EagerlyScrub = &cmd.eager
+		}
 		disk := &types.VirtualDisk{
 			VirtualDevice: types.VirtualDevice{
-				Key: devices.NewKey(),
-				Backing: &types.VirtualDiskFlatVer2BackingInfo{
-					DiskMode:        string(types.VirtualDiskModePersistent),
-					ThinProvisioned: types.NewBool(true),
-				},
+				Key:     devices.NewKey(),
+				Backing: backing,
 			},
 			CapacityInKB: cmd.diskByteSize / 1024,
 		}

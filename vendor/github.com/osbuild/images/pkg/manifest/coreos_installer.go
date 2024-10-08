@@ -185,11 +185,34 @@ func (p *CoreOSInstaller) serialize() osbuild.Pipeline {
 
 	dracutModules := append(
 		p.AdditionalDracutModules,
+		"systemd",
+		"systemd-initrd",
+		"fips",
+		"modsign",
+		"rescue",
+		"i18n",
+		"kernel-modules",
+		"kernel-modules-extra",
+		"network-manager",
+		"network",
+		"drm",
 		"coreos-installer",
 		"fdo",
+		"lvm",
+		"terminfo",
+		"fs-lib",
+		"dracut-systemd",
+		"debug",
+		"shutdown",
 	)
-
-	dracutStageOptions := dracutStageOptions(p.kernelVer, p.Biosdevname, dracutModules)
+	if p.Biosdevname {
+		dracutModules = append(dracutModules, "biosdevname")
+	}
+	dracutStageOptions := &osbuild.DracutStageOptions{
+		Kernel:  []string{p.kernelVer},
+		Modules: dracutModules,
+		Install: []string{"/.buildstamp"},
+	}
 	if p.FDO != nil && p.FDO.DiunPubKeyRootCerts != "" {
 		pipeline.AddStage(osbuild.NewFDOStageForRootCerts(p.FDO.DiunPubKeyRootCerts))
 		dracutStageOptions.Install = []string{"/fdo_diun_pub_key_root_certs.pem"}
