@@ -28,7 +28,7 @@ func (impl *FileResolveJobImpl) Run(job worker.Job) error {
 			}
 		}
 
-		if result.Results == nil || len(result.Results) == 0 {
+		if len(result.Results) == 0 {
 			logWithId.Infof("Resolving file contents failed: %v", err)
 			result.JobError = clienterrors.New(
 				clienterrors.ErrorRemoteFileResolution,
