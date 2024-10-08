@@ -61,8 +61,12 @@ func main() {
 		return
 	}
 
+	if taskID < 0 {
+		fmt.Fprintf(os.Stderr, "invalid task ID: %d\n", taskID)
+		return
+	}
 	build := koji.Build{
-		TaskID:    uint64(taskID),
+		TaskID:    uint64(taskID), // #nosec: G115
 		Name:      name,
 		Version:   version,
 		Release:   release,
@@ -113,7 +117,11 @@ func main() {
 		return
 	}
 
-	build.BuildID = uint64(initResult.BuildID)
+	if initResult.BuildID < 0 {
+		fmt.Fprintf(os.Stderr, "invalid build ID: %d\n", build.BuildID)
+		return
+	}
+	build.BuildID = uint64(initResult.BuildID) // #nosec: G115
 
 	importResult, err := k.CGImport(build, buildRoots, output, dir, initResult.Token)
 	if err != nil {

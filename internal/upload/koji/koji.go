@@ -513,6 +513,7 @@ func (k *Koji) Upload(file io.Reader, filepath, filename string) (string, uint64
 			return "", 0, err
 		}
 
+		// #nosec: G115 // n can't be negative
 		offset += uint64(n)
 
 		m, err := hash.Write(chunk[:n])
@@ -588,9 +589,9 @@ func CreateKojiTransport(relaxTimeout uint) http.RoundTripper {
 
 	// Relax timeouts a bit
 	if relaxTimeout > 0 {
-		transport.TLSHandshakeTimeout *= time.Duration(relaxTimeout)
+		transport.TLSHandshakeTimeout *= time.Duration(relaxTimeout) // #nosec: G115 // relaxTimeout is not negative
 		transport.DialContext = (&net.Dialer{
-			Timeout:   30 * time.Second * time.Duration(relaxTimeout),
+			Timeout:   30 * time.Second * time.Duration(relaxTimeout), // #nosec: G115 // relaxTimeout is not negative
 			KeepAlive: 30 * time.Second,
 		}).DialContext
 	}

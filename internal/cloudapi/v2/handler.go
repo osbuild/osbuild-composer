@@ -4,6 +4,7 @@ package v2
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"net/http"
 	"os"
 	"slices"
@@ -163,6 +164,10 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 
 	var id uuid.UUID
 	if request.Koji != nil {
+		if request.Koji.TaskId < 0 {
+			return fmt.Errorf("invalid Koji Task ID %d", request.Koji.TaskId)
+		}
+		// #nosec: G115
 		id, err = h.server.enqueueKojiCompose(uint64(request.Koji.TaskId), request.Koji.Server, request.Koji.Name, request.Koji.Version, request.Koji.Release, irs, channel)
 		if err != nil {
 			return err
@@ -448,7 +453,11 @@ func (h *apiHandlers) getComposeStatusImpl(ctx echo.Context, id string) error {
 			ImageStatuses: &buildJobStatuses,
 			KojiStatus:    &KojiStatus{},
 		}
-		buildID := int(initResult.BuildID)
+
+		if initResult.BuildID > math.MaxInt {
+			return HTTPErrorWithInternal(ErrorUnspecified, fmt.Errorf("invalid Build ID in Koji result: %d", initResult.BuildID))
+		}
+		buildID := int(initResult.BuildID) // #nosec: G115
 		if buildID != 0 {
 			response.KojiStatus.BuildId = &buildID
 		}
