@@ -80,6 +80,7 @@ func newV2Server(t *testing.T, dir string, depsolveChannels []string, enableJWT 
 	repos, err := reporegistry.New([]string{"../../../test/data"})
 	require.Nil(t, err)
 	require.NotNil(t, repos)
+	require.Greater(t, len(repos.ListDistros()), 0)
 
 	config := v2.ServerConfig{
 		JWTEnabled:           enableJWT,
@@ -249,6 +250,37 @@ func TestGetErrorList(t *testing.T) {
 			"reason": "Unsupported distribution"
 		}]
 	}`, "operation_id", "total", "details")
+}
+
+func TestGetDistributionList(t *testing.T) {
+	srv, _, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false, false)
+	defer cancel()
+
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET",
+		"/api/image-builder-composer/v2/distributions", ``, http.StatusOK, `
+	{
+		"test-distro-1":{
+			"test_arch":{
+				"test_ostree_type":[
+					{"baseurls":["https://rpmrepo.osbuild.org/v2/mirror/public/f40/f40-x86_64-rawhide-20240101"], "check_gpg":true, "name":"test-distro"}
+				],
+				"test_type":[{"baseurls":["https://rpmrepo.osbuild.org/v2/mirror/public/f40/f40-x86_64-rawhide-20240101"], "check_gpg":true, "name":"test-distro"}]
+			},
+			"test_arch2":{
+				"test_type":[{"baseurls":["https://rpmrepo.osbuild.org/v2/mirror/public/f40/f40-aarch64-rawhide-20240101"], "check_gpg":true, "name":"test-distro"}],
+				"test_type2":[{"baseurls":["https://rpmrepo.osbuild.org/v2/mirror/public/f40/f40-aarch64-rawhide-20240101"], "check_gpg":true, "name":"test-distro"}]},
+			"test_arch3":{
+				"ami":[{"baseurls":["https://rpmrepo.osbuild.org/v2/mirror/public/f40/f40-ppc64le-rawhide-20240101"], "check_gpg":true, "name":"test-distro"}],
+				"gce":[{"baseurls":["https://rpmrepo.osbuild.org/v2/mirror/public/f40/f40-ppc64le-rawhide-20240101"], "check_gpg":true, "name":"test-distro"}],
+				"image-installer":[{"baseurls":["https://rpmrepo.osbuild.org/v2/mirror/public/f40/f40-ppc64le-rawhide-20240101"], "check_gpg":true, "name":"test-distro"}],
+				"qcow2":[{"baseurls":["https://rpmrepo.osbuild.org/v2/mirror/public/f40/f40-ppc64le-rawhide-20240101"], "check_gpg":true, "name":"test-distro"}],
+				"rhel-edge-commit":[{"baseurls":["https://rpmrepo.osbuild.org/v2/mirror/public/f40/f40-ppc64le-rawhide-20240101"], "check_gpg":true, "name":"test-distro"}],
+				"rhel-edge-installer":[{"baseurls":["https://rpmrepo.osbuild.org/v2/mirror/public/f40/f40-ppc64le-rawhide-20240101"], "check_gpg":true, "name":"test-distro"}],
+				"vhd":[{"baseurls":["https://rpmrepo.osbuild.org/v2/mirror/public/f40/f40-ppc64le-rawhide-20240101"], "check_gpg":true, "name":"test-distro"}],
+				"vmdk":[{"baseurls":["https://rpmrepo.osbuild.org/v2/mirror/public/f40/f40-ppc64le-rawhide-20240101"], "check_gpg":true, "name":"test-distro"}]
+			}
+		}
+	}`, "gpgkeys", "baseurl")
 }
 
 func TestCompose(t *testing.T) {
