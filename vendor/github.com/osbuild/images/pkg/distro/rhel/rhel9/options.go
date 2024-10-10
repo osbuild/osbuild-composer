@@ -142,10 +142,10 @@ func checkOptions(t *rhel.ImageType, bp *blueprint.Blueprint, options distro.Ima
 
 	if osc := customizations.GetOpenSCAP(); osc != nil {
 		if t.Arch().Distro().OsVersion() == "9.0" {
-			return warnings, fmt.Errorf(fmt.Sprintf("OpenSCAP unsupported os version: %s", t.Arch().Distro().OsVersion()))
+			return warnings, fmt.Errorf("OpenSCAP unsupported os version: %s", t.Arch().Distro().OsVersion())
 		}
 		if !oscap.IsProfileAllowed(osc.ProfileID, oscapProfileAllowList) {
-			return warnings, fmt.Errorf(fmt.Sprintf("OpenSCAP unsupported profile: %s", osc.ProfileID))
+			return warnings, fmt.Errorf("OpenSCAP unsupported profile: %s", osc.ProfileID)
 		}
 		if t.RPMOSTree {
 			return warnings, fmt.Errorf("OpenSCAP customizations are not supported for ostree types")
