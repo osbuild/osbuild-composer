@@ -450,6 +450,9 @@ func getISOLabelFunc(variant string) isoLabelFunc {
 }
 
 func getDistro(version int) distribution {
+	if version < 0 {
+		panic("Invalid Fedora version (must be positive)")
+	}
 	return distribution{
 		name:               fmt.Sprintf("fedora-%d", version),
 		product:            "Fedora",

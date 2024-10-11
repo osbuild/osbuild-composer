@@ -143,7 +143,7 @@ func (t *imageType) getPartitionTable(
 ) (*disk.PartitionTable, error) {
 	basePartitionTable, exists := t.basePartitionTables[t.arch.Name()]
 	if !exists {
-		return nil, fmt.Errorf("unknown arch: " + t.arch.Name())
+		return nil, fmt.Errorf("unknown arch: %s", t.arch.Name())
 	}
 
 	imageSize := t.Size(options.Size)
@@ -367,7 +367,7 @@ func (t *imageType) checkOptions(bp *blueprint.Blueprint, options distro.ImageOp
 	if osc := customizations.GetOpenSCAP(); osc != nil {
 		supported := oscap.IsProfileAllowed(osc.ProfileID, oscapProfileAllowList)
 		if !supported {
-			return nil, fmt.Errorf(fmt.Sprintf("OpenSCAP unsupported profile: %s", osc.ProfileID))
+			return nil, fmt.Errorf("OpenSCAP unsupported profile: %s", osc.ProfileID)
 		}
 		if t.rpmOstree {
 			return nil, fmt.Errorf("OpenSCAP customizations are not supported for ostree types")
