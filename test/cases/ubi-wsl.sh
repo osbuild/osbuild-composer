@@ -32,6 +32,8 @@ fi
 TEMPDIR=$(mktemp -d)
 function cleanup() {
     greenprint "== Script execution stopped or finished - Cleaning up =="
+    # Cleanup in a best-effort way (don't fail test on cleanup failure)
+    set +e
 
     $AZURE_CMD vm show \
        --resource-group "$AZURE_RESOURCE_GROUP" \
