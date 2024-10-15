@@ -144,7 +144,7 @@ func verifyChecksum(commit string) bool {
 func ResolveRef(location, ref string, consumerCerts bool, subs *rhsm.Subscriptions, ca *string) (string, error) {
 	u, err := url.Parse(location)
 	if err != nil {
-		return "", NewResolveRefError(fmt.Sprintf("error parsing ostree repository location: %v", err))
+		return "", NewResolveRefError("error parsing ostree repository location: %v", err)
 	}
 	u.Path = path.Join(u.Path, "refs/heads/", ref)
 
@@ -200,14 +200,14 @@ func ResolveRef(location, ref string, consumerCerts bool, subs *rhsm.Subscriptio
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return "", NewResolveRefError(fmt.Sprintf("error sending request to ostree repository %q: %v", u.String(), err))
+		return "", NewResolveRefError("error sending request to ostree repository %q: %v", u.String(), err)
 	}
 	if resp.StatusCode != http.StatusOK {
 		return "", NewResolveRefError("ostree repository %q returned status: %s", u.String(), resp.Status)
 	}
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", NewResolveRefError(fmt.Sprintf("error reading response from ostree repository %q: %v", u.String(), err))
+		return "", NewResolveRefError("error reading response from ostree repository %q: %v", u.String(), err)
 	}
 	checksum := strings.TrimSpace(string(body))
 	// Check that this is at least a hex string.
