@@ -142,7 +142,7 @@ func TestSICreateFleetFailures(t *testing.T) {
 	aws := awscloud.NewForTest(m, &ec2imdsmock{t, "instance-id", "region1"}, nil, nil, nil)
 	require.NotNil(t, aws)
 
-	// unfillable capacity should call create fleet thrice
+	// create fleet error should call create fleet thrice
 	m.failFn["CreateFleet"] = nil
 	si, err := aws.RunSecureInstance("iam-profile", "key-name", "cw-group", "hostname")
 	require.Error(t, err)
