@@ -848,6 +848,33 @@ func TestGetImageRequests_BlueprintDistro(t *testing.T) {
 	assert.Equal(t, got[0].blueprint.Distro, "fedora-39")
 }
 
+// TestGetImageRequests_BlueprintArch test to make sure blueprint architecture overrides
+// the request arch
+func TestGetImageRequests_BlueprintArch(t *testing.T) {
+	uo := UploadOptions(struct{}{})
+	request := &ComposeRequest{
+		Distribution: "fedora-40",
+		ImageRequest: &ImageRequest{
+			Architecture:  "x86_64",
+			ImageType:     ImageTypesAws,
+			UploadOptions: &uo,
+			Repositories:  []Repository{},
+		},
+		Blueprint: &Blueprint{
+			Name:         "arch-test",
+			Architecture: common.ToPtr("aarch64"),
+		},
+	}
+	// NOTE: current directory is the location of this file, back up so it can use ./repositories/
+	rr, err := reporegistry.New([]string{"../../../"})
+	require.NoError(t, err)
+	got, err := request.GetImageRequests(distrofactory.NewDefault(), rr)
+	assert.NoError(t, err)
+	require.Len(t, got, 1)
+	require.Greater(t, len(got[0].repositories), 0)
+	assert.Equal(t, got[0].blueprint.Arch, "aarch64")
+}
+
 func TestOpenSCAPTailoringOptions(t *testing.T) {
 	cr := ComposeRequest{
 		Customizations: &Customizations{
