@@ -47,7 +47,7 @@ function cleanup() {
     NSG_ID=$(jq -r '.networkSecurityGroup.id' "$TEMPDIR"/nic_details.json)
     PUBLICIP_ID=$(jq -r '.ipConfigurations[0].publicIPAddress.id' "$TEMPDIR"/nic_details.json)
 
-    $AZURE_CMD resource delete --no-wait --ids "$VM_ID" "$OSDISK_ID" "$NIC_ID" "$NSG_ID" "$PUBLICIP_ID"
+    $AZURE_CMD resource delete --verbose --no-wait --ids "$VM_ID" "$OSDISK_ID" "$NIC_ID" "$NSG_ID" "$PUBLICIP_ID"
     sudo rm -rf "$TEMPDIR"
 }
 trap cleanup EXIT
