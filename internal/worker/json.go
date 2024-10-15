@@ -300,9 +300,8 @@ type FileResolveJobResult struct {
 }
 
 type OSTreeResolveSpec struct {
-	URL  string `json:"url"`
-	Ref  string `json:"ref"`
-	RHSM bool   `json:"rhsm"`
+	URL string `json:"url"`
+	Ref string `json:"ref"`
 }
 
 type OSTreeResolveJob struct {

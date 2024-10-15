@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 
+	"github.com/BurntSushi/toml"
 	"github.com/sirupsen/logrus"
 
 	"github.com/osbuild/images/pkg/ostree"
@@ -48,11 +49,31 @@ func (impl *OSTreeResolveJobImpl) Run(job worker.Job) error {
 		Specs: make([]worker.OSTreeResolveResultSpec, len(args.Specs)),
 	}
 
+	config, err := parseConfig(configFile)
+	if err != nil {
+		logrus.Fatalf("Could not load config file '%s': %v", configFile, err)
+	}
+
+	logrus.Info("Composer configuration:")
+	encoder := toml.NewEncoder(logrus.StandardLogger().WriterLevel(logrus.InfoLevel))
+	err = encoder.Encode(&config)
+	if err != nil {
+		logrus.Fatalf("Could not print config: %v", err)
+	}
+
 	logWithId.Infof("Resolving (%d) ostree commits", len(args.Specs))
+
+	// OSTree MTLS configuration is shared with osbuilder worker
+	conn := &ostree.Connection{
+		CA:             config.RepositoryMTLSConfig.CA,
+		MTLSClientCert: config.RepositoryMTLSConfig.MTLSClientCert,
+		MTLSClientKey:  config.RepositoryMTLSConfig.MTLSClientKey,
+		Proxy:          config.RepositoryMTLSConfig.Proxy,
+	}
 
 	for i, s := range args.Specs {
 		reqParams := ostree.SourceSpec(s)
-		commitSpec, err := ostree.Resolve(reqParams)
+		commitSpec, err := ostree.Resolve(reqParams, conn)
 		if err != nil {
 			logWithId.Infof("Resolving ostree params failed: %v", err)
 			setError(err, &result)
@@ -63,8 +84,6 @@ func (impl *OSTreeResolveJobImpl) Run(job worker.Job) error {
 			URL:      commitSpec.URL,
 			Ref:      commitSpec.Ref,
 			Checksum: commitSpec.Checksum,
-			Secrets:  commitSpec.Secrets,
-			RHSM:     s.RHSM,
 		}
 	}
 

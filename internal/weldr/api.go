@@ -2393,7 +2393,8 @@ func (api *API) resolveOSTreeCommits(sourceSpecs map[string][]ostree.SourceSpec,
 					Checksum: checksum,
 				}
 			} else {
-				commit, err := ostree.Resolve(source)
+				// MTLS not supported on-prem
+				commit, err := ostree.Resolve(source, &ostree.Connection{})
 				if err != nil {
 					return nil, err
 				}

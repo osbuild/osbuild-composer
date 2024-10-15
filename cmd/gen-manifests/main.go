@@ -134,7 +134,6 @@ func makeManifestJob(name string, imgType distro.ImageType, cr composeRequest, d
 			URL:       cr.OSTree.URL,
 			ImageRef:  cr.OSTree.Ref,
 			ParentRef: cr.OSTree.Parent,
-			RHSM:      cr.OSTree.RHSM,
 		}
 	}
 
@@ -303,9 +302,6 @@ func resolveCommit(commitSource ostree.SourceSpec) ostree.CommitSpec {
 		Ref:      commitSource.Ref,
 		URL:      commitSource.URL,
 		Checksum: checksum,
-	}
-	if commitSource.RHSM {
-		spec.Secrets = "org.osbuild.rhsm.consumer"
 	}
 	return spec
 }
