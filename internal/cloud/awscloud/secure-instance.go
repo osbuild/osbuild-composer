@@ -547,14 +547,14 @@ func (a *AWS) createFleet(input *ec2.CreateFleetInput) (*ec2.CreateFleetOutput, 
 		return nil, fmt.Errorf("Unable to create spot fleet: %w", err)
 	}
 
-	if len(createFleetOutput.Errors) > 0 && *createFleetOutput.Errors[0].ErrorCode == "UnfulfillableCapacity" {
-		logrus.Warn("Received UnfulfillableCapacity from CreateFleet, retrying CreateFleet with OnDemand instance")
+	if len(createFleetOutput.Errors) > 0 {
+		logrus.Warnf("Received error %s from CreateFleet, retrying CreateFleet with OnDemand instance", *createFleetOutput.Errors[0].ErrorCode)
 		input.SpotOptions = nil
 		createFleetOutput, err = a.ec2.CreateFleet(context.Background(), input)
 	}
 
-	if len(createFleetOutput.Errors) > 0 && *createFleetOutput.Errors[0].ErrorCode == "UnfulfillableCapacity" {
-		logrus.Warn("Received UnfulfillableCapacity from CreateFleet with OnDemand instance option, retrying across availability zones")
+	if err == nil && len(createFleetOutput.Errors) > 0 {
+		logrus.Warnf("Received error %s from CreateFleet with OnDemand instance option, retrying across availability zones", *createFleetOutput.Errors[0].ErrorCode)
 		input.LaunchTemplateConfigs[0].Overrides = nil
 		createFleetOutput, err = a.ec2.CreateFleet(context.Background(), input)
 	}
@@ -566,7 +566,7 @@ func (a *AWS) createFleet(input *ec2.CreateFleetInput) (*ec2.CreateFleetOutput, 
 	if len(createFleetOutput.Errors) > 0 {
 		fleetErrs := []string{}
 		for _, fleetErr := range createFleetOutput.Errors {
-			fleetErrs = append(fleetErrs, *fleetErr.ErrorMessage)
+			fleetErrs = append(fleetErrs, fmt.Sprintf("%s: %s", *fleetErr.ErrorCode, *fleetErr.ErrorMessage))
 		}
 		return nil, fmt.Errorf("Unable to create fleet: %v", strings.Join(fleetErrs, "; "))
 	}
