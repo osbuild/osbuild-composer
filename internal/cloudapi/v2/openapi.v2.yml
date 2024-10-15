@@ -397,6 +397,27 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
+  /distributions:
+    get:
+      operationId: getDistributionList
+      summary: |-
+        Get all of the supported distribution repository details
+      security:
+        - Bearer: []
+      responses:
+        '200':
+          description: Distribution repositories
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DistributionList'
+        '500':
+          description: Unexpected error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
   /errors/{id}:
     get:
       operationId: getError
@@ -547,6 +568,21 @@ components:
             type: array
             items:
               $ref: '#/components/schemas/Error'
+
+    DistributionList:
+      properties:
+        map:
+          type: object
+          additionalProperties:
+            map:
+              type: object
+              additionalProperties:
+                map:
+                  type: object
+                  additionalProperties:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/BlueprintRepository'
 
     ComposeStatus:
       allOf:
