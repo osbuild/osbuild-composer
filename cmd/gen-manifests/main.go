@@ -13,6 +13,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"math"
 	"os"
 	"path/filepath"
 	"sort"
@@ -534,6 +535,11 @@ func main() {
 
 	nJobs := len(jobs)
 	fmt.Printf("Collected %d jobs\n", nJobs)
+	if nWorkers > math.MaxUint32 {
+		fmt.Fprintf(os.Stderr, "worker count too large: %d\n", nWorkers)
+		os.Exit(1)
+	}
+	// #nosec: G115
 	wq := newWorkerQueue(uint32(nWorkers), uint32(nJobs))
 	wq.start()
 	fmt.Printf("Initialised %d workers\n", nWorkers)

@@ -44,6 +44,10 @@ func (impl *KojiInitJobImpl) kojiInit(server, name, version, release string) (st
 		return "", 0, err
 	}
 
+	if buildInfo.BuildID < 0 {
+		return "", 0, fmt.Errorf("invalid Build ID: %d", buildInfo.BuildID)
+	}
+	// #nosec: G115
 	return buildInfo.Token, uint64(buildInfo.BuildID), nil
 }
 
