@@ -150,8 +150,10 @@ func NewGrub2InstStageOption(filename string, pt *disk.PartitionTable, platform 
 	prefix := PrefixPartition{
 		Type:      "partition",
 		PartLabel: pt.Type,
-		Number:    uint(bootIdx),
-		Path:      prefixPath,
+		// bootidx can't be negative after check with rootIdx above:
+		// nolint:gosec
+		Number: uint(bootIdx),
+		Path:   prefixPath,
 	}
 
 	return &Grub2InstStageOptions{
