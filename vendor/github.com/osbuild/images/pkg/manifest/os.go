@@ -163,7 +163,6 @@ type OS struct {
 	// OSTreeParent source spec (optional). If nil the new commit (if
 	// applicable) will have no parent
 	OSTreeParent *ostree.SourceSpec
-
 	// Enabling Bootupd runs bootupctl generate-update-metadata in the tree to
 	// transform /usr/lib/ostree-boot into a bootupd-compatible update
 	// payload. Only works with ostree-based images.
@@ -289,6 +288,25 @@ func (p *OS) getContainerSources() []container.SourceSpec {
 	return p.OSCustomizations.Containers
 }
 
+func tomlPkgsFor(distro Distro) []string {
+	switch distro {
+	case DISTRO_EL7:
+		// nothing needs toml in rhel7
+		panic("no support for toml on rhel7")
+	case DISTRO_EL8:
+		// deprecated, needed for backwards compatibility (EL8 manifests)
+		return []string{"python3-pytoml"}
+	case DISTRO_EL9:
+		// older unmaintained lib, needed for backwards compatibility
+		return []string{"python3-toml"}
+	default:
+		// No extra package needed for reading, on rhel10 and
+		// fedora as stdlib has "tomlib" but we need tomli-w
+		// for writing
+		return []string{"python3-tomli-w"}
+	}
+}
+
 func (p *OS) getBuildPackages(distro Distro) []string {
 	packages := p.platform.GetBuildPackages()
 	if p.PartitionTable != nil {
@@ -315,13 +333,7 @@ func (p *OS) getBuildPackages(distro Distro) []string {
 
 	if len(p.OSCustomizations.Containers) > 0 {
 		if p.OSCustomizations.ContainersStorage != nil {
-			switch distro {
-			case DISTRO_EL8:
-				packages = append(packages, "python3-pytoml")
-			case DISTRO_EL10:
-			default:
-				packages = append(packages, "python3-toml")
-			}
+			packages = append(packages, tomlPkgsFor(distro)...)
 		}
 		packages = append(packages, "skopeo")
 	}
@@ -331,13 +343,7 @@ func (p *OS) getBuildPackages(distro Distro) []string {
 	}
 
 	if p.BootcConfig != nil {
-		switch distro {
-		case DISTRO_EL8:
-			packages = append(packages, "python3-pytoml")
-		case DISTRO_EL10:
-		default:
-			packages = append(packages, "python3-toml")
-		}
+		packages = append(packages, tomlPkgsFor(distro)...)
 	}
 
 	return packages

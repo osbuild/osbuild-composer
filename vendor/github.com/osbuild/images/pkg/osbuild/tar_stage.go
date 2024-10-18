@@ -42,6 +42,9 @@ type TarStageOptions struct {
 
 	// List of paths to include, instead of the whole tree
 	Paths []string `json:"paths,omitempty"`
+
+	// Pass --transform=...
+	Transform string `json:"transform,omitempty"`
 }
 
 func (TarStageOptions) isStageOptions() {}
