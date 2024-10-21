@@ -355,6 +355,12 @@ func Convert(bp Blueprint) iblueprint.Blueprint {
 					Contents: installer.Kickstart.Contents,
 				}
 			}
+			if installer.Modules != nil {
+				iinst.Modules = &iblueprint.AnacondaModules{
+					Enable:  installer.Modules.Enable,
+					Disable: installer.Modules.Disable,
+				}
+			}
 			customizations.Installer = &iinst
 		}
 		if rpm := c.RPM; rpm != nil && rpm.ImportKeys != nil {
