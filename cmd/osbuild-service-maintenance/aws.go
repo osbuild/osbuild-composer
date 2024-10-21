@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"time"
 
@@ -82,5 +83,22 @@ func AWSCleanup(maxConcurrentRequests int, dryRun bool, accessKeyID, accessKey s
 		wg.Wait()
 	}
 
+	// Terminate leftover secure instances
+	reservations, err := a.DescribeInstancesByTag("parent", "i-*")
+	if err != nil {
+		return fmt.Errorf("Unable to describe instances by tag %w", err)
+	}
+	var instanceIDs []string
+	for _, res := range reservations {
+		for _, i := range res.Instances {
+			if i.LaunchTime.Before(time.Now().Add(-time.Hour * 2)) {
+				instanceIDs = append(instanceIDs, *i.InstanceId)
+			}
+		}
+	}
+	err = a.TerminateInstances(instanceIDs)
+	if err != nil {
+		return fmt.Errorf("Unable to terminate secure instances: %w", err)
+	}
 	return nil
 }
