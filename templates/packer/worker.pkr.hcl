@@ -4,10 +4,6 @@ source "amazon-ebs" "image_builder" {
   secret_key = var.aws_secret_key
   region = var.region
 
-  # Remove previous image before making the new one.
-  force_deregister = true
-  force_delete_snapshot = true
-
   # Apply tags to the instance that is building our image.
   run_tags = {
     AppCode = "IMGB-001"
