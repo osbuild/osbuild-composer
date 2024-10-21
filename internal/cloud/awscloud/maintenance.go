@@ -62,3 +62,28 @@ func (a *AWS) RemoveSnapshotAndDeregisterImage(image *ec2types.Image) error {
 	}
 	return err
 }
+
+func (a *AWS) DescribeInstancesByTag(tagKey, tagValue string) ([]ec2types.Reservation, error) {
+	res, err := a.ec2.DescribeInstances(
+		context.Background(),
+		&ec2.DescribeInstancesInput{
+			Filters: []ec2types.Filter{
+				{
+					Name:   aws.String(fmt.Sprintf("tag:%s", tagKey)),
+					Values: []string{tagValue},
+				},
+			},
+		},
+	)
+	return res.Reservations, err
+}
+
+func (a *AWS) TerminateInstances(instanceIDs []string) error {
+	_, err := a.ec2.TerminateInstances(
+		context.Background(),
+		&ec2.TerminateInstancesInput{
+			InstanceIds: instanceIDs,
+		},
+	)
+	return err
+}
