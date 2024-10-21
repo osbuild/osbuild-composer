@@ -173,6 +173,9 @@ func TestConvert(t *testing.T) {
 					Installer: &InstallerCustomization{
 						Unattended:   true,
 						SudoNopasswd: []string{"%group", "user"},
+						Kickstart: &Kickstart{
+							Contents: "# test kickstart addition created by osbuild-composer",
+						},
 						Modules: &AnacondaModules{
 							Enable: []string{
 								"org.fedoraproject.Anaconda.Modules.Localization",
@@ -360,6 +363,9 @@ func TestConvert(t *testing.T) {
 					Installer: &iblueprint.InstallerCustomization{
 						Unattended:   true,
 						SudoNopasswd: []string{"%group", "user"},
+						Kickstart: &iblueprint.Kickstart{
+							Contents: "# test kickstart addition created by osbuild-composer",
+						},
 						Modules: &iblueprint.AnacondaModules{
 							Enable: []string{
 								"org.fedoraproject.Anaconda.Modules.Localization",
