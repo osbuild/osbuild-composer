@@ -156,7 +156,6 @@ Packer:
   extends: .terraform
   rules:
     - !reference [.upstream_and_ga_rules_all, rules]
-    - !reference [.ga_rules_all, rules]
   script:
     - tools/ci-build-worker-packer.sh
   variables:
