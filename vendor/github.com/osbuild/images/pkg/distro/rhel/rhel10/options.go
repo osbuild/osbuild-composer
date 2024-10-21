@@ -35,7 +35,7 @@ func checkOptions(t *rhel.ImageType, bp *blueprint.Blueprint, options distro.Ima
 
 	if osc := customizations.GetOpenSCAP(); osc != nil {
 		if !oscap.IsProfileAllowed(osc.ProfileID, oscapProfileAllowList) {
-			return warnings, fmt.Errorf(fmt.Sprintf("OpenSCAP unsupported profile: %s", osc.ProfileID))
+			return warnings, fmt.Errorf("OpenSCAP unsupported profile: %s", osc.ProfileID)
 		}
 		if osc.ProfileID == "" {
 			return warnings, fmt.Errorf("OpenSCAP profile cannot be empty")
