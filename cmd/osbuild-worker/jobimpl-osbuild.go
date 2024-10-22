@@ -518,7 +518,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 
 	if impl.RepositoryMTLSConfig != nil {
 		if impl.RepositoryMTLSConfig.CA != "" {
-			extraEnv = append(extraEnv, fmt.Sprintf("OSBUILD_SOURCES_CURL_SSL_CLIENT_CERT=%s", impl.RepositoryMTLSConfig.CA))
+			extraEnv = append(extraEnv, fmt.Sprintf("OSBUILD_SOURCES_CURL_SSL_CA_CERT=%s", impl.RepositoryMTLSConfig.CA))
 		}
 		extraEnv = append(extraEnv, fmt.Sprintf("OSBUILD_SOURCES_CURL_SSL_CLIENT_KEY=%s", impl.RepositoryMTLSConfig.MTLSClientKey))
 		extraEnv = append(extraEnv, fmt.Sprintf("OSBUILD_SOURCES_CURL_SSL_CLIENT_CERT=%s", impl.RepositoryMTLSConfig.MTLSClientCert))
