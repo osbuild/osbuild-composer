@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/semaphore"
 
@@ -88,6 +89,16 @@ func AWSCleanup(maxConcurrentRequests int, dryRun bool, accessKeyID, accessKey s
 	if err != nil {
 		return fmt.Errorf("Unable to describe instances by tag %w", err)
 	}
+
+	instanceIDs := filterReservations(reservations)
+	err = a.TerminateInstances(instanceIDs)
+	if err != nil {
+		return fmt.Errorf("Unable to terminate secure instances: %w", err)
+	}
+	return nil
+}
+
+func filterReservations(reservations []ec2types.Reservation) []string {
 	var instanceIDs []string
 	for _, res := range reservations {
 		for _, i := range res.Instances {
@@ -96,9 +107,5 @@ func AWSCleanup(maxConcurrentRequests int, dryRun bool, accessKeyID, accessKey s
 			}
 		}
 	}
-	err = a.TerminateInstances(instanceIDs)
-	if err != nil {
-		return fmt.Errorf("Unable to terminate secure instances: %w", err)
-	}
-	return nil
+	return instanceIDs
 }
