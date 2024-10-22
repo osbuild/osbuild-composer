@@ -36,6 +36,8 @@ fi
 TEMPDIR=$(mktemp -d)
 function cleanup() {
     greenprint "== Script execution stopped or finished - Cleaning up =="
+    # kill dangling journalctl processes to prevent GitLab CI from hanging
+    sudo pkill journalctl || echo "Nothing killed"
     sudo rm -rf "$TEMPDIR"
 }
 trap cleanup EXIT
@@ -50,6 +52,7 @@ if ! hash az; then
     mkdir "${AZURE_CMD_CREDS_DIR}"
 
     AZURE_CMD="sudo ${CONTAINER_RUNTIME} run --rm \
+        --net=host \
         -v ${AZURE_CMD_CREDS_DIR}:/root/.azure:Z \
         -v ${TEMPDIR}:${TEMPDIR}:Z \
         ${CONTAINER_IMAGE_CLOUD_TOOLS} az"
@@ -156,8 +159,6 @@ sudo composer-cli blueprints depsolve bash
 WORKER_UNIT=$(sudo systemctl list-units | grep -o -E "osbuild.*worker.*\.service")
 sudo journalctl -af -n 1 -u "${WORKER_UNIT}" &
 WORKER_JOURNAL_PID=$!
-# Stop watching the worker journal when exiting.
-trap 'sudo pkill -P ${WORKER_JOURNAL_PID}' EXIT
 
 # Start the compose and upload to Azure.
 greenprint "🚀 Starting compose"
@@ -184,9 +185,8 @@ greenprint "💬 Getting compose log and metadata"
 get_compose_log "$COMPOSE_ID"
 get_compose_metadata "$COMPOSE_ID"
 
-# Kill the journal monitor immediately and remove the trap
+# Kill the journal monitor
 sudo pkill -P ${WORKER_JOURNAL_PID}
-trap - EXIT
 
 # Did the compose finish with success?
 if [[ $COMPOSE_STATUS != FINISHED ]]; then
@@ -220,9 +220,11 @@ tee "${TEMPDIR}/resource-file.json" <<EOF
   "instances": [
     {
       "vhd_uri": "${BLOB_URL}",
+      "arch": "${ARCH}",
       "location": "${AZURE_LOCATION}",
       "name": "${IMAGE_KEY}",
-      "hyper_v_generation": "${HYPER_V_GEN}"
+      "hyper_v_generation": "${HYPER_V_GEN}",
+      "storage_account": "${AZURE_STORAGE_ACCOUNT}"
     }
   ]
 }
@@ -238,20 +240,27 @@ cp "${CIV_CONFIG_FILE}" "${TEMPDIR}/civ_config.yml"
 # temporary workaround for
 # https://issues.redhat.com/browse/CLOUDX-488
 if nvrGreaterOrEqual "osbuild-composer" "83"; then
-    sudo "${CONTAINER_RUNTIME}" run \
-        -a stdout -a stderr \
-        -e ARM_CLIENT_ID="${V2_AZURE_CLIENT_ID}" \
-        -e ARM_CLIENT_SECRET="${V2_AZURE_CLIENT_SECRET}" \
-        -e ARM_SUBSCRIPTION_ID="${AZURE_SUBSCRIPTION_ID}" \
-        -e ARM_TENANT_ID="${AZURE_TENANT_ID}" \
-        -e JIRA_PAT="${JIRA_PAT}" \
-        -v "${TEMPDIR}":/tmp:Z \
-        "${CONTAINER_CLOUD_IMAGE_VAL}" \
-        python cloud-image-val.py \
-        -c /tmp/civ_config.yml \
-        && RESULTS=1 || RESULTS=0
+    # TODO: Remove this workaround, once CLOUDX-994 is resolved
+    if [[ ($ID == rhel || $ID == centos) && ${VERSION_ID%.*} == 10 ]]; then
+        RESULTS=1
+        yellowprint "WARNING: cloud-image-val currently skipped until CLOUDX-994 is resolved!"
+    else
+        sudo "${CONTAINER_RUNTIME}" run \
+            --net=host \
+            -a stdout -a stderr \
+            -e ARM_CLIENT_ID="${V2_AZURE_CLIENT_ID}" \
+            -e ARM_CLIENT_SECRET="${V2_AZURE_CLIENT_SECRET}" \
+            -e ARM_SUBSCRIPTION_ID="${AZURE_SUBSCRIPTION_ID}" \
+            -e ARM_TENANT_ID="${AZURE_TENANT_ID}" \
+            -e JIRA_PAT="${JIRA_PAT}" \
+            -v "${TEMPDIR}":/tmp:Z \
+            "${CONTAINER_CLOUD_IMAGE_VAL}" \
+            python cloud-image-val.py \
+            -c /tmp/civ_config.yml \
+            && RESULTS=1 || RESULTS=0
 
-    mv "${TEMPDIR}"/report.html "${ARTIFACTS}"
+        mv "${TEMPDIR}"/report.html "${ARTIFACTS}"
+    fi
 else
     RESULTS=1
 fi
