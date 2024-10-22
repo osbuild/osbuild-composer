@@ -258,26 +258,6 @@ jobs:
           name: PR_STATUS
           path: SKIP_CI.txt
 
-  kube-linter:
-    name: "🎀 kube-linter"
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    - uses: redhat-actions/oc-installer@v1
-    - name: Process template
-      run: |
-        mkdir processed-templates
-        oc process -f templates/composer.yml \
-          -p IMAGE_TAG=image_tag \
-          --local \
-          -o yaml > processed-templates/composer.yml
-
-    - uses: stackrox/kube-linter-action@v1.0.4
-      with:
-        directory: processed-templates
-        config: templates/.kube-linter-config.yml
-        version: 0.3.0
-
   cloud-cleaner-is-enabled:
     name: "🧹 cloud-cleaner-is-enabled"
     runs-on: ubuntu-latest
