@@ -7,7 +7,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/osbuild/images/internal/common"
+	"github.com/osbuild/images/pkg/datasizes"
 )
 
 // Argon2id defines parameters for the key derivation function for LUKS.
@@ -116,7 +116,7 @@ func (lc *LUKSContainer) MetadataSize() uint64 {
 	}
 
 	// 16 MiB is the default size for the LUKS2 header
-	return 16 * common.MiB
+	return 16 * datasizes.MiB
 }
 
 func (lc *LUKSContainer) minSize(size uint64) uint64 {

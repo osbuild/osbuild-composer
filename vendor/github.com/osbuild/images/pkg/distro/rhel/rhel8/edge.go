@@ -6,6 +6,7 @@ import (
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/customizations/fsnode"
+	"github.com/osbuild/images/pkg/datasizes"
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distro/rhel"
@@ -88,7 +89,7 @@ func mkEdgeRawImgType() *rhel.ImageType {
 		Locale:       common.ToPtr("C.UTF-8"),
 		LockRootUser: common.ToPtr(true),
 	}
-	it.DefaultSize = 10 * common.GibiByte
+	it.DefaultSize = 10 * datasizes.GibiByte
 	it.RPMOSTree = true
 	it.Bootable = true
 	it.BasePartitionTables = edgeBasePartitionTables
@@ -175,7 +176,7 @@ func mkEdgeSimplifiedInstallerImgType(rd *rhel.Distribution) *rhel.ImageType {
 			"prefixdevname-tools",
 		},
 	}
-	it.DefaultSize = 10 * common.GibiByte
+	it.DefaultSize = 10 * datasizes.GibiByte
 	it.RPMOSTree = true
 	it.Bootable = true
 	it.BootISO = true
@@ -212,7 +213,7 @@ func mkMinimalRawImgType() *rhel.ImageType {
 	}
 	it.KernelOptions = "ro"
 	it.Bootable = true
-	it.DefaultSize = 2 * common.GibiByte
+	it.DefaultSize = 2 * datasizes.GibiByte
 	it.BasePartitionTables = defaultBasePartitionTables
 
 	return it

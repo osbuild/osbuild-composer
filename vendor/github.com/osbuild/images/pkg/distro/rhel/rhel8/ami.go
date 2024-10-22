@@ -3,6 +3,7 @@ package rhel8
 import (
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/customizations/subscription"
+	"github.com/osbuild/images/pkg/datasizes"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distro/rhel"
 	"github.com/osbuild/images/pkg/osbuild"
@@ -32,7 +33,7 @@ func mkAmiImgTypeX86_64() *rhel.ImageType {
 	it.DefaultImageConfig = defaultAMIImageConfigX86_64()
 	it.KernelOptions = amiX86KernelOptions
 	it.Bootable = true
-	it.DefaultSize = 10 * common.GibiByte
+	it.DefaultSize = 10 * datasizes.GibiByte
 	it.BasePartitionTables = ec2PartitionTables
 
 	return it
@@ -56,7 +57,7 @@ func mkEc2ImgTypeX86_64(rd *rhel.Distribution) *rhel.ImageType {
 	it.DefaultImageConfig = defaultEc2ImageConfigX86_64(rd)
 	it.KernelOptions = amiX86KernelOptions
 	it.Bootable = true
-	it.DefaultSize = 10 * common.GibiByte
+	it.DefaultSize = 10 * datasizes.GibiByte
 	it.BasePartitionTables = ec2PartitionTables
 
 	return it
@@ -80,7 +81,7 @@ func mkEc2HaImgTypeX86_64(rd *rhel.Distribution) *rhel.ImageType {
 	it.DefaultImageConfig = defaultEc2ImageConfigX86_64(rd)
 	it.KernelOptions = amiX86KernelOptions
 	it.Bootable = true
-	it.DefaultSize = 10 * common.GibiByte
+	it.DefaultSize = 10 * datasizes.GibiByte
 	it.BasePartitionTables = ec2PartitionTables
 
 	return it
@@ -103,7 +104,7 @@ func mkAmiImgTypeAarch64() *rhel.ImageType {
 	it.DefaultImageConfig = defaultAMIImageConfig()
 	it.KernelOptions = amiAarch64KernelOptions
 	it.Bootable = true
-	it.DefaultSize = 10 * common.GibiByte
+	it.DefaultSize = 10 * datasizes.GibiByte
 	it.BasePartitionTables = ec2PartitionTables
 
 	return it
@@ -127,7 +128,7 @@ func mkEc2ImgTypeAarch64(rd *rhel.Distribution) *rhel.ImageType {
 	it.DefaultImageConfig = defaultEc2ImageConfig(rd)
 	it.KernelOptions = amiAarch64KernelOptions
 	it.Bootable = true
-	it.DefaultSize = 10 * common.GibiByte
+	it.DefaultSize = 10 * datasizes.GibiByte
 	it.BasePartitionTables = ec2PartitionTables
 
 	return it
@@ -151,7 +152,7 @@ func mkEc2SapImgTypeX86_64(rd *rhel.Distribution) *rhel.ImageType {
 	it.DefaultImageConfig = defaultEc2SapImageConfigX86_64(rd)
 	it.KernelOptions = amiSapKernelOptions
 	it.Bootable = true
-	it.DefaultSize = 10 * common.GibiByte
+	it.DefaultSize = 10 * datasizes.GibiByte
 	it.BasePartitionTables = ec2PartitionTables
 
 	return it
