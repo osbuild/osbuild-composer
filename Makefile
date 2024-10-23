@@ -344,9 +344,14 @@ container_composer_golangci_built.info: Makefile Containerfile_golangci_lint too
 	echo "Image last built on" > $@
 	date >> $@
 
+# trying to catch our use cases of the github action implementation
+# https://github.com/ludeeus/action-shellcheck/blob/master/action.yaml#L164
+SHELLCHECK_FILES=$(shell find . -name "*.sh" -not -regex "./vendor/.*")
+
 .PHONY: lint
 lint: $(GOLANGCI_LINT_CACHE_DIR) container_composer_golangci_built.info
 	podman run -t --rm -v $(SRCDIR):/app:z -v $(GOLANGCI_LINT_CACHE_DIR):/root/.cache:z -w /app $(GOLANGCI_COMPOSER_IMAGE) golangci-lint run -v
+	echo "$(SHELLCHECK_FILES)" | xargs shellcheck --shell bash -e SC1091 -e SC2002 -e SC2317
 
 # The OpenShift CLI - maybe get it from https://access.redhat.com/downloads/content/290
 OC_EXECUTABLE ?= oc
