@@ -6,6 +6,8 @@ package jobqueuetest
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"os"
 	"sync"
 	"testing"
 	"time"
@@ -18,6 +20,14 @@ import (
 type MakeJobQueue func() (q jobqueue.JobQueue, stop func(), err error)
 
 type testResult struct {
+}
+
+func TestDbURL() string {
+	host := os.Getenv("COMPOSER_TEST_DB_HOST")
+	if host == "" {
+		host = "localhost"
+	}
+	return fmt.Sprintf("postgres://postgres:foobar@%s:5432/osbuildcomposer", host)
 }
 
 func TestJobQueue(t *testing.T, makeJobQueue MakeJobQueue) {

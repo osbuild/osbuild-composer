@@ -19,6 +19,10 @@ SRCDIR ?= .
 
 RST2MAN ?= rst2man
 
+.ONESHELL:
+SHELL := /bin/bash
+.SHELLFLAGS := -ec -o pipefail
+
 # see https://hub.docker.com/r/docker/golangci-lint/tags
 # v1.55 to get golang 1.21 (1.21.3)
 # v1.53 to get golang 1.20 (1.20.5)
@@ -164,7 +168,7 @@ install: build
 	systemctl daemon-reload
 
 .PHONY: clean
-clean:
+clean: db-tests-prune
 	rm -rf $(BUILDDIR)/bin/
 	rm -rf $(CURDIR)/rpmbuild
 	rm -rf container_composer_golangci_built.info
@@ -236,7 +240,6 @@ worker-key-pair: ca
 	rm /etc/osbuild-composer/worker-csr.pem
 
 .PHONY: unit-tests
-.ONESHELL:
 unit-tests:
 	go test -race -covermode=atomic -coverprofile=coverage.txt -coverpkg=$$(go list ./... | tr "\n" ",") ./...
 	# go modules with go.mod in subdirs are not tested automatically
@@ -247,6 +250,42 @@ unit-tests:
 coverage-report: unit-tests
 	go tool cover -o coverage.html -html coverage.txt
 	go tool cover -o coverage_splunk_logger.html -html coverage_splunk_logger.txt
+
+CONTAINER_EXECUTABLE ?= podman
+
+.PHONY: db-tests-prune
+db-tests-prune:
+	-$(CONTAINER_EXECUTABLE) stop composer-test-db
+	-$(CONTAINER_EXECUTABLE) rm composer-test-db
+
+CHECK_DB_PORT_READY=$(CONTAINER_EXECUTABLE) exec composer-test-db pg_isready -d osbuildcomposer
+CHECK_DB_UP=$(CONTAINER_EXECUTABLE) exec composer-test-db psql -U postgres -d osbuildcomposer -c "SELECT 1"
+
+.PHONY: db-tests
+db-tests:
+	-$(CONTAINER_EXECUTABLE) stop composer-test-db 2>/dev/null || echo "DB already stopped"
+	-$(CONTAINER_EXECUTABLE) rm composer-test-db 2>/dev/null || echo "DB already removed"
+	$(CONTAINER_EXECUTABLE) run -d \
+      --name composer-test-db \
+      --env POSTGRES_PASSWORD=foobar \
+      --env POSTGRES_DB=osbuildcomposer \
+      --publish 5432:5432 \
+      postgres:12
+	echo "Waiting for DB"
+	until $(CHECK_DB_PORT_READY) ; do sleep 1; done
+	until $(CHECK_DB_UP) ; do sleep 1; done
+	env PGPASSWORD=foobar \
+	    PGDATABASE=osbuildcomposer \
+	    PGUSER=postgres \
+	    PGHOST=localhost \
+	    PGPORT=5432 \
+	    ./tools/dbtest-run-migrations.sh
+	./tools/dbtest-entrypoint.sh
+	# we'll leave the composer-test-db container running
+	# for easier inspection is something fails
+
+.PHONY: test
+test: unit-tests db-tests  # run all tests
 
 #
 # Building packages
