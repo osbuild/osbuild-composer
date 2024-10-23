@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -547,20 +548,24 @@ func (a *AWS) createFleet(input *ec2.CreateFleetInput) (*ec2.CreateFleetOutput, 
 		return nil, fmt.Errorf("Unable to create spot fleet: %w", err)
 	}
 
-	if len(createFleetOutput.Errors) > 0 {
-		logrus.Warnf("Received error %s from CreateFleet, retrying CreateFleet with OnDemand instance", *createFleetOutput.Errors[0].ErrorCode)
+	retry, fleetErrs := doCreateFleetRetry(createFleetOutput)
+	if len(fleetErrs) > 0 && retry {
+		logrus.Warnf("Received errors (%s) from CreateFleet, retrying CreateFleet with OnDemand instance", strings.Join(fleetErrs, "; "))
 		input.SpotOptions = nil
 		createFleetOutput, err = a.ec2.CreateFleet(context.Background(), input)
+		if err != nil {
+			return nil, fmt.Errorf("Unable to create on demand fleet: %w", err)
+		}
 	}
 
-	if err == nil && len(createFleetOutput.Errors) > 0 {
-		logrus.Warnf("Received error %s from CreateFleet with OnDemand instance option, retrying across availability zones", *createFleetOutput.Errors[0].ErrorCode)
+	retry, fleetErrs = doCreateFleetRetry(createFleetOutput)
+	if len(fleetErrs) > 0 && retry {
+		logrus.Warnf("Received errors (%s) from CreateFleet with OnDemand instance option, retrying across availability zones", strings.Join(fleetErrs, "; "))
 		input.LaunchTemplateConfigs[0].Overrides = nil
 		createFleetOutput, err = a.ec2.CreateFleet(context.Background(), input)
-	}
-
-	if err != nil {
-		return nil, fmt.Errorf("Unable to create fleet, tried on-demand and across AZs: %w", err)
+		if err != nil {
+			return nil, fmt.Errorf("Unable to create on demand fleet across AZs: %w", err)
+		}
 	}
 
 	if len(createFleetOutput.Errors) > 0 {
@@ -578,4 +583,31 @@ func (a *AWS) createFleet(input *ec2.CreateFleetInput) (*ec2.CreateFleetOutput, 
 		return nil, fmt.Errorf("Expected exactly one instance ID on fleet, got %d", len(createFleetOutput.Instances[0].InstanceIds))
 	}
 	return createFleetOutput, nil
+}
+
+func doCreateFleetRetry(cfOutput *ec2.CreateFleetOutput) (bool, []string) {
+	if cfOutput == nil {
+		return false, nil
+	}
+
+	retryCodes := []string{
+		"UnfulfillableCapacity",
+		"InsufficientInstanceCapacity",
+	}
+	msg := []string{}
+	retry := false
+	for _, err := range cfOutput.Errors {
+		if slices.Contains(retryCodes, *err.ErrorCode) {
+			retry = true
+		}
+		msg = append(msg, fmt.Sprintf("%s: %s", *err.ErrorCode, *err.ErrorMessage))
+	}
+
+	// Do not retry in case an instance already exists, in that case just fail and let the worker terminate the SI
+	if len(cfOutput.Instances) > 0 && len(cfOutput.Instances[0].InstanceIds) > 0 {
+		retry = false
+		msg = append(msg, fmt.Sprintf("Already launched instance (%s), aborting create fleet", cfOutput.Instances[0].InstanceIds))
+	}
+
+	return retry, msg
 }
