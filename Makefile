@@ -90,6 +90,7 @@ help:
 	@echo "    clean:              Remove all built binaries"
 	@echo "    man:                Generate all man-pages"
 	@echo "    unit-tests:         Run unit tests"
+	@echo "    db-tests:           Run postgres DB tests"
 	@echo "    push-check:         Replicates the github workflow checks as close as possible"
 	@echo "                        (do this before pushing!)"
 	@echo "    lint:               Runs linters as close as github workflow as possible"
