@@ -87,7 +87,7 @@ func testErrors(t *testing.T, q jobqueue.JobQueue) {
 	require.Equal(t, uuid.Nil, id)
 
 	// invalid dependency
-	id, err = q.Enqueue("test", "arg0", []uuid.UUID{uuid.New()}, "")
+	id, err = q.Enqueue("test", "{}", []uuid.UUID{uuid.New()}, "")
 	require.Error(t, err)
 	require.Equal(t, uuid.Nil, id)
 
