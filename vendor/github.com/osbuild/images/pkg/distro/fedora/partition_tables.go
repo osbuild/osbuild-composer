@@ -1,8 +1,8 @@
 package fedora
 
 import (
-	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/arch"
+	"github.com/osbuild/images/pkg/datasizes"
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/distro"
 )
@@ -13,13 +13,13 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 		Type: "gpt",
 		Partitions: []disk.Partition{
 			{
-				Size:     1 * common.MebiByte,
+				Size:     1 * datasizes.MebiByte,
 				Bootable: true,
 				Type:     disk.BIOSBootPartitionGUID,
 				UUID:     disk.BIOSBootPartitionUUID,
 			},
 			{
-				Size: 200 * common.MebiByte,
+				Size: 200 * datasizes.MebiByte,
 				Type: disk.EFISystemPartitionGUID,
 				UUID: disk.EFISystemPartitionUUID,
 				Payload: &disk.Filesystem{
@@ -33,7 +33,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 				},
 			},
 			{
-				Size: 500 * common.MebiByte,
+				Size: 500 * datasizes.MebiByte,
 				Type: disk.FilesystemDataGUID,
 				UUID: disk.FilesystemDataUUID,
 				Payload: &disk.Filesystem{
@@ -46,7 +46,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 				},
 			},
 			{
-				Size: 2 * common.GibiByte,
+				Size: 2 * datasizes.GibiByte,
 				Type: disk.FilesystemDataGUID,
 				UUID: disk.RootPartitionUUID,
 				Payload: &disk.Filesystem{
@@ -65,7 +65,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 		Type: "gpt",
 		Partitions: []disk.Partition{
 			{
-				Size: 200 * common.MebiByte,
+				Size: 200 * datasizes.MebiByte,
 				Type: disk.EFISystemPartitionGUID,
 				UUID: disk.EFISystemPartitionUUID,
 				Payload: &disk.Filesystem{
@@ -79,7 +79,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 				},
 			},
 			{
-				Size: 500 * common.MebiByte,
+				Size: 500 * datasizes.MebiByte,
 				Type: disk.FilesystemDataGUID,
 				UUID: disk.FilesystemDataUUID,
 				Payload: &disk.Filesystem{
@@ -92,7 +92,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 				},
 			},
 			{
-				Size: 2 * common.GibiByte,
+				Size: 2 * datasizes.GibiByte,
 				Type: disk.FilesystemDataGUID,
 				UUID: disk.RootPartitionUUID,
 				Payload: &disk.Filesystem{
@@ -111,12 +111,12 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 		Type: "dos",
 		Partitions: []disk.Partition{
 			{
-				Size:     4 * common.MebiByte,
+				Size:     4 * datasizes.MebiByte,
 				Type:     "41",
 				Bootable: true,
 			},
 			{
-				Size: 500 * common.MebiByte,
+				Size: 500 * datasizes.MebiByte,
 				Payload: &disk.Filesystem{
 					Type:         "ext4",
 					Mountpoint:   "/boot",
@@ -127,7 +127,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 				},
 			},
 			{
-				Size: 2 * common.GibiByte,
+				Size: 2 * datasizes.GibiByte,
 				Payload: &disk.Filesystem{
 					Type:         "ext4",
 					Mountpoint:   "/",
@@ -144,7 +144,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 		Type: "dos",
 		Partitions: []disk.Partition{
 			{
-				Size: 500 * common.MebiByte,
+				Size: 500 * datasizes.MebiByte,
 				Payload: &disk.Filesystem{
 					Type:         "ext4",
 					Mountpoint:   "/boot",
@@ -155,7 +155,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 				},
 			},
 			{
-				Size:     2 * common.GibiByte,
+				Size:     2 * datasizes.GibiByte,
 				Bootable: true,
 				Payload: &disk.Filesystem{
 					Type:         "ext4",
@@ -173,10 +173,10 @@ var minimalrawPartitionTables = distro.BasePartitionTableMap{
 	arch.ARCH_X86_64.String(): disk.PartitionTable{
 		UUID:        "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
 		Type:        "gpt",
-		StartOffset: 8 * common.MebiByte,
+		StartOffset: 8 * datasizes.MebiByte,
 		Partitions: []disk.Partition{
 			{
-				Size: 200 * common.MebiByte,
+				Size: 200 * datasizes.MebiByte,
 				Type: disk.EFISystemPartitionGUID,
 				UUID: disk.EFISystemPartitionUUID,
 				Payload: &disk.Filesystem{
@@ -190,7 +190,7 @@ var minimalrawPartitionTables = distro.BasePartitionTableMap{
 				},
 			},
 			{
-				Size: 1 * common.GibiByte,
+				Size: 1 * datasizes.GibiByte,
 				Type: disk.XBootLDRPartitionGUID,
 				UUID: disk.FilesystemDataUUID,
 				Payload: &disk.Filesystem{
@@ -203,7 +203,7 @@ var minimalrawPartitionTables = distro.BasePartitionTableMap{
 				},
 			},
 			{
-				Size: 2 * common.GibiByte,
+				Size: 2 * datasizes.GibiByte,
 				Type: disk.FilesystemDataGUID,
 				UUID: disk.RootPartitionUUID,
 				Payload: &disk.Filesystem{
@@ -220,10 +220,10 @@ var minimalrawPartitionTables = distro.BasePartitionTableMap{
 	arch.ARCH_AARCH64.String(): disk.PartitionTable{
 		UUID:        "0xc1748067",
 		Type:        "dos",
-		StartOffset: 8 * common.MebiByte,
+		StartOffset: 8 * datasizes.MebiByte,
 		Partitions: []disk.Partition{
 			{
-				Size:     200 * common.MebiByte,
+				Size:     200 * datasizes.MebiByte,
 				Type:     disk.DosFat16B,
 				Bootable: true,
 				Payload: &disk.Filesystem{
@@ -237,7 +237,7 @@ var minimalrawPartitionTables = distro.BasePartitionTableMap{
 				},
 			},
 			{
-				Size: 1 * common.GibiByte,
+				Size: 1 * datasizes.GibiByte,
 				Type: "83",
 				Payload: &disk.Filesystem{
 					Type:         "ext4",
@@ -249,7 +249,7 @@ var minimalrawPartitionTables = distro.BasePartitionTableMap{
 				},
 			},
 			{
-				Size: 2 * common.GibiByte,
+				Size: 2 * datasizes.GibiByte,
 				Type: "83",
 				Payload: &disk.Filesystem{
 					Type:         "ext4",
@@ -268,10 +268,10 @@ var iotBasePartitionTables = distro.BasePartitionTableMap{
 	arch.ARCH_X86_64.String(): disk.PartitionTable{
 		UUID:        "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
 		Type:        "gpt",
-		StartOffset: 8 * common.MebiByte,
+		StartOffset: 8 * datasizes.MebiByte,
 		Partitions: []disk.Partition{
 			{
-				Size: 501 * common.MebiByte,
+				Size: 501 * datasizes.MebiByte,
 				Type: disk.EFISystemPartitionGUID,
 				UUID: disk.EFISystemPartitionUUID,
 				Payload: &disk.Filesystem{
@@ -285,7 +285,7 @@ var iotBasePartitionTables = distro.BasePartitionTableMap{
 				},
 			},
 			{
-				Size: 1 * common.GibiByte,
+				Size: 1 * datasizes.GibiByte,
 				Type: disk.FilesystemDataGUID,
 				UUID: disk.FilesystemDataUUID,
 				Payload: &disk.Filesystem{
@@ -298,7 +298,7 @@ var iotBasePartitionTables = distro.BasePartitionTableMap{
 				},
 			},
 			{
-				Size: 2569 * common.MebiByte,
+				Size: 2569 * datasizes.MebiByte,
 				Type: disk.FilesystemDataGUID,
 				UUID: disk.RootPartitionUUID,
 				Payload: &disk.Filesystem{
@@ -315,10 +315,10 @@ var iotBasePartitionTables = distro.BasePartitionTableMap{
 	arch.ARCH_AARCH64.String(): disk.PartitionTable{
 		UUID:        "0xc1748067",
 		Type:        "dos",
-		StartOffset: 8 * common.MebiByte,
+		StartOffset: 8 * datasizes.MebiByte,
 		Partitions: []disk.Partition{
 			{
-				Size:     501 * common.MebiByte,
+				Size:     501 * datasizes.MebiByte,
 				Type:     disk.DosFat16B,
 				Bootable: true,
 				Payload: &disk.Filesystem{
@@ -332,7 +332,7 @@ var iotBasePartitionTables = distro.BasePartitionTableMap{
 				},
 			},
 			{
-				Size: 1 * common.GibiByte,
+				Size: 1 * datasizes.GibiByte,
 				Type: "83",
 				Payload: &disk.Filesystem{
 					Type:         "ext4",
@@ -344,7 +344,7 @@ var iotBasePartitionTables = distro.BasePartitionTableMap{
 				},
 			},
 			{
-				Size: 2569 * common.MebiByte,
+				Size: 2569 * datasizes.MebiByte,
 				Type: "83",
 				Payload: &disk.Filesystem{
 					Type:         "ext4",
@@ -365,7 +365,7 @@ var iotSimplifiedInstallerPartitionTables = distro.BasePartitionTableMap{
 		Type: "gpt",
 		Partitions: []disk.Partition{
 			{
-				Size: 501 * common.MebiByte,
+				Size: 501 * datasizes.MebiByte,
 				Type: disk.EFISystemPartitionGUID,
 				UUID: disk.EFISystemPartitionUUID,
 				Payload: &disk.Filesystem{
@@ -379,7 +379,7 @@ var iotSimplifiedInstallerPartitionTables = distro.BasePartitionTableMap{
 				},
 			},
 			{
-				Size: 1 * common.GibiByte,
+				Size: 1 * datasizes.GibiByte,
 				Type: disk.XBootLDRPartitionGUID,
 				UUID: disk.FilesystemDataUUID,
 				Payload: &disk.Filesystem{
@@ -413,7 +413,7 @@ var iotSimplifiedInstallerPartitionTables = distro.BasePartitionTableMap{
 						Description: "built with lvm2 and osbuild",
 						LogicalVolumes: []disk.LVMLogicalVolume{
 							{
-								Size: 8 * common.GibiByte,
+								Size: 8 * datasizes.GibiByte,
 								Name: "rootlv",
 								Payload: &disk.Filesystem{
 									Type:         "ext4",
@@ -435,7 +435,7 @@ var iotSimplifiedInstallerPartitionTables = distro.BasePartitionTableMap{
 		Type: "gpt",
 		Partitions: []disk.Partition{
 			{
-				Size: 501 * common.MebiByte,
+				Size: 501 * datasizes.MebiByte,
 				Type: disk.EFISystemPartitionGUID,
 				UUID: disk.EFISystemPartitionUUID,
 				Payload: &disk.Filesystem{
@@ -449,7 +449,7 @@ var iotSimplifiedInstallerPartitionTables = distro.BasePartitionTableMap{
 				},
 			},
 			{
-				Size: 1 * common.GibiByte,
+				Size: 1 * datasizes.GibiByte,
 				Type: disk.XBootLDRPartitionGUID,
 				UUID: disk.FilesystemDataUUID,
 				Payload: &disk.Filesystem{
@@ -483,7 +483,7 @@ var iotSimplifiedInstallerPartitionTables = distro.BasePartitionTableMap{
 						Description: "built with lvm2 and osbuild",
 						LogicalVolumes: []disk.LVMLogicalVolume{
 							{
-								Size: 8 * common.GibiByte,
+								Size: 8 * datasizes.GibiByte,
 								Name: "rootlv",
 								Payload: &disk.Filesystem{
 									Type:         "ext4",

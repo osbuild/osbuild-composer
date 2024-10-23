@@ -4,6 +4,7 @@ import (
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/customizations/subscription"
+	"github.com/osbuild/images/pkg/datasizes"
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distro/rhel"
@@ -34,7 +35,7 @@ func mkAzureRhuiImgType() *rhel.ImageType {
 	it.KernelOptions = "ro crashkernel=auto console=tty1 console=ttyS0 earlyprintk=ttyS0 rootdelay=300 scsi_mod.use_blk_mq=y"
 	it.DefaultImageConfig = azureDefaultImgConfig
 	it.Bootable = true
-	it.DefaultSize = 64 * common.GibiByte
+	it.DefaultSize = 64 * datasizes.GibiByte
 	it.BasePartitionTables = azureRhuiBasePartitionTables
 
 	return it
@@ -286,10 +287,10 @@ func azureRhuiBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool)
 		return disk.PartitionTable{
 			UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
 			Type: "gpt",
-			Size: 64 * common.GibiByte,
+			Size: 64 * datasizes.GibiByte,
 			Partitions: []disk.Partition{
 				{
-					Size: 500 * common.MebiByte,
+					Size: 500 * datasizes.MebiByte,
 					Type: disk.EFISystemPartitionGUID,
 					UUID: disk.EFISystemPartitionUUID,
 					Payload: &disk.Filesystem{
@@ -302,7 +303,7 @@ func azureRhuiBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool)
 					},
 				},
 				{
-					Size: 500 * common.MebiByte,
+					Size: 500 * datasizes.MebiByte,
 					Type: disk.FilesystemDataGUID,
 					UUID: disk.FilesystemDataUUID,
 					Payload: &disk.Filesystem{
@@ -314,7 +315,7 @@ func azureRhuiBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool)
 					},
 				},
 				{
-					Size:     2 * common.MebiByte,
+					Size:     2 * datasizes.MebiByte,
 					Bootable: true,
 					Type:     disk.BIOSBootPartitionGUID,
 					UUID:     disk.BIOSBootPartitionUUID,
@@ -327,7 +328,7 @@ func azureRhuiBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool)
 						Description: "built with lvm2 and osbuild",
 						LogicalVolumes: []disk.LVMLogicalVolume{
 							{
-								Size: 1 * common.GibiByte,
+								Size: 1 * datasizes.GibiByte,
 								Name: "homelv",
 								Payload: &disk.Filesystem{
 									Type:         "xfs",
@@ -339,7 +340,7 @@ func azureRhuiBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool)
 								},
 							},
 							{
-								Size: 2 * common.GibiByte,
+								Size: 2 * datasizes.GibiByte,
 								Name: "rootlv",
 								Payload: &disk.Filesystem{
 									Type:         "xfs",
@@ -351,7 +352,7 @@ func azureRhuiBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool)
 								},
 							},
 							{
-								Size: 2 * common.GibiByte,
+								Size: 2 * datasizes.GibiByte,
 								Name: "tmplv",
 								Payload: &disk.Filesystem{
 									Type:         "xfs",
@@ -363,7 +364,7 @@ func azureRhuiBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool)
 								},
 							},
 							{
-								Size: 10 * common.GibiByte,
+								Size: 10 * datasizes.GibiByte,
 								Name: "usrlv",
 								Payload: &disk.Filesystem{
 									Type:         "xfs",
@@ -375,7 +376,7 @@ func azureRhuiBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool)
 								},
 							},
 							{
-								Size: 10 * common.GibiByte, // firedrill: 8 GB
+								Size: 10 * datasizes.GibiByte,
 								Name: "varlv",
 								Payload: &disk.Filesystem{
 									Type:         "xfs",

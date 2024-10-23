@@ -2,6 +2,7 @@ package rhel10
 
 import (
 	"github.com/osbuild/images/internal/common"
+	"github.com/osbuild/images/pkg/datasizes"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distro/rhel"
 	"github.com/osbuild/images/pkg/osbuild"
@@ -25,7 +26,7 @@ func mkAzureImgType() *rhel.ImageType {
 
 	it.KernelOptions = defaultAzureKernelOptions
 	it.Bootable = true
-	it.DefaultSize = 4 * common.GibiByte
+	it.DefaultSize = 4 * datasizes.GibiByte
 	it.DefaultImageConfig = defaultAzureImageConfig
 	it.BasePartitionTables = defaultBasePartitionTables
 
@@ -49,7 +50,7 @@ func mkAzureByosImgType(rd distro.Distro) *rhel.ImageType {
 
 	it.KernelOptions = defaultAzureKernelOptions
 	it.Bootable = true
-	it.DefaultSize = 4 * common.GibiByte
+	it.DefaultSize = 4 * datasizes.GibiByte
 	it.DefaultImageConfig = defaultAzureImageConfig
 	it.BasePartitionTables = defaultBasePartitionTables
 
