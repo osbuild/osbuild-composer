@@ -8,15 +8,15 @@ if [ -z "${SLACK_WEBHOOK_URL:-}" ]; then
 fi
 
 if [ "$3" == "ga" ]; then
-    MESSAGE="\"GA composes pipeline execution finished with status *$1* $2 \n QE: @atodorov, @jrusz, @tkosciel\n Link to results: $CI_PIPELINE_URL \""
+    MESSAGE="\"<$CI_PIPELINE_URL|GA composes pipeline>: *$1* $2, cc <@U01CUGX9L68>, <@U01Q07AHZ9C>, <@U04PYMDRV5H>\""
 else
     COMPOSE_ID=$(cat COMPOSE_ID)
     COMPOSER_NVR=$(cat COMPOSER_NVR)
-    MESSAGE="\"Nightly pipeline execution on *$COMPOSE_ID* with *$COMPOSER_NVR* finished with status *$1* $2 \n QE: @atodorov, @jrusz, @tkosciel\n Link to results: $CI_PIPELINE_URL\n For edge testing status please see https://url.corp.redhat.com/edge-pipelines \""
+    MESSAGE="\"<$CI_PIPELINE_URL|Nightly pipeline> ($COMPOSE_ID: $COMPOSER_NVR): *$1* $2, cc <@U01CUGX9L68>, <@U01Q07AHZ9C>, <@U04PYMDRV5H>\""
 fi
 
 curl \
     -X POST \
     -H 'Content-type: application/json' \
-    --data '{"text": "test", "blocks": [ { "type": "section", "text": {"type": "mrkdwn", "text":'"$MESSAGE"'}}]}' \
+    --data '{"text": '"$MESSAGE"'}' \
     "$SLACK_WEBHOOK_URL"
