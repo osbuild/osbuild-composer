@@ -67,7 +67,7 @@ jobs:
       run: sudo apt-get update
       # gpgme-devel is needed for container upload dependencies
     - name: Install test dependencies
-      run: sudo apt-get install -y libgpgme-dev
+      run: sudo apt-get install -y libgpgme-dev libbtrfs-dev
     - uses: actions/checkout@v4
     - uses: actions/setup-go@v5
       with:

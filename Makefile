@@ -304,6 +304,7 @@ container_composer_golangci_built.info: Makefile Containerfile_golangci_lint too
 
 .PHONY: lint
 lint: $(GOLANGCI_LINT_CACHE_DIR) container_composer_golangci_built.info
+	go fmt ./...
 	podman run -t --rm -v $(SRCDIR):/app:z -v $(GOLANGCI_LINT_CACHE_DIR):/root/.cache:z -w /app $(GOLANGCI_COMPOSER_IMAGE) golangci-lint run -v
 
 # The OpenShift CLI - maybe get it from https://access.redhat.com/downloads/content/290
