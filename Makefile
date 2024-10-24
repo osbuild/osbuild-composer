@@ -182,7 +182,6 @@ push-check: lint build unit-tests srpm man
 	./tools/check-runners
 	./tools/check-snapshots --errors-only .
 	rpmlint --config rpmlint.config $(CURDIR)/rpmbuild/SRPMS/*
-	./tools/prepare-source.sh
 	@if [ 0 -ne $$(git status --porcelain --untracked-files|wc -l) ]; then \
 	    echo "There should be no changed or untracked files"; \
 	    git status --porcelain --untracked-files; \
@@ -350,6 +349,7 @@ SHELLCHECK_FILES=$(shell find . -name "*.sh" -not -regex "./vendor/.*")
 
 .PHONY: lint
 lint: $(GOLANGCI_LINT_CACHE_DIR) container_composer_golangci_built.info
+	./tools/prepare-source.sh
 	podman run -t --rm -v $(SRCDIR):/app:z -v $(GOLANGCI_LINT_CACHE_DIR):/root/.cache:z -w /app $(GOLANGCI_COMPOSER_IMAGE) golangci-lint run -v
 	echo "$(SHELLCHECK_FILES)" | xargs shellcheck --shell bash -e SC1091 -e SC2002 -e SC2317
 
