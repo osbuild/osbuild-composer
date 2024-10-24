@@ -552,6 +552,7 @@ func (a *AWS) createFleet(input *ec2.CreateFleetInput) (*ec2.CreateFleetOutput, 
 	if len(fleetErrs) > 0 && retry {
 		logrus.Warnf("Received errors (%s) from CreateFleet, retrying CreateFleet with OnDemand instance", strings.Join(fleetErrs, "; "))
 		input.SpotOptions = nil
+		input.TargetCapacitySpecification.DefaultTargetCapacityType = ec2types.DefaultTargetCapacityTypeOnDemand
 		createFleetOutput, err = a.ec2.CreateFleet(context.Background(), input)
 		if err != nil {
 			return nil, fmt.Errorf("Unable to create on demand fleet: %w", err)
