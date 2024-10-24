@@ -14,12 +14,10 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/jobqueue/jobqueuetest"
 )
 
-const url = "postgres://postgres:foobar@localhost:5432/osbuildcomposer"
-
 func TestJobQueueInterface(t *testing.T) {
 	makeJobQueue := func() (jobqueue.JobQueue, func(), error) {
 		// clear db before each run
-		conn, err := pgx.Connect(context.Background(), url)
+		conn, err := pgx.Connect(context.Background(), jobqueuetest.TestDbURL())
 		if err != nil {
 			return nil, nil, err
 		}
@@ -35,7 +33,7 @@ func TestJobQueueInterface(t *testing.T) {
 			return nil, nil, err
 		}
 
-		q, err := dbjobqueue.New(url)
+		q, err := dbjobqueue.New(jobqueuetest.TestDbURL())
 		if err != nil {
 			return nil, nil, err
 		}

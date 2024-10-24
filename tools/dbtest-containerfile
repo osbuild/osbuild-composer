@@ -1,0 +1,9 @@
+FROM docker.io/golang:1.21
+
+RUN mkdir -p /app/tools
+WORKDIR /app
+RUN apt update && apt install -y make ca-certificates golang-github-proglottis-gpgme-dev libbtrfs-dev
+RUN update-ca-certificates
+
+COPY ./dbtest-prepare-env.sh ./tools/
+RUN ./tools/dbtest-prepare-env.sh

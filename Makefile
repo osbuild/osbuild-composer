@@ -19,12 +19,18 @@ SRCDIR ?= .
 
 RST2MAN ?= rst2man
 
+.ONESHELL:
+SHELL := /bin/bash
+.SHELLFLAGS := -ec -o pipefail
+
 # see https://hub.docker.com/r/docker/golangci-lint/tags
 # v1.55 to get golang 1.21 (1.21.3)
 # v1.53 to get golang 1.20 (1.20.5)
 GOLANGCI_LINT_VERSION=v1.55
 GOLANGCI_LINT_CACHE_DIR=$(HOME)/.cache/golangci-lint/$(GOLANGCI_LINT_VERSION)
 GOLANGCI_COMPOSER_IMAGE=composer_golangci
+GOLANGCI_CONTAINERFILE=Containerfile_golangci_lint
+
 #
 # Automatic Variables
 #
@@ -86,6 +92,7 @@ help:
 	@echo "    clean:              Remove all built binaries"
 	@echo "    man:                Generate all man-pages"
 	@echo "    unit-tests:         Run unit tests"
+	@echo "    db-tests:           Run postgres DB tests"
 	@echo "    push-check:         Replicates the github workflow checks as close as possible"
 	@echo "                        (do this before pushing!)"
 	@echo "    lint:               Runs linters as close as github workflow as possible"
@@ -139,6 +146,7 @@ build: $(BUILDDIR)/bin/
 	go build -o $<osbuild-service-maintenance ./cmd/osbuild-service-maintenance
 	go build -o $<osbuild-jobsite-manager ./cmd/osbuild-jobsite-manager
 	go build -o $<osbuild-jobsite-builder ./cmd/osbuild-jobsite-builder
+	# also build the test binaries
 	go test -c -tags=integration -o $<osbuild-composer-cli-tests ./cmd/osbuild-composer-cli-tests/main_test.go
 	go test -c -tags=integration -o $<osbuild-weldr-tests ./internal/client/
 	go test -c -tags=integration -o $<osbuild-dnf-json-tests ./cmd/osbuild-dnf-json-tests/main_test.go
@@ -164,7 +172,7 @@ install: build
 	systemctl daemon-reload
 
 .PHONY: clean
-clean:
+clean: db-tests-prune
 	rm -rf $(BUILDDIR)/bin/
 	rm -rf $(CURDIR)/rpmbuild
 	rm -rf container_composer_golangci_built.info
@@ -235,7 +243,6 @@ worker-key-pair: ca
 	rm /etc/osbuild-composer/worker-csr.pem
 
 .PHONY: unit-tests
-.ONESHELL:
 unit-tests:
 	go test -race -covermode=atomic -coverprofile=coverage.txt -coverpkg=$$(go list ./... | tr "\n" ",") ./...
 	# go modules with go.mod in subdirs are not tested automatically
@@ -246,6 +253,29 @@ unit-tests:
 coverage-report: unit-tests
 	go tool cover -o coverage.html -html coverage.txt
 	go tool cover -o coverage_splunk_logger.html -html coverage_splunk_logger.txt
+
+DBTEST_COMPOSEFILE=tools/dbtest-compose.yml
+
+# as of now (writing this)
+# podman-compose does not robustly rebuild the services
+# and dependencies so we'll use docker for now
+CONTAINER_EXECUTABLE ?= docker
+
+.PHONY: db-tests-prune
+db-tests-prune:
+	-$(CONTAINER_EXECUTABLE)-compose -f $(DBTEST_COMPOSEFILE) down
+	# two names for the same container
+	# docker and podman give different names
+	-$(CONTAINER_EXECUTABLE) rmi composer_composer-tests tools-composer-tests
+
+.PHONY: db-tests
+db-tests:
+	# assure clean environment with "down"
+	-$(CONTAINER_EXECUTABLE)-compose -f $(DBTEST_COMPOSEFILE) down
+	$(CONTAINER_EXECUTABLE)-compose -f $(DBTEST_COMPOSEFILE) up --exit-code-from composer-tests
+
+.PHONY: test
+test: unit-tests db-tests  # run all tests
 
 #
 # Building packages
@@ -297,14 +327,19 @@ scratch: $(RPM_SPECFILE) $(RPM_TARBALL)
 		--nocheck \
 		$(RPM_SPECFILE)
 
-container_composer_golangci_built.info: Makefile Containerfile_golangci_lint tools/apt-install-deps.sh
-	podman build -f Containerfile_golangci_lint -t $(GOLANGCI_COMPOSER_IMAGE) --build-arg "GOLANGCI_LINT_VERSION=$(GOLANGCI_LINT_VERSION)"
+container_composer_golangci_built.info: Makefile $(GOLANGCI_CONTAINERFILE) tools/apt-install-deps.sh
+	podman build -f $(GOLANGCI_CONTAINERFILE) -t $(GOLANGCI_COMPOSER_IMAGE) --build-arg "GOLANGCI_LINT_VERSION=$(GOLANGCI_LINT_VERSION)"
 	echo "Image last built on" > $@
 	date >> $@
+
+# trying to catch our use cases of the github action implementation
+# https://github.com/ludeeus/action-shellcheck/blob/master/action.yaml#L164
+SHELLCHECK_FILES=$(shell find . -name "*.sh" -not -regex "./vendor/.*")
 
 .PHONY: lint
 lint: $(GOLANGCI_LINT_CACHE_DIR) container_composer_golangci_built.info
 	podman run -t --rm -v $(SRCDIR):/app:z -v $(GOLANGCI_LINT_CACHE_DIR):/root/.cache:z -w /app $(GOLANGCI_COMPOSER_IMAGE) golangci-lint run -v
+	echo "$(SHELLCHECK_FILES)" | xargs shellcheck --shell bash -e SC1091 -e SC2002 -e SC2317
 
 # The OpenShift CLI - maybe get it from https://access.redhat.com/downloads/content/290
 OC_EXECUTABLE ?= oc

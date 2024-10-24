@@ -79,14 +79,9 @@ jobs:
         PGHOST: localhost
         PGPORT: 5432
       run: |
-        WORKDIR=$(readlink -f pkg/jobqueue/dbjobqueue/schemas)
-        pushd $(mktemp -d)
-        go mod init temp
-        go install github.com/jackc/tern@latest
-        $(go env GOPATH)/bin/tern migrate -m "$WORKDIR"
-        popd
-    - run: go test -tags=integration ./cmd/osbuild-composer-dbjobqueue-tests
-    - run: go test -tags=integration ./cmd/osbuild-service-maintenance
+        ./tools/dbtest-prepare-env.sh
+        ./tools/dbtest-run-migrations.sh
+    - run: ./tools/dbtest-entrypoint.sh
 
   python-lint:
     name: "🐍 Lint python scripts"

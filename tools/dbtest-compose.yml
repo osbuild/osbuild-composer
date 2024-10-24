@@ -1,0 +1,34 @@
+---
+services:
+  postgres:
+    image: docker.io/library/postgres:12
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: foobar
+      POSTGRES_DB: osbuildcomposer
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-h", "localhost", "-U", "postgres", "-d", "osbuildcomposer" ]
+      interval: 2s
+      timeout: 2s
+      retries: 10
+    ports:
+      - 5432:5432
+  composer-tests:
+    restart: no
+    depends_on:
+      postgres:
+        condition: service_healthy
+    build:
+      dockerfile: dbtest-containerfile
+    environment:
+      PGUSER: postgres
+      PGPASSWORD: foobar
+      PGDATABASE: osbuildcomposer
+      PGHOST: postgres
+      PGPORT: 5432
+      COMPOSER_TEST_DB_HOST: postgres
+    volumes:
+      - ..:/app:z
+    entrypoint: ["/app/tools/dbtest-entrypoint.sh"]
+
