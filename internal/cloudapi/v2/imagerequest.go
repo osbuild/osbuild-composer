@@ -465,9 +465,6 @@ func (ir *ImageRequest) GetOSTreeOptions() (ostreeOptions *ostree.ImageOptions, 
 	if ir.Ostree.Parent != nil {
 		ostreeOptions.ParentRef = *ir.Ostree.Parent
 	}
-	if ir.Ostree.Rhsm != nil {
-		ostreeOptions.RHSM = *ir.Ostree.Rhsm
-	}
 
 	return ostreeOptions, nil
 }

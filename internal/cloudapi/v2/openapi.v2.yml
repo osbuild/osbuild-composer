@@ -1884,6 +1884,7 @@ components:
           type: boolean
           default: false
           description: |
+            DEPRECATED:
             Determines whether a valid subscription manager (candlepin) identity is required to
             access this repository. Consumer certificates will be used as client certificates when
             fetching metadata and content.
