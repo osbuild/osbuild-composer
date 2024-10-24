@@ -25,7 +25,10 @@ func (a *AWS) DescribeImagesByTag(tagKey, tagValue string) ([]ec2types.Image, er
 			},
 		},
 	)
-	return imgs.Images, err
+	if err != nil {
+		return nil, err
+	}
+	return imgs.Images, nil
 }
 
 func (a *AWS) RemoveSnapshotAndDeregisterImage(image *ec2types.Image) error {
