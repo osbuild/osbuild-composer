@@ -91,9 +91,14 @@ func AWSCleanup(maxConcurrentRequests int, dryRun bool, accessKeyID, accessKey s
 	}
 
 	instanceIDs := filterReservations(reservations)
-	err = a.TerminateInstances(instanceIDs)
-	if err != nil {
-		return fmt.Errorf("Unable to terminate secure instances: %w", err)
+	logrus.Infof("Cleaning up executor instances: %v", instanceIDs)
+	if !dryRun {
+		err = a.TerminateInstances(instanceIDs)
+		if err != nil {
+			return fmt.Errorf("Unable to terminate secure instances: %w", err)
+		}
+	} else {
+		logrus.Info("Dry run, didn't actually terminate any instances")
 	}
 	return nil
 }
