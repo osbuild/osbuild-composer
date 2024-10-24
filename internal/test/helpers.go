@@ -102,14 +102,17 @@ func TestRouteWithReply(t *testing.T, api http.Handler, external bool, method, p
 	t.Helper()
 
 	resp := SendHTTP(api, external, method, path, body)
+	//nolint:golint,staticcheck
 	if resp == nil {
 		t.Skip("This test is for internal testing only")
 	}
 
 	var err error
+	//nolint:golint,staticcheck
 	replyJSON, err = io.ReadAll(resp.Body)
 	require.NoErrorf(t, err, "%s: could not read response body", path)
 
+	//nolint:golint,staticcheck
 	assert.Equalf(t, expectedStatus, resp.StatusCode, "SendHTTP failed for path %s: %v", path, string(replyJSON))
 
 	if expectedJSON == "" {
@@ -144,13 +147,16 @@ func TestTOMLRoute(t *testing.T, api http.Handler, external bool, method, path, 
 	t.Helper()
 
 	resp := SendHTTP(api, external, method, path, body)
+	//nolint:golint,staticcheck
 	if resp == nil {
 		t.Skip("This test is for internal testing only")
 	}
 
+	//nolint:golint,staticcheck
 	replyTOML, err := io.ReadAll(resp.Body)
 	require.NoErrorf(t, err, "%s: could not read response body", path)
 
+	//nolint:golint,staticcheck
 	assert.Equalf(t, expectedStatus, resp.StatusCode, "SendHTTP failed for path %s: %v", path, string(replyTOML))
 
 	if expectedTOML == "" {
