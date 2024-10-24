@@ -13,6 +13,7 @@ import (
 	"github.com/osbuild/images/pkg/blueprint"
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/customizations/oscap"
+	"github.com/osbuild/images/pkg/datasizes"
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/image"
@@ -97,8 +98,8 @@ func (t *imageType) ISOLabel() (string, error) {
 
 func (t *imageType) Size(size uint64) uint64 {
 	// Microsoft Azure requires vhd images to be rounded up to the nearest MB
-	if t.name == "vhd" && size%common.MebiByte != 0 {
-		size = (size/common.MebiByte + 1) * common.MebiByte
+	if t.name == "vhd" && size%datasizes.MebiByte != 0 {
+		size = (size/datasizes.MebiByte + 1) * datasizes.MebiByte
 	}
 	if size == 0 {
 		size = t.defaultSize
@@ -143,7 +144,7 @@ func (t *imageType) getPartitionTable(
 ) (*disk.PartitionTable, error) {
 	basePartitionTable, exists := t.basePartitionTables[t.arch.Name()]
 	if !exists {
-		return nil, fmt.Errorf("unknown arch: " + t.arch.Name())
+		return nil, fmt.Errorf("unknown arch: %s", t.arch.Name())
 	}
 
 	imageSize := t.Size(options.Size)
@@ -367,7 +368,7 @@ func (t *imageType) checkOptions(bp *blueprint.Blueprint, options distro.ImageOp
 	if osc := customizations.GetOpenSCAP(); osc != nil {
 		supported := oscap.IsProfileAllowed(osc.ProfileID, oscapProfileAllowList)
 		if !supported {
-			return nil, fmt.Errorf(fmt.Sprintf("OpenSCAP unsupported profile: %s", osc.ProfileID))
+			return nil, fmt.Errorf("OpenSCAP unsupported profile: %s", osc.ProfileID)
 		}
 		if t.rpmOstree {
 			return nil, fmt.Errorf("OpenSCAP customizations are not supported for ostree types")
