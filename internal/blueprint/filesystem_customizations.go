@@ -35,7 +35,11 @@ func (fsc *FilesystemCustomization) UnmarshalTOML(data interface{}) error {
 	// we would like to discourage its use.
 	switch d["size"].(type) {
 	case int64:
-		size = uint64(d["size"].(int64))
+		sizeInt := d["size"].(int64)
+		if sizeInt < 0 {
+			return fmt.Errorf("TOML unmarshal: size cannot be negative: %d", sizeInt)
+		}
+		size = uint64(sizeInt)
 	case string:
 		s, err := common.DataSizeToUint64(d["size"].(string))
 		if err != nil {
@@ -50,7 +54,11 @@ func (fsc *FilesystemCustomization) UnmarshalTOML(data interface{}) error {
 
 	switch d["minsize"].(type) {
 	case int64:
-		minsize = uint64(d["minsize"].(int64))
+		sizeInt := d["minsize"].(int64)
+		if sizeInt < 0 {
+			return fmt.Errorf("TOML unmarshal: minsize cannot be negative: %d", sizeInt)
+		}
+		minsize = uint64(sizeInt)
 	case string:
 		s, err := common.DataSizeToUint64(d["minsize"].(string))
 		if err != nil {

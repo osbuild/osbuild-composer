@@ -26,7 +26,7 @@ func BuildJWTAuthHandler(keysURLs []string, caFile, aclFile string, exclude []st
 		return
 	}
 
-	logger.Info(context.Background(), aclFile)
+	logger.Info(context.Background(), "%s", aclFile)
 
 	builder := authentication.NewHandler().
 		Logger(logger)

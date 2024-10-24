@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
 	"os"
 	"os/exec"
@@ -94,7 +95,7 @@ func runOsbuild(logger *logrus.Logger, buildDir string, control *controlJSON, ou
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		err = fmt.Errorf("cannot tar output directory: %w, output:\n%s", err, out)
-		logger.Errorf(err.Error())
+		logger.Errorf("%s", err.Error())
 		_, _ = mw.Write([]byte(err.Error()))
 		return "", err
 	}
@@ -202,6 +203,10 @@ func handleIncludedSources(atar *tar.Reader, buildDir string) error {
 
 		// this assume "well" behaving tars, i.e. all dirs that lead
 		// up to the tar are included etc
+		if hdr.Mode < 0 || hdr.Mode > math.MaxUint32 {
+			return fmt.Errorf("invalid file mode in header: %d", hdr.Mode)
+		}
+		// #nosec G115
 		mode := os.FileMode(hdr.Mode)
 		switch hdr.Typeflag {
 		case tar.TypeDir:

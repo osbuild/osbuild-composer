@@ -28,7 +28,7 @@ func checkOptions(t *rhel.ImageType, bp *blueprint.Blueprint, options distro.Ima
 	}
 
 	if osc := customizations.GetOpenSCAP(); osc != nil {
-		return warnings, fmt.Errorf(fmt.Sprintf("OpenSCAP unsupported os version: %s", t.Arch().Distro().OsVersion()))
+		return warnings, fmt.Errorf("OpenSCAP unsupported os version: %s", t.Arch().Distro().OsVersion())
 	}
 
 	// Check Directory/File Customizations are valid

@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"net/url"
 	"time"
 
@@ -102,6 +103,11 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 		// Fail the Koji build if the job error is set and the necessary
 		// information to identify the job are available.
 		if kojiFinalizeJobResult.JobError != nil && initArgs != nil {
+			if initArgs.BuildID > math.MaxInt {
+				logWithId.Errorf("job BuildID %d can't be converted to 'int'", initArgs.BuildID)
+				return
+			}
+			// #nosec: G115
 			err = impl.kojiFail(args.Server, int(initArgs.BuildID), initArgs.Token)
 			if err != nil {
 				logWithId.Errorf("Failing Koji job failed: %v", err)
@@ -157,7 +163,7 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 		kojiTargetOptions := kojiTargetResult.Options.(*target.KojiTargetResultOptions)
 
 		buildRoots = append(buildRoots, koji.BuildRoot{
-			ID: uint64(i),
+			ID: uint64(i), // #nosec: G115  // index can't be negative
 			Host: koji.Host{
 				Os:   buildResult.HostOS,
 				Arch: buildResult.Arch,
@@ -210,7 +216,7 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 
 		// Image output
 		outputs = append(outputs, koji.BuildOutput{
-			BuildRootID:  uint64(i),
+			BuildRootID:  uint64(i), // #nosec: G115  // index can't be negative
 			Filename:     imageFilename,
 			FileSize:     kojiTargetOptions.Image.Size,
 			Arch:         buildResult.Arch,
@@ -254,7 +260,7 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 			manifestOutputsExtraInfo[kojiTargetOptions.OSBuildManifest.Filename] = &manifestExtraInfo
 
 			outputs = append(outputs, koji.BuildOutput{
-				BuildRootID:  uint64(i),
+				BuildRootID:  uint64(i), // #nosec: G115  // index can't be negative
 				Filename:     kojiTargetOptions.OSBuildManifest.Filename,
 				FileSize:     kojiTargetOptions.OSBuildManifest.Size,
 				Arch:         buildResult.Arch,
@@ -272,7 +278,7 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 		// TODO: Remove the condition it in the future.
 		if kojiTargetOptions.Log != nil {
 			outputs = append(outputs, koji.BuildOutput{
-				BuildRootID:  uint64(i),
+				BuildRootID:  uint64(i), // #nosec: G115  // index can't be negative
 				Filename:     kojiTargetOptions.Log.Filename,
 				FileSize:     kojiTargetOptions.Log.Size,
 				Arch:         "noarch", // log file is not architecture dependent
@@ -286,7 +292,7 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 		if len(kojiTargetOptions.SbomDocs) > 0 {
 			for _, sbomDoc := range kojiTargetOptions.SbomDocs {
 				outputs = append(outputs, koji.BuildOutput{
-					BuildRootID:  uint64(i),
+					BuildRootID:  uint64(i), // #nosec: G115  // index can't be negative
 					Filename:     sbomDoc.Filename,
 					FileSize:     sbomDoc.Size,
 					Arch:         buildResult.Arch,
@@ -305,13 +311,16 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 		}
 	}
 
+	if args.StartTime > math.MaxInt64 {
+		return fmt.Errorf("args.StartTime %d is too large for Koji StartTime", args.StartTime)
+	}
 	build := koji.Build{
 		BuildID:   initArgs.BuildID,
 		TaskID:    args.TaskID,
 		Name:      args.Name,
 		Version:   args.Version,
 		Release:   args.Release,
-		StartTime: int64(args.StartTime),
+		StartTime: int64(args.StartTime), // #nosec: G115 // this will break in 2262
 		EndTime:   time.Now().Unix(),
 		Extra: koji.BuildExtra{
 			TypeInfo: koji.TypeInfoBuild{
