@@ -3,6 +3,7 @@ package rhel8
 import (
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/arch"
+	"github.com/osbuild/images/pkg/datasizes"
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/distro/rhel"
 )
@@ -15,13 +16,13 @@ func defaultBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 			Type: "gpt",
 			Partitions: []disk.Partition{
 				{
-					Size:     1 * common.MebiByte,
+					Size:     1 * datasizes.MebiByte,
 					Bootable: true,
 					Type:     disk.BIOSBootPartitionGUID,
 					UUID:     disk.BIOSBootPartitionUUID,
 				},
 				{
-					Size: 100 * common.MebiByte,
+					Size: 100 * datasizes.MebiByte,
 					Type: disk.EFISystemPartitionGUID,
 					UUID: disk.EFISystemPartitionUUID,
 					Payload: &disk.Filesystem{
@@ -34,7 +35,7 @@ func defaultBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 					},
 				},
 				{
-					Size: 2 * common.GibiByte,
+					Size: 2 * datasizes.GibiByte,
 					Type: disk.FilesystemDataGUID,
 					UUID: disk.RootPartitionUUID,
 					Payload: &disk.Filesystem{
@@ -55,7 +56,7 @@ func defaultBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 			Type: "gpt",
 			Partitions: []disk.Partition{
 				{
-					Size: 100 * common.MebiByte,
+					Size: 100 * datasizes.MebiByte,
 					Type: disk.EFISystemPartitionGUID,
 					UUID: disk.EFISystemPartitionUUID,
 					Payload: &disk.Filesystem{
@@ -68,7 +69,7 @@ func defaultBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 					},
 				},
 				{
-					Size: 2 * common.GibiByte,
+					Size: 2 * datasizes.GibiByte,
 					Type: disk.FilesystemDataGUID,
 					UUID: disk.RootPartitionUUID,
 					Payload: &disk.Filesystem{
@@ -89,12 +90,12 @@ func defaultBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 			Type: "dos",
 			Partitions: []disk.Partition{
 				{
-					Size:     4 * common.MebiByte,
+					Size:     4 * datasizes.MebiByte,
 					Type:     "41",
 					Bootable: true,
 				},
 				{
-					Size: 2 * common.GibiByte,
+					Size: 2 * datasizes.GibiByte,
 					Payload: &disk.Filesystem{
 						Type:         "xfs",
 						Mountpoint:   "/",
@@ -112,7 +113,7 @@ func defaultBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 			Type: "dos",
 			Partitions: []disk.Partition{
 				{
-					Size:     2 * common.GibiByte,
+					Size:     2 * datasizes.GibiByte,
 					Bootable: true,
 					Payload: &disk.Filesystem{
 						Type:         "xfs",
@@ -138,13 +139,13 @@ func edgeBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 			Type: "gpt",
 			Partitions: []disk.Partition{
 				{
-					Size:     1 * common.MebiByte,
+					Size:     1 * datasizes.MebiByte,
 					Bootable: true,
 					Type:     disk.BIOSBootPartitionGUID,
 					UUID:     disk.BIOSBootPartitionUUID,
 				},
 				{
-					Size: 127 * common.MebiByte,
+					Size: 127 * datasizes.MebiByte,
 					Type: disk.EFISystemPartitionGUID,
 					UUID: disk.EFISystemPartitionUUID,
 					Payload: &disk.Filesystem{
@@ -158,7 +159,7 @@ func edgeBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 					},
 				},
 				{
-					Size: 384 * common.MebiByte,
+					Size: 384 * datasizes.MebiByte,
 					Type: disk.FilesystemDataGUID,
 					UUID: disk.FilesystemDataUUID,
 					Payload: &disk.Filesystem{
@@ -171,7 +172,7 @@ func edgeBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 					},
 				},
 				{
-					Size: 2 * common.GibiByte,
+					Size: 2 * datasizes.GibiByte,
 					Type: disk.FilesystemDataGUID,
 					UUID: disk.RootPartitionUUID,
 					Payload: &disk.LUKSContainer{
@@ -207,7 +208,7 @@ func edgeBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 			Type: "gpt",
 			Partitions: []disk.Partition{
 				{
-					Size: 127 * common.MebiByte,
+					Size: 127 * datasizes.MebiByte,
 					Type: disk.EFISystemPartitionGUID,
 					UUID: disk.EFISystemPartitionUUID,
 					Payload: &disk.Filesystem{
@@ -221,7 +222,7 @@ func edgeBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 					},
 				},
 				{
-					Size: 384 * common.MebiByte,
+					Size: 384 * datasizes.MebiByte,
 					Type: disk.FilesystemDataGUID,
 					UUID: disk.FilesystemDataUUID,
 					Payload: &disk.Filesystem{
@@ -234,7 +235,7 @@ func edgeBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 					},
 				},
 				{
-					Size: 2 * common.GibiByte,
+					Size: 2 * datasizes.GibiByte,
 					Type: disk.FilesystemDataGUID,
 					UUID: disk.RootPartitionUUID,
 					Payload: &disk.LUKSContainer{
@@ -275,9 +276,9 @@ func ec2PartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 	var aarch64BootSize uint64
 	switch {
 	case common.VersionLessThan(t.Arch().Distro().OsVersion(), "8.10") && t.IsRHEL():
-		aarch64BootSize = 512 * common.MebiByte
+		aarch64BootSize = 512 * datasizes.MebiByte
 	default:
-		aarch64BootSize = 1 * common.GibiByte
+		aarch64BootSize = 1 * datasizes.GibiByte
 	}
 
 	x86PartitionTable := disk.PartitionTable{
@@ -285,13 +286,13 @@ func ec2PartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 		Type: "gpt",
 		Partitions: []disk.Partition{
 			{
-				Size:     1 * common.MebiByte,
+				Size:     1 * datasizes.MebiByte,
 				Bootable: true,
 				Type:     disk.BIOSBootPartitionGUID,
 				UUID:     disk.BIOSBootPartitionUUID,
 			},
 			{
-				Size: 200 * common.MebiByte,
+				Size: 200 * datasizes.MebiByte,
 				Type: disk.EFISystemPartitionGUID,
 				UUID: disk.EFISystemPartitionUUID,
 				Payload: &disk.Filesystem{
@@ -304,7 +305,7 @@ func ec2PartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 				},
 			},
 			{
-				Size: 2 * common.GibiByte,
+				Size: 2 * datasizes.GibiByte,
 				Type: disk.FilesystemDataGUID,
 				UUID: disk.RootPartitionUUID,
 				Payload: &disk.Filesystem{
@@ -325,13 +326,13 @@ func ec2PartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 			Type: "gpt",
 			Partitions: []disk.Partition{
 				{
-					Size:     1 * common.MebiByte,
+					Size:     1 * datasizes.MebiByte,
 					Bootable: true,
 					Type:     disk.BIOSBootPartitionGUID,
 					UUID:     disk.BIOSBootPartitionUUID,
 				},
 				{
-					Size: 2 * common.GibiByte,
+					Size: 2 * datasizes.GibiByte,
 					Type: disk.FilesystemDataGUID,
 					UUID: disk.RootPartitionUUID,
 					Payload: &disk.Filesystem{
@@ -357,7 +358,7 @@ func ec2PartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 			Type: "gpt",
 			Partitions: []disk.Partition{
 				{
-					Size: 200 * common.MebiByte,
+					Size: 200 * datasizes.MebiByte,
 					Type: disk.EFISystemPartitionGUID,
 					UUID: disk.EFISystemPartitionUUID,
 					Payload: &disk.Filesystem{
@@ -382,7 +383,7 @@ func ec2PartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 					},
 				},
 				{
-					Size: 2 * common.GibiByte,
+					Size: 2 * datasizes.GibiByte,
 					Type: disk.FilesystemDataGUID,
 					UUID: disk.RootPartitionUUID,
 					Payload: &disk.Filesystem{

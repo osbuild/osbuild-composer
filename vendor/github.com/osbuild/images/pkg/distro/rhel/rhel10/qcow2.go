@@ -3,6 +3,7 @@ package rhel10
 import (
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/customizations/subscription"
+	"github.com/osbuild/images/pkg/datasizes"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distro/rhel"
 	"github.com/osbuild/images/pkg/rpmmd"
@@ -24,7 +25,7 @@ func mkQcow2ImgType(d *rhel.Distribution) *rhel.ImageType {
 
 	it.DefaultImageConfig = qcowImageConfig(d)
 	it.KernelOptions = "console=tty0 console=ttyS0,115200n8 no_timer_check"
-	it.DefaultSize = 10 * common.GibiByte
+	it.DefaultSize = 10 * datasizes.GibiByte
 	it.Bootable = true
 	it.BasePartitionTables = defaultBasePartitionTables
 
@@ -47,7 +48,7 @@ func mkOCIImgType(d *rhel.Distribution) *rhel.ImageType {
 
 	it.DefaultImageConfig = qcowImageConfig(d)
 	it.KernelOptions = "console=tty0 console=ttyS0,115200n8 no_timer_check"
-	it.DefaultSize = 10 * common.GibiByte
+	it.DefaultSize = 10 * datasizes.GibiByte
 	it.Bootable = true
 	it.BasePartitionTables = defaultBasePartitionTables
 

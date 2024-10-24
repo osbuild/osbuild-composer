@@ -2,6 +2,7 @@ package rhel9
 
 import (
 	"github.com/osbuild/images/internal/common"
+	"github.com/osbuild/images/pkg/datasizes"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distro/rhel"
 	"github.com/osbuild/images/pkg/osbuild"
@@ -29,7 +30,7 @@ func mkGCEImageType() *rhel.ImageType {
 	// https://issues.redhat.com/browse/COMPOSER-2157
 	it.DefaultImageConfig = baseGCEImageConfig()
 	it.KernelOptions = gceKernelOptions
-	it.DefaultSize = 20 * common.GibiByte
+	it.DefaultSize = 20 * datasizes.GibiByte
 	it.Bootable = true
 	// TODO: the base partition table still contains the BIOS boot partition, but the image is UEFI-only
 	it.BasePartitionTables = defaultBasePartitionTables

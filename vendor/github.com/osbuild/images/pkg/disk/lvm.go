@@ -5,12 +5,12 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/osbuild/images/internal/common"
+	"github.com/osbuild/images/pkg/datasizes"
 )
 
 // Default physical extent size in bytes: logical volumes
 // created inside the VG will be aligned to this.
-const LVMDefaultExtentSize = 4 * common.MebiByte
+const LVMDefaultExtentSize = 4 * datasizes.MebiByte
 
 type LVMVolumeGroup struct {
 	Name        string
@@ -143,7 +143,7 @@ func (vg *LVMVolumeGroup) MetadataSize() uint64 {
 	// of the metadata and its location and thus the start of the physical
 	// extent. For now we assume the default which results in a start of
 	// the physical extent 1 MiB
-	return 1 * common.MiB
+	return 1 * datasizes.MiB
 }
 
 func (vg *LVMVolumeGroup) minSize(size uint64) uint64 {

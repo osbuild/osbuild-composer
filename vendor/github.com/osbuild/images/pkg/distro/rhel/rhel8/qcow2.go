@@ -3,6 +3,7 @@ package rhel8
 import (
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/customizations/subscription"
+	"github.com/osbuild/images/pkg/datasizes"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distro/rhel"
 	"github.com/osbuild/images/pkg/rpmmd"
@@ -25,7 +26,7 @@ func mkQcow2ImgType(rd *rhel.Distribution) *rhel.ImageType {
 	it.DefaultImageConfig = qcowImageConfig(rd)
 	it.KernelOptions = "console=tty0 console=ttyS0,115200n8 no_timer_check net.ifnames=0 crashkernel=auto"
 	it.Bootable = true
-	it.DefaultSize = 10 * common.GibiByte
+	it.DefaultSize = 10 * datasizes.GibiByte
 	it.BasePartitionTables = defaultBasePartitionTables
 
 	return it
@@ -48,7 +49,7 @@ func mkOCIImgType(rd *rhel.Distribution) *rhel.ImageType {
 	it.DefaultImageConfig = qcowImageConfig(rd)
 	it.KernelOptions = "console=tty0 console=ttyS0,115200n8 no_timer_check net.ifnames=0 crashkernel=auto"
 	it.Bootable = true
-	it.DefaultSize = 10 * common.GibiByte
+	it.DefaultSize = 10 * datasizes.GibiByte
 	it.BasePartitionTables = defaultBasePartitionTables
 
 	return it
@@ -69,7 +70,7 @@ func mkOpenstackImgType() *rhel.ImageType {
 	)
 
 	it.KernelOptions = "ro net.ifnames=0"
-	it.DefaultSize = 4 * common.GibiByte
+	it.DefaultSize = 4 * datasizes.GibiByte
 	it.Bootable = true
 	it.BasePartitionTables = defaultBasePartitionTables
 

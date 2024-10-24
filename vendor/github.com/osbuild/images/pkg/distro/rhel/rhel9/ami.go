@@ -2,6 +2,7 @@ package rhel9
 
 import (
 	"github.com/osbuild/images/internal/common"
+	"github.com/osbuild/images/pkg/datasizes"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distro/rhel"
 	"github.com/osbuild/images/pkg/osbuild"
@@ -276,7 +277,7 @@ func mkEc2ImgTypeX86_64() *rhel.ImageType {
 	it.Compression = "xz"
 	it.KernelOptions = amiKernelOptions
 	it.Bootable = true
-	it.DefaultSize = 10 * common.GibiByte
+	it.DefaultSize = 10 * datasizes.GibiByte
 	it.DefaultImageConfig = defaultEc2ImageConfigX86_64()
 	it.BasePartitionTables = defaultBasePartitionTables
 
@@ -299,7 +300,7 @@ func mkAMIImgTypeX86_64() *rhel.ImageType {
 
 	it.KernelOptions = amiKernelOptions
 	it.Bootable = true
-	it.DefaultSize = 10 * common.GibiByte
+	it.DefaultSize = 10 * datasizes.GibiByte
 	it.DefaultImageConfig = defaultEc2ImageConfigX86_64()
 	it.BasePartitionTables = defaultBasePartitionTables
 
@@ -323,7 +324,7 @@ func mkEC2SapImgTypeX86_64(osVersion string) *rhel.ImageType {
 	it.Compression = "xz"
 	it.KernelOptions = "console=ttyS0,115200n8 console=tty0 net.ifnames=0 nvme_core.io_timeout=4294967295 processor.max_cstate=1 intel_idle.max_cstate=1"
 	it.Bootable = true
-	it.DefaultSize = 10 * common.GibiByte
+	it.DefaultSize = 10 * datasizes.GibiByte
 	it.DefaultImageConfig = sapImageConfig(osVersion).InheritFrom(defaultEc2ImageConfigX86_64())
 	it.BasePartitionTables = defaultBasePartitionTables
 
@@ -347,7 +348,7 @@ func mkEc2HaImgTypeX86_64() *rhel.ImageType {
 	it.Compression = "xz"
 	it.KernelOptions = amiKernelOptions
 	it.Bootable = true
-	it.DefaultSize = 10 * common.GibiByte
+	it.DefaultSize = 10 * datasizes.GibiByte
 	it.DefaultImageConfig = defaultEc2ImageConfigX86_64()
 	it.BasePartitionTables = defaultBasePartitionTables
 
@@ -370,7 +371,7 @@ func mkAMIImgTypeAarch64() *rhel.ImageType {
 
 	it.KernelOptions = "console=ttyS0,115200n8 console=tty0 net.ifnames=0 nvme_core.io_timeout=4294967295 iommu.strict=0"
 	it.Bootable = true
-	it.DefaultSize = 10 * common.GibiByte
+	it.DefaultSize = 10 * datasizes.GibiByte
 	it.DefaultImageConfig = defaultEc2ImageConfig()
 	it.BasePartitionTables = defaultBasePartitionTables
 
@@ -394,7 +395,7 @@ func mkEC2ImgTypeAarch64() *rhel.ImageType {
 	it.Compression = "xz"
 	it.KernelOptions = "console=ttyS0,115200n8 console=tty0 net.ifnames=0 nvme_core.io_timeout=4294967295 iommu.strict=0"
 	it.Bootable = true
-	it.DefaultSize = 10 * common.GibiByte
+	it.DefaultSize = 10 * datasizes.GibiByte
 	it.DefaultImageConfig = defaultEc2ImageConfig()
 	it.BasePartitionTables = defaultBasePartitionTables
 

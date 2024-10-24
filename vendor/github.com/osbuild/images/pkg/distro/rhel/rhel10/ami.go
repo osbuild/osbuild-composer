@@ -2,6 +2,7 @@ package rhel10
 
 import (
 	"github.com/osbuild/images/internal/common"
+	"github.com/osbuild/images/pkg/datasizes"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distro/rhel"
 	"github.com/osbuild/images/pkg/osbuild"
@@ -217,7 +218,7 @@ func mkAMIImgTypeX86_64() *rhel.ImageType {
 
 	it.KernelOptions = amiKernelOptions
 	it.Bootable = true
-	it.DefaultSize = 10 * common.GibiByte
+	it.DefaultSize = 10 * datasizes.GibiByte
 	it.DefaultImageConfig = defaultAMIImageConfigX86_64()
 	it.BasePartitionTables = defaultBasePartitionTables
 
@@ -241,7 +242,7 @@ func mkAMIImgTypeAarch64() *rhel.ImageType {
 
 	it.KernelOptions = "console=ttyS0,115200n8 console=tty0 nvme_core.io_timeout=4294967295 iommu.strict=0"
 	it.Bootable = true
-	it.DefaultSize = 10 * common.GibiByte
+	it.DefaultSize = 10 * datasizes.GibiByte
 	it.DefaultImageConfig = defaultAMIImageConfig()
 	it.BasePartitionTables = defaultBasePartitionTables
 

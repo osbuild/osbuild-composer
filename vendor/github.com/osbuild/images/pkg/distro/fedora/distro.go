@@ -11,6 +11,7 @@ import (
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/customizations/fsnode"
 	"github.com/osbuild/images/pkg/customizations/oscap"
+	"github.com/osbuild/images/pkg/datasizes"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/platform"
@@ -209,7 +210,7 @@ var (
 			LockRootUser:              common.ToPtr(true),
 			IgnitionPlatform:          common.ToPtr("metal"),
 		},
-		defaultSize:         10 * common.GibiByte,
+		defaultSize:         10 * datasizes.GibiByte,
 		rpmOstree:           true,
 		bootable:            true,
 		bootISO:             true,
@@ -238,7 +239,7 @@ var (
 			LockRootUser:              common.ToPtr(true),
 			IgnitionPlatform:          common.ToPtr("metal"),
 		},
-		defaultSize:         4 * common.GibiByte,
+		defaultSize:         4 * datasizes.GibiByte,
 		rpmOstree:           true,
 		bootable:            true,
 		image:               iotImage,
@@ -268,7 +269,7 @@ var (
 			LockRootUser:              common.ToPtr(true),
 			IgnitionPlatform:          common.ToPtr("qemu"),
 		},
-		defaultSize:         10 * common.GibiByte,
+		defaultSize:         10 * datasizes.GibiByte,
 		rpmOstree:           true,
 		bootable:            true,
 		image:               iotImage,
@@ -292,7 +293,7 @@ var (
 		},
 		kernelOptions:       cloudKernelOptions,
 		bootable:            true,
-		defaultSize:         5 * common.GibiByte,
+		defaultSize:         5 * datasizes.GibiByte,
 		image:               diskImage,
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"os", "image", "qcow2"},
@@ -320,7 +321,7 @@ var (
 		defaultImageConfig:  vmdkDefaultImageConfig,
 		kernelOptions:       cloudKernelOptions,
 		bootable:            true,
-		defaultSize:         2 * common.GibiByte,
+		defaultSize:         2 * datasizes.GibiByte,
 		image:               diskImage,
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"os", "image", "vmdk"},
@@ -338,7 +339,7 @@ var (
 		defaultImageConfig:  vmdkDefaultImageConfig,
 		kernelOptions:       cloudKernelOptions,
 		bootable:            true,
-		defaultSize:         2 * common.GibiByte,
+		defaultSize:         2 * datasizes.GibiByte,
 		image:               diskImage,
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"os", "image", "vmdk", "ovf", "archive"},
@@ -412,7 +413,7 @@ var (
 		rpmOstree:           false,
 		kernelOptions:       defaultKernelOptions,
 		bootable:            true,
-		defaultSize:         2 * common.GibiByte,
+		defaultSize:         2 * datasizes.GibiByte,
 		image:               diskImage,
 		buildPipelines:      []string{"build"},
 		payloadPipelines:    []string{"os", "image", "xz"},
@@ -450,6 +451,9 @@ func getISOLabelFunc(variant string) isoLabelFunc {
 }
 
 func getDistro(version int) distribution {
+	if version < 0 {
+		panic("Invalid Fedora version (must be positive)")
+	}
 	return distribution{
 		name:               fmt.Sprintf("fedora-%d", version),
 		product:            "Fedora",

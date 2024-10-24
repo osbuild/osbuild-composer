@@ -6,6 +6,7 @@ import (
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/customizations/fsnode"
+	"github.com/osbuild/images/pkg/datasizes"
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distro/rhel"
@@ -38,7 +39,7 @@ func mkEc2ImgTypeX86_64() *rhel.ImageType {
 	it.DefaultImageConfig = ec2ImageConfig()
 	it.KernelOptions = ec2KernelOptions
 	it.Bootable = true
-	it.DefaultSize = 10 * common.GibiByte
+	it.DefaultSize = 10 * datasizes.GibiByte
 	it.BasePartitionTables = ec2PartitionTables
 
 	return it
@@ -259,16 +260,16 @@ func ec2PartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 		return disk.PartitionTable{
 			UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
 			Type: "gpt",
-			Size: 10 * common.GibiByte,
+			Size: 10 * datasizes.GibiByte,
 			Partitions: []disk.Partition{
 				{
-					Size:     1 * common.MebiByte,
+					Size:     1 * datasizes.MebiByte,
 					Bootable: true,
 					Type:     disk.BIOSBootPartitionGUID,
 					UUID:     disk.BIOSBootPartitionUUID,
 				},
 				{
-					Size: 6144 * common.MebiByte,
+					Size: 6144 * datasizes.MebiByte,
 					Type: disk.FilesystemDataGUID,
 					UUID: disk.RootPartitionUUID,
 					Payload: &disk.Filesystem{

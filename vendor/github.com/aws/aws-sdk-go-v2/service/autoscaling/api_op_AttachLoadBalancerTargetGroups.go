@@ -10,7 +10,7 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// This API operation is superseded by AttachTrafficSources, which can attach multiple traffic sources
+// This API operation is superseded by [AttachTrafficSources], which can attach multiple traffic sources
 // types. We recommend using AttachTrafficSources to simplify how you manage
 // traffic sources. However, we continue to support AttachLoadBalancerTargetGroups
 // . You can use both the original AttachLoadBalancerTargetGroups API operation
@@ -28,14 +28,17 @@ import (
 //
 //   - Gateway Load Balancer - Operates at the network layer (layer 3).
 //
-// To describe the target groups for an Auto Scaling group, call the DescribeLoadBalancerTargetGroups API. To
-// detach the target group from the Auto Scaling group, call the DetachLoadBalancerTargetGroupsAPI.
+// To describe the target groups for an Auto Scaling group, call the [DescribeLoadBalancerTargetGroups] API. To
+// detach the target group from the Auto Scaling group, call the [DetachLoadBalancerTargetGroups]API.
 //
 // This operation is additive and does not detach existing target groups or
 // Classic Load Balancers from the Auto Scaling group.
 //
 // For more information, see [Use Elastic Load Balancing to distribute traffic across the instances in your Auto Scaling group] in the Amazon EC2 Auto Scaling User Guide.
 //
+// [DescribeLoadBalancerTargetGroups]: https://docs.aws.amazon.com/autoscaling/ec2/APIReference/API_DescribeLoadBalancerTargetGroups.html
+// [DetachLoadBalancerTargetGroups]: https://docs.aws.amazon.com/autoscaling/ec2/APIReference/API_DetachLoadBalancerTargetGroups.html
+// [AttachTrafficSources]: https://docs.aws.amazon.com/autoscaling/ec2/APIReference/API_AttachTrafficSources.html
 // [Use Elastic Load Balancing to distribute traffic across the instances in your Auto Scaling group]: https://docs.aws.amazon.com/autoscaling/ec2/userguide/autoscaling-load-balancer.html
 func (c *Client) AttachLoadBalancerTargetGroups(ctx context.Context, params *AttachLoadBalancerTargetGroupsInput, optFns ...func(*Options)) (*AttachLoadBalancerTargetGroupsOutput, error) {
 	if params == nil {
@@ -121,6 +124,9 @@ func (c *Client) addOperationAttachLoadBalancerTargetGroupsMiddlewares(stack *mi
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -158,6 +164,18 @@ func (c *Client) addOperationAttachLoadBalancerTargetGroupsMiddlewares(stack *mi
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

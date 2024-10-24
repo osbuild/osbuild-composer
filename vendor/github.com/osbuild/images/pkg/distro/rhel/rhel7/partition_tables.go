@@ -1,8 +1,8 @@
 package rhel7
 
 import (
-	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/arch"
+	"github.com/osbuild/images/pkg/datasizes"
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/distro/rhel"
 )
@@ -15,13 +15,13 @@ func defaultBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 			Type: "gpt",
 			Partitions: []disk.Partition{
 				{
-					Size:     1 * common.MebiByte,
+					Size:     1 * datasizes.MebiByte,
 					Bootable: true,
 					Type:     disk.BIOSBootPartitionGUID,
 					UUID:     disk.BIOSBootPartitionUUID,
 				},
 				{
-					Size: 200 * common.MebiByte,
+					Size: 200 * datasizes.MebiByte,
 					Type: disk.EFISystemPartitionGUID,
 					UUID: disk.EFISystemPartitionUUID,
 					Payload: &disk.Filesystem{
@@ -35,7 +35,7 @@ func defaultBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 					},
 				},
 				{
-					Size: 500 * common.MebiByte,
+					Size: 500 * datasizes.MebiByte,
 					Type: disk.FilesystemDataGUID,
 					UUID: disk.FilesystemDataUUID,
 					Payload: &disk.Filesystem{
@@ -48,7 +48,7 @@ func defaultBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 					},
 				},
 				{
-					Size: 2 * common.GibiByte,
+					Size: 2 * datasizes.GibiByte,
 					Type: disk.FilesystemDataGUID,
 					UUID: disk.RootPartitionUUID,
 					Payload: &disk.Filesystem{
