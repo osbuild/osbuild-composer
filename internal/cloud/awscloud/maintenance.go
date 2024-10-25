@@ -78,7 +78,10 @@ func (a *AWS) DescribeInstancesByTag(tagKey, tagValue string) ([]ec2types.Reserv
 			},
 		},
 	)
-	return res.Reservations, err
+	if err != nil {
+		return nil, err
+	}
+	return res.Reservations, nil
 }
 
 func (a *AWS) TerminateInstances(instanceIDs []string) error {
