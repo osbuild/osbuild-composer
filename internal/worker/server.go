@@ -676,6 +676,9 @@ func (s *Server) DeleteArtifacts(id uuid.UUID) error {
 		return fmt.Errorf("Cannot delete artifacts before job is finished: %s", id)
 	}
 
+	// Remove the ComposeRequest but ignore any errors
+	_ = os.Remove(path.Join(s.config.ArtifactsDir, "ComposeRequest", id.String()+".json"))
+
 	return os.RemoveAll(path.Join(s.config.ArtifactsDir, id.String()))
 }
 
