@@ -1,4 +1,4 @@
 package fedora
 
-const VERSION_BRANCHED = "41"
+const VERSION_BRANCHED = "42"
 const VERSION_RAWHIDE = "42"

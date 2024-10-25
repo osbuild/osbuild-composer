@@ -3,6 +3,7 @@ package rhel9
 import (
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/arch"
+	"github.com/osbuild/images/pkg/datasizes"
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/distro/rhel"
 )
@@ -12,13 +13,13 @@ func defaultBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 	switch {
 	case common.VersionLessThan(t.Arch().Distro().OsVersion(), "9.3") && t.IsRHEL():
 		// RHEL <= 9.2 had only 500 MiB /boot
-		bootSize = 500 * common.MebiByte
+		bootSize = 500 * datasizes.MebiByte
 	case common.VersionLessThan(t.Arch().Distro().OsVersion(), "9.4") && t.IsRHEL():
 		// RHEL 9.3 had 600 MiB /boot, see RHEL-7999
-		bootSize = 600 * common.MebiByte
+		bootSize = 600 * datasizes.MebiByte
 	default:
 		// RHEL >= 9.4 needs to have even a bigger /boot, see COMPOSER-2155
-		bootSize = 1 * common.GibiByte
+		bootSize = 1 * datasizes.GibiByte
 	}
 
 	switch t.Arch().Name() {
@@ -28,13 +29,13 @@ func defaultBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 			Type: "gpt",
 			Partitions: []disk.Partition{
 				{
-					Size:     1 * common.MebiByte,
+					Size:     1 * datasizes.MebiByte,
 					Bootable: true,
 					Type:     disk.BIOSBootPartitionGUID,
 					UUID:     disk.BIOSBootPartitionUUID,
 				},
 				{
-					Size: 200 * common.MebiByte,
+					Size: 200 * datasizes.MebiByte,
 					Type: disk.EFISystemPartitionGUID,
 					UUID: disk.EFISystemPartitionUUID,
 					Payload: &disk.Filesystem{
@@ -61,7 +62,7 @@ func defaultBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 					},
 				},
 				{
-					Size: 2 * common.GibiByte,
+					Size: 2 * datasizes.GibiByte,
 					Type: disk.FilesystemDataGUID,
 					UUID: disk.RootPartitionUUID,
 					Payload: &disk.Filesystem{
@@ -81,7 +82,7 @@ func defaultBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 			Type: "gpt",
 			Partitions: []disk.Partition{
 				{
-					Size: 200 * common.MebiByte,
+					Size: 200 * datasizes.MebiByte,
 					Type: disk.EFISystemPartitionGUID,
 					UUID: disk.EFISystemPartitionUUID,
 					Payload: &disk.Filesystem{
@@ -108,7 +109,7 @@ func defaultBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 					},
 				},
 				{
-					Size: 2 * common.GibiByte,
+					Size: 2 * datasizes.GibiByte,
 					Type: disk.FilesystemDataGUID,
 					UUID: disk.RootPartitionUUID,
 					Payload: &disk.Filesystem{
@@ -128,7 +129,7 @@ func defaultBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 			Type: "dos",
 			Partitions: []disk.Partition{
 				{
-					Size:     4 * common.MebiByte,
+					Size:     4 * datasizes.MebiByte,
 					Type:     "41",
 					Bootable: true,
 				},
@@ -144,7 +145,7 @@ func defaultBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 					},
 				},
 				{
-					Size: 2 * common.GibiByte,
+					Size: 2 * datasizes.GibiByte,
 					Payload: &disk.Filesystem{
 						Type:         "xfs",
 						Mountpoint:   "/",
@@ -173,7 +174,7 @@ func defaultBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 					},
 				},
 				{
-					Size:     2 * common.GibiByte,
+					Size:     2 * datasizes.GibiByte,
 					Bootable: true,
 					Payload: &disk.Filesystem{
 						Type:         "xfs",

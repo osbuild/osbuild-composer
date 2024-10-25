@@ -109,7 +109,11 @@ func NewDistribution(name string, major, minor int) (*Distribution, error) {
 	var rd *Distribution
 	switch name {
 	case "rhel":
-		if minor == -1 {
+		if major < 0 {
+			return nil, errors.New("Invalid RHEL major version (must be positive)")
+		}
+
+		if minor < 0 {
 			return nil, errors.New("RHEL requires a minor version")
 		}
 

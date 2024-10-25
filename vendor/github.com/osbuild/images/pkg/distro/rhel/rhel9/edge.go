@@ -7,6 +7,7 @@ import (
 	"github.com/osbuild/images/internal/environment"
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/customizations/fsnode"
+	"github.com/osbuild/images/pkg/datasizes"
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distro/rhel"
@@ -114,7 +115,7 @@ func mkEdgeRawImgType(d *rhel.Distribution) *rhel.ImageType {
 		it.KernelOptions += " rw coreos.no_persist_ip"
 	}
 
-	it.DefaultSize = 10 * common.GibiByte
+	it.DefaultSize = 10 * datasizes.GibiByte
 	it.RPMOSTree = true
 	it.Bootable = true
 	it.BasePartitionTables = edgeBasePartitionTables
@@ -203,7 +204,7 @@ func mkEdgeSimplifiedInstallerImgType(d *rhel.Distribution) *rhel.ImageType {
 		},
 	}
 
-	it.DefaultSize = 10 * common.GibiByte
+	it.DefaultSize = 10 * datasizes.GibiByte
 	it.RPMOSTree = true
 	it.BootISO = true
 	it.Bootable = true
@@ -248,7 +249,7 @@ func mkEdgeAMIImgType(d *rhel.Distribution) *rhel.ImageType {
 		it.KernelOptions += " rw coreos.no_persist_ip"
 	}
 
-	it.DefaultSize = 10 * common.GibiByte
+	it.DefaultSize = 10 * datasizes.GibiByte
 	it.RPMOSTree = true
 	it.Bootable = true
 	it.BasePartitionTables = edgeBasePartitionTables
@@ -287,7 +288,7 @@ func mkEdgeVsphereImgType(d *rhel.Distribution) *rhel.ImageType {
 		it.KernelOptions += " rw coreos.no_persist_ip"
 	}
 
-	it.DefaultSize = 10 * common.GibiByte
+	it.DefaultSize = 10 * datasizes.GibiByte
 	it.RPMOSTree = true
 	it.Bootable = true
 	it.BasePartitionTables = edgeBasePartitionTables
@@ -319,7 +320,7 @@ func mkMinimalrawImgType() *rhel.ImageType {
 		Files: []*fsnode.File{initialSetupKickstart()},
 	}
 	it.KernelOptions = "ro"
-	it.DefaultSize = 2 * common.GibiByte
+	it.DefaultSize = 2 * datasizes.GibiByte
 	it.Bootable = true
 	it.BasePartitionTables = minimalrawPartitionTables
 
@@ -363,9 +364,9 @@ func initialSetupKickstart() *fsnode.File {
 // Partition tables
 func minimalrawPartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 	// RHEL >= 9.3 needs to have a bigger /boot, see RHEL-7999
-	bootSize := uint64(600) * common.MebiByte
+	bootSize := uint64(600) * datasizes.MebiByte
 	if common.VersionLessThan(t.Arch().Distro().OsVersion(), "9.3") && t.IsRHEL() {
-		bootSize = 500 * common.MebiByte
+		bootSize = 500 * datasizes.MebiByte
 	}
 
 	switch t.Arch().Name() {
@@ -373,10 +374,10 @@ func minimalrawPartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 		return disk.PartitionTable{
 			UUID:        "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
 			Type:        "gpt",
-			StartOffset: 8 * common.MebiByte,
+			StartOffset: 8 * datasizes.MebiByte,
 			Partitions: []disk.Partition{
 				{
-					Size: 200 * common.MebiByte,
+					Size: 200 * datasizes.MebiByte,
 					Type: disk.EFISystemPartitionGUID,
 					UUID: disk.EFISystemPartitionUUID,
 					Payload: &disk.Filesystem{
@@ -403,7 +404,7 @@ func minimalrawPartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 					},
 				},
 				{
-					Size: 2 * common.GibiByte,
+					Size: 2 * datasizes.GibiByte,
 					Type: disk.FilesystemDataGUID,
 					UUID: disk.RootPartitionUUID,
 					Payload: &disk.Filesystem{
@@ -421,10 +422,10 @@ func minimalrawPartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 		return disk.PartitionTable{
 			UUID:        "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
 			Type:        "gpt",
-			StartOffset: 8 * common.MebiByte,
+			StartOffset: 8 * datasizes.MebiByte,
 			Partitions: []disk.Partition{
 				{
-					Size: 200 * common.MebiByte,
+					Size: 200 * datasizes.MebiByte,
 					Type: disk.EFISystemPartitionGUID,
 					UUID: disk.EFISystemPartitionUUID,
 					Payload: &disk.Filesystem{
@@ -451,7 +452,7 @@ func minimalrawPartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 					},
 				},
 				{
-					Size: 2 * common.GibiByte,
+					Size: 2 * datasizes.GibiByte,
 					Type: disk.FilesystemDataGUID,
 					UUID: disk.RootPartitionUUID,
 					Payload: &disk.Filesystem{
@@ -478,13 +479,13 @@ func edgeBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 			Type: "gpt",
 			Partitions: []disk.Partition{
 				{
-					Size:     1 * common.MebiByte, // 1MB
+					Size:     1 * datasizes.MebiByte,
 					Bootable: true,
 					Type:     disk.BIOSBootPartitionGUID,
 					UUID:     disk.BIOSBootPartitionUUID,
 				},
 				{
-					Size: 127 * common.MebiByte, // 127 MB
+					Size: 127 * datasizes.MebiByte,
 					Type: disk.EFISystemPartitionGUID,
 					UUID: disk.EFISystemPartitionUUID,
 					Payload: &disk.Filesystem{
@@ -498,7 +499,7 @@ func edgeBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 					},
 				},
 				{
-					Size: 384 * common.MebiByte, // 384 MB
+					Size: 384 * datasizes.MebiByte,
 					Type: disk.XBootLDRPartitionGUID,
 					UUID: disk.FilesystemDataUUID,
 					Payload: &disk.Filesystem{
@@ -532,7 +533,7 @@ func edgeBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 							Description: "built with lvm2 and osbuild",
 							LogicalVolumes: []disk.LVMLogicalVolume{
 								{
-									Size: 9 * common.GiB, // 9 GiB
+									Size: 9 * datasizes.GiB, // 9 GiB
 									Name: "rootlv",
 									Payload: &disk.Filesystem{
 										Type:         "xfs",
@@ -555,7 +556,7 @@ func edgeBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 			Type: "gpt",
 			Partitions: []disk.Partition{
 				{
-					Size: 127 * common.MebiByte, // 127 MB
+					Size: 127 * datasizes.MebiByte,
 					Type: disk.EFISystemPartitionGUID,
 					UUID: disk.EFISystemPartitionUUID,
 					Payload: &disk.Filesystem{
@@ -569,7 +570,7 @@ func edgeBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 					},
 				},
 				{
-					Size: 384 * common.MebiByte, // 384 MB
+					Size: 384 * datasizes.MebiByte,
 					Type: disk.XBootLDRPartitionGUID,
 					UUID: disk.FilesystemDataUUID,
 					Payload: &disk.Filesystem{
@@ -603,7 +604,7 @@ func edgeBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 							Description: "built with lvm2 and osbuild",
 							LogicalVolumes: []disk.LVMLogicalVolume{
 								{
-									Size: 9 * common.GiB, // 9 GiB
+									Size: 9 * datasizes.GiB, // 9 GiB
 									Name: "rootlv",
 									Payload: &disk.Filesystem{
 										Type:         "xfs",

@@ -5,13 +5,13 @@ import (
 	"math/rand"
 	"path/filepath"
 
-	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/internal/environment"
 	"github.com/osbuild/images/internal/workload"
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/artifact"
 	"github.com/osbuild/images/pkg/customizations/anaconda"
 	"github.com/osbuild/images/pkg/customizations/kickstart"
+	"github.com/osbuild/images/pkg/datasizes"
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/osbuild"
@@ -21,7 +21,7 @@ import (
 )
 
 func efiBootPartitionTable(rng *rand.Rand) *disk.PartitionTable {
-	var efibootImageSize uint64 = 20 * common.MebiByte
+	var efibootImageSize uint64 = 20 * datasizes.MebiByte
 	return &disk.PartitionTable{
 		Size: efibootImageSize,
 		Partitions: []disk.Partition{
@@ -154,7 +154,7 @@ func (img *AnacondaTarInstaller) InstantiateManifest(m *manifest.Manifest,
 	anacondaPipeline.Checkpoint()
 
 	rootfsImagePipeline := manifest.NewISORootfsImg(buildPipeline, anacondaPipeline)
-	rootfsImagePipeline.Size = 5 * common.GibiByte
+	rootfsImagePipeline.Size = 5 * datasizes.GibiByte
 
 	bootTreePipeline := manifest.NewEFIBootTree(buildPipeline, img.Product, img.OSVersion)
 	bootTreePipeline.Platform = img.Platform

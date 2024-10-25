@@ -2,6 +2,7 @@ package rhel10
 
 import (
 	"github.com/osbuild/images/internal/common"
+	"github.com/osbuild/images/pkg/datasizes"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distro/rhel"
 	"github.com/osbuild/images/pkg/rpmmd"
@@ -28,7 +29,7 @@ func mkVMDKImgType() *rhel.ImageType {
 	}
 	it.KernelOptions = vmdkKernelOptions
 	it.Bootable = true
-	it.DefaultSize = 4 * common.GibiByte
+	it.DefaultSize = 4 * datasizes.GibiByte
 	it.BasePartitionTables = defaultBasePartitionTables
 
 	return it
@@ -53,7 +54,7 @@ func mkOVAImgType() *rhel.ImageType {
 	}
 	it.KernelOptions = vmdkKernelOptions
 	it.Bootable = true
-	it.DefaultSize = 4 * common.GibiByte
+	it.DefaultSize = 4 * datasizes.GibiByte
 	it.BasePartitionTables = defaultBasePartitionTables
 
 	return it

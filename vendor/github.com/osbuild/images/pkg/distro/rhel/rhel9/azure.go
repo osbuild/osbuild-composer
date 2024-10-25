@@ -3,6 +3,7 @@ package rhel9
 import (
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/arch"
+	"github.com/osbuild/images/pkg/datasizes"
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distro/rhel"
@@ -27,7 +28,7 @@ func mkAzureImgType(rd *rhel.Distribution) *rhel.ImageType {
 
 	it.KernelOptions = defaultAzureKernelOptions
 	it.Bootable = true
-	it.DefaultSize = 4 * common.GibiByte
+	it.DefaultSize = 4 * datasizes.GibiByte
 	it.DefaultImageConfig = defaultAzureImageConfig(rd)
 	it.BasePartitionTables = defaultBasePartitionTables
 
@@ -52,7 +53,7 @@ func mkAzureInternalImgType(rd *rhel.Distribution) *rhel.ImageType {
 	it.Compression = "xz"
 	it.KernelOptions = defaultAzureKernelOptions
 	it.Bootable = true
-	it.DefaultSize = 64 * common.GibiByte
+	it.DefaultSize = 64 * datasizes.GibiByte
 	it.DefaultImageConfig = defaultAzureImageConfig(rd)
 	it.BasePartitionTables = azureInternalBasePartitionTables
 
@@ -76,7 +77,7 @@ func mkAzureSapInternalImgType(rd *rhel.Distribution) *rhel.ImageType {
 	it.Compression = "xz"
 	it.KernelOptions = defaultAzureKernelOptions
 	it.Bootable = true
-	it.DefaultSize = 64 * common.GibiByte
+	it.DefaultSize = 64 * datasizes.GibiByte
 	it.DefaultImageConfig = sapAzureImageConfig(rd)
 	it.BasePartitionTables = azureInternalBasePartitionTables
 
@@ -182,13 +183,13 @@ func azureInternalBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, b
 	switch {
 	case common.VersionLessThan(t.Arch().Distro().OsVersion(), "9.3") && t.IsRHEL():
 		// RHEL <= 9.2 had only 500 MiB /boot
-		bootSize = 500 * common.MebiByte
+		bootSize = 500 * datasizes.MebiByte
 	case common.VersionLessThan(t.Arch().Distro().OsVersion(), "9.4") && t.IsRHEL():
 		// RHEL 9.3 had 600 MiB /boot, see RHEL-7999
-		bootSize = 600 * common.MebiByte
+		bootSize = 600 * datasizes.MebiByte
 	default:
 		// RHEL >= 9.4 needs to have even a bigger /boot, see COMPOSER-2155
-		bootSize = 1 * common.GibiByte
+		bootSize = 1 * datasizes.GibiByte
 	}
 
 	switch t.Arch().Name() {
@@ -196,10 +197,10 @@ func azureInternalBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, b
 		return disk.PartitionTable{
 			UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
 			Type: "gpt",
-			Size: 64 * common.GibiByte,
+			Size: 64 * datasizes.GibiByte,
 			Partitions: []disk.Partition{
 				{
-					Size: 500 * common.MebiByte,
+					Size: 500 * datasizes.MebiByte,
 					Type: disk.EFISystemPartitionGUID,
 					UUID: disk.EFISystemPartitionUUID,
 					Payload: &disk.Filesystem{
@@ -224,7 +225,7 @@ func azureInternalBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, b
 					},
 				},
 				{
-					Size:     2 * common.MebiByte,
+					Size:     2 * datasizes.MebiByte,
 					Bootable: true,
 					Type:     disk.BIOSBootPartitionGUID,
 					UUID:     disk.BIOSBootPartitionUUID,
@@ -237,7 +238,7 @@ func azureInternalBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, b
 						Description: "built with lvm2 and osbuild",
 						LogicalVolumes: []disk.LVMLogicalVolume{
 							{
-								Size: 1 * common.GibiByte,
+								Size: 1 * datasizes.GibiByte,
 								Name: "homelv",
 								Payload: &disk.Filesystem{
 									Type:         "xfs",
@@ -249,7 +250,7 @@ func azureInternalBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, b
 								},
 							},
 							{
-								Size: 2 * common.GibiByte,
+								Size: 2 * datasizes.GibiByte,
 								Name: "rootlv",
 								Payload: &disk.Filesystem{
 									Type:         "xfs",
@@ -261,7 +262,7 @@ func azureInternalBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, b
 								},
 							},
 							{
-								Size: 2 * common.GibiByte,
+								Size: 2 * datasizes.GibiByte,
 								Name: "tmplv",
 								Payload: &disk.Filesystem{
 									Type:         "xfs",
@@ -273,7 +274,7 @@ func azureInternalBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, b
 								},
 							},
 							{
-								Size: 10 * common.GibiByte,
+								Size: 10 * datasizes.GibiByte,
 								Name: "usrlv",
 								Payload: &disk.Filesystem{
 									Type:         "xfs",
@@ -285,7 +286,7 @@ func azureInternalBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, b
 								},
 							},
 							{
-								Size: 10 * common.GibiByte,
+								Size: 10 * datasizes.GibiByte,
 								Name: "varlv",
 								Payload: &disk.Filesystem{
 									Type:         "xfs",
@@ -305,10 +306,10 @@ func azureInternalBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, b
 		return disk.PartitionTable{
 			UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
 			Type: "gpt",
-			Size: 64 * common.GibiByte,
+			Size: 64 * datasizes.GibiByte,
 			Partitions: []disk.Partition{
 				{
-					Size: 500 * common.MebiByte,
+					Size: 500 * datasizes.MebiByte,
 					Type: disk.EFISystemPartitionGUID,
 					UUID: disk.EFISystemPartitionUUID,
 					Payload: &disk.Filesystem{
@@ -340,7 +341,7 @@ func azureInternalBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, b
 						Description: "built with lvm2 and osbuild",
 						LogicalVolumes: []disk.LVMLogicalVolume{
 							{
-								Size: 1 * common.GibiByte,
+								Size: 1 * datasizes.GibiByte,
 								Name: "homelv",
 								Payload: &disk.Filesystem{
 									Type:         "xfs",
@@ -352,7 +353,7 @@ func azureInternalBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, b
 								},
 							},
 							{
-								Size: 2 * common.GibiByte,
+								Size: 2 * datasizes.GibiByte,
 								Name: "rootlv",
 								Payload: &disk.Filesystem{
 									Type:         "xfs",
@@ -364,7 +365,7 @@ func azureInternalBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, b
 								},
 							},
 							{
-								Size: 2 * common.GibiByte,
+								Size: 2 * datasizes.GibiByte,
 								Name: "tmplv",
 								Payload: &disk.Filesystem{
 									Type:         "xfs",
@@ -376,7 +377,7 @@ func azureInternalBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, b
 								},
 							},
 							{
-								Size: 10 * common.GibiByte,
+								Size: 10 * datasizes.GibiByte,
 								Name: "usrlv",
 								Payload: &disk.Filesystem{
 									Type:         "xfs",
@@ -388,7 +389,7 @@ func azureInternalBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, b
 								},
 							},
 							{
-								Size: 10 * common.GibiByte,
+								Size: 10 * datasizes.GibiByte,
 								Name: "varlv",
 								Payload: &disk.Filesystem{
 									Type:         "xfs",
