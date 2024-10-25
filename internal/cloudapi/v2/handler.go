@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
+	"path"
 	"slices"
 	"sort"
 	"strconv"
@@ -22,6 +24,7 @@ import (
 	"github.com/osbuild/images/pkg/sbom"
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/common"
+	"github.com/osbuild/osbuild-composer/internal/jsondb"
 	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
@@ -149,6 +152,11 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 	}
 
 	ctx.Logger().Infof("Job ID %s enqueued for operationID %s", id, ctx.Get(common.OperationIDKey))
+
+	// Save the request in the artifacts directory, log errors but continue
+	if err := saveComposeRequest(h.server.workers.ArtifactsDir(), id, request); err != nil {
+		ctx.Logger().Warnf("Failed to save compose request: %v", err)
+	}
 
 	return ctx.JSON(http.StatusCreated, &ComposeId{
 		ObjectReference: ObjectReference{
@@ -622,6 +630,12 @@ func (h *apiHandlers) getComposeMetadataImpl(ctx echo.Context, id string) error 
 		return HTTPErrorWithInternal(ErrorComposeNotFound, err)
 	}
 
+	// Get the original compose request, if present
+	request, err := readComposeRequest(h.server.workers.ArtifactsDir(), jobId)
+	if err != nil {
+		ctx.Logger().Warnf("Failed to read compose request: %v", err)
+	}
+
 	if buildInfo.JobStatus.Finished.IsZero() {
 		// job still running: empty response
 		return ctx.JSON(200, ComposeMetadata{
@@ -630,6 +644,7 @@ func (h *apiHandlers) getComposeMetadataImpl(ctx echo.Context, id string) error 
 				Id:   jobId.String(),
 				Kind: "ComposeMetadata",
 			},
+			Request: request,
 		})
 	}
 
@@ -641,6 +656,7 @@ func (h *apiHandlers) getComposeMetadataImpl(ctx echo.Context, id string) error 
 				Id:   jobId.String(),
 				Kind: "ComposeMetadata",
 			},
+			Request: request,
 		})
 	}
 
@@ -675,6 +691,7 @@ func (h *apiHandlers) getComposeMetadataImpl(ctx echo.Context, id string) error 
 			Kind: "ComposeMetadata",
 		},
 		Packages: &packages,
+		Request:  request,
 	}
 
 	if ostreeCommitMetadata != nil {
@@ -1570,4 +1587,42 @@ func (h *apiHandlers) getComposeDownloadImpl(ctx echo.Context, id string) error 
 		return HTTPErrorWithInternal(ErrorArtifactNotFound, err)
 	}
 	return ctx.Attachment(file, fmt.Sprintf("%s-%s", jobId, tr.OsbuildArtifact.ExportFilename))
+}
+
+// saveComposeRequest stores the compose request's json on disk
+// This is saved in the ComposeRequest directory of the artifacts directory
+// If no artifacts directory has been configured it saves nothing and silently returns
+func saveComposeRequest(artifactsDir string, id uuid.UUID, request ComposeRequest) error {
+	if artifactsDir == "" {
+		return nil
+	}
+	p := path.Join(artifactsDir, "ComposeRequest")
+	err := os.MkdirAll(p, 0700)
+	if err != nil {
+		return err
+	}
+	db := jsondb.New(p, 0700)
+	return db.Write(id.String(), request)
+}
+
+// readComposeRequest reads the compose request's json on disk
+// This reads the original compose request json from the ComposeRequest directory of
+// the artifacts directory.
+// If no artifacts directory had been setup it silently returns nothing
+func readComposeRequest(artifactsDir string, id uuid.UUID) (*ComposeRequest, error) {
+	if artifactsDir == "" {
+		return nil, nil
+	}
+	p := path.Join(artifactsDir, "ComposeRequest")
+	err := os.MkdirAll(p, 0700)
+	if err != nil {
+		return nil, err
+	}
+	db := jsondb.New(p, 0700)
+	var request ComposeRequest
+	exists, err := db.Read(id.String(), &request)
+	if !exists {
+		return nil, err
+	}
+	return &request, err
 }
