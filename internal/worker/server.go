@@ -605,6 +605,11 @@ func (s *Server) SetFailed(id uuid.UUID, error *clienterrors.Error) error {
 	return s.jobs.FailJob(id, res)
 }
 
+// Return the ArtifactsDir path
+func (s *Server) ArtifactsDir() string {
+	return s.config.ArtifactsDir
+}
+
 // Provides access to artifacts of a job. Returns an io.Reader for the artifact
 // and the artifact's size.
 func (s *Server) JobArtifact(id uuid.UUID, name string) (io.Reader, int64, error) {
