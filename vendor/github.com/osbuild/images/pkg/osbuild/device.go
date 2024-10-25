@@ -262,7 +262,7 @@ func genOsbuildMount(source string, mnt disk.Mountable) (*Mount, error) {
 			return nil, fmt.Errorf("mounting bare btrfs partition is unsupported: %s", mountpoint)
 		}
 	default:
-		return nil, fmt.Errorf("unknown fs type " + t)
+		return nil, fmt.Errorf("unknown fs type %s", t)
 	}
 }
 
