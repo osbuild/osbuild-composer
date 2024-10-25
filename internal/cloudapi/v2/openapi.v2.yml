@@ -1050,6 +1050,9 @@ components:
           ostree_commit:
             type: string
             description: 'ID (hash) of the built commit'
+          request:
+            $ref: '#/components/schemas/ComposeRequest'
+            description: 'Original request to create this compose'
     PackageMetadata:
       required:
         - type
