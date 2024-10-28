@@ -39,6 +39,7 @@ const (
 	JobTypeOSTreeResolve    string = "ostree-resolve"
 	JobTypeAWSEC2Copy       string = "aws-ec2-copy"
 	JobTypeAWSEC2Share      string = "aws-ec2-share"
+	JobTypeBootcManifest    string = "bootc-manifest"
 )
 
 type Server struct {
@@ -220,6 +221,10 @@ func (s *Server) EnqueueAWSEC2ShareJob(job *AWSEC2ShareJob, parent uuid.UUID, ch
 	return s.enqueue(JobTypeAWSEC2Share, job, []uuid.UUID{parent}, channel)
 }
 
+func (s *Server) EnqueueBootcManifestJob(job *BootcManifestJob, channel string) (uuid.UUID, error) {
+	return s.enqueue(JobTypeBootcManifest, job, nil, channel)
+}
+
 func (s *Server) enqueue(jobType string, job interface{}, dependencies []uuid.UUID, channel string) (uuid.UUID, error) {
 	prometheus.EnqueueJobMetrics(strings.Split(jobType, ":")[0], channel)
 	return s.jobs.Enqueue(jobType, job, dependencies, channel)
@@ -297,6 +302,13 @@ func (s *Server) JobDependencyChainErrors(id uuid.UUID) (*clienterrors.Error, er
 			return nil, err
 		}
 		jobResult = &ostreeResolveJR.JobResult
+
+	case JobTypeBootcManifest:
+		var bootcManifestJR BootcManifestJobResult
+		jobInfo, err = s.BootcManifestJobInfo(id, &bootcManifestJR)
+		if err != nil {
+			return nil, err
+		}
 
 	default:
 		return nil, fmt.Errorf("unexpected job type: %s", jobType)
@@ -486,6 +498,17 @@ func (s *Server) AWSEC2ShareJobInfo(id uuid.UUID, result *AWSEC2ShareJobResult) 
 		return nil, fmt.Errorf("expected %q, found %q job instead", JobTypeAWSEC2Share, jobInfo.JobType)
 	}
 
+	return jobInfo, nil
+}
+
+func (s *Server) BootcManifestJobInfo(id uuid.UUID, result *BootcManifestJobResult) (*JobInfo, error) {
+	jobInfo, err := s.jobInfo(id, result)
+	if err != nil {
+		return nil, err
+	}
+	if jobInfo.JobType != JobTypeBootcManifest {
+		return nil, fmt.Errorf("expected %q, found %q job instead", JobTypeBootcManifest, jobInfo.JobType)
+	}
 	return jobInfo, nil
 }
 
@@ -802,6 +825,13 @@ func (s *Server) RequeueOrFinishJob(token uuid.UUID, maxRetries uint64, result j
 			return err
 		}
 		jobResult = &ostreeResolveJR.JobResult
+	case JobTypeBootcManifest:
+		var bootcManifestJR BootcManifestJobResult
+		jobInfo, err = s.BootcManifestJobInfo(jobId, &bootcManifestJR)
+		if err != nil {
+			return err
+		}
+		jobResult = &bootcManifestJR.JobResult
 
 	default:
 		return fmt.Errorf("unexpected job type: %s", jobType)

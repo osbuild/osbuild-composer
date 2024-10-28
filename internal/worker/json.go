@@ -305,6 +305,19 @@ type OSTreeResolveSpec struct {
 	RHSM bool   `json:"rhsm"`
 }
 
+type BootcManifestJob struct {
+	ImageType string `json:"image_type"`
+	Arch      string `json:"arch"`
+	ImageRef  string `json:"image_ref"`
+	TLSVerify bool   `json:"tls_verify,omitempty"`
+}
+
+type BootcManifestJobResult struct {
+	Manifest manifest.OSBuildManifest `json:"data,omitempty"`
+	Error    string                   `json:"error"`
+	JobResult
+}
+
 type OSTreeResolveJob struct {
 	Specs []OSTreeResolveSpec `json:"ostree_resolve_specs"`
 }
