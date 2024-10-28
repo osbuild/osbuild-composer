@@ -254,3 +254,5 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+replace github.com/osbuild/images => github.com/achilleas-k/images v0.0.0-20241028111523-6e94a3ec4b70
