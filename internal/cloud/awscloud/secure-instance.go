@@ -419,7 +419,6 @@ func (a *AWS) createOrReplaceLT(hostInstanceID, imageID, sgID, iamProfile, keyNa
 				NetworkInterfaceCount: &ec2types.NetworkInterfaceCountRequest{
 					Min: aws.Int32(1),
 				},
-				SpotMaxPricePercentageOverLowestPrice: aws.Int32(200),
 				VCpuCount: &ec2types.VCpuCountRangeRequest{
 					Min: aws.Int32(2),
 				},
