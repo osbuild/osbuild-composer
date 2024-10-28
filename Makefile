@@ -169,6 +169,7 @@ clean:
 	rm -rf $(CURDIR)/rpmbuild
 	rm -rf container_composer_golangci_built.info
 	rm -rf $(BUILDDIR)/$(PROCESSED_TEMPLATE_DIR)
+	rm -rf $(GOLANGCI_LINT_CACHE_DIR)
 
 .PHONY: push-check
 push-check: lint build unit-tests srpm man
