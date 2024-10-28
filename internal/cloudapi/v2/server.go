@@ -264,7 +264,7 @@ func (s *Server) enqueueCompose(irs []imageRequest, channel string) (uuid.UUID, 
 
 	s.goroutinesGroup.Add(1)
 	go func() {
-		serializeManifest(s.goroutinesCtx, manifestSource, s.workers, depsolveJobID, containerResolveJobID, ostreeResolveJobID, manifestJobID, id, ir.manifestSeed)
+		serializeManifest(s.goroutinesCtx, manifestSource, s.workers, depsolveJobID, containerResolveJobID, ostreeResolveJobID, manifestJobID, ir.manifestSeed)
 		defer s.goroutinesGroup.Done()
 	}()
 
@@ -424,7 +424,7 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 		// copy the image request while passing it into the goroutine to prevent data races
 		s.goroutinesGroup.Add(1)
 		go func(ir imageRequest) {
-			serializeManifest(s.goroutinesCtx, manifestSource, s.workers, depsolveJobID, containerResolveJobID, ostreeResolveJobID, manifestJobID, buildID, ir.manifestSeed)
+			serializeManifest(s.goroutinesCtx, manifestSource, s.workers, depsolveJobID, containerResolveJobID, ostreeResolveJobID, manifestJobID, ir.manifestSeed)
 			defer s.goroutinesGroup.Done()
 		}(ir)
 	}
@@ -445,7 +445,7 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 	return id, nil
 }
 
-func serializeManifest(ctx context.Context, manifestSource *manifest.Manifest, workers *worker.Server, depsolveJobID, containerResolveJobID, ostreeResolveJobID, manifestJobID, osbuildJobID uuid.UUID, seed int64) {
+func serializeManifest(ctx context.Context, manifestSource *manifest.Manifest, workers *worker.Server, depsolveJobID, containerResolveJobID, ostreeResolveJobID, manifestJobID uuid.UUID, seed int64) {
 	// prepared to become a config variable
 	const depsolveTimeout = 5
 	ctx, cancel := context.WithTimeout(ctx, time.Minute*depsolveTimeout)
@@ -468,12 +468,12 @@ func serializeManifest(ctx context.Context, manifestSource *manifest.Manifest, w
 		if token == uuid.Nil {
 			if jobResult.JobError != nil {
 				// set all jobs to "failed"
+				// osbuild job will fail as dependency
 				jobs := map[string]uuid.UUID{
 					"depsolve":         depsolveJobID,
 					"containerResolve": containerResolveJobID,
 					"ostreeResolve":    ostreeResolveJobID,
 					"manifest":         manifestJobID,
-					"osbuild":          osbuildJobID,
 				}
 
 				for jobName, jobID := range jobs {
