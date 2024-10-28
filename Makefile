@@ -183,6 +183,7 @@ clean: db-tests-prune
 	rm -rf $(BUILDDIR)/$(PROCESSED_TEMPLATE_DIR)
 	rm -rf $(GOLANGCI_LINT_CACHE_DIR)
 	rm -rf $(BUILDDIR)/build/
+	rm -rf $(GOLANGCI_LINT_CACHE_DIR)
 	rm -f $(BUILDDIR)/go.local.*
 	rm -f $(BUILDDIR)/container_worker_built.info
 	rm -f $(BUILDDIR)/container_composer_built.info
