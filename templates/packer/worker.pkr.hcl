@@ -128,8 +128,8 @@ EOF
   source "amazon-ebs.image_builder"  {
     name = "fedora-40-aarch64"
 
-    # Fedora-Cloud-Base-AmazonEC2.aarch64-40-1.14-hvm-us-east-1-gp3-0
-    source_ami = "ami-0d3825b70fa928886"
+    # Fedora-Cloud-Base-AmazonEC2.aarch64-40-20241024.0
+    source_ami = "ami-05c254a81747590f5"
     ssh_username = "fedora"
     instance_type = "c6g.large"
 
