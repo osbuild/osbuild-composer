@@ -626,7 +626,7 @@ func (h *apiHandlers) getComposeMetadataImpl(ctx echo.Context, id string) error 
 		// job still running: empty response
 		return ctx.JSON(200, ComposeMetadata{
 			ObjectReference: ObjectReference{
-				Href: fmt.Sprintf("/api/image-builder-composer/v2/%v/metadata", jobId),
+				Href: fmt.Sprintf("/api/image-builder-composer/v2/composes/%v/metadata", jobId),
 				Id:   jobId.String(),
 				Kind: "ComposeMetadata",
 			},
@@ -637,7 +637,7 @@ func (h *apiHandlers) getComposeMetadataImpl(ctx echo.Context, id string) error 
 		// job canceled or failed, empty response
 		return ctx.JSON(200, ComposeMetadata{
 			ObjectReference: ObjectReference{
-				Href: fmt.Sprintf("/api/image-builder-composer/v2/%v/metadata", jobId),
+				Href: fmt.Sprintf("/api/image-builder-composer/v2/composes/%v/metadata", jobId),
 				Id:   jobId.String(),
 				Kind: "ComposeMetadata",
 			},
