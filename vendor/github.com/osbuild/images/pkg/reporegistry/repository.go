@@ -1,7 +1,6 @@
 package reporegistry
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -66,6 +65,10 @@ func LoadAllRepositories(confPaths []string) (rpmmd.DistrosRepoConfigs, error) {
 		}
 	}
 
+	if len(distrosRepoConfigs) == 0 {
+		return nil, &NoReposLoadedError{confPaths}
+	}
+
 	return distrosRepoConfigs, nil
 }
 
@@ -93,7 +96,7 @@ func LoadRepositories(confPaths []string, distro string) (map[string][]rpmmd.Rep
 	}
 
 	if repoConfigs == nil {
-		return nil, fmt.Errorf("LoadRepositories failed: none of the provided paths contain distro configuration")
+		return nil, &NoReposLoadedError{confPaths}
 	}
 
 	return repoConfigs, nil
