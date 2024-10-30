@@ -78,16 +78,29 @@ func NewComposer(config *ComposerConfigFile, stateDir, cacheDir string) (*Compos
 	}
 
 	repoConfigs, err := reporegistry.LoadAllRepositories(repositoryConfigs)
-	if err != nil {
-		return nil, fmt.Errorf("error loading repository definitions: %v", err)
+	switch err.(type) {
+	case *reporegistry.NoReposLoadedError:
+		// When running as a service (cloud API), there are no repositories
+		// configured, so this is OK. The weldr initialiser should check if
+		// there are no repositories configured and behave accordingly.
+		// Log for troubleshooting.
+		logrus.Info(err.Error())
+	case nil:
+		c.repos = reporegistry.NewFromDistrosRepoConfigs(repoConfigs)
+	default:
+		return nil, fmt.Errorf("error loading repository definitions: %w", err)
 	}
-	c.repos = reporegistry.NewFromDistrosRepoConfigs(repoConfigs)
 
 	c.solver = dnfjson.NewBaseSolver(path.Join(c.cacheDir, "rpmmd"))
 	c.solver.SetDNFJSONPath(c.config.DNFJson)
 
-	// Clean up the cache, removes unknown distros and files
-	c.solver.CleanupOldCacheDirs(c.repos.ListDistros())
+	// Clean up the cache, removes unknown distros and files.
+	// If no repos are configured, the cache is cleared out completely.
+	var repoDistros []string
+	if c.repos != nil {
+		repoDistros = c.repos.ListDistros()
+	}
+	c.solver.CleanupOldCacheDirs(repoDistros)
 
 	var jobs jobqueue.JobQueue
 	if config.Worker.PGDatabase != "" {
