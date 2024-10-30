@@ -163,6 +163,11 @@ func New(rr *reporegistry.RepoRegistry, stateDir string, solver *dnfjson.BaseSol
 		logger = log.New(os.Stdout, "", 0)
 	}
 
+	// Weldr requires repo configs
+	if rr == nil {
+		return nil, fmt.Errorf("weldr requires repository definitions but none were found")
+	}
+
 	hostDistroName, err := distro.GetHostDistroName()
 	if err != nil {
 		return nil, fmt.Errorf("failed to read host distro information")
