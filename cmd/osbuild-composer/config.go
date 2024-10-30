@@ -12,18 +12,19 @@ import (
 )
 
 type ComposerConfigFile struct {
-	Koji              KojiAPIConfig     `toml:"koji"`
-	Worker            WorkerAPIConfig   `toml:"worker"`
-	WeldrAPI          WeldrAPIConfig    `toml:"weldr_api"`
-	DistroAliases     map[string]string `toml:"distro_aliases" env:"DISTRO_ALIASES"`
-	LogLevel          string            `toml:"log_level"`
-	LogFormat         string            `toml:"log_format"`
-	DNFJson           string            `toml:"dnf-json"`
-	SplunkHost        string            `env:"SPLUNK_HEC_HOST"`
-	SplunkPort        string            `env:"SPLUNK_HEC_PORT"`
-	SplunkToken       string            `env:"SPLUNK_HEC_TOKEN"`
-	GlitchTipDSN      string            `env:"GLITCHTIP_DSN"`
-	DeploymentChannel string            `env:"CHANNEL"`
+	Koji               KojiAPIConfig     `toml:"koji"`
+	Worker             WorkerAPIConfig   `toml:"worker"`
+	WeldrAPI           WeldrAPIConfig    `toml:"weldr_api"`
+	DistroAliases      map[string]string `toml:"distro_aliases" env:"DISTRO_ALIASES"`
+	LogLevel           string            `toml:"log_level"`
+	LogFormat          string            `toml:"log_format"`
+	DNFJson            string            `toml:"dnf-json"`
+	IgnoreMissingRepos bool              `toml:"ignore_missing_repos"`
+	SplunkHost         string            `env:"SPLUNK_HEC_HOST"`
+	SplunkPort         string            `env:"SPLUNK_HEC_PORT"`
+	SplunkToken        string            `env:"SPLUNK_HEC_TOKEN"`
+	GlitchTipDSN       string            `env:"GLITCHTIP_DSN"`
+	DeploymentChannel  string            `env:"CHANNEL"`
 }
 
 type KojiAPIConfig struct {
@@ -129,9 +130,10 @@ func GetDefaultConfig() *ComposerConfigFile {
 			"rhel-9":  "rhel-9.5",
 			"rhel-10": "rhel-10.0",
 		},
-		LogLevel:  "info",
-		LogFormat: "journal",
-		DNFJson:   "/usr/libexec/osbuild-depsolve-dnf",
+		LogLevel:           "info",
+		LogFormat:          "journal",
+		DNFJson:            "/usr/libexec/osbuild-depsolve-dnf",
+		IgnoreMissingRepos: false,
 	}
 }
 
