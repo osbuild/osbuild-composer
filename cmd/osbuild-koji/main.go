@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/osbuild/images/pkg/distro"
+	"github.com/osbuild/images/pkg/platform"
 	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/upload/koji"
 	"github.com/sirupsen/logrus"
@@ -101,7 +101,7 @@ func main() {
 			Extra: &koji.BuildOutputExtra{
 				ImageOutput: koji.ImageExtraInfo{
 					Arch:     arch,
-					BootMode: distro.BOOT_NONE.String(), // TODO: put the correct boot mode here
+					BootMode: platform.BOOT_NONE.String(), // TODO: put the correct boot mode here
 				},
 			},
 		},

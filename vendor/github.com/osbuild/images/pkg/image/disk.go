@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/internal/environment"
 	"github.com/osbuild/images/internal/workload"
 	"github.com/osbuild/images/pkg/artifact"
@@ -103,13 +102,7 @@ func (img *DiskImage) InstantiateManifest(m *manifest.Manifest,
 		// NOTE(akoutsou): temporary workaround; filename required for GCP
 		// TODO: define internal raw filename on image type
 		rawImagePipeline.SetFilename("disk.raw")
-		tarPipeline := manifest.NewTar(buildPipeline, rawImagePipeline, "archive")
-		tarPipeline.Format = osbuild.TarArchiveFormatOldgnu
-		tarPipeline.RootNode = osbuild.TarRootNodeOmit
-		// these are required to successfully import the image to GCP
-		tarPipeline.ACLs = common.ToPtr(false)
-		tarPipeline.SELinux = common.ToPtr(false)
-		tarPipeline.Xattrs = common.ToPtr(false)
+		tarPipeline := newGCETarPipelineForImg(buildPipeline, rawImagePipeline, "archive")
 		tarPipeline.SetFilename(img.Filename) // filename extension will determine compression
 		imagePipeline = tarPipeline
 	default:

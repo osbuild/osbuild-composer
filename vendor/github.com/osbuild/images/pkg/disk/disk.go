@@ -19,6 +19,7 @@ package disk
 
 import (
 	"encoding/hex"
+	"fmt"
 	"io"
 	"math/rand"
 	"reflect"
@@ -60,6 +61,54 @@ const (
 	// DosFat16B used for the ESP-System partition
 	DosFat16B = "06"
 )
+
+// FSType is the filesystem type enum.
+//
+// There should always be one value for each filesystem type supported by
+// osbuild stages (stages/org.osbuild.mkfs.*) and the unset/none value.
+type FSType uint64
+
+const (
+	FS_NONE FSType = iota
+	FS_VFAT
+	FS_EXT4
+	FS_XFS
+	FS_BTRFS
+)
+
+func (f FSType) String() string {
+	switch f {
+	case FS_NONE:
+		return ""
+	case FS_VFAT:
+		return "vfat"
+	case FS_EXT4:
+		return "ext4"
+	case FS_XFS:
+		return "xfs"
+	case FS_BTRFS:
+		return "btrfs"
+	default:
+		panic(fmt.Sprintf("unknown or unsupported filesystem type with enum value %d", f))
+	}
+}
+
+func NewFSType(s string) (FSType, error) {
+	switch s {
+	case "":
+		return FS_NONE, nil
+	case "vfat":
+		return FS_VFAT, nil
+	case "ext4":
+		return FS_EXT4, nil
+	case "xfs":
+		return FS_XFS, nil
+	case "btrfs":
+		return FS_BTRFS, nil
+	default:
+		return FS_NONE, fmt.Errorf("unknown or unsupported filesystem type name: %s", s)
+	}
+}
 
 // Entity is the base interface for all disk-related entities.
 type Entity interface {
@@ -204,4 +253,25 @@ func NewVolIDFromRand(r *rand.Rand) string {
 		panic("expected four random bytes")
 	}
 	return hex.EncodeToString(volid)
+}
+
+// genUniqueString returns a string based on base that does does not exist in
+// the existing set. If the base itself does not exist, it is returned as is,
+// otherwise a two digit number is added and incremented until a unique string
+// is found.
+// This function is mimicking what blivet does for avoiding name collisions.
+// See blivet/blivet.py#L1060 commit 2eb4bd4
+func genUniqueString(base string, existing map[string]bool) (string, error) {
+	if !existing[base] {
+		return base, nil
+	}
+
+	for i := 0; i < 100; i++ {
+		uniq := fmt.Sprintf("%s%02d", base, i)
+		if !existing[uniq] {
+			return uniq, nil
+		}
+	}
+
+	return "", fmt.Errorf("name collision: could not generate unique version of %q", base)
 }

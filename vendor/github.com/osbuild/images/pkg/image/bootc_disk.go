@@ -3,9 +3,7 @@ package image
 import (
 	"fmt"
 	"math/rand"
-	"regexp"
 
-	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/customizations/users"
 	"github.com/osbuild/images/pkg/disk"
@@ -92,15 +90,7 @@ func (img *BootcDiskImage) InstantiateManifestFromContainers(m *manifest.Manifes
 		fmt.Sprintf("%s.vhd", fileBasename),
 	}
 
-	// XXX: copied from https://github.com/osbuild/images/blob/v0.85.0/pkg/image/disk.go#L102
-	gcePipeline := manifest.NewTar(buildPipeline, rawImage, "gce")
-	gcePipeline.Format = osbuild.TarArchiveFormatOldgnu
-	gcePipeline.RootNode = osbuild.TarRootNodeOmit
-	// these are required to successfully import the image to GCP
-	gcePipeline.ACLs = common.ToPtr(false)
-	gcePipeline.SELinux = common.ToPtr(false)
-	gcePipeline.Xattrs = common.ToPtr(false)
-	gcePipeline.Transform = fmt.Sprintf(`s/%s/disk.raw/`, regexp.QuoteMeta(rawImage.Filename()))
+	gcePipeline := newGCETarPipelineForImg(buildPipeline, rawImage, "gce")
 	gcePipeline.SetFilename("image.tar.gz")
 
 	return nil

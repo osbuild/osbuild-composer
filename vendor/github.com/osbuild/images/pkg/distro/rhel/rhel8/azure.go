@@ -529,7 +529,6 @@ var defaultAzureImageConfig = &distro.ImageConfig{
 		"nm-cloud-setup.service",
 		"nm-cloud-setup.timer",
 		"sshd",
-		"systemd-resolved",
 		"waagent",
 	},
 	SshdConfig: &osbuild.SshdConfigStageOptions{
