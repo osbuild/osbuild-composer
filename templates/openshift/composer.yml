@@ -249,6 +249,7 @@ objects:
       - claim: account_id
         pattern: ^(${ACL_ACCOUNT_ID_TENANTS})$
     osbuild-composer.toml: |
+      ignore_missing_repos = true
       log_level = "info"
       log_format = "json"
       [koji]
