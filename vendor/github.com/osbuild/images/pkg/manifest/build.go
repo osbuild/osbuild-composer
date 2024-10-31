@@ -236,7 +236,9 @@ func (p *BuildrootFromContainer) serialize() osbuild.Pipeline {
 	pipeline.Runner = p.runner.String()
 
 	image := osbuild.NewContainersInputForSingleSource(p.containerSpecs[0])
-	stage, err := osbuild.NewContainerDeployStage(image, &osbuild.ContainerDeployOptions{})
+	// Make skopeo copy to remove the signatures of signed containers by default to workaround
+	// build failures until https://github.com/containers/image/issues/2599 is implemented
+	stage, err := osbuild.NewContainerDeployStage(image, &osbuild.ContainerDeployOptions{RemoveSignatures: true})
 	if err != nil {
 		panic(err)
 	}

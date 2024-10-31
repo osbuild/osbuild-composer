@@ -228,7 +228,12 @@ func (s *Server) enqueueCompose(irs []imageRequest, channel string) (uuid.UUID, 
 		workerResolveSpecs := make([]worker.OSTreeResolveSpec, len(sources))
 		for idx, source := range sources {
 			// ostree.SourceSpec is directly convertible to worker.OSTreeResolveSpec
-			workerResolveSpecs[idx] = worker.OSTreeResolveSpec(source)
+			workerResolveSpecs[idx] = worker.OSTreeResolveSpec{
+				URL:  source.URL,
+				Ref:  source.Ref,
+				RHSM: source.RHSM,
+			}
+
 		}
 		jobID, err := s.workers.EnqueueOSTreeResolveJob(&worker.OSTreeResolveJob{Specs: workerResolveSpecs}, channel)
 		if err != nil {
@@ -356,7 +361,11 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 			workerResolveSpecs := make([]worker.OSTreeResolveSpec, len(sources))
 			for idx, source := range sources {
 				// ostree.SourceSpec is directly convertible to worker.OSTreeResolveSpec
-				workerResolveSpecs[idx] = worker.OSTreeResolveSpec(source)
+				workerResolveSpecs[idx] = worker.OSTreeResolveSpec{
+					URL:  source.URL,
+					Ref:  source.Ref,
+					RHSM: source.RHSM,
+				}
 			}
 			jobID, err := s.workers.EnqueueOSTreeResolveJob(&worker.OSTreeResolveJob{Specs: workerResolveSpecs}, channel)
 			if err != nil {

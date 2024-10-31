@@ -10,6 +10,7 @@ import (
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/ostree"
+	"github.com/osbuild/images/pkg/platform"
 	"github.com/osbuild/osbuild-composer/internal/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/cloud/gcp"
 	"github.com/osbuild/osbuild-composer/internal/common"
@@ -56,11 +57,11 @@ func newAWSTarget(options UploadOptions, imageType distro.ImageType) (*target.Ta
 
 	var amiBootMode *string
 	switch imageType.BootMode() {
-	case distro.BOOT_HYBRID:
+	case platform.BOOT_HYBRID:
 		amiBootMode = common.ToPtr(string(ec2types.BootModeValuesUefiPreferred))
-	case distro.BOOT_UEFI:
+	case platform.BOOT_UEFI:
 		amiBootMode = common.ToPtr(string(ec2types.BootModeValuesUefi))
-	case distro.BOOT_LEGACY:
+	case platform.BOOT_LEGACY:
 		amiBootMode = common.ToPtr(string(ec2types.BootModeValuesLegacyBios))
 	}
 

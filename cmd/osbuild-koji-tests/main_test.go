@@ -23,7 +23,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/osbuild/images/pkg/distro"
+	"github.com/osbuild/images/pkg/platform"
 	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/upload/koji"
 )
@@ -182,7 +182,7 @@ func TestKojiImport(t *testing.T) {
 			Extra: &koji.BuildOutputExtra{
 				ImageOutput: koji.ImageExtraInfo{
 					Arch:     "noarch",
-					BootMode: distro.BOOT_LEGACY.String(),
+					BootMode: platform.BOOT_LEGACY.String(),
 				},
 			},
 		},

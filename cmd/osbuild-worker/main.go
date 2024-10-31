@@ -7,12 +7,13 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	slogger "github.com/osbuild/osbuild-composer/pkg/splunk_logger"
 	"net/url"
 	"os"
 	"path"
 	"strings"
 	"time"
+
+	slogger "github.com/osbuild/osbuild-composer/pkg/splunk_logger"
 
 	"github.com/BurntSushi/toml"
 	"github.com/sirupsen/logrus"
@@ -508,8 +509,10 @@ func main() {
 		worker.JobTypeContainerResolve: &ContainerResolveJobImpl{
 			AuthFilePath: containersAuthFilePath,
 		},
-		worker.JobTypeOSTreeResolve: &OSTreeResolveJobImpl{},
-		worker.JobTypeFileResolve:   &FileResolveJobImpl{},
+		worker.JobTypeOSTreeResolve: &OSTreeResolveJobImpl{
+			RepositoryMTLSConfig: repositoryMTLSConfig,
+		},
+		worker.JobTypeFileResolve: &FileResolveJobImpl{},
 		worker.JobTypeAWSEC2Copy: &AWSEC2CopyJobImpl{
 			AWSCreds: awsCredentials,
 		},

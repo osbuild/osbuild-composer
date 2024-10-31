@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"net/url"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 
@@ -11,6 +13,26 @@ import (
 )
 
 type OSTreeResolveJobImpl struct {
+	RepositoryMTLSConfig *RepositoryMTLSConfig
+}
+
+func (job *OSTreeResolveJobImpl) CompareBaseURL(baseURLStr string) (bool, error) {
+	baseURL, err := url.Parse(baseURLStr)
+	if err != nil {
+		return false, err
+	}
+
+	if baseURL.Scheme != job.RepositoryMTLSConfig.BaseURL.Scheme {
+		return false, nil
+	}
+	if baseURL.Host != job.RepositoryMTLSConfig.BaseURL.Host {
+		return false, nil
+	}
+	if !strings.HasPrefix(baseURL.Path, job.RepositoryMTLSConfig.BaseURL.Path) {
+		return false, nil
+	}
+
+	return true, nil
 }
 
 func setError(err error, result *worker.OSTreeResolveJobResult) {
@@ -51,7 +73,25 @@ func (impl *OSTreeResolveJobImpl) Run(job worker.Job) error {
 	logWithId.Infof("Resolving (%d) ostree commits", len(args.Specs))
 
 	for i, s := range args.Specs {
-		reqParams := ostree.SourceSpec(s)
+		reqParams := ostree.SourceSpec{}
+		reqParams.URL = s.URL
+		reqParams.Ref = s.Ref
+		if match, err := impl.CompareBaseURL(s.URL); match && err == nil {
+			reqParams.Proxy = impl.RepositoryMTLSConfig.Proxy.String()
+			reqParams.MTLS = &ostree.MTLS{
+				CA:         impl.RepositoryMTLSConfig.CA,
+				ClientCert: impl.RepositoryMTLSConfig.MTLSClientCert,
+				ClientKey:  impl.RepositoryMTLSConfig.MTLSClientKey,
+			}
+		} else if err != nil {
+			logWithId.Errorf("Error comparing base URL: %v", err)
+			result.JobError = clienterrors.New(
+				clienterrors.ErrorInvalidRepositoryURL,
+				"Repository URL is malformed",
+				err.Error(),
+			)
+			break
+		}
 		commitSpec, err := ostree.Resolve(reqParams)
 		if err != nil {
 			logWithId.Infof("Resolving ostree params failed: %v", err)

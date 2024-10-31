@@ -516,14 +516,19 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 		}
 	}
 
+	// Both curl and ostree input share the same MTLS config
 	if impl.RepositoryMTLSConfig != nil {
 		if impl.RepositoryMTLSConfig.CA != "" {
 			extraEnv = append(extraEnv, fmt.Sprintf("OSBUILD_SOURCES_CURL_SSL_CA_CERT=%s", impl.RepositoryMTLSConfig.CA))
+			extraEnv = append(extraEnv, fmt.Sprintf("OSBUILD_SOURCES_OSTREE_SSL_CA_CERT=%s", impl.RepositoryMTLSConfig.CA))
 		}
 		extraEnv = append(extraEnv, fmt.Sprintf("OSBUILD_SOURCES_CURL_SSL_CLIENT_KEY=%s", impl.RepositoryMTLSConfig.MTLSClientKey))
 		extraEnv = append(extraEnv, fmt.Sprintf("OSBUILD_SOURCES_CURL_SSL_CLIENT_CERT=%s", impl.RepositoryMTLSConfig.MTLSClientCert))
+		extraEnv = append(extraEnv, fmt.Sprintf("OSBUILD_SOURCES_OSTREE_SSL_CLIENT_KEY=%s", impl.RepositoryMTLSConfig.MTLSClientKey))
+		extraEnv = append(extraEnv, fmt.Sprintf("OSBUILD_SOURCES_OSTREE_SSL_CLIENT_CERT=%s", impl.RepositoryMTLSConfig.MTLSClientCert))
 		if impl.RepositoryMTLSConfig.Proxy != nil {
 			extraEnv = append(extraEnv, fmt.Sprintf("OSBUILD_SOURCES_CURL_PROXY=%s", impl.RepositoryMTLSConfig.Proxy.String()))
+			extraEnv = append(extraEnv, fmt.Sprintf("OSBUILD_SOURCES_OSTREE_PROXY=%s", impl.RepositoryMTLSConfig.Proxy.String()))
 		}
 	}
 
