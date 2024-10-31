@@ -1,3 +1,5 @@
+ignore_missing_repos = true
+
 [koji]
 allowed_domains = [ "localhost", "client.osbuild.org" ]
 ca = "/etc/osbuild-composer/ca-crt.pem"

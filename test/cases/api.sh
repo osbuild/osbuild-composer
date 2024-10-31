@@ -136,6 +136,7 @@ PGUSER=postgres PGPASSWORD=foobar PGDATABASE=osbuildcomposer PGHOST=localhost PG
 popd
 
 cat <<EOF | sudo tee "/etc/osbuild-composer/osbuild-composer.toml"
+ignore_missing_repos = true
 log_level = "debug"
 [koji]
 allowed_domains = [ "localhost", "client.osbuild.org" ]
@@ -778,6 +779,7 @@ verifyPackageList
 #
 greenprint  "Verifying oauth2"
 cat <<EOF | sudo tee "/etc/osbuild-composer/osbuild-composer.toml"
+ignore_missing_repos = true
 [koji]
 enable_tls = false
 enable_mtls = false

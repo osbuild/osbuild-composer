@@ -62,6 +62,7 @@ sudo mkdir -p /etc/osbuild-worker
 # these are expected to be provided with the compose request.
 if [[ "$AUTH_METHOD" != "$AUTH_METHOD_NONE" ]]; then
     # Remove the repositories, because it is not used in the Service scenario
+    # This requires that ignore_missing_repos is enabled in the osbuild-composer configuration
     sudo rm -rf /etc/osbuild-composer/repositories
     sudo rm -f /usr/share/osbuild-composer/repositories/*
 
