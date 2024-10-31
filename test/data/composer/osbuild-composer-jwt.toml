@@ -1,3 +1,5 @@
+ignore_missing_repos = true
+
 [koji]
 enable_tls = false
 enable_mtls = false

@@ -102,6 +102,7 @@ sudo "${CONTAINER_RUNTIME}" pull --creds "${V2_QUAY_USERNAME}":"${V2_QUAY_PASSWO
      "quay.io/osbuild/osbuild-composer-ubi-pr:${CI_COMMIT_SHA}"
 
 cat <<EOF | sudo tee "/etc/osbuild-composer/osbuild-composer.toml"
+ignore_missing_repos = true
 log_level = "debug"
 [koji]
 allowed_domains = [ "localhost", "client.osbuild.org" ]
