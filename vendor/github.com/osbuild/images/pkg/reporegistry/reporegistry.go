@@ -23,9 +23,6 @@ func New(repoConfigPaths []string) (*RepoRegistry, error) {
 	if err != nil {
 		return nil, err
 	}
-	if len(repositories) == 0 {
-		return nil, fmt.Errorf("no repositories found in the given paths: %v", repoConfigPaths)
-	}
 
 	return &RepoRegistry{repositories}, nil
 }
