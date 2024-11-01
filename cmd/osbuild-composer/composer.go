@@ -148,6 +148,10 @@ func NewComposer(config *ComposerConfigFile, stateDir, cacheDir string) (*Compos
 }
 
 func (c *Composer) InitWeldr(weldrListener net.Listener, distrosImageTypeDenylist map[string][]string) (err error) {
+	// Weldr requires repository definitions, so error out if none were loaded
+	if c.repos == nil {
+		return fmt.Errorf("weldr API requires repository definitions but none were loaded")
+	}
 	c.weldr, err = weldr.New(c.repos, c.stateDir, c.solver, c.distros, c.logger, c.workers, distrosImageTypeDenylist)
 	if err != nil {
 		return err
