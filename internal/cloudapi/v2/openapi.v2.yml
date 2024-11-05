@@ -346,6 +346,56 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
+  /experimental/compose:
+    post:
+      operationId: postBootcCompose
+      summary: Create compose with bootc image
+      description: Create a new compose with bootc image, potentially consisting of several images and upload each to their destinations.
+      security:
+        - Bearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ComposeBootcRequest'
+      responses:
+        '201':
+          description: Compose has started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComposeId'
+        '400':
+          description: Invalid compose request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Auth token is invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Unauthorized to perform operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Unknown compose id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Unexpected error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /compose:
     post:
       operationId: postCompose
@@ -831,43 +881,65 @@ components:
         signature:
           type: string
 
-    ComposeRequest:
+    BaseComposeRequest:
+      type: object
       additionalProperties: false
-      required:
-        - distribution
-      not: {required: ['customizations', 'blueprint']}
       properties:
         distribution:
           type: string
           example: 'rhel-8'
-        image_request:
-          $ref: '#/components/schemas/ImageRequest'
-        image_requests:
-          type: array
-          items:
-            $ref: '#/components/schemas/ImageRequest'
         customizations:
           $ref: '#/components/schemas/Customizations'
-        koji:
-          $ref: '#/components/schemas/Koji'
-        blueprint:
-          $ref: '#/components/schemas/Blueprint'
-    ImageRequest:
+
+    ComposeBootcRequest:
+      allOf:
+        - $ref: '#/components/schemas/BaseComposeRequest'
+        - type: object
+          required:
+            - distribution
+            - image_ref
+          not: {required: ['customizations', 'blueprint']}
+          properties:
+            image_request:
+              $ref: '#/components/schemas/ImageRequestBase'
+            image_requests:
+              type: array
+              items:
+                $ref: '#/components/schemas/ImageRequestBase'
+            image_ref:
+              type: string
+              example: 'quay.io/myaccount/bootc:latest'
+
+    ComposeRequest:
+      allOf:
+        - $ref: '#/components/schemas/BaseComposeRequest'
+        - type: object
+          required:
+            - distribution
+          not: {required: ['customizations', 'blueprint']}
+          properties:
+            image_request:
+              $ref: '#/components/schemas/ImageRequest'
+            image_requests:
+              type: array
+              items:
+                $ref: '#/components/schemas/ImageRequest'
+            koji:
+              $ref: '#/components/schemas/Koji'
+            blueprint:
+              $ref: '#/components/schemas/Blueprint'
+    
+    ImageRequestBase:
       additionalProperties: false
       required:
         - architecture
         - image_type
-        - repositories
       properties:
         architecture:
           type: string
           example: 'x86_64'
         image_type:
           $ref: '#/components/schemas/ImageTypes'
-        repositories:
-          type: array
-          items:
-            $ref: '#/components/schemas/Repository'
         ostree:
           $ref: '#/components/schemas/OSTree'
         upload_targets:
@@ -892,6 +964,18 @@ components:
           description: |
             Size of image, in bytes. When set to 0 the image size is a minimum
             defined by the image type.
+    ImageRequest:
+      allOf:
+        - $ref: '#/components/schemas/ImageRequestBase'
+        - type: object
+          properties:
+            repositories:
+              type: array
+              items:
+                $ref: '#/components/schemas/Repository'
+          required:
+            - repositories
+   
     ImageTypes:
       type: string
       enum:

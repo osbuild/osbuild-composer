@@ -143,6 +143,26 @@ type imageRequest struct {
 	manifestSeed int64
 }
 
+func (h *apiHandlers) PostBootcCompose(ctx echo.Context) error {
+	var request ComposeBootcRequest
+	err := ctx.Bind(&request)
+	if err != nil {
+		return err
+	}
+
+	// TODO: add enqueueBootcCompose in server and call it here
+
+	return ctx.JSON(http.StatusCreated, &ComposeId{
+		ObjectReference: ObjectReference{
+			Href: "/api/image-builder-composer/v2/experimental/compose",
+			Id:   "not-implemented",
+			Kind: "ComposeId",
+		},
+		Id: "",
+	})
+
+}
+
 func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 	var request ComposeRequest
 	err := ctx.Bind(&request)
