@@ -9,7 +9,8 @@ type ContainerDeployInputs struct {
 func (ContainerDeployInputs) isStageInputs() {}
 
 type ContainerDeployOptions struct {
-	Exclude []string `json:"exclude,omitempty"`
+	Exclude          []string `json:"exclude,omitempty"`
+	RemoveSignatures bool     `json:"remove-signatures,omitempty"`
 }
 
 func (ContainerDeployOptions) isStageOptions() {}

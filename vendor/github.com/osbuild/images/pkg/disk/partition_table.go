@@ -715,7 +715,7 @@ func (pt *PartitionTable) ensureLVM() error {
 
 		// create root logical volume on the new volume group with the same
 		// size and filesystem as the previous root partition
-		_, err := vg.CreateLogicalVolume("root", part.Size, filesystem)
+		_, err := vg.CreateLogicalVolume("rootlv", part.Size, filesystem)
 		if err != nil {
 			panic(fmt.Sprintf("Could not create LV: %v", err))
 		}
