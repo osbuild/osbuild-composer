@@ -708,7 +708,7 @@ func (s *Server) RequeueOrFinishJob(token uuid.UUID, maxRetries uint64, result j
 		}
 	}
 
-	err = s.jobs.RequeueOrFinishJob(jobId, maxRetries, result)
+	requeued, err := s.jobs.RequeueOrFinishJob(jobId, maxRetries, result)
 	if err != nil {
 		switch err {
 		case jobqueue.ErrNotRunning:
@@ -716,6 +716,14 @@ func (s *Server) RequeueOrFinishJob(token uuid.UUID, maxRetries uint64, result j
 		default:
 			return fmt.Errorf("error finishing job: %v", err)
 		}
+	}
+
+	if requeued {
+		jobInfo, err := s.jobInfo(jobId, nil)
+		if err != nil {
+			return fmt.Errorf("error requeueing job: %w", err)
+		}
+		prometheus.RequeueJobMetrics(jobInfo.JobType, jobInfo.Channel)
 	}
 
 	jobType, err := s.JobType(jobId)

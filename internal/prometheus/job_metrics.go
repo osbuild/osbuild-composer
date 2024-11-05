@@ -68,6 +68,11 @@ func DequeueJobMetrics(pending time.Time, started time.Time, jobType, tenant, ar
 	}
 }
 
+func RequeueJobMetrics(jobType, tenant string) {
+	PendingJobs.WithLabelValues(jobType, tenant).Inc()
+	RunningJobs.WithLabelValues(jobType, tenant).Dec()
+}
+
 func CancelJobMetrics(started time.Time, jobType, tenant string) {
 	if !started.IsZero() {
 		RunningJobs.WithLabelValues(jobType, tenant).Dec()
