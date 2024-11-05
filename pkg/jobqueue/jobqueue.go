@@ -51,10 +51,10 @@ type JobQueue interface {
 
 	// Tries to requeue a running job by its ID
 	//
-	// Returns the given job to the pending state. If the job has reached
-	// the maxRetries number of retries already, finish the job instead.
+	// If the job has reached the maxRetries number of retries already, finish the job instead.
 	// `result` must fit the associated job type and must be serializable to JSON.
-	RequeueOrFinishJob(id uuid.UUID, maxRetries uint64, result interface{}) error
+	// Fills in result, and returns if the job was requeued, or an error.
+	RequeueOrFinishJob(id uuid.UUID, maxRetries uint64, result interface{}) (bool, error)
 
 	// Cancel a job. Does nothing if the job has already finished.
 	CancelJob(id uuid.UUID) error

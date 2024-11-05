@@ -487,16 +487,16 @@ func (q *DBJobQueue) DequeueByID(ctx context.Context, id, workerID uuid.UUID) (u
 	return token, dependencies, jobType, args, nil
 }
 
-func (q *DBJobQueue) RequeueOrFinishJob(id uuid.UUID, maxRetries uint64, result interface{}) error {
+func (q *DBJobQueue) RequeueOrFinishJob(id uuid.UUID, maxRetries uint64, result interface{}) (bool, error) {
 	conn, err := q.pool.Acquire(context.Background())
 	if err != nil {
-		return fmt.Errorf("error connecting to database: %w", err)
+		return false, fmt.Errorf("error connecting to database: %w", err)
 	}
 	defer conn.Release()
 
 	tx, err := conn.Begin(context.Background())
 	if err != nil {
-		return fmt.Errorf("error starting database transaction: %w", err)
+		return false, fmt.Errorf("error starting database transaction: %w", err)
 	}
 	defer func() {
 		err = tx.Rollback(context.Background())
@@ -513,60 +513,61 @@ func (q *DBJobQueue) RequeueOrFinishJob(id uuid.UUID, maxRetries uint64, result 
 	canceled := false
 	err = tx.QueryRow(context.Background(), sqlQueryJob, id).Scan(&jobType, nil, nil, &started, &finished, &retries, &canceled)
 	if err == pgx.ErrNoRows {
-		return jobqueue.ErrNotExist
+		return false, jobqueue.ErrNotExist
 	}
 	if canceled {
-		return jobqueue.ErrCanceled
+		return false, jobqueue.ErrCanceled
 	}
 	if started == nil || finished != nil {
-		return jobqueue.ErrNotRunning
+		return false, jobqueue.ErrNotRunning
 	}
 
 	// Remove from heartbeats if token is null
 	tag, err := tx.Exec(context.Background(), sqlDeleteHeartbeat, id)
 	if err != nil {
-		return fmt.Errorf("error removing job %s from heartbeats: %w", id, err)
+		return false, fmt.Errorf("error removing job %s from heartbeats: %w", id, err)
 	}
 
 	if tag.RowsAffected() != 1 {
-		return jobqueue.ErrNotExist
+		return false, jobqueue.ErrNotExist
 	}
 
 	if retries >= maxRetries {
 		err = tx.QueryRow(context.Background(), sqlFinishJob, result, id).Scan(&finished)
 		if err == pgx.ErrNoRows {
-			return jobqueue.ErrNotExist
+			return false, jobqueue.ErrNotExist
 		}
 		if err != nil {
-			return fmt.Errorf("error finishing job %s: %w", id, err)
+			return false, fmt.Errorf("error finishing job %s: %w", id, err)
 		}
 	} else {
 		tag, err = tx.Exec(context.Background(), sqlRequeue, id)
 		if err != nil {
-			return fmt.Errorf("error requeueing job %s: %w", id, err)
+			return false, fmt.Errorf("error requeueing job %s: %w", id, err)
 		}
 
 		if tag.RowsAffected() != 1 {
-			return jobqueue.ErrNotExist
+			return false, jobqueue.ErrNotExist
 		}
 	}
 
 	_, err = tx.Exec(context.Background(), sqlNotify)
 	if err != nil {
-		return fmt.Errorf("error notifying jobs channel: %w", err)
+		return false, fmt.Errorf("error notifying jobs channel: %w", err)
 	}
 
 	err = tx.Commit(context.Background())
 	if err != nil {
-		return fmt.Errorf("unable to commit database transaction: %w", err)
+		return false, fmt.Errorf("unable to commit database transaction: %w", err)
 	}
 
 	if retries >= maxRetries {
 		q.logger.Info("Finished job", "job_type", jobType, "job_id", id.String())
+		return false, nil
 	} else {
 		q.logger.Info("Requeued job", "job_type", jobType, "job_id", id.String())
+		return true, nil
 	}
-	return nil
 }
 
 func (q *DBJobQueue) CancelJob(id uuid.UUID) error {

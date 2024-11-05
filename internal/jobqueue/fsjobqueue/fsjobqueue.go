@@ -126,7 +126,7 @@ func New(dir string) (*fsJobQueue, error) {
 		if !j.StartedAt.IsZero() && j.FinishedAt.IsZero() && !j.Canceled {
 			// Fail older running jobs which don't have a token stored
 			if j.Token == uuid.Nil {
-				err = q.RequeueOrFinishJob(j.Id, 0, nil)
+				_, err = q.RequeueOrFinishJob(j.Id, 0, nil)
 				if err != nil {
 					return nil, fmt.Errorf("Error finishing job '%s' without a token: %v", j.Id, err)
 				}
@@ -297,21 +297,21 @@ func (q *fsJobQueue) DequeueByID(ctx context.Context, id, wID uuid.UUID) (uuid.U
 	return j.Token, j.Dependencies, j.Type, j.Args, nil
 }
 
-func (q *fsJobQueue) RequeueOrFinishJob(id uuid.UUID, maxRetries uint64, result interface{}) error {
+func (q *fsJobQueue) RequeueOrFinishJob(id uuid.UUID, maxRetries uint64, result interface{}) (bool, error) {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 
 	j, err := q.readJob(id)
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	if j.Canceled {
-		return jobqueue.ErrCanceled
+		return false, jobqueue.ErrCanceled
 	}
 
 	if j.StartedAt.IsZero() || !j.FinishedAt.IsZero() {
-		return jobqueue.ErrNotRunning
+		return false, jobqueue.ErrNotRunning
 	}
 
 	delete(q.jobIdByToken, j.Token)
@@ -326,26 +326,27 @@ func (q *fsJobQueue) RequeueOrFinishJob(id uuid.UUID, maxRetries uint64, result 
 
 		j.Result, err = json.Marshal(result)
 		if err != nil {
-			return fmt.Errorf("error marshaling result: %v", err)
+			return false, fmt.Errorf("error marshaling result: %v", err)
 		}
 
 		// Write before notifying dependants, because it will be read again.
 		err = q.db.Write(id.String(), j)
 		if err != nil {
-			return fmt.Errorf("error writing job %s: %v", id, err)
+			return false, fmt.Errorf("error writing job %s: %v", id, err)
 		}
 
 		for _, depid := range q.dependants[id] {
 			dep, err := q.readJob(depid)
 			if err != nil {
-				return err
+				return false, err
 			}
 			err = q.maybeEnqueue(dep, false)
 			if err != nil {
-				return err
+				return false, err
 			}
 		}
 		delete(q.dependants, id)
+		return false, nil
 	} else {
 		j.Token = uuid.Nil
 		j.StartedAt = time.Time{}
@@ -355,7 +356,7 @@ func (q *fsJobQueue) RequeueOrFinishJob(id uuid.UUID, maxRetries uint64, result 
 		// doesn't become corrupt when writing fails.
 		err = q.db.Write(j.Id.String(), j)
 		if err != nil {
-			return fmt.Errorf("cannot write job: %v", err)
+			return false, fmt.Errorf("cannot write job: %v", err)
 		}
 
 		// add the job to the list of pending ones
@@ -368,9 +369,8 @@ func (q *fsJobQueue) RequeueOrFinishJob(id uuid.UUID, maxRetries uint64, result 
 			default:
 			}
 		}
+		return true, nil
 	}
-
-	return nil
 }
 
 func (q *fsJobQueue) CancelJob(id uuid.UUID) error {
