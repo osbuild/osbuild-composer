@@ -1573,3 +1573,68 @@ func TestRequestJobForWorker(t *testing.T) {
 	require.NotNil(t, args)
 	require.Nil(t, dynamicArgs)
 }
+
+func TestJobHeartbeats(t *testing.T) {
+	config := defaultConfig
+	config.JobTimeout = time.Millisecond * 1
+	config.JobWatchFreq = time.Millisecond * 100
+	server := newTestServer(t, t.TempDir(), config, false)
+
+	distroStruct := newTestDistro(t)
+	arch, err := distroStruct.GetArch(test_distro.TestArchName)
+	if err != nil {
+		t.Fatalf("error getting arch from distro: %v", err)
+	}
+	imageType, err := arch.GetImageType(test_distro.TestImageTypeName)
+	if err != nil {
+		t.Fatalf("error getting image type from arch: %v", err)
+	}
+	manifest, _, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, nil, 0)
+	if err != nil {
+		t.Fatalf("error creating osbuild manifest: %v", err)
+	}
+	mf, err := manifest.Serialize(nil, nil, nil, nil)
+	if err != nil {
+		t.Fatalf("error creating osbuild manifest: %v", err)
+	}
+	jobId, err := server.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: mf}, "")
+	require.NoError(t, err)
+	require.Equal(t, float64(1), promtest.ToFloat64(prometheus.PendingJobs))
+
+	// Can request a job with worker ID
+	j, _, typ, args, dynamicArgs, err := server.RequestJob(context.Background(), arch.Name(), []string{worker.JobTypeOSBuild}, []string{""}, uuid.Nil)
+	require.NoError(t, err)
+	require.Equal(t, jobId, j)
+	require.Equal(t, worker.JobTypeOSBuild, typ)
+	require.NotNil(t, args)
+	require.Nil(t, dynamicArgs)
+	require.Equal(t, float64(0), promtest.ToFloat64(prometheus.PendingJobs))
+	require.Equal(t, float64(1), promtest.ToFloat64(prometheus.RunningJobs))
+
+	var jobInfo *worker.JobInfo
+	var jobRes worker.OSBuildJobResult
+	retries := 0
+	for i := 0; i < 3 && retries < 3; i++ {
+		//wait until job is completely failed
+		jobInfo, err = server.OSBuildJobInfo(j, &jobRes)
+		require.NoError(t, err)
+		if jobInfo.JobStatus.Started.IsZero() {
+			require.Equal(t, float64(1), promtest.ToFloat64(prometheus.PendingJobs))
+			require.Equal(t, float64(0), promtest.ToFloat64(prometheus.RunningJobs))
+			j, _, typ, args, dynamicArgs, err := server.RequestJob(context.Background(), arch.Name(), []string{worker.JobTypeOSBuild}, []string{""}, uuid.Nil)
+			require.NoError(t, err)
+			require.Equal(t, jobId, j)
+			require.Equal(t, worker.JobTypeOSBuild, typ)
+			require.NotNil(t, args)
+			require.Nil(t, dynamicArgs)
+			retries += 1
+		}
+		time.Sleep(time.Millisecond * 200)
+	}
+	_, err = server.OSBuildJobInfo(j, &jobRes)
+	require.NoError(t, err)
+	require.NotNil(t, jobRes.JobError)
+	require.Equal(t, clienterrors.ErrorJobMissingHeartbeat, jobRes.JobError.ID)
+	require.Equal(t, float64(0), promtest.ToFloat64(prometheus.PendingJobs))
+	require.Equal(t, float64(0), promtest.ToFloat64(prometheus.RunningJobs))
+}
