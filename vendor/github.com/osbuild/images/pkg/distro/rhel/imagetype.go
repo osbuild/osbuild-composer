@@ -168,15 +168,15 @@ func (t *ImageType) Exports() []string {
 	return []string{"assembler"}
 }
 
-func (t *ImageType) BootMode() distro.BootMode {
+func (t *ImageType) BootMode() platform.BootMode {
 	if t.platform.GetUEFIVendor() != "" && t.platform.GetBIOSPlatform() != "" {
-		return distro.BOOT_HYBRID
+		return platform.BOOT_HYBRID
 	} else if t.platform.GetUEFIVendor() != "" {
-		return distro.BOOT_UEFI
+		return platform.BOOT_UEFI
 	} else if t.platform.GetBIOSPlatform() != "" || t.platform.GetZiplSupport() {
-		return distro.BOOT_LEGACY
+		return platform.BOOT_LEGACY
 	}
-	return distro.BOOT_NONE
+	return platform.BOOT_NONE
 }
 
 func (t *ImageType) GetPartitionTable(

@@ -25,9 +25,21 @@ var (
 // SourceSpec serves as input for ResolveParams, and contains all necessary
 // variables to resolve a ref, which can then be turned into a CommitSpec.
 type SourceSpec struct {
-	URL  string
-	Ref  string
+	URL string
+	Ref string
+	// RHSM indicates to use RHSM secrets when pulling from the remote. Alternatively, you can use MTLS with plain certs.
 	RHSM bool
+	// MTLS information. Will be ignored if RHSM is set.
+	MTLS *MTLS
+	// Proxy as HTTP proxy to use when fetching the ref.
+	Proxy string
+}
+
+// MTLS contains the options for resolving an ostree source.
+type MTLS struct {
+	CA         string
+	ClientCert string
+	ClientKey  string
 }
 
 // CommitSpec specifies an ostree commit using any combination of Ref (branch), URL (source), and Checksum (commit ID).
@@ -138,59 +150,53 @@ func verifyChecksum(commit string) bool {
 	return len(commit) > 0 && ostreeCommitRE.MatchString(commit)
 }
 
-// ResolveRef resolves the URL path specified by the location and ref
+// resolveRef resolves the URL path specified by the location and ref
 // (location+"refs/heads/"+ref) and returns the commit ID for the named ref. If
 // there is an error, it will be of type ResolveRefError.
-func ResolveRef(location, ref string, consumerCerts bool, subs *rhsm.Subscriptions, ca *string) (string, error) {
-	u, err := url.Parse(location)
+func resolveRef(ss SourceSpec) (string, error) {
+	u, err := url.Parse(ss.URL)
 	if err != nil {
 		return "", NewResolveRefError("error parsing ostree repository location: %v", err)
 	}
-	u.Path = path.Join(u.Path, "refs/heads/", ref)
+	u.Path = path.Join(u.Path, "refs/heads/", ss.Ref)
 
-	var client *http.Client
-	if consumerCerts {
-		if subs == nil {
-			subs, err = rhsm.LoadSystemSubscriptions()
-			if err != nil {
-				return "", NewResolveRefError("error adding rhsm certificates when resolving ref: %s", err)
-			}
-			if subs.Consumer == nil {
-				return "", NewResolveRefError("error adding rhsm certificates when resolving ref")
-			}
-		}
-
+	transport := http.DefaultTransport.(*http.Transport).Clone()
+	client := &http.Client{
+		Transport: transport,
+		Timeout:   300 * time.Second,
+	}
+	if u.Scheme == "https" {
 		tlsConf := &tls.Config{
 			MinVersion: tls.VersionTLS12,
 		}
 
-		if ca != nil {
-			caCertPEM, err := os.ReadFile(*ca)
+		// If CA is set, load the CA certificate and add it to the TLS configuration. Otherwise, use the system CA.
+		if ss.MTLS.CA != "" {
+			caCertPEM, err := os.ReadFile(ss.MTLS.CA)
 			if err != nil {
-				return "", NewResolveRefError("error adding rhsm certificates when resolving ref: %s", err)
+				return "", NewResolveRefError("error adding ca certificate when resolving ref: %s", err)
 			}
-			roots := x509.NewCertPool()
-			ok := roots.AppendCertsFromPEM(caCertPEM)
-			if !ok {
-				return "", NewResolveRefError("error adding rhsm certificates when resolving ref")
+			tlsConf.RootCAs = x509.NewCertPool()
+			if ok := tlsConf.RootCAs.AppendCertsFromPEM(caCertPEM); !ok {
+				return "", NewResolveRefError("error adding ca certificate when resolving ref")
 			}
-			tlsConf.RootCAs = roots
 		}
 
-		cert, err := tls.LoadX509KeyPair(subs.Consumer.ConsumerCert, subs.Consumer.ConsumerKey)
-		if err != nil {
-			return "", NewResolveRefError("error adding rhsm certificates when resolving ref: %s", err)
+		if ss.MTLS.ClientCert != "" && ss.MTLS.ClientKey != "" {
+			cert, err := tls.LoadX509KeyPair(ss.MTLS.ClientCert, ss.MTLS.ClientKey)
+			if err != nil {
+				return "", NewResolveRefError("error adding client certificate when resolving ref: %s", err)
+			}
+			tlsConf.Certificates = []tls.Certificate{cert}
 		}
-		tlsConf.Certificates = []tls.Certificate{cert}
 
-		client = &http.Client{
-			Transport: &http.Transport{
-				TLSClientConfig: tlsConf,
-			},
-			Timeout: 300 * time.Second,
+		transport.TLSClientConfig = tlsConf
+	}
+
+	if ss.Proxy != "" {
+		transport.Proxy = func(request *http.Request) (*url.URL, error) {
+			return url.Parse(ss.Proxy)
 		}
-	} else {
-		client = &http.Client{}
 	}
 
 	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
@@ -234,8 +240,31 @@ func Resolve(source SourceSpec) (CommitSpec, error) {
 		URL: source.URL,
 	}
 
+	if source.RHSM && source.MTLS != nil {
+		return commit, NewResolveRefError("cannot use both RHSM and MTLS when resolving ref")
+	}
+
 	if source.RHSM {
+		var subs *rhsm.Subscriptions
+		var err error
+
 		commit.Secrets = "org.osbuild.rhsm.consumer"
+		subs, err = rhsm.LoadSystemSubscriptions()
+
+		if err != nil {
+			return commit, NewResolveRefError("error adding rhsm certificates when resolving ref: %s", err)
+		}
+
+		if subs.Consumer == nil {
+			return commit, NewResolveRefError("error adding rhsm certificates when resolving ref")
+		}
+
+		source.MTLS = &MTLS{
+			ClientCert: subs.Consumer.ConsumerCert,
+			ClientKey:  subs.Consumer.ConsumerKey,
+		}
+	} else if source.MTLS != nil {
+		commit.Secrets = "org.osbuild.mtls"
 	}
 
 	if verifyChecksum(source.Ref) {
@@ -252,7 +281,7 @@ func Resolve(source SourceSpec) (CommitSpec, error) {
 	// URL set: Resolve checksum
 	if source.URL != "" {
 		// If a URL is specified, we need to fetch the commit at the URL.
-		checksum, err := ResolveRef(source.URL, source.Ref, source.RHSM, nil, nil)
+		checksum, err := resolveRef(source)
 		if err != nil {
 			return CommitSpec{}, err // ResolveRefError
 		}
