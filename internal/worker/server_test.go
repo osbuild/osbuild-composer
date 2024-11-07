@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	promtest "github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -22,6 +23,7 @@ import (
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue/fsjobqueue"
+	"github.com/osbuild/osbuild-composer/internal/prometheus"
 	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/test"
 	"github.com/osbuild/osbuild-composer/internal/worker"
@@ -43,6 +45,10 @@ func newTestServer(t *testing.T, tempdir string, config worker.Config, acceptArt
 		}
 		config.ArtifactsDir = artifactsDir
 	}
+
+	// Reset metrics
+	prometheus.RunningJobs.Reset()
+	prometheus.PendingJobs.Reset()
 
 	return worker.NewServer(nil, q, config)
 }
@@ -154,6 +160,7 @@ func TestCreate(t *testing.T) {
 
 	_, err = server.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: mf}, "")
 	require.NoError(t, err)
+	require.Equal(t, float64(1), promtest.ToFloat64(prometheus.PendingJobs))
 
 	emptyManifest := `{"version":"2","pipelines":[{"name":"build"},{"name":"os"}],"sources":{}}`
 	test.TestRoute(t, handler, false, "POST", "/api/worker/v1/jobs",
@@ -184,6 +191,7 @@ func TestCancel(t *testing.T) {
 
 	jobId, err := server.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: mf}, "")
 	require.NoError(t, err)
+	require.Equal(t, float64(1), promtest.ToFloat64(prometheus.PendingJobs))
 
 	j, token, typ, args, dynamicArgs, err := server.RequestJob(context.Background(), arch.Name(), []string{worker.JobTypeOSBuild}, []string{""}, uuid.Nil)
 	require.NoError(t, err)
@@ -191,6 +199,8 @@ func TestCancel(t *testing.T) {
 	require.Equal(t, worker.JobTypeOSBuild, typ)
 	require.NotNil(t, args)
 	require.Nil(t, dynamicArgs)
+	require.Equal(t, float64(0), promtest.ToFloat64(prometheus.PendingJobs))
+	require.Equal(t, float64(1), promtest.ToFloat64(prometheus.RunningJobs))
 
 	test.TestRoute(t, handler, false, "GET", fmt.Sprintf("/api/worker/v1/jobs/%s", token), `{}`, http.StatusOK,
 		fmt.Sprintf(`{"canceled":false,"href":"/api/worker/v1/jobs/%s","id":"%s","kind":"JobStatus"}`, token, token))
@@ -225,6 +235,7 @@ func TestUpdate(t *testing.T) {
 
 	jobId, err := server.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: mf}, "")
 	require.NoError(t, err)
+	require.Equal(t, float64(1), promtest.ToFloat64(prometheus.PendingJobs))
 
 	j, token, typ, args, dynamicArgs, err := server.RequestJob(context.Background(), arch.Name(), []string{worker.JobTypeOSBuild}, []string{""}, uuid.Nil)
 	require.NoError(t, err)
@@ -232,9 +243,13 @@ func TestUpdate(t *testing.T) {
 	require.Equal(t, worker.JobTypeOSBuild, typ)
 	require.NotNil(t, args)
 	require.Nil(t, dynamicArgs)
+	require.Equal(t, float64(0), promtest.ToFloat64(prometheus.PendingJobs))
+	require.Equal(t, float64(1), promtest.ToFloat64(prometheus.RunningJobs))
 
 	test.TestRoute(t, handler, false, "PATCH", fmt.Sprintf("/api/worker/v1/jobs/%s", token), `{}`, http.StatusOK,
 		fmt.Sprintf(`{"href":"/api/worker/v1/jobs/%s","id":"%s","kind":"UpdateJobResponse"}`, token, token))
+	require.Equal(t, float64(0), promtest.ToFloat64(prometheus.PendingJobs))
+	require.Equal(t, float64(0), promtest.ToFloat64(prometheus.RunningJobs))
 	test.TestRoute(t, handler, false, "PATCH", fmt.Sprintf("/api/worker/v1/jobs/%s", token), `{}`, http.StatusNotFound,
 		`{"href":"/api/worker/v1/errors/5","code":"IMAGE-BUILDER-WORKER-5","id":"5","kind":"Error","message":"Token not found","reason":"Token not found"}`,
 		"operation_id")
@@ -317,6 +332,8 @@ func TestUpload(t *testing.T) {
 	require.Nil(t, dynamicArgs)
 
 	test.TestRoute(t, handler, false, "PUT", fmt.Sprintf("/api/worker/v1/jobs/%s/artifacts/foobar", token), `this is my artifact`, http.StatusOK, `?`)
+	require.Equal(t, float64(0), promtest.ToFloat64(prometheus.PendingJobs))
+	require.Equal(t, float64(1), promtest.ToFloat64(prometheus.RunningJobs))
 }
 
 func TestUploadNotAcceptingArtifacts(t *testing.T) {
