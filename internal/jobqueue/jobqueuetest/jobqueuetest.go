@@ -776,18 +776,15 @@ func testFail(t *testing.T, q jobqueue.JobQueue) {
 		),
 	}
 
-	testReason, err := json.Marshal(FailedJobErrorResult)
-	require.NoError(t, err)
-
 	// set a non-existing job to failed
-	err = q.FailJob(uuid.New(), testReason)
+	err := q.FailJob(uuid.New(), FailedJobErrorResult)
 	require.Error(t, err)
 
 	// Cancel a pending job
 	id := pushTestJob(t, q, "coralreef", nil, nil, "testchannel")
 	require.NotEmpty(t, id)
 
-	err = q.FailJob(id, testReason)
+	err = q.FailJob(id, FailedJobErrorResult)
 	require.NoError(t, err)
 
 	//nolint:golint,ineffassign
@@ -798,9 +795,10 @@ func testFail(t *testing.T, q jobqueue.JobQueue) {
 	type JobResult struct {
 		JobError *clienterrors.Error `json:"job_error"`
 	}
+
 	var r1 JobResult
 	err = json.Unmarshal(result, &r1)
-	require.NoError(t, err)
+	require.NoError(t, err, fmt.Sprintf("Error %v when trying to unmarshal %v", err, string(result)))
 
 	require.NotNil(t, r1)
 	require.Equal(t, "Test timeout reason", r1.JobError.Reason)
