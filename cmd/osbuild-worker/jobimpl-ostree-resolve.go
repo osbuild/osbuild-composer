@@ -17,6 +17,10 @@ type OSTreeResolveJobImpl struct {
 }
 
 func (job *OSTreeResolveJobImpl) CompareBaseURL(baseURLStr string) (bool, error) {
+	if job.RepositoryMTLSConfig == nil || job.RepositoryMTLSConfig.BaseURL == nil {
+		return false, nil
+	}
+
 	baseURL, err := url.Parse(baseURLStr)
 	if err != nil {
 		return false, err
@@ -91,6 +95,12 @@ func (impl *OSTreeResolveJobImpl) Run(job worker.Job) error {
 				err.Error(),
 			)
 			break
+		} else {
+			mURL := ""
+			if impl.RepositoryMTLSConfig != nil && impl.RepositoryMTLSConfig.BaseURL != nil {
+				mURL = impl.RepositoryMTLSConfig.BaseURL.String()
+			}
+			logWithId.Warnf("Repository URL '%s' does not match '%s', MTLS: %t", s.URL, mURL, impl.RepositoryMTLSConfig != nil)
 		}
 		commitSpec, err := ostree.Resolve(reqParams)
 		if err != nil {
