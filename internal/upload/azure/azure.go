@@ -11,6 +11,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
 
 	"github.com/osbuild/osbuild-composer/internal/common"
+	"github.com/osbuild/osbuild-composer/internal/target"
 )
 
 type Client struct {
@@ -147,7 +148,7 @@ func (ac Client) GetStorageAccountKey(ctx context.Context, resourceGroup string,
 // RegisterImage creates a generalized V1 Linux image from a given blob.
 // The location is optional and if not provided, it is determined
 // from the resource group.
-func (ac Client) RegisterImage(ctx context.Context, subscriptionID, resourceGroup, storageAccount, storageContainer, blobName, imageName, location string) error {
+func (ac Client) RegisterImage(ctx context.Context, subscriptionID, resourceGroup, storageAccount, storageContainer, blobName, imageName, location string, hyperVGen target.HyperVGenerationType) error {
 	c, err := armcompute.NewImagesClient(subscriptionID, ac.creds, nil)
 	if err != nil {
 		return fmt.Errorf("unable to create compute client: %v", err)
@@ -162,9 +163,19 @@ func (ac Client) RegisterImage(ctx context.Context, subscriptionID, resourceGrou
 		}
 	}
 
+	var hypvgen armcompute.HyperVGenerationTypes
+	switch hyperVGen {
+	case target.HyperVGenV1:
+		hypvgen = armcompute.HyperVGenerationTypes(armcompute.HyperVGenerationTypesV1)
+	case target.HyperVGenV2:
+		hypvgen = armcompute.HyperVGenerationTypes(armcompute.HyperVGenerationTypesV2)
+	default:
+		return fmt.Errorf("Unknown hyper v generation type %v", hyperVGen)
+	}
+
 	imageFuture, err := c.BeginCreateOrUpdate(ctx, resourceGroup, imageName, armcompute.Image{
 		Properties: &armcompute.ImageProperties{
-			HyperVGeneration:     common.ToPtr(armcompute.HyperVGenerationTypesV1),
+			HyperVGeneration:     common.ToPtr(hypvgen),
 			SourceVirtualMachine: nil,
 			StorageProfile: &armcompute.ImageStorageProfile{
 				OSDisk: &armcompute.ImageOSDisk{
