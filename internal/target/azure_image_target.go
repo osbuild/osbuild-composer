@@ -2,11 +2,19 @@ package target
 
 const TargetNameAzureImage TargetName = "org.osbuild.azure.image"
 
+type HyperVGenerationType string
+
+const (
+	HyperVGenV1 HyperVGenerationType = "V1"
+	HyperVGenV2 HyperVGenerationType = "V2"
+)
+
 type AzureImageTargetOptions struct {
-	TenantID       string `json:"tenant_id"`
-	Location       string `json:"location,omitempty"`
-	SubscriptionID string `json:"subscription_id"`
-	ResourceGroup  string `json:"resource_group"`
+	TenantID         string               `json:"tenant_id"`
+	Location         string               `json:"location,omitempty"`
+	SubscriptionID   string               `json:"subscription_id"`
+	ResourceGroup    string               `json:"resource_group"`
+	HyperVGeneration HyperVGenerationType `json:"hyperv_generation"`
 }
 
 func (AzureImageTargetOptions) isTargetOptions() {}
