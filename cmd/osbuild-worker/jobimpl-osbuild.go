@@ -981,6 +981,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				blobName,
 				jobTarget.ImageName,
 				location,
+				targetOptions.HyperVGeneration,
 			)
 			if err != nil {
 				targetResult.TargetError = clienterrors.New(clienterrors.ErrorImportingImage, fmt.Sprintf("registering the image failed: %v", err), nil)
