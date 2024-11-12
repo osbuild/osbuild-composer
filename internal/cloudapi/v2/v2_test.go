@@ -1317,7 +1317,8 @@ func TestImageTypes(t *testing.T) {
 				"subscription_id": "4e5d8b2c-ab24-4413-90c5-612306e809e2",
 				"tenant_id": "5c7ef5b6-1c3f-4da0-a622-0b060239d7d7",
 				"resource_group": "ToucanResourceGroup",
-				"location": "westeurope"
+				"location": "westeurope",
+                                "hyper_v_generation": "V2"
 			}
 		}
 	}`, test_distro.TestDistro1Name, test_distro.TestArch3Name, string(v2.ImageTypesAzure)), http.StatusCreated, `

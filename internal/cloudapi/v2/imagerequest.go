@@ -189,11 +189,19 @@ func newAzureTarget(options UploadOptions, imageType distro.ImageType) (*target.
 	if azureUploadOptions.Location != nil {
 		rgLocation = *azureUploadOptions.Location
 	}
+
+	hypvgen := target.HyperVGenV1
+	if azureUploadOptions.HyperVGeneration != nil &&
+		*azureUploadOptions.HyperVGeneration == AzureUploadOptionsHyperVGenerationV2 {
+		hypvgen = target.HyperVGenV2
+	}
+
 	t := target.NewAzureImageTarget(&target.AzureImageTargetOptions{
-		TenantID:       azureUploadOptions.TenantId,
-		Location:       rgLocation,
-		SubscriptionID: azureUploadOptions.SubscriptionId,
-		ResourceGroup:  azureUploadOptions.ResourceGroup,
+		TenantID:         azureUploadOptions.TenantId,
+		Location:         rgLocation,
+		SubscriptionID:   azureUploadOptions.SubscriptionId,
+		ResourceGroup:    azureUploadOptions.ResourceGroup,
+		HyperVGeneration: hypvgen,
 	})
 
 	if azureUploadOptions.ImageName != nil {

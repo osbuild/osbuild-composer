@@ -1351,6 +1351,15 @@ components:
             Name of the uploaded image. It must be unique in the given resource group.
             If name is omitted from the request, a random one based on a UUID is
             generated.
+        hyper_v_generation:
+          type: string
+          enum:
+            - V1
+            - V2
+          default: V1
+          description: |
+            Choose the VM Image HyperV generation, different features on Azure are available
+            depending on the HyperV generation.
     ContainerUploadOptions:
       type: object
       additionalProperties: false
