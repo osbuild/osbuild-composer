@@ -143,13 +143,13 @@ func NewGrub2InstStageOption(filename string, pt *disk.PartitionTable, platform 
 	}
 	core := CoreMkImage{
 		Type:       "mkimage",
-		PartLabel:  pt.Type,
+		PartLabel:  pt.Type.String(),
 		Filesystem: bootPayload.GetFSType(),
 	}
 
 	prefix := PrefixPartition{
 		Type:      "partition",
-		PartLabel: pt.Type,
+		PartLabel: pt.Type.String(),
 		// bootidx can't be negative after check with rootIdx above:
 		// nolint:gosec
 		Number: uint(bootIdx),

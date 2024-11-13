@@ -22,7 +22,7 @@ func sfdiskStageOptions(pt *disk.PartitionTable) *SfdiskStageOptions {
 		}
 	}
 	stageOptions := &SfdiskStageOptions{
-		Label:      pt.Type,
+		Label:      pt.Type.String(),
 		UUID:       pt.UUID,
 		Partitions: partitions,
 	}

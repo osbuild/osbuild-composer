@@ -9,12 +9,13 @@ import (
 
 	"github.com/osbuild/images/pkg/blueprint"
 	"github.com/osbuild/images/pkg/datasizes"
+	"github.com/osbuild/images/pkg/platform"
 )
 
 type PartitionTable struct {
-	Size       uint64 // Size of the disk (in bytes).
-	UUID       string // Unique identifier of the partition table (GPT only).
-	Type       string // Partition table type, e.g. dos, gpt.
+	Size       uint64             // Size of the disk (in bytes).
+	UUID       string             // Unique identifier of the partition table (GPT only).
+	Type       PartitionTableType // Partition table type, e.g. dos, gpt.
 	Partitions []Partition
 
 	SectorSize   uint64 // Sector size in bytes
@@ -243,7 +244,7 @@ func (pt *PartitionTable) GenerateUUIDs(rng *rand.Rand) {
 
 	// if this is a MBR partition table, there is no need to generate
 	// uuids for the partitions themselves
-	if pt.Type != "gpt" {
+	if pt.Type != PT_GPT {
 		return
 	}
 
@@ -339,7 +340,7 @@ func (pt *PartitionTable) CreateMountpoint(mountpoint string, size uint64) (Enti
 	n := len(pt.Partitions)
 	var maxNo int
 
-	if pt.Type == "gpt" {
+	if pt.Type == PT_GPT {
 		switch mountpoint {
 		case "/boot":
 			partition.Type = XBootLDRPartitionGUID
@@ -398,7 +399,7 @@ func (pt *PartitionTable) HeaderSize() uint64 {
 	// this also ensure we have enough space for the MBR
 	header := pt.SectorsToBytes(1)
 
-	if pt.Type == "dos" {
+	if pt.Type == PT_DOS {
 		return header
 	}
 
@@ -454,7 +455,7 @@ func (pt *PartitionTable) relayout(size uint64) uint64 {
 	footer := uint64(0)
 
 	// The GPT header is also at the end of the partition table
-	if pt.Type == "gpt" {
+	if pt.Type == PT_GPT {
 		footer = header
 	}
 
@@ -726,7 +727,7 @@ func (pt *PartitionTable) ensureLVM() error {
 		// reset the vg partition size - it will be grown later
 		part.Size = 0
 
-		if pt.Type == "gpt" {
+		if pt.Type == PT_GPT {
 			part.Type = LVMPartitionGUID
 		} else {
 			part.Type = "8e"
@@ -792,10 +793,10 @@ func (pt *PartitionTable) ensureBtrfs() error {
 		// reset the btrfs partition size - it will be grown later
 		part.Size = 0
 
-		if pt.Type == "gpt" {
+		if pt.Type == PT_GPT {
 			part.Type = FilesystemDataGUID
 		} else {
-			part.Type = "83"
+			part.Type = DosLinuxTypeID
 		}
 
 	} else {
@@ -893,4 +894,253 @@ func (pt *PartitionTable) GetMountpointSize(mountpoint string) (uint64, error) {
 	}
 
 	panic(fmt.Sprintf("no sizeable of the entity path for mountpoint %s, this is a programming error", mountpoint))
+}
+
+// EnsureRootFilesystem adds a root filesystem if the partition table doesn't
+// already have one.
+//
+// When adding the root filesystem, add it to:
+//
+//   - The first LVM Volume Group if one exists, otherwise
+//   - The first Btrfs volume if one exists, otherwise
+//   - At the end of the plain partitions.
+//
+// For LVM and Plain, the fsType argument must be a valid filesystem type.
+func EnsureRootFilesystem(pt *PartitionTable, defaultFsType FSType) error {
+	// collect all labels and subvolume names to avoid conflicts
+	subvolNames := make(map[string]bool)
+	labels := make(map[string]bool)
+	var foundRoot bool
+	_ = pt.ForEachMountable(func(mnt Mountable, path []Entity) error {
+		if mnt.GetMountpoint() == "/" {
+			foundRoot = true
+			return nil
+		}
+
+		labels[mnt.GetFSSpec().Label] = true
+		switch mountable := mnt.(type) {
+		case *BtrfsSubvolume:
+			subvolNames[mountable.Name] = true
+		}
+		return nil
+	})
+	if foundRoot {
+		// nothing to do
+		return nil
+	}
+
+	for _, part := range pt.Partitions {
+		switch payload := part.Payload.(type) {
+		case *LVMVolumeGroup:
+			if defaultFsType == FS_NONE {
+				return fmt.Errorf("error creating root logical volume: no default filesystem type")
+			}
+
+			rootLabel, err := genUniqueString("root", labels)
+			if err != nil {
+				return fmt.Errorf("error creating root logical volume: %w", err)
+			}
+			rootfs := &Filesystem{
+				Type:         defaultFsType.String(),
+				Label:        rootLabel,
+				Mountpoint:   "/",
+				FSTabOptions: "defaults",
+			}
+			// Let the function autogenerate the name to avoid conflicts
+			// with LV names from customizations.
+			// Set the size to 0 and it will be adjusted by
+			// EnsureDirectorySizes() and relayout().
+			if _, err := payload.CreateLogicalVolume("", 0, rootfs); err != nil {
+				return fmt.Errorf("error creating root logical volume: %w", err)
+			}
+			return nil
+		case *Btrfs:
+			rootName, err := genUniqueString("root", subvolNames)
+			if err != nil {
+				return fmt.Errorf("error creating root subvolume: %w", err)
+			}
+			rootsubvol := BtrfsSubvolume{
+				Name:       rootName,
+				Mountpoint: "/",
+			}
+			payload.Subvolumes = append(payload.Subvolumes, rootsubvol)
+			return nil
+		}
+	}
+
+	// We're going to create a root partition, so we have to ensure the default type is set.
+	if defaultFsType == FS_NONE {
+		return fmt.Errorf("error creating root partition: no default filesystem type")
+	}
+
+	// add a plain root partition at the end of the partition table
+	rootLabel, err := genUniqueString("root", labels)
+	if err != nil {
+		return fmt.Errorf("error creating root partition: %w", err)
+	}
+
+	var partType string
+	switch pt.Type {
+	case PT_DOS:
+		partType = DosLinuxTypeID
+	case PT_GPT:
+		partType = FilesystemDataGUID
+	default:
+		return fmt.Errorf("error creating root partition: unknown or unsupported partition table type: %s", pt.Type)
+	}
+	rootpart := Partition{
+		Type: partType,
+		Size: 0, // Set the size to 0 and it will be adjusted by EnsureDirectorySizes() and relayout()
+		Payload: &Filesystem{
+			Type:         defaultFsType.String(),
+			Label:        rootLabel,
+			Mountpoint:   "/",
+			FSTabOptions: "defaults",
+		},
+	}
+	pt.Partitions = append(pt.Partitions, rootpart)
+	return nil
+}
+
+// EnsureBootPartition creates a boot partition if one does not already exist.
+// The function will append the boot partition to the end of the existing
+// partition table therefore it is best to call this function early to put boot
+// near the front (as is conventional).
+func EnsureBootPartition(pt *PartitionTable, bootFsType FSType) error {
+	// collect all labels to avoid conflicts
+	labels := make(map[string]bool)
+	var foundBoot bool
+	_ = pt.ForEachMountable(func(mnt Mountable, path []Entity) error {
+		if mnt.GetMountpoint() == "/boot" {
+			foundBoot = true
+			return nil
+		}
+
+		labels[mnt.GetFSSpec().Label] = true
+		return nil
+	})
+	if foundBoot {
+		// nothing to do
+		return nil
+	}
+
+	if bootFsType == FS_NONE {
+		return fmt.Errorf("error creating boot partition: no filesystem type")
+	}
+
+	bootLabel, err := genUniqueString("boot", labels)
+	if err != nil {
+		return fmt.Errorf("error creating boot partition: %w", err)
+	}
+
+	var partType string
+	switch pt.Type {
+	case PT_DOS:
+		partType = DosLinuxTypeID
+	case PT_GPT:
+		partType = XBootLDRPartitionGUID
+	default:
+		return fmt.Errorf("error creating boot partition: unknown or unsupported partition table type: %s", pt.Type)
+	}
+	bootPart := Partition{
+		Type: partType,
+		Size: 512 * datasizes.MiB,
+		Payload: &Filesystem{
+			Type:         bootFsType.String(),
+			Label:        bootLabel,
+			Mountpoint:   "/boot",
+			FSTabOptions: "defaults",
+		},
+	}
+	pt.Partitions = append(pt.Partitions, bootPart)
+	return nil
+}
+
+// AddPartitionsForBootMode creates partitions to satisfy the boot mode requirements:
+//   - BIOS/legacy: adds a 1 MiB BIOS boot partition.
+//   - UEFI: adds a 200 MiB EFI system partition.
+//   - Hybrid: adds both.
+//
+// The function will append the new partitions to the end of the existing
+// partition table therefore it is best to call this function early to put them
+// near the front (as is conventional).
+func AddPartitionsForBootMode(pt *PartitionTable, bootMode platform.BootMode) error {
+	switch bootMode {
+	case platform.BOOT_LEGACY:
+		// add BIOS boot partition
+		part, err := mkBIOSBoot(pt.Type)
+		if err != nil {
+			return err
+		}
+		pt.Partitions = append(pt.Partitions, part)
+		return nil
+	case platform.BOOT_UEFI:
+		// add ESP
+		part, err := mkESP(200*datasizes.MiB, pt.Type)
+		if err != nil {
+			return err
+		}
+		pt.Partitions = append(pt.Partitions, part)
+		return nil
+	case platform.BOOT_HYBRID:
+		// add both
+		bios, err := mkBIOSBoot(pt.Type)
+		if err != nil {
+			return err
+		}
+		esp, err := mkESP(200*datasizes.MiB, pt.Type)
+		if err != nil {
+			return err
+		}
+		pt.Partitions = append(pt.Partitions, bios, esp)
+		return nil
+	case platform.BOOT_NONE:
+		return nil
+	default:
+		return fmt.Errorf("unknown or unsupported boot mode type with enum value %d", bootMode)
+	}
+}
+
+func mkBIOSBoot(ptType PartitionTableType) (Partition, error) {
+	var partType string
+	switch ptType {
+	case PT_DOS:
+		partType = DosBIOSBootID
+	case PT_GPT:
+		partType = BIOSBootPartitionGUID
+	default:
+		return Partition{}, fmt.Errorf("error creating BIOS boot partition: unknown or unsupported partition table enum: %d", ptType)
+	}
+	return Partition{
+		Size:     1 * datasizes.MiB,
+		Bootable: true,
+		Type:     partType,
+		UUID:     BIOSBootPartitionUUID,
+	}, nil
+}
+
+func mkESP(size uint64, ptType PartitionTableType) (Partition, error) {
+	var partType string
+	switch ptType {
+	case PT_DOS:
+		partType = DosESPID
+	case PT_GPT:
+		partType = EFISystemPartitionGUID
+	default:
+		return Partition{}, fmt.Errorf("error creating EFI system partition: unknown or unsupported partition table enum: %d", ptType)
+	}
+	return Partition{
+		Size: size,
+		Type: partType,
+		UUID: EFISystemPartitionUUID,
+		Payload: &Filesystem{
+			Type:         "vfat",
+			UUID:         EFIFilesystemUUID,
+			Mountpoint:   "/boot/efi",
+			Label:        "EFI-SYSTEM",
+			FSTabOptions: "defaults,uid=0,gid=0,umask=077,shortname=winnt",
+			FSTabFreq:    0,
+			FSTabPassNo:  2,
+		},
+	}, nil
 }

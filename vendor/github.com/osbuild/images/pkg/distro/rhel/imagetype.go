@@ -215,10 +215,14 @@ func (t *ImageType) getDefaultInstallerConfig() (*distro.InstallerConfig, error)
 	return t.DefaultInstallerConfig, nil
 }
 
-func (t *ImageType) PartitionType() string {
+func (t *ImageType) PartitionType() disk.PartitionTableType {
+	if t.BasePartitionTables == nil {
+		return disk.PT_NONE
+	}
+
 	basePartitionTable, exists := t.BasePartitionTables(t)
 	if !exists {
-		return ""
+		return disk.PT_NONE
 	}
 
 	return basePartitionTable.Type
