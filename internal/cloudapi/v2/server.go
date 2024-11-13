@@ -469,18 +469,21 @@ func serializeManifest(ctx context.Context, manifestSource *manifest.Manifest, w
 			if jobResult.JobError != nil {
 				// set all jobs to "failed"
 				// osbuild job will fail as dependency
-				jobs := map[string]uuid.UUID{
-					"depsolve":         depsolveJobID,
-					"containerResolve": containerResolveJobID,
-					"ostreeResolve":    ostreeResolveJobID,
-					"manifest":         manifestJobID,
+				jobs := []struct {
+					Name string
+					ID   uuid.UUID
+				}{
+					{"depsolve", depsolveJobID},
+					{"containerResolve", containerResolveJobID},
+					{"ostreeResolve", ostreeResolveJobID},
+					{"manifest", manifestJobID},
 				}
 
-				for jobName, jobID := range jobs {
-					if jobID != uuid.Nil {
-						err := workers.SetFailed(jobID, jobResult.JobError)
+				for _, job := range jobs {
+					if job.ID != uuid.Nil {
+						err := workers.SetFailed(job.ID, jobResult.JobError)
 						if err != nil {
-							logWithId.Errorf("Error failing %s job: %v", jobName, err)
+							logWithId.Errorf("Error failing %s job: %v", job.Name, err)
 						}
 					}
 				}
