@@ -519,8 +519,7 @@ func serializeManifest(ctx context.Context, manifestSource *manifest.Manifest, w
 
 				jobResult.JobError = clienterrors.New(clienterrors.ErrorDepsolveTimeout,
 					"Timeout while waiting for package dependency resolution",
-					"There may be a temporary issue with compute resources. "+
-						"We’re looking into it, please try again later.",
+					"There may be a temporary issue with compute resources.",
 				)
 				break
 			default:
