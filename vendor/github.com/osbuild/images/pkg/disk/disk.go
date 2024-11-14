@@ -19,6 +19,7 @@ package disk
 
 import (
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"io"
 	"math/rand"
@@ -60,6 +61,15 @@ const (
 
 	// DosFat16B used for the ESP-System partition
 	DosFat16B = "06"
+
+	// Partition type ID for any native Linux filesystem on dos
+	DosLinuxTypeID = "83"
+
+	// Partition type ID for BIOS boot partition on dos
+	DosBIOSBootID = "ef02"
+
+	// Partition type ID for ESP on dos
+	DosESPID = "ef00"
 )
 
 // FSType is the filesystem type enum.
@@ -107,6 +117,59 @@ func NewFSType(s string) (FSType, error) {
 		return FS_BTRFS, nil
 	default:
 		return FS_NONE, fmt.Errorf("unknown or unsupported filesystem type name: %s", s)
+	}
+}
+
+// PartitionTableType is the partition table type enum.
+type PartitionTableType uint64
+
+const (
+	PT_NONE PartitionTableType = iota
+	PT_DOS
+	PT_GPT
+)
+
+func (t PartitionTableType) String() string {
+	switch t {
+	case PT_NONE:
+		return ""
+	case PT_DOS:
+		return "dos"
+	case PT_GPT:
+		return "gpt"
+	default:
+		panic(fmt.Sprintf("unknown or unsupported partition table type with enum value %d", t))
+	}
+}
+
+func (t PartitionTableType) MarshalJSON() ([]byte, error) {
+	return json.Marshal(t.String())
+}
+
+func (t *PartitionTableType) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return err
+	}
+
+	new, err := NewPartitionTableType(s)
+	if err != nil {
+		return err
+	}
+	*t = new
+	return nil
+}
+
+func NewPartitionTableType(s string) (PartitionTableType, error) {
+	switch s {
+	case "":
+		return PT_NONE, nil
+	case "dos":
+		return PT_DOS, nil
+	case "gpt":
+		return PT_GPT, nil
+	default:
+		return PT_NONE, fmt.Errorf("unknown or unsupported partition table type name: %s", s)
 	}
 }
 
