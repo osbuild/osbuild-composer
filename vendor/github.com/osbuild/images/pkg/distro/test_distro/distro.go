@@ -6,6 +6,7 @@ import (
 	"sort"
 
 	"github.com/osbuild/images/pkg/blueprint"
+	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/ostree"
@@ -207,8 +208,8 @@ func (t *TestImageType) Size(size uint64) uint64 {
 	return size
 }
 
-func (t *TestImageType) PartitionType() string {
-	return ""
+func (t *TestImageType) PartitionType() disk.PartitionTableType {
+	return disk.PT_NONE
 }
 
 func (t *TestImageType) BootMode() platform.BootMode {

@@ -373,7 +373,7 @@ func minimalrawPartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 	case arch.ARCH_X86_64.String():
 		return disk.PartitionTable{
 			UUID:        "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
-			Type:        "gpt",
+			Type:        disk.PT_GPT,
 			StartOffset: 8 * datasizes.MebiByte,
 			Partitions: []disk.Partition{
 				{
@@ -421,7 +421,7 @@ func minimalrawPartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 	case arch.ARCH_AARCH64.String():
 		return disk.PartitionTable{
 			UUID:        "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
-			Type:        "gpt",
+			Type:        disk.PT_GPT,
 			StartOffset: 8 * datasizes.MebiByte,
 			Partitions: []disk.Partition{
 				{
@@ -476,7 +476,7 @@ func edgeBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 	case arch.ARCH_X86_64.String():
 		return disk.PartitionTable{
 			UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
-			Type: "gpt",
+			Type: disk.PT_GPT,
 			Partitions: []disk.Partition{
 				{
 					Size:     1 * datasizes.MebiByte,
@@ -553,7 +553,7 @@ func edgeBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 	case arch.ARCH_AARCH64.String():
 		return disk.PartitionTable{
 			UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
-			Type: "gpt",
+			Type: disk.PT_GPT,
 			Partitions: []disk.Partition{
 				{
 					Size: 127 * datasizes.MebiByte,

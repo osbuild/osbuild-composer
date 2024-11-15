@@ -173,10 +173,10 @@ func (t *imageType) getDefaultImageConfig() *distro.ImageConfig {
 
 }
 
-func (t *imageType) PartitionType() string {
+func (t *imageType) PartitionType() disk.PartitionTableType {
 	basePartitionTable, exists := t.basePartitionTables[t.arch.Name()]
 	if !exists {
-		return ""
+		return disk.PT_NONE
 	}
 
 	return basePartitionTable.Type
