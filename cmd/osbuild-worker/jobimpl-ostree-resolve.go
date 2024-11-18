@@ -83,6 +83,7 @@ func (impl *OSTreeResolveJobImpl) Run(job worker.Job) error {
 		if match, err := impl.CompareBaseURL(s.URL); match && err == nil {
 			if impl.RepositoryMTLSConfig.Proxy != nil {
 				reqParams.Proxy = impl.RepositoryMTLSConfig.Proxy.String()
+				logWithId.Infof("Using proxy for OSTree resolving: %s", reqParams.Proxy)
 			}
 			reqParams.MTLS = &ostree.MTLS{
 				CA:         impl.RepositoryMTLSConfig.CA,
