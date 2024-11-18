@@ -35,7 +35,7 @@ jobs:
       - name: Run unit tests
         run: make unit-tests
 
-      - uses: codecov/codecov-action@v4
+      - uses: codecov/codecov-action@v5
         if: env.CODECOV_TOKEN
         with:
           fail_ci_if_error: false
