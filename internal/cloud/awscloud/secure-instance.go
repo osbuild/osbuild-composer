@@ -203,6 +203,12 @@ func (a *AWS) RunSecureInstance(iamProfile, keyName, cloudWatchGroup, hostname s
 	}
 	secureInstance.Instance = &descrInstOutput.Reservations[0].Instances[0]
 
+	logrus.Infof(
+		"Secure instance created: https://%s.console.aws.amazon.com/ec2/v2/home?region=%s#InstanceDetails:instanceId=%s",
+		identity.Region,
+		identity.Region,
+		secureInstance.InstanceID)
+
 	return secureInstance, nil
 }
 
