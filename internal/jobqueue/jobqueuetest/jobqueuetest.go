@@ -8,12 +8,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"sort"
 	"sync"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/osbuild/osbuild-composer/pkg/jobqueue"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -55,6 +57,9 @@ func TestJobQueue(t *testing.T, makeJobQueue MakeJobQueue) {
 	t.Run("multiple-channels", wrap(testMultipleChannels))
 	t.Run("100-dequeuers", wrap(test100dequeuers))
 	t.Run("workers", wrap(testWorkers))
+	t.Run("all-jobs", wrap(testAllJobs))
+	t.Run("all-root-jobs", wrap(testAllRootJobs))
+	t.Run("remove-jobs", wrap(testRemoveJobs))
 }
 
 func pushTestJob(t *testing.T, q jobqueue.JobQueue, jobType string, args interface{}, dependencies []uuid.UUID, channel string) uuid.UUID {
@@ -761,4 +766,104 @@ func testWorkers(t *testing.T, q jobqueue.JobQueue) {
 
 	err = q.DeleteWorker(w2)
 	require.NoError(t, err)
+}
+
+// sortUUIDs is a helper to sort a list of UUIDs
+func sortUUIDs(entries []uuid.UUID) {
+	sort.Slice(entries, func(i, j int) bool {
+		return entries[i].String() < entries[j].String()
+	})
+}
+
+// Test listing all root jobs
+func testAllRootJobs(t *testing.T, q jobqueue.JobQueue) {
+	var rootJobs []uuid.UUID
+
+	// root with no dependencies
+	jidRoot1 := pushTestJob(t, q, "oneRoot", nil, nil, "OneRootJob")
+	rootJobs = append(rootJobs, jidRoot1)
+
+	// root with 2 dependencies
+	jid1 := pushTestJob(t, q, "twoDeps", nil, nil, "TwoDepJobs")
+	jid2 := pushTestJob(t, q, "twoDeps", nil, nil, "TwoDepJobs")
+	jidRoot2 := pushTestJob(t, q, "twoDeps", nil, []uuid.UUID{jid1, jid2}, "TwoDepJobs")
+	rootJobs = append(rootJobs, jidRoot2)
+
+	// root with 2 dependencies, one shared with the previous root
+	jid3 := pushTestJob(t, q, "sharedDeps", nil, nil, "SharedDepJobs")
+	jidRoot3 := pushTestJob(t, q, "sharedDeps", nil, []uuid.UUID{jid1, jid3}, "SharedDepJobs")
+	rootJobs = append(rootJobs, jidRoot3)
+
+	sortUUIDs(rootJobs)
+	roots, err := q.AllRootJobIDs()
+	require.Nil(t, err)
+	require.Greater(t, len(roots), 0)
+	sortUUIDs(roots)
+	require.Equal(t, rootJobs, roots)
+}
+
+// Test listing all jobs
+func testAllJobs(t *testing.T, q jobqueue.JobQueue) {
+	var allJobs []uuid.UUID
+
+	// root with no dependencies
+	jidRoot1 := pushTestJob(t, q, "oneRoot", nil, nil, "OneRootJob")
+	allJobs = append(allJobs, jidRoot1)
+
+	// root with 2 dependencies
+	jid1 := pushTestJob(t, q, "twoDeps", nil, nil, "TwoDepJobs")
+	allJobs = append(allJobs, jid1)
+	jid2 := pushTestJob(t, q, "twoDeps", nil, nil, "TwoDepJobs")
+	allJobs = append(allJobs, jid2)
+	jidRoot2 := pushTestJob(t, q, "twoDeps", nil, []uuid.UUID{jid1, jid2}, "TwoDepJobs")
+	allJobs = append(allJobs, jidRoot2)
+
+	sortUUIDs(allJobs)
+	jobs, err := q.AllJobIDs()
+	require.Nil(t, err)
+	require.Greater(t, len(jobs), 0)
+	sortUUIDs(jobs)
+	require.Equal(t, allJobs, jobs)
+}
+
+// Test removing jobs
+func testRemoveJobs(t *testing.T, q jobqueue.JobQueue) {
+	// root with no dependencies
+	t.Run("no dependencies", func(t *testing.T) {
+		jidRoot1 := pushTestJob(t, q, "oneRoot", nil, nil, "OneRootJob")
+		err := q.RemoveJob(jidRoot1)
+		require.Nil(t, err)
+		jobs, err := q.AllJobIDs()
+		require.Nil(t, err)
+		require.Equal(t, 0, len(jobs))
+	})
+
+	// root with 2 dependencies
+	t.Run("two dependencies", func(t *testing.T) {
+		jid1 := pushTestJob(t, q, "twoDeps", nil, nil, "TwoDepJobs")
+		jid2 := pushTestJob(t, q, "twoDeps", nil, nil, "TwoDepJobs")
+		jidRoot2 := pushTestJob(t, q, "twoDeps", nil, []uuid.UUID{jid1, jid2}, "TwoDepJobs")
+
+		// root with 2 dependencies, one shared with the previous root
+		jid3 := pushTestJob(t, q, "sharedDeps", nil, nil, "SharedDepJobs")
+		jidRoot3 := pushTestJob(t, q, "sharedDeps", nil, []uuid.UUID{jid1, jid3}, "SharedDepJobs")
+
+		// This should only remove jidRoot2 and jid2, leaving jidRoot3, jid1, jid3
+		err := q.RemoveJob(jidRoot2)
+		require.Nil(t, err)
+		jobs, err := q.AllJobIDs()
+		require.Nil(t, err)
+		require.Equal(t, 3, len(jobs))
+		sortUUIDs(jobs)
+		expected := []uuid.UUID{jidRoot3, jid1, jid3}
+		sortUUIDs(expected)
+		assert.Equal(t, expected, jobs)
+
+		// This should remove the rest
+		err = q.RemoveJob(jidRoot3)
+		require.Nil(t, err)
+		jobs, err = q.AllJobIDs()
+		require.Nil(t, err)
+		require.Equal(t, 0, len(jobs))
+	})
 }

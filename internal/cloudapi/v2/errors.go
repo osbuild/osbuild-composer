@@ -50,6 +50,7 @@ const (
 	ErrorInvalidPartitioningMode      ServiceErrorCode = 37
 	ErrorInvalidUploadTarget          ServiceErrorCode = 38
 	ErrorBlueprintOrCustomNotBoth     ServiceErrorCode = 39
+	ErrorComposeRunning               ServiceErrorCode = 40
 
 	// Internal errors, these are bugs
 	ErrorFailedToInitializeBlueprint              ServiceErrorCode = 1000
@@ -73,6 +74,9 @@ const (
 	ErrorGettingAWSEC2JobStatus                   ServiceErrorCode = 1018
 	ErrorGettingJobType                           ServiceErrorCode = 1019
 	ErrorTenantNotInContext                       ServiceErrorCode = 1020
+	ErrorGettingComposeList                       ServiceErrorCode = 1021
+	ErrorRemovingJob                              ServiceErrorCode = 1022
+	ErrorRemovingArtifacts                        ServiceErrorCode = 1023
 
 	// Errors contained within this file
 	ErrorUnspecified          ServiceErrorCode = 10000
@@ -131,6 +135,7 @@ func getServiceErrors() serviceErrors {
 		serviceError{ErrorInvalidPartitioningMode, http.StatusBadRequest, "Requested partitioning mode is invalid"},
 		serviceError{ErrorInvalidUploadTarget, http.StatusBadRequest, "Invalid upload target for image type"},
 		serviceError{ErrorBlueprintOrCustomNotBoth, http.StatusBadRequest, "Invalid request, include blueprint or customizations, not both"},
+		serviceError{ErrorComposeRunning, http.StatusBadRequest, "Compose is running"},
 
 		serviceError{ErrorFailedToInitializeBlueprint, http.StatusInternalServerError, "Failed to initialize blueprint"},
 		serviceError{ErrorFailedToGenerateManifestSeed, http.StatusInternalServerError, "Failed to generate manifest seed"},
@@ -153,6 +158,9 @@ func getServiceErrors() serviceErrors {
 		serviceError{ErrorGettingAWSEC2JobStatus, http.StatusInternalServerError, "Unable to get ec2 job status"},
 		serviceError{ErrorGettingJobType, http.StatusInternalServerError, "Unable to get job type of existing job"},
 		serviceError{ErrorTenantNotInContext, http.StatusInternalServerError, "Unable to retrieve tenant from request context"},
+		serviceError{ErrorGettingComposeList, http.StatusInternalServerError, "Unable to get list of composes"},
+		serviceError{ErrorRemovingJob, http.StatusInternalServerError, "Unable to remove job"},
+		serviceError{ErrorRemovingArtifacts, http.StatusInternalServerError, "Unable to remove job artifacts"},
 
 		serviceError{ErrorUnspecified, http.StatusInternalServerError, "Unspecified internal error "},
 		serviceError{ErrorNotHTTPError, http.StatusInternalServerError, "Error is not an instance of HTTPError"},
