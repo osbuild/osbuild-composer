@@ -58,25 +58,25 @@
           set_fact:
             failed_counter: "{{ failed_counter | int + 1 }}"
 
-    - name: add RHEL 9.5 BaseOS repository
+    - name: add RHEL 9.6 BaseOS repository
       yum_repository:
         name: baseos
         description: RHEL repository
-        baseurl: "http://{{ download_node }}/rhel-9/nightly/RHEL-9/latest-RHEL-9.5.0/compose/BaseOS/{{ ansible_facts['architecture'] }}/os/"
+        baseurl: "http://{{ download_node }}/rhel-9/nightly/RHEL-9/latest-RHEL-9.6.0/compose/BaseOS/{{ ansible_facts['architecture'] }}/os/"
         gpgcheck: no
         file: rhel_repo
       become: yes
-      when: ansible_facts['distribution'] == 'RedHat' and ansible_facts ['distribution_version'] is version('9.5', '==')
+      when: ansible_facts['distribution'] == 'RedHat' and ansible_facts ['distribution_version'] is version('9.6', '==')
 
-    - name: add RHEL 9.5 AppStream repository
+    - name: add RHEL 9.6 AppStream repository
       yum_repository:
         name: appstream
         description: RHEL repository
-        baseurl: "http://{{ download_node }}/rhel-9/nightly/RHEL-9/latest-RHEL-9.5.0/compose/AppStream/{{ ansible_facts['architecture'] }}/os/"
+        baseurl: "http://{{ download_node }}/rhel-9/nightly/RHEL-9/latest-RHEL-9.6.0/compose/AppStream/{{ ansible_facts['architecture'] }}/os/"
         gpgcheck: no
         file: rhel_repo
       become: yes
-      when: ansible_facts['distribution'] == 'RedHat' and ansible_facts ['distribution_version'] is version('9.5', '==')
+      when: ansible_facts['distribution'] == 'RedHat' and ansible_facts ['distribution_version'] is version('9.6', '==')
 
     - name: add RHEL 8.10 BaseOS repository
       yum_repository:

@@ -56,7 +56,7 @@ case "${ID}-${VERSION_ID}" in
             BOOT_LOCATION="${COMPOSE_URL:-}/compose/BaseOS/x86_64/os/"
         fi
         ;;
-    "rhel-9.5")
+    "rhel-9.6")
         IMAGE_TYPE=edge-commit
         OSTREE_REF="rhel/9/${ARCH}/edge"
         OS_VARIANT="rhel9-unknown"
