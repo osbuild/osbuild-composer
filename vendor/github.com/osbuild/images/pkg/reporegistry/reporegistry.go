@@ -2,8 +2,6 @@ package reporegistry
 
 import (
 	"fmt"
-	"path/filepath"
-	"runtime"
 
 	"github.com/osbuild/images/pkg/distroidparser"
 	"github.com/osbuild/images/pkg/rpmmd"
@@ -25,19 +23,6 @@ func New(repoConfigPaths []string) (*RepoRegistry, error) {
 	}
 
 	return &RepoRegistry{repositories}, nil
-}
-
-// NewTestedDefault returns a new RepoRegistry instance with the data
-// loaded from the default test repositories
-func NewTestedDefault() (*RepoRegistry, error) {
-	_, callerSrc, _, ok := runtime.Caller(0)
-	var testReposPath []string
-	if !ok {
-		testReposPath = append(testReposPath, "../../test/data")
-	} else {
-		testReposPath = append(testReposPath, filepath.Join(filepath.Dir(callerSrc), "../../test/data"))
-	}
-	return New(testReposPath)
 }
 
 func NewFromDistrosRepoConfigs(distrosRepoConfigs rpmmd.DistrosRepoConfigs) *RepoRegistry {

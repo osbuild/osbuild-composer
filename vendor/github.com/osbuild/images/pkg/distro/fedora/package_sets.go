@@ -354,7 +354,7 @@ func anacondaPackageSet(t *imageType) rpmmd.PackageSet {
 			"alsa-tools-firmware",
 			"anaconda",
 			"anaconda-dracut",
-			"anaconda-install-env-deps",
+			"anaconda-install-img-deps",
 			"anaconda-widgets",
 			"atheros-firmware",
 			"audit",
