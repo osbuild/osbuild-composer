@@ -117,6 +117,26 @@ func (BurstablePerformance) Values() []BurstablePerformance {
 	}
 }
 
+type CapacityDistributionStrategy string
+
+// Enum values for CapacityDistributionStrategy
+const (
+	CapacityDistributionStrategyBalancedOnly       CapacityDistributionStrategy = "balanced-only"
+	CapacityDistributionStrategyBalancedBestEffort CapacityDistributionStrategy = "balanced-best-effort"
+)
+
+// Values returns all known values for CapacityDistributionStrategy. Note that
+// this can be expanded in the future, and so it is only as up to date as the
+// client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (CapacityDistributionStrategy) Values() []CapacityDistributionStrategy {
+	return []CapacityDistributionStrategy{
+		"balanced-only",
+		"balanced-best-effort",
+	}
+}
+
 type CpuManufacturer string
 
 // Enum values for CpuManufacturer
@@ -135,6 +155,26 @@ func (CpuManufacturer) Values() []CpuManufacturer {
 		"intel",
 		"amd",
 		"amazon-web-services",
+	}
+}
+
+type ImpairedZoneHealthCheckBehavior string
+
+// Enum values for ImpairedZoneHealthCheckBehavior
+const (
+	ImpairedZoneHealthCheckBehaviorReplaceUnhealthy ImpairedZoneHealthCheckBehavior = "ReplaceUnhealthy"
+	ImpairedZoneHealthCheckBehaviorIgnoreUnhealthy  ImpairedZoneHealthCheckBehavior = "IgnoreUnhealthy"
+)
+
+// Values returns all known values for ImpairedZoneHealthCheckBehavior. Note that
+// this can be expanded in the future, and so it is only as up to date as the
+// client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (ImpairedZoneHealthCheckBehavior) Values() []ImpairedZoneHealthCheckBehavior {
+	return []ImpairedZoneHealthCheckBehavior{
+		"ReplaceUnhealthy",
+		"IgnoreUnhealthy",
 	}
 }
 
@@ -210,6 +250,7 @@ const (
 	InstanceRefreshStatusRollbackInProgress InstanceRefreshStatus = "RollbackInProgress"
 	InstanceRefreshStatusRollbackFailed     InstanceRefreshStatus = "RollbackFailed"
 	InstanceRefreshStatusRollbackSuccessful InstanceRefreshStatus = "RollbackSuccessful"
+	InstanceRefreshStatusBaking             InstanceRefreshStatus = "Baking"
 )
 
 // Values returns all known values for InstanceRefreshStatus. Note that this can
@@ -227,6 +268,7 @@ func (InstanceRefreshStatus) Values() []InstanceRefreshStatus {
 		"RollbackInProgress",
 		"RollbackFailed",
 		"RollbackSuccessful",
+		"Baking",
 	}
 }
 

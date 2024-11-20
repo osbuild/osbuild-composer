@@ -28,7 +28,7 @@ import (
 //     progress, you can't delete the bucket until all the in-progress multipart
 //     uploads are aborted or completed. To delete these in-progress multipart uploads,
 //     use the ListMultipartUploads operation to list the in-progress multipart
-//     uploads in the bucket and use the AbortMultupartUpload operation to abort all
+//     uploads in the bucket and use the AbortMultipartUpload operation to abort all
 //     the in-progress multipart uploads.
 //
 //   - Directory buckets - For directory buckets, you must make requests for this
@@ -226,6 +226,9 @@ func (c *Client) addOperationAbortMultipartUploadMiddlewares(stack *middleware.S
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -281,6 +284,18 @@ func (c *Client) addOperationAbortMultipartUploadMiddlewares(stack *middleware.S
 		return err
 	}
 	if err = addSerializeImmutableHostnameBucketMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil
