@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"runtime/debug"
 	"strings"
 	"time"
 
@@ -166,7 +167,7 @@ func RequestAndRunJob(client *worker.Client, acceptedJobTypes []string, jobImpls
 	return nil
 }
 
-func main() {
+var run = func() {
 	var unix bool
 	flag.BoolVar(&unix, "unix", false, "Interpret 'address' as a path to a unix domain socket instead of a network address")
 
@@ -533,4 +534,14 @@ func main() {
 			time.Sleep(backoffDuration)
 		}
 	}
+}
+
+func main() {
+	defer func() {
+		if r := recover(); r != nil {
+			logrus.Fatalf("worker crashed: %s\n%s", r, debug.Stack())
+		}
+	}()
+
+	run()
 }
