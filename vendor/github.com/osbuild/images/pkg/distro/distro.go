@@ -98,7 +98,7 @@ type ImageType interface {
 
 	// Returns the corresponding partion type ("gpt", "dos") or "" the image type
 	// has no partition table. Only support for RHEL 8.5+
-	PartitionType() string
+	PartitionType() disk.PartitionTableType
 
 	// Returns the corresponding boot mode ("legacy", "uefi", "hybrid") or "none"
 	BootMode() platform.BootMode

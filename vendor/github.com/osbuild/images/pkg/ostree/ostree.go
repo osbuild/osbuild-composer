@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -158,20 +159,16 @@ func resolveRef(ss SourceSpec) (string, error) {
 	if err != nil {
 		return "", NewResolveRefError("error parsing ostree repository location: %v", err)
 	}
-	u.Path = path.Join(u.Path, "refs/heads/", ss.Ref)
+	u.Path = path.Join(u.Path, "refs", "heads", ss.Ref)
 
 	transport := http.DefaultTransport.(*http.Transport).Clone()
-	client := &http.Client{
-		Transport: transport,
-		Timeout:   300 * time.Second,
-	}
 	if u.Scheme == "https" {
 		tlsConf := &tls.Config{
 			MinVersion: tls.VersionTLS12,
 		}
 
 		// If CA is set, load the CA certificate and add it to the TLS configuration. Otherwise, use the system CA.
-		if ss.MTLS.CA != "" {
+		if ss.MTLS != nil && ss.MTLS.CA != "" {
 			caCertPEM, err := os.ReadFile(ss.MTLS.CA)
 			if err != nil {
 				return "", NewResolveRefError("error adding ca certificate when resolving ref: %s", err)
@@ -182,7 +179,7 @@ func resolveRef(ss SourceSpec) (string, error) {
 			}
 		}
 
-		if ss.MTLS.ClientCert != "" && ss.MTLS.ClientKey != "" {
+		if ss.MTLS != nil && ss.MTLS.ClientCert != "" && ss.MTLS.ClientKey != "" {
 			cert, err := tls.LoadX509KeyPair(ss.MTLS.ClientCert, ss.MTLS.ClientKey)
 			if err != nil {
 				return "", NewResolveRefError("error adding client certificate when resolving ref: %s", err)
@@ -194,9 +191,24 @@ func resolveRef(ss SourceSpec) (string, error) {
 	}
 
 	if ss.Proxy != "" {
-		transport.Proxy = func(request *http.Request) (*url.URL, error) {
-			return url.Parse(ss.Proxy)
+		host, port, err := net.SplitHostPort(ss.Proxy)
+		if err != nil {
+			return "", NewResolveRefError("error parsing MTLS proxy URL '%s': %v", ss.URL, err)
 		}
+
+		proxyURL, err := url.Parse("http://" + host + ":" + port)
+		if err != nil {
+			return "", NewResolveRefError("error parsing MTLS proxy URL '%s': %v", ss.URL, err)
+		}
+
+		transport.Proxy = func(request *http.Request) (*url.URL, error) {
+			return proxyURL, nil
+		}
+	}
+
+	client := &http.Client{
+		Transport: transport,
+		Timeout:   300 * time.Second,
 	}
 
 	req, err := http.NewRequest(http.MethodGet, u.String(), nil)

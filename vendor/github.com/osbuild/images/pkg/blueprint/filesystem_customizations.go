@@ -15,7 +15,10 @@ type FilesystemCustomization struct {
 }
 
 func (fsc *FilesystemCustomization) UnmarshalTOML(data interface{}) error {
-	d, _ := data.(map[string]interface{})
+	d, ok := data.(map[string]interface{})
+	if !ok {
+		return fmt.Errorf("customizations.filesystem is not an object")
+	}
 
 	switch d["mountpoint"].(type) {
 	case string:
