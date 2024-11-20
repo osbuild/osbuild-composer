@@ -228,6 +228,9 @@ func (a *AWS) TerminateSecureInstance(si *SecureInstance) error {
 }
 
 func (a *AWS) terminatePreviousSI(hostInstanceID string) (string, error) {
+	var retryCount int
+	const maxRetries = 3
+
 	descrInstancesOutput, err := a.ec2.DescribeInstances(
 		context.Background(),
 		&ec2.DescribeInstancesInput{
@@ -260,6 +263,38 @@ func (a *AWS) terminatePreviousSI(hostInstanceID string) (string, error) {
 		return instanceID, err
 	}
 
+	retryFunction := func(ctx context.Context, input *ec2.DescribeInstancesInput, output *ec2.DescribeInstancesOutput, err error) (bool, error) {
+
+		if err == nil {
+			var lastState ec2types.InstanceStateName = "unknown"
+			for _, reservation := range output.Reservations {
+				for _, instance := range reservation.Instances {
+					if instance.State.Name == ec2types.InstanceStateNameTerminated {
+						return false, nil
+					}
+					lastState = instance.State.Name
+				}
+			}
+			logrus.Warnf("instance not terminated, but %s", lastState)
+		} else {
+			logrus.Errorf("Error encountered while waiting for termination: %v", err)
+		}
+
+		retryCount++
+		if retryCount > maxRetries {
+			logrus.Errorf("maximum retries reached, while waiting for %v to terminate", instanceID)
+			return false, err
+		}
+		logrus.Warnf("retry waiting for termination %d/%d", retryCount, maxRetries)
+		return true, nil
+
+	}
+
+	TerminatedWaiterOptions := func(o *ec2.InstanceTerminatedWaiterOptions) {
+		o.Retryable = retryFunction
+		o.LogWaitAttempts = true
+	}
+
 	instTermWaiter := ec2.NewInstanceTerminatedWaiter(a.ec2)
 	err = instTermWaiter.Wait(
 		context.Background(),
@@ -267,6 +302,7 @@ func (a *AWS) terminatePreviousSI(hostInstanceID string) (string, error) {
 			InstanceIds: []string{instanceID},
 		},
 		time.Hour,
+		TerminatedWaiterOptions,
 	)
 	if err != nil {
 		return instanceID, err
