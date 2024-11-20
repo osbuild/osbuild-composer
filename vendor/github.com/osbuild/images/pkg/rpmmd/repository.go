@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"sort"
 	"strings"
@@ -232,10 +233,14 @@ func LoadRepositoriesFromFile(filename string) (map[string][]RepoConfig, error) 
 	}
 	defer f.Close()
 
+	return LoadRepositoriesFromReader(f)
+}
+
+func LoadRepositoriesFromReader(r io.Reader) (map[string][]RepoConfig, error) {
 	var reposMap map[string][]repository
 	repoConfigs := make(map[string][]RepoConfig)
 
-	err = json.NewDecoder(f).Decode(&reposMap)
+	err := json.NewDecoder(r).Decode(&reposMap)
 	if err != nil {
 		return nil, err
 	}
