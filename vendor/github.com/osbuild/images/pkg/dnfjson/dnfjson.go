@@ -161,6 +161,7 @@ type DepsolveResult struct {
 	Packages []rpmmd.PackageSpec
 	Repos    []rpmmd.RepoConfig
 	SBOM     *sbom.Document
+	Solver   string
 }
 
 // Create a new Solver with the given configuration. Initialising a Solver also loads system subscription information.
@@ -244,6 +245,7 @@ func (s *Solver) Depsolve(pkgSets []rpmmd.PackageSet, sbomType sbom.StandardType
 		Packages: packages,
 		Repos:    repos,
 		SBOM:     sbomDoc,
+		Solver:   result.Solver,
 	}, nil
 }
 
