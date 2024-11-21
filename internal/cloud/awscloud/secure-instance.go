@@ -229,7 +229,7 @@ func (a *AWS) TerminateSecureInstance(si *SecureInstance) error {
 
 func (a *AWS) terminatePreviousSI(hostInstanceID string) (string, error) {
 	var retryCount int
-	const maxRetries = 3
+	const maxRetries = 10
 
 	descrInstancesOutput, err := a.ec2.DescribeInstances(
 		context.Background(),
@@ -292,7 +292,7 @@ func (a *AWS) terminatePreviousSI(hostInstanceID string) (string, error) {
 
 	TerminatedWaiterOptions := func(o *ec2.InstanceTerminatedWaiterOptions) {
 		o.Retryable = retryFunction
-		o.LogWaitAttempts = true
+		o.MinDelay = 60 * time.Second
 	}
 
 	instTermWaiter := ec2.NewInstanceTerminatedWaiter(a.ec2)
