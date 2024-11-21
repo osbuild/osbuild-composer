@@ -31,6 +31,7 @@ type Customizations struct {
 	Installer          *InstallerCustomization   `json:"installer,omitempty" toml:"installer,omitempty"`
 	RPM                *RPMCustomization         `json:"rpm,omitempty" toml:"rpm,omitempty"`
 	RHSM               *RHSMCustomization        `json:"rhsm,omitempty" toml:"rhsm,omitempty"`
+	CACerts            *CACustomization          `json:"cacerts,omitempty" toml:"cacerts,omitempty"`
 }
 
 type IgnitionCustomization struct {
@@ -133,6 +134,10 @@ type OpenSCAPTailoringCustomizations struct {
 type OpenSCAPJSONTailoringCustomizations struct {
 	ProfileID string `json:"profile_id,omitempty" toml:"profile_id,omitempty"`
 	Filepath  string `json:"filepath,omitempty" toml:"filepath,omitempty"`
+}
+
+type CACustomization struct {
+	PEMCerts []string `json:"pem_certs,omitempty" toml:"pem_certs,omitempty"`
 }
 
 type CustomizationError struct {

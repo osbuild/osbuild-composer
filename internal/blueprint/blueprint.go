@@ -406,6 +406,13 @@ func Convert(bp Blueprint) iblueprint.Blueprint {
 
 			customizations.RHSM = &irhsm
 		}
+
+		if ca := c.CACerts; ca != nil {
+			ica := iblueprint.CACustomization{
+				PEMCerts: ca.PEMCerts,
+			}
+			customizations.CACerts = &ica
+		}
 	}
 
 	ibp := iblueprint.Blueprint{
