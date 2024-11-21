@@ -211,6 +211,9 @@ func TestConvert(t *testing.T) {
 							},
 						},
 					},
+					CACerts: &CACustomization{
+						PEMCerts: []string{"pem-cert"},
+					},
 				},
 				Distro: "distro",
 			},
@@ -400,6 +403,9 @@ func TestConvert(t *testing.T) {
 								},
 							},
 						},
+					},
+					CACerts: &iblueprint.CACustomization{
+						PEMCerts: []string{"pem-cert"},
 					},
 				},
 				Distro: "distro",

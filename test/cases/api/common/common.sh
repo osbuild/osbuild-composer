@@ -1,4 +1,5 @@
 #!/usr/bin/bash
+# vim: sw=2:et:
 
 # Reusable function, which waits for a given host to respond to SSH
 function _instanceWaitSSH() {
@@ -83,6 +84,7 @@ function _instanceCheck() {
 
   verify_repository_customization "$_ssh"
   verify_openscap_customization "$_ssh"
+  verify_cacert_customization "$_ssh"
 
   echo "✔️ Checking timezone customization"
   TZ=$($_ssh timedatectl show  -p Timezone --value)
@@ -240,6 +242,26 @@ function verify_openscap_customization {
 
   if [[ "$_error" == "1" ]]; then
     echo "Testing of OpenSCAP customizations has failed."
+    exit 1
+  fi
+}
+
+# Verify that CA cert file was extracted
+function verify_cacert_customization {
+  echo "✔️ Checking CA cert extration"
+  local _ssh="$1"
+  local _serial="27894af897dd2423607045716438a725f28a6d0b"
+  local _cn="Test CA for osbuild"
+
+  if ! $_ssh "test -e /etc/pki/ca-trust/source/anchors/${_serial}.pem"; then
+    echo "Anchor CA file does not exist, directory contents:"
+    $_ssh "find /etc/pki/ca-trust/source/anchors"
+    exit 1
+  fi
+
+  if ! $_ssh "grep -q \"${_cn}\" /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem"; then
+    echo "Extracted CA file is not present, bundle contents:"
+    $_ssh "grep '^#' /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem"
     exit 1
   fi
 }

@@ -1015,6 +1015,12 @@ func (request *ComposeRequest) GetBlueprintFromCustomizations() (blueprint.Bluep
 		bp.Customizations.RHSM = bpRhsm
 	}
 
+	if cacerts := request.Customizations.Cacerts; cacerts != nil {
+		bp.Customizations.CACerts = &blueprint.CACustomization{
+			PEMCerts: cacerts.PemCerts,
+		}
+	}
+
 	// Did bp.Customizations get set at all? If not, set it back to nil
 	if reflect.DeepEqual(*bp.Customizations, blueprint.Customizations{}) {
 		bp.Customizations = nil

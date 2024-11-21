@@ -1175,6 +1175,17 @@ components:
       properties:
         config:
           $ref: '#/components/schemas/RHSMConfig'
+    CACertsCustomization:
+      type: object
+      additionalProperties: false
+      required:
+        - pem_certs
+      properties:
+        pem_certs:
+          type: array
+          example: ['---BEGIN CERTIFICATE---\nMIIC0DCCAbigAwIBAgIUI...\n---END CERTIFICATE---']
+          items:
+            type: string
     UploadTarget:
       type: object
       required:
@@ -1518,6 +1529,8 @@ components:
           $ref: '#/components/schemas/RPMCustomization'
         rhsm:
           $ref: '#/components/schemas/RHSMCustomization'
+        cacerts:
+          $ref: '#/components/schemas/CACertsCustomization'
     SSHKey:
       type: object
       additionalProperties: false
@@ -1666,6 +1679,8 @@ components:
           $ref: '#/components/schemas/RPMCustomization'
         rhsm:
           $ref: '#/components/schemas/RHSMCustomization'
+        cacerts:
+          $ref: '#/components/schemas/CACertsCustomization'
     Container:
       type: object
       required:
