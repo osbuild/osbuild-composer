@@ -6,6 +6,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/osbuild/images/pkg/cert"
 	"github.com/osbuild/images/pkg/customizations/anaconda"
 )
 
@@ -19,6 +20,7 @@ type Customizations struct {
 	Firewall           *FirewallCustomization         `json:"firewall,omitempty" toml:"firewall,omitempty"`
 	Services           *ServicesCustomization         `json:"services,omitempty" toml:"services,omitempty"`
 	Filesystem         []FilesystemCustomization      `json:"filesystem,omitempty" toml:"filesystem,omitempty"`
+	Disk               *DiskCustomization             `json:"disk,omitempty" toml:"disk,omitempty"`
 	InstallationDevice string                         `json:"installation_device,omitempty" toml:"installation_device,omitempty"`
 	FDO                *FDOCustomization              `json:"fdo,omitempty" toml:"fdo,omitempty"`
 	OpenSCAP           *OpenSCAPCustomization         `json:"openscap,omitempty" toml:"openscap,omitempty"`
@@ -31,6 +33,7 @@ type Customizations struct {
 	Installer          *InstallerCustomization        `json:"installer,omitempty" toml:"installer,omitempty"`
 	RPM                *RPMCustomization              `json:"rpm,omitempty" toml:"rpm,omitempty"`
 	RHSM               *RHSMCustomization             `json:"rhsm,omitempty" toml:"rhsm,omitempty"`
+	CACerts            *CACustomization               `json:"cacerts,omitempty" toml:"ca,omitempty"`
 }
 
 type IgnitionCustomization struct {
@@ -311,6 +314,13 @@ func (c *Customizations) GetFilesystemsMinSize() uint64 {
 	return agg
 }
 
+func (c *Customizations) GetPartitioning() *DiskCustomization {
+	if c == nil {
+		return nil
+	}
+	return c.Disk
+}
+
 func (c *Customizations) GetInstallationDevice() string {
 	if c == nil || c.InstallationDevice == "" {
 		return ""
@@ -424,4 +434,33 @@ func (c *Customizations) GetRHSM() *RHSMCustomization {
 		return nil
 	}
 	return c.RHSM
+}
+
+func (c *Customizations) checkCACerts() error {
+	if c == nil {
+		return nil
+	}
+
+	if c.CACerts != nil {
+		for _, bundle := range c.CACerts.PEMCerts {
+			_, err := cert.ParseCerts(bundle)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func (c *Customizations) GetCACerts() (*CACustomization, error) {
+	if c == nil {
+		return nil, nil
+	}
+
+	if err := c.checkCACerts(); err != nil {
+		return nil, err
+	}
+
+	return c.CACerts, nil
 }
