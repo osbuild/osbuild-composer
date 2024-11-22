@@ -165,11 +165,19 @@ func (a *AWS) RunSecureInstance(iamProfile, keyName, cloudWatchGroup, hostname s
 		},
 		Type: ec2types.FleetTypeInstant,
 	})
+	// retrieve any instance information even if there's an error, that way the instance
+	// will be terminated before other resources are removed.
+	if createFleetOutput != nil {
+		if createFleetOutput.FleetId != nil {
+			secureInstance.FleetID = *createFleetOutput.FleetId
+		}
+		if len(createFleetOutput.Instances) > 0 && len(createFleetOutput.Instances[0].InstanceIds) > 0 {
+			secureInstance.InstanceID = createFleetOutput.Instances[0].InstanceIds[0]
+		}
+	}
 	if err != nil {
 		return nil, err
 	}
-	secureInstance.FleetID = *createFleetOutput.FleetId
-	secureInstance.InstanceID = createFleetOutput.Instances[0].InstanceIds[0]
 
 	instWaiter := ec2.NewInstanceStatusOkWaiter(a.ec2)
 	err = instWaiter.Wait(
@@ -586,7 +594,7 @@ func (a *AWS) deleteSGIfExists(si *SecureInstance) error {
 func (a *AWS) createFleet(input *ec2.CreateFleetInput) (*ec2.CreateFleetOutput, error) {
 	createFleetOutput, err := a.ec2.CreateFleet(context.Background(), input)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to create spot fleet: %w", err)
+		return createFleetOutput, fmt.Errorf("Unable to create spot fleet: %w", err)
 	}
 
 	retry, fleetErrs := doCreateFleetRetry(createFleetOutput)
@@ -596,7 +604,7 @@ func (a *AWS) createFleet(input *ec2.CreateFleetInput) (*ec2.CreateFleetOutput, 
 		input.TargetCapacitySpecification.DefaultTargetCapacityType = ec2types.DefaultTargetCapacityTypeOnDemand
 		createFleetOutput, err = a.ec2.CreateFleet(context.Background(), input)
 		if err != nil {
-			return nil, fmt.Errorf("Unable to create on demand fleet: %w", err)
+			return createFleetOutput, fmt.Errorf("Unable to create on demand fleet: %w", err)
 		}
 	}
 
@@ -606,7 +614,7 @@ func (a *AWS) createFleet(input *ec2.CreateFleetInput) (*ec2.CreateFleetOutput, 
 		input.LaunchTemplateConfigs[0].Overrides = nil
 		createFleetOutput, err = a.ec2.CreateFleet(context.Background(), input)
 		if err != nil {
-			return nil, fmt.Errorf("Unable to create on demand fleet across AZs: %w", err)
+			return createFleetOutput, fmt.Errorf("Unable to create on demand fleet across AZs: %w", err)
 		}
 	}
 
@@ -615,14 +623,14 @@ func (a *AWS) createFleet(input *ec2.CreateFleetInput) (*ec2.CreateFleetOutput, 
 		for _, fleetErr := range createFleetOutput.Errors {
 			fleetErrs = append(fleetErrs, fmt.Sprintf("%s: %s", *fleetErr.ErrorCode, *fleetErr.ErrorMessage))
 		}
-		return nil, fmt.Errorf("Unable to create fleet: %v", strings.Join(fleetErrs, "; "))
+		return createFleetOutput, fmt.Errorf("Unable to create fleet: %v", strings.Join(fleetErrs, "; "))
 	}
 
 	if len(createFleetOutput.Instances) != 1 {
-		return nil, fmt.Errorf("Unable to create fleet with exactly one instance, got %d instances", len(createFleetOutput.Instances))
+		return createFleetOutput, fmt.Errorf("Unable to create fleet with exactly one instance, got %d instances", len(createFleetOutput.Instances))
 	}
 	if len(createFleetOutput.Instances[0].InstanceIds) != 1 {
-		return nil, fmt.Errorf("Expected exactly one instance ID on fleet, got %d", len(createFleetOutput.Instances[0].InstanceIds))
+		return createFleetOutput, fmt.Errorf("Expected exactly one instance ID on fleet, got %d", len(createFleetOutput.Instances[0].InstanceIds))
 	}
 	return createFleetOutput, nil
 }
