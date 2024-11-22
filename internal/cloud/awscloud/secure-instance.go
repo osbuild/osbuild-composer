@@ -639,6 +639,7 @@ func doCreateFleetRetry(cfOutput *ec2.CreateFleetOutput) (bool, []string) {
 	msg := []string{}
 	retry := false
 	for _, err := range cfOutput.Errors {
+		logrus.Infof("Checking to retry fleet create on error %s (msg: %s)", *err.ErrorCode, *err.ErrorMessage)
 		if slices.Contains(retryCodes, *err.ErrorCode) {
 			retry = true
 		}
