@@ -343,7 +343,7 @@ parameters:
     description: Name of the secret for connecting to sentry/glitchtip
   - description: Distro name aliases
     name: DISTRO_ALIASES
-    value: "rhel-7=rhel-7.9,rhel-8=rhel-8.10,rhel-9=rhel-9.4,rhel-10=rhel-10.0"
+    value: "rhel-7=rhel-7.9,rhel-8=rhel-8.10,rhel-9=rhel-9.5,rhel-10=rhel-10.0"
   - name: CHANNEL
     value: "local"
     description: >
