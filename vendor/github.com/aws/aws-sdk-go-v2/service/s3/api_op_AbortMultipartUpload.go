@@ -11,6 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/aws/smithy-go/middleware"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
+	"time"
 )
 
 // This operation aborts a multipart upload. After a multipart upload is aborted,
@@ -28,7 +29,7 @@ import (
 //     progress, you can't delete the bucket until all the in-progress multipart
 //     uploads are aborted or completed. To delete these in-progress multipart uploads,
 //     use the ListMultipartUploads operation to list the in-progress multipart
-//     uploads in the bucket and use the AbortMultupartUpload operation to abort all
+//     uploads in the bucket and use the AbortMultipartUpload operation to abort all
 //     the in-progress multipart uploads.
 //
 //   - Directory buckets - For directory buckets, you must make requests for this
@@ -147,6 +148,16 @@ type AbortMultipartUploadInput struct {
 	// status code 403 Forbidden (access denied).
 	ExpectedBucketOwner *string
 
+	// If present, this header aborts an in progress multipart upload only if it was
+	// initiated on the provided timestamp. If the initiated timestamp of the multipart
+	// upload does not match the provided value, the operation returns a 412
+	// Precondition Failed error. If the initiated timestamp matches or if the
+	// multipart upload doesn’t exist, the operation returns a 204 Success (No Content)
+	// response.
+	//
+	// This functionality is only supported for directory buckets.
+	IfMatchInitiatedTime *time.Time
+
 	// Confirms that the requester knows that they will be charged for the request.
 	// Bucket owners need not specify this parameter in their requests. If either the
 	// source or destination S3 bucket has Requester Pays enabled, the requester will
@@ -226,6 +237,9 @@ func (c *Client) addOperationAbortMultipartUploadMiddlewares(stack *middleware.S
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -281,6 +295,18 @@ func (c *Client) addOperationAbortMultipartUploadMiddlewares(stack *middleware.S
 		return err
 	}
 	if err = addSerializeImmutableHostnameBucketMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

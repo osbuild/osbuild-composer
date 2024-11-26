@@ -226,6 +226,14 @@ func osCustomizations(
 	osc.Files = append(osc.Files, imageConfig.Files...)
 	osc.Directories = append(osc.Directories, imageConfig.Directories...)
 
+	ca, err := c.GetCACerts()
+	if err != nil {
+		panic(fmt.Sprintf("unexpected error checking CA certs: %v", err))
+	}
+	if ca != nil {
+		osc.CACerts = ca.PEMCerts
+	}
+
 	return osc, nil
 }
 
@@ -329,7 +337,7 @@ func diskImage(workload workload.Workload,
 		img.InstallWeakDeps = common.ToPtr(false)
 	}
 	// TODO: move generation into LiveImage
-	pt, err := t.getPartitionTable(bp.Customizations.GetFilesystems(), options, rng)
+	pt, err := t.getPartitionTable(bp.Customizations, options, rng)
 	if err != nil {
 		return nil, err
 	}
@@ -700,7 +708,7 @@ func iotImage(workload workload.Workload,
 	img.OSName = "fedora-iot"
 
 	// TODO: move generation into LiveImage
-	pt, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
+	pt, err := t.getPartitionTable(customizations, options, rng)
 	if err != nil {
 		return nil, err
 	}
@@ -741,7 +749,7 @@ func iotSimplifiedInstallerImage(workload workload.Workload,
 	rawImg.OSName = "fedora"
 
 	// TODO: move generation into LiveImage
-	pt, err := t.getPartitionTable(customizations.GetFilesystems(), options, rng)
+	pt, err := t.getPartitionTable(customizations, options, rng)
 	if err != nil {
 		return nil, err
 	}

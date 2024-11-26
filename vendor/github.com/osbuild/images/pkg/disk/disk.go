@@ -72,6 +72,36 @@ const (
 	DosESPID = "ef00"
 )
 
+// pt type -> type -> ID mapping for convenience
+var idMap = map[PartitionTableType]map[string]string{
+	PT_DOS: {
+		"bios": DosBIOSBootID,
+		"boot": DosLinuxTypeID,
+		"data": DosLinuxTypeID,
+		"esp":  DosESPID,
+		"lvm":  DosLinuxTypeID,
+	},
+	PT_GPT: {
+		"bios": BIOSBootPartitionGUID,
+		"boot": XBootLDRPartitionGUID,
+		"data": FilesystemDataGUID,
+		"esp":  EFISystemPartitionGUID,
+		"lvm":  LVMPartitionGUID,
+	},
+}
+
+func getPartitionTypeIDfor(ptType PartitionTableType, partTypeName string) (string, error) {
+	ptMap, ok := idMap[ptType]
+	if !ok {
+		return "", fmt.Errorf("unknown or unsupported partition table enum: %d", ptType)
+	}
+	id, ok := ptMap[partTypeName]
+	if !ok {
+		return "", fmt.Errorf("unknown or unsupported partition type name: %s", partTypeName)
+	}
+	return id, nil
+}
+
 // FSType is the filesystem type enum.
 //
 // There should always be one value for each filesystem type supported by
