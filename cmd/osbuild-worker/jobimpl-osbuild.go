@@ -518,6 +518,9 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 
 	// Both curl and ostree input share the same MTLS config
 	if impl.RepositoryMTLSConfig != nil {
+		// Setting a CA cert with hosted Pulp with break the build since Pulp redirects HTTPS requests to AWS S3 which has
+		// a different CA which is part of OS cert bundle. Both curl and ostree commands only support either explicit CA file
+		// or OS cert bundle, but not both. To verify hosted Pulp CA, enroll its CA into the OS cert bundle instead.
 		if impl.RepositoryMTLSConfig.CA != "" {
 			extraEnv = append(extraEnv, fmt.Sprintf("OSBUILD_SOURCES_CURL_SSL_CA_CERT=%s", impl.RepositoryMTLSConfig.CA))
 			extraEnv = append(extraEnv, fmt.Sprintf("OSBUILD_SOURCES_OSTREE_SSL_CA_CERT=%s", impl.RepositoryMTLSConfig.CA))
@@ -560,6 +563,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 		exportPaths = append(exportPaths, path.Join(jobTarget.OsbuildArtifact.ExportName, jobTarget.OsbuildArtifact.ExportFilename))
 	}
 
+	logWithId.Infof("Extra env: %q", extraEnv)
 	opts := &osbuildexecutor.OsbuildOpts{
 		StoreDir:    impl.Store,
 		OutputDir:   outputDirectory,
