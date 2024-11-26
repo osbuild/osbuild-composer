@@ -464,6 +464,17 @@ func (a *AWS) createOrReplaceLT(hostInstanceID, imageID, sgID, iamProfile, keyNa
 					Max: aws.Int32(0),
 				},
 				BareMetal: ec2types.BareMetalExcluded,
+				// el10 needs x86_64-v3
+				ExcludedInstanceTypes: []string{
+					"m1.*",
+					"c1.*",
+					"t1.*",
+					"m2.*",
+					"i2.*",
+					"m3.*",
+					"c3.*",
+					"r3.*",
+				},
 				MemoryMiB: &ec2types.MemoryMiBRequest{
 					Min: aws.Int32(4096),
 				},
