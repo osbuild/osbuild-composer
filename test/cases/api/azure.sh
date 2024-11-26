@@ -120,7 +120,14 @@ function verify() {
   cloud_login
 
   # verify that the image exists and tag it
-  $AZURE_CMD image show --resource-group "${AZURE_RESOURCE_GROUP}" --name "${AZURE_IMAGE_NAME}"
+  IMG=$($AZURE_CMD image show --resource-group "${AZURE_RESOURCE_GROUP}" --name "${AZURE_IMAGE_NAME}")
+  echo "$IMG" | jq -r .
+  HYPER_V_GEN=$(echo "$IMG" | jq -r '.hyperVGeneration')
+  if [ "$HYPER_V_GEN" != "V2" ]; then
+      redprint "$AZURE_IMAGE_NAME isn't hyper v generation V2, but $HYPER_V_GEN"
+      exit 1
+  fi
+
   $AZURE_CMD image update --resource-group "${AZURE_RESOURCE_GROUP}" --name "${AZURE_IMAGE_NAME}" --tags gitlab-ci-test=true
 
   # Verify that the image boots and have customizations applied
