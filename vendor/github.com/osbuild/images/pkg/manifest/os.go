@@ -141,6 +141,8 @@ type OSCustomizations struct {
 	Directories []*fsnode.Directory
 	Files       []*fsnode.File
 
+	CACerts []string
+
 	FIPS bool
 
 	// NoBLS configures the image bootloader with traditional menu entries
@@ -789,6 +791,21 @@ func (p *OS) serialize() osbuild.Pipeline {
 		pipeline.AddStage(osbuild.NewSystemdPresetStage(&osbuild.SystemdPresetStageOptions{
 			Presets: p.Presets,
 		}))
+	}
+
+	if len(p.CACerts) > 0 {
+		for _, cc := range p.CACerts {
+			files, err := osbuild.NewCAFileNodes(cc)
+			if err != nil {
+				panic(err.Error())
+			}
+
+			if len(files) > 0 {
+				p.Files = append(p.Files, files...)
+				pipeline.AddStages(osbuild.GenFileNodesStages(files)...)
+			}
+		}
+		pipeline.AddStage(osbuild.NewCAStageStage())
 	}
 
 	if p.SElinux != "" {

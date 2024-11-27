@@ -36,9 +36,9 @@ func NewOSTreeSourceItem(commit ostree.CommitSpec) *OSTreeSourceItem {
 	item := new(OSTreeSourceItem)
 	item.Remote.URL = commit.URL
 	item.Remote.ContentURL = commit.ContentURL
-	if commit.Secrets == "org.osbuild.rhsm.consumer" {
+	if commit.Secrets != "" {
 		item.Remote.Secrets = &OSTreeSourceRemoteSecrets{
-			Name: "org.osbuild.rhsm.consumer",
+			Name: commit.Secrets,
 		}
 	}
 	return item

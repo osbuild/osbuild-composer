@@ -151,18 +151,9 @@ func verifyChecksum(commit string) bool {
 	return len(commit) > 0 && ostreeCommitRE.MatchString(commit)
 }
 
-// resolveRef resolves the URL path specified by the location and ref
-// (location+"refs/heads/"+ref) and returns the commit ID for the named ref. If
-// there is an error, it will be of type ResolveRefError.
-func resolveRef(ss SourceSpec) (string, error) {
-	u, err := url.Parse(ss.URL)
-	if err != nil {
-		return "", NewResolveRefError("error parsing ostree repository location: %v", err)
-	}
-	u.Path = path.Join(u.Path, "refs", "heads", ss.Ref)
-
+func httpClientForRef(scheme string, ss SourceSpec) (*http.Client, error) {
 	transport := http.DefaultTransport.(*http.Transport).Clone()
-	if u.Scheme == "https" {
+	if scheme == "https" {
 		tlsConf := &tls.Config{
 			MinVersion: tls.VersionTLS12,
 		}
@@ -171,18 +162,18 @@ func resolveRef(ss SourceSpec) (string, error) {
 		if ss.MTLS != nil && ss.MTLS.CA != "" {
 			caCertPEM, err := os.ReadFile(ss.MTLS.CA)
 			if err != nil {
-				return "", NewResolveRefError("error adding ca certificate when resolving ref: %s", err)
+				return nil, NewResolveRefError("error adding ca certificate when resolving ref: %s", err)
 			}
 			tlsConf.RootCAs = x509.NewCertPool()
 			if ok := tlsConf.RootCAs.AppendCertsFromPEM(caCertPEM); !ok {
-				return "", NewResolveRefError("error adding ca certificate when resolving ref")
+				return nil, NewResolveRefError("error adding ca certificate when resolving ref")
 			}
 		}
 
 		if ss.MTLS != nil && ss.MTLS.ClientCert != "" && ss.MTLS.ClientKey != "" {
 			cert, err := tls.LoadX509KeyPair(ss.MTLS.ClientCert, ss.MTLS.ClientKey)
 			if err != nil {
-				return "", NewResolveRefError("error adding client certificate when resolving ref: %s", err)
+				return nil, NewResolveRefError("error adding client certificate when resolving ref: %s", err)
 			}
 			tlsConf.Certificates = []tls.Certificate{cert}
 		}
@@ -193,12 +184,12 @@ func resolveRef(ss SourceSpec) (string, error) {
 	if ss.Proxy != "" {
 		host, port, err := net.SplitHostPort(ss.Proxy)
 		if err != nil {
-			return "", NewResolveRefError("error parsing MTLS proxy URL '%s': %v", ss.URL, err)
+			return nil, NewResolveRefError("error parsing MTLS proxy URL '%s': %v", ss.URL, err)
 		}
 
 		proxyURL, err := url.Parse("http://" + host + ":" + port)
 		if err != nil {
-			return "", NewResolveRefError("error parsing MTLS proxy URL '%s': %v", ss.URL, err)
+			return nil, NewResolveRefError("error parsing MTLS proxy URL '%s': %v", ss.URL, err)
 		}
 
 		transport.Proxy = func(request *http.Request) (*url.URL, error) {
@@ -206,9 +197,25 @@ func resolveRef(ss SourceSpec) (string, error) {
 		}
 	}
 
-	client := &http.Client{
+	return &http.Client{
 		Transport: transport,
 		Timeout:   300 * time.Second,
+	}, nil
+}
+
+// resolveRef resolves the URL path specified by the location and ref
+// (location+"refs/heads/"+ref) and returns the commit ID for the named ref. If
+// there is an error, it will be of type ResolveRefError.
+func resolveRef(ss SourceSpec) (string, error) {
+	u, err := url.Parse(ss.URL)
+	if err != nil {
+		return "", NewResolveRefError("error parsing ostree repository location: %v", err)
+	}
+	u.Path = path.Join(u.Path, "refs", "heads", ss.Ref)
+
+	client, err := httpClientForRef(u.Scheme, ss)
+	if err != nil {
+		return "", err
 	}
 
 	req, err := http.NewRequest(http.MethodGet, u.String(), nil)

@@ -138,7 +138,7 @@ func (t *imageType) BootMode() platform.BootMode {
 }
 
 func (t *imageType) getPartitionTable(
-	mountpoints []blueprint.FilesystemCustomization,
+	customizations *blueprint.Customizations,
 	options distro.ImageOptions,
 	rng *rand.Rand,
 ) (*disk.PartitionTable, error) {
@@ -148,6 +148,27 @@ func (t *imageType) getPartitionTable(
 	}
 
 	imageSize := t.Size(options.Size)
+	partitioning, err := customizations.GetPartitioning()
+	if err != nil {
+		return nil, err
+	}
+	if partitioning != nil {
+		// Use the new custom partition table to create a PT fully based on the user's customizations.
+		// This overrides FilesystemCustomizations, but we should never have both defined.
+		if options.Size > 0 {
+			// user specified a size on the command line, so let's override the
+			// customization with the calculated/rounded imageSize
+			partitioning.MinSize = imageSize
+		}
+
+		partOptions := &disk.CustomPartitionTableOptions{
+			PartitionTableType: basePartitionTable.Type, // PT type is not customizable, it is determined by the base PT for an image type or architecture
+			BootMode:           t.BootMode(),
+			DefaultFSType:      disk.FS_EXT4, // default fs type for Fedora
+			RequiredMinSizes:   t.requiredPartitionSizes,
+		}
+		return disk.NewCustomPartitionTable(partitioning, partOptions, rng)
+	}
 
 	partitioningMode := options.PartitioningMode
 	if t.rpmOstree {
@@ -160,6 +181,7 @@ func (t *imageType) getPartitionTable(
 		partitioningMode = disk.AutoLVMPartitioningMode
 	}
 
+	mountpoints := customizations.GetFilesystems()
 	return disk.NewPartitionTable(&basePartitionTable, mountpoints, imageSize, partitioningMode, t.requiredPartitionSizes, rng)
 }
 
@@ -355,13 +377,21 @@ func (t *imageType) checkOptions(bp *blueprint.Blueprint, options distro.ImageOp
 	}
 
 	mountpoints := customizations.GetFilesystems()
-
-	if mountpoints != nil && t.rpmOstree {
-		return nil, fmt.Errorf("Custom mountpoints are not supported for ostree types")
+	partitioning, err := customizations.GetPartitioning()
+	if err != nil {
+		return nil, err
+	}
+	if (len(mountpoints) > 0 || partitioning != nil) && t.rpmOstree {
+		return nil, fmt.Errorf("Custom mountpoints and partitioning are not supported for ostree types")
+	}
+	if len(mountpoints) > 0 && partitioning != nil {
+		return nil, fmt.Errorf("partitioning customizations cannot be used with custom filesystems (mountpoints)")
 	}
 
-	err := blueprint.CheckMountpointsPolicy(mountpoints, policies.MountpointPolicies)
-	if err != nil {
+	if err := blueprint.CheckMountpointsPolicy(mountpoints, policies.MountpointPolicies); err != nil {
+		return nil, err
+	}
+	if err := blueprint.CheckDiskMountpointsPolicy(partitioning, policies.MountpointPolicies); err != nil {
 		return nil, err
 	}
 
@@ -436,6 +466,14 @@ func (t *imageType) checkOptions(bp *blueprint.Blueprint, options distro.ImageOp
 			(customizations.GetUsers() != nil || customizations.GetGroups() != nil) {
 			return nil, fmt.Errorf("iot-installer installer.kickstart.contents are not supported in combination with users or groups")
 		}
+	}
+
+	diskc, err := customizations.GetPartitioning()
+	if err != nil {
+		return nil, err
+	}
+	if err := diskc.ValidateLayoutConstraints(); err != nil {
+		return nil, fmt.Errorf("cannot use disk customization: %w", err)
 	}
 
 	return nil, nil

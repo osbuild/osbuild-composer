@@ -1022,7 +1022,7 @@ github.com/oracle/oci-go-sdk/v54/identity
 github.com/oracle/oci-go-sdk/v54/objectstorage
 github.com/oracle/oci-go-sdk/v54/objectstorage/transfer
 github.com/oracle/oci-go-sdk/v54/workrequests
-# github.com/osbuild/images v0.99.0
+# github.com/osbuild/images v0.102.0
 ## explicit; go 1.21.0
 github.com/osbuild/images/internal/common
 github.com/osbuild/images/internal/environment
@@ -1030,6 +1030,7 @@ github.com/osbuild/images/internal/workload
 github.com/osbuild/images/pkg/arch
 github.com/osbuild/images/pkg/artifact
 github.com/osbuild/images/pkg/blueprint
+github.com/osbuild/images/pkg/cert
 github.com/osbuild/images/pkg/container
 github.com/osbuild/images/pkg/crypt
 github.com/osbuild/images/pkg/customizations/anaconda
