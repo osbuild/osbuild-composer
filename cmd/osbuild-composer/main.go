@@ -50,7 +50,7 @@ func main() {
 	logLevel, err := logrus.ParseLevel(config.LogLevel)
 
 	logrus.SetReportCaller(true)
-	// Add context hook to log operation_id and external_id
+	logrus.AddHook(&common.BuildHook{})
 	logrus.AddHook(&common.ContextHook{})
 
 	if err == nil {
