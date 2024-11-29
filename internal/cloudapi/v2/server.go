@@ -130,16 +130,36 @@ func (s *Server) Handler(path string) http.Handler {
 		server: s,
 	}
 
+	// middlewares with auth
 	mws := []echo.MiddlewareFunc{
+		prometheus.StatusMiddleware(prometheus.ComposerSubsystem),
+	}
+	// middlewares without auth
+	mwsna := []echo.MiddlewareFunc{
 		prometheus.StatusMiddleware(prometheus.ComposerSubsystem),
 	}
 	if s.config.JWTEnabled {
 		mws = append(mws, auth.TenantChannelMiddleware(s.config.TenantProviderFields, HTTPError(ErrorTenantNotFound)))
 	}
-	mws = append(mws,
-		prometheus.HTTPDurationMiddleware(prometheus.ComposerSubsystem),
+	mws = append(mws, prometheus.HTTPDurationMiddleware(prometheus.ComposerSubsystem),
 		prometheus.MetricsMiddleware, s.ValidateRequest)
+	mwsna = append(mwsna, prometheus.HTTPDurationMiddleware(prometheus.ComposerSubsystem),
+		prometheus.MetricsMiddleware, s.ValidateRequest)
+
 	RegisterHandlers(e.Group(path, mws...), &handler)
+
+	// no auth endpoints
+	e.GET("/version", func(c echo.Context) error {
+		return handler.GetVersion(c)
+	}, mwsna...)
+
+	e.GET("/status", func(c echo.Context) error {
+		return c.NoContent(http.StatusOK)
+	})
+
+	e.GET("/ready", func(c echo.Context) error {
+		return c.NoContent(http.StatusOK)
+	})
 
 	return e
 }

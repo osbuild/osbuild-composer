@@ -23,8 +23,8 @@ func init() {
 		for _, bs := range bi.Settings {
 			switch bs.Key {
 			case "vcs.revision":
-				if len(bs.Value) > 6 {
-					BuildCommit = bs.Value[0:6]
+				if len(bs.Value) > 7 {
+					BuildCommit = bs.Value[0:7]
 				}
 			case "vcs.time":
 				BuildTime = bs.Value

@@ -21,6 +21,7 @@ import (
 	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/images/pkg/sbom"
 	v2 "github.com/osbuild/osbuild-composer/internal/cloudapi/v2"
+	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue/fsjobqueue"
 	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/test"
@@ -193,6 +194,21 @@ func newV2Server(t *testing.T, dir string, depsolveChannels []string, enableJWT 
 	}
 
 	return v2Server, workerServer, q, cancelWithWait
+}
+
+func TestVersion(t *testing.T) {
+	srv, _, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false, false)
+	defer cancel()
+
+	common.BuildCommit = "abcdef"
+	common.BuildTime = "2013-05-13T00:00:00Z"
+
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", "/api/image-builder-composer/v2/version", ``, http.StatusOK, `
+	{
+		"version": "2",
+		"build_commit": "abcdef",
+		"build_time": "2013-05-13T00:00:00Z"
+	}`, "operation_id", "details")
 }
 
 func TestUnknownRoute(t *testing.T) {

@@ -17,6 +17,21 @@ servers:
   description: current domain
 
 paths:
+  /version:
+    get:
+      summary: get the service version
+      description: "get the service version"
+      operationId: getVersion
+      tags:
+        - meta
+      responses:
+        '200':
+          description: a service version
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Version'
+
   /openapi:
     get:
       operationId: getOpenapi
@@ -487,6 +502,17 @@ paths:
 
 components:
   schemas:
+    Version:
+      required:
+        - version
+      properties:
+        version:
+          type: string
+        build_time:
+          type: string
+        build_commit:
+          type: string
+
     ObjectReference:
       type: object
       required:

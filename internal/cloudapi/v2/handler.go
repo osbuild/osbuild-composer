@@ -45,6 +45,19 @@ func (b binder) Bind(i interface{}, ctx echo.Context) error {
 	return nil
 }
 
+func (h *apiHandlers) GetVersion(ctx echo.Context) error {
+	spec, err := GetSwagger()
+	if err != nil {
+		return HTTPError(ErrorFailedToLoadOpenAPISpec)
+	}
+	version := Version{
+		Version:     spec.Info.Version,
+		BuildCommit: common.ToPtr(common.BuildCommit),
+		BuildTime:   common.ToPtr(common.BuildTime),
+	}
+	return ctx.JSON(http.StatusOK, version)
+}
+
 func (h *apiHandlers) GetOpenapi(ctx echo.Context) error {
 	spec, err := GetSwagger()
 	if err != nil {
