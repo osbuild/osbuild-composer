@@ -313,6 +313,44 @@ func Convert(bp Blueprint) iblueprint.Blueprint {
 			}
 			customizations.Filesystem = ifs
 		}
+		if disk := c.Disk; disk != nil {
+			idisk := &iblueprint.DiskCustomization{
+				MinSize:    disk.MinSize,
+				Partitions: make([]iblueprint.PartitionCustomization, len(disk.Partitions)),
+			}
+			for idx, part := range disk.Partitions {
+				ipart := iblueprint.PartitionCustomization{
+					Type:                     part.Type,
+					MinSize:                  part.MinSize,
+					BtrfsVolumeCustomization: iblueprint.BtrfsVolumeCustomization{},
+					VGCustomization: iblueprint.VGCustomization{
+						Name: part.VGCustomization.Name,
+					},
+					FilesystemTypedCustomization: iblueprint.FilesystemTypedCustomization(part.FilesystemTypedCustomization),
+				}
+
+				if len(part.LogicalVolumes) > 0 {
+					ipart.LogicalVolumes = make([]iblueprint.LVCustomization, len(part.LogicalVolumes))
+					for lvidx, lv := range part.LogicalVolumes {
+						ipart.LogicalVolumes[lvidx] = iblueprint.LVCustomization{
+							Name:                         lv.Name,
+							MinSize:                      lv.MinSize,
+							FilesystemTypedCustomization: iblueprint.FilesystemTypedCustomization(lv.FilesystemTypedCustomization),
+						}
+					}
+				}
+
+				if len(part.Subvolumes) > 0 {
+					ipart.Subvolumes = make([]iblueprint.BtrfsSubvolumeCustomization, len(part.Subvolumes))
+					for svidx, sv := range part.Subvolumes {
+						ipart.Subvolumes[svidx] = iblueprint.BtrfsSubvolumeCustomization(sv)
+					}
+				}
+
+				idisk.Partitions[idx] = ipart
+			}
+			customizations.Disk = idisk
+		}
 		if tz := c.Timezone; tz != nil {
 			itz := iblueprint.TimezoneCustomization(*tz)
 			customizations.Timezone = &itz
