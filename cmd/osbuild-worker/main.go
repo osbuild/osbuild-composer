@@ -7,6 +7,8 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io"
+	"log"
 	"net/url"
 	"os"
 	"path"
@@ -17,11 +19,13 @@ import (
 	slogger "github.com/osbuild/osbuild-composer/pkg/splunk_logger"
 
 	"github.com/BurntSushi/toml"
+	"github.com/coreos/go-systemd/journal"
 	"github.com/sirupsen/logrus"
 
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/dnfjson"
 	"github.com/osbuild/osbuild-composer/internal/cloud/awscloud"
+	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/upload/azure"
 	"github.com/osbuild/osbuild-composer/internal/upload/koji"
 	"github.com/osbuild/osbuild-composer/internal/upload/oci"
@@ -168,6 +172,11 @@ func RequestAndRunJob(client *worker.Client, acceptedJobTypes []string, jobImpls
 }
 
 var run = func() {
+	// Redirect Go standard logger into logrus before it's used by other packages
+	log.SetOutput(common.Logger())
+	// Ensure the Go standard logger does not have any prefix or timestamp
+	log.SetFlags(0)
+
 	var unix bool
 	flag.BoolVar(&unix, "unix", false, "Interpret 'address' as a path to a unix domain socket instead of a network address")
 
@@ -187,6 +196,39 @@ var run = func() {
 	config, err := parseConfig(configFile)
 	if err != nil {
 		logrus.Fatalf("Could not load config file '%s': %v", configFile, err)
+	}
+
+	logrus.SetReportCaller(true)
+	logrus.AddHook(&common.BuildHook{})
+	logrus.SetOutput(os.Stdout)
+	logLevel, err := logrus.ParseLevel(config.Logging.Level)
+	if err != nil {
+		logrus.Info("Failed to load loglevel from config:", err)
+	} else {
+		logrus.SetLevel(logLevel)
+	}
+
+	// logger configuration
+	switch config.Logging.Format {
+	case "journal", "":
+		// If we are running under systemd, use the journal. Otherwise,
+		// fallback to text formatter.
+		if journal.Enabled() {
+			logrus.Info("Switching to journal logging mode, use logging.no_discard to keep writing to standard output/error")
+			logrus.SetFormatter(&logrus.JSONFormatter{})
+			logrus.AddHook(&common.JournalHook{})
+			if !config.Logging.NoDiscard {
+				logrus.SetOutput(io.Discard)
+			}
+		} else {
+			logrus.SetFormatter(&logrus.TextFormatter{})
+		}
+	case "text":
+		logrus.SetFormatter(&logrus.TextFormatter{})
+	case "json":
+		logrus.SetFormatter(&logrus.JSONFormatter{})
+	default:
+		logrus.Infof("Failed to set logging format from config, '%s' is not a valid option", config.Logging.Format)
 	}
 
 	logrus.Info("Composer configuration:")

@@ -75,6 +75,10 @@ type = "aws.ec2"
 iam_profile = "osbuild-worker"
 key_name = "osbuild-worker"
 cloudwatch_group = "osbuild-worker"
+
+[logging]
+level = "debug"
+format = "text"
 `,
 			want: &workerConfig{
 				BasePath: "/api/image-builder-worker/v1",
@@ -137,6 +141,10 @@ cloudwatch_group = "osbuild-worker"
 					ServerURL:   "https://example.com/pulp",
 				},
 				DeploymentChannel: "local",
+				Logging: &loggingConfig{
+					Level:  "debug",
+					Format: "text",
+				},
 			},
 		},
 		{
@@ -148,6 +156,10 @@ cloudwatch_group = "osbuild-worker"
 					Type: "host",
 				},
 				DeploymentChannel: "local",
+				Logging: &loggingConfig{
+					Format: "journal",
+					Level:  "info",
+				},
 			},
 		},
 		{
@@ -159,6 +171,10 @@ cloudwatch_group = "osbuild-worker"
 					Type: "host",
 				},
 				DeploymentChannel: "staging",
+				Logging: &loggingConfig{
+					Format: "journal",
+					Level:  "info",
+				},
 			},
 		},
 	}

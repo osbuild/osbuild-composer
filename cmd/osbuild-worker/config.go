@@ -13,6 +13,12 @@ type composerConfig struct {
 	Proxy string `toml:"proxy"`
 }
 
+type loggingConfig struct {
+	Format    string `toml:"format"` // journal, text or json (defaults to journal or text depending on the OS)
+	Level     string `toml:"level"`
+	NoDiscard bool   `toml:"no_discard"` // do not discard stdout/stderr logs (useful for debugging)
+}
+
 type kerberosConfig struct {
 	Principal string `toml:"principal"`
 	KeyTab    string `toml:"keytab"`
@@ -88,6 +94,7 @@ type repositoryMTLSConfig struct {
 
 type workerConfig struct {
 	Composer       *composerConfig             `toml:"composer"`
+	Logging        *loggingConfig              `toml:"logging"`
 	Koji           map[string]kojiServerConfig `toml:"koji"`
 	GCP            *gcpConfig                  `toml:"gcp"`
 	Azure          *azureConfig                `toml:"azure"`
@@ -115,6 +122,10 @@ func parseConfig(file string) (*workerConfig, error) {
 			Type: "host",
 		},
 		DeploymentChannel: "local",
+		Logging: &loggingConfig{
+			Format: "journal",
+			Level:  "info",
+		},
 	}
 
 	_, err := toml.DecodeFile(file, &config)
