@@ -170,6 +170,7 @@ func (a *AWS) RunSecureInstance(iamProfile, keyName, cloudWatchGroup, hostname s
 		},
 		Type: ec2types.FleetTypeInstant,
 	})
+
 	// retrieve any instance information even if there's an error, that way the instance
 	// will be terminated before other resources are removed.
 	if createFleetOutput != nil {
@@ -181,7 +182,11 @@ func (a *AWS) RunSecureInstance(iamProfile, keyName, cloudWatchGroup, hostname s
 		}
 	}
 	if err != nil {
-		return nil, err
+		if secureInstance.FleetID == "" || secureInstance.InstanceID == "" {
+			logrus.Infof("CreateFleet returned an error (%v), without either an instance (%s) or a fleet (%s)", err, secureInstance.InstanceID, secureInstance.FleetID)
+			return nil, err
+		}
+		logrus.Warnf("CreateFleet returned an error (%v) but also created an instance (%s) in fleet (%s), continuing as normal.", err, secureInstance.InstanceID, secureInstance.FleetID)
 	}
 
 	instWaiter := ec2.NewInstanceStatusOkWaiter(a.ec2)
