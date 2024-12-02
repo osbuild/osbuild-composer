@@ -183,13 +183,14 @@ func newDistro(name string, major, minor int) *rhel.Distribution {
 		mkAMIImgTypeX86_64(),
 	)
 
-	aarch64.AddImageTypes(
-		&platform.Aarch64{
-			UEFIVendor: rd.Vendor(),
-			BasePlatform: platform.BasePlatform{
-				ImageFormat: platform.FORMAT_RAW,
-			},
+	ec2Aarch64Platform := &platform.Aarch64{
+		UEFIVendor: rd.Vendor(),
+		BasePlatform: platform.BasePlatform{
+			ImageFormat: platform.FORMAT_RAW,
 		},
+	}
+	aarch64.AddImageTypes(
+		ec2Aarch64Platform,
 		mkAMIImgTypeAarch64(),
 	)
 
@@ -208,13 +209,8 @@ func newDistro(name string, major, minor int) *rhel.Distribution {
 		},
 	}
 
-	if rd.IsRHEL() { // RHEL-only (non-CentOS) image types
-		x86_64.AddImageTypes(azureX64Platform, mkAzureByosImgType(rd))
-		aarch64.AddImageTypes(azureAarch64Platform, mkAzureByosImgType(rd))
-	} else {
-		x86_64.AddImageTypes(azureX64Platform, mkAzureImgType())
-		aarch64.AddImageTypes(azureAarch64Platform, mkAzureImgType())
-	}
+	x86_64.AddImageTypes(azureX64Platform, mkAzureImgType(rd))
+	aarch64.AddImageTypes(azureAarch64Platform, mkAzureImgType(rd))
 
 	gceX86Platform := &platform.X86{
 		UEFIVendor: rd.Vendor(),
@@ -257,6 +253,16 @@ func newDistro(name string, major, minor int) *rhel.Distribution {
 		},
 		mkImageInstallerImgType(),
 	)
+
+	if rd.IsRHEL() { // RHEL-only (non-CentOS) image types
+		x86_64.AddImageTypes(azureX64Platform, mkAzureInternalImgType(rd))
+		aarch64.AddImageTypes(azureAarch64Platform, mkAzureInternalImgType(rd))
+
+		x86_64.AddImageTypes(azureX64Platform, mkAzureSapInternalImgType(rd))
+
+		x86_64.AddImageTypes(ec2X86Platform, mkEc2ImgTypeX86_64(), mkEc2HaImgTypeX86_64(), mkEC2SapImgTypeX86_64(rd.OsVersion()))
+		aarch64.AddImageTypes(ec2Aarch64Platform, mkEC2ImgTypeAarch64())
+	}
 
 	rd.AddArches(x86_64, aarch64, ppc64le, s390x)
 	return rd

@@ -288,8 +288,11 @@ func (t *imageType) Manifest(bp *blueprint.Blueprint,
 // checkOptions checks the validity and compatibility of options and customizations for the image type.
 // Returns ([]string, error) where []string, if non-nil, will hold any generated warnings (e.g. deprecation notices).
 func (t *imageType) checkOptions(bp *blueprint.Blueprint, options distro.ImageOptions) ([]string, error) {
-
 	customizations := bp.Customizations
+
+	if !t.rpmOstree && options.OSTree != nil {
+		return nil, fmt.Errorf("OSTree is not supported for %q", t.Name())
+	}
 
 	// we do not support embedding containers on ostree-derived images, only on commits themselves
 	if len(bp.Containers) > 0 && t.rpmOstree && (t.name != "iot-commit" && t.name != "iot-container") {
