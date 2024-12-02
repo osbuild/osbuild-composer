@@ -154,6 +154,10 @@ func (a *AWS) RunSecureInstance(iamProfile, keyName, cloudWatchGroup, hostname s
 						Key:   aws.String("parent"),
 						Value: aws.String(identity.InstanceID),
 					},
+					ec2types.Tag{
+						Key:   aws.String("Name"),
+						Value: aws.String(fmt.Sprintf("Executor-for-%s", identity.InstanceID)),
+					},
 				},
 			},
 		},
