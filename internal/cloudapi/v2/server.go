@@ -654,13 +654,7 @@ func serializeManifest(ctx context.Context, manifestSource *manifest.Manifest, w
 				Ref:      resultSpec.Ref,
 				URL:      resultSpec.URL,
 				Checksum: resultSpec.Checksum,
-			}
-			if resultSpec.RHSM {
-				// NOTE: Older workers don't set the Secrets string in the result
-				// spec so let's add it here for backwards compatibility. This
-				// should be removed after a few versions when all workers have
-				// been updated.
-				resultSpec.Secrets = "org.osbuild.rhsm.consumer"
+				Secrets:  resultSpec.Secrets,
 			}
 		}
 		ostreeCommitSpecs = map[string][]ostree.CommitSpec{
