@@ -14,9 +14,21 @@ import (
 )
 
 func AWSCleanup(maxConcurrentRequests int, dryRun bool, accessKeyID, accessKey string, cutoff time.Time) error {
-	a, err := awscloud.New("us-east-1", accessKeyID, accessKey, "")
-	if err != nil {
-		return err
+	const region = "us-east-1"
+	var a *awscloud.AWS
+	var err error
+
+	if accessKeyID != "" && accessKey != "" {
+		a, err = awscloud.New(region, accessKeyID, accessKey, "")
+		if err != nil {
+			return err
+		}
+	} else {
+		logrus.Infof("One of AWS_ACCESS_KEY_ID or AWS_SECRET_ACCESS_KEY is missing, trying default credentials…")
+		a, err = awscloud.NewDefault(region)
+		if err != nil {
+			return err
+		}
 	}
 
 	regions, err := a.Regions()
