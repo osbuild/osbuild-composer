@@ -130,8 +130,13 @@ man: $(MANPAGES_TROFF)
 # They are not supported nor is their use recommended in scripts.
 #
 
+.PHONY: build-maintenance
+build-maintenance: $(BUILDDIR)/bin/
+	go build -o $<osbuild-service-maintenance ./cmd/osbuild-service-maintenance
+	go test -c -tags=integration -o $<osbuild-composer-maintenance-tests ./cmd/osbuild-service-maintenance/
+
 .PHONY: build
-build: $(BUILDDIR)/bin/
+build: $(BUILDDIR)/bin/ build-maintenance
 	go build -o $<osbuild-composer ./cmd/osbuild-composer/
 	go build -o $<osbuild-worker ./cmd/osbuild-worker/
 	go build -o $<osbuild-worker-executor ./cmd/osbuild-worker-executor/
@@ -141,7 +146,6 @@ build: $(BUILDDIR)/bin/
 	go build -o $<osbuild-upload-oci ./cmd/osbuild-upload-oci/
 	go build -o $<osbuild-upload-generic-s3 ./cmd/osbuild-upload-generic-s3/
 	go build -o $<osbuild-mock-openid-provider ./cmd/osbuild-mock-openid-provider
-	go build -o $<osbuild-service-maintenance ./cmd/osbuild-service-maintenance
 	go build -o $<osbuild-jobsite-manager ./cmd/osbuild-jobsite-manager
 	go build -o $<osbuild-jobsite-builder ./cmd/osbuild-jobsite-builder
 	# also build the test binaries
@@ -152,7 +156,6 @@ build: $(BUILDDIR)/bin/
 	go test -c -tags=integration -o $<osbuild-auth-tests ./cmd/osbuild-auth-tests/
 	go test -c -tags=integration -o $<osbuild-koji-tests ./cmd/osbuild-koji-tests/
 	go test -c -tags=integration -o $<osbuild-composer-dbjobqueue-tests ./cmd/osbuild-composer-dbjobqueue-tests/
-	go test -c -tags=integration -o $<osbuild-composer-maintenance-tests ./cmd/osbuild-service-maintenance/
 
 .PHONY: install
 install: build
@@ -373,3 +376,12 @@ $(PROCESSED_TEMPLATE_DIR)/%.yml: $(PROCESSED_TEMPLATE_DIR) $(OPENSHIFT_TEMPLATES
 .PHONY: process-templates
 process-templates: $(addprefix $(PROCESSED_TEMPLATE_DIR)/, $(OPENSHIFT_TEMPLATES))
 
+# get yourself aws access to your deployment by
+# either setting AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY
+# or providing a token in ~/.aws/credentials
+# for profile "default"!
+.PHONY: osbuild-service-maintenance-dry-run-aws
+osbuild-service-maintenance-dry-run-aws: build-maintenance
+	env DRY_RUN=true \
+	    ENABLE_AWS_MAINTENANCE=true \
+	    $(BUILDDIR)/bin/osbuild-service-maintenance
