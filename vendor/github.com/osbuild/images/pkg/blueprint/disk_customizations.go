@@ -75,6 +75,9 @@ type PartitionCustomization struct {
 //   - Does not define a size. The size is defined by its container: a
 //     partition ([PartitionCustomization]) or LVM logical volume
 //     ([LVCustomization]).
+//
+// Setting the FSType to "swap" creates a swap area (and the Mountpoint must be
+// empty).
 type FilesystemTypedCustomization struct {
 	Mountpoint string `json:"mountpoint" toml:"mountpoint"`
 	Label      string `json:"label,omitempty" toml:"label,omitempty"`
@@ -332,6 +335,7 @@ func (v *PartitionCustomization) UnmarshalTOML(data any) error {
 //   - Plain filesystem types are valid for the partition type
 //   - All non-empty properties are valid for the partition type (e.g.
 //     LogicalVolumes is empty when the type is "plain" or "btrfs")
+//   - Filesystems with FSType set to "swap" do not specify a mountpoint.
 //
 // Note that in *addition* consumers should also call
 // ValidateLayoutConstraints() to validate that the policy for disk
@@ -450,6 +454,14 @@ var validPlainFSTypes = []string{
 }
 
 func (p *PartitionCustomization) validatePlain(mountpoints map[string]bool) error {
+	if p.FSType == "swap" {
+		// make sure the mountpoint is empty and return
+		if p.Mountpoint != "" {
+			return fmt.Errorf("mountpoint for swap partition must be empty (got %q)", p.Mountpoint)
+		}
+		return nil
+	}
+
 	if err := validateMountpoint(p.Mountpoint); err != nil {
 		return err
 	}
@@ -490,6 +502,13 @@ func (p *PartitionCustomization) validateLVM(mountpoints, vgnames map[string]boo
 		}
 		lvnames[lv.Name] = true
 
+		if lv.FSType == "swap" {
+			// make sure the mountpoint is empty and return
+			if lv.Mountpoint != "" {
+				return fmt.Errorf("mountpoint for swap logical volume with name %q in volume group %q must be empty", lv.Name, p.Name)
+			}
+			return nil
+		}
 		if err := validateMountpoint(lv.Mountpoint); err != nil {
 			return fmt.Errorf("invalid logical volume customization: %w", err)
 		}
@@ -560,7 +579,9 @@ func CheckDiskMountpointsPolicy(partitioning *DiskCustomization, mountpointAllow
 			mountpoints = append(mountpoints, part.Mountpoint)
 		}
 		for _, lv := range part.LogicalVolumes {
-			mountpoints = append(mountpoints, lv.Mountpoint)
+			if lv.Mountpoint != "" {
+				mountpoints = append(mountpoints, lv.Mountpoint)
+			}
 		}
 		for _, subvol := range part.Subvolumes {
 			mountpoints = append(mountpoints, subvol.Mountpoint)
