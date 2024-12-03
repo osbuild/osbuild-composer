@@ -112,6 +112,112 @@ func TestConvert(t *testing.T) {
 							MinSize:    1024,
 						},
 					},
+					Disk: &DiskCustomization{
+						MinSize: 10240,
+						Partitions: []PartitionCustomization{
+							{
+								// this partition is invalid, since only one of
+								// btrfs, vg, or filesystem should be set, but
+								// the converter copies everything
+								// unconditionally, so let's test the full
+								// thing
+								Type:    "plain",
+								MinSize: 1024,
+								BtrfsVolumeCustomization: BtrfsVolumeCustomization{
+									Subvolumes: []BtrfsSubvolumeCustomization{
+										{
+											Name:       "subvol1",
+											Mountpoint: "/subvol1",
+										},
+										{
+											Name:       "subvol2",
+											Mountpoint: "/subvol2",
+										},
+									},
+								},
+								VGCustomization: VGCustomization{
+									Name: "vg1",
+									LogicalVolumes: []LVCustomization{
+										{
+											Name:    "vg1lv1",
+											MinSize: 0,
+											FilesystemTypedCustomization: FilesystemTypedCustomization{
+												Mountpoint: "/one",
+												Label:      "one",
+												FSType:     "xfs",
+											},
+										},
+										{
+											Name:    "vg1lv2",
+											MinSize: 0,
+											FilesystemTypedCustomization: FilesystemTypedCustomization{
+												Mountpoint: "/two",
+												Label:      "two",
+												FSType:     "ext4",
+											},
+										},
+									},
+								},
+								FilesystemTypedCustomization: FilesystemTypedCustomization{
+									Mountpoint: "/root",
+									Label:      "roothome",
+									FSType:     "xfs",
+								},
+							},
+							{
+								Type:    "plain",
+								MinSize: 1024,
+								FilesystemTypedCustomization: FilesystemTypedCustomization{
+									Mountpoint: "/root",
+									Label:      "roothome",
+									FSType:     "xfs",
+								},
+							},
+							{
+								Type:    "lvm",
+								MinSize: 1024,
+								VGCustomization: VGCustomization{
+									Name: "vg1",
+									LogicalVolumes: []LVCustomization{
+										{
+											Name:    "vg1lv1",
+											MinSize: 0,
+											FilesystemTypedCustomization: FilesystemTypedCustomization{
+												Mountpoint: "/one",
+												Label:      "one",
+												FSType:     "xfs",
+											},
+										},
+										{
+											Name:    "vg1lv2",
+											MinSize: 0,
+											FilesystemTypedCustomization: FilesystemTypedCustomization{
+												Mountpoint: "/two",
+												Label:      "two",
+												FSType:     "ext4",
+											},
+										},
+									},
+								},
+							},
+							{
+								Type:    "btrfs",
+								MinSize: 1024,
+								BtrfsVolumeCustomization: BtrfsVolumeCustomization{
+									Subvolumes: []BtrfsSubvolumeCustomization{
+										{
+											Name:       "subvol1",
+											Mountpoint: "/subvol1",
+										},
+										{
+											Name:       "subvol2",
+											Mountpoint: "/subvol2",
+										},
+									},
+								},
+							},
+						},
+					},
 					InstallationDevice: "/dev/sda",
 					FDO: &FDOCustomization{
 						ManufacturingServerURL:  "http://manufacturing.fdo",
@@ -303,6 +409,112 @@ func TestConvert(t *testing.T) {
 						{
 							Mountpoint: "/usr",
 							MinSize:    1024,
+						},
+					},
+					Disk: &iblueprint.DiskCustomization{
+						MinSize: 10240,
+						Partitions: []iblueprint.PartitionCustomization{
+							{
+								// this partition is invalid, since only one of
+								// btrfs, vg, or filesystem should be set, but
+								// the converter copies everything
+								// unconditionally, so let's test the full
+								// thing
+								Type:    "plain",
+								MinSize: 1024,
+								BtrfsVolumeCustomization: iblueprint.BtrfsVolumeCustomization{
+									Subvolumes: []iblueprint.BtrfsSubvolumeCustomization{
+										{
+											Name:       "subvol1",
+											Mountpoint: "/subvol1",
+										},
+										{
+											Name:       "subvol2",
+											Mountpoint: "/subvol2",
+										},
+									},
+								},
+								VGCustomization: iblueprint.VGCustomization{
+									Name: "vg1",
+									LogicalVolumes: []iblueprint.LVCustomization{
+										{
+											Name:    "vg1lv1",
+											MinSize: 0,
+											FilesystemTypedCustomization: iblueprint.FilesystemTypedCustomization{
+												Mountpoint: "/one",
+												Label:      "one",
+												FSType:     "xfs",
+											},
+										},
+										{
+											Name:    "vg1lv2",
+											MinSize: 0,
+											FilesystemTypedCustomization: iblueprint.FilesystemTypedCustomization{
+												Mountpoint: "/two",
+												Label:      "two",
+												FSType:     "ext4",
+											},
+										},
+									},
+								},
+								FilesystemTypedCustomization: iblueprint.FilesystemTypedCustomization{
+									Mountpoint: "/root",
+									Label:      "roothome",
+									FSType:     "xfs",
+								},
+							},
+							{
+								Type:    "plain",
+								MinSize: 1024,
+								FilesystemTypedCustomization: iblueprint.FilesystemTypedCustomization{
+									Mountpoint: "/root",
+									Label:      "roothome",
+									FSType:     "xfs",
+								},
+							},
+							{
+								Type:    "lvm",
+								MinSize: 1024,
+								VGCustomization: iblueprint.VGCustomization{
+									Name: "vg1",
+									LogicalVolumes: []iblueprint.LVCustomization{
+										{
+											Name:    "vg1lv1",
+											MinSize: 0,
+											FilesystemTypedCustomization: iblueprint.FilesystemTypedCustomization{
+												Mountpoint: "/one",
+												Label:      "one",
+												FSType:     "xfs",
+											},
+										},
+										{
+											Name:    "vg1lv2",
+											MinSize: 0,
+											FilesystemTypedCustomization: iblueprint.FilesystemTypedCustomization{
+												Mountpoint: "/two",
+												Label:      "two",
+												FSType:     "ext4",
+											},
+										},
+									},
+								},
+							},
+							{
+								Type:    "btrfs",
+								MinSize: 1024,
+								BtrfsVolumeCustomization: iblueprint.BtrfsVolumeCustomization{
+									Subvolumes: []iblueprint.BtrfsSubvolumeCustomization{
+										{
+											Name:       "subvol1",
+											Mountpoint: "/subvol1",
+										},
+										{
+											Name:       "subvol2",
+											Mountpoint: "/subvol2",
+										},
+									},
+								},
+							},
 						},
 					},
 					InstallationDevice: "/dev/sda",
