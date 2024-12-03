@@ -24,6 +24,8 @@ func AWSCleanup(maxConcurrentRequests int, dryRun bool, accessKeyID, accessKey s
 	var a *awscloud.AWS
 	var err error
 
+	ctx := context.Background()
+
 	if accessKeyID != "" && accessKey != "" {
 		a, err = awscloud.New(region, accessKeyID, accessKey, "")
 		if err != nil {
@@ -83,7 +85,7 @@ func AWSCleanup(maxConcurrentRequests int, dryRun bool, accessKeyID, accessKey s
 				continue
 			}
 
-			if err = sem.Acquire(context.Background(), 1); err != nil {
+			if err = sem.Acquire(ctx, 1); err != nil {
 				logrus.Errorf("Error acquiring semaphore: %v", err)
 				continue
 			}
@@ -102,6 +104,28 @@ func AWSCleanup(maxConcurrentRequests int, dryRun bool, accessKeyID, accessKey s
 		wg.Wait()
 	}
 
+	// using err to collect both errors as we want to
+	// continue execution if one cleanup fails
+	err = nil
+	errSecureInstances := terminateOrphanedSecureInstances(a, dryRun)
+	// keep going with other cleanup even on error
+	if errSecureInstances != nil {
+		logrus.Errorf("Error in terminating secure instances: %v, continuing other cleanup.", errSecureInstances)
+		err = errSecureInstances
+	}
+
+	errSecurityGroups := searchSGAndCleanup(ctx, a, dryRun)
+	if errSecurityGroups != nil {
+		logrus.Errorf("Error in cleaning up security groups: %v", errSecurityGroups)
+		if err != nil {
+			err = fmt.Errorf("Multiple errors while processing AWSCleanup: %w and %w.", err, errSecurityGroups)
+		}
+	}
+
+	return err
+}
+
+func terminateOrphanedSecureInstances(a *awscloud.AWS, dryRun bool) error {
 	// Terminate leftover secure instances
 	reservations, err := a.DescribeInstancesByTag("parent", "i-*")
 	if err != nil {
@@ -123,7 +147,7 @@ func AWSCleanup(maxConcurrentRequests int, dryRun bool, accessKeyID, accessKey s
 		}
 	}
 
-	instanceIDs = filterReservations(instanceIDs, reservations)
+	instanceIDs = filterOnTooOld(instanceIDs, reservations)
 	logrus.Infof("Cleaning up executor instances: %v", instanceIDs)
 	if !dryRun {
 		err = a.TerminateInstances(instanceIDs)
@@ -133,11 +157,10 @@ func AWSCleanup(maxConcurrentRequests int, dryRun bool, accessKeyID, accessKey s
 	} else {
 		logrus.Info("Dry run, didn't actually terminate any instances")
 	}
-
 	return nil
 }
 
-func filterReservations(instanceIDs []string, reservations []ec2types.Reservation) []string {
+func filterOnTooOld(instanceIDs []string, reservations []ec2types.Reservation) []string {
 	for _, res := range reservations {
 		for _, i := range res.Instances {
 			if i.LaunchTime.Before(time.Now().Add(-time.Hour * 2)) {
@@ -188,11 +211,48 @@ func checkValidParent(childId string, parent []ec2types.Reservation) bool {
 	}
 
 	parentState := parent[0].Instances[0].State.Name
-	if parentState == ec2types.InstanceStateNameRunning || parentState == ec2types.InstanceStateNamePending {
+	if parentState != ec2types.InstanceStateNameTerminated {
 		return true
 	}
 	logrus.Infof("Instance %s has a parent (%s) in state %s, so we'll terminate %s.", childId, *parent[0].Instances[0].InstanceId, parentState, childId)
 	return false
+}
+
+func searchSGAndCleanup(ctx context.Context, a *awscloud.AWS, dryRun bool) error {
+	securityGroups, err := a.DescribeSecurityGroupsByPrefix(ctx, "SG for i-")
+	if err != nil {
+		return err
+	}
+
+	for _, sg := range securityGroups {
+		if sg.GroupId == nil || sg.GroupName == nil {
+			logrus.Errorf(
+				"Security Group needs to have a GroupId (%v) and a GroupName (%v).",
+				sg.GroupId,
+				sg.GroupName)
+			continue
+		}
+		reservations, err := a.DescribeInstancesBySecurityGroupID(*sg.GroupId)
+		if err != nil {
+			logrus.Errorf("Failed to describe security group %s: %v", *sg.GroupId, err)
+			continue
+		}
+
+		// If no instance is running/pending, delete the SG
+		if allTerminated(reservations) {
+			logrus.Infof("Deleting security group: %s (%s)", *sg.GroupName, *sg.GroupId)
+			if !dryRun {
+				err := a.DeleteSecurityGroupById(ctx, sg.GroupId)
+
+				if err != nil {
+					logrus.Errorf("Failed to delete security group %s: %v", *sg.GroupId, err)
+				}
+			}
+		} else {
+			logrus.Debugf("Security group %s has non terminated instances associated with it.", *sg.GroupId)
+		}
+	}
+	return nil
 }
 
 // allTerminated returns true if any instance of the reservations is not terminated
