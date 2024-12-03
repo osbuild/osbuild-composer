@@ -84,6 +84,19 @@ func (a *AWS) DescribeInstancesByTag(tagKey, tagValue string) ([]ec2types.Reserv
 	return res.Reservations, nil
 }
 
+func (a *AWS) DescribeInstancesByInstanceID(instanceID string) ([]ec2types.Reservation, error) {
+	res, err := a.ec2.DescribeInstances(
+		context.Background(),
+		&ec2.DescribeInstancesInput{
+			InstanceIds: []string{instanceID},
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	return res.Reservations, nil
+}
+
 func (a *AWS) TerminateInstances(instanceIDs []string) error {
 	_, err := a.ec2.TerminateInstances(
 		context.Background(),

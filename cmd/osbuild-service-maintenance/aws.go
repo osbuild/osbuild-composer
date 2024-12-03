@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"slices"
 	"sync"
 	"time"
 
@@ -12,6 +13,11 @@ import (
 
 	"github.com/osbuild/osbuild-composer/internal/cloud/awscloud"
 )
+
+type ChildToParentAssociation struct {
+	Child  string
+	Parent string
+}
 
 func AWSCleanup(maxConcurrentRequests int, dryRun bool, accessKeyID, accessKey string, cutoff time.Time) error {
 	const region = "us-east-1"
@@ -102,7 +108,22 @@ func AWSCleanup(maxConcurrentRequests int, dryRun bool, accessKeyID, accessKey s
 		return fmt.Errorf("Unable to describe instances by tag %w", err)
 	}
 
-	instanceIDs := filterReservations(reservations)
+	instanceData := getChildParentAssociations(reservations)
+
+	var instanceIDs []string
+	for _, data := range instanceData {
+		parent, err := a.DescribeInstancesByInstanceID(data.Parent)
+		if err != nil {
+			logrus.Errorf("Error getting info of %s (parent of %s): %v", data.Parent, data.Child, err)
+			continue
+		}
+
+		if !checkValidParent(data.Child, parent) {
+			instanceIDs = append(instanceIDs, data.Child)
+		}
+	}
+
+	instanceIDs = filterReservations(instanceIDs, reservations)
 	logrus.Infof("Cleaning up executor instances: %v", instanceIDs)
 	if !dryRun {
 		err = a.TerminateInstances(instanceIDs)
@@ -112,17 +133,78 @@ func AWSCleanup(maxConcurrentRequests int, dryRun bool, accessKeyID, accessKey s
 	} else {
 		logrus.Info("Dry run, didn't actually terminate any instances")
 	}
+
 	return nil
 }
 
-func filterReservations(reservations []ec2types.Reservation) []string {
-	var instanceIDs []string
+func filterReservations(instanceIDs []string, reservations []ec2types.Reservation) []string {
 	for _, res := range reservations {
 		for _, i := range res.Instances {
 			if i.LaunchTime.Before(time.Now().Add(-time.Hour * 2)) {
-				instanceIDs = append(instanceIDs, *i.InstanceId)
+				logrus.Infof("Instance %s is too old", *i.InstanceId)
+				if !slices.Contains(instanceIDs, *i.InstanceId) {
+					instanceIDs = append(instanceIDs, *i.InstanceId)
+				}
 			}
 		}
 	}
 	return instanceIDs
 }
+
+func getChildParentAssociations(reservations []ec2types.Reservation) []ChildToParentAssociation {
+	var ChildToParentIDs []ChildToParentAssociation
+
+	for _, res := range reservations {
+		for _, i := range res.Instances {
+			for _, t := range i.Tags {
+				if *t.Key == "parent" {
+					ChildToParentIDs = append(ChildToParentIDs, ChildToParentAssociation{
+						Child:  *i.InstanceId,
+						Parent: *t.Value,
+					})
+				}
+			}
+		}
+	}
+	return ChildToParentIDs
+}
+
+func checkValidParent(childId string, parent []ec2types.Reservation) bool {
+	if len(parent) == 0 {
+		logrus.Infof("Instance %s has no parent, removing it", childId)
+		return false
+	}
+	if len(parent) != 1 {
+		logrus.Errorf("Instance %s has %d parents. That should never happen, not changing anything here.", childId, len(parent))
+		return true
+	}
+	if len(parent[0].Instances) == 0 {
+		logrus.Infof("Instance %s has no parent instance, removing it", childId)
+		return false
+	}
+	if len(parent[0].Instances) != 1 {
+		logrus.Errorf("Instance %s has %d parent instances. That should never happen, not changing anything here.", childId, len(parent[0].Instances))
+		return true
+	}
+
+	parentState := parent[0].Instances[0].State.Name
+	if parentState == ec2types.InstanceStateNameRunning || parentState == ec2types.InstanceStateNamePending {
+		return true
+	}
+	logrus.Infof("Instance %s has a parent (%s) in state %s, so we'll terminate %s.", childId, *parent[0].Instances[0].InstanceId, parentState, childId)
+	return false
+}
+
+// allTerminated returns true if any instance of the reservations is not terminated
+// then it's considered "in use"
+func allTerminated(reservations []ec2types.Reservation) bool {
+	for _, reservation := range reservations {
+		for _, instance := range reservation.Instances {
+			if instance.State != nil && (instance.State.Name != ec2types.InstanceStateNameTerminated) {
+				return false
+			}
+		}
+	}
+	return true
+}
+
