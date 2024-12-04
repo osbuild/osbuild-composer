@@ -158,9 +158,11 @@ func terminateOrphanedSecureInstances(a *awscloud.AWS, dryRun bool) error {
 	instanceIDs = filterOnTooOld(instanceIDs, reservations)
 	logrus.Infof("Cleaning up executor instances: %v", instanceIDs)
 	if !dryRun {
-		err = a.TerminateInstances(instanceIDs)
-		if err != nil {
-			return fmt.Errorf("Unable to terminate secure instances: %w", err)
+		if len(instanceIDs) > 0 {
+			err = a.TerminateInstances(instanceIDs)
+			if err != nil {
+				return fmt.Errorf("Unable to terminate secure instances: %w", err)
+			}
 		}
 	} else {
 		logrus.Info("Dry run, didn't actually terminate any instances")
