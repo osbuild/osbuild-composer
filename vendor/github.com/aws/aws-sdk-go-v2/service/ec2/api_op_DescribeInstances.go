@@ -61,7 +61,7 @@ func (c *Client) DescribeInstances(ctx context.Context, params *DescribeInstance
 
 type DescribeInstancesInput struct {
 
-	// Checks whether you have the required permissions for the action, without
+	// Checks whether you have the required permissions for the operation, without
 	// actually making the request, and provides an error response. If you have the
 	// required permissions, the error response is DryRunOperation . Otherwise, it is
 	// UnauthorizedOperation .
@@ -139,9 +139,6 @@ type DescribeInstancesInput struct {
 	//
 	//   - iam-instance-profile.id - The instance profile associated with the instance.
 	//   Specified as an ID.
-	//
-	//   - iam-instance-profile.name - The instance profile associated with the
-	//   instance. Specified as an name.
 	//
 	//   - image-id - The ID of the image used to launch the instance.
 	//
@@ -313,6 +310,13 @@ type DescribeInstancesInput struct {
 	//
 	//   - network-interface.network-interface-id - The ID of the network interface.
 	//
+	//   - network-interface.operator.managed - A Boolean that indicates whether the
+	//   instance has a managed network interface.
+	//
+	//   - network-interface.operator.principal - The principal that manages the
+	//   network interface. Only valid for instances with managed network interfaces,
+	//   where managed is true .
+	//
 	//   - network-interface.outpost-arn - The ARN of the Outpost.
 	//
 	//   - network-interface.owner-id - The ID of the owner of the network interface.
@@ -346,6 +350,12 @@ type DescribeInstancesInput struct {
 	//   interface.
 	//
 	//   - network-interface.vpc-id - The ID of the VPC for the network interface.
+	//
+	//   - operator.managed - A Boolean that indicates whether this is a managed
+	//   instance.
+	//
+	//   - operator.principal - The principal that manages the instance. Only valid for
+	//   managed instances, where managed is true .
 	//
 	//   - outpost-arn - The Amazon Resource Name (ARN) of the Outpost.
 	//
@@ -537,6 +547,9 @@ func (c *Client) addOperationDescribeInstancesMiddlewares(stack *middleware.Stac
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -571,6 +584,18 @@ func (c *Client) addOperationDescribeInstancesMiddlewares(stack *middleware.Stac
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

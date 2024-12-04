@@ -75,7 +75,7 @@ func LoadAllRepositoriesFromFS(confPaths []fs.FS) (rpmmd.DistrosRepoConfigs, err
 					return nil, err
 				}
 
-				logrus.Infof("Loaded repository configuration file: %s", configFile)
+				logrus.Infof("Loaded repository configuration file: %s", fileEntry.Name())
 
 				distrosRepoConfigs[distro] = distroRepos
 			}

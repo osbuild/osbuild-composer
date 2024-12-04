@@ -333,6 +333,10 @@ func (t *ImageType) Manifest(bp *blueprint.Blueprint,
 // checkOptions checks the validity and compatibility of options and customizations for the image type.
 // Returns ([]string, error) where []string, if non-nil, will hold any generated warnings (e.g. deprecation notices).
 func (t *ImageType) checkOptions(bp *blueprint.Blueprint, options distro.ImageOptions) ([]string, error) {
+	if !t.RPMOSTree && options.OSTree != nil {
+		return nil, fmt.Errorf("OSTree is not supported for %q", t.Name())
+	}
+
 	if t.arch.distro.CheckOptions != nil {
 		return t.arch.distro.CheckOptions(t, bp, options)
 	}

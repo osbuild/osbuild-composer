@@ -56,6 +56,8 @@ const (
 
 	RootPartitionUUID = "6264D520-3FB9-423F-8AB8-7A0A8E3D3562"
 
+	SwapPartitionGUID = "0657FD6D-A4AB-43C4-84E5-0933C84B4F4F"
+
 	// Extended Boot Loader Partition
 	XBootLDRPartitionGUID = "BC13C2FF-59E6-4262-A352-B275FD6F7172"
 
@@ -70,6 +72,9 @@ const (
 
 	// Partition type ID for ESP on dos
 	DosESPID = "ef00"
+
+	// Partition type ID for swap
+	DosSwapID = "82"
 )
 
 // pt type -> type -> ID mapping for convenience
@@ -80,6 +85,7 @@ var idMap = map[PartitionTableType]map[string]string{
 		"data": DosLinuxTypeID,
 		"esp":  DosESPID,
 		"lvm":  DosLinuxTypeID,
+		"swap": DosSwapID,
 	},
 	PT_GPT: {
 		"bios": BIOSBootPartitionGUID,
@@ -87,6 +93,7 @@ var idMap = map[PartitionTableType]map[string]string{
 		"data": FilesystemDataGUID,
 		"esp":  EFISystemPartitionGUID,
 		"lvm":  LVMPartitionGUID,
+		"swap": SwapPartitionGUID,
 	},
 }
 
@@ -248,13 +255,21 @@ type Mountable interface {
 	// GetMountPoint returns the path of the mount point.
 	GetMountpoint() string
 
-	// GetFSType returns the file system type, e.g. 'xfs'.
-	GetFSType() string
+	FSTabEntity
+}
 
-	// GetFSSpec returns the file system spec information.
+// FSTabEntity describes any entity that can appear in the fstab file.
+type FSTabEntity interface {
+	// FSSpec for the entity (UUID and Label); the first field of fstab(5).
 	GetFSSpec() FSSpec
 
-	// GetFSTabOptions returns options for mounting the entity.
+	// The mount point (target) for a filesystem or "none" for swap areas; the second field of fstab(5).
+	GetFSFile() string
+
+	// The type of the filesystem or swap for swap areas; the third field of fstab(5).
+	GetFSType() string
+
+	// The mount options, freq, and passno for the entity; the fourth fifth, and sixth fields of fstab(5) respectively.
 	GetFSTabOptions() (FSTabOptions, error)
 }
 
