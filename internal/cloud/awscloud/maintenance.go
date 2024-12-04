@@ -93,6 +93,10 @@ func (a *AWS) DescribeInstancesBySecurityGroupID(securityGroupID string) ([]ec2t
 	return a.describeInstancesByKeyValue("instance.group-id", securityGroupID)
 }
 
+func (a *AWS) DescribeInstancesByLaunchTemplateID(launchTemplateID string) ([]ec2types.Reservation, error) {
+	return a.describeInstancesByKeyValue("tag:aws:ec2launchtemplate:id", launchTemplateID)
+}
+
 func (a *AWS) DescribeInstancesByInstanceID(instanceID string) ([]ec2types.Reservation, error) {
 	res, err := a.ec2.DescribeInstances(
 		context.Background(),
@@ -132,11 +136,37 @@ func (a *AWS) DescribeSecurityGroupsByPrefix(ctx context.Context, prefix string)
 	return securityGroups, nil
 }
 
+func (a *AWS) DescribeLaunchTemplatesByPrefix(ctx context.Context, prefix string) ([]ec2types.LaunchTemplate, error) {
+	var launchTemplates []ec2types.LaunchTemplate
+
+	ltOutput, err := a.ec2.DescribeLaunchTemplates(ctx, &ec2.DescribeLaunchTemplatesInput{})
+	if err != nil {
+		return launchTemplates, fmt.Errorf("failed to describe security groups: %w", err)
+	}
+
+	for _, lt := range ltOutput.LaunchTemplates {
+		if lt.LaunchTemplateName != nil && strings.HasPrefix(*lt.LaunchTemplateName, prefix) {
+			launchTemplates = append(launchTemplates, lt)
+		}
+	}
+	return launchTemplates, nil
+}
+
 func (a *AWS) DeleteSecurityGroupById(ctx context.Context, sgID *string) error {
 	_, err := a.ec2.DeleteSecurityGroup(
 		ctx,
 		&ec2.DeleteSecurityGroupInput{
 			GroupId: sgID,
+		},
+	)
+	return err
+}
+
+func (a *AWS) DeleteLaunchTemplateById(ctx context.Context, ltID *string) error {
+	_, err := a.ec2.DeleteLaunchTemplate(
+		ctx,
+		&ec2.DeleteLaunchTemplateInput{
+			LaunchTemplateId: ltID,
 		},
 	)
 	return err
