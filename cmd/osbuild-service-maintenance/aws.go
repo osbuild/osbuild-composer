@@ -122,6 +122,14 @@ func AWSCleanup(maxConcurrentRequests int, dryRun bool, accessKeyID, accessKey s
 		}
 	}
 
+	errLaunchTemplates := searchLTAndCleanup(ctx, a, dryRun)
+	if errLaunchTemplates != nil {
+		logrus.Errorf("Error in cleaning up launch templates: %v", errLaunchTemplates)
+		if err != nil {
+			err = fmt.Errorf("Multiple errors while processing AWSCleanup: %w and %w.", err, errLaunchTemplates)
+		}
+	}
+
 	return err
 }
 
@@ -268,3 +276,39 @@ func allTerminated(reservations []ec2types.Reservation) bool {
 	return true
 }
 
+func searchLTAndCleanup(ctx context.Context, a *awscloud.AWS, dryRun bool) error {
+	launchTemplates, err := a.DescribeLaunchTemplatesByPrefix(ctx, "launch-template-for-i-")
+	if err != nil {
+		return err
+	}
+
+	for _, lt := range launchTemplates {
+		if lt.LaunchTemplateName == nil || lt.LaunchTemplateId == nil {
+			logrus.Errorf(
+				"Launch template needs to have a LaunchTemplateName (%v) and a LaunchTemplateId (%v).",
+				lt.LaunchTemplateName,
+				lt.LaunchTemplateId)
+			continue
+		}
+
+		reservations, err := a.DescribeInstancesByLaunchTemplateID(*lt.LaunchTemplateId)
+		if err != nil {
+			logrus.Errorf("Failed to describe launch template %s: %v", *lt.LaunchTemplateId, err)
+			continue
+		}
+
+		if allTerminated(reservations) {
+			logrus.Infof("Deleting launch template: %s (%s)\n", *lt.LaunchTemplateName, *lt.LaunchTemplateId)
+			if !dryRun {
+				err := a.DeleteLaunchTemplateById(ctx, lt.LaunchTemplateId)
+
+				if err != nil {
+					logrus.Errorf("Failed to delete launch template %s: %v", *lt.LaunchTemplateId, err)
+				}
+			}
+		} else {
+			fmt.Printf("Launch template %s has non terminated instances associated with it.\n", *lt.LaunchTemplateId)
+		}
+	}
+	return nil
+}
