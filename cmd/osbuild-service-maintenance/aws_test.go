@@ -125,3 +125,79 @@ func TestCheckValidParent(t *testing.T) {
 		require.Equal(t, tc.result, main.CheckValidParent("testChildId", tc.parent))
 	}
 }
+
+func TestAllTerminated(t *testing.T) {
+	tests :=
+		[]struct {
+			reservations []ec2types.Reservation
+			result       bool
+		}{
+			// no reservations
+			{
+				reservations: []ec2types.Reservation{},
+				result:       true,
+			},
+			// no instances
+			{
+				reservations: []ec2types.Reservation{
+					{Instances: []ec2types.Instance{}},
+				},
+				result: true,
+			},
+			{
+				reservations: []ec2types.Reservation{
+					{Instances: []ec2types.Instance{{}, {}}},
+				},
+				result: true,
+			},
+			{
+				reservations: []ec2types.Reservation{
+					{Instances: []ec2types.Instance{{
+						State: &ec2types.InstanceState{
+							Name: ec2types.InstanceStateNamePending,
+						},
+					}}},
+				},
+				result: false,
+			},
+			{
+				reservations: []ec2types.Reservation{
+					{Instances: []ec2types.Instance{{
+						State: &ec2types.InstanceState{
+							Name: ec2types.InstanceStateNameRunning,
+						},
+					}}},
+				},
+				result: false,
+			},
+			{
+				reservations: []ec2types.Reservation{
+					{Instances: []ec2types.Instance{{
+						State: &ec2types.InstanceState{
+							Name: ec2types.InstanceStateNameRunning,
+						},
+					},
+						{
+							State: &ec2types.InstanceState{
+								Name: ec2types.InstanceStateNameTerminated,
+							},
+						},
+					}},
+				},
+				result: false,
+			},
+			{
+				reservations: []ec2types.Reservation{
+					{Instances: []ec2types.Instance{{
+						State: &ec2types.InstanceState{
+							Name: ec2types.InstanceStateNameTerminated,
+						},
+					}}},
+				},
+				result: true,
+			},
+		}
+	for _, tc := range tests {
+		require.Equal(t, tc.result, main.AllTerminated(tc.reservations))
+	}
+}
