@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"slices"
 	"sync"
@@ -104,33 +105,29 @@ func AWSCleanup(maxConcurrentRequests int, dryRun bool, accessKeyID, accessKey s
 		wg.Wait()
 	}
 
-	// using err to collect both errors as we want to
-	// continue execution if one cleanup fails
-	err = nil
-	errSecureInstances := terminateOrphanedSecureInstances(a, dryRun)
-	// keep going with other cleanup even on error
-	if errSecureInstances != nil {
-		logrus.Errorf("Error in terminating secure instances: %v, continuing other cleanup.", errSecureInstances)
-		err = errSecureInstances
+	// using `errs` to collect all errors as we want to
+	// continue execution if only one cleanup fails
+	var errs []error
+
+	err = terminateOrphanedSecureInstances(a, dryRun)
+	if err != nil {
+		logrus.Errorf("Error in terminating secure instances: %v, continuing other cleanup.", err)
+		errs = append(errs, err)
 	}
 
-	errSecurityGroups := searchSGAndCleanup(ctx, a, dryRun)
-	if errSecurityGroups != nil {
-		logrus.Errorf("Error in cleaning up security groups: %v", errSecurityGroups)
-		if err != nil {
-			err = fmt.Errorf("Multiple errors while processing AWSCleanup: %w and %w.", err, errSecurityGroups)
-		}
+	err = searchSGAndCleanup(ctx, a, dryRun)
+	if err != nil {
+		logrus.Errorf("Error in cleaning up security groups: %v", err)
+		errs = append(errs, err)
 	}
 
-	errLaunchTemplates := searchLTAndCleanup(ctx, a, dryRun)
-	if errLaunchTemplates != nil {
-		logrus.Errorf("Error in cleaning up launch templates: %v", errLaunchTemplates)
-		if err != nil {
-			err = fmt.Errorf("Multiple errors while processing AWSCleanup: %w and %w.", err, errLaunchTemplates)
-		}
+	err = searchLTAndCleanup(ctx, a, dryRun)
+	if err != nil {
+		logrus.Errorf("Error in cleaning up launch templates: %v", err)
+		errs = append(errs, err)
 	}
 
-	return err
+	return errors.Join(errs...)
 }
 
 func terminateOrphanedSecureInstances(a *awscloud.AWS, dryRun bool) error {
