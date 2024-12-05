@@ -58,13 +58,13 @@ func (options *FSTabStageOptions) AddFilesystem(id string, vfsType string, path 
 
 func NewFSTabStageOptions(pt *disk.PartitionTable) (*FSTabStageOptions, error) {
 	var options FSTabStageOptions
-	genOption := func(mnt disk.Mountable, path []disk.Entity) error {
+	genOption := func(mnt disk.FSTabEntity, path []disk.Entity) error {
 		fsSpec := mnt.GetFSSpec()
 		fsOptions, err := mnt.GetFSTabOptions()
 		if err != nil {
 			return err
 		}
-		options.AddFilesystem(fsSpec.UUID, mnt.GetFSType(), mnt.GetMountpoint(), fsOptions.MntOps, fsOptions.Freq, fsOptions.PassNo)
+		options.AddFilesystem(fsSpec.UUID, mnt.GetFSType(), mnt.GetFSFile(), fsOptions.MntOps, fsOptions.Freq, fsOptions.PassNo)
 		return nil
 	}
 
@@ -72,7 +72,7 @@ func NewFSTabStageOptions(pt *disk.PartitionTable) (*FSTabStageOptions, error) {
 		return fmt.Sprintf("%d%s", fs.PassNo, fs.Path)
 	}
 
-	err := pt.ForEachMountable(genOption)
+	err := pt.ForEachFSTabEntity(genOption)
 	if err != nil {
 		return nil, err
 	}

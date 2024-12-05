@@ -1022,7 +1022,7 @@ github.com/oracle/oci-go-sdk/v54/identity
 github.com/oracle/oci-go-sdk/v54/objectstorage
 github.com/oracle/oci-go-sdk/v54/objectstorage/transfer
 github.com/oracle/oci-go-sdk/v54/workrequests
-# github.com/osbuild/images v0.102.0
+# github.com/osbuild/images v0.103.0
 ## explicit; go 1.21.0
 github.com/osbuild/images/internal/common
 github.com/osbuild/images/internal/environment
