@@ -99,14 +99,10 @@ func GenImagePrepareStages(pt *disk.PartitionTable, filename string, partTool Pa
 	s := GenDeviceCreationStages(pt, filename)
 	stages = append(stages, s...)
 
-	// Generate all the filesystems on partitons and devices
-	s = GenMkfsStages(pt, filename)
+	// Generate all the filesystems, subvolumes, and swap areas on partitons
+	// and devices
+	s = GenFsStages(pt, filename)
 	stages = append(stages, s...)
-
-	subvolStage := GenBtrfsSubVolStage(filename, pt)
-	if subvolStage != nil {
-		stages = append(stages, subvolStage)
-	}
 
 	return stages
 }
