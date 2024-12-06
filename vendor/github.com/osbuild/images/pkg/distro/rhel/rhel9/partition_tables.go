@@ -1,6 +1,8 @@
 package rhel9
 
 import (
+	"strings"
+
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/datasizes"
@@ -24,6 +26,47 @@ func defaultBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 
 	switch t.Arch().Name() {
 	case arch.ARCH_X86_64.String():
+		// RHEL EC2 x86_64 images prior to 9.3 support only BIOS boot
+		if common.VersionLessThan(t.Arch().Distro().OsVersion(), "9.3") && t.IsRHEL() && (strings.HasPrefix(t.Name(), "ec2") || t.Name() == "ami") {
+			return disk.PartitionTable{
+				UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
+				Type: disk.PT_GPT,
+				Partitions: []disk.Partition{
+					{
+						Size:     1 * datasizes.MebiByte,
+						Bootable: true,
+						Type:     disk.BIOSBootPartitionGUID,
+						UUID:     disk.BIOSBootPartitionUUID,
+					},
+					{
+						Size: bootSize,
+						Type: disk.XBootLDRPartitionGUID,
+						UUID: disk.FilesystemDataUUID,
+						Payload: &disk.Filesystem{
+							Type:         "xfs",
+							Mountpoint:   "/boot",
+							Label:        "boot",
+							FSTabOptions: "defaults",
+							FSTabFreq:    0,
+							FSTabPassNo:  0,
+						},
+					},
+					{
+						Size: 2 * datasizes.GibiByte,
+						Type: disk.FilesystemDataGUID,
+						UUID: disk.RootPartitionUUID,
+						Payload: &disk.Filesystem{
+							Type:         "xfs",
+							Label:        "root",
+							Mountpoint:   "/",
+							FSTabOptions: "defaults",
+							FSTabFreq:    0,
+							FSTabPassNo:  0,
+						},
+					},
+				},
+			}, true
+		}
 		return disk.PartitionTable{
 			UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
 			Type: disk.PT_GPT,
