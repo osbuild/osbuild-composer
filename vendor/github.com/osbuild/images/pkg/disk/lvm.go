@@ -110,12 +110,15 @@ func (vg *LVMVolumeGroup) CreateLogicalVolume(lvName string, size uint64, payloa
 
 	if lvName == "" {
 		// generate a name based on the payload's mountpoint
-		mntble, ok := payload.(Mountable)
-		if !ok {
-			return nil, fmt.Errorf("could not create logical volume: no name provided and payload is not mountable")
+		switch ent := payload.(type) {
+		case Mountable:
+			lvName = ent.GetMountpoint()
+		case *Swap:
+			lvName = "swap"
+		default:
+			return nil, fmt.Errorf("could not create logical volume: no name provided and payload %T is not mountable or swap", payload)
 		}
-		mountpoint := mntble.GetMountpoint()
-		autoName, err := vg.genLVName(mountpoint)
+		autoName, err := vg.genLVName(lvName)
 		if err != nil {
 			return nil, err
 		}
