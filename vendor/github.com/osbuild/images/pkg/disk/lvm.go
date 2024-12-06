@@ -110,12 +110,15 @@ func (vg *LVMVolumeGroup) CreateLogicalVolume(lvName string, size uint64, payloa
 
 	if lvName == "" {
 		// generate a name based on the payload's mountpoint
-		mntble, ok := payload.(Mountable)
-		if !ok {
-			return nil, fmt.Errorf("could not create logical volume: no name provided and payload is not mountable")
+		switch ent := payload.(type) {
+		case Mountable:
+			lvName = ent.GetMountpoint()
+		case *Swap:
+			lvName = "swap"
+		default:
+			return nil, fmt.Errorf("could not create logical volume: no name provided and payload %T is not mountable or swap", payload)
 		}
-		mountpoint := mntble.GetMountpoint()
-		autoName, err := vg.genLVName(mountpoint)
+		autoName, err := vg.genLVName(lvName)
 		if err != nil {
 			return nil, err
 		}
@@ -133,13 +136,16 @@ func (vg *LVMVolumeGroup) CreateLogicalVolume(lvName string, size uint64, payloa
 	return &vg.LogicalVolumes[len(vg.LogicalVolumes)-1], nil
 }
 
-func (vg *LVMVolumeGroup) AlignUp(size uint64) uint64 {
-
+func alignUp(size uint64) uint64 {
 	if size%LVMDefaultExtentSize != 0 {
 		size += LVMDefaultExtentSize - size%LVMDefaultExtentSize
 	}
 
 	return size
+}
+
+func (vg *LVMVolumeGroup) AlignUp(size uint64) uint64 {
+	return alignUp(size)
 }
 
 func (vg *LVMVolumeGroup) MetadataSize() uint64 {
@@ -211,7 +217,7 @@ func (lv *LVMLogicalVolume) EnsureSize(s uint64) bool {
 		panic("LVMLogicalVolume.EnsureSize: nil entity")
 	}
 	if s > lv.Size {
-		lv.Size = s
+		lv.Size = alignUp(s)
 		return true
 	}
 	return false

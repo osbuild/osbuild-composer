@@ -590,6 +590,32 @@ func (pt *PartitionTable) ForEachMountable(cb MountableCallback) error {
 	return forEachMountable(pt, []Entity{pt}, cb)
 }
 
+type FSTabEntityCallback func(mnt FSTabEntity, path []Entity) error
+
+func forEachFSTabEntity(c Container, path []Entity, cb FSTabEntityCallback) error {
+	for idx := uint(0); idx < c.GetItemCount(); idx++ {
+		child := c.GetChild(idx)
+		childPath := append(path, child)
+		var err error
+		switch ent := child.(type) {
+		case FSTabEntity:
+			err = cb(ent, childPath)
+		case Container:
+			err = forEachFSTabEntity(ent, childPath, cb)
+		}
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// ForEachFSTabEntity runs the provided callback function on each FSTabEntity
+// in the PartitionTable.
+func (pt *PartitionTable) ForEachFSTabEntity(cb FSTabEntityCallback) error {
+	return forEachFSTabEntity(pt, []Entity{pt}, cb)
+}
+
 // FindMountable returns the Mountable entity with the given mountpoint in the
 // PartitionTable. Returns nil if no Entity has the target as a Mountpoint.
 func (pt *PartitionTable) FindMountable(mountpoint string) Mountable {
@@ -812,18 +838,23 @@ type partitionTableFeatures struct {
 	FAT   bool
 	EXT4  bool
 	LUKS  bool
+	Swap  bool
 }
 
-// features examines all of the PartitionTable entities
-// and returns a struct with flags set for each feature used
+// features examines all of the PartitionTable entities and returns a struct
+// with flags set for each feature used. The meaning of "feature" here is quite
+// broad. Most disk Entity types are represented by a feature and the existence
+// of at least one type in the partition table means the feature is
+// represented. For Filesystem entities, there is a separate feature for each
+// filesystem type
 func (pt *PartitionTable) features() partitionTableFeatures {
 	var ptFeatures partitionTableFeatures
 
 	introspectPT := func(e Entity, path []Entity) error {
 		switch ent := e.(type) {
-		case *LVMLogicalVolume:
+		case *LVMVolumeGroup, *LVMLogicalVolume:
 			ptFeatures.LVM = true
-		case *Btrfs:
+		case *Btrfs, *BtrfsSubvolume:
 			ptFeatures.Btrfs = true
 		case *Filesystem:
 			switch ent.GetFSType() {
@@ -836,8 +867,14 @@ func (pt *PartitionTable) features() partitionTableFeatures {
 			case "ext4":
 				ptFeatures.EXT4 = true
 			}
+		case *Swap:
+			ptFeatures.Swap = true
 		case *LUKSContainer:
 			ptFeatures.LUKS = true
+		case *PartitionTable, *Partition:
+			// nothing to do
+		default:
+			panic(fmt.Errorf("unknown entity type %T", e))
 		}
 		return nil
 	}
@@ -1254,25 +1291,43 @@ func addPlainPartition(pt *PartitionTable, partition blueprint.PartitionCustomiz
 	if err != nil {
 		return fmt.Errorf("error creating partition with mountpoint %q: %w", partition.Mountpoint, err)
 	}
-	// all user-defined partitions are data partitions except boot
-	typeName := "data"
-	if partition.Mountpoint == "/boot" {
+
+	// all user-defined partitions are data partitions except boot and swap
+	var typeName string
+	switch {
+	case partition.Mountpoint == "/boot":
 		typeName = "boot"
+	case fstype == "swap":
+		typeName = "swap"
+	default:
+		typeName = "data"
 	}
+
 	partType, err := getPartitionTypeIDfor(pt.Type, typeName)
 	if err != nil {
 		return fmt.Errorf("error getting partition type ID for %q: %w", partition.Mountpoint, err)
 	}
-	newpart := Partition{
-		Type:     partType,
-		Bootable: false,
-		Size:     partition.MinSize,
-		Payload: &Filesystem{
+
+	var payload PayloadEntity
+	switch typeName {
+	case "swap":
+		payload = &Swap{
+			Label:        partition.Label,
+			FSTabOptions: "defaults", // TODO: add customization
+		}
+	default:
+		payload = &Filesystem{
 			Type:         fstype,
 			Label:        partition.Label,
 			Mountpoint:   partition.Mountpoint,
 			FSTabOptions: "defaults", // TODO: add customization
-		},
+		}
+	}
+
+	newpart := Partition{
+		Type:    partType,
+		Size:    partition.MinSize,
+		Payload: payload,
 	}
 	pt.Partitions = append(pt.Partitions, newpart)
 	return nil
@@ -1310,11 +1365,21 @@ func addLVMPartition(pt *PartitionTable, partition blueprint.PartitionCustomizat
 		if err != nil {
 			return fmt.Errorf("error creating logical volume %q (%s): %w", lv.Name, lv.Mountpoint, err)
 		}
-		newfs := &Filesystem{
-			Type:         fstype,
-			Label:        lv.Label,
-			Mountpoint:   lv.Mountpoint,
-			FSTabOptions: "defaults", // TODO: add customization
+
+		var newfs PayloadEntity
+		switch fstype {
+		case "swap":
+			newfs = &Swap{
+				Label:        lv.Label,
+				FSTabOptions: "defaults", // TODO: add customization
+			}
+		default:
+			newfs = &Filesystem{
+				Type:         fstype,
+				Label:        lv.Label,
+				Mountpoint:   lv.Mountpoint,
+				FSTabOptions: "defaults", // TODO: add customization
+			}
 		}
 		if _, err := newvg.CreateLogicalVolume(lv.Name, lv.MinSize, newfs); err != nil {
 			return fmt.Errorf("error creating logical volume %q (%s): %w", lv.Name, lv.Mountpoint, err)
