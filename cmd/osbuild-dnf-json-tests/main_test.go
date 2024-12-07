@@ -55,15 +55,17 @@ func TestCrossArchDepsolve(t *testing.T) {
 							InstallationDevice: "/dev/null",
 						}
 					}
+					var options distro.ImageOptions
+					if imgType.OSTreeRef() != "" {
+						options.OSTree = &ostree.ImageOptions{
+							URL: "https://example.com",
+						}
+					}
 					manifest, _, err := imgType.Manifest(
 						&blueprint.Blueprint{
 							Customizations: customizations,
 						},
-						distro.ImageOptions{
-							OSTree: &ostree.ImageOptions{
-								URL: "https://example.com", // required by some image types
-							},
-						},
+						options,
 						repos[archStr], 0)
 					assert.NoError(t, err)
 
