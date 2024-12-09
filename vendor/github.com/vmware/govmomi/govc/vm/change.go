@@ -78,6 +78,7 @@ type change struct {
 	extraConfigFile extraConfigFile
 	Latency         string
 	hwUpgradePolicy string
+	managedBy       string
 }
 
 func init() {
@@ -102,7 +103,11 @@ func (cmd *change) setLatency() error {
 	return fmt.Errorf("latency must be one of: %s", strings.Join(latencyLevels, "|"))
 }
 
-var hwUpgradePolicies = types.ScheduledHardwareUpgradeInfoHardwareUpgradePolicy("").Strings()
+var (
+	hwUpgradePolicies      = types.ScheduledHardwareUpgradeInfoHardwareUpgradePolicy("").Strings()
+	ftEncryptionModes      = types.VirtualMachineConfigSpecEncryptedFtModes("").Strings()
+	migrateEncryptionModes = types.VirtualMachineConfigSpecEncryptedVMotionModes("").Strings()
+)
 
 // setHwUpgradePolicy validates hwUpgradePolicy if set
 func (cmd *change) setHwUpgradePolicy() error {
@@ -160,6 +165,7 @@ func (cmd *change) Register(ctx context.Context, f *flag.FlagSet) {
 	f.StringVar(&cmd.Latency, "latency", "", fmt.Sprintf("Latency sensitivity (%s)", strings.Join(latencyLevels, "|")))
 	f.StringVar(&cmd.Annotation, "annotation", "", "VM description")
 	f.StringVar(&cmd.Uuid, "uuid", "", "BIOS UUID")
+	f.StringVar(&cmd.managedBy, "managed-by", "", "Set or clear managed by VC Extension")
 	f.Var(&cmd.extraConfig, "e", "ExtraConfig. <key>=<value>")
 	f.Var(&cmd.extraConfigFile, "f", "ExtraConfig. <key>=<absolute path to file>")
 
@@ -174,6 +180,9 @@ func (cmd *change) Register(ctx context.Context, f *flag.FlagSet) {
 	f.Var(flags.NewOptionalBool(&cmd.Flags.VvtdEnabled), "iommu-enabled", "Enable IOMMU")
 
 	f.StringVar(&cmd.hwUpgradePolicy, "scheduled-hw-upgrade-policy", "", fmt.Sprintf("Schedule hardware upgrade policy (%s)", strings.Join(hwUpgradePolicies, "|")))
+
+	f.StringVar(&cmd.FtEncryptionMode, "ft-encryption-mode", "", fmt.Sprintf("Encrypted fault tolerance mode (%s)", strings.Join(ftEncryptionModes, "|")))
+	f.StringVar(&cmd.MigrateEncryption, "migrate-encryption", "", fmt.Sprintf("Encrypted vMotion mode (%s)", strings.Join(migrateEncryptionModes, "|")))
 }
 
 func (cmd *change) Description() string {
@@ -232,6 +241,18 @@ func (cmd *change) Run(ctx context.Context, f *flag.FlagSet) error {
 
 	if err = cmd.setHwUpgradePolicy(); err != nil {
 		return err
+	}
+
+	if cmd.managedBy != "" {
+		// From the VirtualMachineConfigSpec doc:
+		//   To unset this field pass a ManagedByInfo object with an empty extensionKey
+		if cmd.managedBy == "-" {
+			cmd.managedBy = ""
+		}
+		cmd.ManagedBy = &types.ManagedByInfo{
+			Type:         vm.Reference().Type,
+			ExtensionKey: cmd.managedBy,
+		}
 	}
 
 	task, err := vm.Reconfigure(ctx, cmd.VirtualMachineConfigSpec)
