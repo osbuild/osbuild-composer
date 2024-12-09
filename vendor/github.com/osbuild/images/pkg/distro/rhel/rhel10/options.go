@@ -2,7 +2,6 @@ package rhel10
 
 import (
 	"fmt"
-	"log"
 
 	"slices"
 
@@ -27,9 +26,24 @@ func checkOptions(t *rhel.ImageType, bp *blueprint.Blueprint, options distro.Ima
 	}
 
 	mountpoints := customizations.GetFilesystems()
-
-	err := blueprint.CheckMountpointsPolicy(mountpoints, policies.MountpointPolicies)
+	partitioning, err := customizations.GetPartitioning()
 	if err != nil {
+		return nil, err
+	}
+
+	if err := blueprint.CheckMountpointsPolicy(mountpoints, policies.MountpointPolicies); err != nil {
+		return warnings, err
+	}
+
+	if len(mountpoints) > 0 && partitioning != nil {
+		return nil, fmt.Errorf("partitioning customizations cannot be used with custom filesystems (mountpoints)")
+	}
+
+	if err := blueprint.CheckDiskMountpointsPolicy(partitioning, policies.MountpointPolicies); err != nil {
+		return warnings, err
+	}
+
+	if err := partitioning.ValidateLayoutConstraints(); err != nil {
 		return warnings, err
 	}
 
@@ -76,9 +90,7 @@ func checkOptions(t *rhel.ImageType, bp *blueprint.Blueprint, options distro.Ima
 	}
 
 	if customizations.GetFIPS() && !common.IsBuildHostFIPSEnabled() {
-		w := fmt.Sprintln(common.FIPSEnabledImageWarning)
-		log.Print(w)
-		warnings = append(warnings, w)
+		warnings = append(warnings, fmt.Sprintln(common.FIPSEnabledImageWarning))
 	}
 
 	instCust, err := customizations.GetInstaller()

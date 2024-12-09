@@ -33,7 +33,7 @@ type Customizations struct {
 	Installer          *InstallerCustomization        `json:"installer,omitempty" toml:"installer,omitempty"`
 	RPM                *RPMCustomization              `json:"rpm,omitempty" toml:"rpm,omitempty"`
 	RHSM               *RHSMCustomization             `json:"rhsm,omitempty" toml:"rhsm,omitempty"`
-	CACerts            *CACustomization               `json:"cacerts,omitempty" toml:"ca,omitempty"`
+	CACerts            *CACustomization               `json:"cacerts,omitempty" toml:"cacerts,omitempty"`
 }
 
 type IgnitionCustomization struct {
@@ -142,6 +142,10 @@ type OpenSCAPJSONTailoringCustomizations struct {
 type ContainerStorageCustomization struct {
 	// destination is always `containers-storage`, so we won't expose this
 	StoragePath *string `json:"destination-path,omitempty" toml:"destination-path,omitempty"`
+}
+
+type CACustomization struct {
+	PEMCerts []string `json:"pem_certs,omitempty" toml:"pem_certs,omitempty"`
 }
 
 type CustomizationError struct {
@@ -441,16 +445,14 @@ func (c *Customizations) GetRHSM() *RHSMCustomization {
 }
 
 func (c *Customizations) checkCACerts() error {
-	if c == nil {
+	if c == nil || c.CACerts == nil {
 		return nil
 	}
 
-	if c.CACerts != nil {
-		for _, bundle := range c.CACerts.PEMCerts {
-			_, err := cert.ParseCerts(bundle)
-			if err != nil {
-				return err
-			}
+	for _, bundle := range c.CACerts.PEMCerts {
+		_, err := cert.ParseCerts(bundle)
+		if err != nil {
+			return err
 		}
 	}
 

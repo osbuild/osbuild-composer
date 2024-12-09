@@ -377,7 +377,7 @@ func DiskImage(workload workload.Workload,
 	img.Workload = workload
 	img.Compression = t.Compression
 	// TODO: move generation into LiveImage
-	pt, err := t.GetPartitionTable(customizations.GetFilesystems(), options, rng)
+	pt, err := t.GetPartitionTable(customizations, options, rng)
 	if err != nil {
 		return nil, err
 	}
@@ -567,7 +567,7 @@ func EdgeRawImage(workload workload.Workload,
 	img.OSName = "rhel-edge"
 
 	// TODO: move generation into LiveImage
-	pt, err := t.GetPartitionTable(customizations.GetFilesystems(), options, rng)
+	pt, err := t.GetPartitionTable(customizations, options, rng)
 	if err != nil {
 		return nil, err
 	}
@@ -609,7 +609,7 @@ func EdgeSimplifiedInstallerImage(workload workload.Workload,
 	rawImg.OSName = "rhel-edge"
 
 	// TODO: move generation into LiveImage
-	pt, err := t.GetPartitionTable(customizations.GetFilesystems(), options, rng)
+	pt, err := t.GetPartitionTable(customizations, options, rng)
 	if err != nil {
 		return nil, err
 	}

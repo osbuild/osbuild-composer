@@ -90,7 +90,7 @@ type EventProcessor func(event *Event, hint *EventHint) *Event
 // ApplyToEvent changes an event based on external data and/or
 // an event hint.
 type EventModifier interface {
-	ApplyToEvent(event *Event, hint *EventHint) *Event
+	ApplyToEvent(event *Event, hint *EventHint, client *Client) *Event
 }
 
 var globalEventProcessors []EventProcessor
@@ -590,14 +590,6 @@ func (client *Client) GetSDKIdentifier() string {
 	return client.sdkIdentifier
 }
 
-// reverse reverses the slice a in place.
-func reverse(a []Exception) {
-	for i := len(a)/2 - 1; i >= 0; i-- {
-		opp := len(a) - 1 - i
-		a[i], a[opp] = a[opp], a[i]
-	}
-}
-
 func (client *Client) processEvent(event *Event, hint *EventHint, scope EventModifier) *EventID {
 	if event == nil {
 		err := usageError{fmt.Errorf("%s called with nil event", callerFunctionName())}
@@ -685,7 +677,7 @@ func (client *Client) prepareEvent(event *Event, hint *EventHint, scope EventMod
 	}
 
 	if scope != nil {
-		event = scope.ApplyToEvent(event, hint)
+		event = scope.ApplyToEvent(event, hint, client)
 		if event == nil {
 			return nil
 		}

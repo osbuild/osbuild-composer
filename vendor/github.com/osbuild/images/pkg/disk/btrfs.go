@@ -155,6 +155,10 @@ func (bs *BtrfsSubvolume) GetMountpoint() string {
 	return bs.Mountpoint
 }
 
+func (bs *BtrfsSubvolume) GetFSFile() string {
+	return bs.GetMountpoint()
+}
+
 func (bs *BtrfsSubvolume) GetFSType() string {
 	return "btrfs"
 }

@@ -39,6 +39,12 @@ const (
 	BlueprintPkgsKey = "blueprint"
 )
 
+// Default directory size minimums for all image types.
+var requiredDirectorySizes = map[string]uint64{
+	"/":    1 * datasizes.GiB,
+	"/usr": 2 * datasizes.GiB,
+}
+
 type ImageFunc func(workload workload.Workload, t *ImageType, customizations *blueprint.Customizations, options distro.ImageOptions, packageSets map[string]rpmmd.PackageSet, containers []container.SourceSpec, rng *rand.Rand) (image.ImageKind, error)
 
 type PackageSetFunc func(t *ImageType) rpmmd.PackageSet
@@ -180,7 +186,7 @@ func (t *ImageType) BootMode() platform.BootMode {
 }
 
 func (t *ImageType) GetPartitionTable(
-	mountpoints []blueprint.FilesystemCustomization,
+	customizations *blueprint.Customizations,
 	options distro.ImageOptions,
 	rng *rand.Rand,
 ) (*disk.PartitionTable, error) {
@@ -193,8 +199,29 @@ func (t *ImageType) GetPartitionTable(
 	}
 
 	imageSize := t.Size(options.Size)
+	partitioning, err := customizations.GetPartitioning()
+	if err != nil {
+		return nil, err
+	}
+	if partitioning != nil {
+		// Use the new custom partition table to create a PT fully based on the user's customizations.
+		// This overrides FilesystemCustomizations, but we should never have both defined.
+		if options.Size > 0 {
+			// user specified a size on the command line, so let's override the
+			// customization with the calculated/rounded imageSize
+			partitioning.MinSize = imageSize
+		}
 
-	return disk.NewPartitionTable(&basePartitionTable, mountpoints, imageSize, options.PartitioningMode, nil, rng)
+		partOptions := &disk.CustomPartitionTableOptions{
+			PartitionTableType: basePartitionTable.Type, // PT type is not customizable, it is determined by the base PT for an image type or architecture
+			BootMode:           t.BootMode(),
+			DefaultFSType:      disk.FS_XFS, // default fs type for RHEL
+			RequiredMinSizes:   requiredDirectorySizes,
+		}
+		return disk.NewCustomPartitionTable(partitioning, partOptions, rng)
+	}
+
+	return disk.NewPartitionTable(&basePartitionTable, customizations.GetFilesystems(), imageSize, options.PartitioningMode, nil, rng)
 }
 
 func (t *ImageType) getDefaultImageConfig() *distro.ImageConfig {
@@ -333,6 +360,10 @@ func (t *ImageType) Manifest(bp *blueprint.Blueprint,
 // checkOptions checks the validity and compatibility of options and customizations for the image type.
 // Returns ([]string, error) where []string, if non-nil, will hold any generated warnings (e.g. deprecation notices).
 func (t *ImageType) checkOptions(bp *blueprint.Blueprint, options distro.ImageOptions) ([]string, error) {
+	if !t.RPMOSTree && options.OSTree != nil {
+		return nil, fmt.Errorf("OSTree is not supported for %q", t.Name())
+	}
+
 	if t.arch.distro.CheckOptions != nil {
 		return t.arch.distro.CheckOptions(t, bp, options)
 	}

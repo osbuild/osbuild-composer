@@ -55,6 +55,10 @@ func (fs *Filesystem) GetMountpoint() string {
 	return fs.Mountpoint
 }
 
+func (fs *Filesystem) GetFSFile() string {
+	return fs.GetMountpoint()
+}
+
 func (fs *Filesystem) GetFSType() string {
 	if fs == nil {
 		return ""

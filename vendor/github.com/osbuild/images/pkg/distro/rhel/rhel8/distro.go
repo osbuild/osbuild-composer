@@ -115,6 +115,15 @@ func newDistro(name string, minor int) *rhel.Distribution {
 			ImageFormat: platform.FORMAT_RAW,
 		},
 	}
+
+	// Keep the RHEL EC2 x86_64 images before 8.9 BIOS-only for backward compatibility.
+	// RHEL-internal EC2 images and RHEL AMI images are kept intentionally in sync
+	// with regard to not supporting hybrid boot mode before RHEL version 8.9.
+	// The partitioning table for these reflects that and is also intentionally in sync.
+	if rd.IsRHEL() && common.VersionLessThan(rd.OsVersion(), "8.9") {
+		ec2X86Platform.UEFIVendor = ""
+	}
+
 	x86_64.AddImageTypes(
 		ec2X86Platform,
 		mkAmiImgTypeX86_64(),
@@ -341,16 +350,6 @@ func newDistro(name string, minor int) *rhel.Distribution {
 			mkAzureByosImgType(),
 			mkAzureSapRhuiImgType(rd),
 		)
-
-		// keep the RHEL EC2 x86_64 images before 8.9 BIOS-only for backward compatibility
-		if common.VersionLessThan(rd.OsVersion(), "8.9") {
-			ec2X86Platform = &platform.X86{
-				BIOS: true,
-				BasePlatform: platform.BasePlatform{
-					ImageFormat: platform.FORMAT_RAW,
-				},
-			}
-		}
 
 		// add ec2 image types to RHEL distro only
 		x86_64.AddImageTypes(

@@ -2,7 +2,6 @@ package rhel9
 
 import (
 	"fmt"
-	"log"
 	"strings"
 
 	"slices"
@@ -31,14 +30,14 @@ func checkOptions(t *rhel.ImageType, bp *blueprint.Blueprint, options distro.Ima
 
 	if options.OSTree != nil {
 		if err := options.OSTree.Validate(); err != nil {
-			return nil, err
+			return warnings, err
 		}
 	}
 
 	if t.BootISO && t.RPMOSTree {
 		// ostree-based ISOs require a URL from which to pull a payload commit
 		if options.OSTree == nil || options.OSTree.URL == "" {
-			return nil, fmt.Errorf("boot ISO image type %q requires specifying a URL from which to retrieve the OSTree commit", t.Name())
+			return warnings, fmt.Errorf("boot ISO image type %q requires specifying a URL from which to retrieve the OSTree commit", t.Name())
 		}
 
 		if t.Name() == "edge-simplified-installer" {
@@ -104,14 +103,10 @@ func checkOptions(t *rhel.ImageType, bp *blueprint.Blueprint, options distro.Ima
 	// TODO(edge): directly error if these options are provided when rhel-9.5's time arrives
 	if t.Name() == "edge-commit" || t.Name() == "edge-container" {
 		if customizations.GetUsers() != nil {
-			w := fmt.Sprintf("Please note that user customizations on %q image type are deprecated and will be removed in the near future\n", t.Name())
-			log.Print(w)
-			warnings = append(warnings, w)
+			warnings = append(warnings, fmt.Sprintf("Please note that user customizations on %q image type are deprecated and will be removed in the near future\n", t.Name()))
 		}
 		if customizations.GetGroups() != nil {
-			w := fmt.Sprintf("Please note that group customizations on %q image type are deprecated and will be removed in the near future\n", t.Name())
-			log.Print(w)
-			warnings = append(warnings, w)
+			warnings = append(warnings, fmt.Sprintf("Please note that group customizations on %q image type are deprecated and will be removed in the near future\n", t.Name()))
 		}
 	}
 
@@ -124,10 +119,13 @@ func checkOptions(t *rhel.ImageType, bp *blueprint.Blueprint, options distro.Ima
 	}
 
 	mountpoints := customizations.GetFilesystems()
-
-	if mountpoints != nil && t.RPMOSTree && (t.Name() == "edge-container" || t.Name() == "edge-commit") {
-		return warnings, fmt.Errorf("Custom mountpoints are not supported for ostree types")
-	} else if mountpoints != nil && t.RPMOSTree && !(t.Name() == "edge-container" || t.Name() == "edge-commit") {
+	partitioning, err := customizations.GetPartitioning()
+	if err != nil {
+		return nil, err
+	}
+	if (mountpoints != nil || partitioning != nil) && t.RPMOSTree && (t.Name() == "edge-container" || t.Name() == "edge-commit") {
+		return warnings, fmt.Errorf("custom mountpoints and partitioning are not supported for ostree types")
+	} else if (mountpoints != nil || partitioning != nil) && t.RPMOSTree && !(t.Name() == "edge-container" || t.Name() == "edge-commit") {
 		//customization allowed for edge-raw-image,edge-ami,edge-vsphere,edge-simplified-installer
 		err := blueprint.CheckMountpointsPolicy(mountpoints, policies.OstreeMountpointPolicies)
 		if err != nil {
@@ -135,8 +133,19 @@ func checkOptions(t *rhel.ImageType, bp *blueprint.Blueprint, options distro.Ima
 		}
 	}
 
-	err := blueprint.CheckMountpointsPolicy(mountpoints, policies.MountpointPolicies)
-	if err != nil {
+	if len(mountpoints) > 0 && partitioning != nil {
+		return nil, fmt.Errorf("partitioning customizations cannot be used with custom filesystems (mountpoints)")
+	}
+
+	if err := blueprint.CheckMountpointsPolicy(mountpoints, policies.MountpointPolicies); err != nil {
+		return warnings, err
+	}
+
+	if err := blueprint.CheckDiskMountpointsPolicy(partitioning, policies.MountpointPolicies); err != nil {
+		return warnings, err
+	}
+
+	if err := partitioning.ValidateLayoutConstraints(); err != nil {
 		return warnings, err
 	}
 
@@ -189,9 +198,7 @@ func checkOptions(t *rhel.ImageType, bp *blueprint.Blueprint, options distro.Ima
 	}
 
 	if customizations.GetFIPS() && !common.IsBuildHostFIPSEnabled() {
-		w := fmt.Sprintln(common.FIPSEnabledImageWarning)
-		log.Print(w)
-		warnings = append(warnings, w)
+		warnings = append(warnings, fmt.Sprintln(common.FIPSEnabledImageWarning))
 	}
 
 	instCust, err := customizations.GetInstaller()
