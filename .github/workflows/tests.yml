@@ -16,6 +16,8 @@ jobs:
     runs-on: ubuntu-20.04
     container:
       image: registry.fedoraproject.org/fedora:40
+    env:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
     steps:
         # krb5-devel is needed to test internal/upload/koji package
@@ -36,13 +38,11 @@ jobs:
         run: make unit-tests
 
       - uses: codecov/codecov-action@v5
-        if: env.CODECOV_TOKEN
+        if: ${{ env.CODECOV_TOKEN != '' }}
         with:
           fail_ci_if_error: false
           verbose: true
-          token: ${{ secrets.CODECOV_TOKEN }}
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+          token: ${{ env.CODECOV_TOKEN }}
 
   db-tests:
     name: "🗄 DB tests"
