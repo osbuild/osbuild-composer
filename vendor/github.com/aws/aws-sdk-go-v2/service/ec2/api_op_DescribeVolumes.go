@@ -76,11 +76,16 @@ type DescribeVolumesInput struct {
 	//
 	//   - encrypted - Indicates whether the volume is encrypted ( true | false )
 	//
+	//   - fast-restored - Indicates whether the volume was created from a snapshot
+	//   that is enabled for fast snapshot restore ( true | false ).
+	//
 	//   - multi-attach-enabled - Indicates whether the volume is enabled for
 	//   Multi-Attach ( true | false )
 	//
-	//   - fast-restored - Indicates whether the volume was created from a snapshot
-	//   that is enabled for fast snapshot restore ( true | false ).
+	//   - operator.managed - A Boolean that indicates whether this is a managed volume.
+	//
+	//   - operator.principal - The principal that manages the volume. Only valid for
+	//   managed volumes, where managed is true .
 	//
 	//   - size - The size of the volume, in GiB.
 	//
@@ -178,6 +183,9 @@ func (c *Client) addOperationDescribeVolumesMiddlewares(stack *middleware.Stack,
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -212,6 +220,18 @@ func (c *Client) addOperationDescribeVolumesMiddlewares(stack *middleware.Stack,
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil
