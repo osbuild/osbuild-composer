@@ -1233,7 +1233,7 @@ func (h *apiHandlers) postCloneComposeImpl(ctx echo.Context, id string) error {
 					Ami:          options.Ami,
 					SourceRegion: options.Region,
 					TargetRegion: img.Region,
-					TargetName:   fmt.Sprintf("composer-api-%s", uuid.New().String()),
+					TargetName:   fmt.Sprintf("composer-api-%s", finalJob),
 				}
 				finalJob, err = h.server.workers.EnqueueAWSEC2CopyJob(copyJob, finalJob, channel)
 				if err != nil {
