@@ -38,7 +38,6 @@ function cleanup_on_exit() {
 }
 trap cleanup_on_exit EXIT
 
-# Build ostree image.
 build_image() {
     blueprint_file=$1
     blueprint_name=$2
@@ -48,6 +47,7 @@ build_image() {
     # Prepare the blueprint for the compose.
     greenprint "📋 Preparing blueprint"
     sudo composer-cli blueprints push "$blueprint_file"
+    greenprint "📋 Depsolving blueprint"
     sudo composer-cli blueprints depsolve "$blueprint_name"
 
     # Get worker unit file so we can watch the journal.
@@ -565,7 +565,6 @@ mountpoint = "/var/lock"
 size = 131072000
 EOF
 
-# build_image "$BLUEPRINT_FILE" custom-filesystem-fail qcow2 true
 build_image "$BLUEPRINT_FILE" custom-filesystem-fail qcow2 true
 
 # Clear the test variable
