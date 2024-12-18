@@ -178,10 +178,6 @@ size = 131072000
 [[customizations.filesystem]]
 mountpoint = "/boot"
 size = 131072000
-EOF
-
-if nvrGreaterOrEqual "osbuild-composer" "94"; then
-    tee -a "$BLUEPRINT_FILE" > /dev/null << EOF
 
 [[customizations.filesystem]]
 mountpoint = "/boot/firmware"
@@ -191,7 +187,6 @@ size = 131072000
 mountpoint = "/foobar"
 size = 131072000
 EOF
-fi
 }
 
 write_fs_blueprint
@@ -293,10 +288,6 @@ size = 131072000
 [[customizations.filesystem]]
 mountpoint = "/sysroot"
 size = 131072000
-EOF
-
-if nvrGreaterOrEqual "osbuild-composer" "94"; then
-    tee -a "$BLUEPRINT_FILE" > /dev/null << EOF
 
 [[customizations.filesystem]]
 mountpoint = "/usr/bin"
@@ -310,7 +301,6 @@ size = 131072000
 mountpoint = "/var/lock"
 size = 131072000
 EOF
-fi
 
 # build_image "$BLUEPRINT_FILE" custom-filesystem-fail qcow2 true
 build_image "$BLUEPRINT_FILE" custom-filesystem-fail qcow2 true
