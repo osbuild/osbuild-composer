@@ -116,8 +116,9 @@ check_result () {
 
 greenprint "🚀 Checking custom filesystems (success case)"
 
-# Write a basic blueprint for our image.
-tee "$BLUEPRINT_FILE" > /dev/null << EOF
+write_fs_blueprint() {
+    # Write a basic blueprint for our image.
+    tee "$BLUEPRINT_FILE" > /dev/null << EOF
 name = "custom-filesystem"
 description = "A base system with custom mountpoints"
 version = "0.0.1"
@@ -191,6 +192,9 @@ mountpoint = "/foobar"
 size = 131072000
 EOF
 fi
+}
+
+write_fs_blueprint
 
 build_image "$BLUEPRINT_FILE" custom-filesystem qcow2 false
 
