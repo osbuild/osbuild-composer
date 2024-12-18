@@ -21,6 +21,8 @@ BLUEPRINT_FILE=${TEMPDIR}/blueprint.toml
 COMPOSE_START=${TEMPDIR}/compose-start-${IMAGE_KEY}.json
 COMPOSE_INFO=${TEMPDIR}/compose-info-${IMAGE_KEY}.json
 
+CUSTOMIZATION_TYPE="${1:-filesystem}"
+
 function cleanup_on_exit() {
     greenprint "🧼 Cleaning up"
     # kill dangling journalctl processes to prevent GitLab CI from hanging
@@ -117,7 +119,6 @@ check_result () {
 greenprint "🚀 Checking custom filesystems (success case)"
 
 write_fs_blueprint() {
-    # Write a basic blueprint for our image.
     tee "$BLUEPRINT_FILE" > /dev/null << EOF
 name = "custom-filesystem"
 description = "A base system with custom mountpoints"
@@ -156,7 +157,7 @@ mountpoint = "/home"
 size = 131072000
 
 [[customizations.filesystem]]
-mountpoint = "/home/shadownman"
+mountpoint = "/home/shadowman"
 size = 131072000
 
 [[customizations.filesystem]]
@@ -187,9 +188,271 @@ size = 131072000
 mountpoint = "/foobar"
 size = 131072000
 EOF
+    EXPECTED_MOUNTPOINTS=(
+        "/"
+        "/var"
+        "/var/log"
+        "/var/log/audit"
+        "/usr"
+        "/tmp"
+        "/var/tmp"
+        "/home"
+        "/home/shadowman"
+        "/opt"
+        "/srv"
+        "/app"
+        "/data"
+        "/boot"
+        "/boot/firmware"
+        "/foobar"
+    )
 }
 
-write_fs_blueprint
+write_plain_blueprint() {
+    tee "$BLUEPRINT_FILE" > /dev/null << EOF
+name = "custom-filesystem"
+description = "A base system with custom plain partitions"
+version = "0.0.1"
+
+[[customizations.disk.partitions]]
+mountpoint = "/data"
+fs_type = "ext4"
+minsize = "1 GiB"
+
+[[customizations.disk.partitions]]
+mountpoint = "/home"
+label = "home"
+fs_type = "ext4"
+minsize = "2 GiB"
+
+[[customizations.disk.partitions]]
+mountpoint = "/home/shadowman"
+fs_type = "ext4"
+minsize = "500 MiB"
+
+[[customizations.disk.partitions]]
+mountpoint = "/foo"
+fs_type = "ext4"
+minsize = "1 GiB"
+
+[[customizations.disk.partitions]]
+mountpoint = "/var"
+fs_type = "xfs"
+minsize = "4 GiB"
+
+[[customizations.disk.partitions]]
+mountpoint = "/opt"
+fs_type = "ext4"
+minsize = "1 GiB"
+
+[[customizations.disk.partitions]]
+mountpoint = "/media"
+fs_type = "ext4"
+minsize = "1 GiB"
+
+[[customizations.disk.partitions]]
+mountpoint = "/root"
+fs_type = "ext4"
+minsize = "1 GiB"
+
+[[customizations.disk.partitions]]
+mountpoint = "/srv"
+fs_type = "xfs"
+minsize = "1 GiB"
+
+[[customizations.disk.partitions]]
+fs_type = "swap"
+minsize = "1 GiB"
+EOF
+    EXPECTED_MOUNTPOINTS=(
+        "/data"
+        "/home"
+        "/home/shadowman"
+        "/foo"
+        "/var"
+        "/opt"
+        "/media"
+        "/root"
+        "/srv"
+        "swap"
+    )
+}
+
+write_lvm_blueprint() {
+    tee "$BLUEPRINT_FILE" > /dev/null << EOF
+name = "custom-filesystem"
+description = "A base system with custom LVM partitioning"
+
+[customizations.disk]
+type = "gpt"
+
+  [[customizations.disk.partitions]]
+  mountpoint = "/data"
+  minsize = "1 GiB"
+  label = "data"
+  fs_type = "ext4"
+
+  [[customizations.disk.partitions]]
+  type = "lvm"
+  name = "testvg"
+  minsize = 10_737_418_240
+
+    [[customizations.disk.partitions.logical_volumes]]
+    name = "homelv"
+    mountpoint = "/home"
+    label = "home"
+    fs_type = "ext4"
+    minsize = "2 GiB"
+
+    [[customizations.disk.partitions.logical_volumes]]
+    name = "shadowmanlv"
+    mountpoint = "/home/shadowman"
+    fs_type = "ext4"
+    minsize = "5 GiB"
+
+    [[customizations.disk.partitions.logical_volumes]]
+    name = "foolv"
+    mountpoint = "/foo"
+    fs_type = "ext4"
+    minsize = "1 GiB"
+
+    [[customizations.disk.partitions.logical_volumes]]
+    name = "usrlv"
+    mountpoint = "/usr"
+    fs_type = "ext4"
+    minsize = "4 GiB"
+
+    [[customizations.disk.partitions.logical_volumes]]
+    name = "optlv"
+    mountpoint = "/opt"
+    fs_type = "ext4"
+    minsize = 1_073_741_824
+
+    [[customizations.disk.partitions.logical_volumes]]
+    name = "medialv"
+    mountpoint = "/media"
+    fs_type = "ext4"
+    minsize = 1_073_741_824
+
+    [[customizations.disk.partitions.logical_volumes]]
+    name = "roothomelv"
+    mountpoint = "/root"
+    fs_type = "ext4"
+    minsize = "1 GiB"
+
+    [[customizations.disk.partitions.logical_volumes]]
+    name = "srvlv"
+    mountpoint = "/srv"
+    fs_type = "ext4"
+    minsize = 1_073_741_824
+
+    [[customizations.disk.partitions.logical_volumes]]
+    name = "swap-lv"
+    fs_type = "swap"
+    minsize = "1 GiB"
+EOF
+
+    EXPECTED_MOUNTPOINTS=(
+        "/data"
+        "/home"
+        "/home/shadowman"
+        "/foo"
+        "/usr"
+        "/opt"
+        "/media"
+        "/root"
+        "/srv"
+        "swap"
+    )
+}
+
+write_btrfs_blueprint() {
+    tee "$BLUEPRINT_FILE" > /dev/null << EOF
+name = "custom-filesystem"
+description = "A base system with custom btrfs partitioning"
+
+[[customizations.disk.partitions]]
+type = "plain"
+mountpoint = "/data"
+minsize = 1_073_741_824
+fs_type = "xfs"
+
+[[customizations.disk.partitions]]
+type = "btrfs"
+minsize = "10 GiB"
+
+  [[customizations.disk.partitions.subvolumes]]
+  name = "subvol-home"
+  mountpoint = "/home"
+
+  [[customizations.disk.partitions.subvolumes]]
+  name = "subvol-shadowman"
+  mountpoint = "/home/shadowman"
+
+  [[customizations.disk.partitions.subvolumes]]
+  name = "subvol-foo"
+  mountpoint = "/foo"
+
+  [[customizations.disk.partitions.subvolumes]]
+  name = "subvol-usr"
+  mountpoint = "/usr"
+
+  [[customizations.disk.partitions.subvolumes]]
+  name = "subvol-opt"
+  mountpoint = "/opt"
+
+  [[customizations.disk.partitions.subvolumes]]
+  name = "subvol-media"
+  mountpoint = "/media"
+
+  [[customizations.disk.partitions.subvolumes]]
+  name = "subvol-root"
+  mountpoint = "/root"
+
+  [[customizations.disk.partitions.subvolumes]]
+  name = "subvol-srv"
+  mountpoint = "/srv"
+
+[[customizations.disk.partitions]]
+type = "plain"
+fs_type = "swap"
+label = "swap-part"
+minsize = "1 GiB"
+EOF
+
+    EXPECTED_MOUNTPOINTS=(
+        "/data"
+        "/home"
+        "/home/shadowman"
+        "/foo"
+        "/usr"
+        "/opt"
+        "/media"
+        "/root"
+        "/srv"
+        "swap"
+    )
+}
+
+case "$CUSTOMIZATION_TYPE" in
+    "filesystem")
+        write_fs_blueprint
+        ;;
+    "disk-plain")
+        write_plain_blueprint
+        ;;
+    "disk-lvm")
+        write_lvm_blueprint
+        ;;
+    "disk-btrfs")
+        write_btrfs_blueprint
+        ;;
+    *)
+        redprint "Invalid value for CUSTOMIZATION_TYPE: ${CUSTOMIZATION_TYPE} - valid values are 'filesystem', 'disk-plain', 'disk-lvm', and 'disk-btrfs'"
+        exit 1
+        ;;
+esac
+
 
 build_image "$BLUEPRINT_FILE" custom-filesystem qcow2 false
 
@@ -206,7 +469,7 @@ if ! INFO="$(sudo osbuild-image-info "${IMAGE_FILENAME}")"; then
 fi
 FAILED_MOUNTPOINTS=()
 
-for MOUNTPOINT in '/' '/var' '/var/log' '/var/log/audit' '/var/tmp' '/usr' '/tmp' '/home' '/opt' '/srv' '/app' '/data'; do
+for MOUNTPOINT in "${EXPECTED_MOUNTPOINTS[@]}"; do
   EXISTS=$(jq --arg m "$MOUNTPOINT" 'any(.fstab[] | .[] == $m; .)' <<< "${INFO}")
   if $EXISTS; then
     greenprint "INFO: mountpoint $MOUNTPOINT exists"
