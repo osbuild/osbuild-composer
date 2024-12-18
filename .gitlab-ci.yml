@@ -519,12 +519,30 @@ filesystem.sh:
   extends: .integration
   parallel:
     matrix:
-    - RUNNER:
-      - aws/fedora-40-x86_64
-    - *rhel_runners
-
+      - CUSTOMIZATION_TYPE: "disk-btrfs"
+        RUNNER:
+          - aws/fedora-40-x86_64
+      - CUSTOMIZATION_TYPE: "filesystem"
+        RUNNER:
+          - aws/rhel-8.10-ga-x86_64
+        INTERNAL_NETWORK: ["true"]
+      - CUSTOMIZATION_TYPE: "disk-plain"
+        RUNNER:
+          - aws/rhel-9.4-ga-x86_64
+          - aws/rhel-10.0-nightly-x86_64
+        INTERNAL_NETWORK: ["true"]
+      - CUSTOMIZATION_TYPE: "disk-lvm"
+        RUNNER:
+          - aws/rhel-9.6-nightly-x86_64
+        INTERNAL_NETWORK: ["true"]
+      - CUSTOMIZATION_TYPE: "disk-lvm"
+        RUNNER:
+          - aws/centos-stream-9-x86_64
+      - CUSTOMIZATION_TYPE: "filesystem"
+        RUNNER:
+          - aws/centos-stream-10-x86_64
   variables:
-    SCRIPT: filesystem.sh
+    SCRIPT: filesystem.sh ${CUSTOMIZATION_TYPE}
 
 cross-distro.sh:
   extends: .integration
