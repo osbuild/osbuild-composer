@@ -161,7 +161,7 @@ func (s *Server) enqueueCompose(irs []imageRequest, channel string) (uuid.UUID, 
 	arch := ir.imageType.Arch()
 	distribution := arch.Distro()
 
-	manifestSource, _, err := ir.imageType.Manifest(&ibp, ir.imageOptions, ir.repositories, ir.manifestSeed)
+	manifestSource, _, err := ir.imageType.Manifest(&ibp, ir.imageOptions, ir.repositories, &ir.manifestSeed)
 	if err != nil {
 		logrus.Warningf("ErrorEnqueueingJob, failed generating manifest: %v", err)
 		return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
@@ -287,14 +287,14 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 
 	var kojiFilenames []string
 	var buildIDs []uuid.UUID
-	for _, ir := range irs {
+	for idx, ir := range irs {
 		ibp := blueprint.Convert(ir.blueprint)
 
 		// shortcuts
 		arch := ir.imageType.Arch()
 		distribution := arch.Distro()
 
-		manifestSource, _, err := ir.imageType.Manifest(&ibp, ir.imageOptions, ir.repositories, ir.manifestSeed)
+		manifestSource, _, err := ir.imageType.Manifest(&ibp, ir.imageOptions, ir.repositories, &irs[idx].manifestSeed)
 		if err != nil {
 			logrus.Errorf("ErrorEnqueueingJob, failed generating manifest: %v", err)
 			return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)

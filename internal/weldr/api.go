@@ -2567,7 +2567,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 	}
 
 	ibp := blueprint.Convert(*bp)
-	manifest, warnings, err := imageType.Manifest(&ibp, options, imageRepos, seed)
+	manifest, warnings, err := imageType.Manifest(&ibp, options, imageRepos, &seed)
 	if err != nil {
 		errors := responseError{
 			ID:  "ManifestCreationFailed",
