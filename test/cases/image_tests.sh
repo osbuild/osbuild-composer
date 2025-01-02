@@ -96,10 +96,6 @@ run_test_case () {
 # Change to the working directory.
 cd $WORKING_DIRECTORY
 
-# Workaround the problem that 'image-info' can not read SELinux labels unknown to the host from the image
-OSBUILD_LABEL=$(matchpathcon -n "$(type -p osbuild)")
-sudo chcon "$OSBUILD_LABEL" /usr/libexec/osbuild-composer-test/image-info
-
 # Run each test case.
 for TEST_CASE in $(get_test_cases); do
     run_test_case "$IMAGE_TEST_CASE_RUNNER" "$TEST_CASE"

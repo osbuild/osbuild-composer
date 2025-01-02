@@ -128,7 +128,7 @@ sudo composer-cli compose image "${COMPOSE_ID}" > /dev/null
 IMAGE_FILENAME="${COMPOSE_ID}-disk.qcow2"
 
 greenprint "💬 Checking that image exists"
-INFO="$(sudo /usr/libexec/osbuild-composer-test/image-info "${IMAGE_FILENAME}")"
+INFO="$(sudo osbuild-image-info "${IMAGE_FILENAME}")"
 
 IMAGE_ID="d4ee87dab8193afad523b1042b9d3f5ec887555a704e5aaec2876798ebb585a6"
 FEDORA_CONTAINER_EXISTS=$(jq -e --arg id "${IMAGE_ID}" 'any(."container-images" | select(. != null and .[].Id == $id); .)' <<< "${INFO}")
