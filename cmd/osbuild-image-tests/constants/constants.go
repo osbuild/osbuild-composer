@@ -21,7 +21,7 @@ func GetOsbuildCommand(store, outputDirectory string, exports []string) *exec.Cm
 
 func GetImageInfoCommand(imagePath string) *exec.Cmd {
 	return exec.Command(
-		"/usr/libexec/osbuild-composer-test/image-info",
+		"osbuild-image-info",
 		imagePath,
 	)
 }
@@ -34,7 +34,7 @@ var TestPaths = struct {
 	MetaData                string
 	AzureDeploymentTemplate string
 }{
-	ImageInfo:               "/usr/libexec/osbuild-composer-test/image-info",
+	ImageInfo:               "osbuild-image-info",
 	PrivateKey:              "/usr/share/tests/osbuild-composer/keyring/id_rsa",
 	TestCasesDirectory:      "/usr/share/tests/osbuild-composer/manifests",
 	UserData:                "/usr/share/tests/osbuild-composer/cloud-init/user-data",

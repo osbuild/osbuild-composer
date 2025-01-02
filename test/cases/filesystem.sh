@@ -36,10 +36,6 @@ function cleanup_on_exit() {
 }
 trap cleanup_on_exit EXIT
 
-# Workaround the problem that 'image-info' can not read SELinux labels unknown to the host from the image
-OSBUILD_LABEL=$(matchpathcon -n "$(type -p osbuild)")
-sudo chcon "$OSBUILD_LABEL" /usr/libexec/osbuild-composer-test/image-info
-
 # Build ostree image.
 build_image() {
     blueprint_file=$1
@@ -204,7 +200,7 @@ sudo composer-cli compose image "${COMPOSE_ID}" > /dev/null
 IMAGE_FILENAME="${COMPOSE_ID}-disk.qcow2"
 
 greenprint "💬 Checking mountpoints"
-if ! INFO="$(sudo /usr/libexec/osbuild-composer-test/image-info "${IMAGE_FILENAME}")"; then
+if ! INFO="$(sudo osbuild-image-info "${IMAGE_FILENAME}")"; then
     echo "ERROR image-info failed, show last few kernel message to debug"
     dmesg | tail -n10
     exit 2
