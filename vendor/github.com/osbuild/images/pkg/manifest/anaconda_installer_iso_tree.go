@@ -17,6 +17,14 @@ import (
 	"github.com/osbuild/images/pkg/rpmmd"
 )
 
+type RootfsType uint64
+
+// These constants are used by the ISO images to control the style of the root filesystem
+const ( // Rootfs type enum
+	SquashfsExt4Rootfs RootfsType = iota // Create an EXT4 rootfs compressed by Squashfs
+	SquashfsRootfs                       // Create a plain squashfs rootfs
+)
+
 // An AnacondaInstallerISOTree represents a tree containing the anaconda installer,
 // configuration in terms of a kickstart file, as well as an embedded
 // payload to be installed, this payload can either be an ostree
@@ -30,7 +38,7 @@ type AnacondaInstallerISOTree struct {
 	PartitionTable *disk.PartitionTable
 
 	anacondaPipeline *AnacondaInstaller
-	rootfsPipeline   *ISORootfsImg
+	rootfsPipeline   *ISORootfsImg // May be nil for plain squashfs rootfs
 	bootTreePipeline *EFIBootTree
 
 	// The path where the payload (tarball, ostree repo, or container) will be stored.
@@ -68,7 +76,7 @@ type AnacondaInstallerISOTree struct {
 func NewAnacondaInstallerISOTree(buildPipeline Build, anacondaPipeline *AnacondaInstaller, rootfsPipeline *ISORootfsImg, bootTreePipeline *EFIBootTree) *AnacondaInstallerISOTree {
 
 	// the three pipelines should all belong to the same manifest
-	if anacondaPipeline.Manifest() != rootfsPipeline.Manifest() ||
+	if (rootfsPipeline != nil && anacondaPipeline.Manifest() != rootfsPipeline.Manifest()) ||
 		anacondaPipeline.Manifest() != bootTreePipeline.Manifest() {
 		panic("pipelines from different manifests")
 	}
@@ -278,7 +286,14 @@ func (p *AnacondaInstallerISOTree) serialize() osbuild.Pipeline {
 		}
 	}
 
-	squashfsStage := osbuild.NewSquashfsStage(&squashfsOptions, p.rootfsPipeline.Name())
+	// The iso's rootfs can either be an ext4 filesystem compressed with squashfs, or
+	// a squashfs of the plain directory tree
+	var squashfsStage *osbuild.Stage
+	if p.rootfsPipeline != nil {
+		squashfsStage = osbuild.NewSquashfsStage(&squashfsOptions, p.rootfsPipeline.Name())
+	} else {
+		squashfsStage = osbuild.NewSquashfsStage(&squashfsOptions, p.anacondaPipeline.Name())
+	}
 	pipeline.AddStage(squashfsStage)
 
 	if p.ISOLinux {
