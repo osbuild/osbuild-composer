@@ -100,7 +100,7 @@ var (
 		// We don't know the variant of the OS pipeline being installed
 		isoLabel:               getISOLabelFunc("Unknown"),
 		buildPipelines:         []string{"build"},
-		payloadPipelines:       []string{"anaconda-tree", "rootfs-image", "efiboot-tree", "os", "bootiso-tree", "bootiso"},
+		payloadPipelines:       []string{"anaconda-tree", "efiboot-tree", "os", "bootiso-tree", "bootiso"},
 		exports:                []string{"bootiso"},
 		requiredPartitionSizes: requiredDirectorySizes,
 	}
@@ -119,7 +119,7 @@ var (
 		image:                  liveInstallerImage,
 		isoLabel:               getISOLabelFunc("Workstation"),
 		buildPipelines:         []string{"build"},
-		payloadPipelines:       []string{"anaconda-tree", "rootfs-image", "efiboot-tree", "bootiso-tree", "bootiso"},
+		payloadPipelines:       []string{"anaconda-tree", "efiboot-tree", "bootiso-tree", "bootiso"},
 		exports:                []string{"bootiso"},
 		requiredPartitionSizes: requiredDirectorySizes,
 	}
@@ -200,7 +200,7 @@ var (
 		image:                  iotInstallerImage,
 		isoLabel:               getISOLabelFunc("IoT"),
 		buildPipelines:         []string{"build"},
-		payloadPipelines:       []string{"anaconda-tree", "rootfs-image", "efiboot-tree", "bootiso-tree", "bootiso"},
+		payloadPipelines:       []string{"anaconda-tree", "efiboot-tree", "bootiso-tree", "bootiso"},
 		exports:                []string{"bootiso"},
 		requiredPartitionSizes: requiredDirectorySizes,
 	}

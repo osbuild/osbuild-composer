@@ -1,5 +1,11 @@
 package osbuild
 
+import (
+	"fmt"
+
+	"github.com/osbuild/images/pkg/disk"
+)
+
 // Partition a target using sfdisk(8)
 
 type SfdiskStageOptions struct {
@@ -36,7 +42,18 @@ type SfdiskPartition struct {
 	UUID string `json:"uuid,omitempty"`
 }
 
+func (o SfdiskStageOptions) validate() error {
+	if o.Label == disk.PT_DOS.String() && len(o.Partitions) > 4 {
+		return fmt.Errorf("sfdisk stage creation failed: \"dos\" partition table only supports up to 4 partitions: got %d", len(o.Partitions))
+	}
+	return nil
+}
+
 func NewSfdiskStage(options *SfdiskStageOptions, device *Device) *Stage {
+	if err := options.validate(); err != nil {
+		panic(err)
+	}
+
 	return &Stage{
 		Type:    "org.osbuild.sfdisk",
 		Options: options,

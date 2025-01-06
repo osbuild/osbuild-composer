@@ -755,7 +755,7 @@ func (pt *PartitionTable) ensureLVM() error {
 		if pt.Type == PT_GPT {
 			part.Type = LVMPartitionGUID
 		} else {
-			part.Type = "8e"
+			part.Type = LVMPartitionDOSID
 		}
 
 	} else {
@@ -1232,15 +1232,24 @@ func NewCustomPartitionTable(customizations *blueprint.DiskCustomization, option
 
 	pt := &PartitionTable{}
 
-	// TODO: Handle partition table type in customizations
-	switch options.PartitionTableType {
-	case PT_GPT, PT_DOS:
-		pt.Type = options.PartitionTableType
-	case PT_NONE:
-		// default to "gpt"
+	switch customizations.Type {
+	case "dos":
+		pt.Type = PT_DOS
+	case "gpt":
 		pt.Type = PT_GPT
+	case "":
+		// partition table type not specified, determine the default
+		switch options.PartitionTableType {
+		case PT_GPT, PT_DOS:
+			pt.Type = options.PartitionTableType
+		case PT_NONE:
+			// default to "gpt"
+			pt.Type = PT_GPT
+		default:
+			return nil, fmt.Errorf("%s invalid partition table type enum value: %d", errPrefix, options.PartitionTableType)
+		}
 	default:
-		return nil, fmt.Errorf("%s invalid partition table type enum value: %d", errPrefix, options.PartitionTableType)
+		return nil, fmt.Errorf("%s invalid partition table type: %s", errPrefix, customizations.Type)
 	}
 
 	// add any partition(s) that are needed for booting (like /boot/efi)
@@ -1266,7 +1275,9 @@ func NewCustomPartitionTable(customizations *blueprint.DiskCustomization, option
 				return nil, fmt.Errorf("%s %w", errPrefix, err)
 			}
 		case "btrfs":
-			addBtrfsPartition(pt, part)
+			if err := addBtrfsPartition(pt, part); err != nil {
+				return nil, fmt.Errorf("%s %w", errPrefix, err)
+			}
 		default:
 			return nil, fmt.Errorf("%s invalid partition type: %s", errPrefix, part.Type)
 		}
@@ -1282,6 +1293,16 @@ func NewCustomPartitionTable(customizations *blueprint.DiskCustomization, option
 
 	pt.relayout(customizations.MinSize)
 	pt.GenerateUUIDs(rng)
+
+	// One thing not caught by the customization validation is if a final "dos"
+	// partition table has more than 4 partitions. This is not possible to
+	// predict with customizations alone because it depends on the boot type
+	// (which comes from the image type) which controls automatic partition
+	// creation. We should therefore always check the final partition table for
+	// this rule.
+	if pt.Type == PT_DOS && len(pt.Partitions) > 4 {
+		return nil, fmt.Errorf("%s invalid partition table: \"dos\" partition table type only supports up to 4 partitions: got %d after creating the partition table with all necessary partitions", errPrefix, len(pt.Partitions))
+	}
 
 	return pt, nil
 }
@@ -1387,8 +1408,12 @@ func addLVMPartition(pt *PartitionTable, partition blueprint.PartitionCustomizat
 	}
 
 	// create partition for volume group
+	partType, err := getPartitionTypeIDfor(pt.Type, "lvm")
+	if err != nil {
+		return fmt.Errorf("error creating lvm partition %q: %w", vgname, err)
+	}
 	newpart := Partition{
-		Type:     LVMPartitionGUID,
+		Type:     partType,
 		Size:     partition.MinSize,
 		Bootable: false,
 		Payload:  newvg,
@@ -1397,7 +1422,7 @@ func addLVMPartition(pt *PartitionTable, partition blueprint.PartitionCustomizat
 	return nil
 }
 
-func addBtrfsPartition(pt *PartitionTable, partition blueprint.PartitionCustomization) {
+func addBtrfsPartition(pt *PartitionTable, partition blueprint.PartitionCustomization) error {
 	subvols := make([]BtrfsSubvolume, len(partition.Subvolumes))
 	for idx, subvol := range partition.Subvolumes {
 		newsubvol := BtrfsSubvolume{
@@ -1412,14 +1437,19 @@ func addBtrfsPartition(pt *PartitionTable, partition blueprint.PartitionCustomiz
 	}
 
 	// create partition for btrfs volume
+	partType, err := getPartitionTypeIDfor(pt.Type, "data")
+	if err != nil {
+		return fmt.Errorf("error creating btrfs partition: %w", err)
+	}
 	newpart := Partition{
-		Type:     FilesystemDataGUID,
+		Type:     partType,
 		Bootable: false,
 		Payload:  newvol,
 		Size:     partition.MinSize,
 	}
 
 	pt.Partitions = append(pt.Partitions, newpart)
+	return nil
 }
 
 // Determine if a boot partition is needed based on the customizations. A boot
