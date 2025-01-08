@@ -23,6 +23,9 @@ type AnacondaLiveInstaller struct {
 
 	ExtraBasePackages rpmmd.PackageSet
 
+	SquashfsCompression string
+	RootfsType          manifest.RootfsType
+
 	ISOLabel  string
 	Product   string
 	Variant   string
@@ -70,8 +73,13 @@ func (img *AnacondaLiveInstaller) InstantiateManifest(m *manifest.Manifest,
 
 	livePipeline.Checkpoint()
 
-	rootfsImagePipeline := manifest.NewISORootfsImg(buildPipeline, livePipeline)
-	rootfsImagePipeline.Size = 8 * datasizes.GibiByte
+	var rootfsImagePipeline *manifest.ISORootfsImg
+	switch img.RootfsType {
+	case manifest.SquashfsExt4Rootfs:
+		rootfsImagePipeline = manifest.NewISORootfsImg(buildPipeline, livePipeline)
+		rootfsImagePipeline.Size = 8 * datasizes.GibiByte
+	default:
+	}
 
 	bootTreePipeline := manifest.NewEFIBootTree(buildPipeline, img.Product, img.OSVersion)
 	bootTreePipeline.Platform = img.Platform
@@ -98,6 +106,8 @@ func (img *AnacondaLiveInstaller) InstantiateManifest(m *manifest.Manifest,
 
 	isoTreePipeline.KernelOpts = kernelOpts
 	isoTreePipeline.ISOLinux = isoLinuxEnabled
+
+	isoTreePipeline.SquashfsCompression = img.SquashfsCompression
 
 	isoPipeline := manifest.NewISO(buildPipeline, isoTreePipeline, img.ISOLabel)
 	isoPipeline.SetFilename(img.Filename)

@@ -258,7 +258,8 @@ func (t *ImageType) PartitionType() disk.PartitionTableType {
 func (t *ImageType) Manifest(bp *blueprint.Blueprint,
 	options distro.ImageOptions,
 	repos []rpmmd.RepoConfig,
-	seed int64) (*manifest.Manifest, []string, error) {
+	seedp *int64) (*manifest.Manifest, []string, error) {
+	seed := distro.SeedFrom(seedp)
 
 	if t.Workload != nil {
 		// For now, if an image type defines its own workload, don't allow any
