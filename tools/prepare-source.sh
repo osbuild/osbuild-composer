@@ -2,20 +2,15 @@
 
 set -eux
 
-GO_VERSION=1.21.11
-GO_BINARY=$(go env GOPATH)/bin/go$GO_VERSION
+# Since Go 1.21 the version is automatically maintained by the toolchain feature:
+go get go@1.22 toolchain@1.22.10
 
-# this is the official way to get a different version of golang
-# see https://go.dev/doc/manage-install
-go install golang.org/dl/go$GO_VERSION@latest
-$GO_BINARY download
+# Update go.mod and go.sum:
+go mod tidy
+go mod vendor
 
-# ensure that go.mod and go.sum are up to date, ...
-$GO_BINARY mod tidy
-$GO_BINARY mod vendor
+# Generate all sources (skip vendor/):
+go generate ./cmd/... ./internal/... ./pkg/...
 
-# ... and all code has been regenerated from its sources.
-$GO_BINARY generate ./...
-
-# ... the code is formatted correctly, ...
-$GO_BINARY fmt ./...
+# Generate all sources (skip vendor/):
+go fmt ./cmd/... ./internal/... ./pkg/...
