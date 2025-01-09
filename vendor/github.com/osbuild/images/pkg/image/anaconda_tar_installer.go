@@ -57,6 +57,7 @@ type AnacondaTarInstaller struct {
 	Kickstart        *kickstart.Options
 
 	SquashfsCompression string
+	RootfsType          manifest.RootfsType
 
 	ISOLabel  string
 	Product   string
@@ -153,8 +154,13 @@ func (img *AnacondaTarInstaller) InstantiateManifest(m *manifest.Manifest,
 
 	anacondaPipeline.Checkpoint()
 
-	rootfsImagePipeline := manifest.NewISORootfsImg(buildPipeline, anacondaPipeline)
-	rootfsImagePipeline.Size = 5 * datasizes.GibiByte
+	var rootfsImagePipeline *manifest.ISORootfsImg
+	switch img.RootfsType {
+	case manifest.SquashfsExt4Rootfs:
+		rootfsImagePipeline = manifest.NewISORootfsImg(buildPipeline, anacondaPipeline)
+		rootfsImagePipeline.Size = 5 * datasizes.GibiByte
+	default:
+	}
 
 	bootTreePipeline := manifest.NewEFIBootTree(buildPipeline, img.Product, img.OSVersion)
 	bootTreePipeline.Platform = img.Platform
