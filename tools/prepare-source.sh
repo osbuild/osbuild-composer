@@ -2,8 +2,8 @@
 
 set -eux
 
-# Since Go 1.21 the version is automatically maintained by the toolchain feature:
-go get go@1.22 toolchain@1.22.10
+# Pin Go and toolbox versions at a reasonable version
+go get go@1.22.0 toolchain@1.22.0
 
 # Update go.mod and go.sum:
 go mod tidy
