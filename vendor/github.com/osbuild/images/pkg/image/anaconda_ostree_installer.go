@@ -29,6 +29,7 @@ type AnacondaOSTreeInstaller struct {
 	Subscription *subscription.ImageOptions
 
 	SquashfsCompression string
+	RootfsType          manifest.RootfsType
 
 	ISOLabel  string
 	Product   string
@@ -101,8 +102,13 @@ func (img *AnacondaOSTreeInstaller) InstantiateManifest(m *manifest.Manifest,
 	anacondaPipeline.DisabledAnacondaModules = img.DisabledAnacondaModules
 	anacondaPipeline.AdditionalDrivers = img.AdditionalDrivers
 
-	rootfsImagePipeline := manifest.NewISORootfsImg(buildPipeline, anacondaPipeline)
-	rootfsImagePipeline.Size = 4 * datasizes.GibiByte
+	var rootfsImagePipeline *manifest.ISORootfsImg
+	switch img.RootfsType {
+	case manifest.SquashfsExt4Rootfs:
+		rootfsImagePipeline = manifest.NewISORootfsImg(buildPipeline, anacondaPipeline)
+		rootfsImagePipeline.Size = 4 * datasizes.GibiByte
+	default:
+	}
 
 	bootTreePipeline := manifest.NewEFIBootTree(buildPipeline, img.Product, img.OSVersion)
 	bootTreePipeline.Platform = img.Platform
