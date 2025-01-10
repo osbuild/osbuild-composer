@@ -40,7 +40,7 @@ const (
 	// rounded to the next MiB.
 	DefaultGrainBytes = uint64(1048576) // 1 MiB
 
-	// UUIDs
+	// UUIDs for GPT disks
 	BIOSBootPartitionGUID = "21686148-6449-6E6F-744E-656564454649"
 	BIOSBootPartitionUUID = "FAC7F1FB-3E8D-4137-A512-961DE09A5549"
 
@@ -61,31 +61,42 @@ const (
 	// Extended Boot Loader Partition
 	XBootLDRPartitionGUID = "BC13C2FF-59E6-4262-A352-B275FD6F7172"
 
-	// DosFat16B used for the ESP-System partition
-	DosFat16B = "06"
+	// Partition type IDs for DOS disks
+
+	// Partition type ID for BIOS boot partition on dos.
+	// Type ID is for 'empty'.
+	// TODO: drop this completely when we convert the bios BOOT space to a
+	// partitionless gap/offset.
+	BIOSBootPartitionDOSID = "00"
 
 	// Partition type ID for any native Linux filesystem on dos
-	DosLinuxTypeID = "83"
+	FilesystemLinuxDOSID = "83"
 
-	// Partition type ID for BIOS boot partition on dos
-	DosBIOSBootID = "ef02"
+	// FAT16BDOSID used for the ESP-System partition
+	FAT16BDOSID = "06"
+
+	// Partition type ID for LVM on dos
+	LVMPartitionDOSID = "8e"
 
 	// Partition type ID for ESP on dos
-	DosESPID = "ef00"
+	EFISystemPartitionDOSID = "ef"
 
 	// Partition type ID for swap
-	DosSwapID = "82"
+	SwapPartitionDOSID = "82"
+
+	// Partition type ID for PRep on dos
+	PRepPartitionDOSID = "41"
 )
 
 // pt type -> type -> ID mapping for convenience
 var idMap = map[PartitionTableType]map[string]string{
 	PT_DOS: {
-		"bios": DosBIOSBootID,
-		"boot": DosLinuxTypeID,
-		"data": DosLinuxTypeID,
-		"esp":  DosESPID,
-		"lvm":  DosLinuxTypeID,
-		"swap": DosSwapID,
+		"bios": BIOSBootPartitionDOSID,
+		"boot": FilesystemLinuxDOSID,
+		"data": FilesystemLinuxDOSID,
+		"esp":  EFISystemPartitionDOSID,
+		"lvm":  LVMPartitionDOSID,
+		"swap": SwapPartitionDOSID,
 	},
 	PT_GPT: {
 		"bios": BIOSBootPartitionGUID,

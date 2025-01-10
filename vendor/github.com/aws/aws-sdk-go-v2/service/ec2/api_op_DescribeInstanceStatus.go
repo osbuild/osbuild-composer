@@ -59,7 +59,7 @@ func (c *Client) DescribeInstanceStatus(ctx context.Context, params *DescribeIns
 
 type DescribeInstanceStatusInput struct {
 
-	// Checks whether you have the required permissions for the action, without
+	// Checks whether you have the required permissions for the operation, without
 	// actually making the request, and provides an error response. If you have the
 	// required permissions, the error response is DryRunOperation . Otherwise, it is
 	// UnauthorizedOperation .
@@ -100,6 +100,12 @@ type DescribeInstanceStatusInput struct {
 	//
 	//   - instance-status.status - The status of the instance ( ok | impaired |
 	//   initializing | insufficient-data | not-applicable ).
+	//
+	//   - operator.managed - A Boolean that indicates whether this is a managed
+	//   instance.
+	//
+	//   - operator.principal - The principal that manages the instance. Only valid for
+	//   managed instances, where managed is true .
 	//
 	//   - system-status.reachability - Filters on system status where the name is
 	//   reachability ( passed | failed | initializing | insufficient-data ).
@@ -199,6 +205,9 @@ func (c *Client) addOperationDescribeInstanceStatusMiddlewares(stack *middleware
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -233,6 +242,18 @@ func (c *Client) addOperationDescribeInstanceStatusMiddlewares(stack *middleware
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

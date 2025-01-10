@@ -207,7 +207,8 @@ func (t *imageType) PartitionType() disk.PartitionTableType {
 func (t *imageType) Manifest(bp *blueprint.Blueprint,
 	options distro.ImageOptions,
 	repos []rpmmd.RepoConfig,
-	seed int64) (*manifest.Manifest, []string, error) {
+	seedp *int64) (*manifest.Manifest, []string, error) {
+	seed := distro.SeedFrom(seedp)
 
 	warnings, err := t.checkOptions(bp, options)
 	if err != nil {
