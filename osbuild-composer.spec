@@ -158,12 +158,13 @@ install -m 0755 -vd                                                %{buildroot}%
 
 # Latest CentOS supports building all CentOS versions
 %if 0%{?centos} >= 10
-install -m 0644 -vp repositories/centos-*                          %{buildroot}%{_datadir}/osbuild-composer/repositories/
+install -m 0644 -vp vendor/github.com/osbuild/images/data/repositories/centos-*                          %{buildroot}%{_datadir}/osbuild-composer/repositories/
 
 %else
 # All other CentOS versions support building for the same version
-install -m 0644 -vp repositories/centos-%{centos}*                 %{buildroot}%{_datadir}/osbuild-composer/repositories/
-install -m 0644 -vp repositories/centos-stream-%{centos}*          %{buildroot}%{_datadir}/osbuild-composer/repositories/
+install -m 0644 -vp vendor/github.com/osbuild/images/data/repositories/centos-%{centos}*                 %{buildroot}%{_datadir}/osbuild-composer/repositories/
+# centos-stream-* are symlinks
+cp -a repositories/centos-stream-%{centos}*          %{buildroot}%{_datadir}/osbuild-composer/repositories/
 %endif
 
 %else
@@ -171,7 +172,7 @@ install -m 0644 -vp repositories/centos-stream-%{centos}*          %{buildroot}%
 %if 0%{?rhel}
 # RHEL 10 supports building all RHEL versions
 %if 0%{?rhel} >= 10
-for REPO_FILE in $(ls repositories/rhel-* | grep -v 'no-aux-key'); do
+for REPO_FILE in $(ls vendor/github.com/osbuild/images/data/repositories/rhel-* | grep -v 'no-aux-key'); do
     install -m 0644 -vp ${REPO_FILE}                               %{buildroot}%{_datadir}/osbuild-composer/repositories/$(basename ${REPO_FILE})
 done
 
@@ -182,13 +183,13 @@ done
 
 %else
 # All other RHEL versions support building for the same version
-for REPO_FILE in $(ls repositories/rhel-%{rhel}* | grep -v 'no-aux-key'); do
+for REPO_FILE in $(ls vendor/github.com/osbuild/images/data/repositories/rhel-%{rhel}* | grep -v 'no-aux-key'); do
     install -m 0644 -vp ${REPO_FILE}                               %{buildroot}%{_datadir}/osbuild-composer/repositories/$(basename ${REPO_FILE})
 done
 
 # RHEL 9 supports building also for RHEL 8
 %if 0%{?rhel} == 9
-for REPO_FILE in $(ls repositories/rhel-8* | grep -v 'no-aux-key'); do
+for REPO_FILE in $(ls vendor/github.com/osbuild/images/data/repositories/rhel-8* | grep -v 'no-aux-key'); do
     install -m 0644 -vp ${REPO_FILE}                               %{buildroot}%{_datadir}/osbuild-composer/repositories/$(basename ${REPO_FILE})
 done
 %endif
@@ -199,7 +200,7 @@ done
 
 # Fedora can build for all included fedora releases
 %if 0%{?fedora}
-install -m 0644 -vp repositories/fedora-*                          %{buildroot}%{_datadir}/osbuild-composer/repositories/
+install -m 0644 -vp vendor/github.com/osbuild/images/data/repositories/fedora-*                          %{buildroot}%{_datadir}/osbuild-composer/repositories/
 %endif
 
 install -m 0755 -vd                                                %{buildroot}%{_unitdir}
