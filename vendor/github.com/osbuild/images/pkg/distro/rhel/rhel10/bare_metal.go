@@ -40,7 +40,7 @@ func mkImageInstallerImgType() *rhel.ImageType {
 		},
 		rhel.ImageInstallerImage,
 		[]string{"build"},
-		[]string{"anaconda-tree", "rootfs-image", "efiboot-tree", "os", "bootiso-tree", "bootiso"},
+		[]string{"anaconda-tree", "efiboot-tree", "os", "bootiso-tree", "bootiso"},
 		[]string{"bootiso"},
 	)
 
