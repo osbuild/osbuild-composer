@@ -37,6 +37,9 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
 )
 
+// How long to wait for a depsolve job to finish
+const depsolveTimeoutMin = 5
+
 // Server represents the state of the cloud Server
 type Server struct {
 	workers *worker.Server
@@ -447,8 +450,7 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 
 func serializeManifest(ctx context.Context, manifestSource *manifest.Manifest, workers *worker.Server, depsolveJobID, containerResolveJobID, ostreeResolveJobID, manifestJobID uuid.UUID, seed int64) {
 	// prepared to become a config variable
-	const depsolveTimeout = 5
-	ctx, cancel := context.WithTimeout(ctx, time.Minute*depsolveTimeout)
+	ctx, cancel := context.WithTimeout(ctx, time.Minute*depsolveTimeoutMin)
 	defer cancel()
 
 	jobResult := &worker.ManifestJobByIDResult{
@@ -515,7 +517,7 @@ func serializeManifest(ctx context.Context, manifestSource *manifest.Manifest, w
 			select {
 			case <-ctx.Done():
 				logWithId.Warning(fmt.Sprintf("Manifest job dependencies took longer than %d minutes to finish,"+
-					" or the server is shutting down, returning to avoid dangling routines", depsolveTimeout))
+					" or the server is shutting down, returning to avoid dangling routines", depsolveTimeoutMin))
 
 				jobResult.JobError = clienterrors.New(clienterrors.ErrorDepsolveTimeout,
 					"Timeout while waiting for package dependency resolution",
