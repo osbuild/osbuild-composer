@@ -731,35 +731,35 @@ func (pt *PartitionTable) ensureLVM() error {
 
 	if _, ok := parent.(*LVMLogicalVolume); ok {
 		return nil
-	} else if part, ok := parent.(*Partition); ok {
-		filesystem := part.Payload
-
-		vg := &LVMVolumeGroup{
-			Name:        "rootvg",
-			Description: "created via lvm2 and osbuild",
-		}
-
-		// create root logical volume on the new volume group with the same
-		// size and filesystem as the previous root partition
-		_, err := vg.CreateLogicalVolume("rootlv", part.Size, filesystem)
-		if err != nil {
-			panic(fmt.Sprintf("Could not create LV: %v", err))
-		}
-
-		// replace the top-level partition payload with the new volume group
-		part.Payload = vg
-
-		// reset the vg partition size - it will be grown later
-		part.Size = 0
-
-		if pt.Type == PT_GPT {
-			part.Type = LVMPartitionGUID
-		} else {
-			part.Type = "8e"
-		}
-
-	} else {
+	}
+	part, ok := parent.(*Partition)
+	if !ok {
 		return fmt.Errorf("Unsupported parent for LVM")
+	}
+	filesystem := part.Payload
+
+	vg := &LVMVolumeGroup{
+		Name:        "rootvg",
+		Description: "created via lvm2 and osbuild",
+	}
+
+	// create root logical volume on the new volume group with the same
+	// size and filesystem as the previous root partition
+	_, err := vg.CreateLogicalVolume("rootlv", part.Size, filesystem)
+	if err != nil {
+		panic(fmt.Sprintf("Could not create LV: %v", err))
+	}
+
+	// replace the top-level partition payload with the new volume group
+	part.Payload = vg
+
+	// reset the vg partition size - it will be grown later
+	part.Size = 0
+
+	if pt.Type == PT_GPT {
+		part.Type = LVMPartitionGUID
+	} else {
+		part.Type = LVMPartitionDOSID
 	}
 
 	return nil
@@ -789,43 +789,43 @@ func (pt *PartitionTable) ensureBtrfs() error {
 
 	if _, ok := parent.(*Btrfs); ok {
 		return nil
-	} else if part, ok := parent.(*Partition); ok {
-		rootMountable, ok := rootPath[0].(Mountable)
-		if !ok {
-			return fmt.Errorf("root entity is not mountable: %T, this is a violation of entityPath() contract", rootPath[0])
-		}
-
-		opts, err := rootMountable.GetFSTabOptions()
-		if err != nil {
-			return err
-		}
-
-		btrfs := &Btrfs{
-			Label: "root",
-			Subvolumes: []BtrfsSubvolume{
-				{
-					Name:       "root",
-					Mountpoint: "/",
-					Compress:   DefaultBtrfsCompression,
-					ReadOnly:   opts.ReadOnly(),
-					Size:       part.Size,
-				},
-			},
-		}
-
-		// replace the top-level partition payload with a new btrfs filesystem
-		part.Payload = btrfs
-
-		// reset the btrfs partition size - it will be grown later
-		part.Size = 0
-
-		part.Type, err = getPartitionTypeIDfor(pt.Type, "data")
-		if err != nil {
-			return fmt.Errorf("error converting partition table to btrfs: %w", err)
-		}
-
-	} else {
+	}
+	part, ok := parent.(*Partition)
+	if !ok {
 		return fmt.Errorf("unsupported parent for btrfs: %T", parent)
+	}
+	rootMountable, ok := rootPath[0].(Mountable)
+	if !ok {
+		return fmt.Errorf("root entity is not mountable: %T, this is a violation of entityPath() contract", rootPath[0])
+	}
+
+	opts, err := rootMountable.GetFSTabOptions()
+	if err != nil {
+		return err
+	}
+
+	btrfs := &Btrfs{
+		Label: "root",
+		Subvolumes: []BtrfsSubvolume{
+			{
+				Name:       "root",
+				Mountpoint: "/",
+				Compress:   DefaultBtrfsCompression,
+				ReadOnly:   opts.ReadOnly(),
+				Size:       part.Size,
+			},
+		},
+	}
+
+	// replace the top-level partition payload with a new btrfs filesystem
+	part.Payload = btrfs
+
+	// reset the btrfs partition size - it will be grown later
+	part.Size = 0
+
+	part.Type, err = getPartitionTypeIDfor(pt.Type, "data")
+	if err != nil {
+		return fmt.Errorf("error converting partition table to btrfs: %w", err)
 	}
 
 	return nil
@@ -1232,15 +1232,24 @@ func NewCustomPartitionTable(customizations *blueprint.DiskCustomization, option
 
 	pt := &PartitionTable{}
 
-	// TODO: Handle partition table type in customizations
-	switch options.PartitionTableType {
-	case PT_GPT, PT_DOS:
-		pt.Type = options.PartitionTableType
-	case PT_NONE:
-		// default to "gpt"
+	switch customizations.Type {
+	case "dos":
+		pt.Type = PT_DOS
+	case "gpt":
 		pt.Type = PT_GPT
+	case "":
+		// partition table type not specified, determine the default
+		switch options.PartitionTableType {
+		case PT_GPT, PT_DOS:
+			pt.Type = options.PartitionTableType
+		case PT_NONE:
+			// default to "gpt"
+			pt.Type = PT_GPT
+		default:
+			return nil, fmt.Errorf("%s invalid partition table type enum value: %d", errPrefix, options.PartitionTableType)
+		}
 	default:
-		return nil, fmt.Errorf("%s invalid partition table type enum value: %d", errPrefix, options.PartitionTableType)
+		return nil, fmt.Errorf("%s invalid partition table type: %s", errPrefix, customizations.Type)
 	}
 
 	// add any partition(s) that are needed for booting (like /boot/efi)
@@ -1266,7 +1275,9 @@ func NewCustomPartitionTable(customizations *blueprint.DiskCustomization, option
 				return nil, fmt.Errorf("%s %w", errPrefix, err)
 			}
 		case "btrfs":
-			addBtrfsPartition(pt, part)
+			if err := addBtrfsPartition(pt, part); err != nil {
+				return nil, fmt.Errorf("%s %w", errPrefix, err)
+			}
 		default:
 			return nil, fmt.Errorf("%s invalid partition type: %s", errPrefix, part.Type)
 		}
@@ -1282,6 +1293,16 @@ func NewCustomPartitionTable(customizations *blueprint.DiskCustomization, option
 
 	pt.relayout(customizations.MinSize)
 	pt.GenerateUUIDs(rng)
+
+	// One thing not caught by the customization validation is if a final "dos"
+	// partition table has more than 4 partitions. This is not possible to
+	// predict with customizations alone because it depends on the boot type
+	// (which comes from the image type) which controls automatic partition
+	// creation. We should therefore always check the final partition table for
+	// this rule.
+	if pt.Type == PT_DOS && len(pt.Partitions) > 4 {
+		return nil, fmt.Errorf("%s invalid partition table: \"dos\" partition table type only supports up to 4 partitions: got %d after creating the partition table with all necessary partitions", errPrefix, len(pt.Partitions))
+	}
 
 	return pt, nil
 }
@@ -1387,8 +1408,12 @@ func addLVMPartition(pt *PartitionTable, partition blueprint.PartitionCustomizat
 	}
 
 	// create partition for volume group
+	partType, err := getPartitionTypeIDfor(pt.Type, "lvm")
+	if err != nil {
+		return fmt.Errorf("error creating lvm partition %q: %w", vgname, err)
+	}
 	newpart := Partition{
-		Type:     LVMPartitionGUID,
+		Type:     partType,
 		Size:     partition.MinSize,
 		Bootable: false,
 		Payload:  newvg,
@@ -1397,7 +1422,7 @@ func addLVMPartition(pt *PartitionTable, partition blueprint.PartitionCustomizat
 	return nil
 }
 
-func addBtrfsPartition(pt *PartitionTable, partition blueprint.PartitionCustomization) {
+func addBtrfsPartition(pt *PartitionTable, partition blueprint.PartitionCustomization) error {
 	subvols := make([]BtrfsSubvolume, len(partition.Subvolumes))
 	for idx, subvol := range partition.Subvolumes {
 		newsubvol := BtrfsSubvolume{
@@ -1412,14 +1437,19 @@ func addBtrfsPartition(pt *PartitionTable, partition blueprint.PartitionCustomiz
 	}
 
 	// create partition for btrfs volume
+	partType, err := getPartitionTypeIDfor(pt.Type, "data")
+	if err != nil {
+		return fmt.Errorf("error creating btrfs partition: %w", err)
+	}
 	newpart := Partition{
-		Type:     FilesystemDataGUID,
+		Type:     partType,
 		Bootable: false,
 		Payload:  newvol,
 		Size:     partition.MinSize,
 	}
 
 	pt.Partitions = append(pt.Partitions, newpart)
+	return nil
 }
 
 // Determine if a boot partition is needed based on the customizations. A boot

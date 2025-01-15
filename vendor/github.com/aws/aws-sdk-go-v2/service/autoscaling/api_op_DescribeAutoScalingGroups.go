@@ -25,8 +25,10 @@ import (
 // information for all Auto Scaling groups.
 //
 // This operation also returns information about instances in Auto Scaling groups.
-// To retrieve information about the instances in a warm pool, you must call the DescribeWarmPool
+// To retrieve information about the instances in a warm pool, you must call the [DescribeWarmPool]
 // API.
+//
+// [DescribeWarmPool]: https://docs.aws.amazon.com/autoscaling/ec2/APIReference/API_DescribeWarmPool.html
 func (c *Client) DescribeAutoScalingGroups(ctx context.Context, params *DescribeAutoScalingGroupsInput, optFns ...func(*Options)) (*DescribeAutoScalingGroupsOutput, error) {
 	if params == nil {
 		params = &DescribeAutoScalingGroupsInput{}
@@ -126,6 +128,9 @@ func (c *Client) addOperationDescribeAutoScalingGroupsMiddlewares(stack *middlew
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -160,6 +165,18 @@ func (c *Client) addOperationDescribeAutoScalingGroupsMiddlewares(stack *middlew
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil
@@ -365,6 +382,9 @@ func groupExistsStateRetryable(ctx context.Context, input *DescribeAutoScalingGr
 		}
 	}
 
+	if err != nil {
+		return false, err
+	}
 	return true, nil
 }
 
@@ -569,6 +589,9 @@ func groupInServiceStateRetryable(ctx context.Context, input *DescribeAutoScalin
 		}
 	}
 
+	if err != nil {
+		return false, err
+	}
 	return true, nil
 }
 
@@ -773,6 +796,9 @@ func groupNotExistsStateRetryable(ctx context.Context, input *DescribeAutoScalin
 		}
 	}
 
+	if err != nil {
+		return false, err
+	}
 	return true, nil
 }
 
