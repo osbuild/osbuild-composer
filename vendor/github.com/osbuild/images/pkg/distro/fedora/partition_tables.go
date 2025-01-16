@@ -112,7 +112,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 		Partitions: []disk.Partition{
 			{
 				Size:     4 * datasizes.MebiByte,
-				Type:     "41",
+				Type:     disk.PRepPartitionDOSID,
 				Bootable: true,
 			},
 			{
@@ -224,7 +224,7 @@ var minimalrawPartitionTables = distro.BasePartitionTableMap{
 		Partitions: []disk.Partition{
 			{
 				Size:     200 * datasizes.MebiByte,
-				Type:     disk.DosFat16B,
+				Type:     disk.FAT16BDOSID,
 				Bootable: true,
 				Payload: &disk.Filesystem{
 					Type:         "vfat",
@@ -238,7 +238,7 @@ var minimalrawPartitionTables = distro.BasePartitionTableMap{
 			},
 			{
 				Size: 1 * datasizes.GibiByte,
-				Type: disk.DosLinuxTypeID,
+				Type: disk.FilesystemLinuxDOSID,
 				Payload: &disk.Filesystem{
 					Type:         "ext4",
 					Mountpoint:   "/boot",
@@ -250,7 +250,7 @@ var minimalrawPartitionTables = distro.BasePartitionTableMap{
 			},
 			{
 				Size: 2 * datasizes.GibiByte,
-				Type: disk.DosLinuxTypeID,
+				Type: disk.FilesystemLinuxDOSID,
 				Payload: &disk.Filesystem{
 					Type:         "ext4",
 					Label:        "root",
@@ -319,7 +319,7 @@ var iotBasePartitionTables = distro.BasePartitionTableMap{
 		Partitions: []disk.Partition{
 			{
 				Size:     501 * datasizes.MebiByte,
-				Type:     disk.DosFat16B,
+				Type:     disk.FAT16BDOSID,
 				Bootable: true,
 				Payload: &disk.Filesystem{
 					Type:         "vfat",
@@ -333,7 +333,7 @@ var iotBasePartitionTables = distro.BasePartitionTableMap{
 			},
 			{
 				Size: 1 * datasizes.GibiByte,
-				Type: disk.DosLinuxTypeID,
+				Type: disk.FilesystemLinuxDOSID,
 				Payload: &disk.Filesystem{
 					Type:         "ext4",
 					Mountpoint:   "/boot",
@@ -345,7 +345,7 @@ var iotBasePartitionTables = distro.BasePartitionTableMap{
 			},
 			{
 				Size: 2569 * datasizes.MebiByte,
-				Type: disk.DosLinuxTypeID,
+				Type: disk.FilesystemLinuxDOSID,
 				Payload: &disk.Filesystem{
 					Type:         "ext4",
 					Label:        "root",

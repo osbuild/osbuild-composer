@@ -496,6 +496,9 @@ func EdgeInstallerImage(workload workload.Workload,
 	img.Kickstart.Timezone, _ = customizations.GetTimezoneSettings()
 
 	img.SquashfsCompression = "xz"
+	if t.Arch().Distro().Releasever() == "10" {
+		img.RootfsType = manifest.SquashfsRootfs
+	}
 
 	installerConfig, err := t.getDefaultInstallerConfig()
 	if err != nil {
@@ -714,6 +717,9 @@ func ImageInstallerImage(workload workload.Workload,
 	img.AdditionalAnacondaModules = append(img.AdditionalAnacondaModules, anaconda.ModuleUsers)
 
 	img.SquashfsCompression = "xz"
+	if t.Arch().Distro().Releasever() == "10" {
+		img.RootfsType = manifest.SquashfsRootfs
+	}
 
 	// put the kickstart file in the root of the iso
 	img.ISORootKickstart = true
