@@ -463,7 +463,7 @@ azure.sh:
   extends: .integration
   rules:
     # Run only on x86_64
-    - !reference [.upstream_rules_x86_64, rules]
+    # - !reference [.upstream_rules_x86_64, rules]
     - !reference [.nightly_rules_x86_64, rules]
     - !reference [.ga_rules_x86_64, rules]
   variables:
@@ -473,7 +473,7 @@ azure.sh_hyperv_gen2:
   extends: .integration
   rules:
     # Run only on x86_64
-    - !reference [.upstream_rules_x86_64, rules]
+    # - !reference [.upstream_rules_x86_64, rules]
     - !reference [.nightly_rules_x86_64, rules]
     - !reference [.ga_rules_x86_64, rules]
   variables:
