@@ -108,6 +108,18 @@ func newV2Server(t *testing.T, dir string, depsolveChannels []string, enableJWT 
 			}
 			dJR := &worker.DepsolveJobResult{
 				PackageSpecs: map[string][]rpmmd.PackageSpec{
+					// Used when depsolving a list of packages outside the manifest
+					// Including it in other responses currently doesn't cause a problem
+					"depsolve": {
+						{
+							Name:     "dep-package1",
+							Version:  "1.33",
+							Release:  "2.fc30",
+							Arch:     "x86_64",
+							Checksum: "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893",
+						},
+					},
+					// Used when depsolving a manifest
 					"build": {
 						{
 							Name:     "pkg1",
@@ -1545,4 +1557,136 @@ func TestImageFromCompose(t *testing.T) {
 			"region": "eu-central-2"
 		}
 	}`, imgJobId, imgJobId))
+}
+
+func TestDepsolveBlueprint(t *testing.T) {
+	srv, _, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false, false)
+	defer cancel()
+
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST",
+		"/api/image-builder-composer/v2/depsolve/blueprint", fmt.Sprintf(`
+		{
+			"blueprint": {
+				"name": "deptest1",
+				"version": "0.0.1",
+				"distro": "%[1]s",
+				"packages": [
+					{ "name": "dep-package", "version": "*" }
+			]},
+			"distribution": "%[1]s",
+			"architecture": "%[2]s"
+		}`, test_distro.TestDistro1Name, test_distro.TestArchName),
+		http.StatusOK,
+		`{
+			"packages": [
+                {
+                    "name": "dep-package1",
+                    "type": "rpm",
+                    "version": "1.33",
+                    "release": "2.fc30",
+                    "arch": "x86_64",
+                    "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893"
+				}
+			]
+		}`)
+}
+
+func TestDepsolveDistroErrors(t *testing.T) {
+	srv, _, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false, false)
+	defer cancel()
+
+	// matching distros, but not supported
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST",
+		"/api/image-builder-composer/v2/depsolve/blueprint", fmt.Sprintf(`
+		{
+			"blueprint": {
+				"name": "deptest1",
+				"version": "0.0.1",
+				"distro": "bart",
+				"packages": [
+					{ "name": "dep-package", "version": "*" }
+			]},
+			"distribution": "bart",
+			"architecture": "%[2]s"
+		}`, test_distro.TestDistro1Name, test_distro.TestArchName),
+		http.StatusBadRequest, `
+		{
+			"href": "/api/image-builder-composer/v2/errors/4",
+			"id": "4",
+			"kind": "Error",
+			"code": "IMAGE-BUILDER-COMPOSER-4",
+			"reason": "Unsupported distribution"
+		}`, "operation_id", "details")
+
+	// Mismatched distros
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST",
+		"/api/image-builder-composer/v2/depsolve/blueprint", fmt.Sprintf(`
+		{
+			"blueprint": {
+				"name": "deptest1",
+				"version": "0.0.1",
+				"distro": "bart",
+				"packages": [
+					{ "name": "dep-package", "version": "*" }
+			]},
+			"distribution": "%[1]s",
+			"architecture": "%[2]s"
+		}`, test_distro.TestDistro1Name, test_distro.TestArchName),
+		http.StatusBadRequest, `
+		{
+			"href": "/api/image-builder-composer/v2/errors/40",
+			"id": "40",
+			"kind": "Error",
+			"code": "IMAGE-BUILDER-COMPOSER-40",
+			"reason": "Invalid request, Blueprint and Cloud API request Distribution must match."
+		}`, "operation_id", "details")
+
+	// Bad distro in request, none in blueprint
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST",
+		"/api/image-builder-composer/v2/depsolve/blueprint", fmt.Sprintf(`
+		{
+			"blueprint": {
+				"name": "deptest1",
+				"version": "0.0.1",
+				"packages": [
+					{ "name": "dep-package", "version": "*" }
+			]},
+			"distribution": "bart",
+			"architecture": "%[2]s"
+		}`, test_distro.TestDistro1Name, test_distro.TestArchName),
+		http.StatusBadRequest, `
+		{
+			"href": "/api/image-builder-composer/v2/errors/4",
+			"id": "4",
+			"kind": "Error",
+			"code": "IMAGE-BUILDER-COMPOSER-4",
+			"reason": "Unsupported distribution"
+		}`, "operation_id", "details")
+}
+
+func TestDepsolveArchErrors(t *testing.T) {
+	srv, _, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false, false)
+	defer cancel()
+
+	// Unsupported architecture
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST",
+		"/api/image-builder-composer/v2/depsolve/blueprint", fmt.Sprintf(`
+		{
+			"blueprint": {
+				"name": "deptest1",
+				"version": "0.0.1",
+				"packages": [
+					{ "name": "dep-package", "version": "*" }
+			]},
+			"distribution": "%[1]s",
+			"architecture": "MOS6502",
+		}`, test_distro.TestDistro1Name),
+		http.StatusBadRequest, `
+		{
+			"href": "/api/image-builder-composer/v2/errors/30",
+			"id": "30",
+			"kind": "Error",
+			"code": "IMAGE-BUILDER-COMPOSER-30",
+			"reason": "Request could not be validated"
+		}`, "operation_id", "details")
 }
