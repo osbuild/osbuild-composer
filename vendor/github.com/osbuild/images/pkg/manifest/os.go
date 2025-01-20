@@ -376,25 +376,25 @@ func (p *OS) getContainerSpecs() []container.Spec {
 	return p.containerSpecs
 }
 
-func (p *OS) serializeStart(packages []rpmmd.PackageSpec, containers []container.Spec, commits []ostree.CommitSpec, rpmRepos []rpmmd.RepoConfig) {
+func (p *OS) serializeStart(inputs Inputs) {
 	if len(p.packageSpecs) > 0 {
 		panic("double call to serializeStart()")
 	}
 
-	p.packageSpecs = packages
-	p.containerSpecs = containers
-	if len(commits) > 0 {
-		if len(commits) > 1 {
+	p.packageSpecs = inputs.Depsolved.Packages
+	p.containerSpecs = inputs.Containers
+	if len(inputs.Commits) > 0 {
+		if len(inputs.Commits) > 1 {
 			panic("pipeline supports at most one ostree commit")
 		}
-		p.ostreeParentSpec = &commits[0]
+		p.ostreeParentSpec = &inputs.Commits[0]
 	}
 
 	if p.KernelName != "" {
 		p.kernelVer = rpmmd.GetVerStrFromPackageSpecListPanic(p.packageSpecs, p.KernelName)
 	}
 
-	p.repos = append(p.repos, rpmRepos...)
+	p.repos = append(p.repos, inputs.Depsolved.Repos...)
 }
 
 func (p *OS) serializeEnd() {

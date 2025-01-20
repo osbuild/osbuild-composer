@@ -22,7 +22,8 @@ type AnacondaContainerInstaller struct {
 	Platform          platform.Platform
 	ExtraBasePackages rpmmd.PackageSet
 
-	SquashfsCompression string
+	RootfsCompression string
+	RootfsType        manifest.RootfsType
 
 	ISOLabel  string
 	Product   string
@@ -98,8 +99,13 @@ func (img *AnacondaContainerInstaller) InstantiateManifest(m *manifest.Manifest,
 	}
 	anacondaPipeline.AdditionalDrivers = img.AdditionalDrivers
 
-	rootfsImagePipeline := manifest.NewISORootfsImg(buildPipeline, anacondaPipeline)
-	rootfsImagePipeline.Size = 4 * datasizes.GibiByte
+	var rootfsImagePipeline *manifest.ISORootfsImg
+	switch img.RootfsType {
+	case manifest.SquashfsExt4Rootfs:
+		rootfsImagePipeline = manifest.NewISORootfsImg(buildPipeline, anacondaPipeline)
+		rootfsImagePipeline.Size = 4 * datasizes.GibiByte
+	default:
+	}
 
 	bootTreePipeline := manifest.NewEFIBootTree(buildPipeline, img.Product, img.OSVersion)
 	bootTreePipeline.Platform = img.Platform
@@ -126,7 +132,8 @@ func (img *AnacondaContainerInstaller) InstantiateManifest(m *manifest.Manifest,
 	isoTreePipeline.Release = img.Release
 	isoTreePipeline.Kickstart = img.Kickstart
 
-	isoTreePipeline.SquashfsCompression = img.SquashfsCompression
+	isoTreePipeline.RootfsCompression = img.RootfsCompression
+	isoTreePipeline.RootfsType = img.RootfsType
 
 	// For ostree installers, always put the kickstart file in the root of the ISO
 	isoTreePipeline.PayloadPath = "/container"

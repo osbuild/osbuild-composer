@@ -403,6 +403,10 @@ func liveInstallerImage(workload workload.Workload,
 
 	img.Filename = t.Filename()
 
+	if common.VersionGreaterThanOrEqual(img.OSVersion, VERSION_ROOTFS_SQUASHFS) {
+		img.RootfsType = manifest.SquashfsRootfs
+	}
+
 	return img, nil
 }
 
@@ -456,8 +460,6 @@ func imageInstallerImage(workload workload.Workload,
 
 	img.ExtraBasePackages = packageSets[installerPkgsKey]
 
-	img.SquashfsCompression = "lz4"
-
 	d := t.arch.distro
 
 	img.Product = d.product
@@ -476,6 +478,11 @@ func imageInstallerImage(workload workload.Workload,
 	}
 
 	img.Filename = t.Filename()
+
+	img.RootfsCompression = "lz4"
+	if common.VersionGreaterThanOrEqual(img.OSVersion, VERSION_ROOTFS_SQUASHFS) {
+		img.RootfsType = manifest.SquashfsRootfs
+	}
 
 	return img, nil
 }
@@ -660,8 +667,6 @@ func iotInstallerImage(workload workload.Workload,
 		anaconda.ModuleUsers,
 	}...)
 
-	img.SquashfsCompression = "lz4"
-
 	img.Product = d.product
 	img.Variant = "IoT"
 	img.OSVersion = d.osVersion
@@ -674,6 +679,11 @@ func iotInstallerImage(workload workload.Workload,
 	}
 
 	img.Filename = t.Filename()
+
+	img.RootfsCompression = "lz4"
+	if common.VersionGreaterThanOrEqual(img.OSVersion, VERSION_ROOTFS_SQUASHFS) {
+		img.RootfsType = manifest.SquashfsRootfs
+	}
 
 	return img, nil
 }

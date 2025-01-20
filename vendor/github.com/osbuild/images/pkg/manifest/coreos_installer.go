@@ -4,11 +4,9 @@ import (
 	"fmt"
 
 	"github.com/osbuild/images/pkg/arch"
-	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/customizations/fdo"
 	"github.com/osbuild/images/pkg/customizations/ignition"
 	"github.com/osbuild/images/pkg/osbuild"
-	"github.com/osbuild/images/pkg/ostree"
 	"github.com/osbuild/images/pkg/platform"
 	"github.com/osbuild/images/pkg/rpmmd"
 )
@@ -136,15 +134,15 @@ func (p *CoreOSInstaller) getPackageSpecs() []rpmmd.PackageSpec {
 	return p.packageSpecs
 }
 
-func (p *CoreOSInstaller) serializeStart(packages []rpmmd.PackageSpec, _ []container.Spec, _ []ostree.CommitSpec, rpmRepos []rpmmd.RepoConfig) {
+func (p *CoreOSInstaller) serializeStart(inputs Inputs) {
 	if len(p.packageSpecs) > 0 {
 		panic("double call to serializeStart()")
 	}
-	p.packageSpecs = packages
+	p.packageSpecs = inputs.Depsolved.Packages
 	if p.kernelName != "" {
 		p.kernelVer = rpmmd.GetVerStrFromPackageSpecListPanic(p.packageSpecs, p.kernelName)
 	}
-	p.repos = append(p.repos, rpmRepos...)
+	p.repos = append(p.repos, inputs.Depsolved.Repos...)
 }
 
 func (p *CoreOSInstaller) getInline() []string {

@@ -31,6 +31,9 @@ func (c *Client) CreateVerifiedAccessInstance(ctx context.Context, params *Creat
 
 type CreateVerifiedAccessInstanceInput struct {
 
+	// The custom subdomain.
+	CidrEndpointsCustomSubDomain *string
+
 	// A unique, case-sensitive token that you provide to ensure idempotency of your
 	// modification request. For more information, see [Ensuring idempotency].
 	//
@@ -110,6 +113,9 @@ func (c *Client) addOperationCreateVerifiedAccessInstanceMiddlewares(stack *midd
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -147,6 +153,18 @@ func (c *Client) addOperationCreateVerifiedAccessInstanceMiddlewares(stack *midd
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil
