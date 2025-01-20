@@ -93,6 +93,7 @@ const depsolveTestResponse = `
           "epoch": 7,
           "version": "3.0.3",
           "release": "1.fc30",
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e",
           "arch": "x86_64",
           "check_gpg": true,
           "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720"
@@ -102,6 +103,7 @@ const depsolveTestResponse = `
           "epoch": 0,
           "version": "1.33",
           "release": "2.fc30",
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e",
           "arch": "x86_64",
           "check_gpg": true,
           "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893"
@@ -111,6 +113,7 @@ const depsolveTestResponse = `
           "epoch": 0,
           "version": "2.9",
           "release": "1.fc30",
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e",
           "arch": "x86_64",
           "check_gpg": true,
           "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2"
@@ -1404,8 +1407,9 @@ const modulesInfoResponse = `
           "version": "3.0.3",
           "release": "1.fc30",
           "arch": "x86_64",
+          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720",
           "check_gpg": true,
-          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720"
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e"
         },
         {
           "name": "dep-package1",
@@ -1413,8 +1417,9 @@ const modulesInfoResponse = `
           "version": "1.33",
           "release": "2.fc30",
           "arch": "x86_64",
+          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893",
           "check_gpg": true,
-          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893"
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e"
         },
         {
           "name": "dep-package2",
@@ -1422,8 +1427,9 @@ const modulesInfoResponse = `
           "version": "2.9",
           "release": "1.fc30",
           "arch": "x86_64",
+          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2",
           "check_gpg": true,
-          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2"
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e"
         }
       ]
     },
@@ -1474,8 +1480,9 @@ const modulesInfoResponse = `
           "version": "3.0.3",
           "release": "1.fc30",
           "arch": "x86_64",
+          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720",
           "check_gpg": true,
-          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720"
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e"
         },
         {
           "name": "dep-package1",
@@ -1483,8 +1490,9 @@ const modulesInfoResponse = `
           "version": "1.33",
           "release": "2.fc30",
           "arch": "x86_64",
+          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893",
           "check_gpg": true,
-          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893"
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e"
         },
         {
           "name": "dep-package2",
@@ -1492,8 +1500,9 @@ const modulesInfoResponse = `
           "version": "2.9",
           "release": "1.fc30",
           "arch": "x86_64",
+          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2",
           "check_gpg": true,
-          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2"
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e"
         }
       ]
     },
@@ -1544,8 +1553,9 @@ const modulesInfoResponse = `
           "version": "3.0.3",
           "release": "1.fc30",
           "arch": "x86_64",
+          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720",
           "check_gpg": true,
-          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720"
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e"
         },
         {
           "name": "dep-package1",
@@ -1553,8 +1563,9 @@ const modulesInfoResponse = `
           "version": "1.33",
           "release": "2.fc30",
           "arch": "x86_64",
+          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893",
           "check_gpg": true,
-          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893"
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e"
         },
         {
           "name": "dep-package2",
@@ -1562,8 +1573,9 @@ const modulesInfoResponse = `
           "version": "2.9",
           "release": "1.fc30",
           "arch": "x86_64",
+          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2",
           "check_gpg": true,
-          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2"
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e"
         }
       ]
     },
@@ -1614,8 +1626,9 @@ const modulesInfoResponse = `
           "version": "3.0.3",
           "release": "1.fc30",
           "arch": "x86_64",
+          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720",
           "check_gpg": true,
-          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720"
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e"
         },
         {
           "name": "dep-package1",
@@ -1623,8 +1636,9 @@ const modulesInfoResponse = `
           "version": "1.33",
           "release": "2.fc30",
           "arch": "x86_64",
+          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893",
           "check_gpg": true,
-          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893"
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e"
         },
         {
           "name": "dep-package2",
@@ -1632,8 +1646,9 @@ const modulesInfoResponse = `
           "version": "2.9",
           "release": "1.fc30",
           "arch": "x86_64",
+          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2",
           "check_gpg": true,
-          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2"
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e"
         }
       ]
     },
@@ -1684,8 +1699,9 @@ const modulesInfoResponse = `
           "version": "3.0.3",
           "release": "1.fc30",
           "arch": "x86_64",
+          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720",
           "check_gpg": true,
-          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720"
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e"
         },
         {
           "name": "dep-package1",
@@ -1693,8 +1709,9 @@ const modulesInfoResponse = `
           "version": "1.33",
           "release": "2.fc30",
           "arch": "x86_64",
+          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893",
           "check_gpg": true,
-          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893"
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e"
         },
         {
           "name": "dep-package2",
@@ -1702,8 +1719,9 @@ const modulesInfoResponse = `
           "version": "2.9",
           "release": "1.fc30",
           "arch": "x86_64",
+          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2",
           "check_gpg": true,
-          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2"
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e"
         }
       ]
     },
@@ -1754,8 +1772,9 @@ const modulesInfoResponse = `
           "version": "3.0.3",
           "release": "1.fc30",
           "arch": "x86_64",
+          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720",
           "check_gpg": true,
-          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720"
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e"
         },
         {
           "name": "dep-package1",
@@ -1763,8 +1782,9 @@ const modulesInfoResponse = `
           "version": "1.33",
           "release": "2.fc30",
           "arch": "x86_64",
+          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893",
           "check_gpg": true,
-          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893"
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e"
         },
         {
           "name": "dep-package2",
@@ -1772,8 +1792,9 @@ const modulesInfoResponse = `
           "version": "2.9",
           "release": "1.fc30",
           "arch": "x86_64",
+          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2",
           "check_gpg": true,
-          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2"
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e"
         }
       ]
     },
@@ -1824,8 +1845,9 @@ const modulesInfoResponse = `
           "version": "3.0.3",
           "release": "1.fc30",
           "arch": "x86_64",
+          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720",
           "check_gpg": true,
-          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720"
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e"
         },
         {
           "name": "dep-package1",
@@ -1833,8 +1855,9 @@ const modulesInfoResponse = `
           "version": "1.33",
           "release": "2.fc30",
           "arch": "x86_64",
+          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893",
           "check_gpg": true,
-          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893"
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e"
         },
         {
           "name": "dep-package2",
@@ -1842,8 +1865,9 @@ const modulesInfoResponse = `
           "version": "2.9",
           "release": "1.fc30",
           "arch": "x86_64",
+          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2",
           "check_gpg": true,
-          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2"
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e"
         }
       ]
     },
@@ -1894,8 +1918,9 @@ const modulesInfoResponse = `
           "version": "3.0.3",
           "release": "1.fc30",
           "arch": "x86_64",
+          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720",
           "check_gpg": true,
-          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720"
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e"
         },
         {
           "name": "dep-package1",
@@ -1903,8 +1928,9 @@ const modulesInfoResponse = `
           "version": "1.33",
           "release": "2.fc30",
           "arch": "x86_64",
+          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893",
           "check_gpg": true,
-          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893"
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e"
         },
         {
           "name": "dep-package2",
@@ -1912,8 +1938,9 @@ const modulesInfoResponse = `
           "version": "2.9",
           "release": "1.fc30",
           "arch": "x86_64",
+          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2",
           "check_gpg": true,
-          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2"
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e"
         }
       ]
     },
@@ -1964,8 +1991,9 @@ const modulesInfoResponse = `
           "version": "3.0.3",
           "release": "1.fc30",
           "arch": "x86_64",
+          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720",
           "check_gpg": true,
-          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720"
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e"
         },
         {
           "name": "dep-package1",
@@ -1973,8 +2001,9 @@ const modulesInfoResponse = `
           "version": "1.33",
           "release": "2.fc30",
           "arch": "x86_64",
+          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893",
           "check_gpg": true,
-          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893"
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e"
         },
         {
           "name": "dep-package2",
@@ -1982,8 +2011,9 @@ const modulesInfoResponse = `
           "version": "2.9",
           "release": "1.fc30",
           "arch": "x86_64",
+          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2",
           "check_gpg": true,
-          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2"
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e"
         }
       ]
     },
@@ -2034,8 +2064,9 @@ const modulesInfoResponse = `
           "version": "3.0.3",
           "release": "1.fc30",
           "arch": "x86_64",
+          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720",
           "check_gpg": true,
-          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720"
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e"
         },
         {
           "name": "dep-package1",
@@ -2043,8 +2074,9 @@ const modulesInfoResponse = `
           "version": "1.33",
           "release": "2.fc30",
           "arch": "x86_64",
+          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893",
           "check_gpg": true,
-          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893"
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e"
         },
         {
           "name": "dep-package2",
@@ -2052,8 +2084,9 @@ const modulesInfoResponse = `
           "version": "2.9",
           "release": "1.fc30",
           "arch": "x86_64",
+          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2",
           "check_gpg": true,
-          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2"
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e"
         }
       ]
     },
@@ -2104,8 +2137,9 @@ const modulesInfoResponse = `
           "version": "3.0.3",
           "release": "1.fc30",
           "arch": "x86_64",
+          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720",
           "check_gpg": true,
-          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720"
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e"
         },
         {
           "name": "dep-package1",
@@ -2113,8 +2147,9 @@ const modulesInfoResponse = `
           "version": "1.33",
           "release": "2.fc30",
           "arch": "x86_64",
+          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893",
           "check_gpg": true,
-          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893"
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e"
         },
         {
           "name": "dep-package2",
@@ -2122,8 +2157,9 @@ const modulesInfoResponse = `
           "version": "2.9",
           "release": "1.fc30",
           "arch": "x86_64",
+          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2",
           "check_gpg": true,
-          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2"
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e"
         }
       ]
     },
@@ -2174,8 +2210,9 @@ const modulesInfoResponse = `
           "version": "3.0.3",
           "release": "1.fc30",
           "arch": "x86_64",
+          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720",
           "check_gpg": true,
-          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720"
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e"
         },
         {
           "name": "dep-package1",
@@ -2183,8 +2220,9 @@ const modulesInfoResponse = `
           "version": "1.33",
           "release": "2.fc30",
           "arch": "x86_64",
+          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893",
           "check_gpg": true,
-          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893"
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e"
         },
         {
           "name": "dep-package2",
@@ -2192,8 +2230,9 @@ const modulesInfoResponse = `
           "version": "2.9",
           "release": "1.fc30",
           "arch": "x86_64",
+          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2",
           "check_gpg": true,
-          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2"
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e"
         }
       ]
     },
@@ -2244,8 +2283,9 @@ const modulesInfoResponse = `
           "version": "3.0.3",
           "release": "1.fc30",
           "arch": "x86_64",
+          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720",
           "check_gpg": true,
-          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720"
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e"
         },
         {
           "name": "dep-package1",
@@ -2253,8 +2293,9 @@ const modulesInfoResponse = `
           "version": "1.33",
           "release": "2.fc30",
           "arch": "x86_64",
+          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893",
           "check_gpg": true,
-          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893"
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e"
         },
         {
           "name": "dep-package2",
@@ -2262,8 +2303,9 @@ const modulesInfoResponse = `
           "version": "2.9",
           "release": "1.fc30",
           "arch": "x86_64",
+          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2",
           "check_gpg": true,
-          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2"
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e"
         }
       ]
     },
@@ -2314,8 +2356,9 @@ const modulesInfoResponse = `
           "version": "3.0.3",
           "release": "1.fc30",
           "arch": "x86_64",
+          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720",
           "check_gpg": true,
-          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720"
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e"
         },
         {
           "name": "dep-package1",
@@ -2323,8 +2366,9 @@ const modulesInfoResponse = `
           "version": "1.33",
           "release": "2.fc30",
           "arch": "x86_64",
+          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893",
           "check_gpg": true,
-          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893"
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e"
         },
         {
           "name": "dep-package2",
@@ -2332,8 +2376,9 @@ const modulesInfoResponse = `
           "version": "2.9",
           "release": "1.fc30",
           "arch": "x86_64",
+          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2",
           "check_gpg": true,
-          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2"
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e"
         }
       ]
     },
@@ -2384,8 +2429,9 @@ const modulesInfoResponse = `
           "version": "3.0.3",
           "release": "1.fc30",
           "arch": "x86_64",
+          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720",
           "check_gpg": true,
-          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720"
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e"
         },
         {
           "name": "dep-package1",
@@ -2393,8 +2439,9 @@ const modulesInfoResponse = `
           "version": "1.33",
           "release": "2.fc30",
           "arch": "x86_64",
+          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893",
           "check_gpg": true,
-          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893"
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e"
         },
         {
           "name": "dep-package2",
@@ -2402,8 +2449,9 @@ const modulesInfoResponse = `
           "version": "2.9",
           "release": "1.fc30",
           "arch": "x86_64",
+          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2",
           "check_gpg": true,
-          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2"
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e"
         }
       ]
     },
@@ -2454,8 +2502,9 @@ const modulesInfoResponse = `
           "version": "3.0.3",
           "release": "1.fc30",
           "arch": "x86_64",
+          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720",
           "check_gpg": true,
-          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720"
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e"
         },
         {
           "name": "dep-package1",
@@ -2463,8 +2512,9 @@ const modulesInfoResponse = `
           "version": "1.33",
           "release": "2.fc30",
           "arch": "x86_64",
+          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893",
           "check_gpg": true,
-          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893"
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e"
         },
         {
           "name": "dep-package2",
@@ -2472,8 +2522,9 @@ const modulesInfoResponse = `
           "version": "2.9",
           "release": "1.fc30",
           "arch": "x86_64",
+          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2",
           "check_gpg": true,
-          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2"
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e"
         }
       ]
     },
@@ -2524,8 +2575,9 @@ const modulesInfoResponse = `
           "version": "3.0.3",
           "release": "1.fc30",
           "arch": "x86_64",
+          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720",
           "check_gpg": true,
-          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720"
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e"
         },
         {
           "name": "dep-package1",
@@ -2533,8 +2585,9 @@ const modulesInfoResponse = `
           "version": "1.33",
           "release": "2.fc30",
           "arch": "x86_64",
+          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893",
           "check_gpg": true,
-          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893"
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e"
         },
         {
           "name": "dep-package2",
@@ -2542,8 +2595,9 @@ const modulesInfoResponse = `
           "version": "2.9",
           "release": "1.fc30",
           "arch": "x86_64",
+          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2",
           "check_gpg": true,
-          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2"
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e"
         }
       ]
     },
@@ -2594,8 +2648,9 @@ const modulesInfoResponse = `
           "version": "3.0.3",
           "release": "1.fc30",
           "arch": "x86_64",
+          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720",
           "check_gpg": true,
-          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720"
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e"
         },
         {
           "name": "dep-package1",
@@ -2603,8 +2658,9 @@ const modulesInfoResponse = `
           "version": "1.33",
           "release": "2.fc30",
           "arch": "x86_64",
+          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893",
           "check_gpg": true,
-          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893"
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e"
         },
         {
           "name": "dep-package2",
@@ -2612,8 +2668,9 @@ const modulesInfoResponse = `
           "version": "2.9",
           "release": "1.fc30",
           "arch": "x86_64",
+          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2",
           "check_gpg": true,
-          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2"
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e"
         }
       ]
     },
@@ -2664,8 +2721,9 @@ const modulesInfoResponse = `
           "version": "3.0.3",
           "release": "1.fc30",
           "arch": "x86_64",
+          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720",
           "check_gpg": true,
-          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720"
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e"
         },
         {
           "name": "dep-package1",
@@ -2673,8 +2731,9 @@ const modulesInfoResponse = `
           "version": "1.33",
           "release": "2.fc30",
           "arch": "x86_64",
+          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893",
           "check_gpg": true,
-          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893"
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e"
         },
         {
           "name": "dep-package2",
@@ -2682,8 +2741,9 @@ const modulesInfoResponse = `
           "version": "2.9",
           "release": "1.fc30",
           "arch": "x86_64",
+          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2",
           "check_gpg": true,
-          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2"
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e"
         }
       ]
     },
@@ -2734,8 +2794,9 @@ const modulesInfoResponse = `
           "version": "3.0.3",
           "release": "1.fc30",
           "arch": "x86_64",
+          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720",
           "check_gpg": true,
-          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720"
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e"
         },
         {
           "name": "dep-package1",
@@ -2743,8 +2804,9 @@ const modulesInfoResponse = `
           "version": "1.33",
           "release": "2.fc30",
           "arch": "x86_64",
+          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893",
           "check_gpg": true,
-          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893"
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e"
         },
         {
           "name": "dep-package2",
@@ -2752,8 +2814,9 @@ const modulesInfoResponse = `
           "version": "2.9",
           "release": "1.fc30",
           "arch": "x86_64",
+          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2",
           "check_gpg": true,
-          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2"
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e"
         }
       ]
     },
@@ -2804,8 +2867,9 @@ const modulesInfoResponse = `
           "version": "3.0.3",
           "release": "1.fc30",
           "arch": "x86_64",
+          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720",
           "check_gpg": true,
-          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720"
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e"
         },
         {
           "name": "dep-package1",
@@ -2813,8 +2877,9 @@ const modulesInfoResponse = `
           "version": "1.33",
           "release": "2.fc30",
           "arch": "x86_64",
+          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893",
           "check_gpg": true,
-          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893"
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e"
         },
         {
           "name": "dep-package2",
@@ -2822,8 +2887,9 @@ const modulesInfoResponse = `
           "version": "2.9",
           "release": "1.fc30",
           "arch": "x86_64",
+          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2",
           "check_gpg": true,
-          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2"
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e"
         }
       ]
     },
@@ -2874,8 +2940,9 @@ const modulesInfoResponse = `
           "version": "3.0.3",
           "release": "1.fc30",
           "arch": "x86_64",
+          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720",
           "check_gpg": true,
-          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720"
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e"
         },
         {
           "name": "dep-package1",
@@ -2883,8 +2950,9 @@ const modulesInfoResponse = `
           "version": "1.33",
           "release": "2.fc30",
           "arch": "x86_64",
+          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893",
           "check_gpg": true,
-          "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893"
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e"
         },
         {
           "name": "dep-package2",
@@ -2892,8 +2960,9 @@ const modulesInfoResponse = `
           "version": "2.9",
           "release": "1.fc30",
           "arch": "x86_64",
+          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2",
           "check_gpg": true,
-          "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2"
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e"
         }
       ]
     }
@@ -2950,6 +3019,7 @@ const modulesInfoFilteredResponse = `
           "epoch": 7,
           "version": "3.0.3",
           "release": "1.fc30",
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e",
           "arch": "x86_64",
           "check_gpg": true,
           "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720"
@@ -2959,6 +3029,7 @@ const modulesInfoFilteredResponse = `
           "epoch": 0,
           "version": "1.33",
           "release": "2.fc30",
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e",
           "arch": "x86_64",
           "check_gpg": true,
           "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893"
@@ -2968,6 +3039,7 @@ const modulesInfoFilteredResponse = `
           "epoch": 0,
           "version": "2.9",
           "release": "1.fc30",
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e",
           "arch": "x86_64",
           "check_gpg": true,
           "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2"
@@ -3020,6 +3092,7 @@ const modulesInfoFilteredResponse = `
           "epoch": 7,
           "version": "3.0.3",
           "release": "1.fc30",
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e",
           "arch": "x86_64",
           "check_gpg": true,
           "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720"
@@ -3029,6 +3102,7 @@ const modulesInfoFilteredResponse = `
           "epoch": 0,
           "version": "1.33",
           "release": "2.fc30",
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e",
           "arch": "x86_64",
           "check_gpg": true,
           "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893"
@@ -3038,6 +3112,7 @@ const modulesInfoFilteredResponse = `
           "epoch": 0,
           "version": "2.9",
           "release": "1.fc30",
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e",
           "arch": "x86_64",
           "check_gpg": true,
           "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2"
@@ -3090,6 +3165,7 @@ const modulesInfoFilteredResponse = `
           "epoch": 7,
           "version": "3.0.3",
           "release": "1.fc30",
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e",
           "arch": "x86_64",
           "check_gpg": true,
           "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720"
@@ -3099,6 +3175,7 @@ const modulesInfoFilteredResponse = `
           "epoch": 0,
           "version": "1.33",
           "release": "2.fc30",
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e",
           "arch": "x86_64",
           "check_gpg": true,
           "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893"
@@ -3108,6 +3185,7 @@ const modulesInfoFilteredResponse = `
           "epoch": 0,
           "version": "2.9",
           "release": "1.fc30",
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e",
           "arch": "x86_64",
           "check_gpg": true,
           "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2"
@@ -3160,6 +3238,7 @@ const modulesInfoFilteredResponse = `
           "epoch": 7,
           "version": "3.0.3",
           "release": "1.fc30",
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e",
           "arch": "x86_64",
           "check_gpg": true,
           "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720"
@@ -3169,6 +3248,7 @@ const modulesInfoFilteredResponse = `
           "epoch": 0,
           "version": "1.33",
           "release": "2.fc30",
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e",
           "arch": "x86_64",
           "check_gpg": true,
           "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893"
@@ -3178,6 +3258,7 @@ const modulesInfoFilteredResponse = `
           "epoch": 0,
           "version": "2.9",
           "release": "1.fc30",
+          "repo_id": "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e",
           "arch": "x86_64",
           "check_gpg": true,
           "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2"
@@ -3237,6 +3318,7 @@ const modulesInfoPackage16Response = `
           "epoch": 7,
           "version": "3.0.3",
           "release": "1.fc30",
+          "repo_id": "0a99a351a0031411571ddfacc8a131862cfc389d5516400d0cdbc9340a6ec423",
           "arch": "x86_64",
           "check_gpg": true,
           "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720"
@@ -3246,6 +3328,7 @@ const modulesInfoPackage16Response = `
           "epoch": 0,
           "version": "1.33",
           "release": "2.fc30",
+          "repo_id": "0a99a351a0031411571ddfacc8a131862cfc389d5516400d0cdbc9340a6ec423",
           "arch": "x86_64",
           "check_gpg": true,
           "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893"
@@ -3255,6 +3338,7 @@ const modulesInfoPackage16Response = `
           "epoch": 0,
           "version": "2.9",
           "release": "1.fc30",
+          "repo_id": "0a99a351a0031411571ddfacc8a131862cfc389d5516400d0cdbc9340a6ec423",
           "arch": "x86_64",
           "check_gpg": true,
           "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2"
