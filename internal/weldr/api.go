@@ -2284,30 +2284,27 @@ func (api *API) blueprintsTagHandler(writer http.ResponseWriter, request *http.R
 // repositories for the depsolving. The actual distro object name may not correspond to the alias.
 // Since the solver uses the distro name to namespace cache, it is important to use the same distro
 // name as the one used to get the repositories.
-func (api *API) depsolve(packageSets map[string][]rpmmd.PackageSet, distroName string, arch distro.Arch) (map[string][]rpmmd.PackageSpec, map[string][]rpmmd.RepoConfig, error) {
+func (api *API) depsolve(packageSets map[string][]rpmmd.PackageSet, distroName string, arch distro.Arch) (map[string]dnfjson.DepsolveResult, error) {
 
 	distro := arch.Distro()
 	platformID := distro.ModulePlatformID()
 	releasever := distro.Releasever()
 	solver := api.solver.NewWithConfig(platformID, releasever, arch.Name(), distroName)
 
-	depsolvedSets := make(map[string][]rpmmd.PackageSpec, len(packageSets))
-	repoConfigs := make(map[string][]rpmmd.RepoConfig)
+	depsolvedSets := make(map[string]dnfjson.DepsolveResult, len(packageSets))
 
 	for name, pkgSet := range packageSets {
-		// TODO: SBOM support could be added here
 		res, err := solver.Depsolve(pkgSet, sbom.StandardTypeNone)
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
-		depsolvedSets[name] = res.Packages
-		repoConfigs[name] = res.Repos
+		depsolvedSets[name] = *res
 	}
 	if err := solver.CleanCache(); err != nil {
 		// log and ignore
 		log.Printf("Error during rpm repo cache cleanup: %s", err.Error())
 	}
-	return depsolvedSets, repoConfigs, nil
+	return depsolvedSets, nil
 }
 
 func (api *API) resolveContainers(sourceSpecs map[string][]container.SourceSpec, archName string) (map[string][]container.Spec, error) {
@@ -2577,7 +2574,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		return
 	}
 
-	packageSets, repoConfigs, err := api.depsolve(manifest.GetPackageSetChains(), distroName, imageType.Arch())
+	depsolved, err := api.depsolve(manifest.GetPackageSetChains(), distroName, imageType.Arch())
 	if err != nil {
 		errors := responseError{
 			ID:  "DepsolveError",
@@ -2609,7 +2606,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		return
 	}
 
-	mf, err := manifest.Serialize(packageSets, containerSpecs, ostreeCommitSpecs, repoConfigs)
+	mf, err := manifest.Serialize(depsolved, containerSpecs, ostreeCommitSpecs, nil)
 	if err != nil {
 		errors := responseError{
 			ID:  "ManifestCreationFailed",
@@ -2622,9 +2619,9 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 	var packages []rpmmd.PackageSpec
 	// TODO: introduce a way to query these from the manifest / image type
 	// BUG: installer/container image types will have empty package sets
-	if packages = packageSets["packages"]; len(packages) == 0 {
-		if packages = packageSets["os"]; len(packages) == 0 {
-			packages = packageSets["ostree-tree"]
+	if packages = depsolved["packages"].Packages; len(packages) == 0 {
+		if packages = depsolved["os"].Packages; len(packages) == 0 {
+			packages = depsolved["ostree-tree"].Packages
 		}
 	}
 
