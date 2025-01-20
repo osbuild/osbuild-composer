@@ -24,6 +24,7 @@ import (
 
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/distrofactory"
+	"github.com/osbuild/images/pkg/dnfjson"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/ostree"
 	"github.com/osbuild/images/pkg/reporegistry"
@@ -664,7 +665,19 @@ func serializeManifest(ctx context.Context, manifestSource *manifest.Manifest, w
 		}
 	}
 
-	ms, err := manifestSource.Serialize(depsolveResults.PackageSpecs, containerSpecs, ostreeCommitSpecs, depsolveResults.RepoConfigs)
+	// XXX: fix worker.DepsolveJobResult
+	depsolveResultsInTheRightFormat := map[string]dnfjson.DepsolveResult{}
+	for plName, res := range depsolveResults.PackageSpecs {
+		r := depsolveResultsInTheRightFormat[plName]
+		r.Packages = res
+		depsolveResultsInTheRightFormat[plName] = r
+	}
+	for plName, res := range depsolveResults.RepoConfigs {
+		r := depsolveResultsInTheRightFormat[plName]
+		r.Repos = res
+		depsolveResultsInTheRightFormat[plName] = r
+	}
+	ms, err := manifestSource.Serialize(depsolveResultsInTheRightFormat, containerSpecs, ostreeCommitSpecs, nil)
 	if err != nil {
 		reason := "Error serializing manifest"
 		jobResult.JobError = clienterrors.New(clienterrors.ErrorManifestGeneration, reason, nil)
