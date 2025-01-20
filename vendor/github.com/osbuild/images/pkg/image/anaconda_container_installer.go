@@ -22,8 +22,8 @@ type AnacondaContainerInstaller struct {
 	Platform          platform.Platform
 	ExtraBasePackages rpmmd.PackageSet
 
-	SquashfsCompression string
-	RootfsType          manifest.RootfsType
+	RootfsCompression string
+	RootfsType        manifest.RootfsType
 
 	ISOLabel  string
 	Product   string
@@ -51,6 +51,10 @@ type AnacondaContainerInstaller struct {
 	// Uses the old, deprecated, Anaconda config option "kickstart-modules".
 	// Only for RHEL 8.
 	UseLegacyAnacondaConfig bool
+
+	// Locale for the installer. This should be set to the same locale as the
+	// ISO OS payload, if known.
+	Locale string
 }
 
 func NewAnacondaContainerInstaller(container container.SourceSpec, ref string) *AnacondaContainerInstaller {
@@ -98,6 +102,7 @@ func (img *AnacondaContainerInstaller) InstantiateManifest(m *manifest.Manifest,
 		)
 	}
 	anacondaPipeline.AdditionalDrivers = img.AdditionalDrivers
+	anacondaPipeline.Locale = img.Locale
 
 	var rootfsImagePipeline *manifest.ISORootfsImg
 	switch img.RootfsType {
@@ -132,7 +137,8 @@ func (img *AnacondaContainerInstaller) InstantiateManifest(m *manifest.Manifest,
 	isoTreePipeline.Release = img.Release
 	isoTreePipeline.Kickstart = img.Kickstart
 
-	isoTreePipeline.SquashfsCompression = img.SquashfsCompression
+	isoTreePipeline.RootfsCompression = img.RootfsCompression
+	isoTreePipeline.RootfsType = img.RootfsType
 
 	// For ostree installers, always put the kickstart file in the root of the ISO
 	isoTreePipeline.PayloadPath = "/container"

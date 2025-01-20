@@ -13,7 +13,6 @@ import (
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/ostree"
 	"github.com/osbuild/images/pkg/platform"
-	"github.com/osbuild/images/pkg/rpmmd"
 )
 
 // OSTreeDeploymentCustomizations encapsulates all configuration applied to an
@@ -161,18 +160,18 @@ func (p *OSTreeDeployment) getContainerSources() []container.SourceSpec {
 	}
 }
 
-func (p *OSTreeDeployment) serializeStart(_ []rpmmd.PackageSpec, containers []container.Spec, commits []ostree.CommitSpec, _ []rpmmd.RepoConfig) {
+func (p *OSTreeDeployment) serializeStart(inputs Inputs) {
 	if p.ostreeSpec != nil || p.containerSpec != nil {
 		panic("double call to serializeStart()")
 	}
 
 	switch {
-	case len(commits) == 1:
-		p.ostreeSpec = &commits[0]
-	case len(containers) == 1:
-		p.containerSpec = &containers[0]
+	case len(inputs.Commits) == 1:
+		p.ostreeSpec = &inputs.Commits[0]
+	case len(inputs.Containers) == 1:
+		p.containerSpec = &inputs.Containers[0]
 	default:
-		panic(fmt.Sprintf("pipeline %s requires exactly one ostree commit or one container (have commits: %v; containers: %v)", p.Name(), commits, containers))
+		panic(fmt.Sprintf("pipeline %s requires exactly one ostree commit or one container (have commits: %v; containers: %v)", p.Name(), inputs.Commits, inputs.Containers))
 	}
 }
 

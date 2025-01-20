@@ -4,9 +4,7 @@ import (
 	"path/filepath"
 
 	"github.com/osbuild/images/internal/common"
-	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/osbuild"
-	"github.com/osbuild/images/pkg/ostree"
 	"github.com/osbuild/images/pkg/platform"
 	"github.com/osbuild/images/pkg/rpmmd"
 )
@@ -80,12 +78,12 @@ func (p *OSTreeCommitServer) getPackageSpecs() []rpmmd.PackageSpec {
 	return p.packageSpecs
 }
 
-func (p *OSTreeCommitServer) serializeStart(packages []rpmmd.PackageSpec, _ []container.Spec, _ []ostree.CommitSpec, rpmRepos []rpmmd.RepoConfig) {
+func (p *OSTreeCommitServer) serializeStart(inputs Inputs) {
 	if len(p.packageSpecs) > 0 {
 		panic("double call to serializeStart()")
 	}
-	p.packageSpecs = packages
-	p.repos = append(p.repos, rpmRepos...)
+	p.packageSpecs = inputs.Depsolved.Packages
+	p.repos = append(p.repos, inputs.Depsolved.Repos...)
 }
 
 func (p *OSTreeCommitServer) serializeEnd() {
