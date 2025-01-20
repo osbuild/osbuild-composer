@@ -62,6 +62,10 @@ func mkImageInstallerImgType() *rhel.ImageType {
 		},
 	}
 
+	it.DefaultImageConfig = &distro.ImageConfig{
+		Locale: common.ToPtr("C.UTF-8"),
+	}
+
 	return it
 }
 

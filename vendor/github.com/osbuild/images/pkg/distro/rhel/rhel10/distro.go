@@ -51,7 +51,7 @@ func distroISOLabelFunc(t *rhel.ImageType) string {
 
 func defaultDistroImageConfig(d *rhel.Distribution) *distro.ImageConfig {
 	return &distro.ImageConfig{
-		Timezone: common.ToPtr("America/New_York"),
+		Timezone: common.ToPtr("UTC"),
 		Locale:   common.ToPtr("C.UTF-8"),
 		Sysconfig: []*osbuild.SysconfigStageOptions{
 			{

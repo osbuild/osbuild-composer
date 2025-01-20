@@ -23,8 +23,8 @@ type AnacondaLiveInstaller struct {
 
 	ExtraBasePackages rpmmd.PackageSet
 
-	SquashfsCompression string
-	RootfsType          manifest.RootfsType
+	RootfsCompression string
+	RootfsType        manifest.RootfsType
 
 	ISOLabel  string
 	Product   string
@@ -36,6 +36,10 @@ type AnacondaLiveInstaller struct {
 	Filename string
 
 	AdditionalKernelOpts []string
+
+	// Locale for the installer. This should be set to the same locale as the
+	// ISO OS payload, if known.
+	Locale string
 }
 
 func NewAnacondaLiveInstaller() *AnacondaLiveInstaller {
@@ -67,6 +71,7 @@ func (img *AnacondaLiveInstaller) InstantiateManifest(m *manifest.Manifest,
 
 	livePipeline.Variant = img.Variant
 	livePipeline.Biosdevname = (img.Platform.GetArch() == arch.ARCH_X86_64)
+	livePipeline.Locale = img.Locale
 
 	// The live installer has SElinux enabled and targeted
 	livePipeline.SElinux = "targeted"
@@ -107,7 +112,8 @@ func (img *AnacondaLiveInstaller) InstantiateManifest(m *manifest.Manifest,
 	isoTreePipeline.KernelOpts = kernelOpts
 	isoTreePipeline.ISOLinux = isoLinuxEnabled
 
-	isoTreePipeline.SquashfsCompression = img.SquashfsCompression
+	isoTreePipeline.RootfsCompression = img.RootfsCompression
+	isoTreePipeline.RootfsType = img.RootfsType
 
 	isoPipeline := manifest.NewISO(buildPipeline, isoTreePipeline, img.ISOLabel)
 	isoPipeline.SetFilename(img.Filename)

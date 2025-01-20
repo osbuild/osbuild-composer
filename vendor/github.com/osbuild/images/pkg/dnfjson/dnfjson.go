@@ -586,6 +586,8 @@ func (result depsolveResult) toRPMMD(rhsm map[string]bool) ([]rpmmd.PackageSpec,
 		rpmDependencies[i].RemoteLocation = dep.RemoteLocation
 		rpmDependencies[i].Checksum = dep.Checksum
 		rpmDependencies[i].CheckGPG = repo.GPGCheck
+		rpmDependencies[i].RepoID = dep.RepoID
+		rpmDependencies[i].Path = dep.Path
 		if verify := repo.SSLVerify; verify != nil {
 			rpmDependencies[i].IgnoreSSL = !*verify
 		}
