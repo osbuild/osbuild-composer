@@ -165,6 +165,9 @@ type PackageSpec struct {
 	Secrets        string `json:"secrets,omitempty"`
 	CheckGPG       bool   `json:"check_gpg,omitempty"`
 	IgnoreSSL      bool   `json:"ignore_ssl,omitempty"`
+
+	Path   string `json:"path,omitempty"`
+	RepoID string `json:"repo_id,omitempty"`
 }
 
 type PackageSource struct {

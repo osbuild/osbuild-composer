@@ -2,6 +2,8 @@ package osbuild
 
 import "github.com/osbuild/images/pkg/ostree"
 
+const SourceNameOstree = "org.osbuild.ostree"
+
 // The commits to fetch indexed their checksum
 type OSTreeSource struct {
 	Items map[string]OSTreeSourceItem `json:"items"`

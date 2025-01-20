@@ -65,14 +65,14 @@ func (p *ContentTest) getOSTreeCommits() []ostree.CommitSpec {
 	return p.commitSpecs
 }
 
-func (p *ContentTest) serializeStart(pkgs []rpmmd.PackageSpec, containers []container.Spec, commits []ostree.CommitSpec, rpmRepos []rpmmd.RepoConfig) {
+func (p *ContentTest) serializeStart(inputs Inputs) {
 	if p.serializing {
 		panic("double call to serializeStart()")
 	}
-	p.packageSpecs = pkgs
-	p.containerSpecs = containers
-	p.commitSpecs = commits
-	p.repos = rpmRepos
+	p.packageSpecs = inputs.Depsolved.Packages
+	p.containerSpecs = inputs.Containers
+	p.commitSpecs = inputs.Commits
+	p.repos = inputs.Depsolved.Repos
 
 	p.serializing = true
 }
