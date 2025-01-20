@@ -167,12 +167,12 @@ func makeManifestJob(name string, imgType distro.ImageType, cr composeRequest, d
 			return
 		}
 
-		packageSpecs, repoConfigs, err := depsolve(cacheDir, manifest.GetPackageSetChains(), distribution, archName)
+		depsolved, err := depsolve(cacheDir, manifest.GetPackageSetChains(), distribution, archName)
 		if err != nil {
 			err = fmt.Errorf("[%s] depsolve failed: %s", filename, err.Error())
 			return
 		}
-		if packageSpecs == nil {
+		if depsolved == nil {
 			err = fmt.Errorf("[%s] nil package specs", filename)
 			return
 		}
@@ -188,7 +188,7 @@ func makeManifestJob(name string, imgType distro.ImageType, cr composeRequest, d
 
 		commitSpecs := resolvePipelineCommits(manifest.GetOSTreeSourceSpecs())
 
-		mf, err := manifest.Serialize(packageSpecs, containerSpecs, commitSpecs, repoConfigs)
+		mf, err := manifest.Serialize(depsolved, containerSpecs, commitSpecs, nil)
 		if err != nil {
 			return fmt.Errorf("[%s] manifest serialization failed: %s", filename, err.Error())
 		}
@@ -202,7 +202,11 @@ func makeManifestJob(name string, imgType distro.ImageType, cr composeRequest, d
 			Blueprint:    cr.Blueprint,
 			OSTree:       cr.OSTree,
 		}
-		err = save(mf, packageSpecs, containerSpecs, commitSpecs, request, path, filename)
+		rpmmd := map[string][]rpmmd.PackageSpec{}
+		for plName, pkgSet := range depsolved {
+			rpmmd[plName] = pkgSet.Packages
+		}
+		err = save(mf, rpmmd, containerSpecs, commitSpecs, request, path, filename)
 		return
 	}
 	return job
@@ -322,19 +326,17 @@ func resolvePipelineCommits(commitSources map[string][]ostree.SourceSpec) map[st
 	return commits
 }
 
-func depsolve(cacheDir string, packageSets map[string][]rpmmd.PackageSet, d distro.Distro, arch string) (map[string][]rpmmd.PackageSpec, map[string][]rpmmd.RepoConfig, error) {
+func depsolve(cacheDir string, packageSets map[string][]rpmmd.PackageSet, d distro.Distro, arch string) (map[string]dnfjson.DepsolveResult, error) {
 	solver := dnfjson.NewSolver(d.ModulePlatformID(), d.Releasever(), arch, d.Name(), cacheDir)
-	depsolvedSets := make(map[string][]rpmmd.PackageSpec)
-	repoConfigs := make(map[string][]rpmmd.RepoConfig)
+	depsolvedSets := make(map[string]dnfjson.DepsolveResult)
 	for name, pkgSet := range packageSets {
 		res, err := solver.Depsolve(pkgSet, sbom.StandardTypeNone)
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
-		depsolvedSets[name] = res.Packages
-		repoConfigs[name] = res.Repos
+		depsolvedSets[name] = *res
 	}
-	return depsolvedSets, repoConfigs, nil
+	return depsolvedSets, nil
 }
 
 func save(ms manifest.OSBuildManifest, pkgs map[string][]rpmmd.PackageSpec, containers map[string][]container.Spec, commits map[string][]ostree.CommitSpec, cr composeRequest, path, filename string) error {
