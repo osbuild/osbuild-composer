@@ -178,6 +178,12 @@ func TestGetTargets(t *testing.T) {
 			includeDefault: true,
 			expected:       []target.TargetName{target.TargetNameAWSS3, target.TargetNameAWSS3},
 		},
+		"guest:local": {
+			imageType:      ImageTypesGuestImage,
+			targets:        []UploadTypes{UploadTypesLocal},
+			includeDefault: false,
+			expected:       []target.TargetName{target.TargetNameWorkerServer},
+		},
 		"guest:azure:fail": {
 			imageType: ImageTypesGuestImage,
 			targets:   []UploadTypes{UploadTypesAzure},

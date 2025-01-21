@@ -1226,8 +1226,7 @@ components:
           default: false
           description: |
             This is used in combination with the OSBUILD_LOCALSAVE environmental
-            variable on the server to enable saving the compose locally. This
-            is for development use only, and is not available to users.
+            variable on the server to enable saving the compose locally.
     AWSEC2UploadOptions:
       type: object
       additionalProperties: false
