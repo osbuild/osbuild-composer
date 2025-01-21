@@ -375,6 +375,31 @@ func targetSupportMap() map[UploadTypes]map[ImageTypes]bool {
 			ImageTypesEdgeCommit: true,
 			ImageTypesIotCommit:  true,
 		},
+		UploadTypesLocal: {
+			ImageTypesAws:                  true,
+			ImageTypesAwsRhui:              true,
+			ImageTypesAwsHaRhui:            true,
+			ImageTypesAwsSapRhui:           true,
+			ImageTypesAzure:                true,
+			ImageTypesAzureRhui:            true,
+			ImageTypesAzureEap7Rhui:        true,
+			ImageTypesAzureSapRhui:         true,
+			ImageTypesEdgeCommit:           true,
+			ImageTypesEdgeContainer:        true,
+			ImageTypesEdgeInstaller:        true,
+			ImageTypesGuestImage:           true,
+			ImageTypesImageInstaller:       true,
+			ImageTypesIotBootableContainer: true,
+			ImageTypesIotCommit:            true,
+			ImageTypesIotInstaller:         true,
+			ImageTypesIotRawImage:          true,
+			ImageTypesLiveInstaller:        true,
+			ImageTypesMinimalRaw:           true,
+			ImageTypesOci:                  true,
+			ImageTypesVsphereOva:           true,
+			ImageTypesVsphere:              true,
+			ImageTypesWsl:                  true,
+		},
 	}
 }
 
@@ -437,6 +462,8 @@ func getTarget(targetType UploadTypes, options UploadOptions, request *ComposeRe
 	case UploadTypesPulpOstree:
 		irTarget, err = newPulpOSTreeTarget(options, imageType)
 
+	case UploadTypesLocal:
+		irTarget = target.NewWorkerServerTarget()
 	default:
 		return nil, HTTPError(ErrorInvalidUploadTarget)
 	}
