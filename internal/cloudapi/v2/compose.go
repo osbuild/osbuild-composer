@@ -1215,26 +1215,12 @@ func (request *ComposeRequest) GetImageRequests(distroFactory *distrofactory.Fac
 			return nil, err
 		}
 
-		// Check to see if local_save is enabled and set
-		localSave, err := isLocalSave(ir.UploadOptions)
-		if err != nil {
-			return nil, err
-		}
-
 		var irTargets []*target.Target
 		if ir.UploadOptions == nil && (ir.UploadTargets == nil || len(*ir.UploadTargets) == 0) {
 			// nowhere to put the image, this is a user error
 			if request.Koji == nil {
 				return nil, HTTPError(ErrorJSONUnMarshallingError)
 			}
-		} else if localSave {
-			// Override the image type upload selection and save it locally
-			// Final image is in /var/lib/osbuild-composer/artifacts/UUID/
-			srvTarget := target.NewWorkerServerTarget()
-			srvTarget.ImageName = imageType.Filename()
-			srvTarget.OsbuildArtifact.ExportFilename = imageType.Filename()
-			srvTarget.OsbuildArtifact.ExportName = imageType.Exports()[0]
-			irTargets = []*target.Target{srvTarget}
 		} else {
 			// Get the target for the selected image type
 			irTargets, err = ir.GetTargets(request, imageType)

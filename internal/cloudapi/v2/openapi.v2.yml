@@ -1273,15 +1273,7 @@ components:
     LocalUploadOptions:
       type: object
       additionalProperties: false
-      required:
-        - local_save
-      properties:
-        local_save:
-          type: boolean
-          default: false
-          description: |
-            This is used in combination with the OSBUILD_LOCALSAVE environmental
-            variable on the server to enable saving the compose locally.
+      properties: {}
     AWSEC2UploadOptions:
       type: object
       additionalProperties: false

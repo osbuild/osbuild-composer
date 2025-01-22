@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
 	"slices"
 	"sort"
 	"strconv"
@@ -105,33 +104,6 @@ func splitExtension(filename string) string {
 	}
 
 	return "." + strings.Join(filenameParts[1:], ".")
-}
-
-// isLocalSave checks the environment to see if a local save has been enabled
-// and tests the UploadOptions to see if it has been selected
-func isLocalSave(options *UploadOptions) (bool, error) {
-	if options == nil {
-		return false, nil
-	}
-
-	var local LocalUploadOptions
-	// This is a terrible way to do this, but it is imposed by the OpenAPI code generator so...
-	j, err := json.Marshal(*options)
-	if err != nil {
-		return false, nil
-	}
-	err = json.Unmarshal(j, &local)
-	if err != nil {
-		return false, nil
-	}
-
-	// Return an error if local_save is set but not enabled
-	_, enabled := os.LookupEnv("OSBUILD_LOCALSAVE")
-	if !enabled && local.LocalSave {
-		return false, HTTPError(ErrorLocalSaveNotEnabled)
-	}
-
-	return enabled && local.LocalSave, nil
 }
 
 type imageRequest struct {
