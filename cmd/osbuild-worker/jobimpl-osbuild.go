@@ -612,7 +612,9 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 		artifact := jobTarget.OsbuildArtifact
 		switch targetOptions := jobTarget.Options.(type) {
 		case *target.WorkerServerTargetOptions:
-			targetResult = target.NewWorkerServerTargetResult(&artifact)
+			targetResult = target.NewWorkerServerTargetResult(&target.WorkerServerTargetResultOptions{
+				ArtifactRelPath: path.Join(jobTarget.OsbuildArtifact.ExportFilename),
+			}, &artifact)
 			var f *os.File
 			imagePath := path.Join(outputDirectory, jobTarget.OsbuildArtifact.ExportName, jobTarget.OsbuildArtifact.ExportFilename)
 			f, err = os.Open(imagePath)
