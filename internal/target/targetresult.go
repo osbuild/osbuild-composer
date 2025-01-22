@@ -78,6 +78,8 @@ func UnmarshalTargetResultOptions(trName TargetName, rawOptions json.RawMessage)
 		options = new(ContainerTargetResultOptions)
 	case TargetNamePulpOSTree:
 		options = new(PulpOSTreeTargetResultOptions)
+	case TargetNameWorkerServer:
+		options = new(WorkerServerTargetResultOptions)
 	default:
 		return nil, fmt.Errorf("unexpected target result name: %s", trName)
 	}

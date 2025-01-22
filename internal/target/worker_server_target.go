@@ -10,6 +10,12 @@ func NewWorkerServerTarget() *Target {
 	return newTarget(TargetNameWorkerServer, &WorkerServerTargetOptions{})
 }
 
-func NewWorkerServerTargetResult(artifact *OsbuildArtifact) *TargetResult {
-	return newTargetResult(TargetNameWorkerServer, nil, artifact)
+type WorkerServerTargetResultOptions struct {
+	ArtifactRelPath string `json:"artifact_relative_path"`
+}
+
+func (WorkerServerTargetResultOptions) isTargetResultOptions() {}
+
+func NewWorkerServerTargetResult(options *WorkerServerTargetResultOptions, artifact *OsbuildArtifact) *TargetResult {
+	return newTargetResult(TargetNameWorkerServer, options, artifact)
 }

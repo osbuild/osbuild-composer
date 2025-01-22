@@ -610,6 +610,27 @@ func (s *Server) JobArtifact(id uuid.UUID, name string) (io.Reader, int64, error
 	return f, info.Size(), nil
 }
 
+func (s *Server) JobArtifactLocation(id uuid.UUID, name string) (string, error) {
+	if s.config.ArtifactsDir == "" {
+		return "", errors.New("Artifacts not enabled")
+	}
+
+	jobInfo, err := s.jobInfo(id, nil)
+	if err != nil {
+		return "", err
+	}
+
+	if jobInfo.JobStatus.Finished.IsZero() {
+		return "", fmt.Errorf("Cannot access artifacts before job is finished: %s", id)
+	}
+
+	p := path.Join(s.config.ArtifactsDir, id.String(), name)
+	if _, err := os.Stat(p); errors.Is(err, os.ErrNotExist) {
+		return "", fmt.Errorf("Artifact not found: %s", p)
+	}
+	return p, nil
+}
+
 // Deletes all artifacts for job `id`.
 func (s *Server) DeleteArtifacts(id uuid.UUID) error {
 	if s.config.ArtifactsDir == "" {
