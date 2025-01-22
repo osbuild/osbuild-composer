@@ -29,8 +29,19 @@ var GuestOsFeaturesRHEL9 []*computepb.GuestOsFeature = []*computepb.GuestOsFeatu
 	{Type: common.ToPtr(computepb.GuestOsFeature_GVNIC.String())},
 	{Type: common.ToPtr(computepb.GuestOsFeature_SEV_SNP_CAPABLE.String())},
 	{Type: common.ToPtr(computepb.GuestOsFeature_SEV_LIVE_MIGRATABLE_V2.String())},
+	{Type: common.ToPtr(computepb.GuestOsFeature_TDX_CAPABLE.String())},
 }
 
+// Guest OS Features for RHEL9.2 images.
+// The TDX support was added since RHEL-9.6.
+var GuestOsFeaturesRHEL92 []*computepb.GuestOsFeature = []*computepb.GuestOsFeature{
+	{Type: common.ToPtr(computepb.GuestOsFeature_UEFI_COMPATIBLE.String())},
+	{Type: common.ToPtr(computepb.GuestOsFeature_VIRTIO_SCSI_MULTIQUEUE.String())},
+	{Type: common.ToPtr(computepb.GuestOsFeature_SEV_CAPABLE.String())},
+	{Type: common.ToPtr(computepb.GuestOsFeature_GVNIC.String())},
+	{Type: common.ToPtr(computepb.GuestOsFeature_SEV_SNP_CAPABLE.String())},
+	{Type: common.ToPtr(computepb.GuestOsFeature_SEV_LIVE_MIGRATABLE_V2.String())},
+}
 // Guest OS Features for RHEL9.1 images.
 // The SEV_LIVE_MIGRATABLE_V2 support was added since RHEL-9.2
 var GuestOsFeaturesRHEL91 []*computepb.GuestOsFeature = []*computepb.GuestOsFeature{
@@ -71,6 +82,14 @@ func GuestOsFeaturesByDistro(distroName string) []*computepb.GuestOsFeature {
 	// TODO: this should be updated for the dot-notation
 	case distroName == "rhel-91":
 		return GuestOsFeaturesRHEL91
+	case distroName == "rhel-92":
+		fallthrough
+	case distroName == "rhel-93":
+		fallthrough
+	case distroName == "rhel-94":
+		fallthrough
+	case distroName == "rhel-95":
+		return GuestOsFeaturesRHEL92
 	case strings.HasPrefix(distroName, "centos-9"):
 		fallthrough
 	case strings.HasPrefix(distroName, "rhel-9"):
