@@ -246,7 +246,7 @@ func imageTypeFromApiImageType(it ImageTypes, arch distro.Arch) string {
 	return ""
 }
 
-func targetResultToUploadStatus(t *target.TargetResult) (*UploadStatus, error) {
+func (h *apiHandlers) targetResultToUploadStatus(jobId uuid.UUID, t *target.TargetResult) (*UploadStatus, error) {
 	var us *UploadStatus
 	var uploadType UploadTypes
 	var uploadOptions interface{}
@@ -299,6 +299,14 @@ func targetResultToUploadStatus(t *target.TargetResult) (*UploadStatus, error) {
 		}
 	case target.TargetNameWorkerServer:
 		uploadType = UploadTypesLocal
+		workerServerOptions := t.Options.(*target.WorkerServerTargetResultOptions)
+		absPath, err := h.server.workers.JobArtifactLocation(jobId, workerServerOptions.ArtifactRelPath)
+		if err != nil {
+			return nil, fmt.Errorf("unable to find job artefact: %w", err)
+		}
+		uploadOptions = LocalUploadStatus{
+			ArtifactPath: absPath,
+		}
 	default:
 		return nil, fmt.Errorf("unknown upload target: %s", t.Name)
 	}
@@ -347,7 +355,7 @@ func (h *apiHandlers) getComposeStatusImpl(ctx echo.Context, id string) error {
 			statuses := make([]UploadStatus, len(result.TargetResults))
 			for idx := range result.TargetResults {
 				tr := result.TargetResults[idx]
-				us, err := targetResultToUploadStatus(tr)
+				us, err := h.targetResultToUploadStatus(jobId, tr)
 				if err != nil {
 					return HTTPError(ErrorUnknownUploadTarget)
 				}
@@ -412,7 +420,7 @@ func (h *apiHandlers) getComposeStatusImpl(ctx echo.Context, id string) error {
 				for idx := range buildJobResult.TargetResults {
 					tr := buildJobResult.TargetResults[idx]
 					if tr.Name != target.TargetNameKoji {
-						us, err := targetResultToUploadStatus(tr)
+						us, err := h.targetResultToUploadStatus(jobId, tr)
 						if err != nil {
 							return HTTPError(ErrorUnknownUploadTarget)
 						}
@@ -1173,7 +1181,7 @@ func (h *apiHandlers) postCloneComposeImpl(ctx echo.Context, id string) error {
 		return HTTPError(ErrorSeveralUploadTargets)
 	}
 	var us *UploadStatus
-	us, err = targetResultToUploadStatus(osbuildResult.TargetResults[0])
+	us, err = h.targetResultToUploadStatus(jobId, osbuildResult.TargetResults[0])
 	if err != nil {
 		return HTTPError(ErrorUnknownUploadTarget)
 	}

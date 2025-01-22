@@ -747,6 +747,7 @@ components:
             - $ref: '#/components/schemas/ContainerUploadStatus'
             - $ref: '#/components/schemas/OCIUploadStatus'
             - $ref: '#/components/schemas/PulpOSTreeUploadStatus'
+            - $ref: '#/components/schemas/LocalUploadStatus'
     UploadStatusValue:
       type: string
       enum: ['success', 'failure', 'pending', 'running']
@@ -835,6 +836,13 @@ components:
         - repo_url
       properties:
         repo_url:
+          type: string
+    LocalUploadStatus:
+      type: object
+      required:
+        - artifact_path
+      properties:
+        artifact_path:
           type: string
     ComposeMetadata:
       allOf:

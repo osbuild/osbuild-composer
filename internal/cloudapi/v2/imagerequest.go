@@ -76,7 +76,6 @@ func newAWSTarget(options UploadOptions, imageType distro.ImageType) (*target.Ta
 	} else {
 		t.ImageName = key
 	}
-	t.OsbuildArtifact.ExportFilename = imageType.Filename()
 	return t, nil
 }
 
@@ -103,7 +102,6 @@ func newAWSS3Target(options UploadOptions, imageType distro.ImageType) (*target.
 		Public: public,
 	})
 	t.ImageName = key
-	t.OsbuildArtifact.ExportFilename = imageType.Filename()
 	return t, nil
 }
 
@@ -129,8 +127,6 @@ func newContainerTarget(options UploadOptions, request *ComposeRequest, imageTyp
 
 	t := target.NewContainerTarget(&target.ContainerTargetOptions{})
 	t.ImageName = fmt.Sprintf("%s:%s", name, tag)
-	t.OsbuildArtifact.ExportFilename = imageType.Filename()
-
 	return t, nil
 }
 
@@ -171,7 +167,6 @@ func newGCPTarget(options UploadOptions, imageType distro.ImageType) (*target.Ta
 	} else {
 		t.ImageName = imageName
 	}
-	t.OsbuildArtifact.ExportFilename = imageType.Filename()
 	return t, nil
 }
 
@@ -210,7 +205,6 @@ func newAzureTarget(options UploadOptions, imageType distro.ImageType) (*target.
 		// if ImageName wasn't given, generate a random one
 		t.ImageName = fmt.Sprintf("composer-api-%s", uuid.New().String())
 	}
-	t.OsbuildArtifact.ExportFilename = imageType.Filename()
 	return t, nil
 }
 
@@ -228,7 +222,6 @@ func newOCITarget(options UploadOptions, imageType distro.ImageType) (*target.Ta
 	key := fmt.Sprintf("composer-api-%s", uuid.New().String())
 	t := target.NewOCIObjectStorageTarget(&target.OCIObjectStorageTargetOptions{})
 	t.ImageName = key
-	t.OsbuildArtifact.ExportFilename = imageType.Filename()
 	return t, nil
 }
 
@@ -257,7 +250,6 @@ func newPulpOSTreeTarget(options UploadOptions, imageType distro.ImageType) (*ta
 	})
 
 	t.ImageName = fmt.Sprintf("composer-api-%s", uuid.New().String())
-	t.OsbuildArtifact.ExportFilename = imageType.Filename()
 	return t, nil
 }
 
@@ -464,12 +456,14 @@ func getTarget(targetType UploadTypes, options UploadOptions, request *ComposeRe
 
 	case UploadTypesLocal:
 		irTarget = target.NewWorkerServerTarget()
+		irTarget.ImageName = imageType.Filename()
 	default:
 		return nil, HTTPError(ErrorInvalidUploadTarget)
 	}
 	if err != nil {
 		return nil, err
 	}
+	irTarget.OsbuildArtifact.ExportFilename = imageType.Filename()
 	irTarget.OsbuildArtifact.ExportName = imageType.Exports()[0]
 
 	return irTarget, nil

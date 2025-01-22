@@ -314,7 +314,8 @@ func TestUpload(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error creating osbuild manifest: %v", err)
 	}
-	server := newTestServer(t, t.TempDir(), defaultConfig, true)
+	storeDir := t.TempDir()
+	server := newTestServer(t, storeDir, defaultConfig, true)
 	mf, err := manifest.Serialize(nil, nil, nil, nil)
 	if err != nil {
 		t.Fatalf("error creating osbuild manifest: %v", err)
@@ -334,6 +335,13 @@ func TestUpload(t *testing.T) {
 	test.TestRoute(t, handler, false, "PUT", fmt.Sprintf("/api/worker/v1/jobs/%s/artifacts/foobar", token), `this is my artifact`, http.StatusOK, `?`)
 	require.Equal(t, float64(0), promtest.ToFloat64(prometheus.PendingJobs))
 	require.Equal(t, float64(1), promtest.ToFloat64(prometheus.RunningJobs))
+
+	err = server.FinishJob(token, []byte("{}"))
+	require.NoError(t, err)
+
+	path, err := server.JobArtifactLocation(jobID, "foobar")
+	require.NoError(t, err)
+	require.Equal(t, fmt.Sprintf("%s/artifacts/%s/foobar", storeDir, jobID), path)
 }
 
 func TestUploadNotAcceptingArtifacts(t *testing.T) {
