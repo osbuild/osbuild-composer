@@ -406,8 +406,6 @@ const defaultAzureKernelOptions = "ro loglevel=3 console=tty1 console=ttyS0 earl
 // based on https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/9/html/deploying_rhel_9_on_microsoft_azure/assembly_deploying-a-rhel-image-as-a-virtual-machine-on-microsoft-azure_cloud-content-azure#making-configuration-changes_configure-the-image-azure
 func defaultAzureImageConfig(rd *rhel.Distribution) *distro.ImageConfig {
 	ic := &distro.ImageConfig{
-		Timezone: common.ToPtr("Etc/UTC"),
-		Locale:   common.ToPtr("en_US.UTF-8"),
 		Keyboard: &osbuild.KeymapStageOptions{
 			Keymap: "us",
 			X11Keymap: &osbuild.X11KeymapOptions{

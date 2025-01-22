@@ -5,7 +5,6 @@ import (
 
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/osbuild"
-	"github.com/osbuild/images/pkg/ostree"
 	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/images/pkg/runner"
 )
@@ -99,12 +98,12 @@ func (p *BuildrootFromPackages) getPackageSpecs() []rpmmd.PackageSpec {
 	return p.packageSpecs
 }
 
-func (p *BuildrootFromPackages) serializeStart(packages []rpmmd.PackageSpec, _ []container.Spec, _ []ostree.CommitSpec, rpmRepos []rpmmd.RepoConfig) {
+func (p *BuildrootFromPackages) serializeStart(inputs Inputs) {
 	if len(p.packageSpecs) > 0 {
 		panic("double call to serializeStart()")
 	}
-	p.packageSpecs = packages
-	p.repos = append(p.repos, rpmRepos...)
+	p.packageSpecs = inputs.Depsolved.Packages
+	p.repos = append(p.repos, inputs.Depsolved.Repos...)
 }
 
 func (p *BuildrootFromPackages) serializeEnd() {
@@ -199,11 +198,11 @@ func (p *BuildrootFromContainer) getContainerSpecs() []container.Spec {
 	return p.containerSpecs
 }
 
-func (p *BuildrootFromContainer) serializeStart(_ []rpmmd.PackageSpec, containerSpecs []container.Spec, _ []ostree.CommitSpec, _ []rpmmd.RepoConfig) {
+func (p *BuildrootFromContainer) serializeStart(inputs Inputs) {
 	if len(p.containerSpecs) > 0 {
 		panic("double call to serializeStart()")
 	}
-	p.containerSpecs = containerSpecs
+	p.containerSpecs = inputs.Containers
 }
 
 func (p *BuildrootFromContainer) serializeEnd() {

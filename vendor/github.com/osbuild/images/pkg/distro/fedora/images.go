@@ -407,6 +407,10 @@ func liveInstallerImage(workload workload.Workload,
 		img.RootfsType = manifest.SquashfsRootfs
 	}
 
+	if locale := t.getDefaultImageConfig().Locale; locale != nil {
+		img.Locale = *locale
+	}
+
 	return img, nil
 }
 
@@ -423,6 +427,11 @@ func imageInstallerImage(workload workload.Workload,
 	img := image.NewAnacondaTarInstaller()
 
 	var err error
+	img.OSCustomizations, err = osCustomizations(t, packageSets[osPkgsKey], containers, bp.Customizations)
+	if err != nil {
+		return nil, err
+	}
+
 	img.Kickstart, err = kickstart.New(customizations)
 	if err != nil {
 		return nil, err
@@ -453,11 +462,6 @@ func imageInstallerImage(workload workload.Workload,
 	img.Platform = t.platform
 	img.Workload = workload
 
-	img.OSCustomizations, err = osCustomizations(t, packageSets[osPkgsKey], containers, bp.Customizations)
-	if err != nil {
-		return nil, err
-	}
-
 	img.ExtraBasePackages = packageSets[installerPkgsKey]
 
 	d := t.arch.distro
@@ -479,7 +483,7 @@ func imageInstallerImage(workload workload.Workload,
 
 	img.Filename = t.Filename()
 
-	img.SquashfsCompression = "lz4"
+	img.RootfsCompression = "lz4"
 	if common.VersionGreaterThanOrEqual(img.OSVersion, VERSION_ROOTFS_SQUASHFS) {
 		img.RootfsType = manifest.SquashfsRootfs
 	}
@@ -680,9 +684,13 @@ func iotInstallerImage(workload workload.Workload,
 
 	img.Filename = t.Filename()
 
-	img.SquashfsCompression = "lz4"
+	img.RootfsCompression = "lz4"
 	if common.VersionGreaterThanOrEqual(img.OSVersion, VERSION_ROOTFS_SQUASHFS) {
 		img.RootfsType = manifest.SquashfsRootfs
+	}
+
+	if locale := t.getDefaultImageConfig().Locale; locale != nil {
+		img.Locale = *locale
 	}
 
 	return img, nil

@@ -16,6 +16,7 @@ import (
 	"encoding/json"
 
 	"github.com/osbuild/images/pkg/container"
+	"github.com/osbuild/images/pkg/dnfjson"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/ostree"
 	"github.com/osbuild/images/pkg/rpmmd"
@@ -40,6 +41,8 @@ const (
 	DISTRO_EL7
 	DISTRO_FEDORA
 )
+
+type Inputs osbuild.SourceInputs
 
 // An OSBuildManifest is an opaque JSON object, which is a valid input to osbuild
 type OSBuildManifest []byte
@@ -138,27 +141,39 @@ func (m Manifest) GetOSTreeSourceSpecs() map[string][]ostree.SourceSpec {
 	return ostreeSpecs
 }
 
-func (m Manifest) Serialize(packageSets map[string][]rpmmd.PackageSpec, containerSpecs map[string][]container.Spec, ostreeCommits map[string][]ostree.CommitSpec, rpmRepos map[string][]rpmmd.RepoConfig) (OSBuildManifest, error) {
-	pipelines := make([]osbuild.Pipeline, 0)
-	packages := make([]rpmmd.PackageSpec, 0)
-	commits := make([]ostree.CommitSpec, 0)
-	inline := make([]string, 0)
-	containers := make([]container.Spec, 0)
-	for _, pipeline := range m.pipelines {
-		pipeline.serializeStart(packageSets[pipeline.Name()], containerSpecs[pipeline.Name()], ostreeCommits[pipeline.Name()], rpmRepos[pipeline.Name()])
+type SerializeOptions struct {
+	RpmDownloader osbuild.RpmDownloader
+}
+
+func (m Manifest) Serialize(depsolvedSets map[string]dnfjson.DepsolveResult, containerSpecs map[string][]container.Spec, ostreeCommits map[string][]ostree.CommitSpec, opts *SerializeOptions) (OSBuildManifest, error) {
+	if opts == nil {
+		opts = &SerializeOptions{}
 	}
+
 	for _, pipeline := range m.pipelines {
-		commits = append(commits, pipeline.getOSTreeCommits()...)
+		pipeline.serializeStart(Inputs{
+			Depsolved:  depsolvedSets[pipeline.Name()],
+			Containers: containerSpecs[pipeline.Name()],
+			Commits:    ostreeCommits[pipeline.Name()],
+		})
+	}
+
+	var pipelines []osbuild.Pipeline
+	var mergedInputs osbuild.SourceInputs
+	for _, pipeline := range m.pipelines {
 		pipelines = append(pipelines, pipeline.serialize())
-		packages = append(packages, packageSets[pipeline.Name()]...)
-		inline = append(inline, pipeline.getInline()...)
-		containers = append(containers, pipeline.getContainerSpecs()...)
+
+		mergedInputs.Commits = append(mergedInputs.Commits, pipeline.getOSTreeCommits()...)
+		mergedInputs.Depsolved.Packages = append(mergedInputs.Depsolved.Packages, depsolvedSets[pipeline.Name()].Packages...)
+		mergedInputs.Depsolved.Repos = append(mergedInputs.Depsolved.Repos, depsolvedSets[pipeline.Name()].Repos...)
+		mergedInputs.Containers = append(mergedInputs.Containers, pipeline.getContainerSpecs()...)
+		mergedInputs.InlineData = append(mergedInputs.InlineData, pipeline.getInline()...)
 	}
 	for _, pipeline := range m.pipelines {
 		pipeline.serializeEnd()
 	}
 
-	sources, err := osbuild.GenSources(packages, commits, inline, containers)
+	sources, err := osbuild.GenSources(mergedInputs, opts.RpmDownloader)
 	if err != nil {
 		return nil, err
 	}
