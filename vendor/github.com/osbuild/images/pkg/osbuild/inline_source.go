@@ -6,6 +6,8 @@ import (
 	"fmt"
 )
 
+const SourceNameInline = "org.osbuild.inline"
+
 type InlineSource struct {
 	Items map[string]InlineSourceItem `json:"items"`
 }
