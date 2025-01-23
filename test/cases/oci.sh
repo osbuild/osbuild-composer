@@ -17,9 +17,9 @@ CONTAINER_IMAGE_CLOUD_TOOLS="quay.io/osbuild/cloud-tools:latest"
 # Provision the software under test.
 /usr/libexec/osbuild-composer-test/provision.sh none
 
-if which podman 2>/dev/null >&2; then
+if type -p podman 2>/dev/null >&2; then
     CONTAINER_RUNTIME=podman
-elif which docker 2>/dev/null >&2; then
+elif type -p docker 2>/dev/null >&2; then
     CONTAINER_RUNTIME=docker
 else
     echo No container runtime found, install podman or docker.
