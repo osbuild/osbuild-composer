@@ -78,9 +78,9 @@ if [[ "$TEST_TYPE" == "$TEST_TYPE_CLOUD_UPLOAD" ]]; then
     # Container image used for cloud provider CLI tools
     export CONTAINER_IMAGE_CLOUD_TOOLS="quay.io/osbuild/cloud-tools:latest"
 
-    if which podman 2>/dev/null >&2; then
+    if type -p podman 2>/dev/null >&2; then
         export CONTAINER_RUNTIME=podman
-    elif which docker 2>/dev/null >&2; then
+    elif type -p docker 2>/dev/null >&2; then
         export CONTAINER_RUNTIME=docker
     else
         echo No container runtime found, install podman or docker.

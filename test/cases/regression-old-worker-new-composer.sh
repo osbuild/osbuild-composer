@@ -84,9 +84,9 @@ sudo dnf install -y osbuild-composer-worker podman composer-cli
 # verify the right worker is installed just to be sure
 rpm -q "$DESIRED_WORKER_RPM"
 
-if which podman 2>/dev/null >&2; then
+if type -p podman 2>/dev/null >&2; then
   CONTAINER_RUNTIME=podman
-elif which docker 2>/dev/null >&2; then
+elif type -p docker 2>/dev/null >&2; then
   CONTAINER_RUNTIME=docker
 else
   echo No container runtime found, install podman or docker.
