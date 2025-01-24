@@ -33,6 +33,7 @@ const (
 	JobTypeKojiInit         string = "koji-init"
 	JobTypeKojiFinalize     string = "koji-finalize"
 	JobTypeDepsolve         string = "depsolve"
+	JobTypeSearchPackages   string = "search-packages"
 	JobTypeManifestIDOnly   string = "manifest-id-only"
 	JobTypeContainerResolve string = "container-resolve"
 	JobTypeFileResolve      string = "file-resolve"

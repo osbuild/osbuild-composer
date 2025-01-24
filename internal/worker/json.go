@@ -217,6 +217,25 @@ type DepsolveJobResult struct {
 	JobResult
 }
 
+// SearchPackagesJob defines the parameters for a dnf metadata search
+// It will search the included repositories for packages matching the
+// package strings
+// Package names support globs using '*' and will search for a substring
+// match if '*foopkg*' is used.
+type SearchPackagesJob struct {
+	Packages         []string           `json:"packages"`
+	Repositories     []rpmmd.RepoConfig `json:"repos"`
+	ModulePlatformID string             `json:"module_platform_id"`
+	Arch             string             `json:"arch"`
+	Releasever       string             `json:"releasever"`
+}
+
+// SearchPackagesJobResult returns the details of the search packages
+type SearchPackagesJobResult struct {
+	Packages rpmmd.PackageList `json:"packages"`
+	JobResult
+}
+
 type ManifestJobByID struct{}
 
 // OSBuildComposerDepModule contains information about a module used by
