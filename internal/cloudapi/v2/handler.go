@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
@@ -1382,4 +1383,64 @@ func packageSpecToPackageMetadata(pkgspecs []rpmmd.PackageSpec) []PackageMetadat
 		)
 	}
 	return packages
+}
+
+// packageListToPackageDetails converts the rpmmd.PackageList to PackageDetails
+// This is used to return detailed package information from the package search
+func packageListToPackageDetails(packages rpmmd.PackageList) []PackageDetails {
+	details := make([]PackageDetails, 0)
+	for _, rpm := range packages {
+		d := PackageDetails{
+			Name:    rpm.Name,
+			Version: rpm.Version,
+			Release: rpm.Release,
+			Arch:    rpm.Arch,
+		}
+
+		// Set epoch if it is not 0
+		if rpm.Epoch > 0 {
+			d.Epoch = common.ToPtr(strconv.FormatUint(uint64(rpm.Epoch), 10))
+		}
+
+		// Set buildtime to a RFC3339 string
+		d.Buildtime = common.ToPtr(rpm.BuildTime.Format(time.RFC3339))
+		if len(rpm.Summary) > 0 {
+			d.Summary = common.ToPtr(rpm.Summary)
+		}
+		if len(rpm.Description) > 0 {
+			d.Description = common.ToPtr(rpm.Description)
+		}
+		if len(rpm.URL) > 0 {
+			d.Url = common.ToPtr(rpm.URL)
+		}
+		if len(rpm.License) > 0 {
+			d.License = common.ToPtr(rpm.License)
+		}
+
+		details = append(details, d)
+	}
+
+	return details
+}
+
+// PostSearchPackages searches for packages and returns detailed
+// information about the matches.
+func (h *apiHandlers) PostSearchPackages(ctx echo.Context) error {
+	var request SearchPackagesRequest
+	err := ctx.Bind(&request)
+	if err != nil {
+		return err
+	}
+
+	// Search for the listed packages
+	// Any errors returned are suitable as a response
+	packages, err := request.Search(h.server.distros, h.server.repos, h.server.workers)
+	if err != nil {
+		return err
+	}
+
+	return ctx.JSON(http.StatusOK,
+		SearchPackagesResponse{
+			Packages: packageListToPackageDetails(packages),
+		})
 }
