@@ -2057,7 +2057,8 @@ func TestModulesInfo(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		t.Run("Path = %s", func(t *testing.T) {
+		name := fmt.Sprintf("Path=%s", c.Path)
+		t.Run(name, func(t *testing.T) {
 			api, sf := createTestWeldrAPI(t.TempDir(), test_distro.TestDistro1Name, test_distro.TestArchName, c.Fixture, nil)
 			t.Cleanup(sf.Cleanup)
 			test.TestRoute(t, api, true, "GET", c.Path, ``, c.ExpectedStatus, c.ExpectedJSON)
