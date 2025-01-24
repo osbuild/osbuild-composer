@@ -56,8 +56,8 @@ type AnacondaTarInstaller struct {
 	ISORootKickstart bool
 	Kickstart        *kickstart.Options
 
-	SquashfsCompression string
-	RootfsType          manifest.RootfsType
+	RootfsCompression string
+	RootfsType        manifest.RootfsType
 
 	ISOLabel  string
 	Product   string
@@ -144,6 +144,7 @@ func (img *AnacondaTarInstaller) InstantiateManifest(m *manifest.Manifest,
 	anacondaPipeline.DisabledAnacondaModules = img.DisabledAnacondaModules
 	anacondaPipeline.AdditionalDracutModules = img.AdditionalDracutModules
 	anacondaPipeline.AdditionalDrivers = img.AdditionalDrivers
+	anacondaPipeline.Locale = img.OSCustomizations.Language
 
 	tarPath := "/liveimg.tar.gz"
 
@@ -195,7 +196,8 @@ func (img *AnacondaTarInstaller) InstantiateManifest(m *manifest.Manifest,
 		isoTreePipeline.Kickstart.Path = img.Kickstart.Path
 	}
 
-	isoTreePipeline.SquashfsCompression = img.SquashfsCompression
+	isoTreePipeline.RootfsCompression = img.RootfsCompression
+	isoTreePipeline.RootfsType = img.RootfsType
 
 	isoTreePipeline.OSPipeline = osPipeline
 	isoTreePipeline.KernelOpts = img.AdditionalKernelOpts

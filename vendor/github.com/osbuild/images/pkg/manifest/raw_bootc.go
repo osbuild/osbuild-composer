@@ -10,9 +10,7 @@ import (
 	"github.com/osbuild/images/pkg/customizations/users"
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/osbuild"
-	"github.com/osbuild/images/pkg/ostree"
 	"github.com/osbuild/images/pkg/platform"
-	"github.com/osbuild/images/pkg/rpmmd"
 )
 
 // A RawBootcImage represents a raw bootc image file which can be booted in a
@@ -71,11 +69,11 @@ func (p *RawBootcImage) getContainerSpecs() []container.Spec {
 	return p.containerSpecs
 }
 
-func (p *RawBootcImage) serializeStart(_ []rpmmd.PackageSpec, containerSpecs []container.Spec, _ []ostree.CommitSpec, _ []rpmmd.RepoConfig) {
+func (p *RawBootcImage) serializeStart(inputs Inputs) {
 	if len(p.containerSpecs) > 0 {
 		panic("double call to serializeStart()")
 	}
-	p.containerSpecs = containerSpecs
+	p.containerSpecs = inputs.Containers
 }
 
 func (p *RawBootcImage) serializeEnd() {

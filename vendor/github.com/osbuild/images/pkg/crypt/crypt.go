@@ -18,6 +18,7 @@ func CryptSHA512(phrase string) (string, error) {
 		return "", nil
 	}
 
+	// Note: update "crypt_impl_non_cgo.go" if new hash types get added
 	hashSettings := "$6$" + salt
 	return crypt(phrase, hashSettings)
 }

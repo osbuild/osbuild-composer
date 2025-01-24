@@ -97,7 +97,6 @@ func iotCommitPackageSet(t *imageType) rpmmd.PackageSet {
 			"cryptsetup",
 			"curl",
 			"dbus-parsec",
-			"dnsmasq",
 			"dosfstools",
 			"dracut-config-generic",
 			"dracut-network",
@@ -180,6 +179,13 @@ func iotCommitPackageSet(t *imageType) rpmmd.PackageSet {
 			Include: []string{
 				"passwd",         // provided by shadow-utils in F40+
 				"podman-plugins", // deprecated in podman 5
+			},
+		})
+	}
+	if common.VersionLessThan(t.arch.distro.osVersion, "41") {
+		ps = ps.Append(rpmmd.PackageSet{
+			Include: []string{
+				"dnsmasq", // deprecated for F41+
 			},
 		})
 	}
@@ -653,7 +659,6 @@ func iotSimplifiedInstallerPackageSet(t *imageType) rpmmd.PackageSet {
 			"coreos-installer-dracut",
 			"coreutils",
 			"device-mapper-multipath",
-			"dnsmasq",
 			"dosfstools",
 			"dracut-live",
 			"e2fsprogs",
@@ -694,6 +699,13 @@ func iotSimplifiedInstallerPackageSet(t *imageType) rpmmd.PackageSet {
 		ps = ps.Append(rpmmd.PackageSet{
 			Include: []string{
 				"passwd",
+			},
+		})
+	}
+	if common.VersionLessThan(t.arch.distro.osVersion, "41") {
+		ps = ps.Append(rpmmd.PackageSet{
+			Include: []string{
+				"dnsmasq", // deprecated for F41+
 			},
 		})
 	}
