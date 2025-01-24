@@ -427,7 +427,7 @@ var run = func() {
 		}
 	}
 
-	// depsolve jobs can be done during other jobs
+	// depsolve and search jobs can be done during other jobs
 	depsolveCtx, depsolveCtxCancel := context.WithCancel(context.Background())
 	solver := dnfjson.NewBaseSolver(rpmmd_cache)
 	if config.DNFJson != "" {
@@ -437,6 +437,10 @@ var run = func() {
 	go func() {
 		jobImpls := map[string]JobImplementation{
 			worker.JobTypeDepsolve: &DepsolveJobImpl{
+				Solver:               solver,
+				RepositoryMTLSConfig: repositoryMTLSConfig,
+			},
+			worker.JobTypeSearchPackages: &SearchPackagesJobImpl{
 				Solver:               solver,
 				RepositoryMTLSConfig: repositoryMTLSConfig,
 			},
