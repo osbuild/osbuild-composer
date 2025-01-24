@@ -441,6 +441,50 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
+  /search/packages:
+    post:
+      operationId: postSearchPackages
+      summary: Search for detailed information on a list of package names
+      security:
+        - Bearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchPackagesRequest'
+      responses:
+        '200':
+          description: Search response with package details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchPackagesResponse'
+        '400':
+          description: Invalid search request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Auth token is invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Unauthorized to perform operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Unexpected error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
   /errors/{id}:
     get:
       operationId: getError
@@ -2286,6 +2330,71 @@ components:
           items:
             $ref: '#/components/schemas/PackageMetadata'
           description: 'Package list including NEVRA'
+
+    SearchPackagesRequest:
+      additionalProperties: false
+      required:
+        - packages
+        - distribution
+        - architecture
+      properties:
+        repositories:
+          type: array
+          items:
+            $ref: '#/components/schemas/Repository'
+        distribution:
+          type: string
+          example: 'rhel-8'
+        architecture:
+          type: string
+          example: 'x86_64'
+        packages:
+          type: array
+          description: |
+            Array of package names to search for. Supports * wildcards for
+            names, but not for versions.
+          items:
+            type: string
+
+    SearchPackagesResponse:
+      type: object
+      required:
+        - packages
+      properties:
+        packages:
+          type: array
+          items:
+            $ref: '#/components/schemas/PackageDetails'
+          description: 'Detailed package information from DNF'
+
+    PackageDetails:
+      type: object
+      required:
+        - name
+        - version
+        - release
+        - arch
+      properties:
+        name:
+          type: string
+        summary:
+          type: string
+        description:
+          type: string
+        url:
+          type: string
+        version:
+          type: string
+        release:
+          type: string
+        epoch:
+          type: string
+        arch:
+          type: string
+        buildtime:
+          type: string
+        license:
+          type: string
 
   parameters:
     page:
