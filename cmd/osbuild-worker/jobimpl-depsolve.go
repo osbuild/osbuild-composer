@@ -24,6 +24,13 @@ type RepositoryMTLSConfig struct {
 	Proxy          *url.URL
 }
 
+// SetupRepoSSL copies the CA, Key, and Cert to the RepoConfig
+func (rmc *RepositoryMTLSConfig) SetupRepoSSL(repo *rpmmd.RepoConfig) {
+	repo.SSLCACert = rmc.CA
+	repo.SSLClientKey = rmc.MTLSClientKey
+	repo.SSLClientCert = rmc.MTLSClientCert
+}
+
 func (rmc *RepositoryMTLSConfig) CompareBaseURL(baseURLStr string) (bool, error) {
 	baseURL, err := url.Parse(baseURLStr)
 	if err != nil {
@@ -139,9 +146,7 @@ func (impl *DepsolveJobImpl) Run(job worker.Job) error {
 							return err
 						}
 						if match {
-							args.PackageSets[pkgsetsi][pkgseti].Repositories[repoi].SSLCACert = impl.RepositoryMTLSConfig.CA
-							args.PackageSets[pkgsetsi][pkgseti].Repositories[repoi].SSLClientKey = impl.RepositoryMTLSConfig.MTLSClientKey
-							args.PackageSets[pkgsetsi][pkgseti].Repositories[repoi].SSLClientCert = impl.RepositoryMTLSConfig.MTLSClientCert
+							impl.RepositoryMTLSConfig.SetupRepoSSL(&args.PackageSets[pkgsetsi][pkgseti].Repositories[repoi])
 						}
 					}
 				}
