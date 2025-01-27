@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -189,6 +190,57 @@ func mockOSTreeResolve(t *testing.T, workerServer *worker.Server, wg *sync.WaitG
 	return cancel
 }
 
+// mockSearch starts a routine which just completes search jobs
+// It requires some of the test framework to operate
+// And the optional fail parameter will cause it to return an error as if the search failed
+func mockSearch(t *testing.T, workerServer *worker.Server, wg *sync.WaitGroup, fail bool) func() {
+	ctx, cancel := context.WithCancel(context.Background())
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for {
+			_, token, _, _, _, err := workerServer.RequestJob(ctx, test_distro.TestArchName, []string{worker.JobTypeSearchPackages}, []string{""}, uuid.Nil)
+			select {
+			case <-ctx.Done():
+				return
+			default:
+			}
+			if err != nil {
+				continue
+			}
+			result := &worker.SearchPackagesJobResult{
+				Packages: rpmmd.PackageList{
+					{
+						Name:        "package1",
+						Summary:     "The package you searched for",
+						Description: "A verbose paragraph about the package",
+						Version:     "1.33",
+						Release:     "2.fc42",
+						Arch:        "x86_64",
+						URL:         "https://example.com/package1",
+						License:     "GPLv3",
+						BuildTime:   time.Date(1985, time.October, 26, 9, 24, 0, 0, time.UTC),
+					},
+				},
+			}
+
+			// fail returns an empty list of matches
+			if fail {
+				result.Packages = nil
+			}
+
+			rawMsg, err := json.Marshal(result)
+			require.NoError(t, err)
+			err = workerServer.FinishJob(token, rawMsg)
+			if err != nil {
+				return
+			}
+
+		}
+	}()
+	return cancel
+}
+
 func newV2Server(t *testing.T, dir string, enableJWT bool, fail bool) (*v2.Server, *worker.Server, jobqueue.JobQueue, context.CancelFunc) {
 	q, err := fsjobqueue.New(dir)
 	require.NoError(t, err)
@@ -217,6 +269,7 @@ func newV2Server(t *testing.T, dir string, enableJWT bool, fail bool) (*v2.Serve
 
 	cancelFuncs = append(cancelFuncs, mockDepsolve(t, workerServer, &wg, fail))
 	cancelFuncs = append(cancelFuncs, mockOSTreeResolve(t, workerServer, &wg, fail))
+	cancelFuncs = append(cancelFuncs, mockSearch(t, workerServer, &wg, fail))
 
 	cancelWithWait := func() {
 		for _, cancel := range cancelFuncs {
@@ -1698,6 +1751,79 @@ func TestDepsolveArchErrors(t *testing.T) {
 				"packages": [
 					{ "name": "dep-package", "version": "*" }
 			]},
+			"distribution": "%[1]s",
+			"architecture": "MOS6502",
+		}`, test_distro.TestDistro1Name),
+		http.StatusBadRequest, `
+		{
+			"href": "/api/image-builder-composer/v2/errors/30",
+			"id": "30",
+			"kind": "Error",
+			"code": "IMAGE-BUILDER-COMPOSER-30",
+			"reason": "Request could not be validated"
+		}`, "operation_id", "details")
+}
+
+func TestSearchPackages(t *testing.T) {
+	srv, _, _, cancel := newV2Server(t, t.TempDir(), false, false)
+	defer cancel()
+
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST",
+		"/api/image-builder-composer/v2/search/packages", fmt.Sprintf(`
+		{
+			"packages": ["package1"],
+			"distribution": "%[1]s",
+			"architecture": "%[2]s"
+		}`, test_distro.TestDistro1Name, test_distro.TestArchName),
+		http.StatusOK,
+		`{
+			"packages": [
+                {
+                    "name": "package1",
+					"summary": "The package you searched for",
+					"description": "A verbose paragraph about the package",
+                    "version": "1.33",
+                    "release": "2.fc42",
+                    "arch": "x86_64",
+					"url": "https://example.com/package1",
+					"license": "GPLv3",
+					"buildtime": "1985-10-26T09:24:00Z"
+				}
+			]
+		}`)
+}
+
+func TestSearchDistroErrors(t *testing.T) {
+	srv, _, _, cancel := newV2Server(t, t.TempDir(), false, false)
+	defer cancel()
+
+	// Bad distro in request
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST",
+		"/api/image-builder-composer/v2/search/packages", fmt.Sprintf(`
+		{
+			"packages": ["package1"],
+			"distribution": "bart",
+			"architecture": "%[2]s"
+		}`, test_distro.TestDistro1Name, test_distro.TestArchName),
+		http.StatusBadRequest, `
+		{
+			"href": "/api/image-builder-composer/v2/errors/4",
+			"id": "4",
+			"kind": "Error",
+			"code": "IMAGE-BUILDER-COMPOSER-4",
+			"reason": "Unsupported distribution"
+		}`, "operation_id", "details")
+}
+
+func TestSearchArchErrors(t *testing.T) {
+	srv, _, _, cancel := newV2Server(t, t.TempDir(), false, false)
+	defer cancel()
+
+	// Unsupported architecture
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST",
+		"/api/image-builder-composer/v2/search/packages", fmt.Sprintf(`
+		{
+			"packages": ["package1"],
 			"distribution": "%[1]s",
 			"architecture": "MOS6502",
 		}`, test_distro.TestDistro1Name),
