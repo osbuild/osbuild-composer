@@ -151,8 +151,14 @@ subprocessPIDs+=( $! )
 ssh -oStrictHostKeyChecking=no -i "$KEYPAIR" "fedora@$EXECUTOR_IP" sudo dnf install -y osbuild-composer osbuild
 
 # no internet access during the build
+# TODO [thozza]: while debugging the test case, it turned out that the worker executor instance in fact has Internet access!
 $AWS_CMD ec2 revoke-security-group-egress --group-id "$SGID" --security-group-rule-ids "$SGRULEID"
 
+greenprint "🔥 opening worker-executor port on firewall"
+ssh -oStrictHostKeyChecking=no -i "$KEYPAIR" "fedora@$EXECUTOR_IP" sudo firewall-cmd --zone=public --add-port=8001/tcp --permanent || true
+ssh -oStrictHostKeyChecking=no -i "$KEYPAIR" "fedora@$EXECUTOR_IP" sudo firewall-cmd --reload || true
+
+greenprint "🚀 Starting worker executor"
 ssh -oStrictHostKeyChecking=no -i "$KEYPAIR" "fedora@$EXECUTOR_IP" sudo /usr/libexec/osbuild-composer/osbuild-worker-executor -host 0.0.0.0 &
 subprocessPIDs+=( $! )
 
