@@ -69,37 +69,18 @@ var sbomDoc = json.RawMessage(`{
   ]
 }`)
 
-func newV2Server(t *testing.T, dir string, depsolveChannels []string, enableJWT bool, failDepsolve bool) (*v2.Server, *worker.Server, jobqueue.JobQueue, context.CancelFunc) {
-	q, err := fsjobqueue.New(dir)
-	require.NoError(t, err)
-	workerServer := worker.NewServer(nil, q, worker.Config{BasePath: "/api/worker/v1", JWTEnabled: enableJWT, TenantProviderFields: []string{"rh-org-id", "account_id"}})
-
-	distros := distrofactory.NewTestDefault()
-	require.NotNil(t, distros)
-
-	repos, err := reporegistry.New([]string{"../../../test/data"})
-	require.Nil(t, err)
-	require.NotNil(t, repos)
-	require.Greater(t, len(repos.ListDistros()), 0)
-
-	config := v2.ServerConfig{
-		JWTEnabled:           enableJWT,
-		TenantProviderFields: []string{"rh-org-id", "account_id"},
-	}
-	v2Server := v2.NewServer(workerServer, distros, repos, config)
-	require.NotNil(t, v2Server)
-	t.Cleanup(v2Server.Shutdown)
-
-	// start a routine which just completes depsolve jobs
-	depsolveContext, cancel := context.WithCancel(context.Background())
-	var wg sync.WaitGroup
+// mockDepsolve starts a routine which just completes depsolve jobs
+// It requires some of the test framework to operate
+// And the optional fail parameter will cause it to return an error as if the depsolve failed
+func mockDepsolve(t *testing.T, workerServer *worker.Server, wg *sync.WaitGroup, fail bool) func() {
+	ctx, cancel := context.WithCancel(context.Background())
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
 		for {
-			_, token, _, _, _, err := workerServer.RequestJob(depsolveContext, test_distro.TestArchName, []string{worker.JobTypeDepsolve}, depsolveChannels, uuid.Nil)
+			_, token, _, _, _, err := workerServer.RequestJob(ctx, test_distro.TestArchName, []string{worker.JobTypeDepsolve}, []string{""}, uuid.Nil)
 			select {
-			case <-depsolveContext.Done():
+			case <-ctx.Done():
 				return
 			default:
 			}
@@ -147,7 +128,7 @@ func newV2Server(t *testing.T, dir string, depsolveChannels []string, enableJWT 
 				ErrorType: worker.ErrorType(""),
 			}
 
-			if failDepsolve {
+			if fail {
 				dJR.JobResult.JobError = clienterrors.New(clienterrors.ErrorDNFOtherError, "DNF Error", nil)
 			}
 
@@ -160,15 +141,21 @@ func newV2Server(t *testing.T, dir string, depsolveChannels []string, enableJWT 
 
 		}
 	}()
+	return cancel
+}
 
-	ostreeResolveContext, cancelOstree := context.WithCancel(context.Background())
+// mockOSTreeResolve starts a routine which completes a dummy ostree job
+// It requires some of the test framework to operate
+// And the optional fail parameter will cause it to return an error as if the ostree job failed
+func mockOSTreeResolve(t *testing.T, workerServer *worker.Server, wg *sync.WaitGroup, fail bool) func() {
+	ctx, cancel := context.WithCancel(context.Background())
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
 		for {
-			_, token, _, _, _, err := workerServer.RequestJob(ostreeResolveContext, test_distro.TestDistro1Name, []string{worker.JobTypeOSTreeResolve}, depsolveChannels, uuid.Nil)
+			_, token, _, _, _, err := workerServer.RequestJob(ctx, test_distro.TestDistro1Name, []string{worker.JobTypeOSTreeResolve}, []string{""}, uuid.Nil)
 			select {
-			case <-ostreeResolveContext.Done():
+			case <-ctx.Done():
 				return
 			default:
 			}
@@ -186,7 +173,7 @@ func newV2Server(t *testing.T, dir string, depsolveChannels []string, enableJWT 
 				},
 			}
 
-			if failDepsolve {
+			if fail {
 				oJR.JobResult.JobError = clienterrors.New(clienterrors.ErrorOSTreeParamsInvalid, "ostree error", nil)
 			}
 
@@ -199,9 +186,42 @@ func newV2Server(t *testing.T, dir string, depsolveChannels []string, enableJWT 
 		}
 	}()
 
+	return cancel
+}
+
+func newV2Server(t *testing.T, dir string, enableJWT bool, fail bool) (*v2.Server, *worker.Server, jobqueue.JobQueue, context.CancelFunc) {
+	q, err := fsjobqueue.New(dir)
+	require.NoError(t, err)
+	workerServer := worker.NewServer(nil, q, worker.Config{BasePath: "/api/worker/v1", JWTEnabled: enableJWT, TenantProviderFields: []string{"rh-org-id", "account_id"}})
+
+	distros := distrofactory.NewTestDefault()
+	require.NotNil(t, distros)
+
+	repos, err := reporegistry.New([]string{"../../../test/data"})
+	require.Nil(t, err)
+	require.NotNil(t, repos)
+	require.Greater(t, len(repos.ListDistros()), 0)
+
+	config := v2.ServerConfig{
+		JWTEnabled:           enableJWT,
+		TenantProviderFields: []string{"rh-org-id", "account_id"},
+	}
+	v2Server := v2.NewServer(workerServer, distros, repos, config)
+	require.NotNil(t, v2Server)
+	t.Cleanup(v2Server.Shutdown)
+
+	// Setup the depsolve and ostree resolve job handlers
+	// These are mocked functions that return a static set of results for testing
+	var wg sync.WaitGroup
+	var cancelFuncs []context.CancelFunc
+
+	cancelFuncs = append(cancelFuncs, mockDepsolve(t, workerServer, &wg, fail))
+	cancelFuncs = append(cancelFuncs, mockOSTreeResolve(t, workerServer, &wg, fail))
+
 	cancelWithWait := func() {
-		cancel()
-		cancelOstree()
+		for _, cancel := range cancelFuncs {
+			cancel()
+		}
 		wg.Wait()
 	}
 
@@ -209,7 +229,7 @@ func newV2Server(t *testing.T, dir string, depsolveChannels []string, enableJWT 
 }
 
 func TestUnknownRoute(t *testing.T) {
-	srv, _, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false, false)
+	srv, _, _, cancel := newV2Server(t, t.TempDir(), false, false)
 	defer cancel()
 
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", "/api/image-builder-composer/v2/badroute", ``, http.StatusNotFound, `
@@ -223,7 +243,7 @@ func TestUnknownRoute(t *testing.T) {
 }
 
 func TestGetError(t *testing.T) {
-	srv, _, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false, false)
+	srv, _, _, cancel := newV2Server(t, t.TempDir(), false, false)
 	defer cancel()
 
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", "/api/image-builder-composer/v2/errors/4", ``, http.StatusOK, `
@@ -246,7 +266,7 @@ func TestGetError(t *testing.T) {
 }
 
 func TestGetErrorList(t *testing.T) {
-	srv, _, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false, false)
+	srv, _, _, cancel := newV2Server(t, t.TempDir(), false, false)
 	defer cancel()
 
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", "/api/image-builder-composer/v2/errors?page=3&size=1", ``, http.StatusOK, `
@@ -265,7 +285,7 @@ func TestGetErrorList(t *testing.T) {
 }
 
 func TestCompose(t *testing.T) {
-	srv, _, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false, false)
+	srv, _, _, cancel := newV2Server(t, t.TempDir(), false, false)
 	defer cancel()
 
 	testDistro := test_distro.DistroFactory(test_distro.TestDistro1Name)
@@ -656,7 +676,7 @@ func TestCompose(t *testing.T) {
 }
 
 func TestComposeStatusSuccess(t *testing.T) {
-	srv, wrksrv, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false, false)
+	srv, wrksrv, _, cancel := newV2Server(t, t.TempDir(), false, false)
 	defer cancel()
 
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
@@ -790,7 +810,7 @@ func TestComposeStatusSuccess(t *testing.T) {
 }
 
 func TestComposeStatusFailure(t *testing.T) {
-	srv, wrksrv, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false, false)
+	srv, wrksrv, _, cancel := newV2Server(t, t.TempDir(), false, false)
 	defer cancel()
 
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
@@ -845,7 +865,7 @@ func TestComposeStatusFailure(t *testing.T) {
 }
 
 func TestComposeStatusInvalidUUID(t *testing.T) {
-	srv, _, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false, false)
+	srv, _, _, cancel := newV2Server(t, t.TempDir(), false, false)
 	defer cancel()
 
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", "/api/image-builder-composer/v2/composes/abcdef", ``, http.StatusBadRequest, `
@@ -861,7 +881,7 @@ func TestComposeStatusInvalidUUID(t *testing.T) {
 }
 
 func TestComposeJobError(t *testing.T) {
-	srv, wrksrv, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false, false)
+	srv, wrksrv, _, cancel := newV2Server(t, t.TempDir(), false, false)
 	defer cancel()
 
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
@@ -922,7 +942,7 @@ func TestComposeJobError(t *testing.T) {
 }
 
 func TestComposeDependencyError(t *testing.T) {
-	srv, wrksrv, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false, true)
+	srv, wrksrv, _, cancel := newV2Server(t, t.TempDir(), false, true)
 	defer cancel()
 
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
@@ -999,7 +1019,7 @@ func TestComposeDependencyError(t *testing.T) {
 }
 
 func TestComposeTargetErrors(t *testing.T) {
-	srv, wrksrv, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false, false)
+	srv, wrksrv, _, cancel := newV2Server(t, t.TempDir(), false, false)
 	defer cancel()
 
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
@@ -1091,7 +1111,7 @@ func TestComposeTargetErrors(t *testing.T) {
 }
 
 func TestComposeCustomizations(t *testing.T) {
-	srv, _, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false, false)
+	srv, _, _, cancel := newV2Server(t, t.TempDir(), false, false)
 	defer cancel()
 
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
@@ -1197,7 +1217,7 @@ func TestComposeCustomizations(t *testing.T) {
 }
 
 func TestComposeRhcSubscription(t *testing.T) {
-	srv, _, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false, false)
+	srv, _, _, cancel := newV2Server(t, t.TempDir(), false, false)
 	defer cancel()
 
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
@@ -1233,7 +1253,7 @@ func TestComposeRhcSubscription(t *testing.T) {
 }
 
 func TestImageTypes(t *testing.T) {
-	srv, _, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false, false)
+	srv, _, _, cancel := newV2Server(t, t.TempDir(), false, false)
 	defer cancel()
 
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
@@ -1420,7 +1440,7 @@ func TestImageTypes(t *testing.T) {
 }
 
 func TestImageFromCompose(t *testing.T) {
-	srv, wrksrv, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false, false)
+	srv, wrksrv, _, cancel := newV2Server(t, t.TempDir(), false, false)
 	defer cancel()
 
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
@@ -1560,7 +1580,7 @@ func TestImageFromCompose(t *testing.T) {
 }
 
 func TestDepsolveBlueprint(t *testing.T) {
-	srv, _, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false, false)
+	srv, _, _, cancel := newV2Server(t, t.TempDir(), false, false)
 	defer cancel()
 
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST",
@@ -1592,7 +1612,7 @@ func TestDepsolveBlueprint(t *testing.T) {
 }
 
 func TestDepsolveDistroErrors(t *testing.T) {
-	srv, _, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false, false)
+	srv, _, _, cancel := newV2Server(t, t.TempDir(), false, false)
 	defer cancel()
 
 	// matching distros, but not supported
@@ -1665,7 +1685,7 @@ func TestDepsolveDistroErrors(t *testing.T) {
 }
 
 func TestDepsolveArchErrors(t *testing.T) {
-	srv, _, _, cancel := newV2Server(t, t.TempDir(), []string{""}, false, false)
+	srv, _, _, cancel := newV2Server(t, t.TempDir(), false, false)
 	defer cancel()
 
 	// Unsupported architecture

@@ -196,9 +196,7 @@ func runNextJob(t *testing.T, jobs []uuid.UUID, workerHandler http.Handler, orgI
 // that all jobs are assigned to the correct channel, therefore we need also
 // this test.
 func TestMultitenancy(t *testing.T) {
-	// Passing an empty list as depsolving channels, we want to do depsolves
-	// ourselvess
-	apiServer, workerServer, q, cancel := newV2Server(t, t.TempDir(), []string{}, true, false)
+	apiServer, workerServer, q, cancel := newV2Server(t, t.TempDir(), true, false)
 	handler := apiServer.Handler("/api/image-builder-composer/v2")
 	defer cancel()
 
