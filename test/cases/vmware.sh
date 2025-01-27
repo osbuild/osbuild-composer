@@ -75,7 +75,7 @@ function cleanup() {
     greenprint "🧼 Cleaning up"
     # kill dangling journalctl processes to prevent GitLab CI from hanging
     sudo pkill journalctl || echo "Nothing killed"
-    $GOVC_CMD vm.destroy -u "${GOVMOMI_USERNAME}":"${GOVMOMI_PASSWORD}"@"${GOVMOMI_URL}" -k=true "${IMAGE_KEY}"
+    $GOVC_CMD vm.destroy -u "${VC8_GOVMOMI_USERNAME}":"${VC8_GOVMOMI_PASSWORD}"@"${VC8_GOVMOMI_URL}" -k=true "${IMAGE_KEY}"
     set -eu
 }
 trap cleanup EXIT
@@ -122,13 +122,13 @@ tee "$VMWARE_CONFIG" > /dev/null << EOF
 provider = "vmware"
 
 [settings]
-host = "${GOVMOMI_URL}"
-username = "${GOVMOMI_USERNAME}"
-password = "${GOVMOMI_PASSWORD}"
-cluster = "${GOVMOMI_CLUSTER}"
-dataStore = "${GOVMOMI_DATASTORE}"
-dataCenter = "${GOVMOMI_DATACENTER}"
-folder = "${GOVMOMI_FOLDER}"
+host = "${VC8_GOVMOMI_URL}"
+username = "${VC8_GOVMOMI_USERNAME}"
+password = "${VC8_GOVMOMI_PASSWORD}"
+cluster = "${VC8_GOVMOMI_CLUSTER}"
+dataStore = "${VC8_GOVMOMI_DATASTORE}"
+dataCenter = "${VC8_GOVMOMI_DATACENTER}"
+folder = "${VC8_GOVMOMI_FOLDER}"
 EOF
 
 # Write a basic blueprint for our image.
@@ -200,13 +200,13 @@ fi
 
 if [ "$IMAGE_TYPE" = "vmdk" ]; then
 greenprint "👷🏻 Building VM in vSphere"
-$GOVC_CMD vm.create -u "${GOVMOMI_USERNAME}":"${GOVMOMI_PASSWORD}"@"${GOVMOMI_URL}" \
+$GOVC_CMD vm.create -u "${VC8_GOVMOMI_USERNAME}":"${VC8_GOVMOMI_PASSWORD}"@"${VC8_GOVMOMI_URL}" \
     -k=true \
-    -pool="${GOVMOMI_CLUSTER}"/Resources \
-    -dc="${GOVMOMI_DATACENTER}" \
-    -ds="${GOVMOMI_DATASTORE}" \
-    -folder="${GOVMOMI_FOLDER}" \
-    -net="${GOVMOMI_NETWORK}" \
+    -pool="${VC8_GOVMOMI_CLUSTER}"/Resources \
+    -dc="${VC8_GOVMOMI_DATACENTER}" \
+    -ds="${VC8_GOVMOMI_DATASTORE}" \
+    -folder="${VC8_GOVMOMI_FOLDER}" \
+    -net="${VC8_GOVMOMI_NETWORK}" \
     -net.adapter=vmxnet3 \
     -m=4096 -c=2 -g=rhel8_64Guest -on=true -firmware=efi \
     -disk="${IMAGE_KEY}"/"${IMAGE_KEY}".vmdk \
@@ -214,16 +214,16 @@ $GOVC_CMD vm.create -u "${GOVMOMI_USERNAME}":"${GOVMOMI_PASSWORD}"@"${GOVMOMI_UR
     "${IMAGE_KEY}"
 elif [ "$IMAGE_TYPE" = "ova" ]; then
 greenprint "👷🏻 Modifying network of the VM in vSphere"
-$GOVC_CMD vm.network.add -u "${GOVMOMI_USERNAME}":"${GOVMOMI_PASSWORD}"@"${GOVMOMI_URL}" \
+$GOVC_CMD vm.network.add -u "${VC8_GOVMOMI_USERNAME}":"${VC8_GOVMOMI_PASSWORD}"@"${VC8_GOVMOMI_URL}" \
     -k=true \
-    -net="${GOVMOMI_NETWORK}" \
+    -net="${VC8_GOVMOMI_NETWORK}" \
     -net.adapter=vmxnet3 \
     -vm="${IMAGE_KEY}" \
-    -net="${GOVMOMI_NETWORK}"
+    -net="${VC8_GOVMOMI_NETWORK}"
 
 # start the vm
 greenprint "👷🏻 Powering on the VM"
-$GOVC_CMD vm.power -u "${GOVMOMI_USERNAME}":"${GOVMOMI_PASSWORD}"@"${GOVMOMI_URL}" \
+$GOVC_CMD vm.power -u "${VC8_GOVMOMI_USERNAME}":"${VC8_GOVMOMI_PASSWORD}"@"${VC8_GOVMOMI_URL}" \
     -k=true \
     -wait=true \
     -on \
@@ -232,13 +232,13 @@ $GOVC_CMD vm.power -u "${GOVMOMI_USERNAME}":"${GOVMOMI_PASSWORD}"@"${GOVMOMI_URL
 fi
 
 # tagging vm as testing object
-$GOVC_CMD tags.attach -u "${GOVMOMI_USERNAME}":"${GOVMOMI_PASSWORD}"@"${GOVMOMI_URL}" \
+$GOVC_CMD tags.attach -u "${VC8_GOVMOMI_USERNAME}":"${VC8_GOVMOMI_PASSWORD}"@"${VC8_GOVMOMI_URL}" \
     -k=true \
     -c "osbuild-composer testing" gitlab-ci-test \
-    "/${GOVMOMI_DATACENTER}/vm/${GOVMOMI_FOLDER}/${IMAGE_KEY}"
+    "/${VC8_GOVMOMI_DATACENTER}/vm/${VC8_GOVMOMI_FOLDER}/${IMAGE_KEY}"
 
 greenprint "Getting IP of created VM"
-VM_IP=$($GOVC_CMD vm.ip -u "${GOVMOMI_USERNAME}":"${GOVMOMI_PASSWORD}"@"${GOVMOMI_URL}" -k=true -v4=true "${IMAGE_KEY}")
+VM_IP=$($GOVC_CMD vm.ip -u "${VC8_GOVMOMI_USERNAME}":"${VC8_GOVMOMI_PASSWORD}"@"${VC8_GOVMOMI_URL}" -k=true -v4=true "${IMAGE_KEY}")
 
 # Wait for the node to come online.
 greenprint "⏱ Waiting for VM to respond to ssh"
