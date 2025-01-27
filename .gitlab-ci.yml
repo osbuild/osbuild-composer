@@ -252,7 +252,7 @@ regression-composer-works-behind-satellite-fallback:
 
 regression-composer-works-behind-satellite:
   extends: .regression
-  rules: 
+  rules:
     # WHITELIST: Run on RHEL-nightly only
     - if: $RUNNER =~ "/^.*(rhel-.*-nightly).*$/" && $CI_PIPELINE_SOURCE != "schedule"
   variables:
@@ -270,7 +270,7 @@ regression-excluded-dependency:
 
 regression-include-excluded-packages:
   extends: .regression
-  rules: 
+  rules:
     # BLACKLIST: Skipped on fedora systems & excluding GA runners from the PR pipeline
     - if: $RUNNER !~ "/^.*(fedora).*$/" && $CI_PIPELINE_SOURCE != "schedule" && $RUNNER !~ /[\S]+rhel-[\S]+-(?:(?:ga)|(?:eus))[\S]+/
     - !reference [.nightly_rules_all, rules]
@@ -305,7 +305,7 @@ regression-insecure-repo:
 
 regression-no-explicit-rootfs-definition:
   extends: .regression
-  rules: 
+  rules:
     # BLACKLIST: Skipped on fedora systems & excluding GA runners from the PR pipeline
     - if: $RUNNER !~ "/^.*(fedora).*$/" && $CI_PIPELINE_SOURCE != "schedule" && $RUNNER !~ /[\S]+rhel-[\S]+-(?:(?:ga)|(?:eus))[\S]+/
     - !reference [.nightly_rules_all, rules]
@@ -493,11 +493,8 @@ vmware.sh_vmdk:
   extends: .integration_rhel
   rules:
     # Run only on x86_64
-    # Temporarily disabled for RHEL-10 and Centos-10
-    - if: '$CI_PIPELINE_SOURCE != "schedule" && $RUNNER =~ "/^.*(x86_64).*$/" && $RUNNER !~ /[\S]+rhel-[\S]+-(?:(?:ga)|(?:eus))[\S]+/ && $RUNNER !~ "/^.*(rhel-10.0-nightly|centos-stream-10).*$/"'
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9.6-[^ga][\S]+/ && $RUNNER =~ "/^.*(x86_64).*$/" && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
-    # - !reference [.upstream_rules_x86_64, rules]
-    # - !reference [.nightly_rules_x86_64, rules]
+    - !reference [.upstream_rules_x86_64, rules]
+    - !reference [.nightly_rules_x86_64, rules]
     - !reference [.ga_rules_x86_64, rules]
   variables:
     SCRIPT: vmware.sh vmdk
@@ -506,11 +503,8 @@ vmware.sh_ova:
   extends: .integration_rhel
   rules:
     # Run only on x86_64
-    # Temporarily disabled for RHEL-10 and Centos-10
-    - if: '$CI_PIPELINE_SOURCE != "schedule" && $RUNNER =~ "/^.*(x86_64).*$/" && $RUNNER !~ /[\S]+rhel-[\S]+-(?:(?:ga)|(?:eus))[\S]+/ && $RUNNER !~ "/^.*(rhel-10.0-nightly|centos-stream-10).*$/"'
-    # - !reference [.upstream_rules_x86_64, rules]
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9.6-[^ga][\S]+/ && $RUNNER =~ "/^.*(x86_64).*$/" && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
-    # - !reference [.nightly_rules_x86_64, rules]
+    - !reference [.upstream_rules_x86_64, rules]
+    - !reference [.nightly_rules_x86_64, rules]
     - !reference [.ga_rules_x86_64, rules]
   variables:
     SCRIPT: vmware.sh ova
@@ -585,6 +579,7 @@ API:
           - azure
           - gcp
           - oci
+          - vsphere
         RUNNER:
           - aws/rhel-10.0-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
