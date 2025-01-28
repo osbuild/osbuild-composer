@@ -420,14 +420,6 @@ func (s *Server) DepsolveJobInfo(id uuid.UUID, result *DepsolveJobResult) (*JobI
 		return nil, fmt.Errorf("expected %q, found %q job instead", JobTypeDepsolve, jobInfo.JobType)
 	}
 
-	if result.JobError == nil && result.Error != "" {
-		if result.ErrorType == DepsolveErrorType {
-			result.JobError = clienterrors.New(clienterrors.ErrorDNFDepsolveError, result.Error, nil)
-		} else {
-			result.JobError = clienterrors.New(clienterrors.ErrorRPMMDError, result.Error, nil)
-		}
-	}
-
 	return jobInfo, nil
 }
 

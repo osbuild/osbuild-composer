@@ -640,41 +640,6 @@ func TestMixedOSBuildJob(t *testing.T) {
 	require.Equal(newJobResult, newJobResultRead)
 }
 
-func TestDepsolveLegacyErrorConversion(t *testing.T) {
-	distroStruct := newTestDistro(t)
-	arch, err := distroStruct.GetArch(test_distro.TestArchName)
-	if err != nil {
-		t.Fatalf("error getting arch from distro: %v", err)
-	}
-	server := newTestServer(t, t.TempDir(), defaultConfig, false)
-
-	depsolveJobId, err := server.EnqueueDepsolve(&worker.DepsolveJob{}, "")
-	require.NoError(t, err)
-
-	_, _, _, _, _, err = server.RequestJob(context.Background(), arch.Name(), []string{worker.JobTypeDepsolve}, []string{""}, uuid.Nil)
-	require.NoError(t, err)
-
-	reason := "Depsolve failed"
-	errType := worker.DepsolveErrorType
-
-	expectedResult := worker.DepsolveJobResult{
-		Error:     reason,
-		ErrorType: errType,
-		JobResult: worker.JobResult{
-			JobError: clienterrors.New(clienterrors.ErrorDNFDepsolveError, reason, nil),
-		},
-	}
-
-	depsolveJobResult := worker.DepsolveJobResult{
-		Error:     reason,
-		ErrorType: errType,
-	}
-
-	_, err = server.DepsolveJobInfo(depsolveJobId, &depsolveJobResult)
-	require.NoError(t, err)
-	require.Equal(t, expectedResult, depsolveJobResult)
-}
-
 type testJob struct {
 	main   interface{}
 	deps   []testJob

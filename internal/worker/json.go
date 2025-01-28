@@ -195,13 +195,6 @@ type DepsolveJob struct {
 	SbomType sbom.StandardType `json:"sbom_type,omitempty"`
 }
 
-type ErrorType string
-
-const (
-	DepsolveErrorType ErrorType = "depsolve"
-	OtherErrorType    ErrorType = "other"
-)
-
 // SbomDoc represents a single SBOM document result.
 type SbomDoc struct {
 	DocType  sbom.StandardType `json:"type"`
@@ -212,8 +205,6 @@ type DepsolveJobResult struct {
 	PackageSpecs map[string][]rpmmd.PackageSpec `json:"package_specs"`
 	SbomDocs     map[string]SbomDoc             `json:"sbom_docs,omitempty"`
 	RepoConfigs  map[string][]rpmmd.RepoConfig  `json:"repo_configs"`
-	Error        string                         `json:"error"`
-	ErrorType    ErrorType                      `json:"error_type"`
 	JobResult
 }
 

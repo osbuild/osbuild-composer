@@ -125,8 +125,6 @@ func mockDepsolve(t *testing.T, workerServer *worker.Server, wg *sync.WaitGroup,
 						Document: sbomDoc,
 					},
 				},
-				Error:     "",
-				ErrorType: worker.ErrorType(""),
 			}
 
 			if fail {
