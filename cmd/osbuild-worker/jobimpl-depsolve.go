@@ -127,13 +127,21 @@ func workerClientErrorFrom(err error, logWithId *logrus.Entry) *clienterrors.Err
 
 func (impl *DepsolveJobImpl) Run(job worker.Job) error {
 	logWithId := logrus.WithField("jobId", job.Id())
+
+	var result worker.DepsolveJobResult
+	// ALWAYS return a result
+	defer func() {
+		err := job.Update(&result)
+		if err != nil {
+			logWithId.Errorf("Error reporting job result: %v", err)
+		}
+	}()
+
 	var args worker.DepsolveJob
 	err := job.Args(&args)
 	if err != nil {
 		return err
 	}
-
-	var result worker.DepsolveJobResult
 
 	if impl.RepositoryMTLSConfig != nil {
 		for pkgsetsi, pkgsets := range args.PackageSets {
@@ -163,10 +171,7 @@ func (impl *DepsolveJobImpl) Run(job worker.Job) error {
 		logWithId.Errorf("Error during rpm repo cache cleanup: %s", err.Error())
 	}
 
-	err = job.Update(&result)
-	if err != nil {
-		return fmt.Errorf("Error reporting job result: %v", err)
-	}
+	// NOTE: result is returned by deferred function above
 
 	return nil
 }
