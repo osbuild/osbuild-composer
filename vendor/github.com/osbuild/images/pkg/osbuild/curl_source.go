@@ -9,6 +9,8 @@ import (
 	"github.com/osbuild/images/pkg/rpmmd"
 )
 
+const SourceNameCurl = "org.osbuild.curl"
+
 var curlDigestPattern = regexp.MustCompile(`(md5|sha1|sha256|sha384|sha512):[0-9a-f]{32,128}`)
 
 type CurlSource struct {

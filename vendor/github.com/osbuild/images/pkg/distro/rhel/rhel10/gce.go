@@ -37,7 +37,6 @@ func mkGCEImageType() *rhel.ImageType {
 
 func baseGCEImageConfig() *distro.ImageConfig {
 	ic := &distro.ImageConfig{
-		Timezone: common.ToPtr("UTC"),
 		TimeSynchronization: &osbuild.ChronyStageOptions{
 			Servers: []osbuild.ChronyConfigServer{{Hostname: "metadata.google.internal"}},
 		},
@@ -59,7 +58,6 @@ func baseGCEImageConfig() *distro.ImageConfig {
 			"reboot.target",
 		},
 		DefaultTarget: common.ToPtr("multi-user.target"),
-		Locale:        common.ToPtr("en_US.UTF-8"),
 		Keyboard: &osbuild.KeymapStageOptions{
 			Keymap: "us",
 		},

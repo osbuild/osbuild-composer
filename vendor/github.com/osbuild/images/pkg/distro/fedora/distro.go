@@ -93,6 +93,9 @@ var (
 			osPkgsKey:        minimalrpmPackageSet,
 			installerPkgsKey: imageInstallerPackageSet,
 		},
+		defaultImageConfig: &distro.ImageConfig{
+			Locale: common.ToPtr("en_US.UTF-8"),
+		},
 		bootable:  true,
 		bootISO:   true,
 		rpmOstree: false,
@@ -112,6 +115,9 @@ var (
 		mimeType:    "application/x-iso9660-image",
 		packageSets: map[string]packageSetFunc{
 			installerPkgsKey: liveInstallerPackageSet,
+		},
+		defaultImageConfig: &distro.ImageConfig{
+			Locale: common.ToPtr("en_US.UTF-8"),
 		},
 		bootable:               true,
 		bootISO:                true,
