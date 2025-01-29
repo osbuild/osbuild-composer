@@ -173,7 +173,7 @@ cp -a repositories/centos-stream-%{centos}*          %{buildroot}%{_datadir}/osb
 %if 0%{?rhel}
 # RHEL 10 supports building all RHEL versions
 %if 0%{?rhel} >= 10
-for REPO_FILE in $(ls vendor/github.com/osbuild/images/data/repositories/rhel-* | grep -v 'no-aux-key'); do
+for REPO_FILE in $(ls vendor/github.com/osbuild/images/data/repositories/rhel-* ); do
     install -m 0644 -vp ${REPO_FILE}                               %{buildroot}%{_datadir}/osbuild-composer/repositories/$(basename ${REPO_FILE})
 done
 
@@ -184,13 +184,13 @@ done
 
 %else
 # All other RHEL versions support building for the same version
-for REPO_FILE in $(ls vendor/github.com/osbuild/images/data/repositories/rhel-%{rhel}* | grep -v 'no-aux-key'); do
+for REPO_FILE in $(ls vendor/github.com/osbuild/images/data/repositories/rhel-%{rhel}* ); do
     install -m 0644 -vp ${REPO_FILE}                               %{buildroot}%{_datadir}/osbuild-composer/repositories/$(basename ${REPO_FILE})
 done
 
 # RHEL 9 supports building also for RHEL 8
 %if 0%{?rhel} == 9
-for REPO_FILE in $(ls vendor/github.com/osbuild/images/data/repositories/rhel-8* | grep -v 'no-aux-key'); do
+for REPO_FILE in $(ls vendor/github.com/osbuild/images/data/repositories/rhel-8* ); do
     install -m 0644 -vp ${REPO_FILE}                               %{buildroot}%{_datadir}/osbuild-composer/repositories/$(basename ${REPO_FILE})
 done
 %endif
