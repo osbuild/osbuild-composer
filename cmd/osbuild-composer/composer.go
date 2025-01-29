@@ -77,8 +77,10 @@ func NewComposer(config *ComposerConfigFile, stateDir, cacheDir string) (*Compos
 		return nil, fmt.Errorf("failed to configure distro aliases: %v", err)
 	}
 
-	repoConfigs, err := reporegistry.LoadAllRepositories(repositoryConfigs)
+	c.repos, err = reporegistry.New(repositoryConfigs)
 	switch err.(type) {
+	case nil:
+		// fine
 	case *reporegistry.NoReposLoadedError:
 		if !c.config.IgnoreMissingRepos {
 			return nil, fmt.Errorf("error loading repository definitions: %w", err)
@@ -86,8 +88,6 @@ func NewComposer(config *ComposerConfigFile, stateDir, cacheDir string) (*Compos
 		// running without repositories is allowed: log message and continue
 		logrus.Info(err.Error())
 		logrus.Info("ignore_missing_repos enabled: continuing")
-	case nil:
-		c.repos = reporegistry.NewFromDistrosRepoConfigs(repoConfigs)
 	default:
 		return nil, fmt.Errorf("error loading repository definitions: %w", err)
 	}
