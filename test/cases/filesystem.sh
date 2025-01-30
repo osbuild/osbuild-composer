@@ -119,7 +119,7 @@ check_result () {
 greenprint "🚀 Checking custom filesystems (success case)"
 
 write_fs_blueprint() {
-    tee "$BLUEPRINT_FILE" > /dev/null << EOF
+    tee "$BLUEPRINT_FILE" << EOF
 name = "custom-filesystem"
 description = "A base system with custom mountpoints"
 version = "0.0.1"
@@ -209,7 +209,7 @@ EOF
 }
 
 write_plain_blueprint() {
-    tee "$BLUEPRINT_FILE" > /dev/null << EOF
+    tee "$BLUEPRINT_FILE" << EOF
 name = "custom-filesystem"
 description = "A base system with custom plain partitions"
 version = "0.0.1"
@@ -279,7 +279,7 @@ EOF
 }
 
 write_lvm_blueprint() {
-    tee "$BLUEPRINT_FILE" > /dev/null << EOF
+    tee "$BLUEPRINT_FILE" << EOF
 name = "custom-filesystem"
 description = "A base system with custom LVM partitioning"
 
@@ -367,7 +367,7 @@ EOF
 }
 
 write_btrfs_blueprint() {
-    tee "$BLUEPRINT_FILE" > /dev/null << EOF
+    tee "$BLUEPRINT_FILE" << EOF
 name = "custom-filesystem"
 description = "A base system with custom btrfs partitioning"
 
@@ -495,7 +495,7 @@ sudo composer-cli blueprints delete custom-filesystem > /dev/null
 greenprint "🚀 Checking custom filesystems (fail case)"
 
 # Write a basic blueprint for our image.
-tee "$BLUEPRINT_FILE" > /dev/null << EOF
+tee "$BLUEPRINT_FILE" << EOF
 name = "custom-filesystem-fail"
 description = "A base system with custom mountpoints"
 version = "0.0.1"
