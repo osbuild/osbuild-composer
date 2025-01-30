@@ -269,5 +269,8 @@ for LOOP_COUNTER in {0..10}; do
     sleep 5
 done
 
+greenprint DEBUG: sleeping for 1 hour to allow debugging
+sleep 3600
+
 greenprint "❌ Failure"
 exit 1
