@@ -76,6 +76,7 @@ const (
 	ErrorGettingJobType                           ServiceErrorCode = 1019
 	ErrorTenantNotInContext                       ServiceErrorCode = 1020
 	ErrorGettingComposeList                       ServiceErrorCode = 1021
+	ErrorArtifactNotFound                         ServiceErrorCode = 1022
 
 	// Errors contained within this file
 	ErrorUnspecified          ServiceErrorCode = 10000
@@ -123,6 +124,7 @@ func getServiceErrors() serviceErrors {
 		serviceError{ErrorInvalidNumberOfImageBuilds, http.StatusBadRequest, "Compose request has unsupported number of image builds"},
 		serviceError{ErrorInvalidOSTreeParams, http.StatusBadRequest, "Invalid OSTree parameters or parameter combination"},
 		serviceError{ErrorTenantNotFound, http.StatusBadRequest, "Tenant not found in JWT claims"},
+		serviceError{ErrorArtifactNotFound, http.StatusBadRequest, "Artifact not found"},
 		serviceError{ErrorNoGPGKey, http.StatusBadRequest, "Invalid repository, when check_gpg is set, gpgkey must be specified"},
 		serviceError{ErrorValidationFailed, http.StatusBadRequest, "Request could not be validated"},
 		serviceError{ErrorComposeBadState, http.StatusBadRequest, "Compose is running or has failed"},
