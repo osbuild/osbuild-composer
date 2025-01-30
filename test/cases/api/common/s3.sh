@@ -209,7 +209,7 @@ function verifyDisk() {
     greenprint "Verifying contents of ${filename}"
 
     infofile="${filename}-info.json"
-    sudo /usr/libexec/osbuild-composer-test/image-info "${filename}" | tee "${infofile}" > /dev/null
+    sudo osbuild-image-info "${filename}" | tee "${infofile}" > /dev/null
 
     # save image info to artifacts
     cp -v "${infofile}" "${ARTIFACTS}/image-info.json"

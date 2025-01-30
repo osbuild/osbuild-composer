@@ -130,6 +130,9 @@ retry sudo dnf -y upgrade selinux-policy
 # Note: installing only -tests to catch missing dependencies
 retry sudo dnf -y install "${PROJECT}-tests"
 
+# Note: image-info is now part of osbuild-tools
+retry sudo dnf -y install osbuild-tools
+
 # Save osbuild-composer NVR to a file to be used as CI artifact
 rpm -q osbuild-composer > COMPOSER_NVR
 

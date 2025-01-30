@@ -35,7 +35,6 @@ DESIRED_OSBUILD_COMMIT_SHA=$(curl -s "https://raw.githubusercontent.com/osbuild/
 
 # Get commit hash of latest composer version, only used for verification.
 CURRENT_COMPOSER_VERSION=$(rpm -q --qf '%{version}\n' osbuild-composer)
-VERIFICATION_COMPOSER_RPM="osbuild-composer-tests-$((CURRENT_COMPOSER_VERSION - 1))"
 
 COMPOSER_LATEST_TAG_SHA=$(curl -s "https://api.github.com/repos/osbuild/osbuild-composer/git/ref/tags/v$((CURRENT_COMPOSER_VERSION-1))" | jq -r '.object.sha')
 COMPOSER_LATEST_COMMIT_SHA=$(curl -s "https://api.github.com/repos/osbuild/osbuild-composer/git/tags/$COMPOSER_LATEST_TAG_SHA" | jq -r '.object.sha')
@@ -398,8 +397,8 @@ setup_repo osbuild-composer "$COMPOSER_LATEST_COMMIT_SHA" 10
 OSBUILD_GIT_COMMIT=$(cat Schutzfile | jq -r '.["'"${ID}-${VERSION_ID}"'"].dependencies.osbuild.commit')
 setup_repo osbuild "$OSBUILD_GIT_COMMIT" 10
 
-greenprint "Installing osbuild-composer-tests for image-info"
-sudo dnf install -y $VERIFICATION_COMPOSER_RPM
+greenprint "Installing osbuild-tools for osbuild-image-info"
+sudo dnf install -y osbuild-tools
 
 curl "${S3_URL}" --output "${WORKDIR}/disk.qcow2"
 
@@ -409,7 +408,7 @@ function verifyDisk() {
     greenprint "Verifying contents of ${filename}"
 
     infofile="${filename}-info.json"
-    sudo /usr/libexec/osbuild-composer-test/image-info "${filename}" | tee "${infofile}" > /dev/null
+    sudo osbuild-image-info "${filename}" | tee "${infofile}" > /dev/null
 
     # save image info to artifacts
     cp -v "${infofile}" "${ARTIFACTS}/image-info.json"
