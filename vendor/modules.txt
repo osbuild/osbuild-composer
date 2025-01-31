@@ -1208,20 +1208,21 @@ github.com/vbauerster/mpb/v8
 github.com/vbauerster/mpb/v8/cwriter
 github.com/vbauerster/mpb/v8/decor
 github.com/vbauerster/mpb/v8/internal
-# github.com/vmware/govmomi v0.42.0
+# github.com/vmware/govmomi v0.48.0
 ## explicit; go 1.21
 github.com/vmware/govmomi
+github.com/vmware/govmomi/cli
+github.com/vmware/govmomi/cli/datastore
+github.com/vmware/govmomi/cli/esx
+github.com/vmware/govmomi/cli/flags
+github.com/vmware/govmomi/cli/importx
+github.com/vmware/govmomi/cli/vm
+github.com/vmware/govmomi/cli/vm/guest
 github.com/vmware/govmomi/cns
 github.com/vmware/govmomi/cns/methods
 github.com/vmware/govmomi/cns/types
+github.com/vmware/govmomi/fault
 github.com/vmware/govmomi/find
-github.com/vmware/govmomi/govc/cli
-github.com/vmware/govmomi/govc/datastore
-github.com/vmware/govmomi/govc/flags
-github.com/vmware/govmomi/govc/host/esxcli
-github.com/vmware/govmomi/govc/importx
-github.com/vmware/govmomi/govc/vm
-github.com/vmware/govmomi/govc/vm/guest
 github.com/vmware/govmomi/guest
 github.com/vmware/govmomi/guest/toolbox
 github.com/vmware/govmomi/history
