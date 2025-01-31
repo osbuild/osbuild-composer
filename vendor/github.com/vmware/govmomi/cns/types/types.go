@@ -25,8 +25,8 @@ import (
 )
 
 type CnsCreateVolumeRequestType struct {
-	This        types.ManagedObjectReference `xml:"_this"`
-	CreateSpecs []CnsVolumeCreateSpec        `xml:"createSpecs,omitempty"`
+	This        types.ManagedObjectReference `xml:"_this" json:"-"`
+	CreateSpecs []CnsVolumeCreateSpec        `xml:"createSpecs,omitempty" json:"createSpecs"`
 }
 
 func init() {
@@ -40,16 +40,16 @@ func init() {
 }
 
 type CnsCreateVolumeResponse struct {
-	Returnval types.ManagedObjectReference `xml:"returnval"`
+	Returnval types.ManagedObjectReference `xml:"returnval" json:"returnval"`
 }
 
 type CnsEntityMetadata struct {
 	types.DynamicData
 
-	EntityName string           `xml:"entityName"`
-	Labels     []types.KeyValue `xml:"labels,omitempty"`
-	Delete     bool             `xml:"delete,omitempty"`
-	ClusterID  string           `xml:"clusterId,omitempty"`
+	EntityName string           `xml:"entityName" json:"entityName"`
+	Labels     []types.KeyValue `xml:"labels,omitempty" json:"labels"`
+	Delete     bool             `xml:"delete,omitempty" json:"delete"`
+	ClusterID  string           `xml:"clusterId,omitempty" json:"clusterID"`
 }
 
 func init() {
@@ -57,18 +57,18 @@ func init() {
 }
 
 type CnsKubernetesEntityReference struct {
-	EntityType string `xml:"entityType"`
-	EntityName string `xml:"entityName"`
-	Namespace  string `xml:"namespace,omitempty"`
-	ClusterID  string `xml:"clusterId,omitempty"`
+	EntityType string `xml:"entityType" json:"entityType"`
+	EntityName string `xml:"entityName" json:"entityName"`
+	Namespace  string `xml:"namespace,omitempty" json:"namespace"`
+	ClusterID  string `xml:"clusterId,omitempty" json:"clusterID"`
 }
 
 type CnsKubernetesEntityMetadata struct {
 	CnsEntityMetadata
 
-	EntityType     string                         `xml:"entityType"`
-	Namespace      string                         `xml:"namespace,omitempty"`
-	ReferredEntity []CnsKubernetesEntityReference `xml:"referredEntity,omitempty"`
+	EntityType     string                         `xml:"entityType" json:"entityType"`
+	Namespace      string                         `xml:"namespace,omitempty" json:"namespace"`
+	ReferredEntity []CnsKubernetesEntityReference `xml:"referredEntity,omitempty" json:"referredEntity"`
 }
 
 func init() {
@@ -78,9 +78,9 @@ func init() {
 type CnsVolumeMetadata struct {
 	types.DynamicData
 
-	ContainerCluster      CnsContainerCluster     `xml:"containerCluster"`
-	EntityMetadata        []BaseCnsEntityMetadata `xml:"entityMetadata,typeattr,omitempty"`
-	ContainerClusterArray []CnsContainerCluster   `xml:"containerClusterArray,omitempty"`
+	ContainerCluster      CnsContainerCluster     `xml:"containerCluster" json:"containerCluster"`
+	EntityMetadata        []BaseCnsEntityMetadata `xml:"entityMetadata,typeattr,omitempty" json:"entityMetadata"`
+	ContainerClusterArray []CnsContainerCluster   `xml:"containerClusterArray,omitempty" json:"containerClusterArray"`
 }
 
 func init() {
@@ -89,14 +89,14 @@ func init() {
 
 type CnsVolumeCreateSpec struct {
 	types.DynamicData
-	Name                 string                                `xml:"name"`
-	VolumeType           string                                `xml:"volumeType"`
-	Datastores           []types.ManagedObjectReference        `xml:"datastores,omitempty"`
-	Metadata             CnsVolumeMetadata                     `xml:"metadata,omitempty"`
-	BackingObjectDetails BaseCnsBackingObjectDetails           `xml:"backingObjectDetails,typeattr"`
-	Profile              []types.BaseVirtualMachineProfileSpec `xml:"profile,omitempty,typeattr"`
-	CreateSpec           BaseCnsBaseCreateSpec                 `xml:"createSpec,omitempty,typeattr"`
-	VolumeSource         BaseCnsVolumeSource                   `xml:"volumeSource,omitempty,typeattr"`
+	Name                 string                                `xml:"name" json:"name"`
+	VolumeType           string                                `xml:"volumeType" json:"volumeType"`
+	Datastores           []types.ManagedObjectReference        `xml:"datastores,omitempty" json:"datastores"`
+	Metadata             CnsVolumeMetadata                     `xml:"metadata,omitempty" json:"metadata"`
+	BackingObjectDetails BaseCnsBackingObjectDetails           `xml:"backingObjectDetails,typeattr" json:"backingObjectDetails"`
+	Profile              []types.BaseVirtualMachineProfileSpec `xml:"profile,omitempty,typeattr" json:"profile"`
+	CreateSpec           BaseCnsBaseCreateSpec                 `xml:"createSpec,omitempty,typeattr" json:"createSpec"`
+	VolumeSource         BaseCnsVolumeSource                   `xml:"volumeSource,omitempty,typeattr" json:"volumeSource"`
 }
 
 func init() {
@@ -104,8 +104,8 @@ func init() {
 }
 
 type CnsUpdateVolumeMetadataRequestType struct {
-	This        types.ManagedObjectReference  `xml:"_this"`
-	UpdateSpecs []CnsVolumeMetadataUpdateSpec `xml:"updateSpecs,omitempty"`
+	This        types.ManagedObjectReference  `xml:"_this" json:"-"`
+	UpdateSpecs []CnsVolumeMetadataUpdateSpec `xml:"updateSpecs,omitempty" json:"updateSpecs"`
 }
 
 func init() {
@@ -119,14 +119,14 @@ func init() {
 }
 
 type CnsUpdateVolumeMetadataResponse struct {
-	Returnval types.ManagedObjectReference `xml:"returnval"`
+	Returnval types.ManagedObjectReference `xml:"returnval" json:"returnval"`
 }
 
 type CnsVolumeMetadataUpdateSpec struct {
 	types.DynamicData
 
-	VolumeId CnsVolumeId       `xml:"volumeId"`
-	Metadata CnsVolumeMetadata `xml:"metadata,omitempty"`
+	VolumeId CnsVolumeId       `xml:"volumeId" json:"volumeId"`
+	Metadata CnsVolumeMetadata `xml:"metadata,omitempty" json:"metadata"`
 }
 
 func init() {
@@ -134,9 +134,9 @@ func init() {
 }
 
 type CnsDeleteVolumeRequestType struct {
-	This       types.ManagedObjectReference `xml:"_this"`
-	VolumeIds  []CnsVolumeId                `xml:"volumeIds"`
-	DeleteDisk bool                         `xml:"deleteDisk"`
+	This       types.ManagedObjectReference `xml:"_this" json:"-"`
+	VolumeIds  []CnsVolumeId                `xml:"volumeIds" json:"volumeIds"`
+	DeleteDisk bool                         `xml:"deleteDisk" json:"deleteDisk"`
 }
 
 func init() {
@@ -150,12 +150,12 @@ func init() {
 }
 
 type CnsDeleteVolumeResponse struct {
-	Returnval types.ManagedObjectReference `xml:"returnval"`
+	Returnval types.ManagedObjectReference `xml:"returnval" json:"returnval"`
 }
 
 type CnsExtendVolumeRequestType struct {
-	This        types.ManagedObjectReference `xml:"_this"`
-	ExtendSpecs []CnsVolumeExtendSpec        `xml:"extendSpecs,omitempty"`
+	This        types.ManagedObjectReference `xml:"_this" json:"-"`
+	ExtendSpecs []CnsVolumeExtendSpec        `xml:"extendSpecs,omitempty" json:"extendSpecs"`
 }
 
 func init() {
@@ -169,14 +169,14 @@ func init() {
 }
 
 type CnsExtendVolumeResponse struct {
-	Returnval types.ManagedObjectReference `xml:"returnval"`
+	Returnval types.ManagedObjectReference `xml:"returnval" json:"returnval"`
 }
 
 type CnsVolumeExtendSpec struct {
 	types.DynamicData
 
-	VolumeId     CnsVolumeId `xml:"volumeId"`
-	CapacityInMb int64       `xml:"capacityInMb"`
+	VolumeId     CnsVolumeId `xml:"volumeId" json:"volumeId"`
+	CapacityInMb int64       `xml:"capacityInMb" json:"capacityInMb"`
 }
 
 func init() {
@@ -184,8 +184,8 @@ func init() {
 }
 
 type CnsAttachVolumeRequestType struct {
-	This        types.ManagedObjectReference `xml:"_this"`
-	AttachSpecs []CnsVolumeAttachDetachSpec  `xml:"attachSpecs,omitempty"`
+	This        types.ManagedObjectReference `xml:"_this" json:"-"`
+	AttachSpecs []CnsVolumeAttachDetachSpec  `xml:"attachSpecs,omitempty" json:"attachSpecs"`
 }
 
 func init() {
@@ -199,12 +199,12 @@ func init() {
 }
 
 type CnsAttachVolumeResponse struct {
-	Returnval types.ManagedObjectReference `xml:"returnval"`
+	Returnval types.ManagedObjectReference `xml:"returnval" json:"returnval"`
 }
 
 type CnsDetachVolumeRequestType struct {
-	This        types.ManagedObjectReference `xml:"_this"`
-	DetachSpecs []CnsVolumeAttachDetachSpec  `xml:"detachSpecs,omitempty"`
+	This        types.ManagedObjectReference `xml:"_this" json:"-"`
+	DetachSpecs []CnsVolumeAttachDetachSpec  `xml:"detachSpecs,omitempty" json:"detachSpecs"`
 }
 
 func init() {
@@ -218,14 +218,14 @@ func init() {
 }
 
 type CnsDetachVolumeResponse struct {
-	Returnval types.ManagedObjectReference `xml:"returnval"`
+	Returnval types.ManagedObjectReference `xml:"returnval" json:"returnval"`
 }
 
 type CnsVolumeAttachDetachSpec struct {
 	types.DynamicData
 
-	VolumeId CnsVolumeId                  `xml:"volumeId"`
-	Vm       types.ManagedObjectReference `xml:"vm"`
+	VolumeId CnsVolumeId                  `xml:"volumeId" json:"volumeId"`
+	Vm       types.ManagedObjectReference `xml:"vm" json:"vm"`
 }
 
 func init() {
@@ -239,8 +239,8 @@ func init() {
 }
 
 type CnsQueryVolumeRequestType struct {
-	This   types.ManagedObjectReference `xml:"_this"`
-	Filter CnsQueryFilter               `xml:"filter"`
+	This   types.ManagedObjectReference `xml:"_this" json:"-"`
+	Filter CnsQueryFilter               `xml:"filter" json:"filter"`
 }
 
 func init() {
@@ -248,7 +248,7 @@ func init() {
 }
 
 type CnsQueryVolumeResponse struct {
-	Returnval CnsQueryResult `xml:"returnval"`
+	Returnval CnsQueryResult `xml:"returnval" json:"returnval"`
 }
 
 type CnsQueryVolumeInfo CnsQueryVolumeInfoRequestType
@@ -258,12 +258,12 @@ func init() {
 }
 
 type CnsQueryVolumeInfoRequestType struct {
-	This      types.ManagedObjectReference `xml:"_this"`
-	VolumeIds []CnsVolumeId                `xml:"volumes"`
+	This      types.ManagedObjectReference `xml:"_this" json:"-"`
+	VolumeIds []CnsVolumeId                `xml:"volumes" json:"volumeIds"`
 }
 
 type CnsQueryVolumeInfoResponse struct {
-	Returnval types.ManagedObjectReference `xml:"returnval"`
+	Returnval types.ManagedObjectReference `xml:"returnval" json:"returnval"`
 }
 
 type CnsQueryAllVolume CnsQueryAllVolumeRequestType
@@ -273,9 +273,9 @@ func init() {
 }
 
 type CnsQueryAllVolumeRequestType struct {
-	This      types.ManagedObjectReference `xml:"_this"`
-	Filter    CnsQueryFilter               `xml:"filter"`
-	Selection CnsQuerySelection            `xml:"selection"`
+	This      types.ManagedObjectReference `xml:"_this" json:"-"`
+	Filter    CnsQueryFilter               `xml:"filter" json:"filter"`
+	Selection CnsQuerySelection            `xml:"selection" json:"selection"`
 }
 
 func init() {
@@ -283,17 +283,18 @@ func init() {
 }
 
 type CnsQueryAllVolumeResponse struct {
-	Returnval CnsQueryResult `xml:"returnval"`
+	Returnval CnsQueryResult `xml:"returnval" json:"returnval"`
 }
 
 type CnsContainerCluster struct {
 	types.DynamicData
 
-	ClusterType         string `xml:"clusterType"`
-	ClusterId           string `xml:"clusterId"`
-	VSphereUser         string `xml:"vSphereUser"`
-	ClusterFlavor       string `xml:"clusterFlavor,omitempty"`
-	ClusterDistribution string `xml:"clusterDistribution,omitempty"`
+	ClusterType         string `xml:"clusterType" json:"clusterType"`
+	ClusterId           string `xml:"clusterId" json:"clusterId"`
+	VSphereUser         string `xml:"vSphereUser" json:"vSphereUser"`
+	ClusterFlavor       string `xml:"clusterFlavor,omitempty" json:"clusterFlavor"`
+	ClusterDistribution string `xml:"clusterDistribution,omitempty" json:"clusterDistribution"`
+	Delete              bool   `xml:"delete,omitempty" json:"delete"`
 }
 
 func init() {
@@ -303,16 +304,16 @@ func init() {
 type CnsVolume struct {
 	types.DynamicData
 
-	VolumeId                     CnsVolumeId                 `xml:"volumeId"`
-	DatastoreUrl                 string                      `xml:"datastoreUrl,omitempty"`
-	Name                         string                      `xml:"name,omitempty"`
-	VolumeType                   string                      `xml:"volumeType,omitempty"`
-	StoragePolicyId              string                      `xml:"storagePolicyId,omitempty"`
-	Metadata                     CnsVolumeMetadata           `xml:"metadata,omitempty"`
-	BackingObjectDetails         BaseCnsBackingObjectDetails `xml:"backingObjectDetails,omitempty"`
-	ComplianceStatus             string                      `xml:"complianceStatus,omitempty"`
-	DatastoreAccessibilityStatus string                      `xml:"datastoreAccessibilityStatus,omitempty"`
-	HealthStatus                 string                      `xml:"healthStatus,omitempty"`
+	VolumeId                     CnsVolumeId                 `xml:"volumeId" json:"volumeId"`
+	DatastoreUrl                 string                      `xml:"datastoreUrl,omitempty" json:"datastoreUrl"`
+	Name                         string                      `xml:"name,omitempty" json:"name"`
+	VolumeType                   string                      `xml:"volumeType,omitempty" json:"volumeType"`
+	StoragePolicyId              string                      `xml:"storagePolicyId,omitempty" json:"storagePolicyId"`
+	Metadata                     CnsVolumeMetadata           `xml:"metadata,omitempty" json:"metadata"`
+	BackingObjectDetails         BaseCnsBackingObjectDetails `xml:"backingObjectDetails,omitempty" json:"backingObjectDetails"`
+	ComplianceStatus             string                      `xml:"complianceStatus,omitempty" json:"complianceStatus"`
+	DatastoreAccessibilityStatus string                      `xml:"datastoreAccessibilityStatus,omitempty" json:"datastoreAccessibilityStatus"`
+	HealthStatus                 string                      `xml:"healthStatus,omitempty" json:"healthStatus"`
 }
 
 func init() {
@@ -322,8 +323,8 @@ func init() {
 type CnsVolumeOperationResult struct {
 	types.DynamicData
 
-	VolumeId CnsVolumeId                 `xml:"volumeId,omitempty"`
-	Fault    *types.LocalizedMethodFault `xml:"fault,omitempty"`
+	VolumeId CnsVolumeId                 `xml:"volumeId,omitempty" json:"volumeId"`
+	Fault    *types.LocalizedMethodFault `xml:"fault,omitempty" json:"fault"`
 }
 
 func init() {
@@ -333,7 +334,7 @@ func init() {
 type CnsVolumeOperationBatchResult struct {
 	types.DynamicData
 
-	VolumeResults []BaseCnsVolumeOperationResult `xml:"volumeResults,omitempty,typeattr"`
+	VolumeResults []BaseCnsVolumeOperationResult `xml:"volumeResults,omitempty,typeattr" json:"volumeResults"`
 }
 
 func init() {
@@ -341,8 +342,8 @@ func init() {
 }
 
 type CnsPlacementResult struct {
-	Datastore       types.ManagedObjectReference  `xml:"datastore,omitempty"`
-	PlacementFaults []*types.LocalizedMethodFault `xml:"placementFaults,omitempty"`
+	Datastore       types.ManagedObjectReference  `xml:"datastore,omitempty" json:"datastore"`
+	PlacementFaults []*types.LocalizedMethodFault `xml:"placementFaults,omitempty" json:"placementFaults"`
 }
 
 func init() {
@@ -351,8 +352,8 @@ func init() {
 
 type CnsVolumeCreateResult struct {
 	CnsVolumeOperationResult
-	Name             string               `xml:"name,omitempty"`
-	PlacementResults []CnsPlacementResult `xml:"placementResults,omitempty"`
+	Name             string               `xml:"name,omitempty" json:"name"`
+	PlacementResults []CnsPlacementResult `xml:"placementResults,omitempty" json:"placementResults"`
 }
 
 func init() {
@@ -362,7 +363,7 @@ func init() {
 type CnsVolumeAttachResult struct {
 	CnsVolumeOperationResult
 
-	DiskUUID string `xml:"diskUUID,omitempty"`
+	DiskUUID string `xml:"diskUUID,omitempty" json:"diskUUID"`
 }
 
 func init() {
@@ -372,7 +373,7 @@ func init() {
 type CnsVolumeId struct {
 	types.DynamicData
 
-	Id string `xml:"id"`
+	Id string `xml:"id" json:"id"`
 }
 
 func init() {
@@ -382,7 +383,7 @@ func init() {
 type CnsBackingObjectDetails struct {
 	types.DynamicData
 
-	CapacityInMb int64 `xml:"capacityInMb,omitempty"`
+	CapacityInMb int64 `xml:"capacityInMb,omitempty" json:"capacityInMb"`
 }
 
 func init() {
@@ -392,10 +393,11 @@ func init() {
 type CnsBlockBackingDetails struct {
 	CnsBackingObjectDetails
 
-	BackingDiskId                  string `xml:"backingDiskId,omitempty"`
-	BackingDiskUrlPath             string `xml:"backingDiskUrlPath,omitempty"`
-	BackingDiskObjectId            string `xml:"backingDiskObjectId,omitempty"`
-	AggregatedSnapshotCapacityInMb int64  `xml:"aggregatedSnapshotCapacityInMb,omitempty"`
+	BackingDiskId                  string `xml:"backingDiskId,omitempty" json:"backingDiskId"`
+	BackingDiskUrlPath             string `xml:"backingDiskUrlPath,omitempty" json:"backingDiskUrlPath"`
+	BackingDiskObjectId            string `xml:"backingDiskObjectId,omitempty" json:"backingDiskObjectId"`
+	AggregatedSnapshotCapacityInMb int64  `xml:"aggregatedSnapshotCapacityInMb,omitempty" json:"aggregatedSnapshotCapacityInMb"`
+	BackingDiskPath                string `xml:"backingDiskPath,omitempty" json:"backingDiskPath"`
 }
 
 func init() {
@@ -405,7 +407,7 @@ func init() {
 type CnsFileBackingDetails struct {
 	CnsBackingObjectDetails
 
-	BackingFileId string `xml:"backingFileId,omitempty"`
+	BackingFileId string `xml:"backingFileId,omitempty" json:"backingFileId"`
 }
 
 func init() {
@@ -415,8 +417,8 @@ func init() {
 type CnsVsanFileShareBackingDetails struct {
 	CnsFileBackingDetails
 
-	Name         string           `xml:"name,omitempty"`
-	AccessPoints []types.KeyValue `xml:"accessPoints,omitempty"`
+	Name         string           `xml:"name,omitempty" json:"name"`
+	AccessPoints []types.KeyValue `xml:"accessPoints,omitempty" json:"accessPoints"`
 }
 
 func init() {
@@ -441,8 +443,8 @@ func init() {
 
 type CnsVSANFileCreateSpec struct {
 	CnsFileCreateSpec
-	SoftQuotaInMb int64                                    `xml:"softQuotaInMb,omitempty"`
-	Permission    []vsanfstypes.VsanFileShareNetPermission `xml:"permission,omitempty,typeattr"`
+	SoftQuotaInMb int64                                    `xml:"softQuotaInMb,omitempty" json:"softQuotaInMb"`
+	Permission    []vsanfstypes.VsanFileShareNetPermission `xml:"permission,omitempty,typeattr" json:"permission"`
 }
 
 func init() {
@@ -452,16 +454,16 @@ func init() {
 type CnsQueryFilter struct {
 	types.DynamicData
 
-	VolumeIds                    []CnsVolumeId                  `xml:"volumeIds,omitempty"`
-	Names                        []string                       `xml:"names,omitempty"`
-	ContainerClusterIds          []string                       `xml:"containerClusterIds,omitempty"`
-	StoragePolicyId              string                         `xml:"storagePolicyId,omitempty"`
-	Datastores                   []types.ManagedObjectReference `xml:"datastores,omitempty"`
-	Labels                       []types.KeyValue               `xml:"labels,omitempty"`
-	ComplianceStatus             string                         `xml:"complianceStatus,omitempty"`
-	DatastoreAccessibilityStatus string                         `xml:"datastoreAccessibilityStatus,omitempty"`
-	Cursor                       *CnsCursor                     `xml:"cursor,omitempty"`
-	HealthStatus                 string                         `xml:"healthStatus,omitempty"`
+	VolumeIds                    []CnsVolumeId                  `xml:"volumeIds,omitempty" json:"volumeIds"`
+	Names                        []string                       `xml:"names,omitempty" json:"names"`
+	ContainerClusterIds          []string                       `xml:"containerClusterIds,omitempty" json:"containerClusterIds"`
+	StoragePolicyId              string                         `xml:"storagePolicyId,omitempty" json:"storagePolicyId"`
+	Datastores                   []types.ManagedObjectReference `xml:"datastores,omitempty" json:"datastores"`
+	Labels                       []types.KeyValue               `xml:"labels,omitempty" json:"labels"`
+	ComplianceStatus             string                         `xml:"complianceStatus,omitempty" json:"complianceStatus"`
+	DatastoreAccessibilityStatus string                         `xml:"datastoreAccessibilityStatus,omitempty" json:"datastoreAccessibilityStatus"`
+	Cursor                       *CnsCursor                     `xml:"cursor,omitempty" json:"cursor"`
+	HealthStatus                 string                         `xml:"healthStatus,omitempty" json:"healthStatus"`
 }
 
 func init() {
@@ -471,14 +473,14 @@ func init() {
 type CnsQuerySelection struct {
 	types.DynamicData
 
-	Names []string `xml:"names,omitempty"`
+	Names []string `xml:"names,omitempty" json:"names"`
 }
 
 type CnsQueryResult struct {
 	types.DynamicData
 
-	Volumes []CnsVolume `xml:"volumes,omitempty"`
-	Cursor  CnsCursor   `xml:"cursor"`
+	Volumes []CnsVolume `xml:"volumes,omitempty" json:"volumes"`
+	Cursor  CnsCursor   `xml:"cursor" json:"cursor"`
 }
 
 func init() {
@@ -496,7 +498,7 @@ func init() {
 type CnsBlockVolumeInfo struct {
 	CnsVolumeInfo
 
-	VStorageObject types.VStorageObject `xml:"vStorageObject"`
+	VStorageObject types.VStorageObject `xml:"vStorageObject" json:"vStorageObject"`
 }
 
 func init() {
@@ -506,7 +508,7 @@ func init() {
 type CnsQueryVolumeInfoResult struct {
 	CnsVolumeOperationResult
 
-	VolumeInfo BaseCnsVolumeInfo `xml:"volumeInfo,typeattr,omitempty"`
+	VolumeInfo BaseCnsVolumeInfo `xml:"volumeInfo,typeattr,omitempty" json:"volumeInfo"`
 }
 
 func init() {
@@ -514,8 +516,8 @@ func init() {
 }
 
 type CnsRelocateVolumeRequestType struct {
-	This          types.ManagedObjectReference `xml:"_this"`
-	RelocateSpecs []BaseCnsVolumeRelocateSpec  `xml:"relocateSpecs,typeattr"`
+	This          types.ManagedObjectReference `xml:"_this" json:"-"`
+	RelocateSpecs []BaseCnsVolumeRelocateSpec  `xml:"relocateSpecs,typeattr" json:"relocateSpecs"`
 }
 
 func init() {
@@ -529,16 +531,16 @@ func init() {
 }
 
 type CnsRelocateVolumeResponse struct {
-	Returnval types.ManagedObjectReference `xml:"returnval"`
+	Returnval types.ManagedObjectReference `xml:"returnval" json:"returnval"`
 }
 
 type CnsVolumeRelocateSpec struct {
 	types.DynamicData
 
-	VolumeId       CnsVolumeId                           `xml:"volumeId"`
-	Datastore      types.ManagedObjectReference          `xml:"datastore"`
-	Profile        []types.BaseVirtualMachineProfileSpec `xml:"profile,omitempty,typeattr"`
-	ServiceLocator *types.ServiceLocator                 `xml:"serviceLocator,omitempty"`
+	VolumeId       CnsVolumeId                           `xml:"volumeId" json:"volumeId"`
+	Datastore      types.ManagedObjectReference          `xml:"datastore" json:"datastore"`
+	Profile        []types.BaseVirtualMachineProfileSpec `xml:"profile,omitempty,typeattr" json:"profile"`
+	ServiceLocator *types.ServiceLocator                 `xml:"serviceLocator,omitempty" json:"serviceLocator"`
 }
 
 func init() {
@@ -571,9 +573,9 @@ func init() {
 type CnsCursor struct {
 	types.DynamicData
 
-	Offset       int64 `xml:"offset"`
-	Limit        int64 `xml:"limit"`
-	TotalRecords int64 `xml:"totalRecords,omitempty"`
+	Offset       int64 `xml:"offset" json:"offset"`
+	Limit        int64 `xml:"limit" json:"limit"`
+	TotalRecords int64 `xml:"totalRecords,omitempty" json:"totalRecords"`
 }
 
 func init() {
@@ -583,7 +585,7 @@ func init() {
 type CnsFault struct {
 	types.BaseMethodFault `xml:"fault,typeattr"`
 
-	Reason string `xml:"reason,omitempty"`
+	Reason string `xml:"reason,omitempty" json:"reason"`
 }
 
 func init() {
@@ -593,7 +595,7 @@ func init() {
 type CnsVolumeNotFoundFault struct {
 	CnsFault
 
-	VolumeId CnsVolumeId `xml:"volumeId"`
+	VolumeId CnsVolumeId `xml:"volumeId" json:"volumeId"`
 }
 
 func init() {
@@ -603,7 +605,7 @@ func init() {
 type CnsAlreadyRegisteredFault struct {
 	CnsFault `xml:"fault,typeattr"`
 
-	VolumeId CnsVolumeId `xml:"volumeId,omitempty"`
+	VolumeId CnsVolumeId `xml:"volumeId,omitempty" json:"volumeId"`
 }
 
 func init() {
@@ -613,8 +615,8 @@ func init() {
 type CnsSnapshotNotFoundFault struct {
 	CnsFault
 
-	VolumeId   CnsVolumeId   `xml:"volumeId,omitempty"`
-	SnapshotId CnsSnapshotId `xml:"SnapshotId"`
+	VolumeId   CnsVolumeId   `xml:"volumeId,omitempty" json:"volumeId"`
+	SnapshotId CnsSnapshotId `xml:"SnapshotId" json:"snapshotId"`
 }
 
 func init() {
@@ -624,9 +626,9 @@ func init() {
 type CnsSnapshotCreatedFault struct {
 	CnsFault
 
-	VolumeId   CnsVolumeId                  `xml:"volumeId"`
-	SnapshotId CnsSnapshotId                `xml:"SnapshotId"`
-	Datastore  types.ManagedObjectReference `xml:"datastore"`
+	VolumeId   CnsVolumeId                  `xml:"volumeId" json:"volumeId"`
+	SnapshotId CnsSnapshotId                `xml:"SnapshotId" json:"snapshotId"`
+	Datastore  types.ManagedObjectReference `xml:"datastore" json:"datastore"`
 }
 
 func init() {
@@ -640,8 +642,8 @@ func init() {
 }
 
 type CnsConfigureVolumeACLsRequestType struct {
-	This           types.ManagedObjectReference `xml:"_this"`
-	ACLConfigSpecs []CnsVolumeACLConfigureSpec  `xml:"ACLConfigSpecs"`
+	This           types.ManagedObjectReference `xml:"_this" json:"-"`
+	ACLConfigSpecs []CnsVolumeACLConfigureSpec  `xml:"ACLConfigSpecs" json:"aclConfigSpecs"`
 }
 
 func init() {
@@ -649,20 +651,20 @@ func init() {
 }
 
 type CnsConfigureVolumeACLsResponse struct {
-	Returnval types.ManagedObjectReference `xml:"returnval"`
+	Returnval types.ManagedObjectReference `xml:"returnval" json:"returnval"`
 }
 
 type CnsVolumeACLConfigureSpec struct {
 	types.DynamicData
 
-	VolumeId              CnsVolumeId               `xml:"volumeId"`
-	AccessControlSpecList []CnsNFSAccessControlSpec `xml:"accessControlSpecList,typeattr"`
+	VolumeId              CnsVolumeId               `xml:"volumeId" json:"volumeId"`
+	AccessControlSpecList []CnsNFSAccessControlSpec `xml:"accessControlSpecList,typeattr" json:"accessControlSpecList"`
 }
 
 type CnsNFSAccessControlSpec struct {
 	types.DynamicData
-	Permission []vsanfstypes.VsanFileShareNetPermission `xml:"netPermission,omitempty,typeattr"`
-	Delete     bool                                     `xml:"delete,omitempty"`
+	Permission []vsanfstypes.VsanFileShareNetPermission `xml:"netPermission,omitempty,typeattr" json:"permission"`
+	Delete     bool                                     `xml:"delete,omitempty" json:"delete"`
 }
 
 func init() {
@@ -676,9 +678,9 @@ func init() {
 }
 
 type CnsQueryAsyncRequestType struct {
-	This      types.ManagedObjectReference `xml:"_this"`
-	Filter    CnsQueryFilter               `xml:"filter"`
-	Selection *CnsQuerySelection           `xml:"selection,omitempty"`
+	This      types.ManagedObjectReference `xml:"_this" json:"-"`
+	Filter    CnsQueryFilter               `xml:"filter" json:"filter"`
+	Selection *CnsQuerySelection           `xml:"selection,omitempty" json:"selection"`
 }
 
 func init() {
@@ -686,13 +688,13 @@ func init() {
 }
 
 type CnsQueryAsyncResponse struct {
-	Returnval types.ManagedObjectReference `xml:"returnval"`
+	Returnval types.ManagedObjectReference `xml:"returnval" json:"returnval"`
 }
 
 type CnsAsyncQueryResult struct {
 	CnsVolumeOperationResult
 
-	QueryResult CnsQueryResult `xml:"queryResult,omitempty"`
+	QueryResult CnsQueryResult `xml:"queryResult,omitempty" json:"queryResult"`
 }
 
 func init() {
@@ -702,8 +704,8 @@ func init() {
 // Cns Snapshot Types
 
 type CnsCreateSnapshotsRequestType struct {
-	This          types.ManagedObjectReference `xml:"_this"`
-	SnapshotSpecs []CnsSnapshotCreateSpec      `xml:"snapshotSpecs,omitempty"`
+	This          types.ManagedObjectReference `xml:"_this" json:"-"`
+	SnapshotSpecs []CnsSnapshotCreateSpec      `xml:"snapshotSpecs,omitempty" json:"snapshotSpecs"`
 }
 
 func init() {
@@ -717,14 +719,14 @@ func init() {
 }
 
 type CnsCreateSnapshotsResponse struct {
-	Returnval types.ManagedObjectReference `xml:"returnval"`
+	Returnval types.ManagedObjectReference `xml:"returnval" json:"returnval"`
 }
 
 type CnsSnapshotCreateSpec struct {
 	types.DynamicData
 
-	VolumeId    CnsVolumeId `xml:"volumeId"`
-	Description string      `xml:"description"`
+	VolumeId    CnsVolumeId `xml:"volumeId" json:"volumeId"`
+	Description string      `xml:"description" json:"description"`
 }
 
 func init() {
@@ -732,8 +734,8 @@ func init() {
 }
 
 type CnsDeleteSnapshotsRequestType struct {
-	This                types.ManagedObjectReference `xml:"_this"`
-	SnapshotDeleteSpecs []CnsSnapshotDeleteSpec      `xml:"snapshotDeleteSpecs,omitempty"`
+	This                types.ManagedObjectReference `xml:"_this" json:"-"`
+	SnapshotDeleteSpecs []CnsSnapshotDeleteSpec      `xml:"snapshotDeleteSpecs,omitempty" json:"snapshotDeleteSpecs"`
 }
 
 func init() {
@@ -747,13 +749,13 @@ func init() {
 }
 
 type CnsDeleteSnapshotsResponse struct {
-	Returnval types.ManagedObjectReference `xml:"returnval"`
+	Returnval types.ManagedObjectReference `xml:"returnval" json:"returnval"`
 }
 
 type CnsSnapshotId struct {
 	types.DynamicData
 
-	Id string `xml:"id"`
+	Id string `xml:"id" json:"id"`
 }
 
 func init() {
@@ -763,8 +765,8 @@ func init() {
 type CnsSnapshotDeleteSpec struct {
 	types.DynamicData
 
-	VolumeId   CnsVolumeId   `xml:"volumeId"`
-	SnapshotId CnsSnapshotId `xml:"snapshotId"`
+	VolumeId   CnsVolumeId   `xml:"volumeId" json:"volumeId"`
+	SnapshotId CnsSnapshotId `xml:"snapshotId" json:"snapshotId"`
 }
 
 func init() {
@@ -774,10 +776,10 @@ func init() {
 type CnsSnapshot struct {
 	types.DynamicData
 
-	SnapshotId  CnsSnapshotId `xml:"snapshotId"`
-	VolumeId    CnsVolumeId   `xml:"volumeId"`
-	Description string        `xml:"description,omitempty"`
-	CreateTime  time.Time     `xml:"createTime"`
+	SnapshotId  CnsSnapshotId `xml:"snapshotId" json:"snapshotId"`
+	VolumeId    CnsVolumeId   `xml:"volumeId" json:"volumeId"`
+	Description string        `xml:"description,omitempty" json:"description"`
+	CreateTime  time.Time     `xml:"createTime" json:"createTime"`
 }
 
 func init() {
@@ -794,8 +796,8 @@ func init() {
 
 type CnsSnapshotCreateResult struct {
 	CnsSnapshotOperationResult
-	Snapshot                       CnsSnapshot `xml:"snapshot,omitempty"`
-	AggregatedSnapshotCapacityInMb int64       `xml:"aggregatedSnapshotCapacityInMb,omitempty"`
+	Snapshot                       CnsSnapshot `xml:"snapshot,omitempty" json:"snapshot"`
+	AggregatedSnapshotCapacityInMb int64       `xml:"aggregatedSnapshotCapacityInMb,omitempty" json:"aggregatedSnapshotCapacityInMb"`
 }
 
 func init() {
@@ -804,8 +806,8 @@ func init() {
 
 type CnsSnapshotDeleteResult struct {
 	CnsSnapshotOperationResult
-	SnapshotId                     CnsSnapshotId `xml:"snapshotId,omitempty"`
-	AggregatedSnapshotCapacityInMb int64         `xml:"aggregatedSnapshotCapacityInMb,omitempty"`
+	SnapshotId                     CnsSnapshotId `xml:"snapshotId,omitempty" json:"snapshotId"`
+	AggregatedSnapshotCapacityInMb int64         `xml:"aggregatedSnapshotCapacityInMb,omitempty" json:"aggregatedSnapshotCapacityInMb"`
 }
 
 func init() {
@@ -823,8 +825,8 @@ func init() {
 type CnsSnapshotVolumeSource struct {
 	CnsVolumeSource
 
-	VolumeId   CnsVolumeId   `xml:"volumeId,omitempty"`
-	SnapshotId CnsSnapshotId `xml:"snapshotId,omitempty"`
+	VolumeId   CnsVolumeId   `xml:"volumeId,omitempty" json:"volumeId"`
+	SnapshotId CnsSnapshotId `xml:"snapshotId,omitempty" json:"snapshotId"`
 }
 
 func init() {
@@ -834,8 +836,8 @@ func init() {
 // CNS QuerySnapshots related types
 
 type CnsQuerySnapshotsRequestType struct {
-	This                types.ManagedObjectReference `xml:"_this"`
-	SnapshotQueryFilter CnsSnapshotQueryFilter       `xml:"snapshotQueryFilter"`
+	This                types.ManagedObjectReference `xml:"_this" json:"-"`
+	SnapshotQueryFilter CnsSnapshotQueryFilter       `xml:"snapshotQueryFilter" json:"snapshotQueryFilter"`
 }
 
 func init() {
@@ -849,14 +851,14 @@ func init() {
 }
 
 type CnsQuerySnapshotsResponse struct {
-	Returnval types.ManagedObjectReference `xml:"returnval"`
+	Returnval types.ManagedObjectReference `xml:"returnval" json:"returnval"`
 }
 
 type CnsSnapshotQueryResult struct {
 	types.DynamicData
 
-	Entries []CnsSnapshotQueryResultEntry `xml:"entries,omitempty"`
-	Cursor  CnsCursor                     `xml:"cursor"`
+	Entries []CnsSnapshotQueryResultEntry `xml:"entries,omitempty" json:"entries"`
+	Cursor  CnsCursor                     `xml:"cursor" json:"cursor"`
 }
 
 func init() {
@@ -866,8 +868,8 @@ func init() {
 type CnsSnapshotQueryResultEntry struct {
 	types.DynamicData
 
-	Snapshot CnsSnapshot                 `xml:"snapshot,omitempty"`
-	Error    *types.LocalizedMethodFault `xml:"error,omitempty"`
+	Snapshot CnsSnapshot                 `xml:"snapshot,omitempty" json:"snapshot"`
+	Error    *types.LocalizedMethodFault `xml:"error,omitempty" json:"error"`
 }
 
 func init() {
@@ -877,8 +879,8 @@ func init() {
 type CnsSnapshotQueryFilter struct {
 	types.DynamicData
 
-	SnapshotQuerySpecs []CnsSnapshotQuerySpec `xml:"snapshotQuerySpecs,omitempty"`
-	Cursor             *CnsCursor             `xml:"cursor,omitempty"`
+	SnapshotQuerySpecs []CnsSnapshotQuerySpec `xml:"snapshotQuerySpecs,omitempty" json:"snapshotQuerySpecs"`
+	Cursor             *CnsCursor             `xml:"cursor,omitempty" json:"cursor"`
 }
 
 func init() {
@@ -888,8 +890,8 @@ func init() {
 type CnsSnapshotQuerySpec struct {
 	types.DynamicData
 
-	VolumeId   CnsVolumeId    `xml:"volumeId"`
-	SnapshotId *CnsSnapshotId `xml:"snapshotId,omitempty"`
+	VolumeId   CnsVolumeId    `xml:"volumeId" json:"volumeId"`
+	SnapshotId *CnsSnapshotId `xml:"snapshotId,omitempty" json:"snapshotId"`
 }
 
 func init() {
@@ -903,8 +905,8 @@ func init() {
 }
 
 type CnsReconfigVolumePolicyRequestType struct {
-	This                      types.ManagedObjectReference  `xml:"_this"`
-	VolumePolicyReconfigSpecs []CnsVolumePolicyReconfigSpec `xml:"volumePolicyReconfigSpecs,omitempty"`
+	This                      types.ManagedObjectReference  `xml:"_this" json:"-"`
+	VolumePolicyReconfigSpecs []CnsVolumePolicyReconfigSpec `xml:"volumePolicyReconfigSpecs,omitempty" json:"volumePolicyReconfigSpecs"`
 }
 
 func init() {
@@ -912,14 +914,14 @@ func init() {
 }
 
 type CnsReconfigVolumePolicyResponse struct {
-	Returnval types.ManagedObjectReference `xml:"returnval"`
+	Returnval types.ManagedObjectReference `xml:"returnval" json:"returnval"`
 }
 
 type CnsVolumePolicyReconfigSpec struct {
 	types.DynamicData
 
-	VolumeId CnsVolumeId                           `xml:"volumeId"`
-	Profile  []types.BaseVirtualMachineProfileSpec `xml:"profile,omitempty,typeattr"`
+	VolumeId CnsVolumeId                           `xml:"volumeId" json:"volumeId"`
+	Profile  []types.BaseVirtualMachineProfileSpec `xml:"profile,omitempty,typeattr" json:"profile"`
 }
 
 func init() {
@@ -933,9 +935,9 @@ func init() {
 }
 
 type CnsSyncDatastoreRequestType struct {
-	This         types.ManagedObjectReference `xml:"_this"`
-	DatastoreUrl string                       `xml:"datastoreUrl,omitempty"`
-	FullSync     *bool                        `xml:"fullSync"`
+	This         types.ManagedObjectReference `xml:"_this" json:"-"`
+	DatastoreUrl string                       `xml:"datastoreUrl,omitempty" json:"datastoreUrl"`
+	FullSync     *bool                        `xml:"fullSync" json:"fullSync"`
 }
 
 func init() {
@@ -943,5 +945,5 @@ func init() {
 }
 
 type CnsSyncDatastoreResponse struct {
-	Returnval types.ManagedObjectReference `xml:"returnval"`
+	Returnval types.ManagedObjectReference `xml:"returnval" json:"returnval"`
 }

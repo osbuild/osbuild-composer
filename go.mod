@@ -53,7 +53,7 @@ require (
 	github.com/spf13/cobra v1.8.1
 	github.com/stretchr/testify v1.10.0
 	github.com/ubccr/kerby v0.0.0-20230802201021-412be7bfaee5
-	github.com/vmware/govmomi v0.42.0
+	github.com/vmware/govmomi v0.48.0
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56
 	golang.org/x/oauth2 v0.25.0
 	golang.org/x/sync v0.10.0
