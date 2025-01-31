@@ -651,7 +651,7 @@ func (s *Server) JobArtifactLocation(id uuid.UUID, name string) (string, error) 
 
 	p := path.Join(s.config.ArtifactsDir, id.String(), name)
 	if _, err := os.Stat(p); errors.Is(err, os.ErrNotExist) {
-		return "", fmt.Errorf("Artifact not found: %s", p)
+		return p, fmt.Errorf("Artifact not found: %s", p)
 	}
 	return p, nil
 }
