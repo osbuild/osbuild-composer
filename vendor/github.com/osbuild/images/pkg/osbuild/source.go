@@ -160,13 +160,13 @@ func GenSources(inputs SourceInputs, rpmDownloader RpmDownloader) (Sources, erro
 			}
 		}
 		if len(skopeo.Items) > 0 {
-			sources["org.osbuild.skopeo"] = skopeo
+			sources[SourceNameSkopeo] = skopeo
 		}
 		if len(skopeoIndex.Items) > 0 {
-			sources["org.osbuild.skopeo-index"] = skopeoIndex
+			sources[SourceNameSkopeoIndex] = skopeoIndex
 		}
 		if len(localContainers.Items) > 0 {
-			sources["org.osbuild.containers-storage"] = localContainers
+			sources[SourceNameContainersStorage] = localContainers
 		}
 	}
 

@@ -5,6 +5,8 @@ import (
 	"regexp"
 )
 
+const SourceNameSkopeo = "org.osbuild.skopeo"
+
 var skopeoDigestPattern = regexp.MustCompile(`sha256:[0-9a-f]{64}`)
 
 const DockerTransport = "docker"

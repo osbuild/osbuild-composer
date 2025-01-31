@@ -4,6 +4,8 @@ import (
 	"fmt"
 )
 
+const SourceNameSkopeoIndex = "org.osbuild.skopeo-index"
+
 type SkopeoIndexSource struct {
 	Items map[string]SkopeoIndexSourceItem `json:"items"`
 }

@@ -722,10 +722,12 @@ type transactionArgs struct {
 }
 
 type packageSpecs []PackageSpec
+type moduleSpecs map[string]ModuleSpec
 
 type depsolveResult struct {
 	Packages packageSpecs          `json:"packages"`
 	Repos    map[string]repoConfig `json:"repos"`
+	Modules  moduleSpecs           `json:"modules"`
 
 	// (optional) contains the solver used, e.g. "dnf5"
 	Solver string `json:"solver,omitempty"`
@@ -746,6 +748,29 @@ type PackageSpec struct {
 	RemoteLocation string `json:"remote_location,omitempty"`
 	Checksum       string `json:"checksum,omitempty"`
 	Secrets        string `json:"secrets,omitempty"`
+}
+
+// Module specification
+type ModuleSpec struct {
+	ModuleConfigFile ModuleConfigFile   `json:"module-file"`
+	FailsafeFile     ModuleFailsafeFile `json:"failsafe-file"`
+}
+
+type ModuleConfigFile struct {
+	Path string           `json:"path"`
+	Data ModuleConfigData `json:"data"`
+}
+
+type ModuleConfigData struct {
+	Name     string   `json:"name"`
+	Stream   string   `json:"stream"`
+	Profiles []string `json:"profiles"`
+	State    string   `json:"state"`
+}
+
+type ModuleFailsafeFile struct {
+	Path string `json:"path"`
+	Data string `json:"string"`
 }
 
 // dnf-json error structure

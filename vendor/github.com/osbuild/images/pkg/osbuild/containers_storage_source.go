@@ -2,6 +2,8 @@ package osbuild
 
 import "fmt"
 
+const SourceNameContainersStorage = "org.osbuild.containers-storage"
+
 type ContainersStorageSource struct {
 	Items map[string]struct{} `json:"items"`
 }
