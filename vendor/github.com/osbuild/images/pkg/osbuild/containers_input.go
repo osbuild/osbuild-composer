@@ -29,7 +29,7 @@ func newContainersInputForSources(containers []container.Spec, forLocal bool) Co
 
 	var sourceType string
 	if forLocal {
-		sourceType = "org.osbuild.containers-storage"
+		sourceType = SourceNameContainersStorage
 	} else {
 		sourceType = "org.osbuild.containers"
 	}
