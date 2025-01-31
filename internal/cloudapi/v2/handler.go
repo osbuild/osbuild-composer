@@ -365,7 +365,7 @@ func (h *apiHandlers) getJobIDComposeStatus(jobId uuid.UUID) (ComposeStatus, err
 				tr := result.TargetResults[idx]
 				us, err := h.targetResultToUploadStatus(jobId, tr)
 				if err != nil {
-					return ComposeStatus{}, HTTPError(ErrorUnknownUploadTarget)
+					return ComposeStatus{}, HTTPErrorWithInternal(ErrorUnknownUploadTarget, err)
 				}
 				us.Status = uploadStatusFromJobStatus(jobInfo.JobStatus, result.JobError)
 				statuses[idx] = *us
@@ -430,7 +430,7 @@ func (h *apiHandlers) getJobIDComposeStatus(jobId uuid.UUID) (ComposeStatus, err
 					if tr.Name != target.TargetNameKoji {
 						us, err := h.targetResultToUploadStatus(jobId, tr)
 						if err != nil {
-							return ComposeStatus{}, HTTPError(ErrorUnknownUploadTarget)
+							return ComposeStatus{}, HTTPErrorWithInternal(ErrorUnknownUploadTarget, err)
 						}
 						us.Status = uploadStatusFromJobStatus(buildInfo.JobStatus, result.JobError)
 						statuses = append(statuses, *us)
@@ -1191,7 +1191,7 @@ func (h *apiHandlers) postCloneComposeImpl(ctx echo.Context, id string) error {
 	var us *UploadStatus
 	us, err = h.targetResultToUploadStatus(jobId, osbuildResult.TargetResults[0])
 	if err != nil {
-		return HTTPError(ErrorUnknownUploadTarget)
+		return HTTPErrorWithInternal(ErrorUnknownUploadTarget, err)
 	}
 
 	var osbuildJob worker.OSBuildJob
