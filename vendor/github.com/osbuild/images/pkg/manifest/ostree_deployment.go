@@ -337,6 +337,12 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 	fstabStage.MountOSTree(p.osName, ref, 0)
 	pipeline.AddStage(fstabStage)
 
+	if len(p.Groups) > 0 {
+		grpStage := osbuild.GenGroupsStage(p.Groups)
+		grpStage.MountOSTree(p.osName, ref, 0)
+		pipeline.AddStage(grpStage)
+	}
+
 	if len(p.Users) > 0 {
 		usersStage, err := osbuild.GenUsersStage(p.Users, false)
 		if err != nil {
@@ -344,12 +350,6 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 		}
 		usersStage.MountOSTree(p.osName, ref, 0)
 		pipeline.AddStage(usersStage)
-	}
-
-	if len(p.Groups) > 0 {
-		grpStage := osbuild.GenGroupsStage(p.Groups)
-		grpStage.MountOSTree(p.osName, ref, 0)
-		pipeline.AddStage(grpStage)
 	}
 
 	if p.IgnitionPlatform != "" {

@@ -41,7 +41,7 @@ func NewSkopeoStageWithContainersStorage(path string, images ContainersInput, ma
 	}
 
 	return &Stage{
-		Type: "org.osbuild.skopeo",
+		Type: SourceNameSkopeo,
 		Options: &SkopeoStageOptions{
 			Destination: SkopeoDestinationContainersStorage{
 				Type:        "containers-storage",
@@ -59,7 +59,7 @@ func NewSkopeoStageWithOCI(path string, images ContainersInput, manifests *Files
 	}
 
 	return &Stage{
-		Type: "org.osbuild.skopeo",
+		Type: SourceNameSkopeo,
 		Options: &SkopeoStageOptions{
 			Destination: &SkopeoDestinationOCI{
 				Type: "oci",
