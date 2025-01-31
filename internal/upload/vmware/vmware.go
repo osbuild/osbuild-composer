@@ -3,8 +3,8 @@ package vmware
 import (
 	"fmt"
 
-	"github.com/vmware/govmomi/govc/cli"
-	_ "github.com/vmware/govmomi/govc/importx"
+	"github.com/vmware/govmomi/cli"
+	_ "github.com/vmware/govmomi/cli/importx"
 )
 
 type Credentials struct {

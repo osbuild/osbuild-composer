@@ -11,11 +11,11 @@ import (
 	"strings"
 
 	// importing the packages registers these cli commands
-	"github.com/vmware/govmomi/govc/cli"
-	_ "github.com/vmware/govmomi/govc/datastore"
-	_ "github.com/vmware/govmomi/govc/importx"
-	_ "github.com/vmware/govmomi/govc/vm"
-	_ "github.com/vmware/govmomi/govc/vm/guest"
+	"github.com/vmware/govmomi/cli"
+	_ "github.com/vmware/govmomi/cli/datastore"
+	_ "github.com/vmware/govmomi/cli/importx"
+	_ "github.com/vmware/govmomi/cli/vm"
+	_ "github.com/vmware/govmomi/cli/vm/guest"
 )
 
 const WaitTimeout = 6000 // in seconds
