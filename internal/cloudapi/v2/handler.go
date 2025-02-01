@@ -276,7 +276,7 @@ func (h *apiHandlers) targetResultToUploadStatus(jobId uuid.UUID, t *target.Targ
 		workerServerOptions := t.Options.(*target.WorkerServerTargetResultOptions)
 		absPath, err := h.server.workers.JobArtifactLocation(jobId, workerServerOptions.ArtifactRelPath)
 		if err != nil {
-			return nil, fmt.Errorf("unable to find job artefact: %w", err)
+			return nil, fmt.Errorf("unable to find job artifact: %w", err)
 		}
 		uploadOptions = LocalUploadStatus{
 			ArtifactPath: absPath,
