@@ -275,7 +275,7 @@ func (h *apiHandlers) targetResultToUploadStatus(jobId uuid.UUID, t *target.Targ
 		workerServerOptions := t.Options.(*target.WorkerServerTargetResultOptions)
 		absPath, err := h.server.workers.JobArtifactLocation(jobId, workerServerOptions.ArtifactRelPath)
 		if err != nil {
-			return nil, fmt.Errorf("unable to find job artefact: %w", err)
+			return nil, fmt.Errorf("unable to find job artifact: %w", err)
 		}
 		uploadOptions = LocalUploadStatus{
 			ArtifactPath: absPath,
@@ -330,7 +330,7 @@ func (h *apiHandlers) getComposeStatusImpl(ctx echo.Context, id string) error {
 				tr := result.TargetResults[idx]
 				us, err := h.targetResultToUploadStatus(jobId, tr)
 				if err != nil {
-					return HTTPError(ErrorUnknownUploadTarget)
+					return HTTPErrorWithInternal(ErrorUnknownUploadTarget, err)
 				}
 				us.Status = uploadStatusFromJobStatus(jobInfo.JobStatus, result.JobError)
 				statuses[idx] = *us
@@ -395,7 +395,7 @@ func (h *apiHandlers) getComposeStatusImpl(ctx echo.Context, id string) error {
 					if tr.Name != target.TargetNameKoji {
 						us, err := h.targetResultToUploadStatus(jobId, tr)
 						if err != nil {
-							return HTTPError(ErrorUnknownUploadTarget)
+							return HTTPErrorWithInternal(ErrorUnknownUploadTarget, err)
 						}
 						us.Status = uploadStatusFromJobStatus(buildInfo.JobStatus, result.JobError)
 						statuses = append(statuses, *us)
@@ -1156,7 +1156,7 @@ func (h *apiHandlers) postCloneComposeImpl(ctx echo.Context, id string) error {
 	var us *UploadStatus
 	us, err = h.targetResultToUploadStatus(jobId, osbuildResult.TargetResults[0])
 	if err != nil {
-		return HTTPError(ErrorUnknownUploadTarget)
+		return HTTPErrorWithInternal(ErrorUnknownUploadTarget, err)
 	}
 
 	var osbuildJob worker.OSBuildJob
@@ -1443,4 +1443,55 @@ func (h *apiHandlers) PostSearchPackages(ctx echo.Context) error {
 		SearchPackagesResponse{
 			Packages: packageListToPackageDetails(packages),
 		})
+}
+
+// GetComposeDownload downloads a compose artifact
+func (h *apiHandlers) GetComposeDownload(ctx echo.Context, id string) error {
+	return h.server.EnsureJobChannel(h.getComposeDownloadImpl)(ctx, id)
+}
+
+func (h *apiHandlers) getComposeDownloadImpl(ctx echo.Context, id string) error {
+	jobId, err := uuid.Parse(id)
+	if err != nil {
+		return HTTPError(ErrorInvalidComposeId)
+	}
+
+	jobType, err := h.server.workers.JobType(jobId)
+	if err != nil {
+		return HTTPError(ErrorComposeNotFound)
+	}
+	if jobType != worker.JobTypeOSBuild {
+		return HTTPError(ErrorInvalidJobType)
+	}
+
+	var osbuildResult worker.OSBuildJobResult
+	jobInfo, err := h.server.workers.OSBuildJobInfo(jobId, &osbuildResult)
+	if err != nil {
+		return HTTPErrorWithInternal(ErrorGettingOSBuildJobStatus, err)
+	}
+
+	// Is it finished?
+	if jobInfo.JobStatus.Finished.IsZero() {
+		err := fmt.Errorf("Cannot access artifacts before job is finished: %s", jobId)
+		return HTTPErrorWithInternal(ErrorArtifactNotFound, err)
+	}
+
+	// Building only supports one target, but that may change, so make sure to check.
+	// NOTE: TargetResults isn't populated until it is finished
+	if len(osbuildResult.TargetResults) != 1 {
+		msg := fmt.Errorf("%#v", osbuildResult.TargetResults)
+		//return HTTPError(ErrorSeveralUploadTargets)
+		return HTTPErrorWithInternal(ErrorSeveralUploadTargets, msg)
+	}
+	tr := osbuildResult.TargetResults[0]
+	if tr.OsbuildArtifact == nil {
+		return HTTPError(ErrorArtifactNotFound)
+	}
+
+	// NOTE: This also returns an error if the job isn't finished or it cannot find the file
+	file, err := h.server.workers.JobArtifactLocation(jobId, tr.OsbuildArtifact.ExportFilename)
+	if err != nil {
+		return HTTPErrorWithInternal(ErrorArtifactNotFound, err)
+	}
+	return ctx.Attachment(file, fmt.Sprintf("%s-%s", jobId, tr.OsbuildArtifact.ExportFilename))
 }
