@@ -242,7 +242,13 @@ func mockSearch(t *testing.T, workerServer *worker.Server, wg *sync.WaitGroup, f
 func newV2Server(t *testing.T, dir string, enableJWT bool, fail bool) (*v2.Server, *worker.Server, jobqueue.JobQueue, context.CancelFunc) {
 	q, err := fsjobqueue.New(dir)
 	require.NoError(t, err)
-	workerServer := worker.NewServer(nil, q, worker.Config{BasePath: "/api/worker/v1", JWTEnabled: enableJWT, TenantProviderFields: []string{"rh-org-id", "account_id"}})
+	workerConfig := worker.Config{
+		ArtifactsDir:         t.TempDir(),
+		BasePath:             "/api/worker/v1",
+		JWTEnabled:           enableJWT,
+		TenantProviderFields: []string{"rh-org-id", "account_id"},
+	}
+	workerServer := worker.NewServer(nil, q, workerConfig)
 
 	distros := distrofactory.NewTestDefault()
 	require.NotNil(t, distros)
@@ -1833,4 +1839,60 @@ func TestSearchArchErrors(t *testing.T) {
 			"code": "IMAGE-BUILDER-COMPOSER-30",
 			"reason": "Request could not be validated"
 		}`, "operation_id", "details")
+}
+
+// TestComposeRequestMetadata tests that the original ComposeRequest is included with the
+// metadata response.
+func TestComposeRequestMetadata(t *testing.T) {
+	srv, wrksrv, _, cancel := newV2Server(t, t.TempDir(), false, false)
+	defer cancel()
+
+	request := fmt.Sprintf(`
+	{
+		"distribution": "%s",
+		"image_requests":[{
+			"architecture": "%s",
+			"image_type": "aws",
+			"repositories": [{
+				"baseurl": "somerepo.org",
+				"rhsm": false
+			}],
+			"upload_options": {
+				"region": "eu-central-1"
+			}
+		}]
+	}`, test_distro.TestDistro1Name, test_distro.TestArch3Name)
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", request, http.StatusCreated, `
+	{
+		"href": "/api/image-builder-composer/v2/compose",
+		"kind": "ComposeId"
+	}`, "id")
+
+	jobId, _, jobType, args, dynArgs, err := wrksrv.RequestJob(context.Background(), test_distro.TestArch3Name, []string{worker.JobTypeOSBuild}, []string{""}, uuid.Nil)
+	require.NoError(t, err)
+	require.Equal(t, worker.JobTypeOSBuild, jobType)
+
+	var osbuildJob worker.OSBuildJob
+	err = json.Unmarshal(args, &osbuildJob)
+	require.NoError(t, err)
+	require.Equal(t, 0, len(osbuildJob.Manifest))
+	require.NotEqual(t, 0, len(dynArgs[0]))
+
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%v", jobId), ``, http.StatusOK, fmt.Sprintf(`
+	{
+		"href": "/api/image-builder-composer/v2/composes/%v",
+		"kind": "ComposeStatus",
+		"id": "%v",
+		"image_status": {"status": "building"},
+		"status": "pending"
+	}`, jobId, jobId))
+
+	// metadata response should include the ComposeRequest even when build is not done
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%v/metadata", jobId), ``, http.StatusOK,
+		fmt.Sprintf(`{
+		"href": "/api/image-builder-composer/v2/composes/%[1]v/metadata",
+		"id": "%[1]v",
+		"kind": "ComposeMetadata",
+		"request": %s
+	}`, jobId, request))
 }
