@@ -8,7 +8,7 @@
 %bcond_with relax_requires
 
 # The minimum required osbuild version
-%global min_osbuild_version 129
+%global min_osbuild_version 139
 
 %global goipath         github.com/osbuild/osbuild-composer
 
@@ -327,7 +327,7 @@ Summary:    The core osbuild-composer binary
 Requires:   osbuild-depsolve-dnf >= %{min_osbuild_version}
 # This version needs to get bumped everytime the osbuild-depsolve-dnf json
 # API changes in incompatible ways
-Requires:   osbuild-dnf-json-api = 7
+Requires:   osbuild-dnf-json-api = 8
 Provides:   %{name}-dnf-json = %{version}-%{release}
 Obsoletes:  %{name}-dnf-json < %{version}-%{release}
 
