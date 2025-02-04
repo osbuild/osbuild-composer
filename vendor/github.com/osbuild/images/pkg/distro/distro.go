@@ -1,7 +1,7 @@
 package distro
 
 import (
-	"time"
+	"math/rand"
 
 	"github.com/osbuild/images/pkg/blueprint"
 	"github.com/osbuild/images/pkg/customizations/subscription"
@@ -162,7 +162,8 @@ func PayloadPackageSets() []string {
 
 func SeedFrom(p *int64) int64 {
 	if p == nil {
-		return time.Now().UnixNano()
+		// #nosec G404
+		return rand.Int63()
 	}
 	return *p
 }

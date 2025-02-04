@@ -85,6 +85,12 @@ type CreateClientVpnEndpointInput struct {
 	// A brief description of the Client VPN endpoint.
 	Description *string
 
+	// Indicates whether the client VPN session is disconnected after the maximum
+	// timeout specified in SessionTimeoutHours is reached. If true , users are
+	// prompted to reconnect client VPN. If false , client VPN attempts to reconnect
+	// automatically. The default value is false .
+	DisconnectOnSessionTimeout *bool
+
 	// Information about the DNS servers to be used for DNS resolution. A Client VPN
 	// endpoint can have up to two DNS servers. If no DNS server is specified, the DNS
 	// address configured on the device is used for the DNS server.
@@ -205,6 +211,9 @@ func (c *Client) addOperationCreateClientVpnEndpointMiddlewares(stack *middlewar
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -245,6 +254,18 @@ func (c *Client) addOperationCreateClientVpnEndpointMiddlewares(stack *middlewar
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil
