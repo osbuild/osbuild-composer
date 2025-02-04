@@ -18,6 +18,7 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/url"
 	"os"
 	"os/exec"
@@ -154,6 +155,14 @@ type Solver struct {
 	proxy string
 
 	subscriptions *rhsm.Subscriptions
+
+	// Stderr is the stderr output from dnfjson, if unset os.Stderr
+	// will be used.
+	//
+	// XXX: ideally this would not be public but just passed via
+	// NewSolver() but it already has 5 args so ideally we would
+	// add a SolverOptions struct here with "CacheDir" and "Stderr"?
+	Stderr io.Writer
 }
 
 // DepsolveResult contains the results of a depsolve operation.
@@ -212,7 +221,7 @@ func (s *Solver) Depsolve(pkgSets []rpmmd.PackageSet, sbomType sbom.StandardType
 	s.cache.locker.RLock()
 	defer s.cache.locker.RUnlock()
 
-	output, err := run(s.dnfJsonCmd, req)
+	output, err := run(s.dnfJsonCmd, req, s.Stderr)
 	if err != nil {
 		return nil, fmt.Errorf("running osbuild-depsolve-dnf failed:\n%w", err)
 	}
@@ -266,7 +275,7 @@ func (s *Solver) FetchMetadata(repos []rpmmd.RepoConfig) (rpmmd.PackageList, err
 		return pkgs, nil
 	}
 
-	result, err := run(s.dnfJsonCmd, req)
+	result, err := run(s.dnfJsonCmd, req, s.Stderr)
 	if err != nil {
 		return nil, err
 	}
@@ -312,7 +321,7 @@ func (s *Solver) SearchMetadata(repos []rpmmd.RepoConfig, packages []string) (rp
 		return pkgs, nil
 	}
 
-	result, err := run(s.dnfJsonCmd, req)
+	result, err := run(s.dnfJsonCmd, req, s.Stderr)
 	if err != nil {
 		return nil, err
 	}
@@ -835,7 +844,7 @@ func ParseError(data []byte) Error {
 	return e
 }
 
-func run(dnfJsonCmd []string, req *Request) ([]byte, error) {
+func run(dnfJsonCmd []string, req *Request, stderr io.Writer) ([]byte, error) {
 	if len(dnfJsonCmd) == 0 {
 		dnfJsonCmd = []string{findDepsolveDnf()}
 	}
@@ -853,7 +862,11 @@ func run(dnfJsonCmd []string, req *Request) ([]byte, error) {
 		return nil, fmt.Errorf("creating stdin pipe for %s failed: %w", ex, err)
 	}
 
-	cmd.Stderr = os.Stderr
+	if stderr != nil {
+		cmd.Stderr = stderr
+	} else {
+		cmd.Stderr = os.Stderr
+	}
 	stdout := new(bytes.Buffer)
 	cmd.Stdout = stdout
 
@@ -873,6 +886,5 @@ func run(dnfJsonCmd []string, req *Request) ([]byte, error) {
 	if runError, ok := err.(*exec.ExitError); ok && runError.ExitCode() != 0 {
 		return nil, parseError(output, req.Arguments.Repos)
 	}
-
 	return output, nil
 }
