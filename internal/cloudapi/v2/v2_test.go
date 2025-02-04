@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"sync"
 	"testing"
 	"time"
@@ -242,7 +243,13 @@ func mockSearch(t *testing.T, workerServer *worker.Server, wg *sync.WaitGroup, f
 func newV2Server(t *testing.T, dir string, enableJWT bool, fail bool) (*v2.Server, *worker.Server, jobqueue.JobQueue, context.CancelFunc) {
 	q, err := fsjobqueue.New(dir)
 	require.NoError(t, err)
-	workerServer := worker.NewServer(nil, q, worker.Config{BasePath: "/api/worker/v1", JWTEnabled: enableJWT, TenantProviderFields: []string{"rh-org-id", "account_id"}})
+	workerServer := worker.NewServer(nil, q,
+		worker.Config{
+			ArtifactsDir:         t.TempDir(),
+			BasePath:             "/api/worker/v1",
+			JWTEnabled:           enableJWT,
+			TenantProviderFields: []string{"rh-org-id", "account_id"},
+		})
 
 	distros := distrofactory.NewTestDefault()
 	require.NotNil(t, distros)
@@ -1904,4 +1911,160 @@ func TestComposesRoute(t *testing.T) {
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", "/api/image-builder-composer/v2/composes/", ``,
 		http.StatusOK, fmt.Sprintf(`[{"href":"/api/image-builder-composer/v2/composes/%[1]s", "id":"%[1]s", "image_status":{"status":"pending"}, "kind":"ComposeStatus", "status":"pending"}]`,
 			jobID.String()))
+}
+
+func TestDownload(t *testing.T) {
+	srv, wrksrv, _, cancel := newV2Server(t, t.TempDir(), false, false)
+	defer cancel()
+
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
+	{
+		"distribution": "%s",
+		"image_requests": [{
+			"architecture": "%s",
+			"image_type": "guest-image",
+			"repositories": [{
+				"baseurl": "somerepo.org",
+				"rhsm": false
+			}],
+			"upload_targets": [{
+				"type": "local",
+				"upload_options": {}
+			}]
+		}]
+	}`, test_distro.TestDistro1Name, test_distro.TestArch3Name), http.StatusCreated, `
+	{
+		"href": "/api/image-builder-composer/v2/compose",
+		"kind": "ComposeId"
+	}`, "id")
+
+	jobId, token, jobType, args, dynArgs, err := wrksrv.RequestJob(context.Background(), test_distro.TestArch3Name, []string{worker.JobTypeOSBuild}, []string{""}, uuid.Nil)
+	require.NoError(t, err)
+	require.Equal(t, worker.JobTypeOSBuild, jobType)
+
+	var osbuildJob worker.OSBuildJob
+	err = json.Unmarshal(args, &osbuildJob)
+	require.NoError(t, err)
+	require.Equal(t, 0, len(osbuildJob.Manifest))
+	require.NotEqual(t, 0, len(dynArgs[0]))
+
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%v", jobId), ``, http.StatusOK, fmt.Sprintf(`
+	{
+		"href": "/api/image-builder-composer/v2/composes/%v",
+		"kind": "ComposeStatus",
+		"id": "%v",
+		"image_status": {"status": "building"},
+		"status": "pending"
+	}`, jobId, jobId))
+
+	// Mock up a local target result
+	tr := target.NewWorkerServerTargetResult(
+		&target.WorkerServerTargetResultOptions{},
+		&target.OsbuildArtifact{
+			ExportFilename: "disk.qcow2",
+			ExportName:     "qcow2",
+		})
+	res, err := json.Marshal(&worker.OSBuildJobResult{
+		Success:       true,
+		OSBuildOutput: &osbuild.Result{Success: true},
+		TargetResults: []*target.TargetResult{
+			tr,
+		},
+	})
+	require.NoError(t, err)
+
+	err = wrksrv.FinishJob(token, res)
+	require.NoError(t, err)
+
+	// Write a fake disk.qcow2 file to the artifact directory
+	file, err := wrksrv.JobArtifactLocation(jobId, tr.OsbuildArtifact.ExportFilename)
+	// Error is expected, file doesn't exist yet
+	require.Error(t, err)
+	// Yes, the dummy file is json to make TestRoute happy
+	err = os.WriteFile(file, []byte("{\"msg\":\"This is the disk.qcow2 you are looking for\"}"), 0600)
+	require.NoError(t, err)
+
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET",
+		fmt.Sprintf("/api/image-builder-composer/v2/composes/%v/download", jobId),
+		``,
+		http.StatusOK,
+		`{
+			"msg": "This is the disk.qcow2 you are looking for"
+		}`)
+}
+
+func TestDownloadNotFinished(t *testing.T) {
+	srv, wrksrv, _, cancel := newV2Server(t, t.TempDir(), false, false)
+	defer cancel()
+
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
+	{
+		"distribution": "%s",
+		"image_requests": [{
+			"architecture": "%s",
+			"image_type": "guest-image",
+			"repositories": [{
+				"baseurl": "somerepo.org",
+				"rhsm": false
+			}],
+			"upload_targets": [{
+				"type": "local",
+				"upload_options": {}
+			}]
+		}]
+	}`, test_distro.TestDistro1Name, test_distro.TestArch3Name), http.StatusCreated, `
+	{
+		"href": "/api/image-builder-composer/v2/compose",
+		"kind": "ComposeId"
+	}`, "id")
+
+	jobId, _, jobType, args, dynArgs, err := wrksrv.RequestJob(context.Background(), test_distro.TestArch3Name, []string{worker.JobTypeOSBuild}, []string{""}, uuid.Nil)
+	require.NoError(t, err)
+	require.Equal(t, worker.JobTypeOSBuild, jobType)
+
+	var osbuildJob worker.OSBuildJob
+	err = json.Unmarshal(args, &osbuildJob)
+	require.NoError(t, err)
+	require.Equal(t, 0, len(osbuildJob.Manifest))
+	require.NotEqual(t, 0, len(dynArgs[0]))
+
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%v", jobId), ``, http.StatusOK, fmt.Sprintf(`
+	{
+		"href": "/api/image-builder-composer/v2/composes/%v",
+		"kind": "ComposeStatus",
+		"id": "%v",
+		"image_status": {"status": "building"},
+		"status": "pending"
+	}`, jobId, jobId))
+
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET",
+		fmt.Sprintf("/api/image-builder-composer/v2/composes/%v/download", jobId),
+		``,
+		http.StatusBadRequest,
+		fmt.Sprintf(`{
+			"href": "/api/image-builder-composer/v2/errors/1022",
+			"id": "1022",
+			"kind": "Error",
+			"code": "IMAGE-BUILDER-COMPOSER-1022",
+			"details": "Cannot access artifacts before job is finished: %s",
+			"reason": "Artifact not found"
+		}`, jobId), "operation_id")
+}
+
+func TestDownloadUnknown(t *testing.T) {
+	srv, _, _, cancel := newV2Server(t, t.TempDir(), false, false)
+	defer cancel()
+
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET",
+		"/api/image-builder-composer/v2/composes/80977a35-1b27-4604-b998-9cd331f9089e/download",
+		``,
+		http.StatusNotFound,
+		`{
+			"href": "/api/image-builder-composer/v2/errors/15",
+			"id": "15",
+			"kind": "Error",
+			"code": "IMAGE-BUILDER-COMPOSER-15",
+			"details": "job does not exist",
+			"reason":"Compose with given id not found"
+		}`, "operation_id")
 }
