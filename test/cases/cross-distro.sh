@@ -103,13 +103,9 @@ else
     echo "All installed distros are recognized by composer."
 fi
 
-# set path to all composer repositories
-if [ ! -d "repositories/" ]; then
-    git clone --depth 1 http://github.com/osbuild/osbuild-composer
-    REPO_PATH="osbuild-composer/repositories/"
-else
-    REPO_PATH="repositories/"
-fi
+# set path to all "images" repositories
+git clone --depth 1 http://github.com/osbuild/images
+REPO_PATH="images/data/repositories/"
 
 # ALL_DISTROS - all possible distros from upstream repository
 # ALL_EXPECTED_DISTROS - all distros matching host pattern
