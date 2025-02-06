@@ -35,6 +35,9 @@ type ModifyVerifiedAccessEndpointInput struct {
 	// This member is required.
 	VerifiedAccessEndpointId *string
 
+	// The CIDR options.
+	CidrOptions *types.ModifyVerifiedAccessEndpointCidrOptions
+
 	// A unique, case-sensitive token that you provide to ensure idempotency of your
 	// modification request. For more information, see [Ensuring idempotency].
 	//
@@ -56,6 +59,9 @@ type ModifyVerifiedAccessEndpointInput struct {
 
 	// The network interface options.
 	NetworkInterfaceOptions *types.ModifyVerifiedAccessEndpointEniOptions
+
+	// The RDS options.
+	RdsOptions *types.ModifyVerifiedAccessEndpointRdsOptions
 
 	// The ID of the Verified Access group.
 	VerifiedAccessGroupId *string
@@ -117,6 +123,9 @@ func (c *Client) addOperationModifyVerifiedAccessEndpointMiddlewares(stack *midd
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -157,6 +166,18 @@ func (c *Client) addOperationModifyVerifiedAccessEndpointMiddlewares(stack *midd
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil
