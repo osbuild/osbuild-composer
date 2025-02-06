@@ -2,15 +2,20 @@
 
 set -eux
 
-# Pin Go and toolbox versions at a reasonable version
-go get go@1.22.0 toolchain@1.22.0
+GO_VERSION=1.22.6
+GO_BINARY=$(go env GOPATH)/bin/go$GO_VERSION
 
-# Update go.mod and go.sum:
-go mod tidy
-go mod vendor
+# this is the official way to get a different version of golang
+# see https://go.dev/doc/manage-install
+go install golang.org/dl/go$GO_VERSION@latest
+$GO_BINARY download
 
-# Generate all sources (skip vendor/):
-go generate ./cmd/... ./internal/... ./pkg/...
+# ensure that go.mod and go.sum are up to date, ...
+$GO_BINARY mod tidy
+$GO_BINARY mod vendor
 
-# Generate all sources (skip vendor/):
-go fmt ./cmd/... ./internal/... ./pkg/...
+# ... and all code has been regenerated from its sources.
+$GO_BINARY generate ./...
+
+# ... the code is formatted correctly, ...
+$GO_BINARY fmt ./...
