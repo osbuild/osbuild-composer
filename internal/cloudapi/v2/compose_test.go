@@ -813,9 +813,8 @@ func TestGetImageRequests_NoRepositories(t *testing.T) {
 			Repositories:  []Repository{},
 		},
 	}
-	reposConf, err := reporegistry.LoadAllRepositoriesFromFS([]fs.FS{repos.FS})
+	rr, err := reporegistry.New(nil, []fs.FS{repos.FS})
 	require.NoError(t, err)
-	rr := reporegistry.NewFromDistrosRepoConfigs(reposConf)
 	got, err := request.GetImageRequests(distrofactory.NewDefault(), rr)
 	assert.NoError(t, err)
 	require.Len(t, got, 1)
@@ -839,9 +838,8 @@ func TestGetImageRequests_BlueprintDistro(t *testing.T) {
 			Distro: common.ToPtr("fedora-39"),
 		},
 	}
-	reposConf, err := reporegistry.LoadAllRepositoriesFromFS([]fs.FS{repos.FS})
+	rr, err := reporegistry.New(nil, []fs.FS{repos.FS})
 	require.NoError(t, err)
-	rr := reporegistry.NewFromDistrosRepoConfigs(reposConf)
 	got, err := request.GetImageRequests(distrofactory.NewDefault(), rr)
 	assert.NoError(t, err)
 	require.Len(t, got, 1)
