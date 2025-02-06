@@ -513,13 +513,13 @@ func createMountpointService(serviceName string, mountpoints []string) *osbuild.
 	for _, mountpoint := range mountpoints {
 		conditionPathIsDirectory = append(conditionPathIsDirectory, "|!"+mountpoint)
 	}
-	unit := osbuild.Unit{
+	unit := osbuild.UnitSection{
 		Description:              "Ensure custom filesystem mountpoints exist",
 		DefaultDependencies:      common.ToPtr(false), // Default dependencies would interfere with our custom order (before mountpoints)
 		ConditionPathIsDirectory: conditionPathIsDirectory,
 		After:                    []string{"ostree-remount.service"},
 	}
-	service := osbuild.Service{
+	service := osbuild.ServiceSection{
 		Type:            osbuild.OneshotServiceType,
 		RemainAfterExit: false,
 		// compatibility with composefs, will require transient rootfs to be enabled too.
@@ -541,14 +541,14 @@ func createMountpointService(serviceName string, mountpoints []string) *osbuild.
 	}
 	unit.Before = befores
 
-	install := osbuild.Install{
+	install := osbuild.InstallSection{
 		WantedBy: []string{"local-fs.target"},
 	}
 	options := osbuild.SystemdUnitCreateStageOptions{
 		Filename: serviceName,
 		UnitPath: osbuild.EtcUnitPath,
 		UnitType: osbuild.System,
-		Config: osbuild.SystemdServiceUnit{
+		Config: osbuild.SystemdUnit{
 			Unit:    &unit,
 			Service: &service,
 			Install: &install,

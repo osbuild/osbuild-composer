@@ -710,6 +710,7 @@ func edgeCommitPackageSet(t *rhel.ImageType) rpmmd.PackageSet {
 		},
 		Exclude: []string{
 			"rng-tools",
+			"bootupd",
 		},
 	}
 

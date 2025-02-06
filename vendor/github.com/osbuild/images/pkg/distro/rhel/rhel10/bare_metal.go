@@ -190,6 +190,7 @@ func anacondaPackageSet(t *rhel.ImageType) rpmmd.PackageSet {
 
 	ps = ps.Append(rpmmd.PackageSet{
 		Include: []string{
+			"@hardware-support",
 			"alsa-firmware",
 			"alsa-tools-firmware",
 			"anaconda",
