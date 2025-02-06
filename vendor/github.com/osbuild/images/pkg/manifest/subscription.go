@@ -156,20 +156,20 @@ func subscriptionService(subscriptionOptions subscription.ImageOptions, serviceO
 		Filename: subscribeServiceFile,
 		UnitType: "system",
 		UnitPath: unitPath,
-		Config: osbuild.SystemdServiceUnit{
-			Unit: &osbuild.Unit{
+		Config: osbuild.SystemdUnit{
+			Unit: &osbuild.UnitSection{
 				Description:         "First-boot service for registering with Red Hat subscription manager and/or insights",
 				ConditionPathExists: []string{subkeyFilepath},
 				Wants:               []string{"network-online.target"},
 				After:               []string{"network-online.target"},
 			},
-			Service: &osbuild.Service{
+			Service: &osbuild.ServiceSection{
 				Type:            osbuild.OneshotServiceType,
 				RemainAfterExit: false,
 				ExecStart:       commands,
 				EnvironmentFile: []string{subkeyFilepath},
 			},
-			Install: &osbuild.Install{
+			Install: &osbuild.InstallSection{
 				WantedBy: []string{"default.target"},
 			},
 		},
