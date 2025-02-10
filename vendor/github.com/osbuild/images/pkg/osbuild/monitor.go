@@ -62,8 +62,15 @@ type Progress struct {
 // NewStatusScanner returns a StatusScanner that can parse osbuild
 // jsonseq monitor status messages
 func NewStatusScanner(r io.Reader) *StatusScanner {
+	scanner := bufio.NewScanner(r)
+	// osbuild can currently generate very long messages, the default
+	// 64kb is too small for e.g. the dracut stage (see also
+	// https://github.com/osbuild/osbuild/issues/1976). Increase for
+	// but to unblock us.
+	buf := make([]byte, 0, 512_000)
+	scanner.Buffer(buf, 512_000)
 	return &StatusScanner{
-		scanner:         bufio.NewScanner(r),
+		scanner:         scanner,
 		contextMap:      make(map[string]*contextJSON),
 		stageContextMap: make(map[string]*stageContextJSON),
 	}
