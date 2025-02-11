@@ -7,7 +7,7 @@ on:
 
 jobs:
   coverity_scan:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: Clone repository
         uses: actions/checkout@v4
