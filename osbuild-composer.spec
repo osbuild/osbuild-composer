@@ -85,11 +85,10 @@ export PATH=$PWD/_bin${PATH:+:$PATH}
 export GOPATH=$GO_BUILD_PATH:%{gopath}
 export GOFLAGS+=" -mod=vendor"
 %endif
-%if 0%{?fedora}
-# Fedora disables Go modules by default, but we want to use them.
-# Undefine the macro which disables it to use the default behavior.
+
+# Fedora and RHEL versions disable Go modules by default, but we want to use them.
+# Unconditionally undefine the macro which disables it to use the default behavior.
 %undefine gomodulesmode
-%endif
 
 # btrfs-progs-devel is not available on RHEL
 %if 0%{?rhel}
