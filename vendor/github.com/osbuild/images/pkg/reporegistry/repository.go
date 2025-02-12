@@ -12,23 +12,24 @@ import (
 	"github.com/osbuild/images/pkg/rpmmd"
 )
 
-// LoadAllRepositories loads all repositories for given distros from the given list of paths.
+// loadAllRepositories loads all repositories for given distros from the given list of paths.
 // Behavior is the same as with the LoadRepositories() method.
-func LoadAllRepositories(confPaths []string) (rpmmd.DistrosRepoConfigs, error) {
-	var confFSes []fs.FS
+func loadAllRepositories(confPaths []string, confFSes []fs.FS) (rpmmd.DistrosRepoConfigs, error) {
+	var mergedFSes []fs.FS
 
 	for _, confPath := range confPaths {
-		confFSes = append(confFSes, os.DirFS(filepath.Join(confPath, "repositories")))
+		mergedFSes = append(mergedFSes, os.DirFS(confPath))
 	}
+	mergedFSes = append(mergedFSes, confFSes...)
 
-	distrosRepoConfigs, err := LoadAllRepositoriesFromFS(confFSes)
+	distrosRepoConfigs, err := loadAllRepositoriesFromFS(mergedFSes)
 	if len(distrosRepoConfigs) == 0 {
-		return nil, &NoReposLoadedError{confPaths}
+		return nil, &NoReposLoadedError{confPaths, confFSes}
 	}
 	return distrosRepoConfigs, err
 }
 
-func LoadAllRepositoriesFromFS(confPaths []fs.FS) (rpmmd.DistrosRepoConfigs, error) {
+func loadAllRepositoriesFromFS(confPaths []fs.FS) (rpmmd.DistrosRepoConfigs, error) {
 	distrosRepoConfigs := rpmmd.DistrosRepoConfigs{}
 
 	for _, confPath := range confPaths {
@@ -89,13 +90,16 @@ func LoadAllRepositoriesFromFS(confPaths []fs.FS) (rpmmd.DistrosRepoConfigs, err
 // If there are duplicate distro repositories definitions found in multiple paths, the first
 // encounter is preferred. For this reason, the order of paths in the passed list should
 // reflect the desired preference.
+//
+// Note that the confPaths must point directly to the directory with
+// the json repo files.
 func LoadRepositories(confPaths []string, distro string) (map[string][]rpmmd.RepoConfig, error) {
 	var repoConfigs map[string][]rpmmd.RepoConfig
-	path := "/repositories/" + distro + ".json"
+	path := distro + ".json"
 
 	for _, confPath := range confPaths {
 		var err error
-		repoConfigs, err = rpmmd.LoadRepositoriesFromFile(confPath + path)
+		repoConfigs, err = rpmmd.LoadRepositoriesFromFile(filepath.Join(confPath, path))
 		if os.IsNotExist(err) {
 			continue
 		} else if err != nil {
@@ -109,7 +113,7 @@ func LoadRepositories(confPaths []string, distro string) (map[string][]rpmmd.Rep
 	}
 
 	if repoConfigs == nil {
-		return nil, &NoReposLoadedError{confPaths}
+		return nil, &NoReposLoadedError{confPaths, nil}
 	}
 
 	return repoConfigs, nil
