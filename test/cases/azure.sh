@@ -240,27 +240,21 @@ cp "${CIV_CONFIG_FILE}" "${TEMPDIR}/civ_config.yml"
 # temporary workaround for
 # https://issues.redhat.com/browse/CLOUDX-488
 if nvrGreaterOrEqual "osbuild-composer" "83"; then
-    # TODO: Remove this workaround, once CLOUDX-994 is resolved
-    if [[ ($ID == rhel || $ID == centos) && ${VERSION_ID%.*} == 10 ]]; then
-        RESULTS=1
-        yellowprint "WARNING: cloud-image-val currently skipped until CLOUDX-994 is resolved!"
-    else
-        sudo "${CONTAINER_RUNTIME}" run \
-            --net=host \
-            -a stdout -a stderr \
-            -e ARM_CLIENT_ID="${V2_AZURE_CLIENT_ID}" \
-            -e ARM_CLIENT_SECRET="${V2_AZURE_CLIENT_SECRET}" \
-            -e ARM_SUBSCRIPTION_ID="${AZURE_SUBSCRIPTION_ID}" \
-            -e ARM_TENANT_ID="${AZURE_TENANT_ID}" \
-            -e JIRA_PAT="${JIRA_PAT}" \
-            -v "${TEMPDIR}":/tmp:Z \
-            "${CONTAINER_CLOUD_IMAGE_VAL}" \
-            python cloud-image-val.py \
-            -c /tmp/civ_config.yml \
-            && RESULTS=1 || RESULTS=0
+    sudo "${CONTAINER_RUNTIME}" run \
+        --net=host \
+        -a stdout -a stderr \
+        -e ARM_CLIENT_ID="${V2_AZURE_CLIENT_ID}" \
+        -e ARM_CLIENT_SECRET="${V2_AZURE_CLIENT_SECRET}" \
+        -e ARM_SUBSCRIPTION_ID="${AZURE_SUBSCRIPTION_ID}" \
+        -e ARM_TENANT_ID="${AZURE_TENANT_ID}" \
+        -e JIRA_PAT="${JIRA_PAT}" \
+        -v "${TEMPDIR}":/tmp:Z \
+        "${CONTAINER_CLOUD_IMAGE_VAL}" \
+        python cloud-image-val.py \
+        -c /tmp/civ_config.yml \
+        && RESULTS=1 || RESULTS=0
 
-        mv "${TEMPDIR}"/report.html "${ARTIFACTS}"
-    fi
+    mv "${TEMPDIR}"/report.html "${ARTIFACTS}"
 else
     RESULTS=1
 fi
