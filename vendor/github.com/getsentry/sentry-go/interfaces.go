@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"reflect"
+	"slices"
 	"strings"
 	"time"
 )
@@ -18,15 +19,8 @@ const eventType = "event"
 // transactionType is the type of a transaction event.
 const transactionType = "transaction"
 
-// profileType is the type of a profile event.
-// currently, profiles are always sent as part of a transaction event.
-const profileType = "profile"
-
 // checkInType is the type of a check in event.
 const checkInType = "check_in"
-
-// metricType is the type of a metric event.
-const metricType = "statsd"
 
 // Level marks the severity of the event.
 type Level string
@@ -118,32 +112,27 @@ type User struct {
 	IPAddress string            `json:"ip_address,omitempty"`
 	Username  string            `json:"username,omitempty"`
 	Name      string            `json:"name,omitempty"`
-	Segment   string            `json:"segment,omitempty"`
 	Data      map[string]string `json:"data,omitempty"`
 }
 
 func (u User) IsEmpty() bool {
-	if len(u.ID) > 0 {
+	if u.ID != "" {
 		return false
 	}
 
-	if len(u.Email) > 0 {
+	if u.Email != "" {
 		return false
 	}
 
-	if len(u.IPAddress) > 0 {
+	if u.IPAddress != "" {
 		return false
 	}
 
-	if len(u.Username) > 0 {
+	if u.Username != "" {
 		return false
 	}
 
-	if len(u.Name) > 0 {
-		return false
-	}
-
-	if len(u.Segment) > 0 {
+	if u.Name != "" {
 		return false
 	}
 
@@ -166,10 +155,11 @@ type Request struct {
 }
 
 var sensitiveHeaders = map[string]struct{}{
-	"Authorization":   {},
-	"Cookie":          {},
-	"X-Forwarded-For": {},
-	"X-Real-Ip":       {},
+	"Authorization":       {},
+	"Proxy-Authorization": {},
+	"Cookie":              {},
+	"X-Forwarded-For":     {},
+	"X-Real-Ip":           {},
 }
 
 // NewRequest returns a new Sentry Request from the given http.Request.
@@ -194,6 +184,7 @@ func NewRequest(r *http.Request) *Request {
 		// attach more than one Cookie header field.
 		cookies = r.Header.Get("Cookie")
 
+		headers = make(map[string]string, len(r.Header))
 		for k, v := range r.Header {
 			headers[k] = strings.Join(v, ",")
 		}
@@ -237,8 +228,7 @@ type Mechanism struct {
 // SetUnhandled indicates that the exception is an unhandled exception, i.e.
 // from a panic.
 func (m *Mechanism) SetUnhandled() {
-	h := false
-	m.Handled = &h
+	m.Handled = Pointer(false)
 }
 
 // Exception specifies an error that occurred.
@@ -254,8 +244,7 @@ type Exception struct {
 // SDKMetaData is a struct to stash data which is needed at some point in the SDK's event processing pipeline
 // but which shouldn't get send to Sentry.
 type SDKMetaData struct {
-	dsc                DynamicSamplingContext
-	transactionProfile *profileInfo
+	dsc DynamicSamplingContext
 }
 
 // Contains information about how the name of the transaction was determined.
@@ -323,7 +312,6 @@ type Event struct {
 	Exception   []Exception            `json:"exception,omitempty"`
 	DebugMeta   *DebugMeta             `json:"debug_meta,omitempty"`
 	Attachments []*Attachment          `json:"-"`
-	Metrics     []Metric               `json:"-"`
 
 	// The fields below are only relevant for transactions.
 
@@ -397,12 +385,13 @@ func (e *Event) SetException(exception error, maxErrorDepth int) {
 	}
 
 	// event.Exception should be sorted such that the most recent error is last.
-	reverse(e.Exception)
+	slices.Reverse(e.Exception)
 
 	for i := range e.Exception {
 		e.Exception[i].Mechanism = &Mechanism{
 			IsExceptionGroup: true,
 			ExceptionID:      i,
+			Type:             "generic",
 		}
 		if i == 0 {
 			continue
@@ -428,7 +417,9 @@ func (e *Event) MarshalJSON() ([]byte, error) {
 	// and a few type tricks.
 	if e.Type == transactionType {
 		return e.transactionMarshalJSON()
-	} else if e.Type == checkInType {
+	}
+
+	if e.Type == checkInType {
 		return e.checkInMarshalJSON()
 	}
 	return e.defaultMarshalJSON()
