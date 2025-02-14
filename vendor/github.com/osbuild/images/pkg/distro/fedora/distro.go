@@ -13,6 +13,7 @@ import (
 	"github.com/osbuild/images/pkg/customizations/oscap"
 	"github.com/osbuild/images/pkg/datasizes"
 	"github.com/osbuild/images/pkg/distro"
+	"github.com/osbuild/images/pkg/distro/packagesets"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/platform"
 	"github.com/osbuild/images/pkg/rpmmd"
@@ -90,8 +91,15 @@ var (
 		filename:    "installer.iso",
 		mimeType:    "application/x-iso9660-image",
 		packageSets: map[string]packageSetFunc{
-			osPkgsKey:        minimalrpmPackageSet,
-			installerPkgsKey: imageInstallerPackageSet,
+			osPkgsKey: func(t *imageType) rpmmd.PackageSet {
+				// use the minimal raw image type for the OS package set
+				ft := &imageType{
+					name: "minimal-raw",
+					arch: t.arch,
+				}
+				return packagesets.Load(ft, VersionReplacements())
+			},
+			installerPkgsKey: packageSetLoader,
 		},
 		defaultImageConfig: &distro.ImageConfig{
 			Locale: common.ToPtr("en_US.UTF-8"),
@@ -114,7 +122,7 @@ var (
 		filename:    "live-installer.iso",
 		mimeType:    "application/x-iso9660-image",
 		packageSets: map[string]packageSetFunc{
-			installerPkgsKey: liveInstallerPackageSet,
+			installerPkgsKey: packageSetLoader,
 		},
 		defaultImageConfig: &distro.ImageConfig{
 			Locale: common.ToPtr("en_US.UTF-8"),
@@ -136,7 +144,7 @@ var (
 		filename:    "commit.tar",
 		mimeType:    "application/x-tar",
 		packageSets: map[string]packageSetFunc{
-			osPkgsKey: iotCommitPackageSet,
+			osPkgsKey: packageSetLoader,
 		},
 		defaultImageConfig: &distro.ImageConfig{
 			EnabledServices: iotServices,
@@ -155,7 +163,7 @@ var (
 		filename: "iot-bootable-container.tar",
 		mimeType: "application/x-tar",
 		packageSets: map[string]packageSetFunc{
-			osPkgsKey: bootableContainerPackageSet,
+			osPkgsKey: packageSetLoader,
 		},
 		rpmOstree:              true,
 		image:                  bootableContainerImage,
@@ -171,7 +179,7 @@ var (
 		filename:    "container.tar",
 		mimeType:    "application/x-tar",
 		packageSets: map[string]packageSetFunc{
-			osPkgsKey: iotCommitPackageSet,
+			osPkgsKey: packageSetLoader,
 			containerPkgsKey: func(t *imageType) rpmmd.PackageSet {
 				return rpmmd.PackageSet{}
 			},
@@ -195,7 +203,7 @@ var (
 		filename:    "installer.iso",
 		mimeType:    "application/x-iso9660-image",
 		packageSets: map[string]packageSetFunc{
-			installerPkgsKey: iotInstallerPackageSet,
+			installerPkgsKey: packageSetLoader,
 		},
 		defaultImageConfig: &distro.ImageConfig{
 			Locale:          common.ToPtr("en_US.UTF-8"),
@@ -216,7 +224,7 @@ var (
 		filename: "simplified-installer.iso",
 		mimeType: "application/x-iso9660-image",
 		packageSets: map[string]packageSetFunc{
-			installerPkgsKey: iotSimplifiedInstallerPackageSet,
+			installerPkgsKey: packageSetLoader,
 		},
 		defaultImageConfig: &distro.ImageConfig{
 			EnabledServices: iotServices,
@@ -306,7 +314,7 @@ var (
 		mimeType:    "application/x-qemu-disk",
 		environment: &environment.KVM{},
 		packageSets: map[string]packageSetFunc{
-			osPkgsKey: qcow2CommonPackageSet,
+			osPkgsKey: packageSetLoader,
 		},
 		defaultImageConfig: &distro.ImageConfig{
 			DefaultTarget: common.ToPtr("multi-user.target"),
@@ -337,7 +345,7 @@ var (
 		filename: "disk.vmdk",
 		mimeType: "application/x-vmdk",
 		packageSets: map[string]packageSetFunc{
-			osPkgsKey: vmdkCommonPackageSet,
+			osPkgsKey: packageSetLoader,
 		},
 		defaultImageConfig:     vmdkDefaultImageConfig,
 		kernelOptions:          cloudKernelOptions,
@@ -356,7 +364,7 @@ var (
 		filename: "image.ova",
 		mimeType: "application/ovf",
 		packageSets: map[string]packageSetFunc{
-			osPkgsKey: vmdkCommonPackageSet,
+			osPkgsKey: packageSetLoader,
 		},
 		defaultImageConfig:     vmdkDefaultImageConfig,
 		kernelOptions:          cloudKernelOptions,
@@ -375,7 +383,7 @@ var (
 		filename: "container.tar",
 		mimeType: "application/x-tar",
 		packageSets: map[string]packageSetFunc{
-			osPkgsKey: containerPackageSet,
+			osPkgsKey: packageSetLoader,
 		},
 		defaultImageConfig: &distro.ImageConfig{
 			NoSElinux:   common.ToPtr(true),
@@ -396,7 +404,7 @@ var (
 		filename: "wsl.tar",
 		mimeType: "application/x-tar",
 		packageSets: map[string]packageSetFunc{
-			osPkgsKey: containerPackageSet,
+			osPkgsKey: packageSetLoader,
 		},
 		defaultImageConfig: &distro.ImageConfig{
 			NoSElinux:   common.ToPtr(true),
@@ -423,7 +431,7 @@ var (
 		compression: "xz",
 		mimeType:    "application/xz",
 		packageSets: map[string]packageSetFunc{
-			osPkgsKey: minimalrpmPackageSet,
+			osPkgsKey: packageSetLoader,
 		},
 		defaultImageConfig: &distro.ImageConfig{
 			EnabledServices: minimalRawServices,
@@ -660,7 +668,7 @@ func newDistro(version int) distro.Distro {
 	vhdImgType.exports = []string{"vpc"}
 	vhdImgType.environment = &environment.Azure{}
 	vhdImgType.packageSets = map[string]packageSetFunc{
-		osPkgsKey: vhdCommonPackageSet,
+		osPkgsKey: packageSetLoader,
 	}
 	vhdConfig := distro.ImageConfig{
 		SshdConfig: &osbuild.SshdConfigStageOptions{

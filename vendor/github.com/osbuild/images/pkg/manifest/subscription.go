@@ -211,13 +211,21 @@ func runInsightsClientOnBoot() (*fsnode.Directory, *fsnode.File, error) {
 	return icDropinDirectory, icDropinFile, nil
 }
 
-// Filename and contents for the insights-client service drop-in.
+// Filename and contents for the insights-client-boot service drop-in.
 // This is a temporary workaround until the org.osbuild.systemd.unit stage
 // gains support for all the options we need.
+//
+// The insights-client-boot.service is defined as first boot with a conditional file
+// that gets removed when it runs (similar to the registration service).
+// We are overriding that here to run at every boot to collect changes after upgrades, etc.
 func insightsClientDropin() (string, string) {
-	return "/etc/systemd/system/insights-client.service.d/override.conf", `[Unit]
+	return "/etc/systemd/system/insights-client-boot.service.d/override.conf", `[Unit]
 Requisite=greenboot-healthcheck.service
-After=network-online.target greenboot-healthcheck.service osbuild-first-boot.service
+After=network-online.target greenboot-healthcheck.service osbuild-first-boot.service osbuild-subscription-register.service
+ConditionPathExists=
+[Service]
+ExecStartPre=
 [Install]
-WantedBy=multi-user.target`
+WantedBy=multi-user.target
+`
 }
