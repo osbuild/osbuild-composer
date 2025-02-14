@@ -12,9 +12,9 @@ import (
 	"github.com/osbuild/images/pkg/rpmmd"
 )
 
-// loadAllRepositories loads all repositories for given distros from the given list of paths.
+// LoadAllRepositories loads all repositories for given distros from the given list of paths.
 // Behavior is the same as with the LoadRepositories() method.
-func loadAllRepositories(confPaths []string, confFSes []fs.FS) (rpmmd.DistrosRepoConfigs, error) {
+func LoadAllRepositories(confPaths []string, confFSes []fs.FS) (rpmmd.DistrosRepoConfigs, error) {
 	var mergedFSes []fs.FS
 
 	for _, confPath := range confPaths {

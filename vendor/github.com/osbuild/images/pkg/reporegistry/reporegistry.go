@@ -22,7 +22,7 @@ type RepoRegistry struct {
 // Note that the confPaths must point directly to the directory with
 // the json repo files.
 func New(repoConfigPaths []string, repoConfigFS []fs.FS) (*RepoRegistry, error) {
-	repositories, err := loadAllRepositories(repoConfigPaths, repoConfigFS)
+	repositories, err := LoadAllRepositories(repoConfigPaths, repoConfigFS)
 	if err != nil {
 		return nil, err
 	}
