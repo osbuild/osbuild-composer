@@ -13,6 +13,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"math"
 	"os"
 	"path/filepath"
 	"sort"
@@ -446,9 +447,9 @@ func mergeOverrides(base, overrides composeRequest) composeRequest {
 func main() {
 	// common args
 	var outputDir, cacheRoot string
-	var nWorkers int
+	var nWorkers uint
 	flag.StringVar(&outputDir, "output", "test/data/manifests/", "manifest store directory")
-	flag.IntVar(&nWorkers, "workers", 16, "number of workers to run concurrently")
+	flag.UintVar(&nWorkers, "workers", 16, "number of workers to run concurrently")
 	flag.StringVar(&cacheRoot, "cache", "/tmp/rpmmd", "rpm metadata cache directory")
 
 	// manifest selection args
@@ -458,6 +459,11 @@ func main() {
 	flag.Var(&imgTypes, "images", "comma-separated list of image types")
 
 	flag.Parse()
+
+	// nWorkers cannot be larger than uint32
+	if nWorkers > math.MaxUint32 {
+		panic(fmt.Sprintf("--workers must be %d or less.", math.MaxUint32))
+	}
 
 	seedArg := int64(0)
 	darm := readRepos()
@@ -536,6 +542,8 @@ func main() {
 
 	nJobs := len(jobs)
 	fmt.Printf("Collected %d jobs\n", nJobs)
+	// nWorkers has been tested to be <= math.MaxUint32
+	/* #nosec G115 */
 	wq := newWorkerQueue(uint32(nWorkers), uint32(nJobs))
 	wq.start()
 	fmt.Printf("Initialised %d workers\n", nWorkers)

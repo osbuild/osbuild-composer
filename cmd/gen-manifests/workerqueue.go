@@ -94,7 +94,7 @@ func (wq *workerQueue) startMessagePrinter() {
 		var msglen int
 		for msg := range wq.msgQueue {
 			// clear previous line (avoids leftover trailing characters from progress)
-			fmt.Printf(strings.Repeat(" ", msglen) + "\r")
+			fmt.Print(strings.Repeat(" ", msglen) + "\r")
 			fmt.Println(msg)
 			msglen, _ = fmt.Printf(" == Jobs == Queue: %4d  Active: %4d  Total: %4d\r", len(wq.jobQueue), wq.activeWorkers, wq.njobs)
 		}
