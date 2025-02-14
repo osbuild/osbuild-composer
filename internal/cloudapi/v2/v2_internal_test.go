@@ -1,8 +1,10 @@
 package v2
 
 import (
+	"io"
 	"testing"
 
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -10,6 +12,13 @@ import (
 	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/common"
 )
+
+func init() {
+	// logrus is creating so much output that it drowns the useful
+	// test output and we don't get test anything logrus related
+	// anyway so silence it by default
+	logrus.SetOutput(io.Discard)
+}
 
 func TestSplitExtension(t *testing.T) {
 	tests := []struct {
