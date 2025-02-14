@@ -144,6 +144,8 @@ func (d DirectoryCustomization) ToFsNodeDirectory() (*fsnode.Directory, error) {
 		if err != nil {
 			return nil, fmt.Errorf("invalid mode %s: %v", d.Mode, err)
 		}
+		// modeNum is parsed as an unsigned 32 bit int
+		/* #nosec G115 */
 		mode = common.ToPtr(os.FileMode(modeNum))
 	}
 
@@ -302,6 +304,8 @@ func (f FileCustomization) ToFsNodeFile() (*fsnode.File, error) {
 		if err != nil {
 			return nil, fmt.Errorf("invalid mode %s: %v", f.Mode, err)
 		}
+		// modeNum is parsed as an unsigned 32 bit int
+		/* #nosec G115 */
 		mode = common.ToPtr(os.FileMode(modeNum))
 	}
 

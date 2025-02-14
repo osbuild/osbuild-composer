@@ -202,7 +202,7 @@ func handleIncludedSources(atar *tar.Reader, buildDir string) error {
 
 		// this assume "well" behaving tars, i.e. all dirs that lead
 		// up to the tar are included etc
-		mode := os.FileMode(hdr.Mode)
+		mode := hdr.FileInfo().Mode()
 		switch hdr.Typeflag {
 		case tar.TypeDir:
 			if err := os.Mkdir(target, mode); err != nil {

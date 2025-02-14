@@ -39,7 +39,7 @@ type connectionConfig struct {
 
 type kojiServer struct {
 	creds              koji.GSSAPICredentials
-	relaxTimeoutFactor uint
+	relaxTimeoutFactor time.Duration
 }
 
 // Represents the implementation of a job type as defined by the worker API.
