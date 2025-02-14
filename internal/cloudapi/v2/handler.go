@@ -464,7 +464,13 @@ func (h *apiHandlers) getJobIDComposeStatus(jobId uuid.UUID) (ComposeStatus, err
 			ImageStatuses: &buildJobStatuses,
 			KojiStatus:    &KojiStatus{},
 		}
+		/* #nosec G115 */
 		buildID := int(initResult.BuildID)
+		// Make sure signed integer conversion didn't underflow
+		if buildID < 0 {
+			err := fmt.Errorf("BuildID integer underflow: %d", initResult.BuildID)
+			return ComposeStatus{}, HTTPErrorWithInternal(ErrorMalformedOSBuildJobResult, err)
+		}
 		if buildID != 0 {
 			response.KojiStatus.BuildId = &buildID
 		}

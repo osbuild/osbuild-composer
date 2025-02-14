@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/BurntSushi/toml"
 	"github.com/osbuild/osbuild-composer/internal/upload/azure"
@@ -20,7 +21,7 @@ type kerberosConfig struct {
 
 type kojiServerConfig struct {
 	Kerberos           *kerberosConfig `toml:"kerberos,omitempty"`
-	RelaxTimeoutFactor uint            `toml:"relax_timeout_factor"`
+	RelaxTimeoutFactor time.Duration   `toml:"relax_timeout_factor"`
 }
 
 type gcpConfig struct {

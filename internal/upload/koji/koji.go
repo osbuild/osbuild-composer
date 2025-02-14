@@ -574,7 +574,7 @@ func GSSAPICredentialsFromEnv() (*GSSAPICredentials, error) {
 	}, nil
 }
 
-func CreateKojiTransport(relaxTimeout uint) http.RoundTripper {
+func CreateKojiTransport(relaxTimeout time.Duration) http.RoundTripper {
 	// Koji for some reason needs TLS renegotiation enabled.
 	// Clone the default http rt and enable renegotiation.
 	rt := CreateRetryableTransport()
@@ -588,9 +588,9 @@ func CreateKojiTransport(relaxTimeout uint) http.RoundTripper {
 
 	// Relax timeouts a bit
 	if relaxTimeout > 0 {
-		transport.TLSHandshakeTimeout *= time.Duration(relaxTimeout)
+		transport.TLSHandshakeTimeout *= relaxTimeout
 		transport.DialContext = (&net.Dialer{
-			Timeout:   30 * time.Second * time.Duration(relaxTimeout),
+			Timeout:   30 * time.Second * relaxTimeout,
 			KeepAlive: 30 * time.Second,
 		}).DialContext
 	}
