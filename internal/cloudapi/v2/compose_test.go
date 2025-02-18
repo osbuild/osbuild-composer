@@ -805,7 +805,7 @@ func TestGetImageRequests_ImageTypeConversion(t *testing.T) {
 func TestGetImageRequests_NoRepositories(t *testing.T) {
 	uo := UploadOptions(struct{}{})
 	request := &ComposeRequest{
-		Distribution: "fedora-40",
+		Distribution: "fedora-42",
 		ImageRequest: &ImageRequest{
 			Architecture:  "x86_64",
 			ImageType:     ImageTypesAws,
@@ -813,21 +813,20 @@ func TestGetImageRequests_NoRepositories(t *testing.T) {
 			Repositories:  []Repository{},
 		},
 	}
-	reposConf, err := reporegistry.LoadAllRepositoriesFromFS([]fs.FS{repos.FS})
+	rr, err := reporegistry.New(nil, []fs.FS{repos.FS})
 	require.NoError(t, err)
-	rr := reporegistry.NewFromDistrosRepoConfigs(reposConf)
 	got, err := request.GetImageRequests(distrofactory.NewDefault(), rr)
 	assert.NoError(t, err)
 	require.Len(t, got, 1)
 	require.Greater(t, len(got[0].repositories), 0)
-	assert.Contains(t, got[0].repositories[0].Metalink, "40")
+	assert.Contains(t, got[0].repositories[0].Metalink, "42")
 }
 
 // TestGetImageRequests_BlueprintDistro test to make sure blueprint distro overrides request distro
 func TestGetImageRequests_BlueprintDistro(t *testing.T) {
 	uo := UploadOptions(struct{}{})
 	request := &ComposeRequest{
-		Distribution: "fedora-40",
+		Distribution: "fedora-42",
 		ImageRequest: &ImageRequest{
 			Architecture:  "x86_64",
 			ImageType:     ImageTypesAws,
@@ -836,18 +835,17 @@ func TestGetImageRequests_BlueprintDistro(t *testing.T) {
 		},
 		Blueprint: &Blueprint{
 			Name:   "distro-test",
-			Distro: common.ToPtr("fedora-39"),
+			Distro: common.ToPtr("fedora-42"),
 		},
 	}
-	reposConf, err := reporegistry.LoadAllRepositoriesFromFS([]fs.FS{repos.FS})
+	rr, err := reporegistry.New(nil, []fs.FS{repos.FS})
 	require.NoError(t, err)
-	rr := reporegistry.NewFromDistrosRepoConfigs(reposConf)
 	got, err := request.GetImageRequests(distrofactory.NewDefault(), rr)
 	assert.NoError(t, err)
 	require.Len(t, got, 1)
 	require.Greater(t, len(got[0].repositories), 0)
-	assert.Contains(t, got[0].repositories[0].Metalink, "39")
-	assert.Equal(t, got[0].blueprint.Distro, "fedora-39")
+	assert.Contains(t, got[0].repositories[0].Metalink, "42")
+	assert.Equal(t, got[0].blueprint.Distro, "fedora-42")
 }
 
 func TestOpenSCAPTailoringOptions(t *testing.T) {

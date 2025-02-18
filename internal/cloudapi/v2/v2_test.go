@@ -254,7 +254,7 @@ func newV2Server(t *testing.T, dir string, enableJWT bool, fail bool) (*v2.Serve
 	distros := distrofactory.NewTestDefault()
 	require.NotNil(t, distros)
 
-	repos, err := reporegistry.New([]string{"../../../test/data"})
+	repos, err := reporegistry.New([]string{"../../../test/data/repositories"}, nil)
 	require.Nil(t, err)
 	require.NotNil(t, repos)
 	require.Greater(t, len(repos.ListDistros()), 0)

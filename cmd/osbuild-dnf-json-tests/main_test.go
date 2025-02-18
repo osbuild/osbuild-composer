@@ -26,7 +26,7 @@ import (
 // this should run cross-arch dependency solving N-1 times.
 func TestCrossArchDepsolve(t *testing.T) {
 	// Load repositories from the definition we provide in the RPM package
-	repoDir := "/usr/share/tests/osbuild-composer"
+	repoDir := "/usr/share/tests/osbuild-composer/repositories"
 
 	// NOTE: we can add RHEL, but don't make it hard requirement because it will fail outside of VPN
 	cs9 := rhel9.DistroFactory("centos-9")
@@ -83,7 +83,7 @@ func TestCrossArchDepsolve(t *testing.T) {
 // and tries to depsolve all package sets of one image type for one architecture.
 func TestDepsolvePackageSets(t *testing.T) {
 	// Load repositories from the definition we provide in the RPM package
-	repoDir := "/usr/share/tests/osbuild-composer"
+	repoDir := "/usr/share/tests/osbuild-composer/repositories"
 
 	// NOTE: we can add RHEL, but don't make it hard requirement because it will fail outside of VPN
 	cs9 := rhel9.DistroFactory("centos-9")

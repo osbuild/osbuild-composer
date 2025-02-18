@@ -77,7 +77,7 @@ func NewComposer(config *ComposerConfigFile, stateDir, cacheDir string) (*Compos
 		return nil, fmt.Errorf("failed to configure distro aliases: %v", err)
 	}
 
-	c.repos, err = reporegistry.New(repositoryConfigs)
+	c.repos, err = reporegistry.New(repositoryConfigs, nil)
 	switch err.(type) {
 	case nil:
 		// fine
