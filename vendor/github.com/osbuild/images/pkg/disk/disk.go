@@ -29,6 +29,7 @@ import (
 	"slices"
 
 	"github.com/google/uuid"
+	"github.com/osbuild/images/pkg/arch"
 )
 
 const (
@@ -40,26 +41,29 @@ const (
 	// rounded to the next MiB.
 	DefaultGrainBytes = uint64(1048576) // 1 MiB
 
-	// UUIDs for GPT disks
-	BIOSBootPartitionGUID = "21686148-6449-6E6F-744E-656564454649"
-	BIOSBootPartitionUUID = "FAC7F1FB-3E8D-4137-A512-961DE09A5549"
+	// GUIDs (partition types) for partitions on GPT disks
+	// The SD_GPT name next to each constant is the partition type shown in
+	// systemd-gpt-auto-generator(8) (if present)
+	// See also
+	// - https://www.freedesktop.org/wiki/Specifications/DiscoverablePartitionsSpec/
+	// - https://uapi-group.org/specifications/specs/discoverable_partitions_specification/
+	BIOSBootPartitionGUID  = "21686148-6449-6E6F-744E-656564454649"
+	FilesystemDataGUID     = "0FC63DAF-8483-4772-8E79-3D69D8477DE4" // SD_GPT_LINUX_GENERIC
+	EFISystemPartitionGUID = "C12A7328-F81F-11D2-BA4B-00A0C93EC93B" // SD_GPT_ESP
+	LVMPartitionGUID       = "E6D6D379-F507-44C2-A23C-238F2A3DF928"
+	PRePartitionGUID       = "9E1A2D38-C612-4316-AA26-8B49521E5A8B"
+	SwapPartitionGUID      = "0657FD6D-A4AB-43C4-84E5-0933C84B4F4F" // SD_GPT_SWAP
+	XBootLDRPartitionGUID  = "BC13C2FF-59E6-4262-A352-B275FD6F7172" // SD_GPT_XBOOTLDR
 
-	FilesystemDataGUID = "0FC63DAF-8483-4772-8E79-3D69D8477DE4"
-	FilesystemDataUUID = "CB07C243-BC44-4717-853E-28852021225B"
+	RootPartitionX86_64GUID  = "4F68BCE3-E8CD-4DB1-96E7-FBCAF984B709" // SD_GPT_ROOT_X86_64
+	RootPartitionAarch64GUID = "B921B045-1DF0-41C3-AF44-4C6F280D3FAE" // SD_GPT_ROOT_ARM64
+	RootPartitionPpc64leGUID = "C31C45E6-3F39-412E-80FB-4809C4980599" // SD_GPT_ROOT_PPC64_LE
+	RootPartitionS390xGUID   = "5EEAD9A9-FE09-4A1E-A1D7-520D00531306" // SD_GPT_ROOT_S390X
 
-	EFISystemPartitionGUID = "C12A7328-F81F-11D2-BA4B-00A0C93EC93B"
-	EFISystemPartitionUUID = "68B2905B-DF3E-4FB3-80FA-49D1E773AA33"
-	EFIFilesystemUUID      = "7B77-95E7"
-
-	LVMPartitionGUID = "E6D6D379-F507-44C2-A23C-238F2A3DF928"
-	PRePartitionGUID = "9E1A2D38-C612-4316-AA26-8B49521E5A8B"
-
-	RootPartitionUUID = "6264D520-3FB9-423F-8AB8-7A0A8E3D3562"
-
-	SwapPartitionGUID = "0657FD6D-A4AB-43C4-84E5-0933C84B4F4F"
-
-	// Extended Boot Loader Partition
-	XBootLDRPartitionGUID = "BC13C2FF-59E6-4262-A352-B275FD6F7172"
+	UsrPartitionX86_64GUID  = "8484680C-9521-48C6-9C11-B0720656F69E" // SD_GPT_USR_X86_64
+	UsrPartitionAarch64GUID = "B0E01050-EE5F-4390-949A-9101B17104E9" // SD_GPT_USR_ARM64
+	UsrPartitionPpc64leGUID = "15BB03AF-77E7-4D4A-B12B-C0D084F7491C" // SD_GPT_USR_PPC64_LE
+	UsrPartitionS390xGUID   = "8A4F5770-50AA-4ED3-874A-99B710DB6FEA" // SD_GPT_USR_S390X
 
 	// Partition type IDs for DOS disks
 
@@ -86,38 +90,88 @@ const (
 
 	// Partition type ID for PRep on dos
 	PRepPartitionDOSID = "41"
+
+	// static UUIDs for partitions and filesystems
+	// NOTE(akoutsou): These are unnecessary and have stuck around since the
+	// beginning where (I believe) the goal was to have predictable,
+	// reproducible partition tables. They might be removed soon in favour of
+	// proper, random UUIDs, with reproducibility being controlled by fixing
+	// rng seeds.
+	BIOSBootPartitionUUID  = "FAC7F1FB-3E8D-4137-A512-961DE09A5549"
+	RootPartitionUUID      = "6264D520-3FB9-423F-8AB8-7A0A8E3D3562"
+	DataPartitionUUID      = "CB07C243-BC44-4717-853E-28852021225B"
+	EFISystemPartitionUUID = "68B2905B-DF3E-4FB3-80FA-49D1E773AA33"
+
+	EFIFilesystemUUID = "7B77-95E7"
 )
 
-// pt type -> type -> ID mapping for convenience
-var idMap = map[PartitionTableType]map[string]string{
-	PT_DOS: {
-		"bios": BIOSBootPartitionDOSID,
-		"boot": FilesystemLinuxDOSID,
-		"data": FilesystemLinuxDOSID,
-		"esp":  EFISystemPartitionDOSID,
-		"lvm":  LVMPartitionDOSID,
-		"swap": SwapPartitionDOSID,
-	},
-	PT_GPT: {
-		"bios": BIOSBootPartitionGUID,
-		"boot": XBootLDRPartitionGUID,
-		"data": FilesystemDataGUID,
-		"esp":  EFISystemPartitionGUID,
-		"lvm":  LVMPartitionGUID,
-		"swap": SwapPartitionGUID,
-	},
-}
-
-func getPartitionTypeIDfor(ptType PartitionTableType, partTypeName string) (string, error) {
-	ptMap, ok := idMap[ptType]
-	if !ok {
+func getPartitionTypeIDfor(ptType PartitionTableType, partTypeName string, architecture arch.Arch) (string, error) {
+	switch ptType {
+	case PT_DOS:
+		switch partTypeName {
+		case "bios":
+			return BIOSBootPartitionDOSID, nil
+		case "data", "boot", "root", "usr":
+			return FilesystemLinuxDOSID, nil
+		case "esp":
+			return EFISystemPartitionDOSID, nil
+		case "lvm":
+			return LVMPartitionDOSID, nil
+		case "swap":
+			return SwapPartitionDOSID, nil
+		default:
+			return "", fmt.Errorf("unknown or unsupported partition type name: %s", partTypeName)
+		}
+	case PT_GPT:
+		switch partTypeName {
+		case "bios":
+			return BIOSBootPartitionGUID, nil
+		case "boot":
+			return XBootLDRPartitionGUID, nil
+		case "data":
+			return FilesystemDataGUID, nil
+		case "esp":
+			return EFISystemPartitionGUID, nil
+		case "lvm":
+			return LVMPartitionGUID, nil
+		case "swap":
+			return SwapPartitionGUID, nil
+		case "root":
+			switch architecture {
+			case arch.ARCH_X86_64:
+				return RootPartitionX86_64GUID, nil
+			case arch.ARCH_AARCH64:
+				return RootPartitionAarch64GUID, nil
+			case arch.ARCH_PPC64LE:
+				return RootPartitionPpc64leGUID, nil
+			case arch.ARCH_S390X:
+				return RootPartitionS390xGUID, nil
+			case arch.ARCH_UNSET:
+				return "", fmt.Errorf("architecture must be specified for selecting GUID for %q partition", partTypeName)
+			default:
+				return "", fmt.Errorf("unknown or unsupported architecture enum value: %d", architecture)
+			}
+		case "usr":
+			switch architecture {
+			case arch.ARCH_X86_64:
+				return UsrPartitionX86_64GUID, nil
+			case arch.ARCH_AARCH64:
+				return UsrPartitionAarch64GUID, nil
+			case arch.ARCH_PPC64LE:
+				return UsrPartitionPpc64leGUID, nil
+			case arch.ARCH_S390X:
+				return UsrPartitionS390xGUID, nil
+			case arch.ARCH_UNSET:
+				return "", fmt.Errorf("architecture must be specified for selecting GUID for %q partition", partTypeName)
+			default:
+				return "", fmt.Errorf("unknown or unsupported architecture enum value: %d", architecture)
+			}
+		default:
+			return "", fmt.Errorf("unknown or unsupported partition type name: %s", partTypeName)
+		}
+	default:
 		return "", fmt.Errorf("unknown or unsupported partition table enum: %d", ptType)
 	}
-	id, ok := ptMap[partTypeName]
-	if !ok {
-		return "", fmt.Errorf("unknown or unsupported partition type name: %s", partTypeName)
-	}
-	return id, nil
 }
 
 // FSType is the filesystem type enum.

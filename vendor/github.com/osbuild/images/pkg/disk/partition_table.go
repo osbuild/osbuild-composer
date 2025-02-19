@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/blueprint"
 	"github.com/osbuild/images/pkg/datasizes"
 	"github.com/osbuild/images/pkg/platform"
@@ -97,7 +98,7 @@ const (
 // containing the root filesystem is grown to fill any left over space on the
 // partition table. Logical Volumes are not grown to fill the space in the
 // Volume Group since they are trivial to grow on a live system.
-func NewPartitionTable(basePT *PartitionTable, mountpoints []blueprint.FilesystemCustomization, imageSize uint64, mode PartitioningMode, requiredSizes map[string]uint64, rng *rand.Rand) (*PartitionTable, error) {
+func NewPartitionTable(basePT *PartitionTable, mountpoints []blueprint.FilesystemCustomization, imageSize uint64, mode PartitioningMode, architecture arch.Arch, requiredSizes map[string]uint64, rng *rand.Rand) (*PartitionTable, error) {
 	newPT := basePT.Clone().(*PartitionTable)
 
 	if basePT.features().LVM && (mode == RawPartitioningMode || mode == BtrfsPartitioningMode) {
@@ -126,7 +127,7 @@ func NewPartitionTable(basePT *PartitionTable, mountpoints []blueprint.Filesyste
 			return nil, err
 		}
 	} else if ensureBtrfs {
-		err := newPT.ensureBtrfs()
+		err := newPT.ensureBtrfs(architecture)
 		if err != nil {
 			return nil, err
 		}
@@ -767,7 +768,7 @@ func (pt *PartitionTable) ensureLVM() error {
 
 // ensureBtrfs will ensure that the root partition is on a btrfs subvolume, i.e. if
 // it currently is not, it will wrap it in one
-func (pt *PartitionTable) ensureBtrfs() error {
+func (pt *PartitionTable) ensureBtrfs(architecture arch.Arch) error {
 
 	rootPath := entityPath(pt, "/")
 	if rootPath == nil {
@@ -823,7 +824,7 @@ func (pt *PartitionTable) ensureBtrfs() error {
 	// reset the btrfs partition size - it will be grown later
 	part.Size = 0
 
-	part.Type, err = getPartitionTypeIDfor(pt.Type, "data")
+	part.Type, err = getPartitionTypeIDfor(pt.Type, "root", architecture)
 	if err != nil {
 		return fmt.Errorf("error converting partition table to btrfs: %w", err)
 	}
@@ -942,7 +943,7 @@ func (pt *PartitionTable) GetMountpointSize(mountpoint string) (uint64, error) {
 //   - At the end of the plain partitions.
 //
 // For LVM and Plain, the fsType argument must be a valid filesystem type.
-func EnsureRootFilesystem(pt *PartitionTable, defaultFsType FSType) error {
+func EnsureRootFilesystem(pt *PartitionTable, defaultFsType FSType, architecture arch.Arch) error {
 	// collect all labels and subvolume names to avoid conflicts
 	subvolNames := make(map[string]bool)
 	labels := make(map[string]bool)
@@ -1015,7 +1016,7 @@ func EnsureRootFilesystem(pt *PartitionTable, defaultFsType FSType) error {
 		return fmt.Errorf("error creating root partition: %w", err)
 	}
 
-	partType, err := getPartitionTypeIDfor(pt.Type, "data")
+	partType, err := getPartitionTypeIDfor(pt.Type, "root", architecture)
 	if err != nil {
 		return fmt.Errorf("error creating root partition: %w", err)
 	}
@@ -1053,7 +1054,7 @@ func addBootPartition(pt *PartitionTable, bootFsType FSType) error {
 		return fmt.Errorf("error creating boot partition: %w", err)
 	}
 
-	partType, err := getPartitionTypeIDfor(pt.Type, "boot")
+	partType, err := getPartitionTypeIDfor(pt.Type, "boot", arch.ARCH_UNSET)
 	if err != nil {
 		return fmt.Errorf("error creating boot partition: %w", err)
 	}
@@ -1117,7 +1118,7 @@ func addPartitionsForBootMode(pt *PartitionTable, bootMode platform.BootMode) er
 }
 
 func mkBIOSBoot(ptType PartitionTableType) (Partition, error) {
-	partType, err := getPartitionTypeIDfor(ptType, "bios")
+	partType, err := getPartitionTypeIDfor(ptType, "bios", arch.ARCH_UNSET)
 	if err != nil {
 		return Partition{}, fmt.Errorf("error creating BIOS boot partition: %w", err)
 	}
@@ -1130,7 +1131,7 @@ func mkBIOSBoot(ptType PartitionTableType) (Partition, error) {
 }
 
 func mkESP(size uint64, ptType PartitionTableType) (Partition, error) {
-	partType, err := getPartitionTypeIDfor(ptType, "esp")
+	partType, err := getPartitionTypeIDfor(ptType, "esp", arch.ARCH_UNSET)
 	if err != nil {
 		return Partition{}, fmt.Errorf("error creating EFI system partition: %w", err)
 	}
@@ -1151,7 +1152,7 @@ func mkESP(size uint64, ptType PartitionTableType) (Partition, error) {
 }
 
 type CustomPartitionTableOptions struct {
-	// PartitionTableType must be either "dos" or "gpt". Defaults to "gpt".
+	// PartitionTableType must be either PT_DOS or PT_GPT. Defaults to PT_GPT.
 	PartitionTableType PartitionTableType
 
 	// BootMode determines the types of boot-related partitions that are
@@ -1176,6 +1177,12 @@ type CustomPartitionTableOptions struct {
 	// mountpoint's partition is the sum of all the required directory sizes it
 	// will contain.
 	RequiredMinSizes map[string]uint64
+
+	// Architecture of the hardware that will use the partition table. This is
+	// used to select appropriate partition types for GPT formatted disks to
+	// enable automatic discovery. It has no effect and is not required when
+	// the PartitionTableType is PT_DOS.
+	Architecture arch.Arch
 }
 
 // Returns the default filesystem type if the fstype is empty. If both are
@@ -1283,7 +1290,7 @@ func NewCustomPartitionTable(customizations *blueprint.DiskCustomization, option
 		}
 	}
 
-	if err := EnsureRootFilesystem(pt, options.DefaultFSType); err != nil {
+	if err := EnsureRootFilesystem(pt, options.DefaultFSType, options.Architecture); err != nil {
 		return nil, fmt.Errorf("%s %w", errPrefix, err)
 	}
 
@@ -1316,6 +1323,10 @@ func addPlainPartition(pt *PartitionTable, partition blueprint.PartitionCustomiz
 	// all user-defined partitions are data partitions except boot and swap
 	var typeName string
 	switch {
+	case partition.Mountpoint == "/":
+		typeName = "root"
+	case partition.Mountpoint == "/usr":
+		typeName = "usr"
 	case partition.Mountpoint == "/boot":
 		typeName = "boot"
 	case fstype == "swap":
@@ -1324,7 +1335,7 @@ func addPlainPartition(pt *PartitionTable, partition blueprint.PartitionCustomiz
 		typeName = "data"
 	}
 
-	partType, err := getPartitionTypeIDfor(pt.Type, typeName)
+	partType, err := getPartitionTypeIDfor(pt.Type, typeName, options.Architecture)
 	if err != nil {
 		return fmt.Errorf("error getting partition type ID for %q: %w", partition.Mountpoint, err)
 	}
@@ -1408,7 +1419,7 @@ func addLVMPartition(pt *PartitionTable, partition blueprint.PartitionCustomizat
 	}
 
 	// create partition for volume group
-	partType, err := getPartitionTypeIDfor(pt.Type, "lvm")
+	partType, err := getPartitionTypeIDfor(pt.Type, "lvm", arch.ARCH_UNSET)
 	if err != nil {
 		return fmt.Errorf("error creating lvm partition %q: %w", vgname, err)
 	}
@@ -1437,7 +1448,7 @@ func addBtrfsPartition(pt *PartitionTable, partition blueprint.PartitionCustomiz
 	}
 
 	// create partition for btrfs volume
-	partType, err := getPartitionTypeIDfor(pt.Type, "data")
+	partType, err := getPartitionTypeIDfor(pt.Type, "data", arch.ARCH_UNSET)
 	if err != nil {
 		return fmt.Errorf("error creating btrfs partition: %w", err)
 	}

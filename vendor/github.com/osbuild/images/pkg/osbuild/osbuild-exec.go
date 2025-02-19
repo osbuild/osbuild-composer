@@ -8,6 +8,8 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/osbuild/images/pkg/datasizes"
 )
 
 // Run an instance of osbuild, returning a parsed osbuild.Result.
@@ -32,6 +34,11 @@ func RunOSBuild(manifest []byte, store, outputDirectory string, exports, checkpo
 
 	for _, checkpoint := range checkpoints {
 		cmd.Args = append(cmd.Args, "--checkpoint", checkpoint)
+	}
+
+	if len(checkpoints) > 0 {
+		// set the cache-max-size to a reasonable size that the checkpoints actually get stored
+		cmd.Args = append(cmd.Args, "--cache-max-size", fmt.Sprint(20*datasizes.GiB))
 	}
 
 	if result {

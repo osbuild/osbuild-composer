@@ -41,7 +41,7 @@ func defaultBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 					{
 						Size: bootSize,
 						Type: disk.XBootLDRPartitionGUID,
-						UUID: disk.FilesystemDataUUID,
+						UUID: disk.DataPartitionUUID,
 						Payload: &disk.Filesystem{
 							Type:         "xfs",
 							Mountpoint:   "/boot",
@@ -94,7 +94,7 @@ func defaultBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 				{
 					Size: bootSize,
 					Type: disk.XBootLDRPartitionGUID,
-					UUID: disk.FilesystemDataUUID,
+					UUID: disk.DataPartitionUUID,
 					Payload: &disk.Filesystem{
 						Type:         "xfs",
 						Mountpoint:   "/boot",
@@ -141,7 +141,7 @@ func defaultBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 				{
 					Size: bootSize,
 					Type: disk.XBootLDRPartitionGUID,
-					UUID: disk.FilesystemDataUUID,
+					UUID: disk.DataPartitionUUID,
 					Payload: &disk.Filesystem{
 						Type:         "xfs",
 						Mountpoint:   "/boot",

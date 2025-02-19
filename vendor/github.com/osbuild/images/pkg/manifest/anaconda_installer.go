@@ -422,7 +422,6 @@ func dracutStageOptions(kernelVer string, biosdevname bool, additionalModules []
 		"convertfs",
 		"network-manager",
 		"network",
-		"ifcfg",
 		"url-lib",
 		"drm",
 		"plymouth",

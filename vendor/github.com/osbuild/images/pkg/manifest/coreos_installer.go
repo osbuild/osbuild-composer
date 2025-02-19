@@ -42,6 +42,7 @@ type CoreOSInstaller struct {
 	Ignition *ignition.EmbeddedOptions
 
 	AdditionalDracutModules []string
+	AdditionalDrivers       []string
 }
 
 // NewCoreOSInstaller creates an CoreOS installer pipeline object.
@@ -206,10 +207,12 @@ func (p *CoreOSInstaller) serialize() osbuild.Pipeline {
 	if p.Biosdevname {
 		dracutModules = append(dracutModules, "biosdevname")
 	}
+	drivers := p.AdditionalDrivers
 	dracutStageOptions := &osbuild.DracutStageOptions{
-		Kernel:  []string{p.kernelVer},
-		Modules: dracutModules,
-		Install: []string{"/.buildstamp"},
+		Kernel:     []string{p.kernelVer},
+		Modules:    dracutModules,
+		Install:    []string{"/.buildstamp"},
+		AddDrivers: drivers,
 	}
 	if p.FDO != nil && p.FDO.DiunPubKeyRootCerts != "" {
 		pipeline.AddStage(osbuild.NewFDOStageForRootCerts(p.FDO.DiunPubKeyRootCerts))
