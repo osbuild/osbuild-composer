@@ -38,11 +38,13 @@ type AnacondaContainerInstaller struct {
 
 	Filename string
 
-	AdditionalDracutModules   []string
 	AdditionalAnacondaModules []string
 	DisabledAnacondaModules   []string
-	AdditionalDrivers         []string
-	FIPS                      bool
+
+	AdditionalDracutModules []string
+	AdditionalDrivers       []string
+
+	FIPS bool
 
 	Kickstart *kickstart.Options
 
@@ -92,7 +94,6 @@ func (img *AnacondaContainerInstaller) InstantiateManifest(m *manifest.Manifest,
 	anacondaPipeline.Variant = img.Variant
 	anacondaPipeline.Biosdevname = (img.Platform.GetArch() == arch.ARCH_X86_64)
 	anacondaPipeline.Checkpoint()
-	anacondaPipeline.AdditionalDracutModules = img.AdditionalDracutModules
 	anacondaPipeline.AdditionalAnacondaModules = img.AdditionalAnacondaModules
 	anacondaPipeline.DisabledAnacondaModules = img.DisabledAnacondaModules
 	if img.FIPS {
@@ -101,6 +102,7 @@ func (img *AnacondaContainerInstaller) InstantiateManifest(m *manifest.Manifest,
 			anaconda.ModuleSecurity,
 		)
 	}
+	anacondaPipeline.AdditionalDracutModules = img.AdditionalDracutModules
 	anacondaPipeline.AdditionalDrivers = img.AdditionalDrivers
 	anacondaPipeline.Locale = img.Locale
 

@@ -506,8 +506,8 @@ func EdgeInstallerImage(workload workload.Workload,
 	}
 
 	if installerConfig != nil {
-		img.AdditionalDracutModules = installerConfig.AdditionalDracutModules
-		img.AdditionalDrivers = installerConfig.AdditionalDrivers
+		img.AdditionalDracutModules = append(img.AdditionalDracutModules, installerConfig.AdditionalDracutModules...)
+		img.AdditionalDrivers = append(img.AdditionalDrivers, installerConfig.AdditionalDrivers...)
 	}
 
 	instCust, err := customizations.GetInstaller()
@@ -660,7 +660,8 @@ func EdgeSimplifiedInstallerImage(workload workload.Workload,
 	}
 
 	if installerConfig != nil {
-		img.AdditionalDracutModules = installerConfig.AdditionalDracutModules
+		img.AdditionalDracutModules = append(img.AdditionalDracutModules, installerConfig.AdditionalDracutModules...)
+		img.AdditionalDrivers = append(img.AdditionalDrivers, installerConfig.AdditionalDrivers...)
 	}
 
 	return img, nil
@@ -706,8 +707,8 @@ func ImageInstallerImage(workload workload.Workload,
 	}
 
 	if installerConfig != nil {
-		img.AdditionalDracutModules = installerConfig.AdditionalDracutModules
-		img.AdditionalDrivers = installerConfig.AdditionalDrivers
+		img.AdditionalDracutModules = append(img.AdditionalDracutModules, installerConfig.AdditionalDracutModules...)
+		img.AdditionalDrivers = append(img.AdditionalDrivers, installerConfig.AdditionalDrivers...)
 	}
 
 	instCust, err := customizations.GetInstaller()

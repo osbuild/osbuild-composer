@@ -130,6 +130,7 @@ func mkEdgeInstallerImgType(rd *rhel.Distribution) *rhel.ImageType {
 		AdditionalDracutModules: []string{
 			"prefixdevname",
 			"prefixdevname-tools",
+			"ifcfg",
 		},
 	}
 	it.RPMOSTree = true

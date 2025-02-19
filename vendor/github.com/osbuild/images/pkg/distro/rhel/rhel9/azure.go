@@ -215,7 +215,7 @@ func azureInternalBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, b
 				{
 					Size: bootSize,
 					Type: disk.FilesystemDataGUID,
-					UUID: disk.FilesystemDataUUID,
+					UUID: disk.DataPartitionUUID,
 					Payload: &disk.Filesystem{
 						Type:         "xfs",
 						Mountpoint:   "/boot",
@@ -324,7 +324,7 @@ func azureInternalBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, b
 				{
 					Size: bootSize,
 					Type: disk.FilesystemDataGUID,
-					UUID: disk.FilesystemDataUUID,
+					UUID: disk.DataPartitionUUID,
 					Payload: &disk.Filesystem{
 						Type:         "xfs",
 						Mountpoint:   "/boot",

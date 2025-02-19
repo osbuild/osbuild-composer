@@ -411,6 +411,16 @@ func liveInstallerImage(workload workload.Workload,
 		img.Locale = *locale
 	}
 
+	installerConfig, err := t.getDefaultInstallerConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	if installerConfig != nil {
+		img.AdditionalDracutModules = append(img.AdditionalDracutModules, installerConfig.AdditionalDracutModules...)
+		img.AdditionalDrivers = append(img.AdditionalDrivers, installerConfig.AdditionalDrivers...)
+	}
+
 	return img, nil
 }
 
@@ -463,6 +473,16 @@ func imageInstallerImage(workload workload.Workload,
 	img.Workload = workload
 
 	img.ExtraBasePackages = packageSets[installerPkgsKey]
+
+	installerConfig, err := t.getDefaultInstallerConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	if installerConfig != nil {
+		img.AdditionalDracutModules = append(img.AdditionalDracutModules, installerConfig.AdditionalDracutModules...)
+		img.AdditionalDrivers = append(img.AdditionalDrivers, installerConfig.AdditionalDrivers...)
+	}
 
 	d := t.arch.distro
 
@@ -671,6 +691,16 @@ func iotInstallerImage(workload workload.Workload,
 		anaconda.ModuleUsers,
 	}...)
 
+	installerConfig, err := t.getDefaultInstallerConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	if installerConfig != nil {
+		img.AdditionalDracutModules = append(img.AdditionalDracutModules, installerConfig.AdditionalDracutModules...)
+		img.AdditionalDrivers = append(img.AdditionalDrivers, installerConfig.AdditionalDrivers...)
+	}
+
 	img.Product = d.product
 	img.Variant = "IoT"
 	img.OSVersion = d.osVersion
@@ -792,6 +822,16 @@ func iotSimplifiedInstallerImage(workload workload.Workload,
 				return nil, err
 			}
 		}
+	}
+
+	installerConfig, err := t.getDefaultInstallerConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	if installerConfig != nil {
+		img.AdditionalDracutModules = append(img.AdditionalDracutModules, installerConfig.AdditionalDracutModules...)
+		img.AdditionalDrivers = append(img.AdditionalDrivers, installerConfig.AdditionalDrivers...)
 	}
 
 	img.AdditionalDracutModules = append(img.AdditionalDracutModules, "dbus-broker")

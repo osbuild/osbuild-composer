@@ -161,7 +161,7 @@ func edgeBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 				{
 					Size: 384 * datasizes.MebiByte,
 					Type: disk.FilesystemDataGUID,
-					UUID: disk.FilesystemDataUUID,
+					UUID: disk.DataPartitionUUID,
 					Payload: &disk.Filesystem{
 						Type:         "xfs",
 						Mountpoint:   "/boot",
@@ -224,7 +224,7 @@ func edgeBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 				{
 					Size: 384 * datasizes.MebiByte,
 					Type: disk.FilesystemDataGUID,
-					UUID: disk.FilesystemDataUUID,
+					UUID: disk.DataPartitionUUID,
 					Payload: &disk.Filesystem{
 						Type:         "xfs",
 						Mountpoint:   "/boot",
@@ -373,7 +373,7 @@ func ec2PartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 				{
 					Size: aarch64BootSize,
 					Type: disk.FilesystemDataGUID,
-					UUID: disk.FilesystemDataUUID,
+					UUID: disk.DataPartitionUUID,
 					Payload: &disk.Filesystem{
 						Type:         "xfs",
 						Mountpoint:   "/boot",

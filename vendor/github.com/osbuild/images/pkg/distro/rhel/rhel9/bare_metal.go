@@ -54,6 +54,7 @@ func mkImageInstallerImgType() *rhel.ImageType {
 			"nvdimm", // non-volatile DIMM firmware (provides nfit, cuse, and nd_e820)
 			"prefixdevname",
 			"prefixdevname-tools",
+			"ifcfg",
 		},
 		AdditionalDrivers: []string{
 			"cuse",

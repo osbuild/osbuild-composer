@@ -42,11 +42,13 @@ type AnacondaOSTreeInstaller struct {
 
 	Filename string
 
-	AdditionalDracutModules   []string
 	AdditionalAnacondaModules []string
 	DisabledAnacondaModules   []string
-	AdditionalDrivers         []string
-	FIPS                      bool
+
+	AdditionalDracutModules []string
+	AdditionalDrivers       []string
+
+	FIPS bool
 
 	// Uses the old, deprecated, Anaconda config option "kickstart-modules".
 	// Only for RHEL 8.

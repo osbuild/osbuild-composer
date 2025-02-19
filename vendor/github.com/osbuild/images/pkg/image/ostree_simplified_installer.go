@@ -59,6 +59,7 @@ type OSTreeSimplifiedInstaller struct {
 	IgnitionEmbedded *ignition.EmbeddedOptions
 
 	AdditionalDracutModules []string
+	AdditionalDrivers       []string
 }
 
 func NewOSTreeSimplifiedInstaller(rawImage *OSTreeDiskImage, installDevice string) *OSTreeSimplifiedInstaller {
@@ -98,6 +99,7 @@ func (img *OSTreeSimplifiedInstaller) InstantiateManifest(m *manifest.Manifest,
 	coiPipeline.Biosdevname = (img.Platform.GetArch() == arch.ARCH_X86_64)
 	coiPipeline.Variant = img.Variant
 	coiPipeline.AdditionalDracutModules = img.AdditionalDracutModules
+	coiPipeline.AdditionalDrivers = img.AdditionalDrivers
 
 	var isoLabel string
 

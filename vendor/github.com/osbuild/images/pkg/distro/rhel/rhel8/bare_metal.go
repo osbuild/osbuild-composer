@@ -32,6 +32,7 @@ func mkImageInstaller() *rhel.ImageType {
 		AdditionalDracutModules: []string{
 			"prefixdevname",
 			"prefixdevname-tools",
+			"ifcfg",
 		},
 	}
 

@@ -35,7 +35,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 			{
 				Size: 500 * datasizes.MebiByte,
 				Type: disk.FilesystemDataGUID,
-				UUID: disk.FilesystemDataUUID,
+				UUID: disk.DataPartitionUUID,
 				Payload: &disk.Filesystem{
 					Type:         "ext4",
 					Mountpoint:   "/boot",
@@ -81,7 +81,7 @@ var defaultBasePartitionTables = distro.BasePartitionTableMap{
 			{
 				Size: 500 * datasizes.MebiByte,
 				Type: disk.FilesystemDataGUID,
-				UUID: disk.FilesystemDataUUID,
+				UUID: disk.DataPartitionUUID,
 				Payload: &disk.Filesystem{
 					Type:         "ext4",
 					Mountpoint:   "/boot",
@@ -192,7 +192,7 @@ var minimalrawPartitionTables = distro.BasePartitionTableMap{
 			{
 				Size: 1 * datasizes.GibiByte,
 				Type: disk.XBootLDRPartitionGUID,
-				UUID: disk.FilesystemDataUUID,
+				UUID: disk.DataPartitionUUID,
 				Payload: &disk.Filesystem{
 					Type:         "ext4",
 					Mountpoint:   "/boot",
@@ -287,7 +287,7 @@ var iotBasePartitionTables = distro.BasePartitionTableMap{
 			{
 				Size: 1 * datasizes.GibiByte,
 				Type: disk.FilesystemDataGUID,
-				UUID: disk.FilesystemDataUUID,
+				UUID: disk.DataPartitionUUID,
 				Payload: &disk.Filesystem{
 					Type:         "ext4",
 					Mountpoint:   "/boot",
@@ -381,7 +381,7 @@ var iotSimplifiedInstallerPartitionTables = distro.BasePartitionTableMap{
 			{
 				Size: 1 * datasizes.GibiByte,
 				Type: disk.XBootLDRPartitionGUID,
-				UUID: disk.FilesystemDataUUID,
+				UUID: disk.DataPartitionUUID,
 				Payload: &disk.Filesystem{
 					Type:         "ext4",
 					Mountpoint:   "/boot",
@@ -451,7 +451,7 @@ var iotSimplifiedInstallerPartitionTables = distro.BasePartitionTableMap{
 			{
 				Size: 1 * datasizes.GibiByte,
 				Type: disk.XBootLDRPartitionGUID,
-				UUID: disk.FilesystemDataUUID,
+				UUID: disk.DataPartitionUUID,
 				Payload: &disk.Filesystem{
 					Type:         "ext4",
 					Mountpoint:   "/boot",

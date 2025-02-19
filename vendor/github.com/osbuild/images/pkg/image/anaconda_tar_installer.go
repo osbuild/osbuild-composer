@@ -71,8 +71,9 @@ type AnacondaTarInstaller struct {
 	AdditionalKernelOpts      []string
 	AdditionalAnacondaModules []string
 	DisabledAnacondaModules   []string
-	AdditionalDracutModules   []string
-	AdditionalDrivers         []string
+
+	AdditionalDracutModules []string
+	AdditionalDrivers       []string
 
 	// Uses the old, deprecated, Anaconda config option "kickstart-modules".
 	// Only for RHEL 8.

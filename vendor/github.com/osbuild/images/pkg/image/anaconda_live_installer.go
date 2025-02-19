@@ -40,6 +40,9 @@ type AnacondaLiveInstaller struct {
 	// Locale for the installer. This should be set to the same locale as the
 	// ISO OS payload, if known.
 	Locale string
+
+	AdditionalDracutModules []string
+	AdditionalDrivers       []string
 }
 
 func NewAnacondaLiveInstaller() *AnacondaLiveInstaller {
