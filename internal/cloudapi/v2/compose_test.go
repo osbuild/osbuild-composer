@@ -4,7 +4,7 @@ import (
 	"io/fs"
 	"testing"
 
-	"github.com/osbuild/images/data/repositories"
+	repos "github.com/osbuild/images/data/repositories"
 	"github.com/osbuild/images/pkg/customizations/subscription"
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/distrofactory"
@@ -15,6 +15,12 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+)
+
+// Change these when moving to a new release
+const (
+	TEST_DISTRO_NAME    = "fedora-42"
+	TEST_DISTRO_VERSION = "42"
 )
 
 // GetTestBlueprint returns a populated blueprint
@@ -805,7 +811,7 @@ func TestGetImageRequests_ImageTypeConversion(t *testing.T) {
 func TestGetImageRequests_NoRepositories(t *testing.T) {
 	uo := UploadOptions(struct{}{})
 	request := &ComposeRequest{
-		Distribution: "fedora-42",
+		Distribution: TEST_DISTRO_NAME,
 		ImageRequest: &ImageRequest{
 			Architecture:  "x86_64",
 			ImageType:     ImageTypesAws,
@@ -819,14 +825,14 @@ func TestGetImageRequests_NoRepositories(t *testing.T) {
 	assert.NoError(t, err)
 	require.Len(t, got, 1)
 	require.Greater(t, len(got[0].repositories), 0)
-	assert.Contains(t, got[0].repositories[0].Metalink, "42")
+	assert.Contains(t, got[0].repositories[0].Metalink, TEST_DISTRO_VERSION)
 }
 
 // TestGetImageRequests_BlueprintDistro test to make sure blueprint distro overrides request distro
 func TestGetImageRequests_BlueprintDistro(t *testing.T) {
 	uo := UploadOptions(struct{}{})
 	request := &ComposeRequest{
-		Distribution: "fedora-42",
+		Distribution: TEST_DISTRO_NAME,
 		ImageRequest: &ImageRequest{
 			Architecture:  "x86_64",
 			ImageType:     ImageTypesAws,
@@ -835,7 +841,7 @@ func TestGetImageRequests_BlueprintDistro(t *testing.T) {
 		},
 		Blueprint: &Blueprint{
 			Name:   "distro-test",
-			Distro: common.ToPtr("fedora-42"),
+			Distro: common.ToPtr(TEST_DISTRO_NAME),
 		},
 	}
 	rr, err := reporegistry.New(nil, []fs.FS{repos.FS})
@@ -844,8 +850,8 @@ func TestGetImageRequests_BlueprintDistro(t *testing.T) {
 	assert.NoError(t, err)
 	require.Len(t, got, 1)
 	require.Greater(t, len(got[0].repositories), 0)
-	assert.Contains(t, got[0].repositories[0].Metalink, "42")
-	assert.Equal(t, got[0].blueprint.Distro, "fedora-42")
+	assert.Contains(t, got[0].repositories[0].Metalink, TEST_DISTRO_VERSION)
+	assert.Equal(t, got[0].blueprint.Distro, TEST_DISTRO_NAME)
 }
 
 func TestOpenSCAPTailoringOptions(t *testing.T) {
