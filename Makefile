@@ -23,11 +23,13 @@ RST2MAN ?= rst2man
 SHELL := /bin/bash
 .SHELLFLAGS := -ec -o pipefail
 
-# see https://hub.docker.com/r/docker/golangci-lint/tags
-# v1.56 to get golang 1.22 (1.22.1)
+# see https://hub.docker.com/r/golangci/golangci-lint/tags
+# This is also used in Containerfile_golangci_lint FROM line
+# v1.60 to get golang 1.23 (1.23.0)
+# v1.56 to get golang 1.22 (1.22.0)
 # v1.55 to get golang 1.21 (1.21.3)
 # v1.53 to get golang 1.20 (1.20.5)
-GOLANGCI_LINT_VERSION=v1.56
+GOLANGCI_LINT_VERSION=v1.60
 GOLANGCI_LINT_CACHE_DIR=$(HOME)/.cache/golangci-lint/$(GOLANGCI_LINT_VERSION)
 GOLANGCI_COMPOSER_IMAGE=composer_golangci
 #
@@ -354,6 +356,7 @@ SHELLCHECK_FILES=$(shell find . -name "*.sh" -not -regex "./vendor/.*")
 .PHONY: lint
 lint: $(GOLANGCI_LINT_CACHE_DIR) container_composer_golangci_built.info
 	./tools/prepare-source.sh
+	podman run -t --rm -v $(SRCDIR):/app:z -v $(GOLANGCI_LINT_CACHE_DIR):/root/.cache:z -w /app $(GOLANGCI_COMPOSER_IMAGE) golangci-lint config verify -v
 	podman run -t --rm -v $(SRCDIR):/app:z -v $(GOLANGCI_LINT_CACHE_DIR):/root/.cache:z -w /app $(GOLANGCI_COMPOSER_IMAGE) golangci-lint run -v
 	echo "$(SHELLCHECK_FILES)" | xargs shellcheck --shell bash -e SC1091 -e SC2002 -e SC2317
 

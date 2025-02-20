@@ -1,6 +1,3 @@
-exclude-dirs:
-  - vendor
-
 linters-settings:
   govet:
     disable:
@@ -23,6 +20,9 @@ run:
   timeout: 5m
 
 issues:
+  exclude-dirs:
+    - vendor
+
   # Maximum issues count per one linter. Set to 0 to disable. Default is 50.
   max-issues-per-linter: 0
 

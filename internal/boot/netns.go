@@ -73,6 +73,8 @@ func newNetworkNamespace() (NetNS, error) {
 		return "", fmt.Errorf("cannot unshare the network namespace")
 	}
 	defer func() {
+		// The Fd() is actually an int cast into a uintptr, so casting back to an int is fine
+		/* #nosec G115 */
 		err = unix.Setns(int(oldNS.Fd()), syscall.CLONE_NEWNET)
 		if err != nil {
 			// We cannot return to the original namespace.

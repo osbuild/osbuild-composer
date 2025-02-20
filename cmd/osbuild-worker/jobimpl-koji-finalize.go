@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"net/url"
 	"time"
 
@@ -102,7 +103,14 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 		// Fail the Koji build if the job error is set and the necessary
 		// information to identify the job are available.
 		if kojiFinalizeJobResult.JobError != nil && initArgs != nil {
-			err = impl.kojiFail(args.Server, int(initArgs.BuildID), initArgs.Token)
+			/* #nosec G115 */
+			buildID := int(initArgs.BuildID)
+			// Make sure that signed integer conversion didn't underflow
+			if buildID < 0 {
+				logWithId.Errorf("BuildID integer underflow: %d", initArgs.BuildID)
+				return
+			}
+			err = impl.kojiFail(args.Server, buildID, initArgs.Token)
 			if err != nil {
 				logWithId.Errorf("Failing Koji job failed: %v", err)
 			}
@@ -305,13 +313,19 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 		}
 	}
 
+	// Make sure StartTime cannot overflow the int64 conversion
+	if args.StartTime > math.MaxInt64 {
+		return fmt.Errorf("StartTime integer overflow: %d", args.StartTime)
+	}
+	/* #nosec G115 */
+	startTime := int64(args.StartTime)
 	build := koji.Build{
 		BuildID:   initArgs.BuildID,
 		TaskID:    args.TaskID,
 		Name:      args.Name,
 		Version:   args.Version,
 		Release:   args.Release,
-		StartTime: int64(args.StartTime),
+		StartTime: startTime,
 		EndTime:   time.Now().Unix(),
 		Extra: koji.BuildExtra{
 			TypeInfo: koji.TypeInfoBuild{
