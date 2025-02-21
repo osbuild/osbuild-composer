@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
+	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/smithy-go/middleware"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
@@ -54,6 +55,15 @@ type GetImageBlockPublicAccessStateOutput struct {
 	//
 	//   - unblocked - Your AMIs in the specified Region can be publicly shared.
 	ImageBlockPublicAccessState *string
+
+	// The entity that manages the state for block public access for AMIs. Possible
+	// values include:
+	//
+	//   - account - The state is managed by the account.
+	//
+	//   - declarative-policy - The state is managed by a declarative policy and can't
+	//   be modified by the account.
+	ManagedBy types.ManagedBy
 
 	// Metadata pertaining to the operation's result.
 	ResultMetadata middleware.Metadata
@@ -104,6 +114,9 @@ func (c *Client) addOperationGetImageBlockPublicAccessStateMiddlewares(stack *mi
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -138,6 +151,18 @@ func (c *Client) addOperationGetImageBlockPublicAccessStateMiddlewares(stack *mi
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

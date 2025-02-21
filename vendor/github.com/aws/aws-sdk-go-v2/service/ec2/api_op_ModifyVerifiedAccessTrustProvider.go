@@ -54,6 +54,9 @@ type ModifyVerifiedAccessTrustProviderInput struct {
 	// UnauthorizedOperation .
 	DryRun *bool
 
+	// The OpenID Connect (OIDC) options.
+	NativeApplicationOidcOptions *types.ModifyVerifiedAccessNativeApplicationOidcOptions
+
 	// The options for an OpenID Connect-compatible user-identity trust provider.
 	OidcOptions *types.ModifyVerifiedAccessTrustProviderOidcOptions
 
@@ -117,6 +120,9 @@ func (c *Client) addOperationModifyVerifiedAccessTrustProviderMiddlewares(stack 
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -157,6 +163,18 @@ func (c *Client) addOperationModifyVerifiedAccessTrustProviderMiddlewares(stack 
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

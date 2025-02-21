@@ -59,7 +59,7 @@ func (c *Client) DescribeInstanceStatus(ctx context.Context, params *DescribeIns
 
 type DescribeInstanceStatusInput struct {
 
-	// Checks whether you have the required permissions for the action, without
+	// Checks whether you have the required permissions for the operation, without
 	// actually making the request, and provides an error response. If you have the
 	// required permissions, the error response is DryRunOperation . Otherwise, it is
 	// UnauthorizedOperation .
@@ -100,6 +100,12 @@ type DescribeInstanceStatusInput struct {
 	//
 	//   - instance-status.status - The status of the instance ( ok | impaired |
 	//   initializing | insufficient-data | not-applicable ).
+	//
+	//   - operator.managed - A Boolean that indicates whether this is a managed
+	//   instance.
+	//
+	//   - operator.principal - The principal that manages the instance. Only valid for
+	//   managed instances, where managed is true .
 	//
 	//   - system-status.reachability - Filters on system status where the name is
 	//   reachability ( passed | failed | initializing | insufficient-data ).
@@ -199,6 +205,9 @@ func (c *Client) addOperationDescribeInstanceStatusMiddlewares(stack *middleware
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -233,6 +242,18 @@ func (c *Client) addOperationDescribeInstanceStatusMiddlewares(stack *middleware
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil
@@ -402,7 +423,11 @@ func instanceStatusOkStateRetryable(ctx context.Context, input *DescribeInstance
 		var v2 []types.SummaryStatus
 		for _, v := range v1 {
 			v3 := v.InstanceStatus
-			v4 := v3.Status
+			var v4 types.SummaryStatus
+			if v3 != nil {
+				v5 := v3.Status
+				v4 = v5
+			}
 			v2 = append(v2, v4)
 		}
 		expectedValue := "ok"
@@ -431,6 +456,9 @@ func instanceStatusOkStateRetryable(ctx context.Context, input *DescribeInstance
 		}
 	}
 
+	if err != nil {
+		return false, err
+	}
 	return true, nil
 }
 
@@ -598,7 +626,11 @@ func systemStatusOkStateRetryable(ctx context.Context, input *DescribeInstanceSt
 		var v2 []types.SummaryStatus
 		for _, v := range v1 {
 			v3 := v.SystemStatus
-			v4 := v3.Status
+			var v4 types.SummaryStatus
+			if v3 != nil {
+				v5 := v3.Status
+				v4 = v5
+			}
 			v2 = append(v2, v4)
 		}
 		expectedValue := "ok"
@@ -615,6 +647,9 @@ func systemStatusOkStateRetryable(ctx context.Context, input *DescribeInstanceSt
 		}
 	}
 
+	if err != nil {
+		return false, err
+	}
 	return true, nil
 }
 

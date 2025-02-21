@@ -110,6 +110,9 @@ type DescribeInstanceTypesInput struct {
 	//
 	//   - memory-info.size-in-mib - The memory size.
 	//
+	//   - network-info.bandwidth-weightings - For instances that support bandwidth
+	//   weighting to boost performance ( default , vpc-1 , ebs-1 ).
+	//
 	//   - network-info.efa-info.maximum-efa-interfaces - The maximum number of Elastic
 	//   Fabric Adapters (EFAs) per instance.
 	//
@@ -161,7 +164,8 @@ type DescribeInstanceTypesInput struct {
 	//
 	//   - supported-root-device-type - The root device type ( ebs | instance-store ).
 	//
-	//   - supported-usage-class - The usage class ( on-demand | spot ).
+	//   - supported-usage-class - The usage class ( on-demand | spot | capacity-block
+	//   ).
 	//
 	//   - supported-virtualization-type - The virtualization type ( hvm | paravirtual
 	//   ).
@@ -255,6 +259,9 @@ func (c *Client) addOperationDescribeInstanceTypesMiddlewares(stack *middleware.
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -289,6 +296,18 @@ func (c *Client) addOperationDescribeInstanceTypesMiddlewares(stack *middleware.
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

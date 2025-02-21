@@ -16,7 +16,9 @@ import (
 // reached their end time.
 //
 // To describe the scaling activities for scheduled actions that have already run,
-// call the DescribeScalingActivitiesAPI.
+// call the [DescribeScalingActivities]API.
+//
+// [DescribeScalingActivities]: https://docs.aws.amazon.com/autoscaling/ec2/APIReference/API_DescribeScalingActivities.html
 func (c *Client) DescribeScheduledActions(ctx context.Context, params *DescribeScheduledActionsInput, optFns ...func(*Options)) (*DescribeScheduledActionsOutput, error) {
 	if params == nil {
 		params = &DescribeScheduledActionsInput{}
@@ -123,6 +125,9 @@ func (c *Client) addOperationDescribeScheduledActionsMiddlewares(stack *middlewa
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -157,6 +162,18 @@ func (c *Client) addOperationDescribeScheduledActionsMiddlewares(stack *middlewa
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil
