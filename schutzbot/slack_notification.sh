@@ -8,11 +8,19 @@ if [ -z "${SLACK_WEBHOOK_URL:-}" ]; then
 fi
 
 if [ "$3" == "ga" ]; then
-    MESSAGE="\"<$CI_PIPELINE_URL|GA composes pipeline>: *$1* $2, cc <@U01CUGX9L68>, <@U04PYMDRV5H>\""
+    if [ "$1" == "FAILED" ]; then
+      MESSAGE="\"<$CI_PIPELINE_URL|GA composes pipeline>: *$1* $2, cc <@U01S1KWFMFF>, <@U04PYMDRV5H>\""
+    else
+      MESSAGE="\"<$CI_PIPELINE_URL|GA composes pipeline>: *$1* $2\""
+    fi
 else
     COMPOSE_ID=$(cat COMPOSE_ID)
     COMPOSER_NVR=$(cat COMPOSER_NVR)
-    MESSAGE="\"<$CI_PIPELINE_URL|Nightly pipeline> ($COMPOSE_ID: $COMPOSER_NVR): *$1* $2, cc <@U01CUGX9L68>, <@U04PYMDRV5H>\""
+    if [ "$1" == "FAILED" ]; then
+      MESSAGE="\"<$CI_PIPELINE_URL|Nightly pipeline> ($COMPOSE_ID: $COMPOSER_NVR): *$1* $2, cc <@U01S1KWFMFF>, <@U04PYMDRV5H>\""
+    else
+      MESSAGE="\"<$CI_PIPELINE_URL|Nightly pipeline> ($COMPOSE_ID: $COMPOSER_NVR): *$1* $2\""
+    fi
 fi
 
 curl \
