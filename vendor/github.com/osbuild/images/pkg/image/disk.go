@@ -39,6 +39,8 @@ type DiskImage struct {
 	// InstallWeakDeps enables installation of weak dependencies for packages
 	// that are statically defined for the payload pipeline of the image.
 	InstallWeakDeps *bool
+
+	FirstBoot bool
 }
 
 func NewDiskImage() *DiskImage {
@@ -66,6 +68,7 @@ func (img *DiskImage) InstantiateManifest(m *manifest.Manifest,
 	if img.InstallWeakDeps != nil {
 		osPipeline.InstallWeakDeps = *img.InstallWeakDeps
 	}
+	osPipeline.FirstBoot = img.FirstBoot
 
 	rawImagePipeline := manifest.NewRawImage(buildPipeline, osPipeline)
 	rawImagePipeline.PartTool = img.PartTool
@@ -114,6 +117,10 @@ func (img *DiskImage) InstantiateManifest(m *manifest.Manifest,
 		xzPipeline := manifest.NewXZ(buildPipeline, imagePipeline)
 		xzPipeline.SetFilename(img.Filename)
 		return xzPipeline.Export(), nil
+	case "zstd":
+		zstdPipeline := manifest.NewZstd(buildPipeline, imagePipeline)
+		zstdPipeline.SetFilename(img.Filename)
+		return zstdPipeline.Export(), nil
 	case "":
 		// don't compress, but make sure the pipeline's filename is set
 		imagePipeline.SetFilename(img.Filename)

@@ -145,7 +145,7 @@ func (t *imageType) getPartitionTable(
 ) (*disk.PartitionTable, error) {
 	basePartitionTable, exists := t.basePartitionTables[t.arch.Name()]
 	if !exists {
-		return nil, fmt.Errorf("unknown arch: %s", t.arch.Name())
+		return nil, fmt.Errorf("unknown arch for partition table: %s", t.arch.Name())
 	}
 
 	imageSize := t.Size(options.Size)
