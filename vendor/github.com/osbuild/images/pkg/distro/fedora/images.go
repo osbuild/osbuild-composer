@@ -345,6 +345,9 @@ func diskImage(workload workload.Workload,
 
 	img.Filename = t.Filename()
 
+	d := t.arch.distro
+	img.FirstBoot = common.VersionGreaterThanOrEqual(d.osVersion, VERSION_FIRSTBOOT)
+
 	return img, nil
 }
 
