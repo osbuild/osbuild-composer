@@ -819,7 +819,7 @@ container: &container
 wsl:
   <<: *container
 
-minimal_raw:
+minimal_raw: &minimal
   include:
     - "@core"
     - "initial-setup"
@@ -828,7 +828,19 @@ minimal_raw:
     - "brcmfmac-firmware"
     - "realtek-firmware"
     - "iwlwifi-mvm-firmware"
+  exclude:
+    - "dracut-config-rescue"
+  condition:
+    architecture:
+      riscv64:
+        include:
+          # missing from @core in riscv64
+          - "dnf5"
+          - "policycoreutils"
+          - "selinux-policy-targeted"
 
+minimal_raw_zst:
+  <<: *minimal
 
 iot_simplified_installer:
   include:

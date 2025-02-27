@@ -471,7 +471,7 @@ type distribution struct {
 // Fedora based OS image configuration defaults
 var defaultDistroImageConfig = &distro.ImageConfig{
 	Timezone:               common.ToPtr("UTC"),
-	Locale:                 common.ToPtr("en_US"),
+	Locale:                 common.ToPtr("C.UTF-8"),
 	DefaultOSCAPDatastream: common.ToPtr(oscap.DefaultFedoraDatastream()),
 }
 
@@ -696,6 +696,14 @@ func newDistro(version int) distro.Distro {
 	}
 	vhdImgType.defaultImageConfig = vhdConfig.InheritFrom(qcow2ImgType.defaultImageConfig)
 
+	minimalrawZstdImgType := minimalrawImgType
+	minimalrawZstdImgType.name = "minimal-raw-zst"
+	minimalrawZstdImgType.filename = "disk.raw.zst"
+	minimalrawZstdImgType.mimeType = "application/zstd"
+	minimalrawZstdImgType.compression = "zstd"
+	minimalrawZstdImgType.payloadPipelines = []string{"os", "image", "zstd"}
+	minimalrawZstdImgType.exports = []string{"zstd"}
+
 	x86_64.addImageTypes(
 		&platform.X86{
 			BIOS:       true,
@@ -911,6 +919,7 @@ func newDistro(version int) distro.Distro {
 			},
 		},
 		minimalrawImgType,
+		minimalrawZstdImgType,
 	)
 	aarch64.addImageTypes(
 		&platform.Aarch64_Fedora{
@@ -928,6 +937,7 @@ func newDistro(version int) distro.Distro {
 			},
 		},
 		minimalrawImgType,
+		minimalrawZstdImgType,
 	)
 
 	iotSimplifiedInstallerImgType.defaultInstallerConfig = distroInstallerConfig
@@ -1063,9 +1073,20 @@ func newDistro(version int) distro.Distro {
 		containerImgType,
 	)
 
+	// XXX: there is no "qcow2" for riscv64 yet because there is
+	// no "@Fedora Cloud Server" group
 	riscv64.addImageTypes(
 		&platform.RISCV64{},
 		containerImgType,
+	)
+	riscv64.addImageTypes(
+		&platform.RISCV64{
+			UEFIVendor: "fedora",
+			BasePlatform: platform.BasePlatform{
+				ImageFormat: platform.FORMAT_RAW,
+			},
+		},
+		minimalrawImgType,
 	)
 
 	rd.addArches(x86_64, aarch64, ppc64le, s390x, riscv64)

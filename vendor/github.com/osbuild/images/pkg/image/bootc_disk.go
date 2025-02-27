@@ -5,6 +5,7 @@ import (
 	"math/rand"
 
 	"github.com/osbuild/images/pkg/container"
+	"github.com/osbuild/images/pkg/customizations/fsnode"
 	"github.com/osbuild/images/pkg/customizations/users"
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/manifest"
@@ -30,6 +31,10 @@ type BootcDiskImage struct {
 	// will become unmanaged state by bootc when used
 	Users  []users.User
 	Groups []users.Group
+
+	// Custom directories and files to create in the image
+	Directories []*fsnode.Directory
+	Files       []*fsnode.File
 
 	// SELinux policy, when set it enables the labeling of the tree with the
 	// selected profile
@@ -59,6 +64,8 @@ func (img *BootcDiskImage) InstantiateManifestFromContainers(m *manifest.Manifes
 	rawImage.PartitionTable = img.PartitionTable
 	rawImage.Users = img.Users
 	rawImage.Groups = img.Groups
+	rawImage.Files = img.Files
+	rawImage.Directories = img.Directories
 	rawImage.KernelOptionsAppend = img.KernelOptionsAppend
 	rawImage.SELinux = img.SELinux
 

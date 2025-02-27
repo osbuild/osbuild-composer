@@ -16,12 +16,11 @@ import (
 	"time"
 )
 
-// Describes one or more of your network interfaces.
+// Describes the specified network interfaces or all your network interfaces.
 //
 // If you have a large number of network interfaces, the operation fails unless
 // you use pagination or one of the following filters: group-id , mac-address ,
-// private-dns-name , private-ip-address , private-dns-name , subnet-id , or vpc-id
-// .
+// private-dns-name , private-ip-address , subnet-id , or vpc-id .
 //
 // We strongly recommend using only paginated requests. Unpaginated requests are
 // susceptible to throttling and timeouts.
@@ -109,14 +108,20 @@ type DescribeNetworkInterfacesInput struct {
 	//
 	//   - interface-type - The type of network interface ( api_gateway_managed |
 	//   aws_codestar_connections_managed | branch | ec2_instance_connect_endpoint |
-	//   efa | efs | gateway_load_balancer | gateway_load_balancer_endpoint |
-	//   global_accelerator_managed | interface | iot_rules_managed | lambda |
+	//   efa | efa-only | efs | gateway_load_balancer | gateway_load_balancer_endpoint
+	//   | global_accelerator_managed | interface | iot_rules_managed | lambda |
 	//   load_balancer | nat_gateway | network_load_balancer | quicksight |
 	//   transit_gateway | trunk | vpc_endpoint ).
 	//
 	//   - mac-address - The MAC address of the network interface.
 	//
 	//   - network-interface-id - The ID of the network interface.
+	//
+	//   - operator.managed - A Boolean that indicates whether this is a managed
+	//   network interface.
+	//
+	//   - operator.principal - The principal that manages the network interface. Only
+	//   valid for managed network interfaces, where managed is true .
 	//
 	//   - owner-id - The Amazon Web Services account ID of the network interface owner.
 	//
@@ -232,6 +237,9 @@ func (c *Client) addOperationDescribeNetworkInterfacesMiddlewares(stack *middlew
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -266,6 +274,18 @@ func (c *Client) addOperationDescribeNetworkInterfacesMiddlewares(stack *middlew
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil
@@ -466,6 +486,9 @@ func networkInterfaceAvailableStateRetryable(ctx context.Context, input *Describ
 		}
 	}
 
+	if err != nil {
+		return false, err
+	}
 	return true, nil
 }
 

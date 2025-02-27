@@ -7,6 +7,7 @@ import (
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/artifact"
 	"github.com/osbuild/images/pkg/container"
+	"github.com/osbuild/images/pkg/customizations/fsnode"
 	"github.com/osbuild/images/pkg/customizations/users"
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/osbuild"
@@ -35,6 +36,10 @@ type RawBootcImage struct {
 	// will become unmanaged state by bootc when used
 	Users  []users.User
 	Groups []users.Group
+
+	// Custom directories and files to create in the image
+	Directories []*fsnode.Directory
+	Files       []*fsnode.File
 
 	// SELinux policy, when set it enables the labeling of the tree with the
 	// selected profile
@@ -164,6 +169,8 @@ func (p *RawBootcImage) serialize() osbuild.Pipeline {
 	mounts = append(mounts, *osbuild.NewBindMount("bind-ostree-deployment-to-tree", "mount://", "tree://"))
 
 	// we always include the fstab stage
+	// XXX: see issue#756 - if we stop doing this, conditionally
+	// apply selinux again
 	fstabOpts, err := osbuild.NewFSTabStageOptions(pt)
 	if err != nil {
 		panic(err)
@@ -199,21 +206,44 @@ func (p *RawBootcImage) serialize() osbuild.Pipeline {
 		usersStage.Mounts = mounts
 		usersStage.Devices = devices
 		pipeline.AddStage(usersStage)
+	}
 
-		// add selinux
-		if p.SELinux != "" {
-			opts := &osbuild.SELinuxStageOptions{
-				FileContexts: fmt.Sprintf("etc/selinux/%s/contexts/files/file_contexts", p.SELinux),
-				ExcludePaths: []string{"/sysroot"},
-			}
-			selinuxStage := osbuild.NewSELinuxStage(opts)
-			selinuxStage.Mounts = mounts
-			selinuxStage.Devices = devices
-			pipeline.AddStage(selinuxStage)
+	// First create custom directories, because some of the custom files may depend on them
+	if len(p.Directories) > 0 {
+		pipeline.AddStages(osbuild.GenDirectoryNodesStages(p.Directories)...)
+	}
+
+	if len(p.Files) > 0 {
+		pipeline.AddStages(osbuild.GenFileNodesStages(p.Files)...)
+	}
+
+	// XXX: maybe go back to adding this conditionally when we stop
+	// writing an /etc/fstab by default (see issue #756)
+	// add selinux
+	if p.SELinux != "" {
+		opts := &osbuild.SELinuxStageOptions{
+			FileContexts: fmt.Sprintf("etc/selinux/%s/contexts/files/file_contexts", p.SELinux),
+			ExcludePaths: []string{"/sysroot"},
 		}
+		selinuxStage := osbuild.NewSELinuxStage(opts)
+		selinuxStage.Mounts = mounts
+		selinuxStage.Devices = devices
+		pipeline.AddStage(selinuxStage)
 	}
 
 	return pipeline
+}
+
+// XXX: duplicated from os.go
+func (p *RawBootcImage) getInline() []string {
+	inlineData := []string{}
+
+	// inline data for custom files
+	for _, file := range p.Files {
+		inlineData = append(inlineData, string(file.Data()))
+	}
+
+	return inlineData
 }
 
 // XXX: copied from raw.go
