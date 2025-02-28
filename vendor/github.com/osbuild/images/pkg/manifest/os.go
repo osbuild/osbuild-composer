@@ -148,6 +148,11 @@ type OSCustomizations struct {
 	// NoBLS configures the image bootloader with traditional menu entries
 	// instead of BLS. Required for legacy systems like RHEL 7.
 	NoBLS bool
+
+	// FirstBoot sets if the machine-id should be written with the
+	// magic value that determines if the machine is being booted for the
+	// first time.
+	FirstBoot bool
 }
 
 // OS represents the filesystem tree of the target image. This roughly
@@ -806,6 +811,12 @@ func (p *OS) serialize() osbuild.Pipeline {
 			}
 		}
 		pipeline.AddStage(osbuild.NewCAStageStage())
+	}
+
+	if p.FirstBoot {
+		pipeline.AddStage(osbuild.NewMachineIdStage(&osbuild.MachineIdStageOptions{
+			FirstBoot: osbuild.MachineIdFirstBootYes,
+		}))
 	}
 
 	if p.SElinux != "" {
