@@ -5,3 +5,9 @@
 # Worker code
 /internal/worker/       @thozza
 /cmd/osbuild-worker/    @thozza
+
+# Service deployment
+# (note: last match wins)
+/templates/ @croissanne @kingsleyzissou @schuellerf @thozza
+/templates/dashboards/ @croissanne @kingsleyzissou @schuellerf @thozza
+
