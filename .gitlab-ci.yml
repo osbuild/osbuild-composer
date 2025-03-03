@@ -811,7 +811,10 @@ Installer:
   extends: .terraform/openstack
   rules:
     - !reference [.upstream_rules_all, rules]
-    - !reference [.nightly_rules_all, rules]
+    # Disable Installer test for RHEL 10.0 nightly pipeline because fix for dracut issue won't make to nightly composes
+    # For more info see: https://issues.redhat.com/browse/RHEL-80160
+    # - !reference [.nightly_rules_all, rules]
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9.6-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
     - !reference [.ga_rules_all, rules]
   script:
     - schutzbot/deploy.sh
