@@ -969,7 +969,7 @@ data:
               "refId": "A"
             }
           ],
-          "title": "Slow Request Rate",
+          "title": "Slow Request Rate ($target_duration)",
           "type": "timeseries"
         },
         {
@@ -1073,7 +1073,7 @@ data:
               "refId": "A"
             }
           ],
-          "title": "Error Budget Remaining",
+          "title": "Err Budget Remain ($target_duration)",
           "type": "stat"
         },
         {
@@ -1180,7 +1180,7 @@ data:
               "refId": "A"
             }
           ],
-          "title": "Error Budget Consumed",
+          "title": "Error Budget Consumed ($target_duration)",
           "type": "timeseries"
         },
         {
@@ -1562,7 +1562,7 @@ data:
               "refId": "A"
             }
           ],
-          "title": "Slow Request Rate",
+          "title": "Slow Request Rate ($target_duration)",
           "type": "timeseries"
         },
         {
@@ -1964,8 +1964,8 @@ data:
           {
             "current": {
               "selected": false,
-              "text": "2400",
-              "value": "2400"
+              "text": "50min",
+              "value": "3000"
             },
             "description": "The duration in seconds 95% of jobs should adhere to.",
             "hide": 0,
@@ -1976,33 +1976,38 @@ data:
             "options": [
               {
                 "selected": false,
-                "text": "30s",
+                "text": "30sec",
                 "value": "30"
               },
               {
                 "selected": false,
-                "text": "1m",
+                "text": "1min",
                 "value": "60"
               },
               {
                 "selected": false,
-                "text": "10m",
+                "text": "10min",
                 "value": "600"
               },
               {
                 "selected": false,
-                "text": "20m",
+                "text": "20min",
                 "value": "1200"
               },
               {
                 "selected": false,
-                "text": "30m",
+                "text": "30min",
                 "value": "1800"
               },
               {
-                "selected": true,
-                "text": "40m",
+                "selected": false,
+                "text": "40min",
                 "value": "2400"
+              },
+              {
+                "selected": true,
+                "text": "50min",
+                "value": "3000"
               },
               {
                 "selected": false,
@@ -2013,9 +2018,20 @@ data:
                 "selected": false,
                 "text": "2h",
                 "value": "7200"
+              },
+              {
+                "selected": false,
+                "text": "1d",
+                "value": "86400"
+              },
+              {
+                "selected": false,
+                "text": "3d",
+                "value": "259200"
               }
             ],
-            "query": "30m, 60, 600, 1200, 1800, 2400, 3600, 7200",
+            "query": "30sec : 30,1min : 60,10min : 600,20min : 1200,30min : 1800,40min : 2400,50min : 3000,1h : 3600,2h : 7200,1d : 86400,3d : 259200",
+            "queryValue": "",
             "skipUrlSync": false,
             "type": "custom"
           }
@@ -2053,6 +2069,6 @@ data:
       "timezone": "",
       "title": "Image Builder Worker Job Stats",
       "uid": "image-builder-worker",
-      "version": 20,
+      "version": 21,
       "weekStart": ""
     }
