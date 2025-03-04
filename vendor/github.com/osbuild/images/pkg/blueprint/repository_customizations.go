@@ -25,6 +25,10 @@ type RepositoryCustomization struct {
 	SSLVerify      *bool    `json:"sslverify,omitempty" toml:"sslverify,omitempty"`
 	ModuleHotfixes *bool    `json:"module_hotfixes,omitempty" toml:"module_hotfixes,omitempty"`
 	Filename       string   `json:"filename,omitempty" toml:"filename,omitempty"`
+
+	// When set the repository will be used during the depsolve of
+	// payload repositories to install packages from it.
+	InstallFrom bool `json:"install_from" toml:"install_from"`
 }
 
 const repoFilenameRegex = "^[\\w.-]{1,250}\\.repo$"
@@ -74,6 +78,17 @@ func (rc *RepositoryCustomization) getFilename() string {
 		return fmt.Sprintf("%s.repo", rc.Filename)
 	}
 	return rc.Filename
+}
+
+func RepoCustomizationsInstallFromOnly(repos []RepositoryCustomization) []rpmmd.RepoConfig {
+	var res []rpmmd.RepoConfig
+	for _, repo := range repos {
+		if !repo.InstallFrom {
+			continue
+		}
+		res = append(res, repo.customRepoToRepoConfig())
+	}
+	return res
 }
 
 func RepoCustomizationsToRepoConfigAndGPGKeyFiles(repos []RepositoryCustomization) (map[string][]rpmmd.RepoConfig, []*fsnode.File, error) {

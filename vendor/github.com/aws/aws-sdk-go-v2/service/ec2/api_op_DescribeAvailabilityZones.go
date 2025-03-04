@@ -55,10 +55,9 @@ type DescribeAvailabilityZonesInput struct {
 
 	// The filters.
 	//
-	//   - group-name - For Availability Zones, use the Region name. For Local Zones,
-	//   use the name of the group associated with the Local Zone (for example,
-	//   us-west-2-lax-1 ) For Wavelength Zones, use the name of the group associated
-	//   with the Wavelength Zone (for example, us-east-1-wl1 ).
+	//   - group-name - The name of the zone group for the Availability Zone (for
+	//   example, us-east-1-zg-1 ), the Local Zone (for example, us-west-2-lax-1 ), or
+	//   the Wavelength Zone (for example, us-east-1-wl1 ).
 	//
 	//   - message - The Zone message.
 	//
@@ -151,6 +150,9 @@ func (c *Client) addOperationDescribeAvailabilityZonesMiddlewares(stack *middlew
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -169,6 +171,9 @@ func (c *Client) addOperationDescribeAvailabilityZonesMiddlewares(stack *middlew
 	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
+	if err = addCredentialSource(stack, options); err != nil {
+		return err
+	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeAvailabilityZones(options.Region), middleware.Before); err != nil {
 		return err
 	}
@@ -185,6 +190,18 @@ func (c *Client) addOperationDescribeAvailabilityZonesMiddlewares(stack *middlew
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil
