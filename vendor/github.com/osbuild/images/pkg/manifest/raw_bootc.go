@@ -210,11 +210,22 @@ func (p *RawBootcImage) serialize() osbuild.Pipeline {
 
 	// First create custom directories, because some of the custom files may depend on them
 	if len(p.Directories) > 0 {
-		pipeline.AddStages(osbuild.GenDirectoryNodesStages(p.Directories)...)
+
+		stages := osbuild.GenDirectoryNodesStages(p.Directories)
+		for _, stage := range stages {
+			stage.Mounts = mounts
+			stage.Devices = devices
+		}
+		pipeline.AddStages(stages...)
 	}
 
 	if len(p.Files) > 0 {
-		pipeline.AddStages(osbuild.GenFileNodesStages(p.Files)...)
+		stages := osbuild.GenFileNodesStages(p.Files)
+		for _, stage := range stages {
+			stage.Mounts = mounts
+			stage.Devices = devices
+		}
+		pipeline.AddStages(stages...)
 	}
 
 	// XXX: maybe go back to adding this conditionally when we stop

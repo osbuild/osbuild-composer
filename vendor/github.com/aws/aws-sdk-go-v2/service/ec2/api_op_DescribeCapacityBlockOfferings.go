@@ -15,6 +15,14 @@ import (
 // Describes Capacity Block offerings available for purchase in the Amazon Web
 // Services Region that you're currently using. With Capacity Blocks, you purchase
 // a specific instance type for a period of time.
+//
+// To search for an available Capacity Block offering, you specify a reservation
+// duration and instance count. You must select one of the following options.
+//
+//   - For reservation durations 1-day increments up 14 days and 7-day increments
+//     up to 182 days total
+//
+//   - For instance count 1, 2, 4, 8, 16, 32, or 64 instances
 func (c *Client) DescribeCapacityBlockOfferings(ctx context.Context, params *DescribeCapacityBlockOfferingsInput, optFns ...func(*Options)) (*DescribeCapacityBlockOfferingsOutput, error) {
 	if params == nil {
 		params = &DescribeCapacityBlockOfferingsInput{}
@@ -37,16 +45,6 @@ type DescribeCapacityBlockOfferingsInput struct {
 	// This member is required.
 	CapacityDurationHours *int32
 
-	// The number of instances for which to reserve capacity.
-	//
-	// This member is required.
-	InstanceCount *int32
-
-	// The type of instance for which the Capacity Block offering reserves capacity.
-	//
-	// This member is required.
-	InstanceType *string
-
 	// Checks whether you have the required permissions for the action, without
 	// actually making the request, and provides an error response. If you have the
 	// required permissions, the error response is DryRunOperation . Otherwise, it is
@@ -55,6 +53,12 @@ type DescribeCapacityBlockOfferingsInput struct {
 
 	// The latest end date for the Capacity Block offering.
 	EndDateRange *time.Time
+
+	// The number of instances for which to reserve capacity.
+	InstanceCount *int32
+
+	// The type of instance for which the Capacity Block offering reserves capacity.
+	InstanceType *string
 
 	// The maximum number of items to return for this request. To get the next page of
 	// items, make another request with the token returned in the output. For more
@@ -130,6 +134,9 @@ func (c *Client) addOperationDescribeCapacityBlockOfferingsMiddlewares(stack *mi
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -146,6 +153,9 @@ func (c *Client) addOperationDescribeCapacityBlockOfferingsMiddlewares(stack *mi
 		return err
 	}
 	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDescribeCapacityBlockOfferingsValidationMiddleware(stack); err != nil {
@@ -167,6 +177,18 @@ func (c *Client) addOperationDescribeCapacityBlockOfferingsMiddlewares(stack *mi
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil
