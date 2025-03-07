@@ -69,6 +69,7 @@ func defaultDistroImageConfig(d *rhel.Distribution) *distro.ImageConfig {
 			},
 		},
 		DefaultOSCAPDatastream: common.ToPtr(oscap.DefaultRHEL9Datastream(d.IsRHEL())),
+		InstallWeakDeps:        common.ToPtr(true),
 	}
 }
 

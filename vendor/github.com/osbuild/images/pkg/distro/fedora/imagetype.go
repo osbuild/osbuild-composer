@@ -254,9 +254,19 @@ func (t *imageType) Manifest(bp *blueprint.Blueprint,
 
 	w := t.workload
 	if w == nil {
+		// XXX: this needs to get duplicaed in exactly the same
+		// way in rhel/imagetype.go
+		workloadRepos := payloadRepos
+		customRepos, err := bp.Customizations.GetRepositories()
+		if err != nil {
+			return nil, nil, err
+		}
+		installFromRepos := blueprint.RepoCustomizationsInstallFromOnly(customRepos)
+		workloadRepos = append(workloadRepos, installFromRepos...)
+
 		cw := &workload.Custom{
 			BaseWorkload: workload.BaseWorkload{
-				Repos: payloadRepos,
+				Repos: workloadRepos,
 			},
 			Packages: bp.GetPackagesEx(false),
 		}

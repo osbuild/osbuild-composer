@@ -153,6 +153,11 @@ type OSCustomizations struct {
 	// magic value that determines if the machine is being booted for the
 	// first time.
 	FirstBoot bool
+
+	// InstallWeakDeps enables installation of weak dependencies for packages
+	// that are statically defined for the pipeline.
+	// Defaults to True.
+	InstallWeakDeps bool
 }
 
 // OS represents the filesystem tree of the target image. This roughly
@@ -193,11 +198,6 @@ type OS struct {
 	OSProduct string
 	OSVersion string
 	OSNick    string
-
-	// InstallWeakDeps enables installation of weak dependencies for packages
-	// that are statically defined for the pipeline.
-	// Defaults to True.
-	InstallWeakDeps bool
 }
 
 // NewOS creates a new OS pipeline. build is the build pipeline to use for
@@ -206,10 +206,9 @@ type OS struct {
 func NewOS(buildPipeline Build, platform platform.Platform, repos []rpmmd.RepoConfig) *OS {
 	name := "os"
 	p := &OS{
-		Base:            NewBase(name, buildPipeline),
-		repos:           filterRepos(repos, name),
-		platform:        platform,
-		InstallWeakDeps: true,
+		Base:     NewBase(name, buildPipeline),
+		repos:    filterRepos(repos, name),
+		platform: platform,
 	}
 	buildPipeline.addDependent(p)
 	return p

@@ -279,6 +279,10 @@ func osCustomizations(
 		osc.CACerts = ca.PEMCerts
 	}
 
+	if imageConfig.InstallWeakDeps != nil {
+		osc.InstallWeakDeps = *imageConfig.InstallWeakDeps
+	}
+
 	return osc, nil
 }
 
