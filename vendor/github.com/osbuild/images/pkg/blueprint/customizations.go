@@ -376,8 +376,8 @@ func (c *Customizations) GetRepositories() ([]RepositoryCustomization, error) {
 		return nil, nil
 	}
 
-	for idx := range c.Repositories {
-		err := validateCustomRepository(&c.Repositories[idx])
+	for _, repo := range c.Repositories {
+		err := validateCustomRepository(&repo)
 		if err != nil {
 			return nil, err
 		}

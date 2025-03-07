@@ -94,6 +94,10 @@ type ImageConfig struct {
 	LockRootUser *bool
 
 	IgnitionPlatform *string
+
+	// InstallWeakDeps enables installation of weak dependencies for packages
+	// that are statically defined for the pipeline.
+	InstallWeakDeps *bool
 }
 
 // InheritFrom inherits unset values from the provided parent configuration and
