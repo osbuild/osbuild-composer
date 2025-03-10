@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
+	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/smithy-go/middleware"
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
@@ -42,6 +43,14 @@ type GetSerialConsoleAccessStatusInput struct {
 }
 
 type GetSerialConsoleAccessStatusOutput struct {
+
+	// The entity that manages access to the serial console. Possible values include:
+	//
+	//   - account - Access is managed by the account.
+	//
+	//   - declarative-policy - Access is managed by a declarative policy and can't be
+	//   modified by the account.
+	ManagedBy types.ManagedBy
 
 	// If true , access to the EC2 serial console of all instances is enabled for your
 	// account. If false , access to the EC2 serial console of all instances is
@@ -97,6 +106,9 @@ func (c *Client) addOperationGetSerialConsoleAccessStatusMiddlewares(stack *midd
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -115,6 +127,9 @@ func (c *Client) addOperationGetSerialConsoleAccessStatusMiddlewares(stack *midd
 	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
+	if err = addCredentialSource(stack, options); err != nil {
+		return err
+	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opGetSerialConsoleAccessStatus(options.Region), middleware.Before); err != nil {
 		return err
 	}
@@ -131,6 +146,18 @@ func (c *Client) addOperationGetSerialConsoleAccessStatusMiddlewares(stack *midd
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil
