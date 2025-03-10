@@ -102,7 +102,6 @@ iot_commit: &iot_commit
     - "criu"
     - "cryptsetup"
     - "curl"
-    - "dbus-parsec"
     - "dosfstools"
     - "dracut-config-generic"
     - "dracut-network"
@@ -131,7 +130,6 @@ iot_commit: &iot_commit
     - "iputils"
     - "iwd"
     - "iwlwifi-mvm-firmware"
-    - "kernel-tools"
     - "keyutils"
     - "less"
     - "libsss_sudo"
@@ -142,11 +140,9 @@ iot_commit: &iot_commit
     - "openssh-clients"
     - "openssh-server"
     - "openssl"
-    - "parsec"
     - "pinentry"
     - "podman"
     - "policycoreutils"
-    - "policycoreutils-python-utils"
     - "polkit"
     - "procps-ng"
     - "realtek-firmware"
@@ -175,13 +171,19 @@ iot_commit: &iot_commit
     - "wpa_supplicant"
     - "xfsprogs"
     - "xz"
-    - "zezere-ignition"
     - "zram-generator"
   condition:
     version_less_than:
       "41":
         include:
           - "dnsmasq"
+      "42":
+        include:
+          - "dbus-parsec"
+          - "kernel-tools"
+          - "parsec"
+          - "policycoreutils-python-utils"
+          - "zezere-ignition"
       "43":
         include:
           - "basesystem"

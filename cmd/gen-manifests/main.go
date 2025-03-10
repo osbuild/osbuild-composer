@@ -73,6 +73,7 @@ type crBlueprint struct {
 	Version        string                    `json:"version,omitempty"`
 	Packages       []blueprint.Package       `json:"packages,omitempty"`
 	Modules        []blueprint.Package       `json:"modules,omitempty"`
+	EnabledModules []blueprint.EnabledModule `json:"enabled_modules" toml:"enabled_modules"`
 	Groups         []blueprint.Group         `json:"groups,omitempty"`
 	Containers     []blueprint.Container     `json:"containers,omitempty"`
 	Customizations *blueprint.Customizations `json:"customizations,omitempty"`

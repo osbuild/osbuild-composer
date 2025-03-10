@@ -149,10 +149,14 @@ type OSCustomizations struct {
 	// instead of BLS. Required for legacy systems like RHEL 7.
 	NoBLS bool
 
-	// FirstBoot sets if the machine-id should be written with the
-	// magic value that determines if the machine is being booted for the
-	// first time.
-	FirstBoot bool
+	// InstallWeakDeps enables installation of weak dependencies for packages
+	// that are statically defined for the pipeline.
+	// Defaults to True.
+	InstallWeakDeps bool
+
+	// Determines if the machine id should be set to "uninitialized" which allows
+	// "ConditionFirstBoot" to work in systemd
+	MachineIdUninitialized bool
 }
 
 // OS represents the filesystem tree of the target image. This roughly
@@ -184,6 +188,7 @@ type OS struct {
 	// content-related fields
 	repos            []rpmmd.RepoConfig
 	packageSpecs     []rpmmd.PackageSpec
+	moduleSpecs      []rpmmd.ModuleSpec
 	containerSpecs   []container.Spec
 	ostreeParentSpec *ostree.CommitSpec
 
@@ -193,11 +198,6 @@ type OS struct {
 	OSProduct string
 	OSVersion string
 	OSNick    string
-
-	// InstallWeakDeps enables installation of weak dependencies for packages
-	// that are statically defined for the pipeline.
-	// Defaults to True.
-	InstallWeakDeps bool
 }
 
 // NewOS creates a new OS pipeline. build is the build pipeline to use for
@@ -206,10 +206,9 @@ type OS struct {
 func NewOS(buildPipeline Build, platform platform.Platform, repos []rpmmd.RepoConfig) *OS {
 	name := "os"
 	p := &OS{
-		Base:            NewBase(name, buildPipeline),
-		repos:           filterRepos(repos, name),
-		platform:        platform,
-		InstallWeakDeps: true,
+		Base:     NewBase(name, buildPipeline),
+		repos:    filterRepos(repos, name),
+		platform: platform,
 	}
 	buildPipeline.addDependent(p)
 	return p
@@ -281,10 +280,17 @@ func (p *OS) getPackageSetChain(Distro) []rpmmd.PackageSet {
 	if p.Workload != nil {
 		workloadPackages := p.Workload.GetPackages()
 		if len(workloadPackages) > 0 {
-			chain = append(chain, rpmmd.PackageSet{
+			ps := rpmmd.PackageSet{
 				Include:      workloadPackages,
 				Repositories: append(osRepos, p.Workload.GetRepos()...),
-			})
+			}
+
+			workloadModules := p.Workload.GetEnabledModules()
+			if len(workloadModules) > 0 {
+				ps.EnabledModules = workloadModules
+			}
+
+			chain = append(chain, ps)
 		}
 	}
 
@@ -387,6 +393,7 @@ func (p *OS) serializeStart(inputs Inputs) {
 	}
 
 	p.packageSpecs = inputs.Depsolved.Packages
+	p.moduleSpecs = inputs.Depsolved.Modules
 	p.containerSpecs = inputs.Containers
 	if len(inputs.Commits) > 0 {
 		if len(inputs.Commits) > 1 {
@@ -742,6 +749,36 @@ func (p *OS) serialize() osbuild.Pipeline {
 		pipeline.AddStages(osbuild.GenFileNodesStages(p.Files)...)
 	}
 
+	// write modularity related configuration files
+	if len(p.moduleSpecs) > 0 {
+		pipeline.AddStages(osbuild.GenDNFModuleConfigStages(p.moduleSpecs)...)
+
+		var failsafeFiles []*fsnode.File
+
+		// the failsafe file is a blob of YAML returned directly from the depsolver,
+		// we write them as 'normal files' without a special stage
+		for _, module := range p.moduleSpecs {
+			moduleFailsafeFile, err := fsnode.NewFile(module.FailsafeFile.Path, nil, nil, nil, []byte(module.FailsafeFile.Data))
+
+			if err != nil {
+				panic("failed to create module failsafe file")
+			}
+
+			failsafeFiles = append(failsafeFiles, moduleFailsafeFile)
+		}
+
+		failsafeDir, err := fsnode.NewDirectory("/var/lib/dnf/modulefailsafe", nil, nil, nil, true)
+
+		if err != nil {
+			panic("failed to create module failsafe directory")
+		}
+
+		pipeline.AddStages(osbuild.GenDirectoryNodesStages([]*fsnode.Directory{failsafeDir})...)
+		pipeline.AddStages(osbuild.GenFileNodesStages(failsafeFiles)...)
+
+		p.Files = append(p.Files, failsafeFiles...)
+	}
+
 	enabledServices := []string{}
 	disabledServices := []string{}
 	maskedServices := []string{}
@@ -813,7 +850,7 @@ func (p *OS) serialize() osbuild.Pipeline {
 		pipeline.AddStage(osbuild.NewCAStageStage())
 	}
 
-	if p.FirstBoot {
+	if p.MachineIdUninitialized {
 		pipeline.AddStage(osbuild.NewMachineIdStage(&osbuild.MachineIdStageOptions{
 			FirstBoot: osbuild.MachineIdFirstBootYes,
 		}))

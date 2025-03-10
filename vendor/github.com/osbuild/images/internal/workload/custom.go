@@ -3,12 +3,17 @@ package workload
 type Custom struct {
 	BaseWorkload
 	Packages         []string
+	EnabledModules   []string
 	Services         []string
 	DisabledServices []string
 }
 
 func (p *Custom) GetPackages() []string {
 	return p.Packages
+}
+
+func (p *Custom) GetEnabledModules() []string {
+	return p.EnabledModules
 }
 
 func (p *Custom) GetServices() []string {

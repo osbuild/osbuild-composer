@@ -9,7 +9,10 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/osbuild/images/data/dependencies"
 	"github.com/osbuild/images/pkg/datasizes"
+
+	"github.com/hashicorp/go-version"
 )
 
 // Run an instance of osbuild, returning a parsed osbuild.Result.
@@ -18,6 +21,10 @@ import (
 // does not return an error in this case. Instead, the failure is communicated
 // with its corresponding logs through osbuild.Result.
 func RunOSBuild(manifest []byte, store, outputDirectory string, exports, checkpoints, extraEnv []string, result bool, errorWriter io.Writer) (*Result, error) {
+	if err := CheckMinimumOSBuildVersion(); err != nil {
+		return nil, err
+	}
+
 	var stdoutBuffer bytes.Buffer
 	var res Result
 
@@ -94,6 +101,30 @@ func RunOSBuild(manifest []byte, store, outputDirectory string, exports, checkpo
 	}
 
 	return &res, nil
+}
+
+func CheckMinimumOSBuildVersion() error {
+	osbuildVersion, err := OSBuildVersion()
+	if err != nil {
+		return fmt.Errorf("error getting osbuild version: %v", err)
+	}
+
+	minVersion, err := version.NewVersion(dependencies.MinimumOSBuildVersion())
+	if err != nil {
+		return fmt.Errorf("error parsing minimum osbuild version: %v", err)
+	}
+
+	currentVersion, err := version.NewVersion(osbuildVersion)
+	if err != nil {
+		return fmt.Errorf("error parsing current osbuild version: %v", err)
+	}
+
+	if currentVersion.LessThan(minVersion) {
+		return fmt.Errorf("osbuild version %q is lower than the minimum required version %q",
+			osbuildVersion, dependencies.MinimumOSBuildVersion())
+	}
+
+	return nil
 }
 
 // OSBuildVersion returns the version of osbuild.

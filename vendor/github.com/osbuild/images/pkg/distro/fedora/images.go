@@ -110,6 +110,10 @@ func osCustomizations(
 		osc.Hostname = "localhost.localdomain"
 	}
 
+	if imageConfig.InstallWeakDeps != nil {
+		osc.InstallWeakDeps = *imageConfig.InstallWeakDeps
+	}
+
 	timezone, ntpServers := c.GetTimezoneSettings()
 	if timezone != nil {
 		osc.Timezone = *timezone
@@ -234,6 +238,10 @@ func osCustomizations(
 		osc.CACerts = ca.PEMCerts
 	}
 
+	if imageConfig.MachineIdUninitialized != nil {
+		osc.MachineIdUninitialized = *imageConfig.MachineIdUninitialized
+	}
+
 	return osc, nil
 }
 
@@ -334,7 +342,7 @@ func diskImage(workload workload.Workload,
 	img.Compression = t.compression
 	if bp.Minimal {
 		// Disable weak dependencies if the 'minimal' option is enabled
-		img.InstallWeakDeps = common.ToPtr(false)
+		img.OSCustomizations.InstallWeakDeps = false
 	}
 	// TODO: move generation into LiveImage
 	pt, err := t.getPartitionTable(bp.Customizations, options, rng)
@@ -344,9 +352,6 @@ func diskImage(workload workload.Workload,
 	img.PartitionTable = pt
 
 	img.Filename = t.Filename()
-
-	d := t.arch.distro
-	img.FirstBoot = common.VersionGreaterThanOrEqual(d.osVersion, VERSION_FIRSTBOOT)
 
 	return img, nil
 }

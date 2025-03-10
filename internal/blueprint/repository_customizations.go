@@ -21,6 +21,10 @@ type RepositoryCustomization struct {
 	SSLVerify      *bool    `json:"sslverify,omitempty" toml:"sslverify,omitempty"`
 	ModuleHotfixes *bool    `json:"module_hotfixes,omitempty" toml:"module_hotfixes,omitempty"`
 	Filename       string   `json:"filename,omitempty" toml:"filename,omitempty"`
+
+	// When set the repository will be used during the depsolve of
+	// payload repositories to install packages from it.
+	InstallFrom bool `json:"install_from" toml:"install_from"`
 }
 
 const repoFilenameRegex = "^[\\w.-]{1,250}\\.repo$"
