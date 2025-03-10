@@ -141,6 +141,7 @@ func (pkg Package) ToPackageInfo() PackageInfo {
 type PackageSet struct {
 	Include         []string
 	Exclude         []string
+	EnabledModules  []string
 	Repositories    []RepoConfig
 	InstallWeakDeps bool
 }
@@ -150,6 +151,7 @@ type PackageSet struct {
 func (ps PackageSet) Append(other PackageSet) PackageSet {
 	ps.Include = append(ps.Include, other.Include...)
 	ps.Exclude = append(ps.Exclude, other.Exclude...)
+	ps.EnabledModules = append(ps.EnabledModules, other.EnabledModules...)
 	return ps
 }
 
@@ -197,6 +199,28 @@ type PackageInfo struct {
 	UpstreamVCS  string         `json:"upstream_vcs"`
 	Builds       []PackageBuild `json:"builds"`
 	Dependencies []PackageSpec  `json:"dependencies,omitempty"`
+}
+
+type ModuleSpec struct {
+	ModuleConfigFile ModuleConfigFile   `json:"module-file"`
+	FailsafeFile     ModuleFailsafeFile `json:"failsafe-file"`
+}
+
+type ModuleConfigFile struct {
+	Path string           `json:"path"`
+	Data ModuleConfigData `json:"data"`
+}
+
+type ModuleConfigData struct {
+	Name     string   `json:"name"`
+	Stream   string   `json:"stream"`
+	Profiles []string `json:"profiles"`
+	State    string   `json:"state"`
+}
+
+type ModuleFailsafeFile struct {
+	Path string `json:"path"`
+	Data string `json:"data"`
 }
 
 // GetEVRA returns the package's Epoch:Version-Release.Arch string

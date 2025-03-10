@@ -6,5 +6,5 @@ import (
 )
 
 func packageSetLoader(t *imageType) rpmmd.PackageSet {
-	return packagesets.Load(t, VersionReplacements())
+	return packagesets.Load(t, "", VersionReplacements())
 }

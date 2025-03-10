@@ -22,15 +22,6 @@ import (
 	"github.com/osbuild/images/pkg/rpmmd"
 )
 
-type Arch uint64
-
-const (
-	ARCH_X86_64 Arch = iota
-	ARCH_AARCH64
-	ARCH_S390X
-	ARCH_PPC64LE
-)
-
 type Distro uint64
 
 const (

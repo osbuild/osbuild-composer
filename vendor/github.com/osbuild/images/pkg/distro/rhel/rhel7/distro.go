@@ -33,6 +33,7 @@ func defaultDistroImageConfig(d *rhel.Distribution) *distro.ImageConfig {
 		},
 		KernelOptionsBootloader: common.ToPtr(true),
 		NoBLS:                   common.ToPtr(true), // RHEL 7 grub does not support BLS
+		InstallWeakDeps:         common.ToPtr(true),
 	}
 }
 

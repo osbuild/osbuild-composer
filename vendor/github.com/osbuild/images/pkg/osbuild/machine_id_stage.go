@@ -3,9 +3,9 @@ package osbuild
 type MachineIdFirstBoot string
 
 const (
-	MachineIdFirstBootYes       MachineIdFirstBoot = "yes"
-	MachineIdFirstBootNo        MachineIdFirstBoot = "no"
-	MachineIdFirstBootPreserver MachineIdFirstBoot = "preserve"
+	MachineIdFirstBootYes      MachineIdFirstBoot = "yes"
+	MachineIdFirstBootNo       MachineIdFirstBoot = "no"
+	MachineIdFirstBootPreserve MachineIdFirstBoot = "preserve"
 )
 
 type MachineIdStageOptions struct {

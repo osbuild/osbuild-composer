@@ -168,6 +168,7 @@ type Solver struct {
 // DepsolveResult contains the results of a depsolve operation.
 type DepsolveResult struct {
 	Packages []rpmmd.PackageSpec
+	Modules  []rpmmd.ModuleSpec
 	Repos    []rpmmd.RepoConfig
 	SBOM     *sbom.Document
 	Solver   string
@@ -240,7 +241,7 @@ func (s *Solver) Depsolve(pkgSets []rpmmd.PackageSet, sbomType sbom.StandardType
 		return nil, fmt.Errorf("decoding depsolve result failed: %w", err)
 	}
 
-	packages, repos := result.toRPMMD(rhsmMap)
+	packages, modules, repos := result.toRPMMD(rhsmMap)
 
 	var sbomDoc *sbom.Document
 	if sbomType != sbom.StandardTypeNone {
@@ -252,6 +253,7 @@ func (s *Solver) Depsolve(pkgSets []rpmmd.PackageSet, sbomType sbom.StandardType
 
 	return &DepsolveResult{
 		Packages: packages,
+		Modules:  modules,
 		Repos:    repos,
 		SBOM:     sbomDoc,
 		Solver:   result.Solver,
@@ -463,9 +465,10 @@ func (s *Solver) makeDepsolveRequest(pkgSets []rpmmd.PackageSet, sbomType sbom.S
 	transactions := make([]transactionArgs, len(pkgSets))
 	for dsIdx, pkgSet := range pkgSets {
 		transactions[dsIdx] = transactionArgs{
-			PackageSpecs:    pkgSet.Include,
-			ExcludeSpecs:    pkgSet.Exclude,
-			InstallWeakDeps: pkgSet.InstallWeakDeps,
+			PackageSpecs:      pkgSet.Include,
+			ExcludeSpecs:      pkgSet.Exclude,
+			ModuleEnableSpecs: pkgSet.EnabledModules,
+			InstallWeakDeps:   pkgSet.InstallWeakDeps,
 		}
 
 		for _, jobRepo := range pkgSet.Repositories {
@@ -577,7 +580,7 @@ func (s *Solver) makeSearchRequest(repos []rpmmd.RepoConfig, packages []string) 
 // convert internal a list of PackageSpecs and map of repoConfig to the rpmmd
 // equivalents and attach key and subscription information based on the
 // repository configs.
-func (result depsolveResult) toRPMMD(rhsm map[string]bool) ([]rpmmd.PackageSpec, []rpmmd.RepoConfig) {
+func (result depsolveResult) toRPMMD(rhsm map[string]bool) ([]rpmmd.PackageSpec, []rpmmd.ModuleSpec, []rpmmd.RepoConfig) {
 	pkgs := result.Packages
 	repos := result.Repos
 	rpmDependencies := make([]rpmmd.PackageSpec, len(pkgs))
@@ -610,6 +613,22 @@ func (result depsolveResult) toRPMMD(rhsm map[string]bool) ([]rpmmd.PackageSpec,
 		}
 	}
 
+	mods := result.Modules
+	moduleSpecs := make([]rpmmd.ModuleSpec, len(mods))
+
+	i := 0
+	for _, mod := range mods {
+		moduleSpecs[i].ModuleConfigFile.Data.Name = mod.ModuleConfigFile.Data.Name
+		moduleSpecs[i].ModuleConfigFile.Data.Stream = mod.ModuleConfigFile.Data.Stream
+		moduleSpecs[i].ModuleConfigFile.Data.State = mod.ModuleConfigFile.Data.State
+		moduleSpecs[i].ModuleConfigFile.Data.Profiles = mod.ModuleConfigFile.Data.Profiles
+
+		moduleSpecs[i].FailsafeFile.Path = mod.FailsafeFile.Path
+		moduleSpecs[i].FailsafeFile.Data = mod.FailsafeFile.Data
+
+		i++
+	}
+
 	repoConfigs := make([]rpmmd.RepoConfig, 0, len(repos))
 	for repoID := range repos {
 		repo := repos[repoID]
@@ -635,7 +654,7 @@ func (result depsolveResult) toRPMMD(rhsm map[string]bool) ([]rpmmd.PackageSpec,
 			SSLClientCert:  repo.SSLClientCert,
 		})
 	}
-	return rpmDependencies, repoConfigs
+	return rpmDependencies, moduleSpecs, repoConfigs
 }
 
 // Request command and arguments for dnf-json
@@ -723,6 +742,9 @@ type transactionArgs struct {
 	// Packages to exclude from results
 	ExcludeSpecs []string `json:"exclude-specs"`
 
+	// Modules to enable during depsolve
+	ModuleEnableSpecs []string `json:"module-enable-specs,omitempty"`
+
 	// IDs of repositories to use for this depsolve
 	RepoIDs []string `json:"repo-ids"`
 
@@ -779,7 +801,7 @@ type ModuleConfigData struct {
 
 type ModuleFailsafeFile struct {
 	Path string `json:"path"`
-	Data string `json:"string"`
+	Data string `json:"data"`
 }
 
 // dnf-json error structure

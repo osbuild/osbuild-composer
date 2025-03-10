@@ -11,6 +11,9 @@ const VERSION_ROOTFS_SQUASHFS = "41"
 // other Fedora variants.
 const VERSION_FIRSTBOOT = "43"
 
+// Version at which we stop installing weak dependencies for Fedora Minimal
+const VERSION_MINIMAL_WEAKDEPS = "43"
+
 func VersionReplacements() map[string]string {
 	return map[string]string{
 		"VERSION_BRANCHED":        VERSION_BRANCHED,

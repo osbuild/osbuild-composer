@@ -4,6 +4,7 @@ import "github.com/osbuild/images/pkg/rpmmd"
 
 type Workload interface {
 	GetPackages() []string
+	GetEnabledModules() []string
 	GetRepos() []rpmmd.RepoConfig
 	GetServices() []string
 	GetDisabledServices() []string
@@ -14,6 +15,10 @@ type BaseWorkload struct {
 }
 
 func (p BaseWorkload) GetPackages() []string {
+	return []string{}
+}
+
+func (p BaseWorkload) GetEnabledModules() []string {
 	return []string{}
 }
 
