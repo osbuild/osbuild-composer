@@ -43,6 +43,13 @@ func GetTestBlueprint() blueprint.Blueprint {
 		{Name: "tmux"},
 	}
 
+	expected.EnabledModules = []blueprint.EnabledModule{
+		{
+			Name:   "node",
+			Stream: "20",
+		},
+	}
+
 	// Containers
 	expected.Containers = []blueprint.Container{
 		blueprint.Container{
@@ -207,6 +214,12 @@ func TestGetBlueprintFromCustomizations(t *testing.T) {
 				Groups:   &[]string{"users", "wheel"},
 			}},
 		Packages: &[]string{"bash", "tmux"},
+		EnabledModules: &[]Module{
+			{
+				Name:   "node",
+				Stream: "20",
+			},
+		},
 		Containers: &[]Container{
 			Container{
 				Name:   common.ToPtr("container-name"),
@@ -374,6 +387,12 @@ func TestGetBlueprintFromCompose(t *testing.T) {
 		Name:     "empty blueprint",
 		Version:  common.ToPtr("0.0.0"),
 		Packages: &[]Package{{Name: "bash"}, {Name: "tmux"}},
+		EnabledModules: &[]Module{
+			{
+				Name:   "node",
+				Stream: "20",
+			},
+		},
 		Containers: &[]Container{
 			Container{
 				Name:   common.ToPtr("container-name"),
