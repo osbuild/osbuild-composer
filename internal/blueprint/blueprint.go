@@ -14,11 +14,14 @@ import (
 
 // A Blueprint is a high-level description of an image.
 type Blueprint struct {
-	Name           string          `json:"name" toml:"name"`
-	Description    string          `json:"description" toml:"description"`
-	Version        string          `json:"version,omitempty" toml:"version,omitempty"`
-	Packages       []Package       `json:"packages" toml:"packages"`
-	Modules        []Package       `json:"modules" toml:"modules"`
+	Name        string    `json:"name" toml:"name"`
+	Description string    `json:"description" toml:"description"`
+	Version     string    `json:"version,omitempty" toml:"version,omitempty"`
+	Packages    []Package `json:"packages" toml:"packages"`
+	Modules     []Package `json:"modules" toml:"modules"`
+	// Note, this is called "enabled modules" because we already have "modules" except
+	// the "modules" refers to packages and "enabled modules" refers to modularity modules.
+	EnabledModules []EnabledModule `json:"enabled_modules" toml:"enabled_modules"`
 	Groups         []Group         `json:"groups" toml:"groups"`
 	Containers     []Container     `json:"containers,omitempty" toml:"containers,omitempty"`
 	Customizations *Customizations `json:"customizations,omitempty" toml:"customizations"`
@@ -38,6 +41,12 @@ type Change struct {
 type Package struct {
 	Name    string `json:"name" toml:"name"`
 	Version string `json:"version,omitempty" toml:"version,omitempty"`
+}
+
+// A module specifies a modularity stream.
+type EnabledModule struct {
+	Name   string `json:"name" toml:"name"`
+	Stream string `json:"stream,omitempty" toml:"stream,omitempty"`
 }
 
 // A group specifies an package group.
@@ -80,6 +89,9 @@ func (b *Blueprint) Initialize() error {
 	}
 	if b.Modules == nil {
 		b.Modules = []Package{}
+	}
+	if b.EnabledModules == nil {
+		b.EnabledModules = []EnabledModule{}
 	}
 	if b.Groups == nil {
 		b.Groups = []Group{}
@@ -166,6 +178,20 @@ func (p Package) ToNameVersion() string {
 	return p.Name + "-" + p.Version
 }
 
+func (b *Blueprint) GetEnabledModules() []string {
+	modules := []string{}
+
+	for _, mod := range b.EnabledModules {
+		modules = append(modules, mod.ToNameStream())
+	}
+
+	return modules
+}
+
+func (p EnabledModule) ToNameStream() string {
+	return p.Name + ":" + p.Stream
+}
+
 // CryptPasswords ensures that all blueprint passwords are hashed
 func (b *Blueprint) CryptPasswords() error {
 	if b.Customizations == nil {
@@ -213,6 +239,14 @@ func Convert(bp Blueprint) iblueprint.Blueprint {
 		modules = make([]iblueprint.Package, len(bp.Modules))
 		for idx := range bp.Modules {
 			modules[idx] = iblueprint.Package(bp.Modules[idx])
+		}
+	}
+
+	var enabledModules []iblueprint.EnabledModule
+	if len(bp.EnabledModules) > 0 {
+		enabledModules = make([]iblueprint.EnabledModule, len(bp.EnabledModules))
+		for idx := range bp.EnabledModules {
+			enabledModules[idx] = iblueprint.EnabledModule(bp.EnabledModules[idx])
 		}
 	}
 
@@ -459,6 +493,7 @@ func Convert(bp Blueprint) iblueprint.Blueprint {
 		Version:        bp.Version,
 		Packages:       pkgs,
 		Modules:        modules,
+		EnabledModules: enabledModules,
 		Groups:         groups,
 		Containers:     containers,
 		Customizations: customizations,
