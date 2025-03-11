@@ -1679,6 +1679,7 @@ func TestDepsolveBlueprint(t *testing.T) {
 				"name": "deptest1",
 				"version": "0.0.1",
 				"distro": "%[1]s",
+				"enabled_modules": [{ "name": "deps", "stream": "1" }],
 				"packages": [
 					{ "name": "dep-package", "version": "*" }
 			]},
