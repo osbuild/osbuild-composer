@@ -3611,7 +3611,7 @@ func (api *API) depsolveBlueprint(bp blueprint.Blueprint) ([]rpmmd.PackageSpec, 
 	}
 
 	solver := api.solver.NewWithConfig(d.ModulePlatformID(), d.Releasever(), arch, d.Name())
-	res, err := solver.Depsolve([]rpmmd.PackageSet{{Include: bp.GetPackages(), Repositories: repos}}, sbom.StandardTypeNone)
+	res, err := solver.Depsolve([]rpmmd.PackageSet{{Include: bp.GetPackages(), EnabledModules: bp.GetEnabledModules(), Repositories: repos}}, sbom.StandardTypeNone)
 	if err != nil {
 		return nil, err
 	}
