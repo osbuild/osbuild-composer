@@ -379,9 +379,9 @@ func TestBlueprintsInfo(t *testing.T) {
 		ExpectedStatus int
 		ExpectedJSON   string
 	}{
-		{"GET", "/api/v0/blueprints/info/test1", ``, http.StatusOK, `{"blueprints":[{"name":"test1","description":"Test","distro":"","modules":[],"packages":[{"name":"httpd","version":"2.4.*"}],"groups":[],"version":"0.0.0"}],
+		{"GET", "/api/v0/blueprints/info/test1", ``, http.StatusOK, `{"blueprints":[{"name":"test1","description":"Test","distro":"","modules":[],"enabled_modules":[],"packages":[{"name":"httpd","version":"2.4.*"}],"groups":[],"version":"0.0.0"}],
 		"changes":[{"name":"test1","changed":false}], "errors":[]}`},
-		{"GET", "/api/v0/blueprints/info/test2", ``, http.StatusOK, `{"blueprints":[{"name":"test2","description":"Test","distro":"","modules":[],"packages":[{"name":"systemd","version":"123"}],"groups":[],"version":"0.0.0"}],
+		{"GET", "/api/v0/blueprints/info/test2", ``, http.StatusOK, `{"blueprints":[{"name":"test2","description":"Test","distro":"","modules":[],"enabled_modules":[],"packages":[{"name":"systemd","version":"123"}],"groups":[],"version":"0.0.0"}],
 		"changes":[{"name":"test2","changed":true}], "errors":[]}`},
 		{"GET", "/api/v0/blueprints/info/test3-non", ``, http.StatusOK, `{"blueprints":[],"changes":[],"errors":[{"id":"UnknownBlueprint","msg":"test3-non: "}]}`},
 	}
@@ -425,8 +425,9 @@ func TestBlueprintsInfoToml(t *testing.T) {
 				Name:    "httpd",
 				Version: "2.4.*"},
 		},
-		Groups:  []blueprint.Group{},
-		Modules: []blueprint.Package{},
+		Groups:         []blueprint.Group{},
+		Modules:        []blueprint.Package{},
+		EnabledModules: []blueprint.EnabledModule{},
 	}
 	require.Equalf(t, expected, got, "received unexpected blueprint")
 }
@@ -609,8 +610,9 @@ func TestBlueprintsCustomizationInfoToml(t *testing.T) {
 			blueprint.Package{Name: "git", Version: "*"},
 			blueprint.Package{Name: "vim-enhanced", Version: "*"},
 		},
-		Modules: []blueprint.Package{},
-		Groups:  []blueprint.Group{},
+		Modules:        []blueprint.Package{},
+		EnabledModules: []blueprint.EnabledModule{},
+		Groups:         []blueprint.Group{},
 		Containers: []blueprint.Container{
 			blueprint.Container{
 				Source: "quay.io/fedora/fedora:latest",
@@ -731,8 +733,8 @@ func TestBlueprintsFreeze(t *testing.T) {
 			t.Run(fmt.Sprintf("case %d", idx), func(t *testing.T) {
 				api, sf := createTestWeldrAPI(t.TempDir(), test_distro.TestDistro1Name, test_distro.TestArchName, c.Fixture, nil)
 				t.Cleanup(sf.Cleanup)
-				test.SendHTTP(api, false, "POST", "/api/v0/blueprints/new", `{"name":"test","description":"Test","packages":[{"name":"dep-package1","version":"*"},{"name":"dep-package3","version":"*"}], "modules":[{"name":"dep-package2","version":"*"}],"version":"0.0.0"}`)
-				test.SendHTTP(api, false, "POST", "/api/v0/blueprints/new", `{"name":"test2","description":"Test","packages":[{"name":"dep-package1","version":"*"},{"name":"dep-package3","version":"*"}], "modules":[{"name":"dep-package2","version":"*"}],"version":"0.0.0"}`)
+				test.SendHTTP(api, false, "POST", "/api/v0/blueprints/new", `{"name":"test","description":"Test","packages":[{"name":"dep-package1","version":"*"},{"name":"dep-package3","version":"*"}], "modules":[{"name":"dep-package2","version":"*"}],"enabled_modules": [],"version":"0.0.0"}`)
+				test.SendHTTP(api, false, "POST", "/api/v0/blueprints/new", `{"name":"test2","description":"Test","packages":[{"name":"dep-package1","version":"*"},{"name":"dep-package3","version":"*"}], "modules":[{"name":"dep-package2","version":"*"}],"enabled_modules": [],"version":"0.0.0"}`)
 				test.TestRoute(t, api, false, "GET", c.Path, ``, c.ExpectedStatus, c.ExpectedJSON)
 			})
 		}
@@ -745,7 +747,7 @@ func TestBlueprintsFreeze(t *testing.T) {
 			ExpectedStatus int
 			ExpectedTOML   string
 		}{
-			{rpmmd_mock.BaseFixture, "/api/v0/blueprints/freeze/test?format=toml", http.StatusOK, "name=\"test\"\n description=\"Test\"\n distro=\"\"\n version=\"0.0.1\"\n groups = []\n [[packages]]\n name=\"dep-package1\"\n version=\"1.33-2.fc30.x86_64\"\n [[packages]]\n name=\"dep-package3\"\n version=\"7:3.0.3-1.fc30.x86_64\"\n [[modules]]\n name=\"dep-package2\"\n version=\"2.9-1.fc30.x86_64\""},
+			{rpmmd_mock.BaseFixture, "/api/v0/blueprints/freeze/test?format=toml", http.StatusOK, "name=\"test\"\n description=\"Test\"\n distro=\"\"\n version=\"0.0.1\"\n groups = []\n enabled_modules = []\n [[packages]]\n name=\"dep-package1\"\n version=\"1.33-2.fc30.x86_64\"\n [[packages]]\n name=\"dep-package3\"\n version=\"7:3.0.3-1.fc30.x86_64\"\n [[modules]]\n name=\"dep-package2\"\n version=\"2.9-1.fc30.x86_64\""},
 			{rpmmd_mock.BaseFixture, "/api/v0/blueprints/freeze/missing?format=toml", http.StatusOK, ""},
 		}
 
@@ -753,7 +755,7 @@ func TestBlueprintsFreeze(t *testing.T) {
 			t.Run(fmt.Sprintf("case %d", idx), func(t *testing.T) {
 				api, sf := createTestWeldrAPI(t.TempDir(), test_distro.TestDistro1Name, test_distro.TestArchName, c.Fixture, nil)
 				t.Cleanup(sf.Cleanup)
-				test.SendHTTP(api, false, "POST", "/api/v0/blueprints/new", `{"name":"test","description":"Test","packages":[{"name":"dep-package1","version":"*"},{"name":"dep-package3","version":"*"}], "modules":[{"name":"dep-package2","version":"*"}],"version":"0.0.0"}`)
+				test.SendHTTP(api, false, "POST", "/api/v0/blueprints/new", `{"name":"test","description":"Test","packages":[{"name":"dep-package1","version":"*"},{"name":"dep-package3","version":"*"}], "modules":[{"name":"dep-package2","version":"*"}],"enabled_modules": [],"version":"0.0.0"}`)
 				test.TestTOMLRoute(t, api, false, "GET", c.Path, ``, c.ExpectedStatus, c.ExpectedTOML)
 			})
 		}
@@ -773,8 +775,8 @@ func TestBlueprintsFreeze(t *testing.T) {
 			t.Run(fmt.Sprintf("case %d", idx), func(t *testing.T) {
 				api, sf := createTestWeldrAPI(t.TempDir(), test_distro.TestDistro1Name, test_distro.TestArchName, c.Fixture, nil)
 				t.Cleanup(sf.Cleanup)
-				test.SendHTTP(api, false, "POST", "/api/v0/blueprints/new", `{"name":"test","description":"Test","packages":[{"name":"dep-package1","version":"*"},{"name":"dep-package3","version":"*"}], "modules":[{"name":"dep-package2","version":"*"}],"version":"0.0.0"}`)
-				test.SendHTTP(api, false, "POST", "/api/v0/blueprints/new", `{"name":"test2","description":"Test","packages":[{"name":"dep-package1","version":"*"},{"name":"dep-package3","version":"*"}], "modules":[{"name":"dep-package2","version":"*"}],"version":"0.0.0"}`)
+				test.SendHTTP(api, false, "POST", "/api/v0/blueprints/new", `{"name":"test","description":"Test","packages":[{"name":"dep-package1","version":"*"},{"name":"dep-package3","version":"*"}], "modules":[{"name":"dep-package2","version":"*"}],"enabled_modules": [],"version":"0.0.0"}`)
+				test.SendHTTP(api, false, "POST", "/api/v0/blueprints/new", `{"name":"test2","description":"Test","packages":[{"name":"dep-package1","version":"*"},{"name":"dep-package3","version":"*"}], "modules":[{"name":"dep-package2","version":"*"}],"enabled_modules": [],"version":"0.0.0"}`)
 				test.TestRoute(t, api, false, "GET", c.Path, ``, c.ExpectedStatus, c.ExpectedJSON)
 			})
 		}
@@ -1028,6 +1030,7 @@ func TestCompose(t *testing.T) {
 			Version:        "0.0.0",
 			Packages:       []blueprint.Package{},
 			Modules:        []blueprint.Package{},
+			EnabledModules: []blueprint.EnabledModule{},
 			Groups:         []blueprint.Group{},
 			Customizations: nil,
 		},
@@ -1058,6 +1061,7 @@ func TestCompose(t *testing.T) {
 			Version:        "0.0.0",
 			Packages:       []blueprint.Package{},
 			Modules:        []blueprint.Package{},
+			EnabledModules: []blueprint.EnabledModule{},
 			Groups:         []blueprint.Group{},
 			Customizations: nil,
 		},
@@ -1105,6 +1109,7 @@ func TestCompose(t *testing.T) {
 			Version:        "0.0.0",
 			Packages:       []blueprint.Package{},
 			Modules:        []blueprint.Package{},
+			EnabledModules: []blueprint.EnabledModule{},
 			Groups:         []blueprint.Group{},
 			Customizations: nil,
 		},
@@ -1143,6 +1148,7 @@ func TestCompose(t *testing.T) {
 			Version:        "0.0.0",
 			Packages:       []blueprint.Package{},
 			Modules:        []blueprint.Package{},
+			EnabledModules: []blueprint.EnabledModule{},
 			Groups:         []blueprint.Group{},
 			Customizations: nil,
 		},
@@ -1187,6 +1193,7 @@ func TestCompose(t *testing.T) {
 			Version:        "0.0.0",
 			Packages:       []blueprint.Package{},
 			Modules:        []blueprint.Package{},
+			EnabledModules: []blueprint.EnabledModule{},
 			Groups:         []blueprint.Group{},
 			Customizations: nil,
 			Distro:         testDistro2Name,
@@ -1502,8 +1509,8 @@ func TestComposeInfo(t *testing.T) {
 		ExpectedStatus int
 		ExpectedJSON   string
 	}{
-		{rpmmd_mock.BaseFixture, "GET", "/api/v0/compose/info/30000000-0000-0000-0000-000000000000", ``, http.StatusOK, fmt.Sprintf(`{"id":"30000000-0000-0000-0000-000000000000","config":"","blueprint":{"name":"test","description":"","distro":"","version":"0.0.0","packages":[],"modules":[],"groups":[]},"commit":"","deps":{"packages":[]},"compose_type":"%s","queue_status":"WAITING","image_size":0}`, test_distro.TestImageTypeName)},
-		{rpmmd_mock.BaseFixture, "GET", "/api/v1/compose/info/30000000-0000-0000-0000-000000000000", ``, http.StatusOK, fmt.Sprintf(`{"id":"30000000-0000-0000-0000-000000000000","config":"","blueprint":{"name":"test","description":"","distro":"","version":"0.0.0","packages":[],"modules":[],"groups":[]},"commit":"","deps":{"packages":[]},"compose_type":"%s","queue_status":"WAITING","image_size":0,"uploads":[{"uuid":"10000000-0000-0000-0000-000000000000","status":"WAITING","provider_name":"aws","image_name":"awsimage","creation_time":1574857140,"settings":{"region":"frankfurt","bucket":"clay","key":"imagekey"}}]}`, test_distro.TestImageTypeName)},
+		{rpmmd_mock.BaseFixture, "GET", "/api/v0/compose/info/30000000-0000-0000-0000-000000000000", ``, http.StatusOK, fmt.Sprintf(`{"id":"30000000-0000-0000-0000-000000000000","config":"","blueprint":{"name":"test","description":"","distro":"","version":"0.0.0","packages":[],"modules":[],"enabled_modules":[],"groups":[]},"commit":"","deps":{"packages":[]},"compose_type":"%s","queue_status":"WAITING","image_size":0}`, test_distro.TestImageTypeName)},
+		{rpmmd_mock.BaseFixture, "GET", "/api/v1/compose/info/30000000-0000-0000-0000-000000000000", ``, http.StatusOK, fmt.Sprintf(`{"id":"30000000-0000-0000-0000-000000000000","config":"","blueprint":{"name":"test","description":"","distro":"","version":"0.0.0","packages":[],"modules":[],"enabled_modules":[],"groups":[]},"commit":"","deps":{"packages":[]},"compose_type":"%s","queue_status":"WAITING","image_size":0,"uploads":[{"uuid":"10000000-0000-0000-0000-000000000000","status":"WAITING","provider_name":"aws","image_name":"awsimage","creation_time":1574857140,"settings":{"region":"frankfurt","bucket":"clay","key":"imagekey"}}]}`, test_distro.TestImageTypeName)},
 		{rpmmd_mock.BaseFixture, "GET", "/api/v1/compose/info/30000000-0000-0000-0000", ``, http.StatusBadRequest, `{"status":false,"errors":[{"id":"UnknownUUID","msg":"30000000-0000-0000-0000 is not a valid build uuid"}]}`},
 		{rpmmd_mock.BaseFixture, "GET", "/api/v1/compose/info/42000000-0000-0000-0000-000000000000", ``, http.StatusBadRequest, `{"status":false,"errors":[{"id":"UnknownUUID","msg":"42000000-0000-0000-0000-000000000000 is not a valid build uuid"}]}`},
 	}
@@ -2234,6 +2241,7 @@ func TestComposePOST_ImageTypeDenylist(t *testing.T) {
 			Version:        "0.0.0",
 			Packages:       []blueprint.Package{},
 			Modules:        []blueprint.Package{},
+			EnabledModules: []blueprint.EnabledModule{},
 			Groups:         []blueprint.Group{},
 			Customizations: nil,
 		},
@@ -2266,6 +2274,7 @@ func TestComposePOST_ImageTypeDenylist(t *testing.T) {
 			Version:        "0.0.0",
 			Packages:       []blueprint.Package{},
 			Modules:        []blueprint.Package{},
+			EnabledModules: []blueprint.EnabledModule{},
 			Groups:         []blueprint.Group{},
 			Customizations: nil,
 		},
