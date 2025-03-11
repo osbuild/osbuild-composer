@@ -95,6 +95,8 @@ func (suite *storeTest) SetupSuite() {
 			{Name: "test1", Version: "*"}},
 		Modules: []blueprint.Package{
 			{Name: "test2", Version: "*"}},
+		EnabledModules: []blueprint.EnabledModule{
+			{Name: "name", Stream: "1"}},
 		Groups: []blueprint.Group{
 			{Name: "test3"}},
 		Containers: []blueprint.Container{
@@ -114,6 +116,8 @@ func (suite *storeTest) SetupSuite() {
 			{Name: "test4", Version: "*"}},
 		Modules: []blueprint.Package{
 			{Name: "test5", Version: "*"}},
+		EnabledModules: []blueprint.EnabledModule{
+			{Name: "name", Stream: "1"}},
 		Groups: []blueprint.Group{
 			{Name: "test6"}},
 		Customizations: &suite.myCustomizations,
