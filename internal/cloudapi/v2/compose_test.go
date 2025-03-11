@@ -43,6 +43,13 @@ func GetTestBlueprint() blueprint.Blueprint {
 		{Name: "tmux"},
 	}
 
+	expected.EnabledModules = []blueprint.EnabledModule{
+		{
+			Name:   "node",
+			Stream: "20",
+		},
+	}
+
 	// Containers
 	expected.Containers = []blueprint.Container{
 		blueprint.Container{
@@ -206,7 +213,8 @@ func TestGetBlueprintFromCustomizations(t *testing.T) {
 				Password: common.ToPtr("$6$secret-password"),
 				Groups:   &[]string{"users", "wheel"},
 			}},
-		Packages: &[]string{"bash", "tmux"},
+		Packages:       &[]string{"bash", "tmux"},
+		EnabledModules: &[]string{"node:20"},
 		Containers: &[]Container{
 			Container{
 				Name:   common.ToPtr("container-name"),
@@ -371,9 +379,10 @@ func TestGetBlueprintFromCompose(t *testing.T) {
 
 	// Construct the compose request with a blueprint
 	cr = ComposeRequest{Blueprint: &Blueprint{
-		Name:     "empty blueprint",
-		Version:  common.ToPtr("0.0.0"),
-		Packages: &[]Package{{Name: "bash"}, {Name: "tmux"}},
+		Name:           "empty blueprint",
+		Version:        common.ToPtr("0.0.0"),
+		Packages:       &[]Package{{Name: "bash"}, {Name: "tmux"}},
+		EnabledModules: &[]string{"node:20"},
 		Containers: &[]Container{
 			Container{
 				Name:   common.ToPtr("container-name"),
