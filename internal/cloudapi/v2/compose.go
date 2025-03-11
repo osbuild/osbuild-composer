@@ -7,6 +7,7 @@ import (
 	"math"
 	"math/big"
 	"reflect"
+	"strings"
 
 	"github.com/google/uuid"
 
@@ -539,6 +540,19 @@ func ConvertRequestBP(rbp Blueprint) (blueprint.Blueprint, error) {
 		}
 	}
 
+	if rbp.EnabledModules != nil {
+		for _, em := range *rbp.EnabledModules {
+			emSplit := strings.Split(em, ":")
+			if len(emSplit) != 2 {
+				return bp, fmt.Errorf("Invalid enabled module %s: must be $name:$stream", em)
+			}
+			bp.EnabledModules = append(bp.EnabledModules, blueprint.EnabledModule{
+				Name:   emSplit[0],
+				Stream: emSplit[1],
+			})
+		}
+	}
+
 	if rbp.Groups != nil {
 		for _, group := range *rbp.Groups {
 			bp.Groups = append(bp.Groups, blueprint.Group{
@@ -610,6 +624,19 @@ func (request *ComposeRequest) GetBlueprintFromCustomizations() (blueprint.Bluep
 		for _, p := range *request.Customizations.Packages {
 			bp.Packages = append(bp.Packages, blueprint.Package{
 				Name: p,
+			})
+		}
+	}
+
+	if request.Customizations.EnabledModules != nil {
+		for _, em := range *request.Customizations.EnabledModules {
+			emSplit := strings.Split(em, ":")
+			if len(emSplit) != 2 {
+				return bp, fmt.Errorf("Invalid enabled module %s: must be $name:$stream", em)
+			}
+			bp.EnabledModules = append(bp.EnabledModules, blueprint.EnabledModule{
+				Name:   emSplit[0],
+				Stream: emSplit[1],
 			})
 		}
 	}

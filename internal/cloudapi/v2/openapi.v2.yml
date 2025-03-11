@@ -1673,6 +1673,11 @@ components:
               An alias for packages, retained for backwards compatability
           items:
             $ref: '#/components/schemas/Package'
+        enabled_modules:
+          type: array
+          example: ['nodejs:22']
+          items:
+            type: string
         groups:
           type: array
           description: Package groups to be installed
@@ -1842,6 +1847,11 @@ components:
         packages:
           type: array
           example: ['postgres']
+          items:
+            type: string
+        enabled_modules:
+          type: array
+          example: ['nodejs:22']
           items:
             type: string
         users:
