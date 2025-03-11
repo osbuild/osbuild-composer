@@ -539,6 +539,15 @@ func ConvertRequestBP(rbp Blueprint) (blueprint.Blueprint, error) {
 		}
 	}
 
+	if rbp.EnabledModules != nil {
+		for _, em := range *rbp.EnabledModules {
+			bp.EnabledModules = append(bp.EnabledModules, blueprint.EnabledModule{
+				Name:   em.Name,
+				Stream: em.Stream,
+			})
+		}
+	}
+
 	if rbp.Groups != nil {
 		for _, group := range *rbp.Groups {
 			bp.Groups = append(bp.Groups, blueprint.Group{
@@ -610,6 +619,15 @@ func (request *ComposeRequest) GetBlueprintFromCustomizations() (blueprint.Bluep
 		for _, p := range *request.Customizations.Packages {
 			bp.Packages = append(bp.Packages, blueprint.Package{
 				Name: p,
+			})
+		}
+	}
+
+	if request.Customizations.EnabledModules != nil {
+		for _, em := range *request.Customizations.EnabledModules {
+			bp.EnabledModules = append(bp.EnabledModules, blueprint.EnabledModule{
+				Name:   em.Name,
+				Stream: em.Stream,
 			})
 		}
 	}

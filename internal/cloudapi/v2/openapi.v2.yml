@@ -1673,6 +1673,10 @@ components:
               An alias for packages, retained for backwards compatability
           items:
             $ref: '#/components/schemas/Package'
+        enabled_modules:
+          type: array
+          items:
+            $ref: '#/components/schemas/Module'
         groups:
           type: array
           description: Package groups to be installed
@@ -1818,6 +1822,23 @@ components:
           type: string
           example: 'anaconda-tools'
           description: Package group name
+    Module:
+      type: object
+      required:
+        - name
+        - stream
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          example: 'nodejs'
+          description: |
+            Name of the module to enable.
+        stream:
+          type: string
+          example: '22'
+          description: |
+            Stream to enable.
     Customizations:
       type: object
       additionalProperties: false
@@ -1844,6 +1865,10 @@ components:
           example: ['postgres']
           items:
             type: string
+        enabled_modules:
+          type: array
+          items:
+            $ref: '#/components/schemas/Module'
         users:
           type: array
           items:
