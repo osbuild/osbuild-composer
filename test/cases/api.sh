@@ -529,6 +529,22 @@ fi
 export EXTRA_PAYLOAD_REPOS_BLOCK
 export EXTRA_PACKAGES_BLOCK
 
+ENABLED_MODULES_BLOCK=
+# Only test modularity on rhel 8 and 9
+if [[ ($ID == rhel || $ID == centos) && ${VERSION_ID%.*} -lt 10 ]]; then
+  ENABLED_MODULES_BLOCK=$(cat <<EndOfMessage
+,
+    "enabled_modules": [
+      {
+        "name": "nodejs",
+        "stream" :"20"
+      }
+    ]
+EndOfMessage
+)
+fi
+export ENABLED_MODULES_BLOCK
+
 # generate a temp key for user tests
 ssh-keygen -t rsa-sha2-512 -f "${WORKDIR}/usertest" -C "usertest" -N ""
 
