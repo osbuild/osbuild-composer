@@ -37,6 +37,13 @@ function _instanceCheck() {
   # Check if postgres is installed
   $_ssh rpm -q postgresql dummy
 
+
+  MODULE=$(cat "$REQUEST_FILE" | jq -r .customizations.enabled_modules[0])
+  if [ "$MODULE" = "nodejs:20" ]; then
+      echo "checking if nodejs 20 is installed: $($_ssh rpm -q nodejs)"
+      $_ssh rpm -q nodejs | grep -q nodejs-20
+  fi
+
   # Verify subscribe status. Loop check since the system may not be registered such early(RHEL only)
   if [[ "$ID" == "rhel" ]]; then
     set +eu
