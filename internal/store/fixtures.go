@@ -47,6 +47,7 @@ func FixtureBase(hostDistroName, hostArchName string) *Fixture {
 		Version:        "0.0.0",
 		Packages:       []blueprint.Package{},
 		Modules:        []blueprint.Package{},
+		EnabledModules: []blueprint.EnabledModule{},
 		Groups:         []blueprint.Group{},
 		Customizations: nil,
 	}
@@ -191,6 +192,7 @@ func FixtureFinished(hostDistroName, hostArchName string) *Fixture {
 		Version:        "0.0.0",
 		Packages:       []blueprint.Package{},
 		Modules:        []blueprint.Package{},
+		EnabledModules: []blueprint.EnabledModule{},
 		Groups:         []blueprint.Group{},
 		Customizations: nil,
 	}
@@ -326,6 +328,7 @@ func FixtureEmpty(hostDistroName, hostArchName string) *Fixture {
 		Version:        "0.0.0",
 		Packages:       []blueprint.Package{},
 		Modules:        []blueprint.Package{},
+		EnabledModules: []blueprint.EnabledModule{},
 		Groups:         []blueprint.Group{},
 		Customizations: nil,
 	}
@@ -386,6 +389,7 @@ func FixtureOldChanges(hostDistroName, hostArchName string) *Fixture {
 		Version:        "0.0.0",
 		Packages:       []blueprint.Package{},
 		Modules:        []blueprint.Package{},
+		EnabledModules: []blueprint.EnabledModule{},
 		Groups:         []blueprint.Group{},
 		Customizations: nil,
 	}
@@ -434,6 +438,7 @@ func FixtureJobs(hostDistroName, hostArchName string) *Fixture {
 		Version:        "0.0.0",
 		Packages:       []blueprint.Package{},
 		Modules:        []blueprint.Package{},
+		EnabledModules: []blueprint.EnabledModule{},
 		Groups:         []blueprint.Group{},
 		Customizations: nil,
 	}

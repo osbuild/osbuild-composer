@@ -68,7 +68,11 @@ function createReqFile() {
         "baseurl": "$PAYLOAD_REPO_URL"
       }
     ],
+    "enabled_modules": [
+      "nodejs:20"
+    ],
     "packages": [
+      "nodejs",
       "postgresql",
       "dummy"
     ]${SUBSCRIPTION_BLOCK}${DIR_FILES_CUSTOMIZATION_BLOCK}${REPOSITORY_CUSTOMIZATION_BLOCK}${OPENSCAP_CUSTOMIZATION_BLOCK}

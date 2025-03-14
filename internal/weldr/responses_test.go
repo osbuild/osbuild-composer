@@ -31,7 +31,8 @@ const freezeTestResponse = `
             "version": "2.9-1.fc30.x86_64"
           }
         ],
-        "groups": []
+        "groups": [],
+        "enabled_modules": []
       }
     },
     {
@@ -56,7 +57,8 @@ const freezeTestResponse = `
             "version": "2.9-1.fc30.x86_64"
           }
         ],
-        "groups": []
+        "groups": [],
+        "enabled_modules": []
       }
     }
   ],
@@ -79,6 +81,7 @@ const depsolveTestResponse = `
             "version": "*"
           }
         ],
+        "enabled_modules": [],
         "groups": [],
         "modules": [
           {
@@ -146,7 +149,8 @@ const depsolvePackageNotExistError = `
             "name": "dep-package3",
             "version": "*"
           }
-        ]
+        ],
+        "enabled_modules": []
       },
       "dependencies": []
     }
@@ -181,7 +185,8 @@ const depsolveBadError = `
             "name": "dep-package3",
             "version": "*"
           }
-        ]
+        ],
+        "enabled_modules": []
       },
       "dependencies": []
     }

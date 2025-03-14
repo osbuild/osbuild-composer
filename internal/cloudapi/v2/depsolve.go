@@ -58,7 +58,13 @@ func (request *DepsolveRequest) Depsolve(df *distrofactory.Factory, rr *reporegi
 
 	// Send the depsolve request to the worker
 	packageSet := make(map[string][]rpmmd.PackageSet, 1)
-	packageSet["depsolve"] = []rpmmd.PackageSet{{Include: bp.GetPackages(), Repositories: repos}}
+	packageSet["depsolve"] = []rpmmd.PackageSet{
+		{
+			Include:        bp.GetPackages(),
+			EnabledModules: bp.GetEnabledModules(),
+			Repositories:   repos,
+		},
+	}
 
 	depsolveJobID, err := workers.EnqueueDepsolve(&worker.DepsolveJob{
 		PackageSets:      packageSet,
