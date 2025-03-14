@@ -193,7 +193,7 @@ STORAGE_CLASS="rh-restricted-nfs"
 
 # import the image into a data volume; total quota on the namespace seems to be 500 GiB
 PVC_NAME="image-builder-data-volume-$TEST_ID"
-retry $VIRTCTL image-upload --insecure dv "$PVC_NAME" --size=10Gi --storage-class="${STORAGE_CLASS}" --image-path="${IMAGE_FILENAME}"
+retry "$VIRTCTL" image-upload --insecure dv "$PVC_NAME" --size=10Gi --storage-class="${STORAGE_CLASS}" --image-path="${IMAGE_FILENAME}"
 # Note: --size=10Gi corresponds to the size of the filesystem inside the image, not the actual size of the qcow2 file
 
 PVC_VOLUME_ID=$($OC_CLI get pvc "$PVC_NAME" -o json | jq -r ".spec.volumeName")
