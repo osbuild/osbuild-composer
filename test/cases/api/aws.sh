@@ -50,8 +50,12 @@ function createReqFile() {
       }${EXTRA_PAYLOAD_REPOS_BLOCK}
     ],
     "packages": [
+      "nodejs",
       "postgresql",
       "dummy"${EXTRA_PACKAGES_BLOCK}
+    ],
+    "enabled_modules": [
+      "nodejs:20"
     ],
     "users":[
       {
