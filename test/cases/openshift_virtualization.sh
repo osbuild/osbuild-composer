@@ -151,9 +151,9 @@ sudo composer-cli compose delete "${COMPOSE_ID}" > /dev/null
 # install the OpenShift cli & virtctl binary
 pushd "$TEMPDIR"
 # https://docs.openshift.com/container-platform/4.13/cli_reference/openshift_cli/getting-started-cli.html
-curl -kLO https://downloads-openshift-console.apps.ocp-virt.prod.psi.redhat.com/amd64/linux/oc.tar
+curl -kLO https://downloads-openshift-console.apps.prod-scale-spoke1-aws-us-east-1.itup.redhat.com/amd64/linux/oc.tar
 # https://docs.openshift.com/container-platform/4.13/virt/virt-using-the-cli-tools.html
-curl -kLO https://hyperconverged-cluster-cli-download-openshift-cnv.apps.ocp-virt.prod.psi.redhat.com/amd64/linux/virtctl.tar.gz
+curl -kLO https://hyperconverged-cluster-cli-download-openshift-cnv.apps.prod-scale-spoke1-aws-us-east-1.itup.redhat.com/amd64/linux/virtctl.tar.gz
 tar -xvf oc.tar
 tar -xzvf virtctl.tar.gz
 popd
