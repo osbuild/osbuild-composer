@@ -164,8 +164,7 @@ chmod a+x "$VIRTCTL"
 
 
 # Authenticate via the gitlab-ci service account
-# oc describe secret gitab-ci-token-g7sw2
-$OC_CLI login --token="$OPENSHIFT_TOKEN" --server=https://api.prod-scale-spoke1-aws-us-east-1.prod-scale-mgmthub1-aws-us-east-1.itup.redhat.com/ --insecure-skip-tls-verify=true
+$OC_CLI login --token="$ITUP_OPENSHIFT_TOKEN" --server=https://api.prod-scale-spoke1-aws-us-east-1.prod-scale-mgmthub1-aws-us-east-1.itup.redhat.com/ --insecure-skip-tls-verify=true
 $OC_CLI whoami
 
 OPENSHIFT_PROJECT="image-builder--runtime-int"
