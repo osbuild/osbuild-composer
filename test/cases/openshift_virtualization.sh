@@ -30,6 +30,23 @@ function cleanup() {
 }
 trap cleanup EXIT
 
+function retry {
+    local count=0
+    local retries=5
+    until "$@"; do
+        exit=$?
+        count=$((count + 1))
+        if [[ $count -lt $retries ]]; then
+            echo "Retrying command..."
+            sleep 1
+        else
+            echo "Command failed after ${retries} retries. Giving up."
+            return $exit
+        fi
+    done
+    return 0
+}
+
 ARCH=$(uname -m)
 # OpenShift doesn't like upper-case, dots and underscores
 TEST_ID=$(echo "$DISTRO_CODE-$ARCH-$BRANCH_NAME-$BUILD_ID" | tr "[:upper:]" "[:lower:]" | tr "_." "-")
@@ -178,7 +195,7 @@ STORAGE_CLASS="rh-restricted-nfs"
 
 # import the image into a data volume; total quota on the namespace seems to be 500 GiB
 PVC_NAME="image-builder-data-volume-$TEST_ID"
-"$VIRTCTL" image-upload --insecure dv "$PVC_NAME" --size=10Gi --storage-class="${STORAGE_CLASS}" --image-path="${IMAGE_FILENAME}"
+retry "$VIRTCTL" image-upload --insecure dv "$PVC_NAME" --size=10Gi --storage-class="${STORAGE_CLASS}" --image-path="${IMAGE_FILENAME}"
 # Note: --size=10Gi corresponds to the size of the filesystem inside the image, not the actual size of the qcow2 file
 
 PVC_VOLUME_ID=$($OC_CLI get pvc "$PVC_NAME" -o json | jq -r ".spec.volumeName")
