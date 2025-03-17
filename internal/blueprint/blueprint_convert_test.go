@@ -114,6 +114,7 @@ func TestConvert(t *testing.T) {
 					},
 					Disk: &DiskCustomization{
 						MinSize: 10240,
+						Type:    "gpt",
 						Partitions: []PartitionCustomization{
 							{
 								// this partition is invalid, since only one of
@@ -121,8 +122,9 @@ func TestConvert(t *testing.T) {
 								// the converter copies everything
 								// unconditionally, so let's test the full
 								// thing
-								Type:    "plain",
-								MinSize: 1024,
+								Type:     "plain",
+								MinSize:  1024,
+								PartType: "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
 								BtrfsVolumeCustomization: BtrfsVolumeCustomization{
 									Subvolumes: []BtrfsSubvolumeCustomization{
 										{
@@ -413,6 +415,7 @@ func TestConvert(t *testing.T) {
 					},
 					Disk: &iblueprint.DiskCustomization{
 						MinSize: 10240,
+						Type:    "gpt",
 						Partitions: []iblueprint.PartitionCustomization{
 							{
 								// this partition is invalid, since only one of
@@ -420,8 +423,9 @@ func TestConvert(t *testing.T) {
 								// the converter copies everything
 								// unconditionally, so let's test the full
 								// thing
-								Type:    "plain",
-								MinSize: 1024,
+								Type:     "plain",
+								MinSize:  1024,
+								PartType: "0FC63DAF-8483-4772-8E79-3D69D8477DE4",
 								BtrfsVolumeCustomization: iblueprint.BtrfsVolumeCustomization{
 									Subvolumes: []iblueprint.BtrfsSubvolumeCustomization{
 										{

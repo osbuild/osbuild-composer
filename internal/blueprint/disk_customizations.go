@@ -9,6 +9,7 @@ import (
 )
 
 type DiskCustomization struct {
+	Type       string
 	MinSize    uint64
 	Partitions []PartitionCustomization
 }
@@ -53,6 +54,12 @@ type PartitionCustomization struct {
 	// https://osbuild.org/docs/user-guide/partitioning for more details.
 	// (optional, defaults depend on payload and mountpoints).
 	MinSize uint64 `json:"minsize" toml:"minsize"`
+
+	// The partition type GUID for GPT partitions. For DOS partitions, this
+	// field can be used to set the (2 hex digit) partition type.
+	// If not set, the type will be automatically set based on the mountpoint
+	// or the payload type.
+	PartType string `json:"part_type,omitempty" toml:"part_type,omitempty"`
 
 	BtrfsVolumeCustomization
 
