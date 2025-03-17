@@ -349,12 +349,14 @@ func Convert(bp Blueprint) iblueprint.Blueprint {
 		}
 		if disk := c.Disk; disk != nil {
 			idisk := &iblueprint.DiskCustomization{
+				Type:       disk.Type,
 				MinSize:    disk.MinSize,
 				Partitions: make([]iblueprint.PartitionCustomization, len(disk.Partitions)),
 			}
 			for idx, part := range disk.Partitions {
 				ipart := iblueprint.PartitionCustomization{
 					Type:                     part.Type,
+					PartType:                 part.PartType,
 					MinSize:                  part.MinSize,
 					BtrfsVolumeCustomization: iblueprint.BtrfsVolumeCustomization{},
 					VGCustomization: iblueprint.VGCustomization{
