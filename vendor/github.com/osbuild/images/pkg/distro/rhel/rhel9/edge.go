@@ -110,9 +110,9 @@ func mkEdgeRawImgType(d *rhel.Distribution) *rhel.ImageType {
 		it.DefaultImageConfig.IgnitionPlatform = common.ToPtr("metal")
 	}
 
-	it.KernelOptions = "modprobe.blacklist=vc4"
+	it.KernelOptions = []string{"modprobe.blacklist=vc4"}
 	if common.VersionGreaterThanOrEqual(d.OsVersion(), "9.2") || !d.IsRHEL() {
-		it.KernelOptions += " rw coreos.no_persist_ip"
+		it.KernelOptions = append(it.KernelOptions, "rw", "coreos.no_persist_ip")
 	}
 
 	it.DefaultSize = 10 * datasizes.GibiByte
@@ -213,9 +213,9 @@ func mkEdgeSimplifiedInstallerImgType(d *rhel.Distribution) *rhel.ImageType {
 	it.BasePartitionTables = edgeBasePartitionTables
 	it.UnsupportedPartitioningModes = []disk.PartitioningMode{disk.RawPartitioningMode}
 
-	it.KernelOptions = "modprobe.blacklist=vc4"
+	it.KernelOptions = []string{"modprobe.blacklist=vc4"}
 	if common.VersionGreaterThanOrEqual(d.OsVersion(), "9.2") || !d.IsRHEL() {
-		it.KernelOptions += " rw coreos.no_persist_ip"
+		it.KernelOptions = append(it.KernelOptions, "rw", "coreos.no_persist_ip")
 	}
 
 	return it
@@ -245,9 +245,9 @@ func mkEdgeAMIImgType(d *rhel.Distribution) *rhel.ImageType {
 		it.DefaultImageConfig.IgnitionPlatform = common.ToPtr("metal")
 	}
 
-	it.KernelOptions = amiKernelOptions + " modprobe.blacklist=vc4"
+	it.KernelOptions = append(amiKernelOptions(), "modprobe.blacklist=vc4")
 	if common.VersionGreaterThanOrEqual(d.OsVersion(), "9.2") || !d.IsRHEL() {
-		it.KernelOptions += " rw coreos.no_persist_ip"
+		it.KernelOptions = append(it.KernelOptions, "rw", "coreos.no_persist_ip")
 	}
 
 	it.DefaultSize = 10 * datasizes.GibiByte
@@ -284,9 +284,9 @@ func mkEdgeVsphereImgType(d *rhel.Distribution) *rhel.ImageType {
 		it.DefaultImageConfig.IgnitionPlatform = common.ToPtr("metal")
 	}
 
-	it.KernelOptions = "modprobe.blacklist=vc4"
+	it.KernelOptions = []string{"modprobe.blacklist=vc4"}
 	if common.VersionGreaterThanOrEqual(d.OsVersion(), "9.2") || !d.IsRHEL() {
-		it.KernelOptions += " rw coreos.no_persist_ip"
+		it.KernelOptions = append(it.KernelOptions, "rw", "coreos.no_persist_ip")
 	}
 
 	it.DefaultSize = 10 * datasizes.GibiByte
@@ -320,7 +320,7 @@ func mkMinimalrawImgType() *rhel.ImageType {
 		// requires a kickstart file in the root directory.
 		Files: []*fsnode.File{initialSetupKickstart()},
 	}
-	it.KernelOptions = "ro"
+	it.KernelOptions = []string{"ro"}
 	it.DefaultSize = 2 * datasizes.GibiByte
 	it.Bootable = true
 	it.BasePartitionTables = minimalrawPartitionTables

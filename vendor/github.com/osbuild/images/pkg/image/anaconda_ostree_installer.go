@@ -30,6 +30,7 @@ type AnacondaOSTreeInstaller struct {
 
 	RootfsCompression string
 	RootfsType        manifest.RootfsType
+	ISOBoot           manifest.ISOBootType
 
 	ISOLabel  string
 	Product   string
@@ -133,9 +134,6 @@ func (img *AnacondaOSTreeInstaller) InstantiateManifest(m *manifest.Manifest,
 		bootTreePipeline.KernelOpts = append(bootTreePipeline.KernelOpts, "fips=1")
 	}
 
-	// enable ISOLinux on x86_64 only
-	isoLinuxEnabled := img.Platform.GetArch() == arch.ARCH_X86_64
-
 	var subscriptionPipeline *manifest.Subscription
 	if img.Subscription != nil {
 		// pipeline that will create subscription service and key file to be copied out
@@ -152,7 +150,7 @@ func (img *AnacondaOSTreeInstaller) InstantiateManifest(m *manifest.Manifest,
 	isoTreePipeline.PayloadPath = "/ostree/repo"
 
 	isoTreePipeline.OSTreeCommitSource = &img.Commit
-	isoTreePipeline.ISOLinux = isoLinuxEnabled
+	isoTreePipeline.ISOBoot = img.ISOBoot
 	if img.FIPS {
 		isoTreePipeline.KernelOpts = append(isoTreePipeline.KernelOpts, "fips=1")
 	}
@@ -160,7 +158,7 @@ func (img *AnacondaOSTreeInstaller) InstantiateManifest(m *manifest.Manifest,
 
 	isoPipeline := manifest.NewISO(buildPipeline, isoTreePipeline, img.ISOLabel)
 	isoPipeline.SetFilename(img.Filename)
-	isoPipeline.ISOLinux = isoLinuxEnabled
+	isoPipeline.ISOBoot = img.ISOBoot
 	artifact := isoPipeline.Export()
 
 	return artifact, nil

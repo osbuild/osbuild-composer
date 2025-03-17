@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/disk"
 )
 
@@ -16,7 +17,7 @@ type Grub2InstStageOptions struct {
 	// Platform of the target system
 	Platform string `json:"platform"`
 
-	Location uint64 `json:"location"`
+	Location *uint64 `json:"location,omitempty"`
 
 	// How to obtain the GRUB core image
 	Core CoreMkImage `json:"core"`
@@ -41,12 +42,12 @@ type CoreMkImage struct {
 
 // Grub2 config on a specific partition, e.g. (,gpt3)/boot
 type PrefixPartition struct {
-	Type string `json:"type"`
+	Type string `json:"type,omitempty"`
 
-	PartLabel string `json:"partlabel"`
+	PartLabel string `json:"partlabel,omitempty"`
 
 	// The partition number, starting at zero
-	Number uint `json:"number"`
+	Number *uint `json:"number,omitempty"`
 
 	// Location of the grub config inside the partition
 	Path string `json:"path"`
@@ -81,15 +82,18 @@ func (options Grub2InstStageOptions) MarshalJSON() ([]byte, error) {
 	if !valueIn(g2options.Core.PartLabel, []string{"gpt", "dos"}) {
 		return nil, fmt.Errorf("org.osbuild.grub2.inst: invalid value %q for core.partlabel", g2options.Core.PartLabel)
 	}
-	if !valueIn(g2options.Core.Filesystem, []string{"ext4", "xfs", "btrfs"}) {
+	if !valueIn(g2options.Core.Filesystem, []string{"ext4", "xfs", "btrfs", "iso9660"}) {
 		return nil, fmt.Errorf("org.osbuild.grub2.inst: invalid value %q for core.filesystem", g2options.Core.Filesystem)
 	}
 
-	if g2options.Prefix.Type != "partition" {
-		return nil, fmt.Errorf("org.osbuild.grub2.inst: invalid value %q for prefix.type", g2options.Prefix.Type)
-	}
-	if !valueIn(g2options.Prefix.PartLabel, []string{"gpt", "dos"}) {
-		return nil, fmt.Errorf("org.osbuild.grub2.inst: invalid value %q for core.partlabel", g2options.Core.PartLabel)
+	// iso9660 doesn't use Prefix.Type, Prefix.PartLabel, or Prefix.Number
+	if g2options.Core.Filesystem != "iso9660" {
+		if g2options.Prefix.Type != "partition" {
+			return nil, fmt.Errorf("org.osbuild.grub2.inst: invalid value %q for prefix.type", g2options.Prefix.Type)
+		}
+		if !valueIn(g2options.Prefix.PartLabel, []string{"gpt", "dos"}) {
+			return nil, fmt.Errorf("org.osbuild.grub2.inst: invalid value %q for core.partlabel", g2options.Core.PartLabel)
+		}
 	}
 
 	return json.Marshal(g2options)
@@ -152,15 +156,32 @@ func NewGrub2InstStageOption(filename string, pt *disk.PartitionTable, platform 
 		PartLabel: pt.Type.String(),
 		// bootidx can't be negative after check with rootIdx above:
 		// nolint:gosec
-		Number: uint(bootIdx),
+		Number: common.ToPtr(uint(bootIdx)),
 		Path:   prefixPath,
 	}
 
 	return &Grub2InstStageOptions{
 		Filename: filename,
 		Platform: platform,
-		Location: coreLocation,
+		Location: common.ToPtr(coreLocation),
 		Core:     core,
 		Prefix:   prefix,
+	}
+}
+
+// NewGrub2InstISO9660StageOption returns the options needed to create the eltoritio.img
+// for use on an iso
+func NewGrub2InstISO9660StageOption(filename, prefix string) *Grub2InstStageOptions {
+	return &Grub2InstStageOptions{
+		Filename: filename,
+		Platform: "i386-pc",
+		Core: CoreMkImage{
+			Type:       "mkimage",
+			PartLabel:  "gpt",
+			Filesystem: "iso9660",
+		},
+		Prefix: PrefixPartition{
+			Path: prefix,
+		},
 	}
 }

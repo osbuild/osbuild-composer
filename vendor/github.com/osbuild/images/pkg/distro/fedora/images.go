@@ -6,6 +6,7 @@ import (
 
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/internal/workload"
+	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/blueprint"
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/customizations/anaconda"
@@ -40,8 +41,8 @@ func osCustomizations(
 		osc.KernelName = c.GetKernel().Name
 
 		var kernelOptions []string
-		if t.kernelOptions != "" {
-			kernelOptions = append(kernelOptions, t.kernelOptions)
+		if len(t.kernelOptions) > 0 {
+			kernelOptions = append(kernelOptions, t.kernelOptions...)
 		}
 		if bpKernel := c.GetKernel(); bpKernel.Append != "" {
 			kernelOptions = append(kernelOptions, bpKernel.Append)
@@ -106,8 +107,8 @@ func osCustomizations(
 
 	if hostname := c.GetHostname(); hostname != nil {
 		osc.Hostname = *hostname
-	} else {
-		osc.Hostname = "localhost.localdomain"
+	} else if imageConfig.Hostname != nil {
+		osc.Hostname = *imageConfig.Hostname
 	}
 
 	if imageConfig.InstallWeakDeps != nil {
@@ -242,6 +243,10 @@ func osCustomizations(
 		osc.MachineIdUninitialized = *imageConfig.MachineIdUninitialized
 	}
 
+	if imageConfig.MountUnits != nil {
+		osc.MountUnits = *imageConfig.MountUnits
+	}
+
 	return osc, nil
 }
 
@@ -257,8 +262,8 @@ func ostreeDeploymentCustomizations(
 	deploymentConf := manifest.OSTreeDeploymentCustomizations{}
 
 	var kernelOptions []string
-	if t.kernelOptions != "" {
-		kernelOptions = append(kernelOptions, t.kernelOptions)
+	if len(t.kernelOptions) > 0 {
+		kernelOptions = append(kernelOptions, t.kernelOptions...)
 	}
 	if bpKernel := c.GetKernel(); bpKernel != nil && bpKernel.Append != "" {
 		kernelOptions = append(kernelOptions, bpKernel.Append)
@@ -415,6 +420,11 @@ func liveInstallerImage(workload workload.Workload,
 		img.RootfsType = manifest.SquashfsRootfs
 	}
 
+	// Enable grub2 BIOS iso on x86_64 only
+	if img.Platform.GetArch() == arch.ARCH_X86_64 {
+		img.ISOBoot = manifest.Grub2ISOBoot
+	}
+
 	if locale := t.getDefaultImageConfig().Locale; locale != nil {
 		img.Locale = *locale
 	}
@@ -514,6 +524,11 @@ func imageInstallerImage(workload workload.Workload,
 	img.RootfsCompression = "lz4"
 	if common.VersionGreaterThanOrEqual(img.OSVersion, VERSION_ROOTFS_SQUASHFS) {
 		img.RootfsType = manifest.SquashfsRootfs
+	}
+
+	// Enable grub2 BIOS iso on x86_64 only
+	if img.Platform.GetArch() == arch.ARCH_X86_64 {
+		img.ISOBoot = manifest.Grub2ISOBoot
 	}
 
 	return img, nil
@@ -725,6 +740,11 @@ func iotInstallerImage(workload workload.Workload,
 	img.RootfsCompression = "lz4"
 	if common.VersionGreaterThanOrEqual(img.OSVersion, VERSION_ROOTFS_SQUASHFS) {
 		img.RootfsType = manifest.SquashfsRootfs
+	}
+
+	// Enable grub2 BIOS iso on x86_64 only
+	if img.Platform.GetArch() == arch.ARCH_X86_64 {
+		img.ISOBoot = manifest.Grub2ISOBoot
 	}
 
 	if locale := t.getDefaultImageConfig().Locale; locale != nil {

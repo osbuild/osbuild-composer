@@ -9,7 +9,9 @@ import (
 	"github.com/osbuild/images/pkg/rpmmd"
 )
 
-const gceKernelOptions = "net.ifnames=0 biosdevname=0 scsi_mod.use_blk_mq=Y console=ttyS0,38400n8d"
+func gceKernelOptions() []string {
+	return []string{"net.ifnames=0", "biosdevname=0", "scsi_mod.use_blk_mq=Y", "console=ttyS0,38400n8d"}
+}
 
 func mkGCEImageType() *rhel.ImageType {
 	it := rhel.NewImageType(
@@ -29,7 +31,7 @@ func mkGCEImageType() *rhel.ImageType {
 	// The configuration for non-RHUI images does not touch the RHSM configuration at all.
 	// https://issues.redhat.com/browse/COMPOSER-2157
 	it.DefaultImageConfig = baseGCEImageConfig()
-	it.KernelOptions = gceKernelOptions
+	it.KernelOptions = gceKernelOptions()
 	it.DefaultSize = 20 * datasizes.GibiByte
 	it.Bootable = true
 	// TODO: the base partition table still contains the BIOS boot partition, but the image is UEFI-only

@@ -8,7 +8,6 @@ import (
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distro/rhel"
 	"github.com/osbuild/images/pkg/osbuild"
-	"github.com/osbuild/images/pkg/rpmmd"
 )
 
 // Azure image type
@@ -18,7 +17,7 @@ func mkAzureImgType(rd *rhel.Distribution) *rhel.ImageType {
 		"disk.vhd",
 		"application/x-vhd",
 		map[string]rhel.PackageSetFunc{
-			rhel.OSPkgsKey: azurePackageSet,
+			rhel.OSPkgsKey: packageSetLoader,
 		},
 		rhel.DiskImage,
 		[]string{"build"},
@@ -26,7 +25,7 @@ func mkAzureImgType(rd *rhel.Distribution) *rhel.ImageType {
 		[]string{"vpc"},
 	)
 
-	it.KernelOptions = defaultAzureKernelOptions
+	it.KernelOptions = defaultAzureKernelOptions()
 	it.Bootable = true
 	it.DefaultSize = 4 * datasizes.GibiByte
 	it.DefaultImageConfig = defaultAzureImageConfig(rd)
@@ -42,7 +41,7 @@ func mkAzureInternalImgType(rd *rhel.Distribution) *rhel.ImageType {
 		"disk.vhd.xz",
 		"application/xz",
 		map[string]rhel.PackageSetFunc{
-			rhel.OSPkgsKey: azurePackageSet,
+			rhel.OSPkgsKey: packageSetLoader,
 		},
 		rhel.DiskImage,
 		[]string{"build"},
@@ -51,7 +50,7 @@ func mkAzureInternalImgType(rd *rhel.Distribution) *rhel.ImageType {
 	)
 
 	it.Compression = "xz"
-	it.KernelOptions = defaultAzureKernelOptions
+	it.KernelOptions = defaultAzureKernelOptions()
 	it.Bootable = true
 	it.DefaultSize = 64 * datasizes.GibiByte
 	it.DefaultImageConfig = defaultAzureImageConfig(rd)
@@ -66,7 +65,7 @@ func mkAzureSapInternalImgType(rd *rhel.Distribution) *rhel.ImageType {
 		"disk.vhd.xz",
 		"application/xz",
 		map[string]rhel.PackageSetFunc{
-			rhel.OSPkgsKey: azureSapPackageSet,
+			rhel.OSPkgsKey: packageSetLoader,
 		},
 		rhel.DiskImage,
 		[]string{"build"},
@@ -75,105 +74,13 @@ func mkAzureSapInternalImgType(rd *rhel.Distribution) *rhel.ImageType {
 	)
 
 	it.Compression = "xz"
-	it.KernelOptions = defaultAzureKernelOptions
+	it.KernelOptions = defaultAzureKernelOptions()
 	it.Bootable = true
 	it.DefaultSize = 64 * datasizes.GibiByte
 	it.DefaultImageConfig = sapAzureImageConfig(rd)
 	it.BasePartitionTables = azureInternalBasePartitionTables
 
 	return it
-}
-
-// PACKAGE SETS
-
-// Common Azure image package set
-func azureCommonPackageSet(t *rhel.ImageType) rpmmd.PackageSet {
-	ps := rpmmd.PackageSet{
-		Include: []string{
-			"@Server",
-			"bzip2",
-			"cloud-init",
-			"cloud-utils-growpart",
-			"dracut-config-generic",
-			"efibootmgr",
-			"hyperv-daemons",
-			"kernel-core",
-			"kernel-modules",
-			"kernel",
-			"langpacks-en",
-			"lvm2",
-			"NetworkManager",
-			"NetworkManager-cloud-setup",
-			"nvme-cli",
-			"patch",
-			"rng-tools",
-			"selinux-policy-targeted",
-			"uuid",
-			"WALinuxAgent",
-			"yum-utils",
-		},
-		Exclude: []string{
-			"aic94xx-firmware",
-			"alsa-firmware",
-			"alsa-lib",
-			"alsa-sof-firmware",
-			"alsa-tools-firmware",
-			"biosdevname",
-			"bolt",
-			"buildah",
-			"cockpit-podman",
-			"containernetworking-plugins",
-			"dnf-plugin-spacewalk",
-			"dracut-config-rescue",
-			"glibc-all-langpacks",
-			"iprutils",
-			"ivtv-firmware",
-			"iwl100-firmware",
-			"iwl1000-firmware",
-			"iwl105-firmware",
-			"iwl135-firmware",
-			"iwl2000-firmware",
-			"iwl2030-firmware",
-			"iwl3160-firmware",
-			"iwl3945-firmware",
-			"iwl4965-firmware",
-			"iwl5000-firmware",
-			"iwl5150-firmware",
-			"iwl6000-firmware",
-			"iwl6000g2a-firmware",
-			"iwl6000g2b-firmware",
-			"iwl6050-firmware",
-			"iwl7260-firmware",
-			"libertas-sd8686-firmware",
-			"libertas-sd8787-firmware",
-			"libertas-usb8388-firmware",
-			"NetworkManager-config-server",
-			"plymouth",
-			"podman",
-			"python3-dnf-plugin-spacewalk",
-			"python3-hwdata",
-			"python3-rhnlib",
-			"rhn-check",
-			"rhn-client-tools",
-			"rhn-setup",
-			"rhnlib",
-			"rhnsd",
-			"usb_modeswitch",
-		},
-	}.Append(distroSpecificPackageSet(t))
-
-	return ps
-}
-
-// Azure BYOS image package set
-func azurePackageSet(t *rhel.ImageType) rpmmd.PackageSet {
-	return azureCommonPackageSet(t)
-}
-
-// Azure SAP image package set
-// Includes the common azure package set, the common SAP packages
-func azureSapPackageSet(t *rhel.ImageType) rpmmd.PackageSet {
-	return azureCommonPackageSet(t).Append(SapPackageSet(t))
 }
 
 // PARTITION TABLES
@@ -401,7 +308,9 @@ func azureInternalBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, b
 // IMAGE CONFIG
 
 // use loglevel=3 as described in the RHEL documentation and used in existing RHEL images built by MSFT
-const defaultAzureKernelOptions = "ro loglevel=3 console=tty1 console=ttyS0 earlyprintk=ttyS0 rootdelay=300"
+func defaultAzureKernelOptions() []string {
+	return []string{"ro", "loglevel=3", "console=tty1", "console=ttyS0", "earlyprintk=ttyS0", "rootdelay=300"}
+}
 
 // based on https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/9/html/deploying_rhel_9_on_microsoft_azure/assembly_deploying-a-rhel-image-as-a-virtual-machine-on-microsoft-azure_cloud-content-azure#making-configuration-changes_configure-the-image-azure
 func defaultAzureImageConfig(rd *rhel.Distribution) *distro.ImageConfig {

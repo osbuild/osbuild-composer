@@ -1045,7 +1045,7 @@ github.com/oracle/oci-go-sdk/v54/identity
 github.com/oracle/oci-go-sdk/v54/objectstorage
 github.com/oracle/oci-go-sdk/v54/objectstorage/transfer
 github.com/oracle/oci-go-sdk/v54/workrequests
-# github.com/osbuild/images v0.123.0
+# github.com/osbuild/images v0.124.0
 ## explicit; go 1.22.8
 github.com/osbuild/images/data/dependencies
 github.com/osbuild/images/data/repositories

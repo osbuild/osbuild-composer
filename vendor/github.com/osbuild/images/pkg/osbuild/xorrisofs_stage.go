@@ -19,6 +19,11 @@ type XorrisofsStageOptions struct {
 
 	// The ISO 9660 version (limits data size and filenames; min: 1, max: 4)
 	ISOLevel int `json:"isolevel,omitempty"`
+
+	// Path to grub2 hybrid mbr boot image
+	// This will cause the created iso to use grub2 instead of syslinux/isolinux
+	// when booting on BIOS systems.
+	Grub2MBR string `json:"grub2mbr,omitempty"`
 }
 
 type XorrisofsBoot struct {

@@ -6,6 +6,7 @@ import (
 
 	"slices"
 
+	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/internal/environment"
 	"github.com/osbuild/images/internal/workload"
 	"github.com/osbuild/images/pkg/blueprint"
@@ -13,6 +14,7 @@ import (
 	"github.com/osbuild/images/pkg/datasizes"
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/distro"
+	"github.com/osbuild/images/pkg/experimentalflags"
 	"github.com/osbuild/images/pkg/image"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/osbuild"
@@ -76,7 +78,7 @@ type ImageType struct {
 	Compression            string // TODO: remove from image definition and make it a transport option
 	DefaultImageConfig     *distro.ImageConfig
 	DefaultInstallerConfig *distro.InstallerConfig
-	KernelOptions          string
+	KernelOptions          []string
 	DefaultSize            uint64
 
 	// bootISO: installable ISO
@@ -335,6 +337,16 @@ func (t *ImageType) Manifest(bp *blueprint.Blueprint,
 			Name:      cont.Name,
 			TLSVerify: cont.TLSVerify,
 			Local:     cont.LocalStorage,
+		}
+	}
+
+	if experimentalflags.Bool("no-fstab") {
+		if t.DefaultImageConfig == nil {
+			t.DefaultImageConfig = &distro.ImageConfig{
+				MountUnits: common.ToPtr(true),
+			}
+		} else {
+			t.DefaultImageConfig.MountUnits = common.ToPtr(true)
 		}
 	}
 
