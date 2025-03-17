@@ -34,15 +34,6 @@ const (
 
 	// blueprint package set name
 	blueprintPkgsKey = "blueprint"
-
-	//Default kernel command line
-	defaultKernelOptions = "ro"
-
-	// Added kernel command line options for ami, qcow2, openstack, vhd and vmdk types
-	cloudKernelOptions = "ro no_timer_check console=ttyS0,115200n8 biosdevname=0 net.ifnames=0"
-
-	// Added kernel command line options for iot-raw-image and iot-qcow2-image types
-	ostreeDeploymentKernelOptions = "modprobe.blacklist=vc4 rw coreos.no_persist_ip"
 )
 
 var (
@@ -59,6 +50,23 @@ var (
 	}
 )
 
+// kernel command line arguments
+// NOTE: we define them as functions to make sure they globals are never
+// modified
+
+// Default kernel command line
+func defaultKernelOptions() []string { return []string{"ro"} }
+
+// Added kernel command line options for ami, qcow2, openstack, vhd and vmdk types
+func cloudKernelOptions() []string {
+	return []string{"ro", "no_timer_check", "console=ttyS0,115200n8", "biosdevname=0", "net.ifnames=0"}
+}
+
+// Added kernel command line options for iot-raw-image and iot-qcow2-image types
+func ostreeDeploymentKernelOptions() []string {
+	return []string{"modprobe.blacklist=vc4", "rw", "coreos.no_persist_ip"}
+}
+
 // Image Definitions
 func mkImageInstallerImgType(d distribution) imageType {
 	return imageType{
@@ -67,7 +75,7 @@ func mkImageInstallerImgType(d distribution) imageType {
 		filename:    "installer.iso",
 		mimeType:    "application/x-iso9660-image",
 		packageSets: map[string]packageSetFunc{
-			osPkgsKey: func(t *imageType) rpmmd.PackageSet {
+			osPkgsKey: func(t *imageType) (rpmmd.PackageSet, error) {
 				// use the minimal raw image type for the OS package set
 				return packagesets.Load(t, "minimal-raw", VersionReplacements())
 			},
@@ -164,8 +172,8 @@ func mkIotOCIImgType(d distribution) imageType {
 		mimeType:    "application/x-tar",
 		packageSets: map[string]packageSetFunc{
 			osPkgsKey: packageSetLoader,
-			containerPkgsKey: func(t *imageType) rpmmd.PackageSet {
-				return rpmmd.PackageSet{}
+			containerPkgsKey: func(t *imageType) (rpmmd.PackageSet, error) {
+				return rpmmd.PackageSet{}, nil
 			},
 		},
 		defaultImageConfig: &distro.ImageConfig{
@@ -235,7 +243,7 @@ func mkIotSimplifiedInstallerImgType(d distribution) imageType {
 		payloadPipelines:       []string{"ostree-deployment", "image", "xz", "coi-tree", "efiboot-tree", "bootiso-tree", "bootiso"},
 		exports:                []string{"bootiso"},
 		basePartitionTables:    iotSimplifiedInstallerPartitionTables,
-		kernelOptions:          ostreeDeploymentKernelOptions,
+		kernelOptions:          ostreeDeploymentKernelOptions(),
 		requiredPartitionSizes: requiredDirectorySizes,
 	}
 }
@@ -265,7 +273,7 @@ func mkIotRawImgType(d distribution) imageType {
 		payloadPipelines:    []string{"ostree-deployment", "image", "xz"},
 		exports:             []string{"xz"},
 		basePartitionTables: iotBasePartitionTables,
-		kernelOptions:       ostreeDeploymentKernelOptions,
+		kernelOptions:       ostreeDeploymentKernelOptions(),
 
 		// Passing an empty map into the required partition sizes disables the
 		// default partition sizes normally set so our `basePartitionTables` can
@@ -297,7 +305,7 @@ func mkIotQcow2ImgType(d distribution) imageType {
 		payloadPipelines:       []string{"ostree-deployment", "image", "qcow2"},
 		exports:                []string{"qcow2"},
 		basePartitionTables:    iotBasePartitionTables,
-		kernelOptions:          ostreeDeploymentKernelOptions,
+		kernelOptions:          ostreeDeploymentKernelOptions(),
 		requiredPartitionSizes: requiredDirectorySizes,
 	}
 }
@@ -314,7 +322,7 @@ func mkQcow2ImgType(d distribution) imageType {
 		defaultImageConfig: &distro.ImageConfig{
 			DefaultTarget: common.ToPtr("multi-user.target"),
 		},
-		kernelOptions:          cloudKernelOptions,
+		kernelOptions:          cloudKernelOptions(),
 		bootable:               true,
 		defaultSize:            5 * datasizes.GibiByte,
 		image:                  diskImage,
@@ -347,7 +355,7 @@ func mkVmdkImgType(d distribution) imageType {
 			osPkgsKey: packageSetLoader,
 		},
 		defaultImageConfig:     vmdkDefaultImageConfig,
-		kernelOptions:          cloudKernelOptions,
+		kernelOptions:          cloudKernelOptions(),
 		bootable:               true,
 		defaultSize:            2 * datasizes.GibiByte,
 		image:                  diskImage,
@@ -368,7 +376,7 @@ func mkOvaImgType(d distribution) imageType {
 			osPkgsKey: packageSetLoader,
 		},
 		defaultImageConfig:     vmdkDefaultImageConfig,
-		kernelOptions:          cloudKernelOptions,
+		kernelOptions:          cloudKernelOptions(),
 		bootable:               true,
 		defaultSize:            2 * datasizes.GibiByte,
 		image:                  diskImage,
@@ -412,6 +420,20 @@ func mkWslImgType(d distribution) imageType {
 			osPkgsKey: packageSetLoader,
 		},
 		defaultImageConfig: &distro.ImageConfig{
+			CloudInit: []*osbuild.CloudInitStageOptions{
+				{
+					Filename: "99_wsl.cfg",
+					Config: osbuild.CloudInitConfigFile{
+						DatasourceList: []string{
+							"WSL",
+							"None",
+						},
+						Network: &osbuild.CloudInitConfigNetwork{
+							Config: "disabled",
+						},
+					},
+				},
+			},
 			NoSElinux:   common.ToPtr(true),
 			ExcludeDocs: common.ToPtr(true),
 			Locale:      common.ToPtr("C.UTF-8"),
@@ -432,7 +454,7 @@ func mkWslImgType(d distribution) imageType {
 }
 
 func mkMinimalRawImgType(d distribution) imageType {
-	return imageType{
+	it := imageType{
 		name:        "minimal-raw",
 		filename:    "disk.raw.xz",
 		compression: "xz",
@@ -452,7 +474,7 @@ func mkMinimalRawImgType(d distribution) imageType {
 			InstallWeakDeps: common.ToPtr(common.VersionLessThan(d.osVersion, VERSION_MINIMAL_WEAKDEPS)),
 		},
 		rpmOstree:              false,
-		kernelOptions:          defaultKernelOptions,
+		kernelOptions:          defaultKernelOptions(),
 		bootable:               true,
 		defaultSize:            2 * datasizes.GibiByte,
 		image:                  diskImage,
@@ -462,6 +484,12 @@ func mkMinimalRawImgType(d distribution) imageType {
 		basePartitionTables:    minimalrawPartitionTables,
 		requiredPartitionSizes: requiredDirectorySizes,
 	}
+	if common.VersionGreaterThanOrEqual(d.osVersion, "43") {
+		// from Fedora 43 onward, we stop writing /etc/fstab and start using
+		// mount units only
+		it.defaultImageConfig.MountUnits = common.ToPtr(true)
+	}
+	return it
 }
 
 type distribution struct {
@@ -478,6 +506,7 @@ type distribution struct {
 
 // Fedora based OS image configuration defaults
 var defaultDistroImageConfig = &distro.ImageConfig{
+	Hostname:               common.ToPtr("localhost.localdomain"),
 	Timezone:               common.ToPtr("UTC"),
 	Locale:                 common.ToPtr("C.UTF-8"),
 	DefaultOSCAPDatastream: common.ToPtr(oscap.DefaultFedoraDatastream()),

@@ -30,6 +30,7 @@ type CloudInitConfigFile struct {
 	Datasource     *CloudInitConfigDatasource `json:"datasource,omitempty"`
 	DatasourceList []string                   `json:"datasource_list,omitempty"`
 	Output         *CloudInitConfigOutput     `json:"output,omitempty"`
+	Network        *CloudInitConfigNetwork    `json:"network,omitempty"`
 }
 
 // Represents the 'system_info' configuration section
@@ -69,6 +70,10 @@ type CloudInitConfigDefaultUser struct {
 	Name string `json:"name,omitempty"`
 }
 
+type CloudInitConfigNetwork struct {
+	Config string `json:"config"`
+}
+
 func (c CloudInitConfigFile) validate() error {
 	if c.SystemInfo == nil && c.Reporting == nil && c.Datasource == nil && len(c.DatasourceList) == 0 && c.Output == nil {
 		return fmt.Errorf("at least one cloud-init configuration option must be specified")
@@ -89,7 +94,7 @@ func (c CloudInitConfigFile) validate() error {
 		}
 	}
 
-	allowedDatasources := []string{"Azure", "Ec2", "None"}
+	allowedDatasources := []string{"Azure", "Ec2", "WSL", "NoCloud", "None"}
 	if len(c.DatasourceList) > 0 {
 		for _, d := range c.DatasourceList {
 			if !slices.Contains(allowedDatasources, d) {
@@ -99,6 +104,11 @@ func (c CloudInitConfigFile) validate() error {
 	}
 	if c.Output != nil {
 		if err := c.Output.validate(); err != nil {
+			return err
+		}
+	}
+	if c.Network != nil {
+		if err := c.Network.validate(); err != nil {
 			return err
 		}
 	}
@@ -157,6 +167,13 @@ func (o CloudInitConfigOutput) validate() error {
 func (du CloudInitConfigDefaultUser) validate() error {
 	if du.Name == "" {
 		return fmt.Errorf("at least one configuration option must be specified for 'default_user' section")
+	}
+	return nil
+}
+
+func (n CloudInitConfigNetwork) validate() error {
+	if n.Config != "disabled" {
+		return fmt.Errorf("Network config must be set to disabled if the network section is specified")
 	}
 	return nil
 }

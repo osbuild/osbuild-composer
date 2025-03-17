@@ -6,7 +6,9 @@ import (
 	"github.com/osbuild/images/pkg/rpmmd"
 )
 
-const vmdkKernelOptions = "ro net.ifnames=0"
+func vmdkKernelOptions() []string {
+	return []string{"ro", "net.ifnames=0"}
+}
 
 func mkVmdkImgType() *rhel.ImageType {
 	it := rhel.NewImageType(
@@ -22,7 +24,7 @@ func mkVmdkImgType() *rhel.ImageType {
 		[]string{"vmdk"},
 	)
 
-	it.KernelOptions = vmdkKernelOptions
+	it.KernelOptions = vmdkKernelOptions()
 	it.Bootable = true
 	it.DefaultSize = 4 * datasizes.GibiByte
 	it.BasePartitionTables = defaultBasePartitionTables
@@ -44,7 +46,7 @@ func mkOvaImgType() *rhel.ImageType {
 		[]string{"archive"},
 	)
 
-	it.KernelOptions = vmdkKernelOptions
+	it.KernelOptions = vmdkKernelOptions()
 	it.Bootable = true
 	it.DefaultSize = 4 * datasizes.GibiByte
 	it.BasePartitionTables = defaultBasePartitionTables

@@ -5,6 +5,7 @@ import (
 	"math/rand"
 
 	"github.com/osbuild/images/internal/workload"
+	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/blueprint"
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/customizations/anaconda"
@@ -39,8 +40,8 @@ func osCustomizations(
 		osc.KernelName = c.GetKernel().Name
 
 		var kernelOptions []string
-		if t.KernelOptions != "" {
-			kernelOptions = append(kernelOptions, t.KernelOptions)
+		if len(t.KernelOptions) > 0 {
+			kernelOptions = append(kernelOptions, t.KernelOptions...)
 		}
 		if bpKernel := c.GetKernel(); bpKernel.Append != "" {
 			kernelOptions = append(kernelOptions, bpKernel.Append)
@@ -283,6 +284,10 @@ func osCustomizations(
 		osc.InstallWeakDeps = *imageConfig.InstallWeakDeps
 	}
 
+	if imageConfig.MountUnits != nil {
+		osc.MountUnits = *imageConfig.MountUnits
+	}
+
 	return osc, nil
 }
 
@@ -298,8 +303,8 @@ func ostreeDeploymentCustomizations(
 	deploymentConf := manifest.OSTreeDeploymentCustomizations{}
 
 	var kernelOptions []string
-	if t.KernelOptions != "" {
-		kernelOptions = append(kernelOptions, t.KernelOptions)
+	if len(t.KernelOptions) > 0 {
+		kernelOptions = append(kernelOptions, t.KernelOptions...)
 	}
 	if bpKernel := c.GetKernel(); bpKernel != nil && bpKernel.Append != "" {
 		kernelOptions = append(kernelOptions, bpKernel.Append)
@@ -355,6 +360,10 @@ func ostreeDeploymentCustomizations(
 
 	for _, fs := range c.GetFilesystems() {
 		deploymentConf.CustomFileSystems = append(deploymentConf.CustomFileSystems, fs.Mountpoint)
+	}
+
+	if imageConfig.MountUnits != nil {
+		deploymentConf.MountUnits = *imageConfig.MountUnits
 	}
 
 	return deploymentConf, nil
@@ -502,6 +511,17 @@ func EdgeInstallerImage(workload workload.Workload,
 	img.RootfsCompression = "xz"
 	if t.Arch().Distro().Releasever() == "10" {
 		img.RootfsType = manifest.SquashfsRootfs
+	}
+
+	// Enable BIOS iso on x86_64 only
+	// Use grub2 on RHEL10, otherwise use syslinux
+	// NOTE: Will need to be updated for RHEL11 and later
+	if img.Platform.GetArch() == arch.ARCH_X86_64 {
+		if t.Arch().Distro().Releasever() == "10" {
+			img.ISOBoot = manifest.Grub2ISOBoot
+		} else {
+			img.ISOBoot = manifest.SyslinuxISOBoot
+		}
 	}
 
 	installerConfig, err := t.getDefaultInstallerConfig()
@@ -728,6 +748,17 @@ func ImageInstallerImage(workload workload.Workload,
 	img.RootfsCompression = "xz"
 	if t.Arch().Distro().Releasever() == "10" {
 		img.RootfsType = manifest.SquashfsRootfs
+	}
+
+	// Enable BIOS iso on x86_64 only
+	// Use grub2 on RHEL10, otherwise use syslinux
+	// NOTE: Will need to be updated for RHEL11 and later
+	if img.Platform.GetArch() == arch.ARCH_X86_64 {
+		if t.Arch().Distro().Releasever() == "10" {
+			img.ISOBoot = manifest.Grub2ISOBoot
+		} else {
+			img.ISOBoot = manifest.SyslinuxISOBoot
+		}
 	}
 
 	// put the kickstart file in the root of the iso

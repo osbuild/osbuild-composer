@@ -14,7 +14,9 @@ import (
 )
 
 // use loglevel=3 as described in the RHEL documentation and used in existing RHEL images built by MSFT
-const defaultAzureKernelOptions = "ro loglevel=3 crashkernel=auto console=tty1 console=ttyS0 earlyprintk=ttyS0 rootdelay=300"
+func defaultAzureKernelOptions() []string {
+	return []string{"ro", "loglevel=3", "crashkernel=auto", "console=tty1", "console=ttyS0", "earlyprintk=ttyS0", "rootdelay=300"}
+}
 
 func mkAzureRhuiImgType() *rhel.ImageType {
 	it := rhel.NewImageType(
@@ -32,7 +34,7 @@ func mkAzureRhuiImgType() *rhel.ImageType {
 
 	it.Compression = "xz"
 	it.DefaultImageConfig = defaultAzureRhuiImageConfig.InheritFrom(defaultVhdImageConfig())
-	it.KernelOptions = defaultAzureKernelOptions
+	it.KernelOptions = defaultAzureKernelOptions()
 	it.Bootable = true
 	it.DefaultSize = 64 * datasizes.GibiByte
 	it.BasePartitionTables = azureRhuiBasePartitionTables
@@ -56,7 +58,7 @@ func mkAzureSapRhuiImgType(rd *rhel.Distribution) *rhel.ImageType {
 
 	it.Compression = "xz"
 	it.DefaultImageConfig = defaultAzureRhuiImageConfig.InheritFrom(sapAzureImageConfig(rd))
-	it.KernelOptions = defaultAzureKernelOptions
+	it.KernelOptions = defaultAzureKernelOptions()
 	it.Bootable = true
 	it.DefaultSize = 64 * datasizes.GibiByte
 	it.BasePartitionTables = azureRhuiBasePartitionTables
@@ -79,7 +81,7 @@ func mkAzureByosImgType() *rhel.ImageType {
 	)
 
 	it.DefaultImageConfig = defaultAzureByosImageConfig.InheritFrom(defaultVhdImageConfig())
-	it.KernelOptions = defaultAzureKernelOptions
+	it.KernelOptions = defaultAzureKernelOptions()
 	it.Bootable = true
 	it.DefaultSize = 4 * datasizes.GibiByte
 	it.BasePartitionTables = defaultBasePartitionTables
@@ -103,7 +105,7 @@ func mkAzureImgType() *rhel.ImageType {
 	)
 
 	it.DefaultImageConfig = defaultVhdImageConfig()
-	it.KernelOptions = defaultAzureKernelOptions
+	it.KernelOptions = defaultAzureKernelOptions()
 	it.Bootable = true
 	it.DefaultSize = 4 * datasizes.GibiByte
 	it.BasePartitionTables = defaultBasePartitionTables
@@ -127,7 +129,7 @@ func mkAzureEap7RhuiImgType() *rhel.ImageType {
 
 	it.Compression = "xz"
 	it.DefaultImageConfig = defaultAzureEapImageConfig.InheritFrom(defaultAzureRhuiImageConfig.InheritFrom(defaultAzureImageConfig))
-	it.KernelOptions = defaultAzureKernelOptions
+	it.KernelOptions = defaultAzureKernelOptions()
 	it.Bootable = true
 	it.DefaultSize = 64 * datasizes.GibiByte
 	it.BasePartitionTables = azureRhuiBasePartitionTables
