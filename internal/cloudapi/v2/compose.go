@@ -495,6 +495,12 @@ func (rbp *Blueprint) GetCustomizationsFromBlueprintRequest() (*blueprint.Custom
 		c.RHSM = bpRhsm
 	}
 
+	disk, err := convertDiskCustomizations(rbpc.Disk)
+	if err != nil {
+		return nil, err
+	}
+	c.Disk = disk
+
 	return c, nil
 }
 
@@ -1053,6 +1059,12 @@ func (request *ComposeRequest) GetBlueprintFromCustomizations() (blueprint.Bluep
 		}
 
 		bp.Customizations.RHSM = bpRhsm
+
+	}
+
+	bp.Customizations.Disk, err = convertDiskCustomizations(request.Customizations.Disk)
+	if err != nil {
+		return bp, err
 	}
 
 	if cacerts := request.Customizations.Cacerts; cacerts != nil {
@@ -1275,4 +1287,94 @@ func (request *ComposeRequest) GetImageRequests(distroFactory *distrofactory.Fac
 		})
 	}
 	return irs, nil
+}
+
+func convertDiskCustomizations(disk *Disk) (*blueprint.DiskCustomization, error) {
+	if disk == nil {
+		return nil, nil
+	}
+
+	bpDisk := &blueprint.DiskCustomization{
+		MinSize: common.DerefOrDefault(disk.Minsize),
+		Type:    string(common.DerefOrDefault(disk.Type)),
+	}
+
+	for idx, partition := range disk.Partitions {
+		// partition successfully converts to all three types, so convert to
+		// filesystem to sniff the type string
+		sniffer, err := partition.AsFilesystemTyped()
+		if err != nil {
+			return nil, fmt.Errorf("failed to deserialize disk customization partition %d", idx)
+		}
+
+		var bpPartition blueprint.PartitionCustomization
+		switch partType := common.DerefOrDefault(sniffer.Type); string(partType) {
+		case string(Plain):
+			fs, err := partition.AsFilesystemTyped()
+			if err != nil {
+				return nil, fmt.Errorf("failed to deserialize disk customization partition %d with type %q", idx, partType)
+			}
+			bpPartition = blueprint.PartitionCustomization{
+				Type:     string(common.DerefOrDefault(fs.Type)),
+				PartType: common.DerefOrDefault(fs.PartType),
+				MinSize:  common.DerefOrDefault(fs.Minsize),
+				FilesystemTypedCustomization: blueprint.FilesystemTypedCustomization{
+					Mountpoint: fs.Mountpoint,
+					Label:      common.DerefOrDefault(fs.Label),
+					FSType:     string(common.DerefOrDefault(fs.FsType)),
+				},
+			}
+		case string(Btrfs):
+			btrfsVol, err := partition.AsBtrfsVolume()
+			if err != nil {
+				return nil, fmt.Errorf("failed to deserialize disk customization partition %d with type %q", idx, partType)
+			}
+
+			bpPartition = blueprint.PartitionCustomization{
+				Type:     string(common.DerefOrDefault(btrfsVol.Type)),
+				PartType: common.DerefOrDefault(btrfsVol.PartType),
+				MinSize:  common.DerefOrDefault(btrfsVol.Minsize),
+			}
+
+			for _, subvol := range btrfsVol.Subvolumes {
+				bpSubvol := blueprint.BtrfsSubvolumeCustomization{
+					Name:       subvol.Name,
+					Mountpoint: subvol.Mountpoint,
+				}
+				bpPartition.Subvolumes = append(bpPartition.Subvolumes, bpSubvol)
+			}
+		case string(Lvm):
+			vg, err := partition.AsVolumeGroup()
+			if err != nil {
+				return nil, fmt.Errorf("failed to deserialize disk customization partition %d with type %q", idx, partType)
+			}
+			bpPartition = blueprint.PartitionCustomization{
+				Type:     string(common.DerefOrDefault(vg.Type)),
+				PartType: common.DerefOrDefault(vg.PartType),
+				MinSize:  common.DerefOrDefault(vg.Minsize),
+				VGCustomization: blueprint.VGCustomization{
+					Name: common.DerefOrDefault(vg.Name),
+				},
+			}
+
+			for _, lv := range vg.LogicalVolumes {
+				bpLV := blueprint.LVCustomization{
+					Name:    common.DerefOrDefault(lv.Name),
+					MinSize: common.DerefOrDefault(lv.Minsize),
+					FilesystemTypedCustomization: blueprint.FilesystemTypedCustomization{
+						Mountpoint: lv.Mountpoint,
+						Label:      common.DerefOrDefault(lv.Label),
+						FSType:     string(common.DerefOrDefault(lv.FsType)),
+					},
+				}
+				bpPartition.LogicalVolumes = append(bpPartition.LogicalVolumes, bpLV)
+			}
+		default:
+			return nil, fmt.Errorf("disk customization partition %d has invalid or unknown type %q", idx, partType)
+
+		}
+		bpDisk.Partitions = append(bpDisk.Partitions, bpPartition)
+	}
+
+	return bpDisk, nil
 }
