@@ -485,6 +485,8 @@ func (rbp *Blueprint) GetCustomizationsFromBlueprintRequest() (*blueprint.Custom
 		c.RHSM = bpRhsm
 	}
 
+	c.Disk = convertDiskCustomizations(rbpc.Disk)
+
 	return c, nil
 }
 
@@ -1035,7 +1037,10 @@ func (request *ComposeRequest) GetBlueprintFromCustomizations() (blueprint.Bluep
 		}
 
 		bp.Customizations.RHSM = bpRhsm
+
 	}
+
+	bp.Customizations.Disk = convertDiskCustomizations(request.Customizations.Disk)
 
 	if cacerts := request.Customizations.Cacerts; cacerts != nil {
 		bp.Customizations.CACerts = &blueprint.CACustomization{
@@ -1257,4 +1262,72 @@ func (request *ComposeRequest) GetImageRequests(distroFactory *distrofactory.Fac
 		})
 	}
 	return irs, nil
+}
+
+func convertDiskCustomizations(disk *Disk) *blueprint.DiskCustomization {
+	if disk == nil {
+		return nil
+	}
+
+	bpDisk := &blueprint.DiskCustomization{
+		MinSize: common.DerefOrDefault(disk.Minsize),
+		Type:    string(common.DerefOrDefault(disk.Type)),
+	}
+	for _, partitionIface := range disk.Partitions {
+		var bpPartition blueprint.PartitionCustomization
+		switch partition := partitionIface.(type) {
+		case FilesystemTyped:
+			bpPartition = blueprint.PartitionCustomization{
+				Type:     string(common.DerefOrDefault(partition.Type)),
+				PartType: common.DerefOrDefault(partition.PartType),
+				MinSize:  common.DerefOrDefault(partition.Minsize),
+				FilesystemTypedCustomization: blueprint.FilesystemTypedCustomization{
+					Mountpoint: partition.Mountpoint,
+					Label:      common.DerefOrDefault(partition.Label),
+					FSType:     common.DerefOrDefault(partition.FsType),
+				},
+			}
+
+		case BtrfsVolume:
+			bpPartition = blueprint.PartitionCustomization{
+				Type:     string(common.DerefOrDefault(partition.Type)),
+				PartType: common.DerefOrDefault(partition.PartType),
+				MinSize:  common.DerefOrDefault(partition.Minsize),
+			}
+
+			for _, subvol := range partition.Subvolumes {
+				bpSubvol := blueprint.BtrfsSubvolumeCustomization{
+					Name:       subvol.Name,
+					Mountpoint: subvol.Mountpoint,
+				}
+				bpPartition.Subvolumes = append(bpPartition.Subvolumes, bpSubvol)
+			}
+
+		case VolumeGroup:
+			bpPartition = blueprint.PartitionCustomization{
+				Type:     string(common.DerefOrDefault(partition.Type)),
+				PartType: common.DerefOrDefault(partition.PartType),
+				MinSize:  common.DerefOrDefault(partition.Minsize),
+				VGCustomization: blueprint.VGCustomization{
+					Name: common.DerefOrDefault(partition.Name),
+				},
+			}
+
+			for _, lv := range partition.LogicalVolumes {
+				bpLV := blueprint.LVCustomization{
+					Name:    common.DerefOrDefault(lv.Name),
+					MinSize: common.DerefOrDefault(lv.Minsize),
+					FilesystemTypedCustomization: blueprint.FilesystemTypedCustomization{
+						Mountpoint: lv.Mountpoint,
+						Label:      common.DerefOrDefault(lv.Label),
+						FSType:     common.DerefOrDefault(lv.FsType),
+					},
+				}
+				bpPartition.LogicalVolumes = append(bpPartition.LogicalVolumes, bpLV)
+			}
+		}
+		bpDisk.Partitions = append(bpDisk.Partitions, bpPartition)
+	}
+
+	return bpDisk
 }

@@ -6,6 +6,7 @@ import (
 
 	repos "github.com/osbuild/images/data/repositories"
 	"github.com/osbuild/images/pkg/customizations/subscription"
+	"github.com/osbuild/images/pkg/datasizes"
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/distrofactory"
 	"github.com/osbuild/images/pkg/reporegistry"
@@ -177,6 +178,60 @@ func GetTestBlueprint() blueprint.Blueprint {
 				},
 			},
 		},
+		Disk: &blueprint.DiskCustomization{
+			MinSize: 10,
+			Partitions: []blueprint.PartitionCustomization{
+				{
+					Type: "plain",
+					FilesystemTypedCustomization: blueprint.FilesystemTypedCustomization{
+						FSType:     "xfs",
+						Label:      "data",
+						Mountpoint: "/data",
+					},
+				},
+				{
+					Type:    "btrfs",
+					MinSize: 100 * datasizes.MiB,
+					BtrfsVolumeCustomization: blueprint.BtrfsVolumeCustomization{
+						Subvolumes: []blueprint.BtrfsSubvolumeCustomization{
+							{
+								Name:       "+subvols/db1",
+								Mountpoint: "/data/db1",
+							},
+							{
+								Name:       "+subvols/db2",
+								Mountpoint: "/data/db2",
+							},
+						},
+					},
+				},
+				{
+					Type:     "lvm",
+					MinSize:  10 * datasizes.GiB,
+					PartType: "E6D6D379-F507-44C2-A23C-238F2A3DF928",
+					VGCustomization: blueprint.VGCustomization{
+						Name: "vg000001",
+						LogicalVolumes: []blueprint.LVCustomization{
+							{
+								Name: "rootlv",
+								FilesystemTypedCustomization: blueprint.FilesystemTypedCustomization{
+									Mountpoint: "/",
+									FSType:     "ext4",
+								},
+							},
+							{
+								Name:    "homelv",
+								MinSize: 3 * datasizes.GiB,
+								FilesystemTypedCustomization: blueprint.FilesystemTypedCustomization{
+									Mountpoint: "/home",
+									Label:      "home",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	return expected
@@ -330,6 +385,54 @@ func TestGetBlueprintFromCustomizations(t *testing.T) {
 					},
 					Rhsmcertd: &SubManRHSMCertdConfig{
 						AutoRegistration: common.ToPtr(false),
+					},
+				},
+			},
+		},
+		Disk: &Disk{
+			Minsize: common.ToPtr(uint64(10)),
+			Partitions: []Partition{
+				FilesystemTyped{
+					Type:       common.ToPtr(FilesystemTypedTypePlain),
+					Minsize:    nil,
+					FsType:     common.ToPtr("xfs"),
+					Label:      common.ToPtr("data"),
+					Mountpoint: "/data",
+				},
+				BtrfsVolume{
+					Type:    common.ToPtr(BtrfsVolumeTypeBtrfs),
+					Minsize: common.ToPtr(uint64(100 * datasizes.MiB)),
+					Subvolumes: []BtrfsSubvolume{
+						{
+							Mountpoint: "/data/db1",
+							Name:       "+subvols/db1",
+						},
+						{
+							Mountpoint: "/data/db2",
+							Name:       "+subvols/db2",
+						},
+					},
+				},
+				VolumeGroup{
+					Type:     common.ToPtr(VolumeGroupTypeLvm),
+					Minsize:  common.ToPtr(uint64(10 * datasizes.GiB)),
+					Name:     common.ToPtr("vg000001"),
+					PartType: common.ToPtr("E6D6D379-F507-44C2-A23C-238F2A3DF928"),
+					LogicalVolumes: []LogicalVolume{
+						{
+							FsType:     common.ToPtr("ext4"),
+							Label:      nil,
+							Minsize:    nil,
+							Mountpoint: "/",
+							Name:       common.ToPtr("rootlv"),
+						},
+						{
+							FsType:     nil,
+							Label:      common.ToPtr("home"),
+							Minsize:    common.ToPtr(uint64(3) * datasizes.GiB),
+							Mountpoint: "/home",
+							Name:       common.ToPtr("homelv"),
+						},
 					},
 				},
 			},
@@ -510,6 +613,54 @@ func TestGetBlueprintFromCompose(t *testing.T) {
 						},
 						Rhsmcertd: &SubManRHSMCertdConfig{
 							AutoRegistration: common.ToPtr(false),
+						},
+					},
+				},
+			},
+			Disk: &Disk{
+				Minsize: common.ToPtr(uint64(10)),
+				Partitions: []Partition{
+					FilesystemTyped{
+						Type:       common.ToPtr(FilesystemTypedTypePlain),
+						Minsize:    nil,
+						FsType:     common.ToPtr("xfs"),
+						Label:      common.ToPtr("data"),
+						Mountpoint: "/data",
+					},
+					BtrfsVolume{
+						Type:    common.ToPtr(BtrfsVolumeTypeBtrfs),
+						Minsize: common.ToPtr(uint64(100 * datasizes.MiB)),
+						Subvolumes: []BtrfsSubvolume{
+							{
+								Mountpoint: "/data/db1",
+								Name:       "+subvols/db1",
+							},
+							{
+								Mountpoint: "/data/db2",
+								Name:       "+subvols/db2",
+							},
+						},
+					},
+					VolumeGroup{
+						Type:     common.ToPtr(VolumeGroupTypeLvm),
+						Minsize:  common.ToPtr(uint64(10 * datasizes.GiB)),
+						Name:     common.ToPtr("vg000001"),
+						PartType: common.ToPtr("E6D6D379-F507-44C2-A23C-238F2A3DF928"),
+						LogicalVolumes: []LogicalVolume{
+							{
+								FsType:     common.ToPtr("ext4"),
+								Label:      nil,
+								Minsize:    nil,
+								Mountpoint: "/",
+								Name:       common.ToPtr("rootlv"),
+							},
+							{
+								FsType:     nil,
+								Label:      common.ToPtr("home"),
+								Minsize:    common.ToPtr(uint64(3) * datasizes.GiB),
+								Mountpoint: "/home",
+								Name:       common.ToPtr("homelv"),
+							},
 						},
 					},
 				},
