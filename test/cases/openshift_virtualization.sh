@@ -152,9 +152,9 @@ sudo composer-cli compose delete "${COMPOSE_ID}" > /dev/null
 # install the OpenShift cli & virtctl binary
 sudo dnf -y install wget
 # https://docs.openshift.com/container-platform/4.13/cli_reference/openshift_cli/getting-started-cli.html
-wget --no-check-certificate https://downloads-openshift-console.apps.ocp-virt.prod.psi.redhat.com/amd64/linux/oc.tar --directory-prefix "$TEMPDIR"
+wget --no-check-certificate https://downloads-openshift-console.apps.prod-scale-spoke1-aws-us-east-1.itup.redhat.com/amd64/linux/oc.tar --directory-prefix "$TEMPDIR"
 # https://docs.openshift.com/container-platform/4.13/virt/virt-using-the-cli-tools.html
-wget --no-check-certificate https://hyperconverged-cluster-cli-download-openshift-cnv.apps.ocp-virt.prod.psi.redhat.com/amd64/linux/virtctl.tar.gz --directory-prefix "$TEMPDIR"
+wget --no-check-certificate https://hyperconverged-cluster-cli-download-openshift-cnv.apps.prod-scale-spoke1-aws-us-east-1.itup.redhat.com/amd64/linux/virtctl.tar.gz --directory-prefix "$TEMPDIR"
 pushd "$TEMPDIR"
 tar -xvf oc.tar
 tar -xzvf virtctl.tar.gz
@@ -166,19 +166,19 @@ chmod a+x "$VIRTCTL"
 
 
 # Authenticate via the gitlab-ci service account
-# oc describe secret gitab-ci-token-g7sw2
-$OC_CLI login --token="$OPENSHIFT_TOKEN" --server=https://api.ocp-virt.prod.psi.redhat.com:6443 --insecure-skip-tls-verify=true
+$OC_CLI login --token="$ITUP_OPENSHIFT_TOKEN" --server=https://api.prod-scale-spoke1-aws-us-east-1.prod-scale-mgmthub1-aws-us-east-1.itup.redhat.com/ --insecure-skip-tls-verify=true
 $OC_CLI whoami
 
-OPENSHIFT_PROJECT="image-builder"
+OPENSHIFT_PROJECT="image-builder--runtime-int"
 $OC_CLI project $OPENSHIFT_PROJECT
 
+# Note: rh-restricted-nfs is the default StorageClass, see
+# https://console-openshift-console.apps.prod-scale-spoke1-aws-us-east-1.itup.redhat.com/k8s/cluster/storage.k8s.io~v1~StorageClass
+STORAGE_CLASS="rh-restricted-nfs"
 
-# import the image into a data volume; total quota on the namespace seems to be 40GiB
-# Note: ocs-external-storagecluster-ceph-rbd is the default StorageClass, see
-# https://console-openshift-console.apps.ocp-virt.prod.psi.redhat.com/k8s/cluster/storage.k8s.io~v1~StorageClass
+# import the image into a data volume; total quota on the namespace seems to be 500 GiB
 PVC_NAME="image-builder-data-volume-$TEST_ID"
-$VIRTCTL image-upload --insecure dv "$PVC_NAME" --size=10Gi --storage-class=ocs-external-storagecluster-ceph-rbd --image-path="${IMAGE_FILENAME}"
+"$VIRTCTL" image-upload --insecure dv "$PVC_NAME" --size=10Gi --storage-class="${STORAGE_CLASS}" --image-path="${IMAGE_FILENAME}"
 # Note: --size=10Gi corresponds to the size of the filesystem inside the image, not the actual size of the qcow2 file
 
 PVC_VOLUME_ID=$($OC_CLI get pvc "$PVC_NAME" -o json | jq -r ".spec.volumeName")
@@ -187,14 +187,12 @@ PVC_VOLUME_ID=$($OC_CLI get pvc "$PVC_NAME" -o json | jq -r ".spec.volumeName")
 VM_NAME="image-builder-vm-$TEST_ID"
 VM_YAML_FILE=${TEMPDIR}/vm.yaml
 
-tee "$VM_YAML_FILE" > /dev/null << EOF
-apiVersion: kubevirt.io/v1alpha3
+tee "$VM_YAML_FILE" >/dev/null <<EOF
+apiVersion: kubevirt.io/v1
 kind: VirtualMachine
 metadata:
   name: $VM_NAME
-  namespace: $OPENSHIFT_PROJECT
-  labels:
-    app: $VM_NAME
+  namespace: image-builder--runtime-int
 spec:
   dataVolumeTemplates:
     - apiVersion: cdi.kubevirt.io/v1alpha1
@@ -208,48 +206,33 @@ spec:
           resources:
             requests:
               storage: 15G
-          storageClassName: ocs-external-storagecluster-ceph-rbd
+          storageClassName: $STORAGE_CLASS
           volumeName: $PVC_VOLUME_ID
           volumeMode: Filesystem
         source:
           pvc:
             name: $PVC_NAME
             namespace: $OPENSHIFT_PROJECT
+  instancetype:
+    name: u1.small
   running: true
   template:
+    metadata:
+      labels:
+        network.kubevirt.io/headlessService: headless
     spec:
       domain:
-        cpu:
-          cores: 1
-          sockets: 1
-          threads: 1
         devices:
-          disks:
-            - bootOrder: 1
-              disk:
-                bus: virtio
-              name: disk-0
-            - disk:
-                bus: virtio
-              name: cloudinitdisk
+          autoattachPodInterface: false
+          disks: []
           interfaces:
-            - bootOrder: 2
-              masquerade: {}
-              model: virtio
-              name: nic0
-          networkInterfaceMultiqueue: true
-          rng: {}
-        machine:
-          type: pc-q35-rhel8.2.0
-        resources:
-          requests:
-            memory: 2Gi
-      evictionStrategy: LiveMigrate
+            - masquerade: {}
+              name: default
       hostname: $VM_NAME
       networks:
-        - name: nic0
+        - name: default
           pod: {}
-      terminationGracePeriodSeconds: 0
+      subdomain: headless
       volumes:
         - dataVolume:
             name: $PVC_NAME
