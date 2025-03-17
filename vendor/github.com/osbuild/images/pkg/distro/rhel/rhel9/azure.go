@@ -26,7 +26,7 @@ func mkAzureImgType(rd *rhel.Distribution) *rhel.ImageType {
 		[]string{"vpc"},
 	)
 
-	it.KernelOptions = defaultAzureKernelOptions
+	it.KernelOptions = defaultAzureKernelOptions()
 	it.Bootable = true
 	it.DefaultSize = 4 * datasizes.GibiByte
 	it.DefaultImageConfig = defaultAzureImageConfig(rd)
@@ -51,7 +51,7 @@ func mkAzureInternalImgType(rd *rhel.Distribution) *rhel.ImageType {
 	)
 
 	it.Compression = "xz"
-	it.KernelOptions = defaultAzureKernelOptions
+	it.KernelOptions = defaultAzureKernelOptions()
 	it.Bootable = true
 	it.DefaultSize = 64 * datasizes.GibiByte
 	it.DefaultImageConfig = defaultAzureImageConfig(rd)
@@ -75,7 +75,7 @@ func mkAzureSapInternalImgType(rd *rhel.Distribution) *rhel.ImageType {
 	)
 
 	it.Compression = "xz"
-	it.KernelOptions = defaultAzureKernelOptions
+	it.KernelOptions = defaultAzureKernelOptions()
 	it.Bootable = true
 	it.DefaultSize = 64 * datasizes.GibiByte
 	it.DefaultImageConfig = sapAzureImageConfig(rd)
@@ -413,7 +413,9 @@ func azureInternalBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, b
 // IMAGE CONFIG
 
 // use loglevel=3 as described in the RHEL documentation and used in existing RHEL images built by MSFT
-const defaultAzureKernelOptions = "ro loglevel=3 console=tty1 console=ttyS0 earlyprintk=ttyS0 rootdelay=300"
+func defaultAzureKernelOptions() []string {
+	return []string{"ro", "loglevel=3", "console=tty1", "console=ttyS0", "earlyprintk=ttyS0", "rootdelay=300"}
+}
 
 // based on https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/9/html/deploying_rhel_9_on_microsoft_azure/assembly_deploying-a-rhel-image-as-a-virtual-machine-on-microsoft-azure_cloud-content-azure#making-configuration-changes_configure-the-image-azure
 func defaultAzureImageConfig(rd *rhel.Distribution) *distro.ImageConfig {

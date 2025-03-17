@@ -42,6 +42,10 @@ type OSTreeDeploymentCustomizations struct {
 	// Lock the root account in the deployment unless the user defined root
 	// user options in the build configuration.
 	LockRoot bool
+
+	// MountUnits creates systemd .mount units to describe the filesystem
+	// instead of writing to /etc/fstab
+	MountUnits bool
 }
 
 // OSTreeDeployment represents the filesystem tree of a target image based
@@ -289,7 +293,10 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 			},
 		},
 	}))
-	kernelOpts := osbuild.GenImageKernelOptions(p.PartitionTable)
+	_, kernelOpts, err := osbuild.GenImageKernelOptions(p.PartitionTable, p.MountUnits)
+	if err != nil {
+		panic(err)
+	}
 	kernelOpts = append(kernelOpts, p.KernelOptionsAppend...)
 
 	if p.IgnitionPlatform != "" {
@@ -329,13 +336,14 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 	configStage.MountOSTree(p.osName, ref, 0)
 	pipeline.AddStage(configStage)
 
-	fstabOptions, err := osbuild.NewFSTabStageOptions(p.PartitionTable)
+	fsCfgStages, err := filesystemConfigStages(p.PartitionTable, p.MountUnits)
 	if err != nil {
 		panic(err)
 	}
-	fstabStage := osbuild.NewFSTabStage(fstabOptions)
-	fstabStage.MountOSTree(p.osName, ref, 0)
-	pipeline.AddStage(fstabStage)
+	for _, stage := range fsCfgStages {
+		stage.MountOSTree(p.osName, ref, 0)
+		pipeline.AddStage(stage)
+	}
 
 	if len(p.Groups) > 0 {
 		grpStage := osbuild.GenGroupsStage(p.Groups)

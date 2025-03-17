@@ -8,7 +8,9 @@ import (
 	"github.com/osbuild/images/pkg/rpmmd"
 )
 
-const vmdkKernelOptions = "ro net.ifnames=0"
+func vmdkKernelOptions() []string {
+	return []string{"ro", "net.ifnames=0"}
+}
 
 func mkVMDKImgType() *rhel.ImageType {
 	it := rhel.NewImageType(
@@ -27,7 +29,7 @@ func mkVMDKImgType() *rhel.ImageType {
 	it.DefaultImageConfig = &distro.ImageConfig{
 		Locale: common.ToPtr("en_US.UTF-8"),
 	}
-	it.KernelOptions = vmdkKernelOptions
+	it.KernelOptions = vmdkKernelOptions()
 	it.Bootable = true
 	it.DefaultSize = 4 * datasizes.GibiByte
 	it.BasePartitionTables = defaultBasePartitionTables
@@ -52,7 +54,7 @@ func mkOVAImgType() *rhel.ImageType {
 	it.DefaultImageConfig = &distro.ImageConfig{
 		Locale: common.ToPtr("en_US.UTF-8"),
 	}
-	it.KernelOptions = vmdkKernelOptions
+	it.KernelOptions = vmdkKernelOptions()
 	it.Bootable = true
 	it.DefaultSize = 4 * datasizes.GibiByte
 	it.BasePartitionTables = defaultBasePartitionTables

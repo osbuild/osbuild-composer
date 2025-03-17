@@ -14,9 +14,9 @@ import (
 	"github.com/osbuild/images/pkg/rpmmd"
 )
 
-const (
-	ec2KernelOptions = "ro console=tty0 console=ttyS0,115200n8 net.ifnames=0 rd.blacklist=nouveau nvme_core.io_timeout=4294967295 crashkernel=auto LANG=en_US.UTF-8"
-)
+func ec2KernelOptions() []string {
+	return []string{"ro", "console=tty0", "console=ttyS0,115200n8", "net.ifnames=0", "rd.blacklist=nouveau", "nvme_core.io_timeout=4294967295", "crashkernel=auto", "LANG=en_US.UTF-8"}
+}
 
 func mkEc2ImgTypeX86_64() *rhel.ImageType {
 	it := rhel.NewImageType(
@@ -37,7 +37,7 @@ func mkEc2ImgTypeX86_64() *rhel.ImageType {
 
 	it.Compression = "xz"
 	it.DefaultImageConfig = ec2ImageConfig()
-	it.KernelOptions = ec2KernelOptions
+	it.KernelOptions = ec2KernelOptions()
 	it.Bootable = true
 	it.DefaultSize = 10 * datasizes.GibiByte
 	it.BasePartitionTables = ec2PartitionTables

@@ -157,6 +157,10 @@ type OSCustomizations struct {
 	// Determines if the machine id should be set to "uninitialized" which allows
 	// "ConditionFirstBoot" to work in systemd
 	MachineIdUninitialized bool
+
+	// MountUnits creates systemd .mount units to describe the filesystem
+	// instead of writing to /etc/fstab
+	MountUnits bool
 }
 
 // OS represents the filesystem tree of the target image. This roughly
@@ -476,7 +480,9 @@ func (p *OS) serialize() osbuild.Pipeline {
 		}
 	}
 
-	pipeline.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: p.Language}))
+	if p.Language != "" {
+		pipeline.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: p.Language}))
+	}
 
 	if p.Keyboard != nil {
 		keymapOptions := &osbuild.KeymapStageOptions{Keymap: *p.Keyboard}
@@ -489,7 +495,10 @@ func (p *OS) serialize() osbuild.Pipeline {
 	if p.Hostname != "" {
 		pipeline.AddStage(osbuild.NewHostnameStage(&osbuild.HostnameStageOptions{Hostname: p.Hostname}))
 	}
-	pipeline.AddStage(osbuild.NewTimezoneStage(&osbuild.TimezoneStageOptions{Zone: p.Timezone}))
+
+	if p.Timezone != "" {
+		pipeline.AddStage(osbuild.NewTimezoneStage(&osbuild.TimezoneStageOptions{Zone: p.Timezone}))
+	}
 
 	if len(p.NTPServers) > 0 {
 		chronyOptions := &osbuild.ChronyStageOptions{Servers: p.NTPServers}
@@ -633,7 +642,10 @@ func (p *OS) serialize() osbuild.Pipeline {
 	}
 
 	if pt := p.PartitionTable; pt != nil {
-		kernelOptions := osbuild.GenImageKernelOptions(p.PartitionTable)
+		rootUUID, kernelOptions, err := osbuild.GenImageKernelOptions(p.PartitionTable, p.MountUnits)
+		if err != nil {
+			panic(err)
+		}
 		kernelOptions = append(kernelOptions, p.KernelOptionsAppend...)
 
 		if p.FIPS {
@@ -644,15 +656,11 @@ func (p *OS) serialize() osbuild.Pipeline {
 			}))
 		}
 
-		if !p.KernelOptionsBootloader || p.platform.GetArch() == arch.ARCH_S390X {
-			pipeline = prependKernelCmdlineStage(pipeline, strings.Join(kernelOptions, " "), pt)
-		}
-
-		opts, err := osbuild.NewFSTabStageOptions(pt)
+		fsCfgStages, err := filesystemConfigStages(pt, p.MountUnits)
 		if err != nil {
 			panic(err)
 		}
-		pipeline.AddStage(osbuild.NewFSTabStage(opts))
+		pipeline.AddStages(fsCfgStages...)
 
 		var bootloader *osbuild.Stage
 		switch p.platform.GetArch() {
@@ -708,6 +716,10 @@ func (p *OS) serialize() osbuild.Pipeline {
 		}
 
 		pipeline.AddStage(bootloader)
+
+		if !p.KernelOptionsBootloader || p.platform.GetArch() == arch.ARCH_S390X {
+			pipeline = prependKernelCmdlineStage(pipeline, rootUUID, kernelOptions)
+		}
 	}
 
 	if p.RHSMFacts != nil {
@@ -890,13 +902,8 @@ func (p *OS) serialize() osbuild.Pipeline {
 	return pipeline
 }
 
-func prependKernelCmdlineStage(pipeline osbuild.Pipeline, kernelOptions string, pt *disk.PartitionTable) osbuild.Pipeline {
-	rootFs := pt.FindMountable("/")
-	if rootFs == nil {
-		panic("root filesystem must be defined for kernel-cmdline stage, this is a programming error")
-	}
-	rootFsUUID := rootFs.GetFSSpec().UUID
-	kernelStage := osbuild.NewKernelCmdlineStage(osbuild.NewKernelCmdlineStageOptions(rootFsUUID, kernelOptions))
+func prependKernelCmdlineStage(pipeline osbuild.Pipeline, rootUUID string, kernelOptions []string) osbuild.Pipeline {
+	kernelStage := osbuild.NewKernelCmdlineStage(osbuild.NewKernelCmdlineStageOptions(rootUUID, strings.Join(kernelOptions, " ")))
 	pipeline.Stages = append([]*osbuild.Stage{kernelStage}, pipeline.Stages...)
 	return pipeline
 }

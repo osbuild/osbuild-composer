@@ -44,6 +44,10 @@ type RawBootcImage struct {
 	// SELinux policy, when set it enables the labeling of the tree with the
 	// selected profile
 	SELinux string
+
+	// MountUnits creates systemd .mount units to describe the filesystem
+	// instead of writing to /etc/fstab
+	MountUnits bool
 }
 
 func (p RawBootcImage) Filename() string {
@@ -168,17 +172,15 @@ func (p *RawBootcImage) serialize() osbuild.Pipeline {
 	mounts = append(mounts, *osbuild.NewOSTreeDeploymentMountDefault("ostree.deployment", osbuild.OSTreeMountSourceMount))
 	mounts = append(mounts, *osbuild.NewBindMount("bind-ostree-deployment-to-tree", "mount://", "tree://"))
 
-	// we always include the fstab stage
-	// XXX: see issue#756 - if we stop doing this, conditionally
-	// apply selinux again
-	fstabOpts, err := osbuild.NewFSTabStageOptions(pt)
+	fsCfgStages, err := filesystemConfigStages(pt, p.MountUnits)
 	if err != nil {
 		panic(err)
 	}
-	fstabStage := osbuild.NewFSTabStage(fstabOpts)
-	fstabStage.Mounts = mounts
-	fstabStage.Devices = devices
-	pipeline.AddStage(fstabStage)
+	for _, stage := range fsCfgStages {
+		stage.Mounts = mounts
+		stage.Devices = devices
+		pipeline.AddStage(stage)
+	}
 
 	// customize the image
 	if len(p.Groups) > 0 {

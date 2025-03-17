@@ -58,6 +58,7 @@ type AnacondaTarInstaller struct {
 
 	RootfsCompression string
 	RootfsType        manifest.RootfsType
+	ISOBoot           manifest.ISOBootType
 
 	ISOLabel  string
 	Product   string
@@ -184,9 +185,6 @@ func (img *AnacondaTarInstaller) InstantiateManifest(m *manifest.Manifest,
 	osPipeline.Environment = img.Environment
 	osPipeline.Workload = img.Workload
 
-	// enable ISOLinux on x86_64 only
-	isoLinuxEnabled := img.Platform.GetArch() == arch.ARCH_X86_64
-
 	isoTreePipeline := manifest.NewAnacondaInstallerISOTree(buildPipeline, anacondaPipeline, rootfsImagePipeline, bootTreePipeline)
 	// TODO: the partition table is required - make it a ctor arg or set a default one in the pipeline
 	isoTreePipeline.PartitionTable = efiBootPartitionTable(rng)
@@ -206,11 +204,11 @@ func (img *AnacondaTarInstaller) InstantiateManifest(m *manifest.Manifest,
 		isoTreePipeline.KernelOpts = append(isoTreePipeline.KernelOpts, "fips=1")
 	}
 
-	isoTreePipeline.ISOLinux = isoLinuxEnabled
+	isoTreePipeline.ISOBoot = img.ISOBoot
 
 	isoPipeline := manifest.NewISO(buildPipeline, isoTreePipeline, img.ISOLabel)
 	isoPipeline.SetFilename(img.Filename)
-	isoPipeline.ISOLinux = isoLinuxEnabled
+	isoPipeline.ISOBoot = img.ISOBoot
 
 	artifact := isoPipeline.Export()
 

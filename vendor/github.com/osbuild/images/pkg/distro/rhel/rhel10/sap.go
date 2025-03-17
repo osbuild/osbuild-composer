@@ -2,9 +2,7 @@ package rhel10
 
 import (
 	"github.com/osbuild/images/pkg/distro"
-	"github.com/osbuild/images/pkg/distro/rhel"
 	"github.com/osbuild/images/pkg/osbuild"
-	"github.com/osbuild/images/pkg/rpmmd"
 )
 
 // sapImageConfig returns the SAP specific ImageConfig data
@@ -115,60 +113,6 @@ func sapImageConfig(osVersion string) *distro.ImageConfig {
 				},
 				nil,
 			),
-		},
-	}
-}
-
-func SapPackageSet(t *rhel.ImageType) rpmmd.PackageSet {
-	return rpmmd.PackageSet{
-		Include: []string{
-			// RHBZ#2076763
-			"@Server",
-			// SAP System Roles
-			// https://access.redhat.com/sites/default/files/attachments/rhel_system_roles_for_sap_1.pdf
-			"ansible-core",
-			"rhel-system-roles-sap",
-			// RHBZ#1959813
-			"bind-utils",
-			"nfs-utils",
-			"tcsh",
-			// RHBZ#1959955
-			"uuidd",
-			// RHBZ#1959923
-			"cairo",
-			"expect",
-			"graphviz",
-			//"gtk2", // gtk2 is not available in RHEL-10
-			"iptraf-ng",
-			"krb5-workstation",
-			"libaio",
-			"libatomic",
-			"libicu",
-			"libtool-ltdl",
-			"lm_sensors",
-			"net-tools",
-			"numactl",
-			"PackageKit-gtk3-module",
-			"xorg-x11-xauth",
-			// RHBZ#1960617
-			"tuned-profiles-sap-hana",
-			// RHBZ#1961168
-			"libnsl",
-		},
-		Exclude: []string{
-			"iwl1000-firmware",
-			"iwl100-firmware",
-			"iwl105-firmware",
-			"iwl135-firmware",
-			"iwl2000-firmware",
-			"iwl2030-firmware",
-			"iwl3160-firmware",
-			"iwl5000-firmware",
-			"iwl5150-firmware",
-			"iwl6000g2a-firmware",
-			"iwl6000g2b-firmware",
-			"iwl6050-firmware",
-			"iwl7260-firmware",
 		},
 	}
 }
