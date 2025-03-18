@@ -33,13 +33,9 @@ case $ID in
     centos)
         MAJOR=$(echo "$VERSION_ID" | sed -E 's/\..*//')
         case $MAJOR in
-            8)
-                # CentOS 8 only supports building CentosOS 8
-                PATTERN="\[|\]|centos-8"
-                ;;
             9)
-                # CentOS 9 supports building CentosOS 8 and 9
-                PATTERN="\[|\]|centos-(8|9)"
+                # CentOS 9 supports building CentosOS 9
+                PATTERN="\[|\]|centos-(9)"
                 ;;
             *)
                 # CentOS 10 and later support building all releases
