@@ -1,6 +1,7 @@
 package v2
 
 import (
+	"fmt"
 	"io/fs"
 	"testing"
 
@@ -179,7 +180,7 @@ func GetTestBlueprint() blueprint.Blueprint {
 			},
 		},
 		Disk: &blueprint.DiskCustomization{
-			MinSize: 10,
+			MinSize: 20 * datasizes.GiB,
 			Partitions: []blueprint.PartitionCustomization{
 				{
 					Type: "plain",
@@ -276,11 +277,14 @@ func TestGetBlueprintFromCustomizations(t *testing.T) {
 		},
 	))
 
+	var btrfsSize Minsize
+	require.NoError(t, btrfsSize.FromMinsize0(100*datasizes.MiB))
+
 	var btrfsPart Partition
 	require.NoError(t, btrfsPart.FromBtrfsVolume(
 		BtrfsVolume{
 			Type:    common.ToPtr(Btrfs),
-			Minsize: common.ToPtr(uint64(100 * datasizes.MiB)),
+			Minsize: &btrfsSize,
 			Subvolumes: []BtrfsSubvolume{
 				{
 					Mountpoint: "/data/db1",
@@ -294,12 +298,16 @@ func TestGetBlueprintFromCustomizations(t *testing.T) {
 		},
 	))
 
+	var vgSize, lvSize Minsize
+	require.NoError(t, vgSize.FromMinsize0(10*datasizes.GiB))
+	require.NoError(t, lvSize.FromMinsize0(3*datasizes.GiB))
+
 	var vgPart Partition
 	require.NoError(t, vgPart.FromVolumeGroup(
 		VolumeGroup{
 			Type:     common.ToPtr(Lvm),
-			Minsize:  common.ToPtr(uint64(10 * datasizes.GiB)),
 			Name:     common.ToPtr("vg000001"),
+			Minsize:  &vgSize,
 			PartType: common.ToPtr("E6D6D379-F507-44C2-A23C-238F2A3DF928"),
 			LogicalVolumes: []LogicalVolume{
 				{
@@ -312,13 +320,16 @@ func TestGetBlueprintFromCustomizations(t *testing.T) {
 				{
 					FsType:     nil,
 					Label:      common.ToPtr("home"),
-					Minsize:    common.ToPtr(uint64(3) * datasizes.GiB),
+					Minsize:    &lvSize,
 					Mountpoint: "/home",
 					Name:       common.ToPtr("homelv"),
 				},
 			},
 		},
 	))
+
+	var diskSize Minsize
+	require.NoError(t, diskSize.FromMinsize1("20 GiB"))
 
 	// Construct the compose request with customizations
 	cr = ComposeRequest{Customizations: &Customizations{
@@ -451,7 +462,7 @@ func TestGetBlueprintFromCustomizations(t *testing.T) {
 			},
 		},
 		Disk: &Disk{
-			Minsize: common.ToPtr(uint64(10)),
+			Minsize: &diskSize,
 			Partitions: []Partition{
 				plainPart,
 				btrfsPart,
@@ -523,11 +534,14 @@ func TestGetBlueprintFromCompose(t *testing.T) {
 		},
 	))
 
+	var btrfsSize Minsize
+	require.NoError(t, btrfsSize.FromMinsize0(100*datasizes.MiB))
+
 	var btrfsPart Partition
 	require.NoError(t, btrfsPart.FromBtrfsVolume(
 		BtrfsVolume{
 			Type:    common.ToPtr(Btrfs),
-			Minsize: common.ToPtr(uint64(100 * datasizes.MiB)),
+			Minsize: &btrfsSize,
 			Subvolumes: []BtrfsSubvolume{
 				{
 					Mountpoint: "/data/db1",
@@ -541,11 +555,15 @@ func TestGetBlueprintFromCompose(t *testing.T) {
 		},
 	))
 
+	var vgSize, lvSize Minsize
+	require.NoError(t, vgSize.FromMinsize0(10*datasizes.GiB))
+	require.NoError(t, lvSize.FromMinsize0(3*datasizes.GiB))
+
 	var vgPart Partition
 	require.NoError(t, vgPart.FromVolumeGroup(
 		VolumeGroup{
 			Type:     common.ToPtr(Lvm),
-			Minsize:  common.ToPtr(uint64(10 * datasizes.GiB)),
+			Minsize:  &vgSize,
 			Name:     common.ToPtr("vg000001"),
 			PartType: common.ToPtr("E6D6D379-F507-44C2-A23C-238F2A3DF928"),
 			LogicalVolumes: []LogicalVolume{
@@ -559,13 +577,19 @@ func TestGetBlueprintFromCompose(t *testing.T) {
 				{
 					FsType:     nil,
 					Label:      common.ToPtr("home"),
-					Minsize:    common.ToPtr(uint64(3) * datasizes.GiB),
+					Minsize:    &lvSize,
 					Mountpoint: "/home",
 					Name:       common.ToPtr("homelv"),
 				},
 			},
 		},
 	))
+
+	var fsSize Minsize
+	require.NoError(t, fsSize.FromMinsize0(1099511627776))
+
+	var diskSize Minsize
+	require.NoError(t, diskSize.FromMinsize1("20 GiB"))
 
 	// Construct the compose request with a blueprint
 	cr = ComposeRequest{Blueprint: &Blueprint{
@@ -613,7 +637,7 @@ func TestGetBlueprintFromCompose(t *testing.T) {
 			Filesystem: &[]BlueprintFilesystem{
 				{
 					Mountpoint: "/var/lib/wopr/",
-					Minsize:    1099511627776,
+					Minsize:    fsSize,
 				},
 			},
 			Services: &Services{
@@ -700,7 +724,7 @@ func TestGetBlueprintFromCompose(t *testing.T) {
 				},
 			},
 			Disk: &Disk{
-				Minsize: common.ToPtr(uint64(10)),
+				Minsize: &diskSize,
 				Partitions: []Partition{
 					plainPart,
 					btrfsPart,
@@ -1130,4 +1154,73 @@ func TestOpenSCAPTailoringOptions(t *testing.T) {
 
 	bp, err = cr.GetBlueprintFromCustomizations()
 	assert.Error(t, err)
+}
+
+func TestDecodeMinsize(t *testing.T) {
+	type testCase struct {
+		in           *Minsize
+		expOut       uint64
+		expErrSubstr string
+	}
+
+	msStr := func(s string) *Minsize {
+		var ms Minsize
+		if err := ms.FromMinsize1(s); err != nil {
+			panic(err)
+		}
+		return &ms
+	}
+
+	msInt := func(i uint64) *Minsize {
+		var ms Minsize
+		if err := ms.FromMinsize0(i); err != nil {
+			panic(err)
+		}
+		return &ms
+	}
+
+	testCases := []testCase{
+		{
+			in:     nil,
+			expOut: 0,
+		},
+		{
+			in:     msInt(10),
+			expOut: 10,
+		},
+		{
+			in:     msInt(41 * datasizes.MiB),
+			expOut: 41 * datasizes.MiB,
+		},
+		{
+			in:     msStr("10"),
+			expOut: 10,
+		},
+		{
+			in:     msStr("32 GiB"),
+			expOut: 32 * datasizes.GiB,
+		},
+
+		{
+			in:           msStr("not a number"),
+			expErrSubstr: "the size string doesn't contain any number: not a number",
+		},
+		{
+			in:           msStr("10 GiBi"),
+			expErrSubstr: "unknown data size units in string: 10 GiBi",
+		},
+	}
+
+	for idx, tc := range testCases {
+		t.Run(fmt.Sprintf("case-%02d", idx), func(t *testing.T) {
+			assert := assert.New(t)
+			out, err := decodeMinsize(tc.in)
+			if tc.expErrSubstr != "" {
+				assert.ErrorContains(err, tc.expErrSubstr)
+			} else {
+				assert.NoError(err)
+			}
+			assert.Equal(tc.expOut, out)
+		})
+	}
 }
