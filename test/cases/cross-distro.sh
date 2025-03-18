@@ -62,11 +62,11 @@ echo "====> Starting $(basename "$0")"
 # Remove repo overrides installed by provision.sh, these will show up in the
 # list and cause it to fail and are not needed since this test doesn't build
 # anything.
-sudo rm -f /etc/osbuild-composer/repositories/*
-sudo systemctl try-restart osbuild-composer
+sudo rm -rf /etc/osbuild-composer/repositories
+sudo systemctl stop 'osbuild*.service'
+sudo composer-cli status show
 
 echo "Repository directories:"
-ls -lR /etc/osbuild-composer/repositories/
 ls -lR /usr/share/osbuild-composer/repositories/
 
 echo "Repositories installed by the rpm:"
