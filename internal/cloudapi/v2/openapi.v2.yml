@@ -2162,9 +2162,7 @@ components:
           type: string
           example: '/var'
         minsize:
-          x-go-type: uint64
-          example: 2147483648
-          description: 'size of the filesystem in bytes'
+          $ref: '#/components/schemas/minsize'
     OSTree:
       type: object
       properties:
@@ -2600,9 +2598,7 @@ components:
           description: |
             Type of the partition table
         minsize:
-          x-go-type: uint64
-          example: 2147483648
-          description: 'size of the filesystem in bytes'
+          $ref: '#/components/schemas/minsize'
         partitions:
           type: array
           items:
@@ -2628,9 +2624,7 @@ components:
           description: |
             The partition type GUID for GPT partitions. For DOS partitions, this field can be used to set the (2 hex digit) partition type. If not set, the type will be automatically set based on the mountpoint or the payload type.
         minsize:
-          x-go-type: uint64
-          example: 2147483648
-          description: 'minimum size of the filesystem in bytes'
+          $ref: '#/components/schemas/minsize'
         mountpoint:
           type: string
         label:
@@ -2657,9 +2651,7 @@ components:
           description: |
             The partition type GUID for GPT partitions. For DOS partitions, this field can be used to set the (2 hex digit) partition type. If not set, the type will be automatically set based on the mountpoint or the payload type.
         minsize:
-          x-go-type: uint64
-          example: 2147483648
-          description: 'minimum size of the btrfs volume in bytes'
+          $ref: '#/components/schemas/minsize'
         subvolumes:
           type: array
           items:
@@ -2696,9 +2688,7 @@ components:
           description: |
             Volume group name (will be automatically generated if omitted)
         minsize:
-          x-go-type: uint64
-          example: 2147483648
-          description: 'minimum size of the volume group in bytes'
+          $ref: '#/components/schemas/minsize'
         logical_volumes:
           type: array
           items:
@@ -2711,9 +2701,7 @@ components:
         name:
           type: string
         minsize:
-          x-go-type: uint64
-          example: 2147483648
-          description: 'minimum size of the logical volume in bytes'
+          $ref: '#/components/schemas/minsize'
         mountpoint:
           type: string
           description: |
@@ -2728,6 +2716,14 @@ components:
             - vfat
           description: |
             The filesystem type for the logical volume
+    minsize:
+      oneOf:
+        - x-go-type: uint64
+          example: 2147483648
+          description: 'size in bytes'
+        - type: string
+          example: "2 GiB"
+          description: 'size with data units'
 
   parameters:
     page:

@@ -1,6 +1,7 @@
 package v2
 
 import (
+	"fmt"
 	"io/fs"
 	"testing"
 
@@ -207,7 +208,7 @@ func GetTestBlueprint() blueprint.Blueprint {
 				},
 				{
 					Type:     "lvm",
-					MinSize:  10 * datasizes.GiB,
+					MinSize:  11 * datasizes.GiB,
 					PartType: "E6D6D379-F507-44C2-A23C-238F2A3DF928",
 					VGCustomization: blueprint.VGCustomization{
 						Name: "vg000001",
@@ -390,7 +391,7 @@ func TestGetBlueprintFromCustomizations(t *testing.T) {
 			},
 		},
 		Disk: &Disk{
-			Minsize: common.ToPtr(uint64(10)),
+			Minsize: common.ToPtr(Minsize(10)),
 			Partitions: []Partition{
 				FilesystemTyped{
 					Type:       common.ToPtr(FilesystemTypedTypePlain),
@@ -401,7 +402,7 @@ func TestGetBlueprintFromCustomizations(t *testing.T) {
 				},
 				BtrfsVolume{
 					Type:    common.ToPtr(BtrfsVolumeTypeBtrfs),
-					Minsize: common.ToPtr(uint64(100 * datasizes.MiB)),
+					Minsize: common.ToPtr(Minsize(uint64(100 * datasizes.MiB))),
 					Subvolumes: []BtrfsSubvolume{
 						{
 							Mountpoint: "/data/db1",
@@ -415,7 +416,7 @@ func TestGetBlueprintFromCustomizations(t *testing.T) {
 				},
 				VolumeGroup{
 					Type:     common.ToPtr(VolumeGroupTypeLvm),
-					Minsize:  common.ToPtr(uint64(10 * datasizes.GiB)),
+					Minsize:  common.ToPtr(Minsize("11 GiB")),
 					Name:     common.ToPtr("vg000001"),
 					PartType: common.ToPtr("E6D6D379-F507-44C2-A23C-238F2A3DF928"),
 					LogicalVolumes: []LogicalVolume{
@@ -429,7 +430,7 @@ func TestGetBlueprintFromCustomizations(t *testing.T) {
 						{
 							FsType:     nil,
 							Label:      common.ToPtr("home"),
-							Minsize:    common.ToPtr(uint64(3) * datasizes.GiB),
+							Minsize:    common.ToPtr(Minsize("3 GiB")),
 							Mountpoint: "/home",
 							Name:       common.ToPtr("homelv"),
 						},
@@ -618,7 +619,7 @@ func TestGetBlueprintFromCompose(t *testing.T) {
 				},
 			},
 			Disk: &Disk{
-				Minsize: common.ToPtr(uint64(10)),
+				Minsize: common.ToPtr(Minsize("10")),
 				Partitions: []Partition{
 					FilesystemTyped{
 						Type:       common.ToPtr(FilesystemTypedTypePlain),
@@ -629,7 +630,7 @@ func TestGetBlueprintFromCompose(t *testing.T) {
 					},
 					BtrfsVolume{
 						Type:    common.ToPtr(BtrfsVolumeTypeBtrfs),
-						Minsize: common.ToPtr(uint64(100 * datasizes.MiB)),
+						Minsize: common.ToPtr(Minsize(100 * datasizes.MiB)),
 						Subvolumes: []BtrfsSubvolume{
 							{
 								Mountpoint: "/data/db1",
@@ -643,7 +644,7 @@ func TestGetBlueprintFromCompose(t *testing.T) {
 					},
 					VolumeGroup{
 						Type:     common.ToPtr(VolumeGroupTypeLvm),
-						Minsize:  common.ToPtr(uint64(10 * datasizes.GiB)),
+						Minsize:  common.ToPtr(Minsize("11 GiB")),
 						Name:     common.ToPtr("vg000001"),
 						PartType: common.ToPtr("E6D6D379-F507-44C2-A23C-238F2A3DF928"),
 						LogicalVolumes: []LogicalVolume{
@@ -657,7 +658,7 @@ func TestGetBlueprintFromCompose(t *testing.T) {
 							{
 								FsType:     nil,
 								Label:      common.ToPtr("home"),
-								Minsize:    common.ToPtr(uint64(3) * datasizes.GiB),
+								Minsize:    common.ToPtr(Minsize("3 GiB")),
 								Mountpoint: "/home",
 								Name:       common.ToPtr("homelv"),
 							},
@@ -1091,4 +1092,73 @@ func TestOpenSCAPTailoringOptions(t *testing.T) {
 
 	bp, err = cr.GetBlueprintFromCustomizations()
 	assert.Error(t, err)
+}
+
+func TestDecodeMinsize(t *testing.T) {
+	type testCase struct {
+		in           *Minsize
+		expOut       uint64
+		expErrSubstr string
+	}
+
+	msStr := func(s string) *Minsize {
+		return common.ToPtr(Minsize(s))
+	}
+
+	msInt := func(i int) *Minsize {
+		return common.ToPtr(Minsize(uint64(i)))
+	}
+
+	testCases := []testCase{
+		{
+			in:     nil,
+			expOut: 0,
+		},
+		{
+			in:     msInt(10),
+			expOut: 10,
+		},
+		{
+			in:     msInt(41 * datasizes.MiB),
+			expOut: 41 * datasizes.MiB,
+		},
+		{
+			in:     msStr("10"),
+			expOut: 10,
+		},
+		{
+			in:     msStr("32 GiB"),
+			expOut: 32 * datasizes.GiB,
+		},
+		{
+			in:     common.ToPtr(Minsize(1389)), // this fails because 10 isn't a uint64
+			expOut: 1389,
+		},
+
+		{
+			in:           msStr("not a number"),
+			expErrSubstr: "the size string doesn't contain any number: not a number",
+		},
+		{
+			in:           msStr("10 GiBi"),
+			expErrSubstr: "unknown data size units in string: 10 GiBi",
+		},
+		{
+			in:           common.ToPtr(Minsize(uint32(839))), // non uint64 numbers aren't supported
+			expErrSubstr: "failed to convert value",
+		},
+	}
+
+	for idx, tc := range testCases {
+		t.Run(fmt.Sprintf("case-%02d", idx), func(t *testing.T) {
+			assert := assert.New(t)
+			out, err := decodeMinsize(tc.in)
+			if tc.expErrSubstr != "" {
+				assert.ErrorContains(err, tc.expErrSubstr)
+			} else {
+				assert.NoError(err)
+			}
+			assert.Equal(tc.expOut, out)
+		})
+	}
 }

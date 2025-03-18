@@ -11,6 +11,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/osbuild/images/pkg/customizations/subscription"
+	"github.com/osbuild/images/pkg/datasizes"
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/distrofactory"
 	"github.com/osbuild/images/pkg/reporegistry"
@@ -190,10 +191,14 @@ func (rbp *Blueprint) GetCustomizationsFromBlueprintRequest() (*blueprint.Custom
 	if rbpc.Filesystem != nil {
 		var fsCustomizations []blueprint.FilesystemCustomization
 		for _, f := range *rbpc.Filesystem {
+			minSize, err := decodeMinsize(&f.Minsize)
+			if err != nil {
+				return nil, err
+			}
 			fsCustomizations = append(fsCustomizations,
 				blueprint.FilesystemCustomization{
 					Mountpoint: f.Mountpoint,
-					MinSize:    f.Minsize,
+					MinSize:    minSize,
 				},
 			)
 		}
@@ -485,7 +490,11 @@ func (rbp *Blueprint) GetCustomizationsFromBlueprintRequest() (*blueprint.Custom
 		c.RHSM = bpRhsm
 	}
 
-	c.Disk = convertDiskCustomizations(rbpc.Disk)
+	bpDisk, err := convertDiskCustomizations(rbpc.Disk)
+	if err != nil {
+		return nil, err
+	}
+	c.Disk = bpDisk
 
 	return c, nil
 }
@@ -1040,7 +1049,11 @@ func (request *ComposeRequest) GetBlueprintFromCustomizations() (blueprint.Bluep
 
 	}
 
-	bp.Customizations.Disk = convertDiskCustomizations(request.Customizations.Disk)
+	bpDisk, err := convertDiskCustomizations(request.Customizations.Disk)
+	if err != nil {
+		return bp, err
+	}
+	bp.Customizations.Disk = bpDisk
 
 	if cacerts := request.Customizations.Cacerts; cacerts != nil {
 		bp.Customizations.CACerts = &blueprint.CACustomization{
@@ -1264,23 +1277,31 @@ func (request *ComposeRequest) GetImageRequests(distroFactory *distrofactory.Fac
 	return irs, nil
 }
 
-func convertDiskCustomizations(disk *Disk) *blueprint.DiskCustomization {
+func convertDiskCustomizations(disk *Disk) (*blueprint.DiskCustomization, error) {
 	if disk == nil {
-		return nil
+		return nil, nil
 	}
 
+	diskSize, err := decodeMinsize(disk.Minsize)
+	if err != nil {
+		return nil, err
+	}
 	bpDisk := &blueprint.DiskCustomization{
-		MinSize: common.DerefOrDefault(disk.Minsize),
+		MinSize: diskSize,
 		Type:    string(common.DerefOrDefault(disk.Type)),
 	}
 	for _, partitionIface := range disk.Partitions {
 		var bpPartition blueprint.PartitionCustomization
 		switch partition := partitionIface.(type) {
 		case FilesystemTyped:
+			fsSize, err := decodeMinsize(partition.Minsize)
+			if err != nil {
+				return nil, err
+			}
 			bpPartition = blueprint.PartitionCustomization{
 				Type:     string(common.DerefOrDefault(partition.Type)),
 				PartType: common.DerefOrDefault(partition.PartType),
-				MinSize:  common.DerefOrDefault(partition.Minsize),
+				MinSize:  fsSize,
 				FilesystemTypedCustomization: blueprint.FilesystemTypedCustomization{
 					Mountpoint: partition.Mountpoint,
 					Label:      common.DerefOrDefault(partition.Label),
@@ -1289,10 +1310,14 @@ func convertDiskCustomizations(disk *Disk) *blueprint.DiskCustomization {
 			}
 
 		case BtrfsVolume:
+			volSize, err := decodeMinsize(partition.Minsize)
+			if err != nil {
+				return nil, err
+			}
 			bpPartition = blueprint.PartitionCustomization{
 				Type:     string(common.DerefOrDefault(partition.Type)),
 				PartType: common.DerefOrDefault(partition.PartType),
-				MinSize:  common.DerefOrDefault(partition.Minsize),
+				MinSize:  volSize,
 			}
 
 			for _, subvol := range partition.Subvolumes {
@@ -1304,19 +1329,27 @@ func convertDiskCustomizations(disk *Disk) *blueprint.DiskCustomization {
 			}
 
 		case VolumeGroup:
+			vgSize, err := decodeMinsize(partition.Minsize)
+			if err != nil {
+				return nil, err
+			}
 			bpPartition = blueprint.PartitionCustomization{
 				Type:     string(common.DerefOrDefault(partition.Type)),
 				PartType: common.DerefOrDefault(partition.PartType),
-				MinSize:  common.DerefOrDefault(partition.Minsize),
+				MinSize:  vgSize,
 				VGCustomization: blueprint.VGCustomization{
 					Name: common.DerefOrDefault(partition.Name),
 				},
 			}
 
 			for _, lv := range partition.LogicalVolumes {
+				lvSize, err := decodeMinsize(lv.Minsize)
+				if err != nil {
+					return nil, err
+				}
 				bpLV := blueprint.LVCustomization{
 					Name:    common.DerefOrDefault(lv.Name),
-					MinSize: common.DerefOrDefault(lv.Minsize),
+					MinSize: lvSize,
 					FilesystemTypedCustomization: blueprint.FilesystemTypedCustomization{
 						Mountpoint: lv.Mountpoint,
 						Label:      common.DerefOrDefault(lv.Label),
@@ -1329,5 +1362,25 @@ func convertDiskCustomizations(disk *Disk) *blueprint.DiskCustomization {
 		bpDisk.Partitions = append(bpDisk.Partitions, bpPartition)
 	}
 
-	return bpDisk
+	return bpDisk, nil
+}
+
+func decodeMinsize(size *Minsize) (uint64, error) {
+	if size == nil {
+		return 0, nil
+	}
+
+	fmt.Printf("Decoding %+v (%T)\n", *size, *size)
+	// Minsize can only be converted to uint64 or string
+	switch s := (*size).(type) {
+	case string:
+		return datasizes.Parse(s)
+	case uint64:
+		return s, nil
+	case int:
+		// but let's also support plain ints for convenience with literals
+		return uint64(s), nil
+	default:
+		return 0, fmt.Errorf("failed to convert value \"%v\" to number", size)
+	}
 }
