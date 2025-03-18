@@ -35,13 +35,13 @@ function get_build_info() {
 
 # Colorful timestamped output.
 function greenprint {
-    echo -e "\033[1;32m[$(date -Isecond)] ${1}\033[0m"
+    echo -e "\033[1;32m[$(date -Isecond)] ${1}\033[0m" >&2
 }
 
 function yellowprint {
-    echo -e "\033[1;33m[$(date -Isecond)] ${1}\033[0m"
+    echo -e "\033[1;33m[$(date -Isecond)] ${1}\033[0m" >&2
 }
 
 function redprint {
-    echo -e "\033[1;31m[$(date -Isecond)] ${1}\033[0m"
+    echo -e "\033[1;31m[$(date -Isecond)] ${1}\033[0m" >&2
 }
