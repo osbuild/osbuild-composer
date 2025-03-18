@@ -191,5 +191,175 @@ EOF
     fi
 done
 
+# Function to start a compose
+# TODO: This function should be moved to shared_lib.sh
+function start_compose() {
+    local blueprint=$1
+    local image_type=${2:-qcow2}
+
+    local compose_start
+    compose_start=$(mktemp)
+    local compose_id
+
+    greenprint "🚀 Starting compose of $image_type for $blueprint blueprint"
+    sudo composer-cli --json compose start "$blueprint" "$image_type" | tee "$compose_start" >&2
+    compose_id=$(get_build_info ".build_id" "$compose_start")
+
+    greenprint "INFO: Compose started with ID: ${compose_id}"
+    echo "$compose_id"
+}
+
+# Function to wait for a compose to finish
+# TODO: This function should be moved to shared_lib.sh
+function wait_for_compose() {
+    local compose_id=$1
+    local timeout=${2:-600}
+    local compose_status
+
+    if [[ -z "$compose_id" ]]; then
+        redprint "ERROR (wait_for_compose): No compose ID provided"
+        exit 1
+    fi
+
+    local compose_info
+    compose_info=$(mktemp)
+
+    greenprint "⏱ Waiting for compose to finish: ${compose_id}"
+    while [[ $timeout -gt 0 ]]; do
+        sudo composer-cli --json compose info "${compose_id}" | tee "$compose_info" > /dev/null
+        compose_status=$(get_build_info ".queue_status" "$compose_info")
+
+        # Is the compose finished?
+        if [[ $compose_status != "RUNNING" ]] && [[ $compose_status != "WAITING" ]]; then
+            break
+        fi
+
+        # Wait 30 seconds and try again.
+        sleep 30
+        timeout=$((timeout - 30))
+    done
+
+    # Get the last compose status if the compose was still running before the last sleep
+    if [[ $compose_status == "RUNNING" ]]; then
+        sudo composer-cli --json compose info "${compose_id}" | tee "$compose_info" > /dev/null
+        compose_status=$(get_build_info ".queue_status" "$compose_info")
+    fi
+
+    if [[ $compose_status == "RUNNING" || $compose_status == "WAITING" ]] && [[ timeout -le 0 ]]; then
+        redprint "ERROR: Compose did not finish in time"
+        exit 1
+    fi
+
+    greenprint "INFO: Compose finished with status: ${compose_status}"
+
+    # Return the status of the compose
+    echo "$compose_status"
+}
+
+# Get the compose log.
+# TODO: This function should be moved to shared_lib.sh
+function get_compose_log() {
+    local compose_id=$1
+
+    if [[ -z "$compose_id" ]]; then
+        redprint "ERROR (get_compose_log): No compose ID provided"
+        exit 1
+    fi
+
+    sudo composer-cli compose log "$compose_id"
+}
+
+# Function to ensure the system is subscribed
+# Subscription is need to build RHEL GA images
+function ensure_subscription() {
+    if sudo subscription-manager status; then
+        greenprint "📋 Running on subscribed RHEL machine"
+    elif [[ -f "$V2_RHN_REGISTRATION_SCRIPT" ]]; then
+        greenprint "📋 Registering the system using registration script"
+        sudo bash "$V2_RHN_REGISTRATION_SCRIPT"
+        # Since the system was not registered, it didn't depend on the CDN repos, so don't enable them
+        sudo subscription-manager config --rhsm.manage_repos=1
+    else
+        redprint "ERROR: Not running on a subscribed RHEL machine and no registration script provided"
+        exit 1
+    fi
+}
+
+# Function to build a vanilla image for a given distro
+function test_cross_build_distro() {
+    local distro=$1
+    # default to gce image type, because building it will try importing all GPG keys that we ship in repo configs
+    local image_type=${2:-gce}
+
+    if [[ -z "$distro" ]]; then
+        redprint "ERROR (cross_build_distro): No distro provided"
+        exit 1
+    fi
+
+    greenprint "Testing cross-distro build of $distro ($image_type)"
+    local blueprint
+    blueprint=$(mktemp --suffix=".toml")
+
+    local bp_name="cross-distro-$distro"
+    cat > "$blueprint" << EOF
+name = "$bp_name"
+distro = "$distro"
+EOF
+
+    echo "INFO: $blueprint content:"
+    cat "$blueprint"
+
+    sudo composer-cli blueprints push "$blueprint"
+    local compose_id
+    compose_id=$(start_compose "$bp_name" "$image_type")
+    local compose_status
+    compose_status=$(wait_for_compose "$compose_id")
+    
+    if [[ $compose_status != "FINISHED" ]]; then
+        redprint "ERROR: Compose did not finish successfully ($compose_status)"
+        redprint "INFO: Compose logs for $compose_id:"
+        get_compose_log "$compose_id"
+        exit 1
+    fi
+}
+
+# Test cross-distro builds on RHEL and CentOS
+case $ID in
+    rhel)
+        MAJOR=$(echo "$VERSION_ID" | sed -E 's/\..*//')
+        ensure_subscription
+        case $MAJOR in
+            9)
+                # There are no new RHEL-8 releases, so just use the distro alias
+                test_cross_build_distro "rhel-8"
+                ;;
+            10)
+                # There are no new RHEL-8 releases, so just use the distro alias
+                test_cross_build_distro "rhel-8"
+                # Test building RHEL 9.5, which is the latest RHEL-9 minor version that is GA at this time
+                test_cross_build_distro "rhel-9.5"
+                ;;
+            *)
+                greenprint "INFO not testing actual cross-distro image build on $ID-$VERSION_ID"
+                ;;
+        esac
+        ;;
+    centos)
+        MAJOR=$(echo "$VERSION_ID" | sed -E 's/\..*//')
+        case $MAJOR in
+            10)
+                test_cross_build_distro "centos-9"
+                ;;
+            *)
+                greenprint "INFO not testing actual cross-distro image build on $ID-$VERSION_ID"
+                ;;
+        esac
+        ;;
+    *)
+        greenprint "INFO not testing actual cross-distro image build on $ID-$VERSION_ID"
+        ;;
+esac
+
+
 echo "🎉 All tests passed."
 exit 0
