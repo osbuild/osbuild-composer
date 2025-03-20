@@ -707,14 +707,16 @@ func stagesToPackageMetadata(stages []osbuild.RPMStageMetadata) []PackageMetadat
 		for _, rpm := range md.Packages {
 			packages = append(packages,
 				PackageMetadata{
-					Type:      "rpm",
-					Name:      rpm.Name,
-					Version:   rpm.Version,
-					Release:   rpm.Release,
-					Epoch:     rpm.Epoch,
-					Arch:      rpm.Arch,
-					Sigmd5:    common.ToPtr(rpm.SigMD5),
-					Signature: osbuild.RPMPackageMetadataToSignature(rpm),
+					PackageMetadataCommon: PackageMetadataCommon{
+						Type:      "rpm",
+						Name:      rpm.Name,
+						Version:   rpm.Version,
+						Release:   rpm.Release,
+						Epoch:     rpm.Epoch,
+						Arch:      rpm.Arch,
+						Signature: osbuild.RPMPackageMetadataToSignature(rpm),
+					},
+					Sigmd5: rpm.SigMD5,
 				},
 			)
 		}
@@ -1419,8 +1421,8 @@ func (h *apiHandlers) PostDepsolveBlueprint(ctx echo.Context) error {
 // packageSpecToPackageMetadata converts the rpmmd.PackageSpec to PackageMetadata
 // This is used to return package information from the blueprint depsolve request
 // using the common PackageMetadata format from the openapi schema.
-func packageSpecToPackageMetadata(pkgspecs []rpmmd.PackageSpec) []PackageMetadata {
-	packages := make([]PackageMetadata, 0)
+func packageSpecToPackageMetadata(pkgspecs []rpmmd.PackageSpec) []PackageMetadataCommon {
+	packages := make([]PackageMetadataCommon, 0)
 	for _, rpm := range pkgspecs {
 		// Set epoch if it is not 0
 
@@ -1429,7 +1431,7 @@ func packageSpecToPackageMetadata(pkgspecs []rpmmd.PackageSpec) []PackageMetadat
 			epoch = common.ToPtr(strconv.FormatUint(uint64(rpm.Epoch), 10))
 		}
 		packages = append(packages,
-			PackageMetadata{
+			PackageMetadataCommon{
 				Type:     "rpm",
 				Name:     rpm.Name,
 				Version:  rpm.Version,
