@@ -1053,13 +1053,14 @@ components:
           request:
             $ref: '#/components/schemas/ComposeRequest'
             description: 'Original request to create this compose'
-    PackageMetadata:
+    PackageMetadataCommon:
       required:
         - type
         - name
         - version
         - release
         - arch
+        - sigmd5
       properties:
         type:
           type: string
@@ -1073,14 +1074,21 @@ components:
           type: string
         arch:
           type: string
-        sigmd5:
-          type: string
         signature:
           type: string
         checksum:
           type: string
           description: 'Optional package checksum using ALGO:HASH form'
           example: 'sha256:525788de3dd44497c27d4172568366b20380a6b6707f0a1970473e4d97046a4f'
+    PackageMetadata:
+      allOf:
+        - $ref: '#/components/schemas/PackageMetadataCommon'
+        - type: object
+          required:
+            - sigmd5
+          properties:
+            sigmd5:
+              type: string
 
     ComposeRequest:
       additionalProperties: false
@@ -2505,7 +2513,7 @@ components:
         packages:
           type: array
           items:
-            $ref: '#/components/schemas/PackageMetadata'
+            $ref: '#/components/schemas/PackageMetadataCommon'
           description: 'Package list including NEVRA'
 
     SearchPackagesRequest:
