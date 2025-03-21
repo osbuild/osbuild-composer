@@ -1734,6 +1734,8 @@ components:
           description: List of filesystem mountpoints to create
           items:
             $ref: '#/components/schemas/BlueprintFilesystem'
+        disk:
+          $ref: '#/components/schemas/Disk'
         installation_device:
           type: string
           description: |
@@ -1785,6 +1787,8 @@ components:
           $ref: '#/components/schemas/RHSMCustomization'
         cacerts:
           $ref: '#/components/schemas/CACertsCustomization'
+        disk:
+          $ref: '#/components/schemas/Disk'
     SSHKey:
       type: object
       additionalProperties: false
@@ -1956,6 +1960,8 @@ components:
           $ref: '#/components/schemas/RHSMCustomization'
         cacerts:
           $ref: '#/components/schemas/CACertsCustomization'
+        disk:
+          $ref: '#/components/schemas/Disk'
     Container:
       type: object
       required:
@@ -2156,9 +2162,7 @@ components:
           type: string
           example: '/var'
         minsize:
-          x-go-type: uint64
-          example: 2147483648
-          description: 'size of the filesystem in bytes'
+          $ref: '#/components/schemas/minsize'
     OSTree:
       type: object
       properties:
@@ -2580,6 +2584,146 @@ components:
           type: string
         license:
           type: string
+
+    Disk:
+      type: object
+      required:
+        - partitions
+      properties:
+        type:
+          type: string
+          enum:
+            - gpt
+            - dos
+          description: |
+            Type of the partition table
+        minsize:
+          $ref: '#/components/schemas/minsize'
+        partitions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Partition'
+    Partition:
+      type: object
+      oneOf:
+        - $ref: '#/components/schemas/FilesystemTyped'
+        - $ref: '#/components/schemas/BtrfsVolume'
+        - $ref: '#/components/schemas/VolumeGroup'
+    FilesystemTyped:
+      type: object
+      required:
+        - mountpoint
+      properties:
+        type:
+          type: string
+          default: plain
+          enum:
+            - plain
+        part_type:
+          type: string
+          description: |
+            The partition type GUID for GPT partitions. For DOS partitions, this field can be used to set the (2 hex digit) partition type. If not set, the type will be automatically set based on the mountpoint or the payload type.
+        minsize:
+          $ref: '#/components/schemas/minsize'
+        mountpoint:
+          type: string
+        label:
+          type: string
+        fs_type:
+          type: string
+          emum:
+            - ext4
+            - xfs
+            - vfat
+          description: |
+            The filesystem type
+    BtrfsVolume:
+      type: object
+      required:
+        - subvolumes
+      properties:
+        type:
+          type: string
+          enum:
+            - btrfs
+        part_type:
+          type: string
+          description: |
+            The partition type GUID for GPT partitions. For DOS partitions, this field can be used to set the (2 hex digit) partition type. If not set, the type will be automatically set based on the mountpoint or the payload type.
+        minsize:
+          $ref: '#/components/schemas/minsize'
+        subvolumes:
+          type: array
+          items:
+            $ref: '#/components/schemas/BtrfsSubvolume'
+    BtrfsSubvolume:
+      type: object
+      required:
+        - name
+        - mountpoint
+      properties:
+        name:
+          type: string
+          description: |
+            The name of the subvolume, which defines the location (path) on the root volume
+        mountpoint:
+          type: string
+          description: |
+            Mountpoint for the subvolume
+    VolumeGroup:
+      type: object
+      required:
+        - logical_volumes
+      properties:
+        type:
+          type: string
+          enum:
+            - lvm
+        part_type:
+          type: string
+          description: |
+            The partition type GUID for GPT partitions. For DOS partitions, this field can be used to set the (2 hex digit) partition type. If not set, the type will be automatically set based on the mountpoint or the payload type.
+        name:
+          type: string
+          description: |
+            Volume group name (will be automatically generated if omitted)
+        minsize:
+          $ref: '#/components/schemas/minsize'
+        logical_volumes:
+          type: array
+          items:
+            $ref: '#/components/schemas/LogicalVolume'
+    LogicalVolume:
+      type: object
+      required:
+        - mountpoint
+      properties:
+        name:
+          type: string
+        minsize:
+          $ref: '#/components/schemas/minsize'
+        mountpoint:
+          type: string
+          description: |
+            Mountpoint for the logical volume
+        label:
+          type: string
+        fs_type:
+          type: string
+          emum:
+            - ext4
+            - xfs
+            - vfat
+          description: |
+            The filesystem type for the logical volume
+    minsize:
+      oneOf:
+        - x-go-type: uint64
+          example: 2147483648
+          description: 'size in bytes'
+        - type: string
+          example: "2 GiB"
+          description: 'size with data units'
 
   parameters:
     page:

@@ -262,20 +262,19 @@ func (c *Customizations) GetGroups() []GroupCustomization {
 }
 
 func (c *Customizations) GetKernel() *KernelCustomization {
-	var name string
-	var append string
+	var kernelName, kernelAppend string
 	if c != nil && c.Kernel != nil {
-		name = c.Kernel.Name
-		append = c.Kernel.Append
+		kernelName = c.Kernel.Name
+		kernelAppend = c.Kernel.Append
 	}
 
-	if name == "" {
-		name = "kernel"
+	if kernelName == "" {
+		kernelName = "kernel"
 	}
 
 	return &KernelCustomization{
-		Name:   name,
-		Append: append,
+		Name:   kernelName,
+		Append: kernelAppend,
 	}
 }
 

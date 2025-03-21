@@ -9,7 +9,7 @@ import (
 // an existing ISOTreePipeline.
 type ISO struct {
 	Base
-	ISOLinux bool
+	ISOBoot  ISOBootType
 	filename string
 
 	treePipeline Pipeline
@@ -45,13 +45,13 @@ func (p *ISO) getBuildPackages(Distro) []string {
 func (p *ISO) serialize() osbuild.Pipeline {
 	pipeline := p.Base.serialize()
 
-	pipeline.AddStage(osbuild.NewXorrisofsStage(xorrisofsStageOptions(p.Filename(), p.isoLabel, p.ISOLinux), p.treePipeline.Name()))
+	pipeline.AddStage(osbuild.NewXorrisofsStage(xorrisofsStageOptions(p.Filename(), p.isoLabel, p.ISOBoot), p.treePipeline.Name()))
 	pipeline.AddStage(osbuild.NewImplantisomd5Stage(&osbuild.Implantisomd5StageOptions{Filename: p.Filename()}))
 
 	return pipeline
 }
 
-func xorrisofsStageOptions(filename, isolabel string, isolinux bool) *osbuild.XorrisofsStageOptions {
+func xorrisofsStageOptions(filename, isolabel string, isoboot ISOBootType) *osbuild.XorrisofsStageOptions {
 	options := &osbuild.XorrisofsStageOptions{
 		Filename: filename,
 		VolID:    isolabel,
@@ -60,13 +60,20 @@ func xorrisofsStageOptions(filename, isolabel string, isolinux bool) *osbuild.Xo
 		ISOLevel: 3,
 	}
 
-	if isolinux {
+	if isoboot == SyslinuxISOBoot {
+		// Syslinux BIOS ISO creation
 		options.Boot = &osbuild.XorrisofsBoot{
 			Image:   "isolinux/isolinux.bin",
 			Catalog: "isolinux/boot.cat",
 		}
-
 		options.IsohybridMBR = "/usr/share/syslinux/isohdpfx.bin"
+	} else if isoboot == Grub2ISOBoot {
+		// grub2 BIOS ISO creation
+		options.Boot = &osbuild.XorrisofsBoot{
+			Image:   "images/eltorito.img",
+			Catalog: "boot.cat",
+		}
+		options.Grub2MBR = "/usr/lib/grub/i386-pc/boot_hybrid.img"
 	}
 
 	return options

@@ -24,6 +24,7 @@ type AnacondaContainerInstaller struct {
 
 	RootfsCompression string
 	RootfsType        manifest.RootfsType
+	ISOBoot           manifest.ISOBootType
 
 	ISOLabel  string
 	Product   string
@@ -131,9 +132,6 @@ func (img *AnacondaContainerInstaller) InstantiateManifest(m *manifest.Manifest,
 		bootTreePipeline.KernelOpts = append(bootTreePipeline.KernelOpts, "fips=1")
 	}
 
-	// enable ISOLinux on x86_64 only
-	isoLinuxEnabled := img.Platform.GetArch() == arch.ARCH_X86_64
-
 	isoTreePipeline := manifest.NewAnacondaInstallerISOTree(buildPipeline, anacondaPipeline, rootfsImagePipeline, bootTreePipeline)
 	isoTreePipeline.PartitionTable = efiBootPartitionTable(rng)
 	isoTreePipeline.Release = img.Release
@@ -147,14 +145,14 @@ func (img *AnacondaContainerInstaller) InstantiateManifest(m *manifest.Manifest,
 	isoTreePipeline.PayloadRemoveSignatures = img.ContainerRemoveSignatures
 
 	isoTreePipeline.ContainerSource = &img.ContainerSource
-	isoTreePipeline.ISOLinux = isoLinuxEnabled
+	isoTreePipeline.ISOBoot = img.ISOBoot
 	if img.FIPS {
 		isoTreePipeline.KernelOpts = append(isoTreePipeline.KernelOpts, "fips=1")
 	}
 
 	isoPipeline := manifest.NewISO(buildPipeline, isoTreePipeline, img.ISOLabel)
 	isoPipeline.SetFilename(img.Filename)
-	isoPipeline.ISOLinux = isoLinuxEnabled
+	isoPipeline.ISOBoot = img.ISOBoot
 	artifact := isoPipeline.Export()
 
 	return artifact, nil

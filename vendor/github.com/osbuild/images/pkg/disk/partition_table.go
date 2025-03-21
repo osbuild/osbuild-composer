@@ -1272,6 +1272,13 @@ func NewCustomPartitionTable(customizations *blueprint.DiskCustomization, option
 	}
 	// add user customized partitions
 	for _, part := range customizations.Partitions {
+		if part.PartType != "" {
+			// check the partition type now that we also know the partition table type
+			if err := part.ValidatePartitionTypeID(pt.Type.String()); err != nil {
+				return nil, fmt.Errorf("%s error validating partition type ID for %q: %w", errPrefix, part.Mountpoint, err)
+			}
+		}
+
 		switch part.Type {
 		case "plain", "":
 			if err := addPlainPartition(pt, part, options); err != nil {
@@ -1320,28 +1327,34 @@ func addPlainPartition(pt *PartitionTable, partition blueprint.PartitionCustomiz
 		return fmt.Errorf("error creating partition with mountpoint %q: %w", partition.Mountpoint, err)
 	}
 
-	// all user-defined partitions are data partitions except boot and swap
-	var typeName string
-	switch {
-	case partition.Mountpoint == "/":
-		typeName = "root"
-	case partition.Mountpoint == "/usr":
-		typeName = "usr"
-	case partition.Mountpoint == "/boot":
-		typeName = "boot"
-	case fstype == "swap":
-		typeName = "swap"
-	default:
-		typeName = "data"
-	}
+	partType := partition.PartType
 
-	partType, err := getPartitionTypeIDfor(pt.Type, typeName, options.Architecture)
-	if err != nil {
-		return fmt.Errorf("error getting partition type ID for %q: %w", partition.Mountpoint, err)
+	if partType == "" {
+		// if the partition type is not specified, determine it based on the
+		// mountpoint and the partition type
+
+		var typeName string
+		switch {
+		case partition.Mountpoint == "/":
+			typeName = "root"
+		case partition.Mountpoint == "/usr":
+			typeName = "usr"
+		case partition.Mountpoint == "/boot":
+			typeName = "boot"
+		case fstype == "swap":
+			typeName = "swap"
+		default:
+			typeName = "data"
+		}
+
+		partType, err = getPartitionTypeIDfor(pt.Type, typeName, options.Architecture)
+		if err != nil {
+			return fmt.Errorf("error getting partition type ID for %q: %w", partition.Mountpoint, err)
+		}
 	}
 
 	var payload PayloadEntity
-	switch typeName {
+	switch fstype {
 	case "swap":
 		payload = &Swap{
 			Label:        partition.Label,
@@ -1419,10 +1432,15 @@ func addLVMPartition(pt *PartitionTable, partition blueprint.PartitionCustomizat
 	}
 
 	// create partition for volume group
-	partType, err := getPartitionTypeIDfor(pt.Type, "lvm", arch.ARCH_UNSET)
-	if err != nil {
-		return fmt.Errorf("error creating lvm partition %q: %w", vgname, err)
+	partType := partition.PartType
+	if partType == "" {
+		var err error
+		partType, err = getPartitionTypeIDfor(pt.Type, "lvm", options.Architecture)
+		if err != nil {
+			return fmt.Errorf("error creating lvm partition %q: %w", vgname, err)
+		}
 	}
+
 	newpart := Partition{
 		Type:     partType,
 		Size:     partition.MinSize,
@@ -1448,9 +1466,13 @@ func addBtrfsPartition(pt *PartitionTable, partition blueprint.PartitionCustomiz
 	}
 
 	// create partition for btrfs volume
-	partType, err := getPartitionTypeIDfor(pt.Type, "data", arch.ARCH_UNSET)
-	if err != nil {
-		return fmt.Errorf("error creating btrfs partition: %w", err)
+	partType := partition.PartType
+	if partType == "" {
+		var err error
+		partType, err = getPartitionTypeIDfor(pt.Type, "data", arch.ARCH_UNSET)
+		if err != nil {
+			return fmt.Errorf("error creating btrfs partition: %w", err)
+		}
 	}
 	newpart := Partition{
 		Type:     partType,

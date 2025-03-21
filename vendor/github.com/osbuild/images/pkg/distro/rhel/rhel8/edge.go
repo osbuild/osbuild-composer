@@ -81,7 +81,7 @@ func mkEdgeRawImgType() *rhel.ImageType {
 
 	it.NameAliases = []string{"rhel-edge-raw-image"}
 	it.Compression = "xz"
-	it.KernelOptions = "modprobe.blacklist=vc4"
+	it.KernelOptions = []string{"modprobe.blacklist=vc4"}
 	it.DefaultImageConfig = &distro.ImageConfig{
 		Keyboard: &osbuild.KeymapStageOptions{
 			Keymap: "us",
@@ -162,7 +162,7 @@ func mkEdgeSimplifiedInstallerImgType(rd *rhel.Distribution) *rhel.ImageType {
 	)
 
 	it.NameAliases = []string{"rhel-edge-simplified-installer"}
-	it.KernelOptions = "modprobe.blacklist=vc4"
+	it.KernelOptions = []string{"modprobe.blacklist=vc4"}
 	it.DefaultImageConfig = &distro.ImageConfig{
 		EnabledServices: edgeServices(rd),
 		Keyboard: &osbuild.KeymapStageOptions{
@@ -212,7 +212,7 @@ func mkMinimalRawImgType() *rhel.ImageType {
 		// requires a kickstart file in the root directory.
 		Files: []*fsnode.File{initialSetupKickstart()},
 	}
-	it.KernelOptions = "ro"
+	it.KernelOptions = []string{"ro"}
 	it.Bootable = true
 	it.DefaultSize = 2 * datasizes.GibiByte
 	it.BasePartitionTables = defaultBasePartitionTables

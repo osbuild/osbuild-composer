@@ -5,6 +5,6 @@ import (
 	"github.com/osbuild/images/pkg/rpmmd"
 )
 
-func packageSetLoader(t *imageType) rpmmd.PackageSet {
+func packageSetLoader(t *imageType) (rpmmd.PackageSet, error) {
 	return packagesets.Load(t, "", VersionReplacements())
 }

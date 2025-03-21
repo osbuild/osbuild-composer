@@ -14,7 +14,7 @@ func mkWslImgType() *rhel.ImageType {
 		"disk.tar.gz",
 		"application/x-tar",
 		map[string]rhel.PackageSetFunc{
-			rhel.OSPkgsKey: ubiCommonPackageSet,
+			rhel.OSPkgsKey: wslPackageSet,
 		},
 		rhel.TarImage,
 		[]string{"build"},
@@ -23,6 +23,20 @@ func mkWslImgType() *rhel.ImageType {
 	)
 
 	it.DefaultImageConfig = &distro.ImageConfig{
+		CloudInit: []*osbuild.CloudInitStageOptions{
+			{
+				Filename: "99_wsl.cfg",
+				Config: osbuild.CloudInitConfigFile{
+					DatasourceList: []string{
+						"WSL",
+						"None",
+					},
+					Network: &osbuild.CloudInitConfigNetwork{
+						Config: "disabled",
+					},
+				},
+			},
+		},
 		Locale:    common.ToPtr("en_US.UTF-8"),
 		NoSElinux: common.ToPtr(true),
 		WSLConfig: &osbuild.WSLConfStageOptions{
@@ -35,7 +49,7 @@ func mkWslImgType() *rhel.ImageType {
 	return it
 }
 
-func ubiCommonPackageSet(t *rhel.ImageType) rpmmd.PackageSet {
+func wslPackageSet(t *rhel.ImageType) rpmmd.PackageSet {
 	ps := rpmmd.PackageSet{
 		Include: []string{
 			"alternatives",
@@ -44,6 +58,7 @@ func ubiCommonPackageSet(t *rhel.ImageType) rpmmd.PackageSet {
 			"bash",
 			"brotli",
 			"ca-certificates",
+			"cloud-init",
 			"coreutils-single",
 			"crypto-policies-scripts",
 			"curl",
@@ -87,7 +102,6 @@ func ubiCommonPackageSet(t *rhel.ImageType) rpmmd.PackageSet {
 			"alsa-tools-firmware",
 			"biosdevname",
 			"cpio",
-			"diffutils",
 			"dnf-plugin-spacewalk",
 			"dracut",
 			"elfutils-debuginfod-client",
@@ -112,18 +126,15 @@ func ubiCommonPackageSet(t *rhel.ImageType) rpmmd.PackageSet {
 			"libkcapi",
 			"libkcapi-hmaccalc",
 			"libsecret",
-			"libselinux-utils",
 			"libxkbcommon",
 			"libertas-sd8787-firmware",
 			"memstrack",
 			"nss",
-			"openssl",
 			"openssl-pkcs11",
 			"os-prober",
 			"pigz",
 			"pinentry",
 			"plymouth",
-			"policycoreutils",
 			"python3-unbound",
 			"redhat-release-eula",
 			"rng-tools",

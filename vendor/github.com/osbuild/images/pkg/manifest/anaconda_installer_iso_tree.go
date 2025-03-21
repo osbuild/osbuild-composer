@@ -25,6 +25,15 @@ const ( // Rootfs type enum
 	ErofsRootfs                          // Create a plain erofs rootfs
 )
 
+type ISOBootType uint64
+
+// These constants are used by the ISO images to control the type of bootable iso
+const ( // ISOBoot type enum
+	Grub2UEFIOnlyISOBoot ISOBootType = iota // Only boot with grub2 UEFI
+	SyslinuxISOBoot                         // Boot with grub2 UEFI and syslinux/isolinux BIOS
+	Grub2ISOBoot                            // Boot with grub2 UEFI and grub2 BIOS
+)
+
 // An AnacondaInstallerISOTree represents a tree containing the anaconda installer,
 // configuration in terms of a kickstart file, as well as an embedded
 // payload to be installed, this payload can either be an ostree
@@ -62,8 +71,8 @@ type AnacondaInstallerISOTree struct {
 	// Kernel options for the ISO image
 	KernelOpts []string
 
-	// Enable ISOLinux stage
-	ISOLinux bool
+	// ISOBoot selects the type of boot support on the iso
+	ISOBoot ISOBootType
 
 	Kickstart *kickstart.Options
 
@@ -143,6 +152,11 @@ func (p *AnacondaInstallerISOTree) getBuildPackages(_ Distro) []string {
 	case ErofsRootfs:
 		packages = []string{"erofs-utils"}
 	default:
+	}
+
+	if p.ISOBoot == Grub2ISOBoot {
+		// Needed for the i386-pc directory of modules needed by grub2 BIOS booting
+		packages = append(packages, "grub2-pc-modules")
 	}
 
 	if p.OSTreeCommitSource != nil {
@@ -342,8 +356,8 @@ func (p *AnacondaInstallerISOTree) serialize() osbuild.Pipeline {
 	default:
 	}
 
-	if p.ISOLinux {
-		isoLinuxOptions := &osbuild.ISOLinuxStageOptions{
+	if p.ISOBoot == SyslinuxISOBoot {
+		options := &osbuild.ISOLinuxStageOptions{
 			Product: osbuild.ISOLinuxProduct{
 				Name:    p.anacondaPipeline.product,
 				Version: p.anacondaPipeline.version,
@@ -354,8 +368,26 @@ func (p *AnacondaInstallerISOTree) serialize() osbuild.Pipeline {
 			},
 		}
 
-		isoLinuxStage := osbuild.NewISOLinuxStage(isoLinuxOptions, p.anacondaPipeline.Name())
-		pipeline.AddStage(isoLinuxStage)
+		stage := osbuild.NewISOLinuxStage(options, p.anacondaPipeline.Name())
+		pipeline.AddStage(stage)
+	} else if p.ISOBoot == Grub2ISOBoot {
+		options := &osbuild.Grub2ISOLegacyStageOptions{
+			Product: osbuild.Product{
+				Name:    p.anacondaPipeline.product,
+				Version: p.anacondaPipeline.version,
+			},
+			Kernel: osbuild.ISOKernel{
+				Dir:  "/images/pxeboot",
+				Opts: kernelOpts,
+			},
+			ISOLabel: p.isoLabel,
+		}
+
+		stage := osbuild.NewGrub2ISOLegacyStage(options)
+		pipeline.AddStage(stage)
+
+		// Add a stage to create the eltorito.img file for grub2 BIOS boot support
+		pipeline.AddStage(osbuild.NewGrub2InstStage(osbuild.NewGrub2InstISO9660StageOption("images/eltorito.img", "/boot/grub2")))
 	}
 
 	filename := "images/efiboot.img"
