@@ -955,11 +955,9 @@ func (h *apiHandlers) GetOpenapi(ctx echo.Context) error {
 
 func (h *apiHandlers) GetStatus(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, &api.StatusResponse{
-		ObjectReference: api.ObjectReference{
-			Href: fmt.Sprintf("%s/status", api.BasePath),
-			Id:   "status",
-			Kind: "Status",
-		},
+		Href:   fmt.Sprintf("%s/status", api.BasePath),
+		Id:     "status",
+		Kind:   "Status",
 		Status: "OK",
 	})
 }
@@ -1030,11 +1028,9 @@ func (h *apiHandlers) RequestJob(ctx echo.Context) error {
 	}
 
 	response := api.RequestJobResponse{
-		ObjectReference: api.ObjectReference{
-			Href: fmt.Sprintf("%s/jobs", api.BasePath),
-			Id:   jobId.String(),
-			Kind: "RequestJob",
-		},
+		Href:             fmt.Sprintf("%s/jobs", api.BasePath),
+		Id:               jobId.String(),
+		Kind:             "RequestJob",
 		Location:         fmt.Sprintf("%s/jobs/%v", api.BasePath, jobToken),
 		ArtifactLocation: fmt.Sprintf("%s/jobs/%v/artifacts/", api.BasePath, jobToken),
 		Type:             jobType,
@@ -1062,11 +1058,9 @@ func (h *apiHandlers) GetJob(ctx echo.Context, tokenstr string) error {
 
 	if jobId == uuid.Nil {
 		return ctx.JSON(http.StatusOK, api.GetJobResponse{
-			ObjectReference: api.ObjectReference{
-				Href: fmt.Sprintf("%s/jobs/%v", api.BasePath, token),
-				Id:   token.String(),
-				Kind: "JobStatus",
-			},
+			Href:     fmt.Sprintf("%s/jobs/%v", api.BasePath, token),
+			Id:       token.String(),
+			Kind:     "JobStatus",
 			Canceled: false,
 		})
 	}
@@ -1079,11 +1073,9 @@ func (h *apiHandlers) GetJob(ctx echo.Context, tokenstr string) error {
 	}
 
 	return ctx.JSON(http.StatusOK, api.GetJobResponse{
-		ObjectReference: api.ObjectReference{
-			Href: fmt.Sprintf("%s/jobs/%v", api.BasePath, token),
-			Id:   token.String(),
-			Kind: "JobStatus",
-		},
+		Href:     fmt.Sprintf("%s/jobs/%v", api.BasePath, token),
+		Id:       token.String(),
+		Kind:     "JobStatus",
 		Canceled: jobInfo.JobStatus.Canceled,
 	})
 }
@@ -1169,21 +1161,15 @@ func (h *apiHandlers) PostWorkers(ctx echo.Context) error {
 	}
 
 	return ctx.JSON(http.StatusCreated, api.PostWorkersResponse{
-		ObjectReference: api.ObjectReference{
-			Href: fmt.Sprintf("%s/workers", api.BasePath),
-			Id:   workerID.String(),
-			Kind: "WorkerID",
-		},
-		WorkerId: workerID.String(),
+		Href:     fmt.Sprintf("%s/workers", api.BasePath),
+		Id:       workerID.String(),
+		Kind:     "WorkerID",
+		WorkerId: workerID,
 	})
 }
 
-func (h *apiHandlers) PostWorkerStatus(ctx echo.Context, workerIdstr string) error {
-	workerID, err := uuid.Parse(workerIdstr)
-	if err != nil {
-		return api.HTTPErrorWithInternal(api.ErrorMalformedWorkerId, err)
-	}
-	err = h.server.jobs.UpdateWorkerStatus(workerID)
+func (h *apiHandlers) PostWorkerStatus(ctx echo.Context, workerID uuid.UUID) error {
+	err := h.server.jobs.UpdateWorkerStatus(workerID)
 
 	if err == jobqueue.ErrWorkerNotExist {
 		return api.HTTPErrorWithInternal(api.ErrorWorkerIdNotFound, err)

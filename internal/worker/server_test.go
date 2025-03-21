@@ -1499,12 +1499,10 @@ func TestWorkerWatch(t *testing.T) {
 	reply := test.TestRouteWithReply(t, server.Handler(), false, "POST", "/api/worker/v1/workers", fmt.Sprintf(`{"arch":"%s"}`, arch.Current().String()), 201, `{"href":"/api/worker/v1/workers","kind":"WorkerID","id": "15"}`, "id", "worker_id")
 	var resp api.PostWorkersResponse
 	require.NoError(t, json.Unmarshal(reply, &resp))
-	workerID, err := uuid.Parse(resp.WorkerId)
-	require.NoError(t, err)
 
-	test.TestRoute(t, server.Handler(), false, "POST", fmt.Sprintf("/api/worker/v1/workers/%s/status", workerID), "{}", 200, "")
+	test.TestRoute(t, server.Handler(), false, "POST", fmt.Sprintf("/api/worker/v1/workers/%s/status", resp.WorkerId), "{}", 200, "")
 	time.Sleep(time.Millisecond * 400)
-	test.TestRoute(t, server.Handler(), false, "POST", fmt.Sprintf("/api/worker/v1/workers/%s/status", workerID), "", 400,
+	test.TestRoute(t, server.Handler(), false, "POST", fmt.Sprintf("/api/worker/v1/workers/%s/status", resp.WorkerId), "", 400,
 		`{"href":"/api/worker/v1/errors/18","code":"IMAGE-BUILDER-WORKER-18","id":"18","kind":"Error","message":"Given worker id doesn't exist","reason":"Given worker id doesn't exist"}`,
 		"operation_id")
 }
@@ -1514,9 +1512,7 @@ func TestRequestJobForWorker(t *testing.T) {
 	reply := test.TestRouteWithReply(t, server.Handler(), false, "POST", "/api/worker/v1/workers", fmt.Sprintf(`{"arch":"%s"}`, arch.Current().String()), 201, `{"href":"/api/worker/v1/workers","kind":"WorkerID","id": "15"}`, "id", "worker_id")
 	var resp api.PostWorkersResponse
 	require.NoError(t, json.Unmarshal(reply, &resp))
-	workerID, err := uuid.Parse(resp.WorkerId)
-	require.NoError(t, err)
-	test.TestRoute(t, server.Handler(), false, "POST", fmt.Sprintf("/api/worker/v1/workers/%s/status", workerID), "{}", 200, "")
+	test.TestRoute(t, server.Handler(), false, "POST", fmt.Sprintf("/api/worker/v1/workers/%s/status", resp.WorkerId), "{}", 200, "")
 
 	distroStruct := newTestDistro(t)
 	arch, err := distroStruct.GetArch(test_distro.TestArchName)
@@ -1539,7 +1535,7 @@ func TestRequestJobForWorker(t *testing.T) {
 	require.NoError(t, err)
 
 	// Can request a job with worker ID
-	j, _, typ, args, dynamicArgs, err := server.RequestJob(context.Background(), arch.Name(), []string{worker.JobTypeOSBuild}, []string{""}, workerID)
+	j, _, typ, args, dynamicArgs, err := server.RequestJob(context.Background(), arch.Name(), []string{worker.JobTypeOSBuild}, []string{""}, resp.WorkerId)
 	require.NoError(t, err)
 	require.Equal(t, jobId, j)
 	require.Equal(t, worker.JobTypeOSBuild, typ)
