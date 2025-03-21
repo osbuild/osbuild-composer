@@ -235,7 +235,7 @@ func (rbp *Blueprint) GetCustomizationsFromBlueprintRequest() (*blueprint.Custom
 		}
 
 		if rbpc.Openscap.PolicyId != nil {
-			oscap.PolicyID = *rbpc.Openscap.PolicyId
+			oscap.PolicyID = rbpc.Openscap.PolicyId.String()
 		}
 
 		if rbpc.Openscap.Datastream != nil {
@@ -288,23 +288,27 @@ func (rbp *Blueprint) GetCustomizationsFromBlueprintRequest() (*blueprint.Custom
 				dirCustomization.Mode = *d.Mode
 			}
 			if d.User != nil {
-				dirCustomization.User = *d.User
-				if uid, ok := dirCustomization.User.(float64); ok {
-					// check if uid can be converted to int64
-					if uid != float64(int64(uid)) {
-						return nil, fmt.Errorf("invalid user %f: must be an integer", uid)
+				user0, err := d.User.AsDirectoryUser0()
+				if err == nil {
+					dirCustomization.User = user0
+				} else {
+					user1, err := d.User.AsDirectoryUser1()
+					if err != nil {
+						return nil, fmt.Errorf("invalid user: %w", err)
 					}
-					dirCustomization.User = int64(uid)
+					dirCustomization.User = user1
 				}
 			}
 			if d.Group != nil {
-				dirCustomization.Group = *d.Group
-				if gid, ok := dirCustomization.Group.(float64); ok {
-					// check if gid can be converted to int64
-					if gid != float64(int64(gid)) {
-						return nil, fmt.Errorf("invalid group %f: must be an integer", gid)
+				group0, err := d.Group.AsDirectoryGroup0()
+				if err == nil {
+					dirCustomization.Group = group0
+				} else {
+					group1, err := d.Group.AsDirectoryGroup1()
+					if err != nil {
+						return nil, fmt.Errorf("invalid group: %w", err)
 					}
-					dirCustomization.Group = int64(gid)
+					dirCustomization.Group = group1
 				}
 			}
 			if d.EnsureParents != nil {
@@ -335,23 +339,29 @@ func (rbp *Blueprint) GetCustomizationsFromBlueprintRequest() (*blueprint.Custom
 				fileCustomization.Mode = *f.Mode
 			}
 			if f.User != nil {
-				fileCustomization.User = *f.User
-				if uid, ok := fileCustomization.User.(float64); ok {
-					// check if uid can be converted to int64
-					if uid != float64(int64(uid)) {
-						return nil, fmt.Errorf("invalid user %f: must be an integer", uid)
+				user0, err := f.User.AsBlueprintFileUser0()
+				if err == nil {
+					fileCustomization.User = user0
+				} else {
+					user1, err := f.User.AsBlueprintFileUser1()
+					if err != nil {
+						return nil, fmt.Errorf("invalid user: %w", err)
 					}
-					fileCustomization.User = int64(uid)
+					fileCustomization.User = user1
 				}
 			}
 			if f.Group != nil {
-				fileCustomization.Group = *f.Group
-				if gid, ok := fileCustomization.Group.(float64); ok {
-					// check if gid can be converted to int64
-					if gid != float64(int64(gid)) {
-						return nil, fmt.Errorf("invalid group %f: must be an integer", gid)
+				group0, err := f.Group.AsBlueprintFileGroup0()
+				if err == nil {
+					fileCustomization.Group = group0
+				} else {
+					group1, err := f.Group.AsBlueprintFileGroup1()
+					if err != nil {
+						return nil, fmt.Errorf("invalid group: %w", err)
 					}
-					fileCustomization.Group = int64(gid)
+					if group1 != 0 {
+						fileCustomization.Group = group1
+					}
 				}
 			}
 			fileCustomizations = append(fileCustomizations, fileCustomization)
@@ -655,23 +665,27 @@ func (request *ComposeRequest) GetBlueprintFromCustomizations() (blueprint.Bluep
 				dirCustomization.Mode = *d.Mode
 			}
 			if d.User != nil {
-				dirCustomization.User = *d.User
-				if uid, ok := dirCustomization.User.(float64); ok {
-					// check if uid can be converted to int64
-					if uid != float64(int64(uid)) {
-						return bp, fmt.Errorf("invalid user %f: must be an integer", uid)
+				user0, err := d.User.AsDirectoryUser0()
+				if err == nil {
+					dirCustomization.User = user0
+				} else {
+					user1, err := d.User.AsDirectoryUser1()
+					if err != nil {
+						return bp, fmt.Errorf("invalid user: %w", err)
 					}
-					dirCustomization.User = int64(uid)
+					dirCustomization.User = user1
 				}
 			}
 			if d.Group != nil {
-				dirCustomization.Group = *d.Group
-				if gid, ok := dirCustomization.Group.(float64); ok {
-					// check if gid can be converted to int64
-					if gid != float64(int64(gid)) {
-						return bp, fmt.Errorf("invalid group %f: must be an integer", gid)
+				group0, err := d.Group.AsDirectoryGroup0()
+				if err == nil {
+					dirCustomization.Group = group0
+				} else {
+					group1, err := d.Group.AsDirectoryGroup1()
+					if err != nil {
+						return bp, fmt.Errorf("invalid group: %w", err)
 					}
-					dirCustomization.Group = int64(gid)
+					dirCustomization.Group = group1
 				}
 			}
 			if d.EnsureParents != nil {
@@ -702,23 +716,27 @@ func (request *ComposeRequest) GetBlueprintFromCustomizations() (blueprint.Bluep
 				fileCustomization.Mode = *f.Mode
 			}
 			if f.User != nil {
-				fileCustomization.User = *f.User
-				if uid, ok := fileCustomization.User.(float64); ok {
-					// check if uid can be converted to int64
-					if uid != float64(int64(uid)) {
-						return bp, fmt.Errorf("invalid user %f: must be an integer", uid)
+				user0, err := f.User.AsFileUser0()
+				if err == nil {
+					fileCustomization.User = user0
+				} else {
+					user1, err := f.User.AsFileUser1()
+					if err != nil {
+						return bp, fmt.Errorf("invalid user: %w", err)
 					}
-					fileCustomization.User = int64(uid)
+					fileCustomization.User = user1
 				}
 			}
 			if f.Group != nil {
-				fileCustomization.Group = *f.Group
-				if gid, ok := fileCustomization.Group.(float64); ok {
-					// check if gid can be converted to int64
-					if gid != float64(int64(gid)) {
-						return bp, fmt.Errorf("invalid group %f: must be an integer", gid)
+				group0, err := f.Group.AsFileGroup0()
+				if err == nil {
+					fileCustomization.Group = group0
+				} else {
+					group1, err := f.Group.AsFileGroup1()
+					if err != nil {
+						return bp, fmt.Errorf("invalid group: %w", err)
 					}
-					fileCustomization.Group = int64(gid)
+					fileCustomization.Group = group1
 				}
 			}
 			fileCustomizations = append(fileCustomizations, fileCustomization)
@@ -770,7 +788,7 @@ func (request *ComposeRequest) GetBlueprintFromCustomizations() (blueprint.Bluep
 		}
 
 		if request.Customizations.Openscap.PolicyId != nil {
-			openSCAPCustomization.PolicyID = *request.Customizations.Openscap.PolicyId
+			openSCAPCustomization.PolicyID = request.Customizations.Openscap.PolicyId.String()
 		}
 
 		if request.Customizations.Openscap.Tailoring != nil && request.Customizations.Openscap.JsonTailoring != nil {

@@ -201,8 +201,14 @@ func TestGetBlueprintFromCustomizations(t *testing.T) {
 	assert.Equal(t, "0.0.0", bp.Version)
 	assert.Nil(t, bp.Customizations)
 
-	// interface{} is a terrible idea. Work around it...
-	var rootStr interface{} = "root"
+	var dirUser Directory_User
+	require.NoError(t, dirUser.FromDirectoryUser0("root"))
+	var dirGroup Directory_Group
+	require.NoError(t, dirGroup.FromDirectoryGroup0("root"))
+	var fileUser File_User
+	require.NoError(t, fileUser.FromFileUser0("root"))
+	var fileGroup File_Group
+	require.NoError(t, fileGroup.FromFileGroup0("root"))
 
 	// Construct the compose request with customizations
 	cr = ComposeRequest{Customizations: &Customizations{
@@ -230,8 +236,8 @@ func TestGetBlueprintFromCustomizations(t *testing.T) {
 			Directory{
 				Path:          "/opt/extra",
 				EnsureParents: common.ToPtr(true),
-				User:          &rootStr,
-				Group:         &rootStr,
+				User:          &dirUser,
+				Group:         &dirGroup,
 				Mode:          common.ToPtr("0755"),
 			},
 		},
@@ -240,8 +246,8 @@ func TestGetBlueprintFromCustomizations(t *testing.T) {
 				Path:          "/etc/mad.conf",
 				Data:          common.ToPtr("Alfred E. Neuman was here.\n"),
 				EnsureParents: common.ToPtr(true),
-				User:          &rootStr,
-				Group:         &rootStr,
+				User:          &fileUser,
+				Group:         &fileGroup,
 				Mode:          common.ToPtr("0644"),
 			},
 		},
@@ -379,8 +385,14 @@ func TestGetBlueprintFromCompose(t *testing.T) {
 	assert.Equal(t, "0.0.0", bp.Version)
 	assert.Nil(t, bp.Customizations)
 
-	// interface{} is a terrible idea. Work around it...
-	var rootStr interface{} = "root"
+	var dirUser Directory_User
+	require.NoError(t, dirUser.FromDirectoryUser0("root"))
+	var dirGroup Directory_Group
+	require.NoError(t, dirGroup.FromDirectoryGroup0("root"))
+	var fileUser BlueprintFile_User
+	require.NoError(t, fileUser.FromBlueprintFileUser0("root"))
+	var fileGroup BlueprintFile_Group
+	require.NoError(t, fileGroup.FromBlueprintFileGroup0("root"))
 
 	// Construct the compose request with a blueprint
 	cr = ComposeRequest{Blueprint: &Blueprint{
@@ -411,8 +423,8 @@ func TestGetBlueprintFromCompose(t *testing.T) {
 				Directory{
 					Path:          "/opt/extra",
 					EnsureParents: common.ToPtr(true),
-					User:          &rootStr,
-					Group:         &rootStr,
+					User:          &dirUser,
+					Group:         &dirGroup,
 					Mode:          common.ToPtr("0755"),
 				},
 			},
@@ -420,8 +432,8 @@ func TestGetBlueprintFromCompose(t *testing.T) {
 				{
 					Path:  "/etc/mad.conf",
 					Data:  common.ToPtr("Alfred E. Neuman was here.\n"),
-					User:  &rootStr,
-					Group: &rootStr,
+					User:  &fileUser,
+					Group: &fileGroup,
 					Mode:  common.ToPtr("0644"),
 				},
 			},
@@ -800,13 +812,12 @@ func TestGetImageRequests_ImageTypeConversion(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(string(tt.requestedImageType), func(t *testing.T) {
 			for _, d := range tt.requestedDistros {
-				uo := UploadOptions(struct{}{})
 				request := &ComposeRequest{
 					Distribution: d,
 					ImageRequest: &ImageRequest{
 						Architecture:  "x86_64",
 						ImageType:     tt.requestedImageType,
-						UploadOptions: &uo,
+						UploadOptions: &UploadOptions{},
 						Repositories: []Repository{
 							Repository{
 								Baseurl: common.ToPtr("http://example.org/pub/linux/repo"),
@@ -828,13 +839,12 @@ func TestGetImageRequests_ImageTypeConversion(t *testing.T) {
 }
 
 func TestGetImageRequests_NoRepositories(t *testing.T) {
-	uo := UploadOptions(struct{}{})
 	request := &ComposeRequest{
 		Distribution: TEST_DISTRO_NAME,
 		ImageRequest: &ImageRequest{
 			Architecture:  "x86_64",
 			ImageType:     ImageTypesAws,
-			UploadOptions: &uo,
+			UploadOptions: &UploadOptions{},
 			Repositories:  []Repository{},
 		},
 	}
@@ -849,13 +859,12 @@ func TestGetImageRequests_NoRepositories(t *testing.T) {
 
 // TestGetImageRequests_BlueprintDistro test to make sure blueprint distro overrides request distro
 func TestGetImageRequests_BlueprintDistro(t *testing.T) {
-	uo := UploadOptions(struct{}{})
 	request := &ComposeRequest{
 		Distribution: TEST_DISTRO_NAME,
 		ImageRequest: &ImageRequest{
 			Architecture:  "x86_64",
 			ImageType:     ImageTypesAws,
-			UploadOptions: &uo,
+			UploadOptions: &UploadOptions{},
 			Repositories:  []Repository{},
 		},
 		Blueprint: &Blueprint{

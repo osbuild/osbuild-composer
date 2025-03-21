@@ -52,6 +52,7 @@ const (
 	ErrorBlueprintOrCustomNotBoth     ServiceErrorCode = 39
 	ErrorMismatchedDistribution       ServiceErrorCode = 40
 	ErrorMismatchedArchitecture       ServiceErrorCode = 41
+	ErrorBadRequest                   ServiceErrorCode = 42
 
 	// Internal errors, these are bugs
 	ErrorFailedToInitializeBlueprint              ServiceErrorCode = 1000
@@ -136,8 +137,9 @@ func getServiceErrors() serviceErrors {
 		serviceError{ErrorInvalidPartitioningMode, http.StatusBadRequest, "Requested partitioning mode is invalid"},
 		serviceError{ErrorInvalidUploadTarget, http.StatusBadRequest, "Invalid upload target for image type"},
 		serviceError{ErrorBlueprintOrCustomNotBoth, http.StatusBadRequest, "Invalid request, include blueprint or customizations, not both"},
-		serviceError{ErrorMismatchedDistribution, http.StatusBadRequest, "Invalid request, Blueprint and Cloud API request Distribution must match."},
-		serviceError{ErrorMismatchedArchitecture, http.StatusBadRequest, "Invalid request, Blueprint and Cloud API request Architecture must match."},
+		serviceError{ErrorMismatchedDistribution, http.StatusBadRequest, "Invalid request, Blueprint and Cloud API request Distribution must match"},
+		serviceError{ErrorMismatchedArchitecture, http.StatusBadRequest, "Invalid request, Blueprint and Cloud API request Architecture must match"},
+		serviceError{ErrorBadRequest, http.StatusBadRequest, "Invalid request, see details for more information"},
 
 		serviceError{ErrorFailedToInitializeBlueprint, http.StatusInternalServerError, "Failed to initialize blueprint"},
 		serviceError{ErrorFailedToGenerateManifestSeed, http.StatusInternalServerError, "Failed to generate manifest seed"},
@@ -221,11 +223,9 @@ func APIError(serviceError *serviceError, c echo.Context, details interface{}) *
 	}
 
 	apiErr := &Error{
-		ObjectReference: ObjectReference{
-			Href: fmt.Sprintf("%s/%d", ErrorHREF, serviceError.code),
-			Id:   fmt.Sprintf("%d", serviceError.code),
-			Kind: "Error",
-		},
+		Href:        fmt.Sprintf("%s/%d", ErrorHREF, serviceError.code),
+		Id:          fmt.Sprintf("%d", serviceError.code),
+		Kind:        "Error",
 		Code:        fmt.Sprintf("%s%d", ErrorCodePrefix, serviceError.code),
 		OperationId: operationID, // set operation id from context
 		Reason:      serviceError.reason,
@@ -239,12 +239,10 @@ func APIError(serviceError *serviceError, c echo.Context, details interface{}) *
 // Helper to make the ErrorList as defined in openapi.v2.yml
 func APIErrorList(page int, pageSize int, c echo.Context) *ErrorList {
 	list := &ErrorList{
-		List: List{
-			Kind:  "ErrorList",
-			Page:  page,
-			Size:  0,
-			Total: len(getServiceErrors()),
-		},
+		Kind:  "ErrorList",
+		Page:  page,
+		Size:  0,
+		Total: len(getServiceErrors()),
 		Items: []Error{},
 	}
 
@@ -273,6 +271,8 @@ func apiErrorFromEchoError(echoError *echo.HTTPError) ServiceErrorCode {
 	switch echoError.Code {
 	case http.StatusNotFound:
 		return ErrorResourceNotFound
+	case http.StatusBadRequest:
+		return ErrorBadRequest
 	case http.StatusMethodNotAllowed:
 		return ErrorMethodNotAllowed
 	case http.StatusNotAcceptable:
@@ -322,7 +322,7 @@ func HTTPErrorHandler(echoError error, c echo.Context) {
 
 	err, ok := he.Message.(detailsError)
 	if !ok {
-		// No service code was set, so Echo threw this error
+		// No service code was set, so Echo or the generated code threw this error
 		doResponse(he.Error(), apiErrorFromEchoError(he), c, he.Internal)
 		return
 	}
