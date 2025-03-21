@@ -3,15 +3,19 @@ package openapi3
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"path/filepath"
+	"sync"
 )
 
 // ReadFromURIFunc defines a function which reads the contents of a resource
 // located at a URI.
 type ReadFromURIFunc func(loader *Loader, url *url.URL) ([]byte, error)
+
+var uriMu = &sync.RWMutex{}
 
 // ErrURINotSupported indicates the ReadFromURIFunc does not know how to handle a
 // given URI.
@@ -60,19 +64,22 @@ func ReadFromHTTP(cl *http.Client) ReadFromURIFunc {
 		if resp.StatusCode > 399 {
 			return nil, fmt.Errorf("error loading %q: request returned status code %d", location.String(), resp.StatusCode)
 		}
-		return ioutil.ReadAll(resp.Body)
+		return io.ReadAll(resp.Body)
 	}
+}
+
+func is_file(location *url.URL) bool {
+	return location.Path != "" &&
+		location.Host == "" &&
+		(location.Scheme == "" || location.Scheme == "file")
 }
 
 // ReadFromFile is a ReadFromURIFunc which reads local file URIs.
 func ReadFromFile(loader *Loader, location *url.URL) ([]byte, error) {
-	if location.Host != "" {
+	if !is_file(location) {
 		return nil, ErrURINotSupported
 	}
-	if location.Scheme != "" && location.Scheme != "file" {
-		return nil, ErrURINotSupported
-	}
-	return ioutil.ReadFile(location.Path)
+	return os.ReadFile(filepath.FromSlash(location.Path))
 }
 
 // URIMapCache returns a ReadFromURIFunc that caches the contents read from URI
@@ -92,12 +99,17 @@ func URIMapCache(reader ReadFromURIFunc) ReadFromURIFunc {
 		}
 		uri := location.String()
 		var ok bool
+		uriMu.RLock()
 		if buf, ok = cache[uri]; ok {
+			uriMu.RUnlock()
 			return
 		}
+		uriMu.RUnlock()
 		if buf, err = reader(loader, location); err != nil {
 			return
 		}
+		uriMu.Lock()
+		defer uriMu.Unlock()
 		cache[uri] = buf
 		return
 	}

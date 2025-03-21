@@ -6,17 +6,16 @@ import (
 	"reflect"
 	"strconv"
 	"text/tabwriter"
-	"time"
 
 	"github.com/kr/text"
 )
 
-var (
-	timeType = reflect.TypeOf(time.Time{})
+const (
+	limit = 50
 )
 
 type formatter struct {
-	v     reflect.Value
+	x     interface{}
 	force bool
 	quote bool
 }
@@ -31,11 +30,11 @@ type formatter struct {
 // format x according to the usual rules of package fmt.
 // In particular, if x satisfies fmt.Formatter, then x.Format will be called.
 func Formatter(x interface{}) (f fmt.Formatter) {
-	return formatter{v: reflect.ValueOf(x), quote: true}
+	return formatter{x: x, quote: true}
 }
 
 func (fo formatter) String() string {
-	return fmt.Sprint(fo.v.Interface()) // unwrap it
+	return fmt.Sprint(fo.x) // unwrap it
 }
 
 func (fo formatter) passThrough(f fmt.State, c rune) {
@@ -52,14 +51,14 @@ func (fo formatter) passThrough(f fmt.State, c rune) {
 		s += fmt.Sprintf(".%d", p)
 	}
 	s += string(c)
-	fmt.Fprintf(f, s, fo.v.Interface())
+	fmt.Fprintf(f, s, fo.x)
 }
 
 func (fo formatter) Format(f fmt.State, c rune) {
 	if fo.force || c == 'v' && f.Flag('#') && f.Flag(' ') {
 		w := tabwriter.NewWriter(f, 4, 4, 1, ' ', 0)
 		p := &printer{tw: w, Writer: w, visited: make(map[visit]int)}
-		p.printValue(fo.v, true, fo.quote)
+		p.printValue(reflect.ValueOf(fo.x), true, fo.quote)
 		w.Flush()
 		return
 	}
@@ -153,11 +152,6 @@ func (p *printer) printValue(v reflect.Value, showType, quote bool) {
 		writeByte(p, '}')
 	case reflect.Struct:
 		t := v.Type()
-		if t == timeType {
-			io.WriteString(p, "time.Now()")
-			break
-		}
-
 		if v.CanAddr() {
 			addr := v.UnsafeAddr()
 			vis := visit{addr, t}
@@ -182,9 +176,6 @@ func (p *printer) printValue(v reflect.Value, showType, quote bool) {
 			for i := 0; i < v.NumField(); i++ {
 				showTypeInStruct := true
 				if f := t.Field(i); f.Name != "" {
-					if f.Name == "DynamicData" {
-						continue
-					}
 					io.WriteString(pp, f.Name)
 					writeByte(pp, ':')
 					if expand {
@@ -229,10 +220,6 @@ func (p *printer) printValue(v reflect.Value, showType, quote bool) {
 			io.WriteString(p, "nil")
 			break
 		}
-		if !showType {
-			// we always want the type for slices
-			io.WriteString(p, t.String())
-		}
 		writeByte(p, '{')
 		expand := !canInline(v.Type())
 		pp := p
@@ -260,23 +247,10 @@ func (p *printer) printValue(v reflect.Value, showType, quote bool) {
 			io.WriteString(p, v.Type().String())
 			io.WriteString(p, ")(nil)")
 		} else {
-			switch e.Kind() {
-			case reflect.Bool:
-				io.WriteString(p, fmt.Sprintf("types.NewBool(%v)", e.Bool()))
-			case reflect.Int32:
-				io.WriteString(p, fmt.Sprintf("types.NewInt32(%v)", e.Int()))
-			case reflect.Int64:
-				io.WriteString(p, fmt.Sprintf("types.NewInt64(%v)", e.Int()))
-			default:
-				if e.Kind() == reflect.Struct && e.Type() == timeType {
-					io.WriteString(p, "types.NewTime(time.Now())")
-				} else {
-					pp := *p
-					pp.depth++
-					writeByte(pp, '&')
-					pp.printValue(e, true, true)
-				}
-			}
+			pp := *p
+			pp.depth++
+			writeByte(pp, '&')
+			pp.printValue(e, true, true)
 		}
 	case reflect.Chan:
 		x := v.Pointer()
@@ -343,6 +317,11 @@ func (p *printer) fmtString(s string, quote bool) {
 		s = strconv.Quote(s)
 	}
 	io.WriteString(p, s)
+}
+
+func tryDeepEqual(a, b interface{}) bool {
+	defer func() { recover() }()
+	return reflect.DeepEqual(a, b)
 }
 
 func writeByte(w io.Writer, b byte) {
