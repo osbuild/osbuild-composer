@@ -196,11 +196,7 @@ func (c *Client) registerWorker() error {
 		return err
 	}
 
-	workerID, err := uuid.Parse(wresp.WorkerId)
-	if err != nil {
-		return err
-	}
-	c.workerID = workerID
+	c.workerID = wresp.WorkerId
 	return nil
 }
 
