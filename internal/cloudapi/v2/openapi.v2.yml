@@ -767,23 +767,18 @@ components:
                 $ref: '#/components/schemas/ComposeStatus'
 
     DistributionList:
-      properties:
-        map:
-          type: object
-          description: Distribution name
-          additionalProperties:
-            map:
-              type: object
-              description: Architecture name
-              additionalProperties:
-                map:
-                  type: object
-                  description: Image type name
-                  additionalProperties:
-                    type: array
-                    description: Repository used for this distro:arch:image-type
-                    items:
-                      $ref: '#/components/schemas/BlueprintRepository'
+      type: object
+      description: |
+        Map of distributions to their architecture.
+      additionalProperties:
+        type: object
+        description: |
+          Map of architectures to their repositories.
+        additionalProperties:
+          type: array
+          description: Repository used for this distro:arch:image-type
+          items:
+            $ref: '#/components/schemas/BlueprintRepository'
 
     ComposeStatus:
       allOf:
@@ -2056,12 +2051,14 @@ components:
           oneOf:
             - type: string
             - type: integer
+              x-go-type: int64
           description: Owner of the directory as a user name or a uid
           example: 'root'
         group:
           oneOf:
             - type: string
             - type: integer
+              x-go-type: int64
           description: Group of the directory as a group name or a gid
           example: 'root'
         ensure_parents:
@@ -2087,12 +2084,14 @@ components:
           oneOf:
             - type: string
             - type: integer
+              x-go-type: int64
           description: Owner of the file as a uid or a user name
           example: 'root'
         group:
           oneOf:
             - type: string
             - type: integer
+              x-go-type: int64
           description: Group of the file as a gid or a group name
           example: 'root'
         data:
@@ -2122,12 +2121,14 @@ components:
           oneOf:
             - type: string
             - type: integer
+              x-go-type: int64
           description: Owner of the file as a uid or a user name
           example: 'root'
         group:
           oneOf:
             - type: string
             - type: integer
+              x-go-type: int64
           description: Group of the file as a gid or a group name
           example: 'root'
         data:

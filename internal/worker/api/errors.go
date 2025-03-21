@@ -130,11 +130,9 @@ func APIError(code ServiceErrorCode, serviceError *serviceError, c echo.Context)
 	}
 
 	return &Error{
-		ObjectReference: ObjectReference{
-			Href: fmt.Sprintf("%s/errors/%d", BasePath, se.code),
-			Id:   fmt.Sprintf("%d", se.code),
-			Kind: "Error",
-		},
+		Href:        fmt.Sprintf("%s/errors/%d", BasePath, se.code),
+		Id:          fmt.Sprintf("%d", se.code),
+		Kind:        "Error",
 		Code:        fmt.Sprintf("%s%d", ErrorCodePrefix, se.code),
 		OperationId: operationID, // set operation id from context
 		Reason:      se.reason,

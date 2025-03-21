@@ -1,4 +1,4 @@
-//go:generate go run github.com/deepmap/oapi-codegen/cmd/oapi-codegen -package=api -generate types,server,spec -o api.gen.go openapi.yml
+//go:generate go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen -package=api -generate types,server,spec -o api.gen.go openapi.yml
 
 package api
 
