@@ -1,4 +1,4 @@
-FROM fedora:40 AS builder
+FROM registry.fedoraproject.org/fedora:latest AS builder
 ENV GOBIN=/opt/app-root/src/go/bin
 # extra packages are needed
 # to compile osbuild
@@ -17,11 +17,15 @@ ENV GOFLAGS=-mod=vendor
 ARG GOPROXY=https://proxy.golang.org,direct
 RUN go env -w GOPROXY=$GOPROXY
 
-RUN go install ./cmd/osbuild-worker
+ARG GOMODARGS=""
+ARG GCFLAGS=""
 
-FROM fedora
-RUN dnf update -y && dnf upgrade -y
-RUN dnf install -y libxcrypt-compat qemu-img osbuild osbuild-ostree osbuild-depsolve-dnf
+RUN go install $GOMODARGS $GCFLAGS ./cmd/osbuild-worker
+
+FROM osbuild_dev
+
+RUN dnf install -y delve
+
 RUN mkdir -p "/usr/libexec/osbuild-composer"
 RUN mkdir -p "/etc/osbuild-composer/"
 RUN mkdir -p "/run/osbuild-composer/"
@@ -29,5 +33,6 @@ RUN mkdir -p "/var/cache/osbuild-worker/"
 RUN mkdir -p "/var/lib/osbuild-composer/"
 RUN mkdir -p "/var/cache/osbuild-composer/output"
 COPY --from=builder /opt/app-root/src/go/bin/osbuild-worker /usr/libexec/osbuild-composer/
+COPY distribution/osbuild-worker-entrypoint.sh /usr/libexec/osbuild-composer/
 
-ENTRYPOINT ["/usr/libexec/osbuild-composer/osbuild-worker"]
+ENTRYPOINT ["/usr/libexec/osbuild-composer/osbuild-worker-entrypoint.sh"]
