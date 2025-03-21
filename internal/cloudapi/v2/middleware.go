@@ -25,16 +25,11 @@ func (s *Server) getTenantChannel(ctx echo.Context) (string, error) {
 	return "", nil
 }
 
-type ComposeHandlerFunc func(ctx echo.Context, id string) error
+type ComposeHandlerFunc func(ctx echo.Context, jobId uuid.UUID) error
 
 // Ensures that the job's channel matches the JWT cannel set in the echo.Context
 func (s *Server) EnsureJobChannel(next ComposeHandlerFunc) ComposeHandlerFunc {
-	return func(c echo.Context, id string) error {
-		jobId, err := uuid.Parse(id)
-		if err != nil {
-			return HTTPError(ErrorInvalidComposeId)
-		}
-
+	return func(c echo.Context, jobId uuid.UUID) error {
 		ctxChannel, err := s.getTenantChannel(c)
 		if err != nil {
 			return err
@@ -50,7 +45,7 @@ func (s *Server) EnsureJobChannel(next ComposeHandlerFunc) ComposeHandlerFunc {
 			return HTTPError(ErrorComposeNotFound)
 		}
 
-		return next(c, id)
+		return next(c, jobId)
 	}
 }
 

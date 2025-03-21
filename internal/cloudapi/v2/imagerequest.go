@@ -187,7 +187,7 @@ func newAzureTarget(options UploadOptions, imageType distro.ImageType) (*target.
 
 	hypvgen := target.HyperVGenV1
 	if azureUploadOptions.HyperVGeneration != nil &&
-		*azureUploadOptions.HyperVGeneration == AzureUploadOptionsHyperVGenerationV2 {
+		*azureUploadOptions.HyperVGeneration == AzureUploadOptionsHyperVGeneration(V2) {
 		hypvgen = target.HyperVGenV2
 	}
 
