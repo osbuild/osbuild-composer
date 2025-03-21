@@ -159,12 +159,9 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 	}
 
 	return ctx.JSON(http.StatusCreated, &ComposeId{
-		ObjectReference: ObjectReference{
-			Href: "/api/image-builder-composer/v2/compose",
-			Id:   id.String(),
-			Kind: "ComposeId",
-		},
-		Id: id.String(),
+		Href: "/api/image-builder-composer/v2/compose",
+		Id:   id,
+		Kind: "ComposeId",
 	})
 }
 
@@ -229,56 +226,56 @@ func imageTypeFromApiImageType(it ImageTypes, arch distro.Arch) string {
 }
 
 func (h *apiHandlers) targetResultToUploadStatus(jobId uuid.UUID, t *target.TargetResult) (*UploadStatus, error) {
-	var us *UploadStatus
 	var uploadType UploadTypes
-	var uploadOptions interface{}
+	var fromErr error
+	var uploadOptions UploadStatus_Options
 
 	switch t.Name {
 	case target.TargetNameAWS:
 		uploadType = UploadTypesAws
 		awsOptions := t.Options.(*target.AWSTargetResultOptions)
-		uploadOptions = AWSEC2UploadStatus{
+		fromErr = uploadOptions.FromAWSEC2UploadStatus(AWSEC2UploadStatus{
 			Ami:    awsOptions.Ami,
 			Region: awsOptions.Region,
-		}
+		})
 	case target.TargetNameAWSS3:
 		uploadType = UploadTypesAwsS3
 		awsOptions := t.Options.(*target.AWSS3TargetResultOptions)
-		uploadOptions = AWSS3UploadStatus{
+		fromErr = uploadOptions.FromAWSS3UploadStatus(AWSS3UploadStatus{
 			Url: awsOptions.URL,
-		}
+		})
 	case target.TargetNameGCP:
 		uploadType = UploadTypesGcp
 		gcpOptions := t.Options.(*target.GCPTargetResultOptions)
-		uploadOptions = GCPUploadStatus{
+		fromErr = uploadOptions.FromGCPUploadStatus(GCPUploadStatus{
 			ImageName: gcpOptions.ImageName,
 			ProjectId: gcpOptions.ProjectID,
-		}
+		})
 	case target.TargetNameAzureImage:
 		uploadType = UploadTypesAzure
 		gcpOptions := t.Options.(*target.AzureImageTargetResultOptions)
-		uploadOptions = AzureUploadStatus{
+		fromErr = uploadOptions.FromAzureUploadStatus(AzureUploadStatus{
 			ImageName: gcpOptions.ImageName,
-		}
+		})
 	case target.TargetNameContainer:
 		uploadType = UploadTypesContainer
 		containerOptions := t.Options.(*target.ContainerTargetResultOptions)
-		uploadOptions = ContainerUploadStatus{
+		fromErr = uploadOptions.FromContainerUploadStatus(ContainerUploadStatus{
 			Url:    containerOptions.URL,
 			Digest: containerOptions.Digest,
-		}
+		})
 	case target.TargetNameOCIObjectStorage:
 		uploadType = UploadTypesOciObjectstorage
 		ociOptions := t.Options.(*target.OCIObjectStorageTargetResultOptions)
-		uploadOptions = OCIUploadStatus{
+		fromErr = uploadOptions.FromOCIUploadStatus(OCIUploadStatus{
 			Url: ociOptions.URL,
-		}
+		})
 	case target.TargetNamePulpOSTree:
 		uploadType = UploadTypesPulpOstree
 		pulpOSTreeOptions := t.Options.(*target.PulpOSTreeTargetResultOptions)
-		uploadOptions = PulpOSTreeUploadStatus{
+		fromErr = uploadOptions.FromPulpOSTreeUploadStatus(PulpOSTreeUploadStatus{
 			RepoUrl: pulpOSTreeOptions.RepoURL,
-		}
+		})
 	case target.TargetNameWorkerServer:
 		uploadType = UploadTypesLocal
 		workerServerOptions := t.Options.(*target.WorkerServerTargetResultOptions)
@@ -286,14 +283,18 @@ func (h *apiHandlers) targetResultToUploadStatus(jobId uuid.UUID, t *target.Targ
 		if err != nil {
 			return nil, fmt.Errorf("unable to find job artifact: %w", err)
 		}
-		uploadOptions = LocalUploadStatus{
+		fromErr = uploadOptions.FromLocalUploadStatus(LocalUploadStatus{
 			ArtifactPath: absPath,
-		}
+		})
 	default:
 		return nil, fmt.Errorf("unknown upload target: %s", t.Name)
 	}
 
-	us = &UploadStatus{
+	if fromErr != nil {
+		return nil, fmt.Errorf("unable to form upload status: %w", fromErr)
+	}
+
+	us := &UploadStatus{
 		// TODO: determine upload status based on the target results, not job results
 		// Don't set the status here for now, but let it be set by the caller.
 		//Status:  UploadStatusValue(result.UploadStatus),
@@ -328,16 +329,11 @@ func (h *apiHandlers) GetComposeList(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, stats)
 }
 
-func (h *apiHandlers) GetComposeStatus(ctx echo.Context, id string) error {
-	return h.server.EnsureJobChannel(h.getComposeStatusImpl)(ctx, id)
+func (h *apiHandlers) GetComposeStatus(ctx echo.Context, jobId uuid.UUID) error {
+	return h.server.EnsureJobChannel(h.getComposeStatusImpl)(ctx, jobId)
 }
 
-func (h *apiHandlers) getComposeStatusImpl(ctx echo.Context, id string) error {
-	jobId, err := uuid.Parse(id)
-	if err != nil {
-		return HTTPError(ErrorInvalidComposeId)
-	}
-
+func (h *apiHandlers) getComposeStatusImpl(ctx echo.Context, jobId uuid.UUID) error {
 	response, err := h.getJobIDComposeStatus(jobId)
 	if err != nil {
 		return err
@@ -388,11 +384,9 @@ func (h *apiHandlers) getJobIDComposeStatus(jobId uuid.UUID) (ComposeStatus, err
 		}
 
 		return ComposeStatus{
-			ObjectReference: ObjectReference{
-				Href: fmt.Sprintf("/api/image-builder-composer/v2/composes/%v", jobId),
-				Id:   jobId.String(),
-				Kind: "ComposeStatus",
-			},
+			Href:   fmt.Sprintf("/api/image-builder-composer/v2/composes/%v", jobId),
+			Id:     jobId.String(),
+			Kind:   "ComposeStatus",
 			Status: composeStatusFromOSBuildJobStatus(jobInfo.JobStatus, &result),
 			ImageStatus: ImageStatus{
 				Status:         imageStatusFromOSBuildJobStatus(jobInfo.JobStatus, &result),
@@ -462,11 +456,9 @@ func (h *apiHandlers) getJobIDComposeStatus(jobId uuid.UUID) (ComposeStatus, err
 			})
 		}
 		response := ComposeStatus{
-			ObjectReference: ObjectReference{
-				Href: fmt.Sprintf("/api/image-builder-composer/v2/composes/%v", jobId),
-				Id:   jobId.String(),
-				Kind: "ComposeStatus",
-			},
+			Href:          fmt.Sprintf("/api/image-builder-composer/v2/composes/%v", jobId),
+			Id:            jobId.String(),
+			Kind:          "ComposeStatus",
 			Status:        composeStatusFromKojiJobStatus(finalizeInfo.JobStatus, &initResult, buildJobResults, &result),
 			ImageStatus:   buildJobStatuses[0], // backwards compatibility
 			ImageStatuses: &buildJobStatuses,
@@ -599,16 +591,11 @@ func composeStatusFromKojiJobStatus(js *worker.JobStatus, initResult *worker.Koj
 }
 
 // ComposeMetadata handles a /composes/{id}/metadata GET request
-func (h *apiHandlers) GetComposeMetadata(ctx echo.Context, id string) error {
-	return h.server.EnsureJobChannel(h.getComposeMetadataImpl)(ctx, id)
+func (h *apiHandlers) GetComposeMetadata(ctx echo.Context, jobId uuid.UUID) error {
+	return h.server.EnsureJobChannel(h.getComposeMetadataImpl)(ctx, jobId)
 }
 
-func (h *apiHandlers) getComposeMetadataImpl(ctx echo.Context, id string) error {
-	jobId, err := uuid.Parse(id)
-	if err != nil {
-		return HTTPError(ErrorInvalidComposeId)
-	}
-
+func (h *apiHandlers) getComposeMetadataImpl(ctx echo.Context, jobId uuid.UUID) error {
 	jobType, err := h.server.workers.JobType(jobId)
 	if err != nil {
 		return HTTPError(ErrorComposeNotFound)
@@ -639,11 +626,9 @@ func (h *apiHandlers) getComposeMetadataImpl(ctx echo.Context, id string) error 
 	if buildInfo.JobStatus.Finished.IsZero() {
 		// job still running: empty response
 		return ctx.JSON(200, ComposeMetadata{
-			ObjectReference: ObjectReference{
-				Href: fmt.Sprintf("/api/image-builder-composer/v2/composes/%v/metadata", jobId),
-				Id:   jobId.String(),
-				Kind: "ComposeMetadata",
-			},
+			Href:    fmt.Sprintf("/api/image-builder-composer/v2/composes/%v/metadata", jobId),
+			Id:      jobId.String(),
+			Kind:    "ComposeMetadata",
 			Request: request,
 		})
 	}
@@ -651,11 +636,9 @@ func (h *apiHandlers) getComposeMetadataImpl(ctx echo.Context, id string) error 
 	if buildInfo.JobStatus.Canceled || !result.Success {
 		// job canceled or failed, empty response
 		return ctx.JSON(200, ComposeMetadata{
-			ObjectReference: ObjectReference{
-				Href: fmt.Sprintf("/api/image-builder-composer/v2/composes/%v/metadata", jobId),
-				Id:   jobId.String(),
-				Kind: "ComposeMetadata",
-			},
+			Href:    fmt.Sprintf("/api/image-builder-composer/v2/composes/%v/metadata", jobId),
+			Id:      jobId.String(),
+			Kind:    "ComposeMetadata",
 			Request: request,
 		})
 	}
@@ -685,11 +668,9 @@ func (h *apiHandlers) getComposeMetadataImpl(ctx echo.Context, id string) error 
 	packages := stagesToPackageMetadata(rpmStagesMd)
 
 	resp := &ComposeMetadata{
-		ObjectReference: ObjectReference{
-			Href: fmt.Sprintf("/api/image-builder-composer/v2/composes/%v/metadata", jobId),
-			Id:   jobId.String(),
-			Kind: "ComposeMetadata",
-		},
+		Href:     fmt.Sprintf("/api/image-builder-composer/v2/composes/%v/metadata", jobId),
+		Id:       jobId.String(),
+		Kind:     "ComposeMetadata",
 		Packages: &packages,
 		Request:  request,
 	}
@@ -707,16 +688,14 @@ func stagesToPackageMetadata(stages []osbuild.RPMStageMetadata) []PackageMetadat
 		for _, rpm := range md.Packages {
 			packages = append(packages,
 				PackageMetadata{
-					PackageMetadataCommon: PackageMetadataCommon{
-						Type:      "rpm",
-						Name:      rpm.Name,
-						Version:   rpm.Version,
-						Release:   rpm.Release,
-						Epoch:     rpm.Epoch,
-						Arch:      rpm.Arch,
-						Signature: osbuild.RPMPackageMetadataToSignature(rpm),
-					},
-					Sigmd5: rpm.SigMD5,
+					Type:      "rpm",
+					Name:      rpm.Name,
+					Version:   rpm.Version,
+					Release:   rpm.Release,
+					Epoch:     rpm.Epoch,
+					Arch:      rpm.Arch,
+					Signature: osbuild.RPMPackageMetadataToSignature(rpm),
+					Sigmd5:    rpm.SigMD5,
 				},
 			)
 		}
@@ -725,17 +704,11 @@ func stagesToPackageMetadata(stages []osbuild.RPMStageMetadata) []PackageMetadat
 }
 
 // Get logs for a compose
-func (h *apiHandlers) GetComposeLogs(ctx echo.Context, id string) error {
-	return h.server.EnsureJobChannel(h.getComposeLogsImpl)(ctx, id)
+func (h *apiHandlers) GetComposeLogs(ctx echo.Context, jobId uuid.UUID) error {
+	return h.server.EnsureJobChannel(h.getComposeLogsImpl)(ctx, jobId)
 }
 
-func (h *apiHandlers) getComposeLogsImpl(ctx echo.Context, id string) error {
-
-	jobId, err := uuid.Parse(id)
-	if err != nil {
-		return HTTPError(ErrorInvalidComposeId)
-	}
-
+func (h *apiHandlers) getComposeLogsImpl(ctx echo.Context, jobId uuid.UUID) error {
 	jobType, err := h.server.workers.JobType(jobId)
 	if err != nil {
 		return HTTPError(ErrorComposeNotFound)
@@ -744,11 +717,9 @@ func (h *apiHandlers) getComposeLogsImpl(ctx echo.Context, id string) error {
 	var buildResultBlobs []interface{}
 
 	resp := &ComposeLogs{
-		ObjectReference: ObjectReference{
-			Href: fmt.Sprintf("/api/image-builder-composer/v2/composes/%v/logs", jobId),
-			Id:   jobId.String(),
-			Kind: "ComposeLogs",
-		},
+		Href: fmt.Sprintf("/api/image-builder-composer/v2/composes/%v/logs", jobId),
+		Id:   jobId.String(),
+		Kind: "ComposeLogs",
 	}
 
 	switch jobType {
@@ -831,16 +802,11 @@ func manifestJobResultsFromJobDeps(w *worker.Server, deps []uuid.UUID) (*worker.
 }
 
 // GetComposeIdManifests returns the Manifests for a given Compose (one for each image).
-func (h *apiHandlers) GetComposeManifests(ctx echo.Context, id string) error {
-	return h.server.EnsureJobChannel(h.getComposeManifestsImpl)(ctx, id)
+func (h *apiHandlers) GetComposeManifests(ctx echo.Context, jobId uuid.UUID) error {
+	return h.server.EnsureJobChannel(h.getComposeManifestsImpl)(ctx, jobId)
 }
 
-func (h *apiHandlers) getComposeManifestsImpl(ctx echo.Context, id string) error {
-	jobId, err := uuid.Parse(id)
-	if err != nil {
-		return HTTPError(ErrorInvalidComposeId)
-	}
-
+func (h *apiHandlers) getComposeManifestsImpl(ctx echo.Context, jobId uuid.UUID) error {
 	jobType, err := h.server.workers.JobType(jobId)
 	if err != nil {
 		return HTTPError(ErrorComposeNotFound)
@@ -921,11 +887,9 @@ func (h *apiHandlers) getComposeManifestsImpl(ctx echo.Context, id string) error
 	}
 
 	resp := &ComposeManifests{
-		ObjectReference: ObjectReference{
-			Href: fmt.Sprintf("/api/image-builder-composer/v2/composes/%v/manifests", jobId),
-			Id:   jobId.String(),
-			Kind: "ComposeManifests",
-		},
+		Href:      fmt.Sprintf("/api/image-builder-composer/v2/composes/%v/manifests", jobId),
+		Id:        jobId.String(),
+		Kind:      "ComposeManifests",
 		Manifests: manifestBlobs,
 	}
 
@@ -942,10 +906,10 @@ func sbomsFromOSBuildJob(w *worker.Server, osbuildJobUUID uuid.UUID) ([]ImageSBO
 
 	pipelineNameToPurpose := func(pipelineName string) (ImageSBOMPipelinePurpose, error) {
 		if slices.Contains(osbuildJobResult.PipelineNames.Payload, pipelineName) {
-			return ImageSBOMPipelinePurposeImage, nil
+			return ImageSBOMPipelinePurpose(Image), nil
 		}
 		if slices.Contains(osbuildJobResult.PipelineNames.Build, pipelineName) {
-			return ImageSBOMPipelinePurposeBuildroot, nil
+			return ImageSBOMPipelinePurpose(Buildroot), nil
 		}
 		return "", fmt.Errorf("Pipeline %q is not listed as either a payload or build pipeline", pipelineName)
 	}
@@ -988,7 +952,7 @@ func sbomsFromOSBuildJob(w *worker.Server, osbuildJobUUID uuid.UUID) ([]ImageSBO
 			var sbomType ImageSBOMSbomType
 			switch sbomDoc.DocType {
 			case sbom.StandardTypeSpdx:
-				sbomType = ImageSBOMSbomTypeSpdx
+				sbomType = ImageSBOMSbomType(Spdx)
 			default:
 				return nil, fmt.Errorf("Unknown SBOM type %q attached to depsolve job %q", sbomDoc.DocType, manifestDepUUID)
 			}
@@ -1020,16 +984,11 @@ func sbomsFromOSBuildJob(w *worker.Server, osbuildJobUUID uuid.UUID) ([]ImageSBO
 }
 
 // GetComposeSBOMs returns the SBOM documents for a given Compose (multiple SBOMs for each image).
-func (h *apiHandlers) GetComposeSBOMs(ctx echo.Context, id string) error {
-	return h.server.EnsureJobChannel(h.getComposeSBOMsImpl)(ctx, id)
+func (h *apiHandlers) GetComposeSBOMs(ctx echo.Context, jobId uuid.UUID) error {
+	return h.server.EnsureJobChannel(h.getComposeSBOMsImpl)(ctx, jobId)
 }
 
-func (h *apiHandlers) getComposeSBOMsImpl(ctx echo.Context, id string) error {
-	jobId, err := uuid.Parse(id)
-	if err != nil {
-		return HTTPError(ErrorInvalidComposeId)
-	}
-
+func (h *apiHandlers) getComposeSBOMsImpl(ctx echo.Context, jobId uuid.UUID) error {
 	jobType, err := h.server.workers.JobType(jobId)
 	if err != nil {
 		return HTTPError(ErrorComposeNotFound)
@@ -1084,11 +1043,9 @@ func (h *apiHandlers) getComposeSBOMsImpl(ctx echo.Context, id string) error {
 	}
 
 	resp := &ComposeSBOMs{
-		ObjectReference: ObjectReference{
-			Href: fmt.Sprintf("/api/image-builder-composer/v2/composes/%v/sboms", jobId),
-			Id:   jobId.String(),
-			Kind: "ComposeSBOMs",
-		},
+		Href:  fmt.Sprintf("/api/image-builder-composer/v2/composes/%v/sboms", jobId),
+		Id:    jobId.String(),
+		Kind:  "ComposeSBOMs",
 		Items: items,
 	}
 
@@ -1172,19 +1129,14 @@ func genRepoConfig(repo Repository) (*rpmmd.RepoConfig, error) {
 	return repoConfig, nil
 }
 
-func (h *apiHandlers) PostCloneCompose(ctx echo.Context, id string) error {
-	return h.server.EnsureJobChannel(h.postCloneComposeImpl)(ctx, id)
+func (h *apiHandlers) PostCloneCompose(ctx echo.Context, jobId uuid.UUID) error {
+	return h.server.EnsureJobChannel(h.postCloneComposeImpl)(ctx, jobId)
 }
 
-func (h *apiHandlers) postCloneComposeImpl(ctx echo.Context, id string) error {
+func (h *apiHandlers) postCloneComposeImpl(ctx echo.Context, jobId uuid.UUID) error {
 	channel, err := h.server.getTenantChannel(ctx)
 	if err != nil {
 		return HTTPErrorWithInternal(ErrorTenantNotFound, err)
-	}
-
-	jobId, err := uuid.Parse(id)
-	if err != nil {
-		return HTTPError(ErrorInvalidComposeId)
 	}
 
 	jobType, err := h.server.workers.JobType(jobId)
@@ -1233,9 +1185,12 @@ func (h *apiHandlers) postCloneComposeImpl(ctx echo.Context, id string) error {
 	finalJob := jobId
 	// look at the upload status of the osbuild dependency to decide what to do
 	if us.Type == UploadTypesAws {
-		options := us.Options.(AWSEC2UploadStatus)
+		options, err := us.Options.AsAWSEC2UploadStatus()
+		if err != nil {
+			return err
+		}
 		var img AWSEC2CloneCompose
-		err := ctx.Bind(&img)
+		err = ctx.Bind(&img)
 		if err != nil {
 			return err
 		}
@@ -1310,31 +1265,25 @@ func (h *apiHandlers) postCloneComposeImpl(ctx echo.Context, id string) error {
 	}
 
 	return ctx.JSON(http.StatusCreated, CloneComposeResponse{
-		ObjectReference: ObjectReference{
-			Href: fmt.Sprintf("/api/image-builder-composer/v2/composes/%v/clone", jobId),
-			Id:   finalJob.String(),
-			Kind: "CloneComposeId",
-		},
-		Id: finalJob.String(),
+		Href: fmt.Sprintf("/api/image-builder-composer/v2/composes/%v/clone", jobId),
+		Id:   finalJob,
+		Kind: "CloneComposeId",
 	})
 }
 
-func (h *apiHandlers) GetCloneStatus(ctx echo.Context, id string) error {
-	return h.server.EnsureJobChannel(h.getCloneStatus)(ctx, id)
+func (h *apiHandlers) GetCloneStatus(ctx echo.Context, jobId uuid.UUID) error {
+	return h.server.EnsureJobChannel(h.getCloneStatus)(ctx, jobId)
 }
 
-func (h *apiHandlers) getCloneStatus(ctx echo.Context, id string) error {
-	jobId, err := uuid.Parse(id)
-	if err != nil {
-		return HTTPError(ErrorInvalidComposeId)
-	}
-
+func (h *apiHandlers) getCloneStatus(ctx echo.Context, jobId uuid.UUID) error {
 	jobType, err := h.server.workers.JobType(jobId)
 	if err != nil {
 		return HTTPError(ErrorComposeNotFound)
 	}
 
-	var us UploadStatus
+	var status UploadStatusValue
+	var uploadType UploadTypes
+	var options CloneStatus_Options
 	switch jobType {
 	case worker.JobTypeAWSEC2Copy:
 		var result worker.AWSEC2CopyJobResult
@@ -1343,13 +1292,14 @@ func (h *apiHandlers) getCloneStatus(ctx echo.Context, id string) error {
 			return HTTPError(ErrorGettingAWSEC2JobStatus)
 		}
 
-		us = UploadStatus{
-			Status: uploadStatusFromJobStatus(info.JobStatus, result.JobError),
-			Type:   UploadTypesAws,
-			Options: AWSEC2UploadStatus{
-				Ami:    result.Ami,
-				Region: result.Region,
-			},
+		status = uploadStatusFromJobStatus(info.JobStatus, result.JobError)
+		uploadType = UploadTypesAws
+		err = options.FromAWSEC2UploadStatus(AWSEC2UploadStatus{
+			Ami:    result.Ami,
+			Region: result.Region,
+		})
+		if err != nil {
+			return HTTPErrorWithInternal(ErrorGettingAWSEC2JobStatus, err)
 		}
 	case worker.JobTypeAWSEC2Share:
 		var result worker.AWSEC2ShareJobResult
@@ -1358,42 +1308,43 @@ func (h *apiHandlers) getCloneStatus(ctx echo.Context, id string) error {
 			return HTTPError(ErrorGettingAWSEC2JobStatus)
 		}
 
-		us = UploadStatus{
-			Status: uploadStatusFromJobStatus(info.JobStatus, result.JobError),
-			Type:   UploadTypesAws,
-			Options: AWSEC2UploadStatus{
-				Ami:    result.Ami,
-				Region: result.Region,
-			},
+		status = uploadStatusFromJobStatus(info.JobStatus, result.JobError)
+		uploadType = UploadTypesAws
+		err = options.FromAWSEC2UploadStatus(AWSEC2UploadStatus{
+			Ami:    result.Ami,
+			Region: result.Region,
+		})
+		if err != nil {
+			return HTTPErrorWithInternal(ErrorGettingAWSEC2JobStatus, err)
 		}
 	default:
 		return HTTPError(ErrorInvalidJobType)
 	}
 
 	return ctx.JSON(http.StatusOK, CloneStatus{
-		ObjectReference: ObjectReference{
-			Href: fmt.Sprintf("/api/image-builder-composer/v2/clones/%v", jobId),
-			Id:   jobId.String(),
-			Kind: "CloneComposeStatus",
-		},
-		UploadStatus: us,
+		Href:    fmt.Sprintf("/api/image-builder-composer/v2/clones/%v", jobId),
+		Id:      jobId.String(),
+		Kind:    "CloneComposeStatus",
+		Status:  status,
+		Type:    uploadType,
+		Options: options,
 	})
 }
 
 // TODO: determine upload status based on the target results, not job results
 func uploadStatusFromJobStatus(js *worker.JobStatus, je *clienterrors.Error) UploadStatusValue {
 	if je != nil || js.Canceled {
-		return UploadStatusValueFailure
+		return UploadStatusValue(Failure)
 	}
 
 	if js.Started.IsZero() {
-		return UploadStatusValuePending
+		return UploadStatusValue(Pending)
 	}
 
 	if js.Finished.IsZero() {
-		return UploadStatusValueRunning
+		return UploadStatusValue(Running)
 	}
-	return UploadStatusValueSuccess
+	return UploadStatusValue(Success)
 }
 
 // PostDepsolveBlueprint depsolves the packages in a blueprint and returns
@@ -1541,16 +1492,11 @@ func (h *apiHandlers) GetDistributionList(ctx echo.Context) error {
 }
 
 // GetComposeDownload downloads a compose artifact
-func (h *apiHandlers) GetComposeDownload(ctx echo.Context, id string) error {
-	return h.server.EnsureJobChannel(h.getComposeDownloadImpl)(ctx, id)
+func (h *apiHandlers) GetComposeDownload(ctx echo.Context, jobId uuid.UUID) error {
+	return h.server.EnsureJobChannel(h.getComposeDownloadImpl)(ctx, jobId)
 }
 
-func (h *apiHandlers) getComposeDownloadImpl(ctx echo.Context, id string) error {
-	jobId, err := uuid.Parse(id)
-	if err != nil {
-		return HTTPError(ErrorInvalidComposeId)
-	}
-
+func (h *apiHandlers) getComposeDownloadImpl(ctx echo.Context, jobId uuid.UUID) error {
 	jobType, err := h.server.workers.JobType(jobId)
 	if err != nil {
 		return HTTPError(ErrorComposeNotFound)

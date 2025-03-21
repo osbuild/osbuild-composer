@@ -895,7 +895,7 @@ func TestComposeStatusSuccess(t *testing.T) {
 				}
 			]
 		]
-	}`, jobId, jobId, sbomDoc, v2.ImageSBOMSbomTypeSpdx), "details")
+	}`, jobId, jobId, sbomDoc, v2.ImageSBOMSbomType(v2.Spdx)), "details")
 }
 
 func TestComposeStatusFailure(t *testing.T) {
@@ -959,12 +959,12 @@ func TestComposeStatusInvalidUUID(t *testing.T) {
 
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", "/api/image-builder-composer/v2/composes/abcdef", ``, http.StatusBadRequest, `
 {
-	"code": "IMAGE-BUILDER-COMPOSER-14",
-	"details": "",
-	"href": "/api/image-builder-composer/v2/errors/14",
-	"id": "14",
+	"code": "IMAGE-BUILDER-COMPOSER-42",
+	"details": "code=400, message=Invalid format for parameter id: error unmarshaling 'abcdef' text as *uuid.UUID: invalid UUID length: 6",
+	"href": "/api/image-builder-composer/v2/errors/42",
+	"id": "42",
 	"kind": "Error",
-	"reason": "Invalid format for compose id"
+	"reason": "Invalid request, see details for more information"
 }
 `, "operation_id")
 }
@@ -1748,7 +1748,7 @@ func TestDepsolveDistroErrors(t *testing.T) {
 			"id": "40",
 			"kind": "Error",
 			"code": "IMAGE-BUILDER-COMPOSER-40",
-			"reason": "Invalid request, Blueprint and Cloud API request Distribution must match."
+			"reason": "Invalid request, Blueprint and Cloud API request Distribution must match"
 		}`, "operation_id", "details")
 
 	// Bad distro in request, none in blueprint
@@ -1905,13 +1905,11 @@ func TestComposesRoute(t *testing.T) {
 	var composeReply v2.ComposeId
 	err := json.Unmarshal(reply, &composeReply)
 	require.NoError(t, err)
-	jobID, err := uuid.Parse(composeReply.Id)
-	require.NoError(t, err)
 
 	// List root composes
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", "/api/image-builder-composer/v2/composes/", ``,
 		http.StatusOK, fmt.Sprintf(`[{"href":"/api/image-builder-composer/v2/composes/%[1]s", "id":"%[1]s", "image_status":{"status":"pending"}, "kind":"ComposeStatus", "status":"pending"}]`,
-			jobID.String()))
+			composeReply.Id.String()))
 }
 
 func TestDownload(t *testing.T) {
@@ -2082,12 +2080,16 @@ func TestComposeRequestMetadata(t *testing.T) {
 		"image_requests":[{
 			"architecture": "%s",
 			"image_type": "aws",
+			"size": 0,
 			"repositories": [{
 				"baseurl": "somerepo.org",
-				"rhsm": false
+				"rhsm": false,
+				"check_repo_gpg": false,
+				"module_hotfixes": false
 			}],
 			"upload_options": {
-				"region": "eu-central-1"
+				"region": "eu-central-1",
+				"public": false
 			}
 		}]
 	}`, test_distro.TestDistro1Name, test_distro.TestArch3Name)

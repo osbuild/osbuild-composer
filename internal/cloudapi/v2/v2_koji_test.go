@@ -414,8 +414,6 @@ func TestKojiCompose(t *testing.T) {
 			var composeReply v2.ComposeId
 			err := json.Unmarshal(composeRawReply, &composeReply)
 			require.NoError(t, err)
-			composeId, err := uuid.Parse(composeReply.Id)
-			require.NoError(t, err)
 
 			// handle koji-init
 			_, token, jobType, rawJob, _, err := workerServer.RequestJob(context.Background(), test_distro.TestArch3Name, []string{worker.JobTypeKojiInit}, []string{""}, uuid.Nil)
@@ -438,7 +436,7 @@ func TestKojiCompose(t *testing.T) {
 			// Finishing of the goroutine handling the manifest job is not deterministic and as a result, we may get
 			// the second osbuild job first.
 			// The build jobs ID is determined from the dependencies of the koji-finalize job dependencies.
-			finalizeInfo, err := workerServer.KojiFinalizeJobInfo(composeId, &worker.KojiFinalizeJobResult{})
+			finalizeInfo, err := workerServer.KojiFinalizeJobInfo(composeReply.Id, &worker.KojiFinalizeJobResult{})
 			require.NoError(t, err)
 			buildJobIDs := finalizeInfo.Deps[1:]
 			require.Len(t, buildJobIDs, 2)
@@ -551,7 +549,7 @@ func TestKojiCompose(t *testing.T) {
 				}
 			]
 		]
-	}`, finalizeID, finalizeID, sbomDoc, v2.ImageSBOMSbomTypeSpdx), "details")
+	}`, finalizeID, finalizeID, sbomDoc, v2.ImageSBOMSbomType(v2.Spdx)), "details")
 		})
 	}
 }
