@@ -1,10 +1,10 @@
 package fedora
 
 import (
-	"github.com/osbuild/images/pkg/distro/packagesets"
+	"github.com/osbuild/images/pkg/distro/defs"
 	"github.com/osbuild/images/pkg/rpmmd"
 )
 
 func packageSetLoader(t *imageType) (rpmmd.PackageSet, error) {
-	return packagesets.Load(t, "", VersionReplacements())
+	return defs.PackageSet(t, "", VersionReplacements())
 }

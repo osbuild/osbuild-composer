@@ -54,7 +54,7 @@ func osCustomizations(
 
 	osc.FIPS = c.GetFIPS()
 
-	osc.ExtraBasePackages = osPackageSet.Include
+	osc.BasePackages = osPackageSet.Include
 	osc.ExcludeBasePackages = osPackageSet.Exclude
 	osc.ExtraBaseRepos = osPackageSet.Repositories
 

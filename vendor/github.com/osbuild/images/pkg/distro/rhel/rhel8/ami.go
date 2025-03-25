@@ -7,7 +7,6 @@ import (
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distro/rhel"
 	"github.com/osbuild/images/pkg/osbuild"
-	"github.com/osbuild/images/pkg/rpmmd"
 )
 
 func amiX86KernelOptions() []string {
@@ -28,7 +27,7 @@ func mkAmiImgTypeX86_64() *rhel.ImageType {
 		"image.raw",
 		"application/octet-stream",
 		map[string]rhel.PackageSetFunc{
-			rhel.OSPkgsKey: ec2CommonPackageSet,
+			rhel.OSPkgsKey: packageSetLoader,
 		},
 		rhel.DiskImage,
 		[]string{"build"},
@@ -51,7 +50,7 @@ func mkEc2ImgTypeX86_64(rd *rhel.Distribution) *rhel.ImageType {
 		"image.raw.xz",
 		"application/xz",
 		map[string]rhel.PackageSetFunc{
-			rhel.OSPkgsKey: rhelEc2PackageSet,
+			rhel.OSPkgsKey: packageSetLoader,
 		},
 		rhel.DiskImage,
 		[]string{"build"},
@@ -75,7 +74,7 @@ func mkEc2HaImgTypeX86_64(rd *rhel.Distribution) *rhel.ImageType {
 		"image.raw.xz",
 		"application/xz",
 		map[string]rhel.PackageSetFunc{
-			rhel.OSPkgsKey: rhelEc2HaPackageSet,
+			rhel.OSPkgsKey: packageSetLoader,
 		},
 		rhel.DiskImage,
 		[]string{"build"},
@@ -99,7 +98,7 @@ func mkAmiImgTypeAarch64() *rhel.ImageType {
 		"image.raw",
 		"application/octet-stream",
 		map[string]rhel.PackageSetFunc{
-			rhel.OSPkgsKey: ec2CommonPackageSet,
+			rhel.OSPkgsKey: packageSetLoader,
 		},
 		rhel.DiskImage,
 		[]string{"build"},
@@ -122,7 +121,7 @@ func mkEc2ImgTypeAarch64(rd *rhel.Distribution) *rhel.ImageType {
 		"image.raw.xz",
 		"application/xz",
 		map[string]rhel.PackageSetFunc{
-			rhel.OSPkgsKey: rhelEc2PackageSet,
+			rhel.OSPkgsKey: packageSetLoader,
 		},
 		rhel.DiskImage,
 		[]string{"build"},
@@ -146,7 +145,7 @@ func mkEc2SapImgTypeX86_64(rd *rhel.Distribution) *rhel.ImageType {
 		"image.raw.xz",
 		"application/xz",
 		map[string]rhel.PackageSetFunc{
-			rhel.OSPkgsKey: rhelEc2SapPackageSet,
+			rhel.OSPkgsKey: packageSetLoader,
 		},
 		rhel.DiskImage,
 		[]string{"build"},
@@ -330,110 +329,6 @@ func defaultAMIImageConfigX86_64() *distro.ImageConfig {
 func defaultEc2SapImageConfigX86_64(rd *rhel.Distribution) *distro.ImageConfig {
 	// default EC2-SAP image config (x86_64)
 	return sapImageConfig(rd).InheritFrom(defaultEc2ImageConfigX86_64(rd))
-}
-
-// common package set for RHEL (BYOS/RHUI) and CentOS Stream images
-func ec2CommonPackageSet(t *rhel.ImageType) rpmmd.PackageSet {
-	return rpmmd.PackageSet{
-		Include: []string{
-			"@core",
-			"authselect-compat",
-			"chrony",
-			"cloud-init",
-			"cloud-utils-growpart",
-			"dhcp-client",
-			"dracut-config-generic",
-			"dracut-norescue",
-			"gdisk",
-			"grub2",
-			"langpacks-en",
-			"NetworkManager",
-			"NetworkManager-cloud-setup",
-			"redhat-release",
-			"redhat-release-eula",
-			"rsync",
-			"tar",
-			"yum-utils",
-		},
-		Exclude: []string{
-			"aic94xx-firmware",
-			"alsa-firmware",
-			"alsa-tools-firmware",
-			"biosdevname",
-			"firewalld",
-			"iprutils",
-			"ivtv-firmware",
-			"iwl1000-firmware",
-			"iwl100-firmware",
-			"iwl105-firmware",
-			"iwl135-firmware",
-			"iwl2000-firmware",
-			"iwl2030-firmware",
-			"iwl3160-firmware",
-			"iwl3945-firmware",
-			"iwl4965-firmware",
-			"iwl5000-firmware",
-			"iwl5150-firmware",
-			"iwl6000-firmware",
-			"iwl6000g2a-firmware",
-			"iwl6000g2b-firmware",
-			"iwl6050-firmware",
-			"iwl7260-firmware",
-			"libertas-sd8686-firmware",
-			"libertas-sd8787-firmware",
-			"libertas-usb8388-firmware",
-			"plymouth",
-			// RHBZ#2075815
-			"qemu-guest-agent",
-		},
-	}.Append(distroSpecificPackageSet(t))
-}
-
-// common rhel ec2 RHUI image package set
-func rhelEc2CommonPackageSet(t *rhel.ImageType) rpmmd.PackageSet {
-	ps := ec2CommonPackageSet(t)
-	// Include "redhat-cloud-client-configuration" on 8.7+ (COMPOSER-1804)
-	if common.VersionGreaterThanOrEqual(t.Arch().Distro().OsVersion(), "8.7") {
-		ps.Include = append(ps.Include, "redhat-cloud-client-configuration")
-	}
-	return ps
-}
-
-// rhel-ec2 image package set
-func rhelEc2PackageSet(t *rhel.ImageType) rpmmd.PackageSet {
-	ec2PackageSet := rhelEc2CommonPackageSet(t)
-	ec2PackageSet.Include = append(ec2PackageSet.Include, "rh-amazon-rhui-client")
-	ec2PackageSet.Exclude = append(ec2PackageSet.Exclude, "alsa-lib")
-	return ec2PackageSet
-}
-
-// rhel-ha-ec2 image package set
-func rhelEc2HaPackageSet(t *rhel.ImageType) rpmmd.PackageSet {
-	ec2HaPackageSet := rhelEc2CommonPackageSet(t)
-	ec2HaPackageSet.Include = append(ec2HaPackageSet.Include,
-		"fence-agents-all",
-		"pacemaker",
-		"pcs",
-		"rh-amazon-rhui-client-ha",
-	)
-	ec2HaPackageSet.Exclude = append(ec2HaPackageSet.Exclude, "alsa-lib")
-	return ec2HaPackageSet
-}
-
-// rhel-sap-ec2 image package set
-// Includes the common ec2 package set, the common SAP packages, and
-// the amazon rhui sap package
-func rhelEc2SapPackageSet(t *rhel.ImageType) rpmmd.PackageSet {
-	rhuiPkg := "rh-amazon-rhui-client-sap-bundle-e4s"
-	if t.Arch().Distro().OsVersion() == "8.10" {
-		rhuiPkg = "rh-amazon-rhui-client-sap-bundle"
-	}
-
-	return rpmmd.PackageSet{
-		Include: []string{
-			rhuiPkg,
-		},
-	}.Append(rhelEc2CommonPackageSet(t)).Append(SapPackageSet(t))
 }
 
 // Add RHSM config options to ImageConfig.

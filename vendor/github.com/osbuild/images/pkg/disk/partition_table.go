@@ -14,14 +14,20 @@ import (
 )
 
 type PartitionTable struct {
-	Size       uint64             // Size of the disk (in bytes).
-	UUID       string             // Unique identifier of the partition table (GPT only).
-	Type       PartitionTableType // Partition table type, e.g. dos, gpt.
-	Partitions []Partition
+	// Size of the disk (in bytes).
+	Size uint64 `json:"size"`
+	// Unique identifier of the partition table (GPT only).
+	UUID string `json:"uuid,omitempty"`
+	// Partition table type, e.g. dos, gpt.
+	Type       PartitionTableType `json:"type"`
+	Partitions []Partition        `json:"partitions"`
 
-	SectorSize   uint64 // Sector size in bytes
-	ExtraPadding uint64 // Extra space at the end of the partition table (sectors)
-	StartOffset  uint64 // Starting offset of the first partition in the table (Mb)
+	// Sector size in bytes
+	SectorSize uint64 `json:"sector_size,omitempty"`
+	// Extra space at the end of the partition table (sectors)
+	ExtraPadding uint64 `json:"extra_padding,omitempty"`
+	// Starting offset of the first partition in the table (Mb)
+	StartOffset uint64 `json:"start_offset,omitempty"`
 }
 
 type PartitioningMode string

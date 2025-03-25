@@ -72,7 +72,7 @@ func (img *AnacondaContainerInstaller) InstantiateManifest(m *manifest.Manifest,
 	repos []rpmmd.RepoConfig,
 	runner runner.Runner,
 	rng *rand.Rand) (*artifact.Artifact, error) {
-	buildPipeline := manifest.NewBuild(m, runner, repos, &manifest.BuildOptions{ContainerBuildable: true})
+	buildPipeline := addBuildBootstrapPipelines(m, runner, repos, &manifest.BuildOptions{ContainerBuildable: true})
 	buildPipeline.Checkpoint()
 
 	anacondaPipeline := manifest.NewAnacondaInstaller(
