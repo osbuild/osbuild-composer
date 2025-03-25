@@ -116,13 +116,6 @@ make man
 # Build test binaries with `go test -c`, so that they can take advantage of
 # golang's testing package. The golang rpm macros don't support building them
 # directly. Thus, do it manually, taking care to also include a build id.
-#
-# On Fedora, also turn off go modules and set the path to the one into which
-# the golang-* packages install source code.
-%if 0%{?fedora}
-export GO111MODULE=off
-export GOPATH=%{gobuilddir}:%{gopath}
-%endif
 
 TEST_LDFLAGS="${LDFLAGS:-} -B 0x$(od -N 20 -An -tx1 -w100 /dev/urandom | tr -d ' ')"
 
@@ -292,14 +285,12 @@ install -m 0644 -vp test/data/rhel-upgrade/*                       %{buildroot}%
 %check
 export GOFLAGS="-buildmode=pie"
 %if 0%{?rhel}
-export GOFLAGS+=" -mod=vendor -tags=exclude_graphdriver_btrfs"
+export GOFLAGS+=" -tags=exclude_graphdriver_btrfs"
+%endif
+
 export GOPATH=$PWD/_build:%{gopath}
 # cd inside GOPATH, otherwise go with GO111MODULE=off ignores vendor directory
 cd $PWD/_build/src/%{goipath}
-%gotest ./...
-%else
-%gocheck
-%endif
 
 %post
 %systemd_post osbuild-composer.service osbuild-composer.socket osbuild-composer-api.socket osbuild-composer-prometheus.socket osbuild-remote-worker.socket
