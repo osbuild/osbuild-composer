@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/osbuild/blueprint/internal/common"
 	"github.com/osbuild/images/pkg/crypt"
-	"github.com/osbuild/osbuild-composer/internal/common"
 
 	"github.com/coreos/go-semver/semver"
 	iblueprint "github.com/osbuild/images/pkg/blueprint"
@@ -19,14 +19,19 @@ type Blueprint struct {
 	Version     string    `json:"version,omitempty" toml:"version,omitempty"`
 	Packages    []Package `json:"packages" toml:"packages"`
 	Modules     []Package `json:"modules" toml:"modules"`
+
 	// Note, this is called "enabled modules" because we already have "modules" except
 	// the "modules" refers to packages and "enabled modules" refers to modularity modules.
 	EnabledModules []EnabledModule `json:"enabled_modules" toml:"enabled_modules"`
+
 	Groups         []Group         `json:"groups" toml:"groups"`
 	Containers     []Container     `json:"containers,omitempty" toml:"containers,omitempty"`
 	Customizations *Customizations `json:"customizations,omitempty" toml:"customizations"`
 	Distro         string          `json:"distro" toml:"distro"`
 	Arch           string          `json:"architecture,omitempty" toml:"architecture,omitempty"`
+
+	// EXPERIMENTAL
+	Minimal bool `json:"minimal,omitempty" toml:"minimal,omitempty"`
 }
 
 type Change struct {
@@ -55,7 +60,7 @@ type Group struct {
 }
 
 type Container struct {
-	Source string `json:"source,omitempty" toml:"source"`
+	Source string `json:"source" toml:"source"`
 	Name   string `json:"name,omitempty" toml:"name,omitempty"`
 
 	TLSVerify    *bool `json:"tls-verify,omitempty" toml:"tls-verify,omitempty"`
@@ -349,14 +354,12 @@ func Convert(bp Blueprint) iblueprint.Blueprint {
 		}
 		if disk := c.Disk; disk != nil {
 			idisk := &iblueprint.DiskCustomization{
-				Type:       disk.Type,
 				MinSize:    disk.MinSize,
 				Partitions: make([]iblueprint.PartitionCustomization, len(disk.Partitions)),
 			}
 			for idx, part := range disk.Partitions {
 				ipart := iblueprint.PartitionCustomization{
 					Type:                     part.Type,
-					PartType:                 part.PartType,
 					MinSize:                  part.MinSize,
 					BtrfsVolumeCustomization: iblueprint.BtrfsVolumeCustomization{},
 					VGCustomization: iblueprint.VGCustomization{

@@ -1,8 +1,6 @@
 package rhel9
 
 import (
-	"fmt"
-
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/internal/environment"
 	"github.com/osbuild/images/pkg/arch"
@@ -10,6 +8,7 @@ import (
 	"github.com/osbuild/images/pkg/datasizes"
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/distro"
+	"github.com/osbuild/images/pkg/distro/defs"
 	"github.com/osbuild/images/pkg/distro/rhel"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/rpmmd"
@@ -21,7 +20,7 @@ func mkEdgeCommitImgType(d *rhel.Distribution) *rhel.ImageType {
 		"commit.tar",
 		"application/x-tar",
 		map[string]rhel.PackageSetFunc{
-			rhel.OSPkgsKey: edgeCommitPackageSet,
+			rhel.OSPkgsKey: packageSetLoader,
 		},
 		rhel.EdgeCommitImage,
 		[]string{"build"},
@@ -53,11 +52,9 @@ func mkEdgeOCIImgType(d *rhel.Distribution) *rhel.ImageType {
 		"container.tar",
 		"application/x-tar",
 		map[string]rhel.PackageSetFunc{
-			rhel.OSPkgsKey: edgeCommitPackageSet,
-			rhel.ContainerPkgsKey: func(t *rhel.ImageType) rpmmd.PackageSet {
-				return rpmmd.PackageSet{
-					Include: []string{"nginx"}, // FIXME: this has no effect
-				}
+			rhel.OSPkgsKey: packageSetLoader,
+			rhel.ContainerPkgsKey: func(t *rhel.ImageType) (rpmmd.PackageSet, error) {
+				return defs.PackageSet(t, "edge_container_pipeline_pkgset", nil)
 			},
 		},
 		rhel.EdgeContainerImage,
@@ -130,7 +127,7 @@ func mkEdgeInstallerImgType() *rhel.ImageType {
 		"installer.iso",
 		"application/x-iso9660-image",
 		map[string]rhel.PackageSetFunc{
-			rhel.InstallerPkgsKey: edgeInstallerPackageSet,
+			rhel.InstallerPkgsKey: packageSetLoader,
 		},
 		rhel.EdgeInstallerImage,
 		[]string{"build"},
@@ -176,7 +173,7 @@ func mkEdgeSimplifiedInstallerImgType(d *rhel.Distribution) *rhel.ImageType {
 			// for other architectures, this will need to be moved to the
 			// architecture and the merging will happen in the PackageSets()
 			// method like the other sets.
-			rhel.InstallerPkgsKey: edgeSimplifiedInstallerPackageSet,
+			rhel.InstallerPkgsKey: packageSetLoader,
 		},
 		rhel.EdgeSimplifiedInstallerImage,
 		[]string{"build"},
@@ -304,7 +301,7 @@ func mkMinimalrawImgType() *rhel.ImageType {
 		"disk.raw.xz",
 		"application/xz",
 		map[string]rhel.PackageSetFunc{
-			rhel.OSPkgsKey: minimalrpmPackageSet,
+			rhel.OSPkgsKey: packageSetLoader,
 		},
 		rhel.DiskImage,
 		[]string{"build"},
@@ -626,209 +623,4 @@ func edgeBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 	default:
 		return disk.PartitionTable{}, false
 	}
-}
-
-// Package Sets
-
-// edge commit OS package set
-func edgeCommitPackageSet(t *rhel.ImageType) rpmmd.PackageSet {
-	ps := rpmmd.PackageSet{
-		Include: []string{
-			"redhat-release",
-			"glibc",
-			"glibc-minimal-langpack",
-			"nss-altfiles",
-			"dracut-config-generic",
-			"dracut-network",
-			"basesystem",
-			"bash",
-			"platform-python",
-			"shadow-utils",
-			"chrony",
-			"setup",
-			"shadow-utils",
-			"sudo",
-			"systemd",
-			"coreutils",
-			"util-linux",
-			"curl",
-			"vim-minimal",
-			"rpm",
-			"rpm-ostree",
-			"polkit",
-			"lvm2",
-			"cryptsetup",
-			"pinentry",
-			"e2fsprogs",
-			"dosfstools",
-			"keyutils",
-			"gnupg2",
-			"attr",
-			"xz",
-			"gzip",
-			"firewalld",
-			"iptables",
-			"NetworkManager",
-			"NetworkManager-wifi",
-			"NetworkManager-wwan",
-			"wpa_supplicant",
-			"traceroute",
-			"hostname",
-			"iproute",
-			"iputils",
-			"openssh-clients",
-			"procps-ng",
-			"rootfiles",
-			"openssh-server",
-			"passwd",
-			"policycoreutils",
-			"policycoreutils-python-utils",
-			"selinux-policy-targeted",
-			"setools-console",
-			"less",
-			"tar",
-			"rsync",
-			"usbguard",
-			"bash-completion",
-			"tmux",
-			"ima-evm-utils",
-			"audit",
-			"podman",
-			"containernetworking-plugins", // required for cni networks but not a hard dependency of podman >= 4.2.0 (rhbz#2123210)
-			"container-selinux",
-			"skopeo",
-			"criu",
-			"slirp4netns",
-			"fuse-overlayfs",
-			"clevis",
-			"clevis-dracut",
-			"clevis-luks",
-			"greenboot",
-			"greenboot-default-health-checks",
-			"fdo-client",
-			"fdo-owner-cli",
-			"sos",
-		},
-		Exclude: []string{
-			"rng-tools",
-			"bootupd",
-		},
-	}
-
-	switch t.Arch().Name() {
-	case arch.ARCH_X86_64.String():
-		ps = ps.Append(x8664EdgeCommitPackageSet(t))
-
-	case arch.ARCH_AARCH64.String():
-		ps = ps.Append(aarch64EdgeCommitPackageSet(t))
-	}
-
-	if common.VersionGreaterThanOrEqual(t.Arch().Distro().OsVersion(), "9.2") || !t.IsRHEL() {
-		ps.Include = append(ps.Include, "ignition", "ignition-edge", "ssh-key-dir")
-	}
-
-	if common.VersionLessThan(t.Arch().Distro().OsVersion(), "9.6") {
-		// dnsmasq removed in 9.6+ but kept in older versions
-		ps.Include = append(ps.Include, "dnsmasq")
-	}
-
-	return ps
-
-}
-
-func x8664EdgeCommitPackageSet(t *rhel.ImageType) rpmmd.PackageSet {
-	return rpmmd.PackageSet{
-		Include: []string{
-			"grub2",
-			"grub2-efi-x64",
-			"efibootmgr",
-			"shim-x64",
-			"microcode_ctl",
-			"iwl1000-firmware",
-			"iwl100-firmware",
-			"iwl105-firmware",
-			"iwl135-firmware",
-			"iwl2000-firmware",
-			"iwl2030-firmware",
-			"iwl3160-firmware",
-			"iwl5000-firmware",
-			"iwl5150-firmware",
-			"iwl6050-firmware",
-			"iwl7260-firmware",
-		},
-	}
-}
-
-func aarch64EdgeCommitPackageSet(t *rhel.ImageType) rpmmd.PackageSet {
-	return rpmmd.PackageSet{
-		Include: []string{
-			"grub2-efi-aa64",
-			"efibootmgr",
-			"shim-aa64",
-			"iwl7260-firmware",
-		},
-	}
-}
-
-func edgeInstallerPackageSet(t *rhel.ImageType) rpmmd.PackageSet {
-	return anacondaPackageSet(t)
-}
-
-func edgeSimplifiedInstallerPackageSet(t *rhel.ImageType) rpmmd.PackageSet {
-	// common installer packages
-	ps := installerPackageSet(t)
-
-	ps = ps.Append(rpmmd.PackageSet{
-		Include: []string{
-			"attr",
-			"basesystem",
-			"binutils",
-			"bsdtar",
-			"clevis-dracut",
-			"clevis-luks",
-			"cloud-utils-growpart",
-			"coreos-installer",
-			"coreos-installer-dracut",
-			"coreutils",
-			"device-mapper-multipath",
-			"dnsmasq",
-			"dosfstools",
-			"dracut-live",
-			"e2fsprogs",
-			"fcoe-utils",
-			"fdo-init",
-			"gzip",
-			"ima-evm-utils",
-			"iproute",
-			"iptables",
-			"iputils",
-			"iscsi-initiator-utils",
-			"keyutils",
-			"lldpad",
-			"lvm2",
-			"passwd",
-			"policycoreutils",
-			"policycoreutils-python-utils",
-			"procps-ng",
-			"redhat-logos",
-			"rootfiles",
-			"setools-console",
-			"sudo",
-			"traceroute",
-			"util-linux",
-		},
-	})
-
-	switch t.Arch().Name() {
-
-	case arch.ARCH_X86_64.String():
-		ps = ps.Append(x8664EdgeCommitPackageSet(t))
-	case arch.ARCH_AARCH64.String():
-		ps = ps.Append(aarch64EdgeCommitPackageSet(t))
-
-	default:
-		panic(fmt.Sprintf("unsupported arch: %s", t.Arch().Name()))
-	}
-
-	return ps
 }
