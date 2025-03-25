@@ -3,9 +3,7 @@ package manifest
 import (
 	"fmt"
 
-	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/container"
-	"github.com/osbuild/images/pkg/experimentalflags"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/images/pkg/runner"
@@ -36,12 +34,30 @@ type BuildrootFromPackages struct {
 	packageSpecs []rpmmd.PackageSpec
 
 	containerBuildable bool
+
+	// XXX: disableSelinux controlls if selinux should be disabled
+	// for the given buildroot. This is currently needed for
+	// bootstraped buildroot containers because most of the
+	// boostrap containers do not include setfiles(8). A
+	// reasonable fix is to teach osbuild to chroot into the
+	// buildroot itself when running setfiles. Once osbuild has
+	// this then this option would become "useChrootSetfiles"
+	disableSelinux bool
 }
 
 type BuildOptions struct {
 	// ContainerBuildable tweaks the buildroot to be container friendly,
 	// i.e. to not rely on an installed osbuild-selinux
 	ContainerBuildable bool
+
+	// DisableSELinux disables SELinux, this is not advised, but is
+	// currently needed when using (experimental) cross-arch building.
+	DisableSELinux bool
+
+	// BootstrapPipeline add the given bootstrap pipeline to the
+	// build pipeline. This is only needed when doing cross-arch
+	// building
+	BootstrapPipeline Build
 }
 
 // NewBuild creates a new build pipeline from the repositories in repos
@@ -53,16 +69,13 @@ func NewBuild(m *Manifest, runner runner.Runner, repos []rpmmd.RepoConfig, opts 
 
 	name := "build"
 	pipeline := &BuildrootFromPackages{
-		Base:               NewBase(name, nil),
+		Base:               NewBase(name, opts.BootstrapPipeline),
 		runner:             runner,
 		dependents:         make([]Pipeline, 0),
 		repos:              filterRepos(repos, name),
 		containerBuildable: opts.ContainerBuildable,
+		disableSelinux:     opts.DisableSELinux,
 	}
-
-	// This allows to bootstrap the buildroot with a custom container
-	// for e.g. cross-arch-build experiments,
-	maybeAddExperimentalContainerBootstrap(m, runner, opts, pipeline)
 
 	m.addPipeline(pipeline)
 	return pipeline
@@ -128,11 +141,13 @@ func (p *BuildrootFromPackages) serialize() osbuild.Pipeline {
 	pipeline.Runner = p.runner.String()
 
 	pipeline.AddStage(osbuild.NewRPMStage(osbuild.NewRPMStageOptions(p.repos), osbuild.NewRpmStageSourceFilesInputs(p.packageSpecs)))
-	pipeline.AddStage(osbuild.NewSELinuxStage(&osbuild.SELinuxStageOptions{
-		FileContexts: "etc/selinux/targeted/contexts/files/file_contexts",
-		Labels:       p.getSELinuxLabels(),
-	},
-	))
+	if !p.disableSelinux {
+		pipeline.AddStage(osbuild.NewSELinuxStage(&osbuild.SELinuxStageOptions{
+			FileContexts: "etc/selinux/targeted/contexts/files/file_contexts",
+			Labels:       p.getSELinuxLabels(),
+		},
+		))
+	}
 
 	return pipeline
 }
@@ -154,40 +169,6 @@ func (p *BuildrootFromPackages) getSELinuxLabels() map[string]string {
 		}
 	}
 	return labels
-}
-
-// maybeAddExperimentalContainerBootstrap will return a container buildroot
-// if the "IMAGE_BUILDER_EXPERIMENTAL=bootstrap=<container-ref>" is
-// defined. This allows us to do cross-arch build experimentation.
-//
-// A "bootstrap" container has only these requirements:
-// - python3 for the runners
-// - rpm so that the real buildroot rpms can get installed
-// - setfiles so that the selinux stage for the real buildroot can run
-// (and does not even need a working dnf or repo setup).
-func maybeAddExperimentalContainerBootstrap(m *Manifest, runner runner.Runner, opts *BuildOptions, build *BuildrootFromPackages) {
-	bootstrapBuildrootRef := experimentalflags.String("bootstrap")
-	if bootstrapBuildrootRef == "" {
-		return
-	}
-
-	cntSrcs := []container.SourceSpec{
-		{
-			Source:    bootstrapBuildrootRef,
-			Name:      bootstrapBuildrootRef,
-			TLSVerify: common.ToPtr(false),
-		},
-	}
-	name := "bootstrap-buildroot"
-	bootstrapPipeline := &BuildrootFromContainer{
-		Base:           NewBase(name, nil),
-		runner:         runner,
-		dependents:     make([]Pipeline, 0),
-		containers:     cntSrcs,
-		disableSelinux: true,
-	}
-	m.addPipeline(bootstrapPipeline)
-	build.build = bootstrapPipeline
 }
 
 type BuildrootFromContainer struct {
@@ -212,12 +193,13 @@ func NewBuildFromContainer(m *Manifest, runner runner.Runner, containerSources [
 
 	name := "build"
 	pipeline := &BuildrootFromContainer{
-		Base:       NewBase(name, nil),
+		Base:       NewBase(name, opts.BootstrapPipeline),
 		runner:     runner,
 		dependents: make([]Pipeline, 0),
 		containers: containerSources,
 
 		containerBuildable: opts.ContainerBuildable,
+		disableSelinux:     opts.DisableSELinux,
 	}
 	m.addPipeline(pipeline)
 	return pipeline
@@ -298,5 +280,29 @@ func (p *BuildrootFromContainer) serialize() osbuild.Pipeline {
 		))
 	}
 
+	return pipeline
+}
+
+// NewBootstrap creates a new bootstrap build pipeline from the given
+// containers specs
+func NewBootstrap(m *Manifest, containerSources []container.SourceSpec) Build {
+	name := "bootstrap-buildroot"
+	pipeline := &BuildrootFromContainer{
+		Base: NewBase(name, nil),
+		// use the most minimal runner as we cannot make assumption
+		// about our environment
+		runner:             &runner.Linux{},
+		dependents:         make([]Pipeline, 0),
+		containers:         containerSources,
+		containerBuildable: true,
+		// XXX: we only disable selinux currently in the buildroot
+		// because selinux requies the bootstrap container to have the
+		// "setfiles" binary. this is typcially not shiped in a
+		// container so we disable it. the easiest fix is to make
+		// osbuld support running setfiles inside the buildroot chroot
+		// (which has setfiles installed)
+		disableSelinux: true,
+	}
+	m.addPipeline(pipeline)
 	return pipeline
 }

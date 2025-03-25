@@ -6,7 +6,6 @@ import (
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distro/rhel"
 	"github.com/osbuild/images/pkg/osbuild"
-	"github.com/osbuild/images/pkg/rpmmd"
 )
 
 // TODO: move these to the EC2 environment
@@ -164,112 +163,13 @@ func defaultEc2ImageConfigX86_64() *distro.ImageConfig {
 	return appendEC2DracutX86_64(ic)
 }
 
-// common ec2 image package set, which is the minimal super set of all ec2 image types
-func ec2BasePackageSet(t *rhel.ImageType) rpmmd.PackageSet {
-	ps := rpmmd.PackageSet{
-		Include: []string{
-			"@core",
-			"authselect-compat",
-			"chrony",
-			"cloud-init",
-			"cloud-utils-growpart",
-			"dhcp-client",
-			"yum-utils",
-			"dracut-config-generic",
-			"gdisk",
-			"grub2",
-			"langpacks-en",
-			"NetworkManager-cloud-setup",
-			"redhat-release",
-			"redhat-release-eula",
-			"rsync",
-			"tuned",
-			"tar",
-		},
-		Exclude: []string{
-			"aic94xx-firmware",
-			"alsa-firmware",
-			"alsa-tools-firmware",
-			"biosdevname",
-			"firewalld",
-			"iprutils",
-			"ivtv-firmware",
-			"iwl1000-firmware",
-			"iwl100-firmware",
-			"iwl105-firmware",
-			"iwl135-firmware",
-			"iwl2000-firmware",
-			"iwl2030-firmware",
-			"iwl3160-firmware",
-			"iwl3945-firmware",
-			"iwl4965-firmware",
-			"iwl5000-firmware",
-			"iwl5150-firmware",
-			"iwl6000-firmware",
-			"iwl6000g2a-firmware",
-			"iwl6000g2b-firmware",
-			"iwl6050-firmware",
-			"iwl7260-firmware",
-			"libertas-sd8686-firmware",
-			"libertas-sd8787-firmware",
-			"libertas-usb8388-firmware",
-			"plymouth",
-			// RHBZ#2064087
-			"dracut-config-rescue",
-			// RHBZ#2075815
-			"qemu-guest-agent",
-		},
-	}.Append(distroSpecificPackageSet(t))
-
-	return ps
-}
-
-// plain ec2 image package set
-func ec2PackageSet(t *rhel.ImageType) rpmmd.PackageSet {
-	ec2PackageSet := ec2BasePackageSet(t)
-	ec2PackageSet = ec2PackageSet.Append(rpmmd.PackageSet{
-		Exclude: []string{
-			"alsa-lib",
-		},
-	})
-	return ec2PackageSet
-}
-
-// rhel-ha-ec2 image package set
-func rhelEc2HaPackageSet(t *rhel.ImageType) rpmmd.PackageSet {
-	ec2HaPackageSet := ec2PackageSet(t)
-	ec2HaPackageSet = ec2HaPackageSet.Append(rpmmd.PackageSet{
-		Include: []string{
-			"fence-agents-all",
-			"pacemaker",
-			"pcs",
-		},
-	})
-	return ec2HaPackageSet
-}
-
-// rhel-sap-ec2 image package set
-// Includes the common ec2 package set, the common SAP packages, and
-// the amazon rhui sap package
-func rhelEc2SapPackageSet(t *rhel.ImageType) rpmmd.PackageSet {
-	return rpmmd.PackageSet{
-		Include: []string{
-			"libcanberra-gtk2",
-		},
-		Exclude: []string{
-			// COMPOSER-1829
-			"firewalld",
-		},
-	}.Append(ec2BasePackageSet(t)).Append(SapPackageSet(t))
-}
-
 func mkEc2ImgTypeX86_64() *rhel.ImageType {
 	it := rhel.NewImageType(
 		"ec2",
 		"image.raw.xz",
 		"application/xz",
 		map[string]rhel.PackageSetFunc{
-			rhel.OSPkgsKey: ec2PackageSet,
+			rhel.OSPkgsKey: packageSetLoader,
 		},
 		rhel.DiskImage,
 		[]string{"build"},
@@ -293,7 +193,7 @@ func mkAMIImgTypeX86_64() *rhel.ImageType {
 		"image.raw",
 		"application/octet-stream",
 		map[string]rhel.PackageSetFunc{
-			rhel.OSPkgsKey: ec2PackageSet,
+			rhel.OSPkgsKey: packageSetLoader,
 		},
 		rhel.DiskImage,
 		[]string{"build"},
@@ -316,7 +216,7 @@ func mkEC2SapImgTypeX86_64(osVersion string) *rhel.ImageType {
 		"image.raw.xz",
 		"application/xz",
 		map[string]rhel.PackageSetFunc{
-			rhel.OSPkgsKey: rhelEc2SapPackageSet,
+			rhel.OSPkgsKey: packageSetLoader,
 		},
 		rhel.DiskImage,
 		[]string{"build"},
@@ -340,7 +240,7 @@ func mkEc2HaImgTypeX86_64() *rhel.ImageType {
 		"image.raw.xz",
 		"application/xz",
 		map[string]rhel.PackageSetFunc{
-			rhel.OSPkgsKey: rhelEc2HaPackageSet,
+			rhel.OSPkgsKey: packageSetLoader,
 		},
 		rhel.DiskImage,
 		[]string{"build"},
@@ -364,7 +264,7 @@ func mkAMIImgTypeAarch64() *rhel.ImageType {
 		"image.raw",
 		"application/octet-stream",
 		map[string]rhel.PackageSetFunc{
-			rhel.OSPkgsKey: ec2PackageSet,
+			rhel.OSPkgsKey: packageSetLoader,
 		},
 		rhel.DiskImage,
 		[]string{"build"},
@@ -387,7 +287,7 @@ func mkEC2ImgTypeAarch64() *rhel.ImageType {
 		"image.raw.xz",
 		"application/xz",
 		map[string]rhel.PackageSetFunc{
-			rhel.OSPkgsKey: ec2PackageSet,
+			rhel.OSPkgsKey: packageSetLoader,
 		},
 		rhel.DiskImage,
 		[]string{"build"},
