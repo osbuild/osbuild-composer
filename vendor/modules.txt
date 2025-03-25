@@ -173,7 +173,7 @@ github.com/AzureAD/microsoft-authentication-library-for-go/apps/internal/options
 github.com/AzureAD/microsoft-authentication-library-for-go/apps/internal/shared
 github.com/AzureAD/microsoft-authentication-library-for-go/apps/internal/version
 github.com/AzureAD/microsoft-authentication-library-for-go/apps/public
-# github.com/BurntSushi/toml v1.4.0
+# github.com/BurntSushi/toml v1.5.1-0.20250403130103-3d3abc24416a
 ## explicit; go 1.18
 github.com/BurntSushi/toml
 github.com/BurntSushi/toml/internal
@@ -1045,7 +1045,11 @@ github.com/oracle/oci-go-sdk/v54/identity
 github.com/oracle/oci-go-sdk/v54/objectstorage
 github.com/oracle/oci-go-sdk/v54/objectstorage/transfer
 github.com/oracle/oci-go-sdk/v54/workrequests
-# github.com/osbuild/images v0.128.0
+# github.com/osbuild/blueprint v1.6.0
+## explicit; go 1.22.8
+github.com/osbuild/blueprint/internal/common
+github.com/osbuild/blueprint/pkg/blueprint
+# github.com/osbuild/images v0.131.0
 ## explicit; go 1.22.8
 github.com/osbuild/images/data/dependencies
 github.com/osbuild/images/data/repositories

@@ -37,10 +37,8 @@ func mkWSLImgType() *rhel.ImageType {
 			},
 		},
 		NoSElinux: common.ToPtr(true),
-		WSLConfig: &osbuild.WSLConfStageOptions{
-			Boot: osbuild.WSLConfBootOptions{
-				Systemd: true,
-			},
+		WSLConfig: &distro.WSLConfig{
+			BootSystemd: true,
 		},
 	}
 

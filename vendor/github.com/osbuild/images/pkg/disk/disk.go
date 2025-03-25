@@ -24,11 +24,11 @@ import (
 	"io"
 	"math/rand"
 	"reflect"
+	"slices"
 	"strings"
 
-	"slices"
-
 	"github.com/google/uuid"
+
 	"github.com/osbuild/images/pkg/arch"
 )
 
@@ -246,6 +246,10 @@ func (t PartitionTableType) String() string {
 
 func (t PartitionTableType) MarshalJSON() ([]byte, error) {
 	return json.Marshal(t.String())
+}
+
+func (t PartitionTableType) MarshalYAML() (interface{}, error) {
+	return t.String(), nil
 }
 
 func (t *PartitionTableType) UnmarshalJSON(data []byte) error {

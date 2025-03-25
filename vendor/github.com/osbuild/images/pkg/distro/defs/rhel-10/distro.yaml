@@ -152,6 +152,23 @@
             - "grub2-efi-aa64"
             - "shim-aa64"
 
+image_config:
+  default:
+    default_kernel: "kernel"
+    # XXX: this needs to be conditional for centos and rhel  
+    default_oscap_datastream: "/usr/share/xml/scap/ssg/content/ssg-rhel10-ds.xml"
+    install_weak_deps: true
+    locale: "C.UTF-8"
+    sysconfig:
+      networking: true
+      no_zero_conf: true
+    timezone: "UTC"
+    update_default_kernel: true
+  condition:
+    distro_name:
+      centos:
+        default_oscap_datastream: "/usr/share/xml/scap/ssg/content/ssg-cs10-ds.xml"
+
 image_types:
   # XXX: not a real pkgset but the "os" pipeline pkgset for image-installer
   # find a nicer way to represent this

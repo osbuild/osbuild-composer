@@ -1,6 +1,7 @@
 package fedora
 
 import (
+	"errors"
 	"fmt"
 	"math/rand"
 	"strings"
@@ -16,6 +17,7 @@ import (
 	"github.com/osbuild/images/pkg/datasizes"
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/distro"
+	"github.com/osbuild/images/pkg/distro/defs"
 	"github.com/osbuild/images/pkg/experimentalflags"
 	"github.com/osbuild/images/pkg/image"
 	"github.com/osbuild/images/pkg/manifest"
@@ -56,9 +58,7 @@ type imageType struct {
 	// rpmOstree: iot/ostree
 	rpmOstree bool
 	// bootable image
-	bootable bool
-	// List of valid arches for the image type
-	basePartitionTables    distro.BasePartitionTableMap
+	bootable               bool
 	requiredPartitionSizes map[string]uint64
 }
 
@@ -139,14 +139,18 @@ func (t *imageType) BootMode() platform.BootMode {
 	return platform.BOOT_NONE
 }
 
+func (t *imageType) BasePartitionTable() (*disk.PartitionTable, error) {
+	return defs.PartitionTable(t, VersionReplacements())
+}
+
 func (t *imageType) getPartitionTable(
 	customizations *blueprint.Customizations,
 	options distro.ImageOptions,
 	rng *rand.Rand,
 ) (*disk.PartitionTable, error) {
-	basePartitionTable, exists := t.basePartitionTables[t.arch.Name()]
-	if !exists {
-		return nil, fmt.Errorf("unknown arch for partition table: %s", t.arch.Name())
+	basePartitionTable, err := t.BasePartitionTable()
+	if err != nil {
+		return nil, err
 	}
 
 	imageSize := t.Size(options.Size)
@@ -185,7 +189,7 @@ func (t *imageType) getPartitionTable(
 	}
 
 	mountpoints := customizations.GetFilesystems()
-	return disk.NewPartitionTable(&basePartitionTable, mountpoints, imageSize, partitioningMode, t.platform.GetArch(), t.requiredPartitionSizes, rng)
+	return disk.NewPartitionTable(basePartitionTable, mountpoints, imageSize, partitioningMode, t.platform.GetArch(), t.requiredPartitionSizes, rng)
 }
 
 func (t *imageType) getDefaultImageConfig() *distro.ImageConfig {
@@ -207,9 +211,12 @@ func (t *imageType) getDefaultInstallerConfig() (*distro.InstallerConfig, error)
 }
 
 func (t *imageType) PartitionType() disk.PartitionTableType {
-	basePartitionTable, exists := t.basePartitionTables[t.arch.Name()]
-	if !exists {
+	basePartitionTable, err := t.BasePartitionTable()
+	if errors.Is(err, defs.ErrNoPartitionTableForImgType) {
 		return disk.PT_NONE
+	}
+	if err != nil {
+		panic(err)
 	}
 
 	return basePartitionTable.Type

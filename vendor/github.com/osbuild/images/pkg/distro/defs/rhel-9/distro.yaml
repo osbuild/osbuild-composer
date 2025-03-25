@@ -362,6 +362,22 @@
           include:
             - "dmidecode"
 
+image_config:
+  default:
+    default_kernel: "kernel"
+    default_oscap_datastream: "/usr/share/xml/scap/ssg/content/ssg-rhel9-ds.xml"
+    install_weak_deps: true
+    locale: "C.UTF-8"
+    sysconfig:
+      networking: true
+      no_zero_conf: true
+    timezone: "America/New_York"
+    update_default_kernel: true
+  condition:
+    distro_name:
+      centos:
+        default_oscap_datastream: "/usr/share/xml/scap/ssg/content/ssg-cs9-ds.xml"
+
 image_types:
   # XXX: not a real pkgset but the "os" pipeline pkgset for image-installer
   # find a nicer way to represent this

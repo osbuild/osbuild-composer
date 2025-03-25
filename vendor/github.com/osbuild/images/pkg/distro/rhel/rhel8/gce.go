@@ -129,14 +129,14 @@ func defaultGceByosImageConfig(rd distro.Distro) *distro.ImageConfig {
 				PermitRootLogin:        osbuild.PermitRootLoginValueNo,
 			},
 		},
-		Sysconfig: []*osbuild.SysconfigStageOptions{
-			{
-				Kernel: &osbuild.SysconfigKernelOptions{
-					DefaultKernel: "kernel-core",
-					UpdateDefault: true,
-				},
-			},
-		},
+		DefaultKernel:       common.ToPtr("kernel-core"),
+		UpdateDefaultKernel: common.ToPtr(true),
+		// XXX: ensure the "old" behavior is preserved (that is
+		// likely a bug) where for GCE the sysconfig network
+		// options are not set because the merge of imageConfig
+		// is shallow and the previous setup was changing the
+		// kernel without also changing the network options.
+		Sysconfig: &distro.Sysconfig{},
 		Modprobe: []*osbuild.ModprobeStageOptions{
 			{
 				Filename: "blacklist-floppy.conf",

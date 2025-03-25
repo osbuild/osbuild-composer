@@ -4,7 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/osbuild/osbuild-composer/internal/common"
+	"github.com/osbuild/images/pkg/datasizes"
+	"github.com/osbuild/images/pkg/pathpolicy"
 )
 
 type FilesystemCustomization struct {
@@ -37,7 +38,7 @@ func (fsc *FilesystemCustomization) UnmarshalTOML(data interface{}) error {
 	case int64:
 		size = uint64(d["size"].(int64))
 	case string:
-		s, err := common.DataSizeToUint64(d["size"].(string))
+		s, err := datasizes.Parse(d["size"].(string))
 		if err != nil {
 			return fmt.Errorf("TOML unmarshal: size is not valid filesystem size (%w)", err)
 		}
@@ -52,7 +53,7 @@ func (fsc *FilesystemCustomization) UnmarshalTOML(data interface{}) error {
 	case int64:
 		minsize = uint64(d["minsize"].(int64))
 	case string:
-		s, err := common.DataSizeToUint64(d["minsize"].(string))
+		s, err := datasizes.Parse(d["minsize"].(string))
 		if err != nil {
 			return fmt.Errorf("TOML unmarshal: minsize is not valid filesystem size (%w)", err)
 		}
@@ -104,13 +105,54 @@ func (fsc *FilesystemCustomization) UnmarshalJSON(data []byte) error {
 		// Note that it uses different key than the TOML version
 		fsc.MinSize = uint64(d["minsize"].(float64))
 	case string:
-		size, err := common.DataSizeToUint64(d["minsize"].(string))
+		size, err := datasizes.Parse(d["minsize"].(string))
 		if err != nil {
 			return fmt.Errorf("JSON unmarshal: size is not valid filesystem size (%w)", err)
 		}
 		fsc.MinSize = size
 	default:
 		return fmt.Errorf("JSON unmarshal: minsize must be float64 number or string, got %v of type %T", d["minsize"], d["minsize"])
+	}
+
+	return nil
+}
+
+// decodeSize takes an integer or string representing a data size (with a data
+// suffix) and returns the uint64 representation.
+func decodeSize(size any) (uint64, error) {
+	switch s := size.(type) {
+	case string:
+		return datasizes.Parse(s)
+	case int64:
+		if s < 0 {
+			return 0, fmt.Errorf("cannot be negative")
+		}
+		return uint64(s), nil
+	case float64:
+		if s < 0 {
+			return 0, fmt.Errorf("cannot be negative")
+		}
+		// TODO: emit warning of possible truncation?
+		return uint64(s), nil
+	case uint64:
+		return s, nil
+	default:
+		return 0, fmt.Errorf("failed to convert value \"%v\" to number", size)
+	}
+}
+
+// CheckMountpointsPolicy checks if the mountpoints are allowed by the policy
+func CheckMountpointsPolicy(mountpoints []FilesystemCustomization, mountpointAllowList *pathpolicy.PathPolicies) error {
+	invalidMountpoints := []string{}
+	for _, m := range mountpoints {
+		err := mountpointAllowList.Check(m.Mountpoint)
+		if err != nil {
+			invalidMountpoints = append(invalidMountpoints, m.Mountpoint)
+		}
+	}
+
+	if len(invalidMountpoints) > 0 {
+		return fmt.Errorf("The following custom mountpoints are not supported %+q", invalidMountpoints)
 	}
 
 	return nil

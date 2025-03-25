@@ -15,19 +15,19 @@ import (
 
 type PartitionTable struct {
 	// Size of the disk (in bytes).
-	Size uint64 `json:"size"`
+	Size uint64 `json:"size,omitempty" yaml:"size,omitempty"`
 	// Unique identifier of the partition table (GPT only).
-	UUID string `json:"uuid,omitempty"`
+	UUID string `json:"uuid,omitempty" yaml:"uuid,omitempty"`
 	// Partition table type, e.g. dos, gpt.
-	Type       PartitionTableType `json:"type"`
-	Partitions []Partition        `json:"partitions"`
+	Type       PartitionTableType `json:"type" yaml:"type"`
+	Partitions []Partition        `json:"partitions" yaml:"partitions"`
 
 	// Sector size in bytes
-	SectorSize uint64 `json:"sector_size,omitempty"`
+	SectorSize uint64 `json:"sector_size,omitempty" yaml:"sector_size,omitempty"`
 	// Extra space at the end of the partition table (sectors)
-	ExtraPadding uint64 `json:"extra_padding,omitempty"`
+	ExtraPadding uint64 `json:"extra_padding,omitempty" yaml:"extra_padding,omitempty"`
 	// Starting offset of the first partition in the table (Mb)
-	StartOffset uint64 `json:"start_offset,omitempty"`
+	StartOffset uint64 `json:"start_offset,omitempty" yaml:"start_offset,omitempty"`
 }
 
 type PartitioningMode string

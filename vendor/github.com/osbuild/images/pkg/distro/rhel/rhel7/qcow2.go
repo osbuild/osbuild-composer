@@ -38,30 +38,12 @@ func mkQcow2ImgType() *rhel.ImageType {
 var qcow2DefaultImgConfig = &distro.ImageConfig{
 	DefaultTarget:       common.ToPtr("multi-user.target"),
 	SELinuxForceRelabel: common.ToPtr(true),
-	Sysconfig: []*osbuild.SysconfigStageOptions{
-		{
-			Kernel: &osbuild.SysconfigKernelOptions{
-				UpdateDefault: true,
-				DefaultKernel: "kernel",
-			},
-			Network: &osbuild.SysconfigNetworkOptions{
-				Networking: true,
-				NoZeroConf: true,
-			},
-			NetworkScripts: &osbuild.NetworkScriptsOptions{
-				IfcfgFiles: map[string]osbuild.IfcfgFile{
-					"eth0": {
-						Device:    "eth0",
-						Bootproto: osbuild.IfcfgBootprotoDHCP,
-						OnBoot:    common.ToPtr(true),
-						Type:      osbuild.IfcfgTypeEthernet,
-						UserCtl:   common.ToPtr(true),
-						PeerDNS:   common.ToPtr(true),
-						IPv6Init:  common.ToPtr(false),
-					},
-				},
-			},
-		},
+	UpdateDefaultKernel: common.ToPtr(true),
+	DefaultKernel:       common.ToPtr("kernel"),
+	Sysconfig: &distro.Sysconfig{
+		Networking:                  true,
+		NoZeroConf:                  true,
+		CreateDefaultNetworkScripts: true,
 	},
 	RHSMConfig: map[subscription.RHSMStatus]*subscription.RHSMConfig{
 		subscription.RHSMConfigNoSubscription: {

@@ -524,6 +524,23 @@
             - "insights-client"
             - "subscription-manager-cockpit"
     
+image_config:
+  default:
+    default_kernel: "kernel"
+    # XXX: this needs to be conditional for centos and rhel
+    default_oscap_datastream: "/usr/share/xml/scap/ssg/content/ssg-rhel8-ds.xml"
+    install_weak_deps: true
+    kernel_options_bootloader: true
+    locale:   "en_US.UTF-8"
+    sysconfig:
+      networking: true
+      no_zero_conf: true
+    timezone: "America/New_York"
+    update_default_kernel: true
+  condition:
+    distro_name:
+      centos:
+        default_oscap_datastream: "/usr/share/xml/scap/ssg/content/ssg-centos8-ds.xml"
 
 image_types:
   # XXX: not a real pkgset but the "os" pipeline pkgset for image-installer

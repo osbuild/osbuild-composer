@@ -8,8 +8,8 @@ import (
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/customizations/oscap"
 	"github.com/osbuild/images/pkg/distro"
+	"github.com/osbuild/images/pkg/distro/defs"
 	"github.com/osbuild/images/pkg/distro/rhel"
-	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/platform"
 )
 
@@ -50,24 +50,7 @@ func distroISOLabelFunc(t *rhel.ImageType) string {
 }
 
 func defaultDistroImageConfig(d *rhel.Distribution) *distro.ImageConfig {
-	return &distro.ImageConfig{
-		Timezone: common.ToPtr("UTC"),
-		Locale:   common.ToPtr("C.UTF-8"),
-		Sysconfig: []*osbuild.SysconfigStageOptions{
-			{
-				Kernel: &osbuild.SysconfigKernelOptions{
-					UpdateDefault: true,
-					DefaultKernel: "kernel",
-				},
-				Network: &osbuild.SysconfigNetworkOptions{
-					Networking: true,
-					NoZeroConf: true,
-				},
-			},
-		},
-		DefaultOSCAPDatastream: common.ToPtr(oscap.DefaultRHEL10Datastream(d.IsRHEL())),
-		InstallWeakDeps:        common.ToPtr(true),
-	}
+	return common.Must(defs.DistroImageConfig(d.Name()))
 }
 
 func newDistro(name string, major, minor int) *rhel.Distribution {
