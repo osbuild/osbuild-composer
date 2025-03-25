@@ -3,36 +3,40 @@ package blueprint
 import (
 	"fmt"
 	"reflect"
+	"slices"
 	"strings"
 
+	"github.com/osbuild/images/pkg/cert"
+	"github.com/osbuild/images/pkg/customizations/anaconda"
 	"github.com/osbuild/images/pkg/disk"
 )
 
 type Customizations struct {
-	Hostname           *string                   `json:"hostname,omitempty" toml:"hostname,omitempty"`
-	Kernel             *KernelCustomization      `json:"kernel,omitempty" toml:"kernel,omitempty"`
-	SSHKey             []SSHKeyCustomization     `json:"sshkey,omitempty" toml:"sshkey,omitempty"`
-	User               []UserCustomization       `json:"user,omitempty" toml:"user,omitempty"`
-	Group              []GroupCustomization      `json:"group,omitempty" toml:"group,omitempty"`
-	Timezone           *TimezoneCustomization    `json:"timezone,omitempty" toml:"timezone,omitempty"`
-	Locale             *LocaleCustomization      `json:"locale,omitempty" toml:"locale,omitempty"`
-	Firewall           *FirewallCustomization    `json:"firewall,omitempty" toml:"firewall,omitempty"`
-	Services           *ServicesCustomization    `json:"services,omitempty" toml:"services,omitempty"`
-	Filesystem         []FilesystemCustomization `json:"filesystem,omitempty" toml:"filesystem,omitempty"`
-	Disk               *DiskCustomization        `json:"disk,omitempty" toml:"disk,omitempty"`
-	InstallationDevice string                    `json:"installation_device,omitempty" toml:"installation_device,omitempty"`
-	PartitioningMode   string                    `json:"partitioning_mode,omitempty" toml:"partitioning_mode,omitempty"`
-	FDO                *FDOCustomization         `json:"fdo,omitempty" toml:"fdo,omitempty"`
-	OpenSCAP           *OpenSCAPCustomization    `json:"openscap,omitempty" toml:"openscap,omitempty"`
-	Ignition           *IgnitionCustomization    `json:"ignition,omitempty" toml:"ignition,omitempty"`
-	Directories        []DirectoryCustomization  `json:"directories,omitempty" toml:"directories,omitempty"`
-	Files              []FileCustomization       `json:"files,omitempty" toml:"files,omitempty"`
-	Repositories       []RepositoryCustomization `json:"repositories,omitempty" toml:"repositories,omitempty"`
-	FIPS               *bool                     `json:"fips,omitempty" toml:"fips,omitempty"`
-	Installer          *InstallerCustomization   `json:"installer,omitempty" toml:"installer,omitempty"`
-	RPM                *RPMCustomization         `json:"rpm,omitempty" toml:"rpm,omitempty"`
-	RHSM               *RHSMCustomization        `json:"rhsm,omitempty" toml:"rhsm,omitempty"`
-	CACerts            *CACustomization          `json:"cacerts,omitempty" toml:"cacerts,omitempty"`
+	Hostname           *string                        `json:"hostname,omitempty" toml:"hostname,omitempty"`
+	Kernel             *KernelCustomization           `json:"kernel,omitempty" toml:"kernel,omitempty"`
+	SSHKey             []SSHKeyCustomization          `json:"sshkey,omitempty" toml:"sshkey,omitempty"`
+	User               []UserCustomization            `json:"user,omitempty" toml:"user,omitempty"`
+	Group              []GroupCustomization           `json:"group,omitempty" toml:"group,omitempty"`
+	Timezone           *TimezoneCustomization         `json:"timezone,omitempty" toml:"timezone,omitempty"`
+	Locale             *LocaleCustomization           `json:"locale,omitempty" toml:"locale,omitempty"`
+	Firewall           *FirewallCustomization         `json:"firewall,omitempty" toml:"firewall,omitempty"`
+	Services           *ServicesCustomization         `json:"services,omitempty" toml:"services,omitempty"`
+	Filesystem         []FilesystemCustomization      `json:"filesystem,omitempty" toml:"filesystem,omitempty"`
+	Disk               *DiskCustomization             `json:"disk,omitempty" toml:"disk,omitempty"`
+	InstallationDevice string                         `json:"installation_device,omitempty" toml:"installation_device,omitempty"`
+	PartitioningMode   string                         `json:"partitioning_mode,omitempty" toml:"partitioning_mode,omitempty"`
+	FDO                *FDOCustomization              `json:"fdo,omitempty" toml:"fdo,omitempty"`
+	OpenSCAP           *OpenSCAPCustomization         `json:"openscap,omitempty" toml:"openscap,omitempty"`
+	Ignition           *IgnitionCustomization         `json:"ignition,omitempty" toml:"ignition,omitempty"`
+	Directories        []DirectoryCustomization       `json:"directories,omitempty" toml:"directories,omitempty"`
+	Files              []FileCustomization            `json:"files,omitempty" toml:"files,omitempty"`
+	Repositories       []RepositoryCustomization      `json:"repositories,omitempty" toml:"repositories,omitempty"`
+	FIPS               *bool                          `json:"fips,omitempty" toml:"fips,omitempty"`
+	Installer          *InstallerCustomization        `json:"installer,omitempty" toml:"installer,omitempty"`
+	RPM                *RPMCustomization              `json:"rpm,omitempty" toml:"rpm,omitempty"`
+	RHSM               *RHSMCustomization             `json:"rhsm,omitempty" toml:"rhsm,omitempty"`
+	CACerts            *CACustomization               `json:"cacerts,omitempty" toml:"cacerts,omitempty"`
+	ContainersStorage  *ContainerStorageCustomization `json:"containers-storage,omitempty" toml:"containers-storage,omitempty"`
 }
 
 type IgnitionCustomization struct {
@@ -141,6 +145,13 @@ type CACustomization struct {
 	PEMCerts []string `json:"pem_certs,omitempty" toml:"pem_certs,omitempty"`
 }
 
+// Configure the container storage separately from containers, since we most likely would
+// like to use the same storage path for all of the containers.
+type ContainerStorageCustomization struct {
+	// destination is always `containers-storage`, so we won't expose this
+	StoragePath *string `json:"destination-path,omitempty" toml:"destination-path,omitempty"`
+}
+
 type CustomizationError struct {
 	Message string
 }
@@ -227,11 +238,11 @@ func (c *Customizations) GetTimezoneSettings() (*string, []string) {
 }
 
 func (c *Customizations) GetUsers() []UserCustomization {
-	if c == nil {
+	if c == nil || (c.User == nil && c.SSHKey == nil) {
 		return nil
 	}
 
-	users := []UserCustomization{}
+	var users []UserCustomization
 
 	// prepend sshkey for backwards compat (overridden by users)
 	if len(c.SSHKey) > 0 {
@@ -268,20 +279,19 @@ func (c *Customizations) GetGroups() []GroupCustomization {
 }
 
 func (c *Customizations) GetKernel() *KernelCustomization {
-	var name string
-	var append string
+	var kernelName, kernelAppend string
 	if c != nil && c.Kernel != nil {
-		name = c.Kernel.Name
-		append = c.Kernel.Append
+		kernelName = c.Kernel.Name
+		kernelAppend = c.Kernel.Append
 	}
 
-	if name == "" {
-		name = "kernel"
+	if kernelName == "" {
+		kernelName = "kernel"
 	}
 
 	return &KernelCustomization{
-		Name:   name,
-		Append: append,
+		Name:   kernelName,
+		Append: kernelAppend,
 	}
 }
 
@@ -322,6 +332,17 @@ func (c *Customizations) GetFilesystemsMinSize() uint64 {
 		agg = (agg/512 + 1) * 512
 	}
 	return agg
+}
+
+func (c *Customizations) GetPartitioning() (*DiskCustomization, error) {
+	if c == nil {
+		return nil, nil
+	}
+	if err := c.Disk.Validate(); err != nil {
+		return nil, err
+	}
+
+	return c.Disk, nil
 }
 
 // GetPartitioningMode converts the string to a disk.PartitioningMode type
@@ -391,8 +412,8 @@ func (c *Customizations) GetRepositories() ([]RepositoryCustomization, error) {
 		return nil, nil
 	}
 
-	for idx := range c.Repositories {
-		err := validateCustomRepository(&c.Repositories[idx])
+	for _, repo := range c.Repositories {
+		err := validateCustomRepository(&repo)
 		if err != nil {
 			return nil, err
 		}
@@ -406,4 +427,82 @@ func (c *Customizations) GetFIPS() bool {
 		return false
 	}
 	return *c.FIPS
+}
+
+func (c *Customizations) GetContainerStorage() *ContainerStorageCustomization {
+	if c == nil || c.ContainersStorage == nil {
+		return nil
+	}
+	if *c.ContainersStorage.StoragePath == "" {
+		return nil
+	}
+	return c.ContainersStorage
+}
+
+func (c *Customizations) GetInstaller() (*InstallerCustomization, error) {
+	if c == nil || c.Installer == nil {
+		return nil, nil
+	}
+
+	// Validate conflicting customizations: Installer options aren't supported
+	// when the user adds their own kickstart content
+	if c.Installer.Kickstart != nil && len(c.Installer.Kickstart.Contents) > 0 {
+		if c.Installer.Unattended {
+			return nil, fmt.Errorf("installer.unattended is not supported when adding custom kickstart contents")
+		}
+		if len(c.Installer.SudoNopasswd) > 0 {
+			return nil, fmt.Errorf("installer.sudo-nopasswd is not supported when adding custom kickstart contents")
+		}
+	}
+
+	// Disabling the user module isn't supported when users or groups are
+	// defined
+	if c.Installer.Modules != nil &&
+		slices.Contains(c.Installer.Modules.Disable, anaconda.ModuleUsers) &&
+		len(c.User)+len(c.Group) > 0 {
+		return nil, fmt.Errorf("blueprint contains user or group customizations but disables the required Users Anaconda module")
+	}
+
+	return c.Installer, nil
+}
+
+func (c *Customizations) GetRPM() *RPMCustomization {
+	if c == nil {
+		return nil
+	}
+	return c.RPM
+}
+
+func (c *Customizations) GetRHSM() *RHSMCustomization {
+	if c == nil {
+		return nil
+	}
+	return c.RHSM
+}
+
+func (c *Customizations) checkCACerts() error {
+	if c == nil || c.CACerts == nil {
+		return nil
+	}
+
+	for _, bundle := range c.CACerts.PEMCerts {
+		_, err := cert.ParseCerts(bundle)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (c *Customizations) GetCACerts() (*CACustomization, error) {
+	if c == nil {
+		return nil, nil
+	}
+
+	if err := c.checkCACerts(); err != nil {
+		return nil, err
+	}
+
+	return c.CACerts, nil
 }

@@ -187,6 +187,21 @@ func (t *ImageType) BootMode() platform.BootMode {
 	return platform.BOOT_NONE
 }
 
+func (t *ImageType) BasePartitionTable() (*disk.PartitionTable, error) {
+	// XXX: simplify once https://github.com/osbuild/images/pull/1372
+	// (or something similar) went in, see pkg/distro/fedora, once
+	// the yaml based loading is in we can drop from ImageType
+	// "BasePartitionTables BasePartitionTableFunc"
+	if t.BasePartitionTables == nil {
+		return nil, nil
+	}
+	basePartitionTable, exists := t.BasePartitionTables(t)
+	if !exists {
+		return nil, nil
+	}
+	return &basePartitionTable, nil
+}
+
 func (t *ImageType) GetPartitionTable(
 	customizations *blueprint.Customizations,
 	options distro.ImageOptions,

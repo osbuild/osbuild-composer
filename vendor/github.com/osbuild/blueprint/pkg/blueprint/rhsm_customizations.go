@@ -2,7 +2,8 @@ package blueprint
 
 // Subscription Manager [rhsm] configuration
 type SubManRHSMConfig struct {
-	ManageRepos *bool `json:"manage_repos,omitempty" toml:"manage_repos,omitempty"`
+	ManageRepos          *bool `json:"manage_repos,omitempty" toml:"manage_repos,omitempty"`
+	AutoEnableYumPlugins *bool `json:"auto_enable_yum_plugins,omitempty" toml:"auto_enable_yum_plugins,omitempty"`
 }
 
 // Subscription Manager [rhsmcertd] configuration

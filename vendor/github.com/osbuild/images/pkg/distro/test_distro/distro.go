@@ -212,6 +212,10 @@ func (t *TestImageType) PartitionType() disk.PartitionTableType {
 	return disk.PT_NONE
 }
 
+func (t *TestImageType) BasePartitionTable() (*disk.PartitionTable, error) {
+	return nil, nil
+}
+
 func (t *TestImageType) BootMode() platform.BootMode {
 	return platform.BOOT_HYBRID
 }

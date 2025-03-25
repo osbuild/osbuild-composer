@@ -15,6 +15,7 @@ type ImageOptions struct {
 	BaseUrl       string `json:"base_url"`
 	Insights      bool   `json:"insights"`
 	Rhc           bool   `json:"rhc"`
+	Proxy         string `json:"proxy"`
 }
 
 type RHSMStatus string

@@ -4,11 +4,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path"
 	"regexp"
+	"sort"
 	"strconv"
+	"strings"
 
-	"github.com/osbuild/osbuild-composer/internal/common"
-	"github.com/osbuild/osbuild-composer/internal/fsnode"
+	"github.com/osbuild/blueprint/internal/common"
+	"github.com/osbuild/images/pkg/customizations/fsnode"
+	"github.com/osbuild/images/pkg/pathpolicy"
 )
 
 // validateModeString checks that the given string is a valid mode octal number
@@ -333,4 +337,139 @@ func FileCustomizationsToFsNodeFiles(files []FileCustomization) ([]*fsnode.File,
 	}
 
 	return fsFiles, nil
+}
+
+// ValidateDirFileCustomizations validates the given Directory and File customizations.
+// If the customizations are invalid, an error is returned. Otherwise, nil is returned.
+//
+// It currently ensures that:
+// - No file path is a prefix of another file or directory path
+// - There are no duplicate file or directory paths in the customizations
+func ValidateDirFileCustomizations(dirs []DirectoryCustomization, files []FileCustomization) error {
+	fsNodesMap := make(map[string]interface{}, len(dirs)+len(files))
+	nodesPaths := make([]string, 0, len(dirs)+len(files))
+
+	// First check for duplicate paths
+	duplicatePaths := make([]string, 0)
+	for _, dir := range dirs {
+		if _, ok := fsNodesMap[dir.Path]; ok {
+			duplicatePaths = append(duplicatePaths, dir.Path)
+		}
+		fsNodesMap[dir.Path] = dir
+		nodesPaths = append(nodesPaths, dir.Path)
+	}
+
+	for _, file := range files {
+		if _, ok := fsNodesMap[file.Path]; ok {
+			duplicatePaths = append(duplicatePaths, file.Path)
+		}
+		fsNodesMap[file.Path] = file
+		nodesPaths = append(nodesPaths, file.Path)
+	}
+
+	// There is no point in continuing if there are duplicate paths,
+	// since the fsNodesMap will not be valid.
+	if len(duplicatePaths) > 0 {
+		return fmt.Errorf("duplicate files / directory customization paths: %v", duplicatePaths)
+	}
+
+	invalidFSNodes := make([]string, 0)
+	checkedPaths := make(map[string]bool)
+	// Sort the paths so that we always check the longest paths first. This
+	// ensures that we don't check a parent path before we check the child
+	// path. Reverse sort the slice based on directory depth.
+	sort.Slice(nodesPaths, func(i, j int) bool {
+		return strings.Count(nodesPaths[i], "/") > strings.Count(nodesPaths[j], "/")
+	})
+
+	for _, nodePath := range nodesPaths {
+		// Skip paths that we have already checked
+		if checkedPaths[nodePath] {
+			continue
+		}
+
+		// Check all parent paths of the current path. If any of them have
+		// already been checked, then we do not need to check them again.
+		// This is because we always check the longest paths first. If a parent
+		// path exists in the filesystem nodes map and it is a File,
+		// then it is an error because it is a parent of a Directory or File.
+		// Parent paths can be only Directories.
+		parentPath := nodePath
+		for {
+			parentPath = path.Dir(parentPath)
+
+			// "." is returned only when the path is relative and we reached
+			// the root directory. This should never happen because File
+			// and Directory customization paths are validated as part of
+			// the unmarshalling process from JSON and TOML.
+			if parentPath == "." {
+				panic("filesystem node has relative path set.")
+			}
+
+			if parentPath == "/" {
+				break
+			}
+
+			if checkedPaths[parentPath] {
+				break
+			}
+
+			// If the node is not a Directory, then it is an error because
+			// it is a parent of a Directory or File.
+			if node, ok := fsNodesMap[parentPath]; ok {
+				switch node.(type) {
+				case DirectoryCustomization:
+					break
+				case FileCustomization:
+					invalidFSNodes = append(invalidFSNodes, nodePath)
+				default:
+					panic(fmt.Sprintf("unexpected filesystem node customization type: %T", node))
+				}
+			}
+
+			checkedPaths[parentPath] = true
+		}
+
+		checkedPaths[nodePath] = true
+	}
+
+	if len(invalidFSNodes) > 0 {
+		return fmt.Errorf("the following filesystem nodes are parents of another node and are not directories: %s", invalidFSNodes)
+	}
+
+	return nil
+}
+
+// CheckFileCustomizationsPolicy checks if the given File customizations are allowed by the path policy.
+// If any of the customizations are not allowed by the path policy, an error is returned. Otherwise, nil is returned.
+func CheckFileCustomizationsPolicy(files []FileCustomization, pathPolicy *pathpolicy.PathPolicies) error {
+	var invalidPaths []string
+	for _, file := range files {
+		if err := pathPolicy.Check(file.Path); err != nil {
+			invalidPaths = append(invalidPaths, file.Path)
+		}
+	}
+
+	if len(invalidPaths) > 0 {
+		return fmt.Errorf("the following custom files are not allowed: %+q", invalidPaths)
+	}
+
+	return nil
+}
+
+// CheckDirectoryCustomizationsPolicy checks if the given Directory customizations are allowed by the path policy.
+// If any of the customizations are not allowed by the path policy, an error is returned. Otherwise, nil is returned.
+func CheckDirectoryCustomizationsPolicy(dirs []DirectoryCustomization, pathPolicy *pathpolicy.PathPolicies) error {
+	var invalidPaths []string
+	for _, dir := range dirs {
+		if err := pathPolicy.Check(dir.Path); err != nil {
+			invalidPaths = append(invalidPaths, dir.Path)
+		}
+	}
+
+	if len(invalidPaths) > 0 {
+		return fmt.Errorf("the following custom directories are not allowed: %+q", invalidPaths)
+	}
+
+	return nil
 }

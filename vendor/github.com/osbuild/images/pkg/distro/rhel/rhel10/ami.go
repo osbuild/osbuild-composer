@@ -203,18 +203,12 @@ func defaultEc2ImageConfig() *distro.ImageConfig {
 			"reboot.target",
 			"tuned",
 		},
-		DefaultTarget: common.ToPtr("multi-user.target"),
-		Sysconfig: []*osbuild.SysconfigStageOptions{
-			{
-				Kernel: &osbuild.SysconfigKernelOptions{
-					UpdateDefault: true,
-					DefaultKernel: "kernel",
-				},
-				Network: &osbuild.SysconfigNetworkOptions{
-					Networking: true,
-					NoZeroConf: true,
-				},
-			},
+		DefaultTarget:       common.ToPtr("multi-user.target"),
+		UpdateDefaultKernel: common.ToPtr(true),
+		DefaultKernel:       common.ToPtr("kernel"),
+		Sysconfig: &distro.Sysconfig{
+			Networking: true,
+			NoZeroConf: true,
 		},
 		SystemdLogind: []*osbuild.SystemdLogindStageOptions{
 			{
