@@ -134,6 +134,8 @@ type ImageOptions struct {
 	Subscription     *subscription.ImageOptions `json:"subscription,omitempty"`
 	Facts            *facts.ImageOptions        `json:"facts,omitempty"`
 	PartitioningMode disk.PartitioningMode      `json:"partitioning-mode,omitempty"`
+
+	UseBootstrapContainer bool `json:"use_bootstrap_container,omitempty"`
 }
 
 type BasePartitionTableMap map[string]disk.PartitionTable

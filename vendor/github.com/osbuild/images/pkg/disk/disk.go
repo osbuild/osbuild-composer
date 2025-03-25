@@ -262,6 +262,10 @@ func (t *PartitionTableType) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+func (t *PartitionTableType) UnmarshalYAML(unmarshal func(any) error) error {
+	return unmarshalYAMLviaJSON(t, unmarshal)
+}
+
 func NewPartitionTableType(s string) (PartitionTableType, error) {
 	switch s {
 	case "":

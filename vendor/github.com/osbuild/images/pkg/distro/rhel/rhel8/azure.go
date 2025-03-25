@@ -10,7 +10,6 @@ import (
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distro/rhel"
 	"github.com/osbuild/images/pkg/osbuild"
-	"github.com/osbuild/images/pkg/rpmmd"
 )
 
 // use loglevel=3 as described in the RHEL documentation and used in existing RHEL images built by MSFT
@@ -24,7 +23,7 @@ func mkAzureRhuiImgType() *rhel.ImageType {
 		"disk.vhd.xz",
 		"application/xz",
 		map[string]rhel.PackageSetFunc{
-			rhel.OSPkgsKey: azureRhuiPackageSet,
+			rhel.OSPkgsKey: packageSetLoader,
 		},
 		rhel.DiskImage,
 		[]string{"build"},
@@ -48,7 +47,7 @@ func mkAzureSapRhuiImgType(rd *rhel.Distribution) *rhel.ImageType {
 		"disk.vhd.xz",
 		"application/xz",
 		map[string]rhel.PackageSetFunc{
-			rhel.OSPkgsKey: azureSapPackageSet,
+			rhel.OSPkgsKey: packageSetLoader,
 		},
 		rhel.DiskImage,
 		[]string{"build"},
@@ -72,7 +71,7 @@ func mkAzureByosImgType() *rhel.ImageType {
 		"disk.vhd",
 		"application/x-vhd",
 		map[string]rhel.PackageSetFunc{
-			rhel.OSPkgsKey: azurePackageSet,
+			rhel.OSPkgsKey: packageSetLoader,
 		},
 		rhel.DiskImage,
 		[]string{"build"},
@@ -96,7 +95,7 @@ func mkAzureImgType() *rhel.ImageType {
 		"disk.vhd",
 		"application/x-vhd",
 		map[string]rhel.PackageSetFunc{
-			rhel.OSPkgsKey: azurePackageSet,
+			rhel.OSPkgsKey: packageSetLoader,
 		},
 		rhel.DiskImage,
 		[]string{"build"},
@@ -119,7 +118,7 @@ func mkAzureEap7RhuiImgType() *rhel.ImageType {
 		"disk.vhd.xz",
 		"application/xz",
 		map[string]rhel.PackageSetFunc{
-			rhel.OSPkgsKey: azureEapPackageSet,
+			rhel.OSPkgsKey: packageSetLoader,
 		},
 		rhel.DiskImage,
 		[]string{"build"},
@@ -136,150 +135,6 @@ func mkAzureEap7RhuiImgType() *rhel.ImageType {
 	it.Workload = eapWorkload()
 
 	return it
-}
-
-// PACKAGE SETS
-
-// Common Azure image package set
-func azureCommonPackageSet(t *rhel.ImageType) rpmmd.PackageSet {
-	ps := rpmmd.PackageSet{
-		Include: []string{
-			"@Server",
-			"NetworkManager",
-			"NetworkManager-cloud-setup",
-			"WALinuxAgent",
-			"bzip2",
-			"cloud-init",
-			"cloud-utils-growpart",
-			"cryptsetup-reencrypt",
-			"dracut-config-generic",
-			"dracut-norescue",
-			"efibootmgr",
-			"gdisk",
-			"hyperv-daemons",
-			"kernel",
-			"kernel-core",
-			"kernel-modules",
-			"langpacks-en",
-			"lvm2",
-			"nvme-cli",
-			"patch",
-			"rng-tools",
-			"selinux-policy-targeted",
-			"uuid",
-			"yum-utils",
-		},
-		Exclude: []string{
-			"NetworkManager-config-server",
-			"aic94xx-firmware",
-			"alsa-firmware",
-			"alsa-sof-firmware",
-			"alsa-tools-firmware",
-			"biosdevname",
-			"bolt",
-			"buildah",
-			"cockpit-podman",
-			"containernetworking-plugins",
-			"dnf-plugin-spacewalk",
-			"dracut-config-rescue",
-			"glibc-all-langpacks",
-			"iprutils",
-			"ivtv-firmware",
-			"iwl100-firmware",
-			"iwl1000-firmware",
-			"iwl105-firmware",
-			"iwl135-firmware",
-			"iwl2000-firmware",
-			"iwl2030-firmware",
-			"iwl3160-firmware",
-			"iwl3945-firmware",
-			"iwl4965-firmware",
-			"iwl5000-firmware",
-			"iwl5150-firmware",
-			"iwl6000-firmware",
-			"iwl6000g2a-firmware",
-			"iwl6000g2b-firmware",
-			"iwl6050-firmware",
-			"iwl7260-firmware",
-			"libertas-sd8686-firmware",
-			"libertas-sd8787-firmware",
-			"libertas-usb8388-firmware",
-			"plymouth",
-			"podman",
-			"python3-dnf-plugin-spacewalk",
-			"python3-hwdata",
-			"python3-rhnlib",
-			"rhn-check",
-			"rhn-client-tools",
-			"rhn-setup",
-			"rhnlib",
-			"rhnsd",
-			"usb_modeswitch",
-		},
-	}.Append(distroSpecificPackageSet(t))
-
-	if t.IsRHEL() {
-		ps.Append(rpmmd.PackageSet{
-			Include: []string{
-				"insights-client",
-				"rhc",
-			},
-		})
-	}
-
-	return ps
-}
-
-// Azure BYOS image package set
-func azurePackageSet(t *rhel.ImageType) rpmmd.PackageSet {
-	return rpmmd.PackageSet{
-		Include: []string{
-			"firewalld",
-		},
-		Exclude: []string{
-			"alsa-lib",
-		},
-	}.Append(azureCommonPackageSet(t))
-}
-
-// Azure RHUI image package set
-func azureRhuiPackageSet(t *rhel.ImageType) rpmmd.PackageSet {
-	return rpmmd.PackageSet{
-		Include: []string{
-			"firewalld",
-			"rhui-azure-rhel8",
-		},
-		Exclude: []string{
-			"alsa-lib",
-		},
-	}.Append(azureCommonPackageSet(t))
-}
-
-// Azure SAP image package set
-// Includes the common azure package set, the common SAP packages, and
-// the azure rhui sap package.
-func azureSapPackageSet(t *rhel.ImageType) rpmmd.PackageSet {
-	rhuiPkg := "rhui-azure-rhel8-sap-ha"
-	if t.Arch().Distro().OsVersion() == "8.10" {
-		rhuiPkg = "rhui-azure-rhel8-base-sap-ha"
-	}
-	return rpmmd.PackageSet{
-		Include: []string{
-			"firewalld",
-			rhuiPkg,
-		},
-	}.Append(azureCommonPackageSet(t)).Append(SapPackageSet(t))
-}
-
-func azureEapPackageSet(t *rhel.ImageType) rpmmd.PackageSet {
-	return rpmmd.PackageSet{
-		Include: []string{
-			"rhui-azure-rhel8",
-		},
-		Exclude: []string{
-			"firewalld",
-		},
-	}.Append(azureCommonPackageSet(t))
 }
 
 // PARTITION TABLES

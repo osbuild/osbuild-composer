@@ -9,7 +9,6 @@ import (
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distro/rhel"
 	"github.com/osbuild/images/pkg/osbuild"
-	"github.com/osbuild/images/pkg/rpmmd"
 )
 
 func mkAzureRhuiImgType() *rhel.ImageType {
@@ -18,7 +17,7 @@ func mkAzureRhuiImgType() *rhel.ImageType {
 		"disk.vhd.xz",
 		"application/xz",
 		map[string]rhel.PackageSetFunc{
-			rhel.OSPkgsKey: azureRhuiCommonPackageSet,
+			rhel.OSPkgsKey: packageSetLoader,
 		},
 		rhel.DiskImage,
 		[]string{"build"},
@@ -225,60 +224,6 @@ var azureDefaultImgConfig = &distro.ImageConfig{
 		},
 	},
 	DefaultTarget: common.ToPtr("multi-user.target"),
-}
-
-func azureRhuiCommonPackageSet(t *rhel.ImageType) rpmmd.PackageSet {
-	ps := rpmmd.PackageSet{
-		Include: []string{
-			"@base",
-			"@core",
-			"authconfig",
-			"bpftool",
-			"bzip2",
-			"chrony",
-			"cloud-init",
-			"cloud-utils-growpart",
-			"dracut-config-generic",
-			"dracut-norescue",
-			"efibootmgr",
-			"firewalld",
-			"gdisk",
-			"grub2-efi-x64",
-			"grub2-pc",
-			"grub2",
-			"hyperv-daemons",
-			"kernel",
-			"lvm2",
-			"redhat-release-eula",
-			"redhat-support-tool",
-			"rh-dotnetcore11",
-			"rhn-setup",
-			"rhui-azure-rhel7",
-			"rsync",
-			"shim-x64",
-			"tar",
-			"tcpdump",
-			"WALinuxAgent",
-			"yum-rhn-plugin",
-			"yum-utils",
-		},
-		Exclude: []string{
-			"dracut-config-rescue",
-			"mariadb-libs",
-			"NetworkManager-config-server",
-			"postfix",
-		},
-	}
-
-	if t.IsRHEL() {
-		ps = ps.Append(rpmmd.PackageSet{
-			Include: []string{
-				"insights-client",
-			},
-		})
-	}
-
-	return ps
 }
 
 func azureRhuiBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {

@@ -49,7 +49,7 @@ var requiredDirectorySizes = map[string]uint64{
 
 type ImageFunc func(workload workload.Workload, t *ImageType, customizations *blueprint.Customizations, options distro.ImageOptions, packageSets map[string]rpmmd.PackageSet, containers []container.SourceSpec, rng *rand.Rand) (image.ImageKind, error)
 
-type PackageSetFunc func(t *ImageType) rpmmd.PackageSet
+type PackageSetFunc func(t *ImageType) (rpmmd.PackageSet, error)
 
 type BasePartitionTableFunc func(t *ImageType) (disk.PartitionTable, bool)
 
@@ -285,7 +285,11 @@ func (t *ImageType) Manifest(bp *blueprint.Blueprint,
 	staticPackageSets := make(map[string]rpmmd.PackageSet)
 
 	for name, getter := range t.packageSets {
-		staticPackageSets[name] = getter(t)
+		pkgSets, err := getter(t)
+		if err != nil {
+			return nil, nil, err
+		}
+		staticPackageSets[name] = pkgSets
 	}
 
 	// amend with repository information and collect payload repos
@@ -373,6 +377,9 @@ func (t *ImageType) Manifest(bp *blueprint.Blueprint,
 	default:
 		return nil, nil, fmt.Errorf("unsupported distro release version: %s", t.Arch().Distro().Releasever())
 	}
+	if options.UseBootstrapContainer {
+		mf.DistroBootstrapRef = bootstrapContainerFor(t)
+	}
 
 	_, err = img.InstantiateManifest(&mf, repos, t.arch.distro.runner, rng)
 	if err != nil {
@@ -411,5 +418,19 @@ func NewImageType(
 		buildPipelines:   buildPipelines,
 		payloadPipelines: payloadPipelines,
 		exports:          exports,
+	}
+}
+
+// XXX: this will become part of the yaml distro definitions, i.e.
+// the yaml will have a "bootstrap_ref" key for each distro/arch
+func bootstrapContainerFor(t *ImageType) string {
+	distro := t.arch.distro
+
+	if distro.IsRHEL() {
+		return fmt.Sprintf("registry.access.redhat.com/ubi%s/ubi:latest", distro.Releasever())
+	} else {
+		// we need the toolbox container because stock centos has
+		// e.g. no mount util
+		return "quay.io/toolbx-images/centos-toolbox:stream" + distro.Releasever()
 	}
 }

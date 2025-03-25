@@ -8,17 +8,21 @@ import (
 )
 
 type Partition struct {
-	Start    uint64 // Start of the partition in bytes
-	Size     uint64 // Size of the partition in bytes
-	Type     string // Partition type, e.g. 0x83 for MBR or a UUID for gpt
-	Bootable bool   // `Legacy BIOS bootable` (GPT) or `active` (DOS) flag
+	// Start of the partition in bytes
+	Start uint64 `json:"start"`
+	// Size of the partition in bytes
+	Size uint64 `json:"size"`
+	// Partition type, e.g. 0x83 for MBR or a UUID for gpt
+	Type string `json:"type,omitempty"`
+	// `Legacy BIOS bootable` (GPT) or `active` (DOS) flag
+	Bootable bool `json:"bootable,omitempty"`
 
 	// ID of the partition, dos doesn't use traditional UUIDs, therefore this
 	// is just a string.
-	UUID string
+	UUID string `json:"uuid,omitempty"`
 
 	// If nil, the partition is raw; It doesn't contain a payload.
-	Payload PayloadEntity
+	Payload PayloadEntity `json:"payload,omitempty"`
 }
 
 func (p *Partition) Clone() Entity {
@@ -108,7 +112,7 @@ func (p *Partition) MarshalJSON() ([]byte, error) {
 
 	partWithPayloadType := struct {
 		partAlias
-		PayloadType string
+		PayloadType string `json:"payload_type,omitempty"`
 	}{
 		partAlias(*p),
 		entityName,
@@ -121,8 +125,8 @@ func (p *Partition) UnmarshalJSON(data []byte) error {
 	type partAlias Partition
 	var partWithoutPayload struct {
 		partAlias
-		Payload     json.RawMessage
-		PayloadType string
+		Payload     json.RawMessage `json:"payload"`
+		PayloadType string          `json:"payload_type,omitempty"`
 	}
 
 	dec := json.NewDecoder(bytes.NewBuffer(data))
@@ -137,7 +141,7 @@ func (p *Partition) UnmarshalJSON(data []byte) error {
 
 	entType := payloadEntityMap[partWithoutPayload.PayloadType]
 	if entType == nil {
-		return fmt.Errorf("cannot build partition from %q", data)
+		return fmt.Errorf("cannot build partition from %q: unknown payload %q", data, partWithoutPayload.PayloadType)
 	}
 	entValP := reflect.New(entType).Elem().Addr()
 	ent := entValP.Interface()
@@ -146,4 +150,7 @@ func (p *Partition) UnmarshalJSON(data []byte) error {
 	}
 	p.Payload = ent.(PayloadEntity)
 	return nil
+}
+func (t *Partition) UnmarshalYAML(unmarshal func(any) error) error {
+	return unmarshalYAMLviaJSON(t, unmarshal)
 }

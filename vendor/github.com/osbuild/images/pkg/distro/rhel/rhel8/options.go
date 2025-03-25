@@ -7,6 +7,7 @@ import (
 	"slices"
 
 	"github.com/osbuild/images/internal/common"
+	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/blueprint"
 	"github.com/osbuild/images/pkg/customizations/oscap"
 	"github.com/osbuild/images/pkg/distro"
@@ -110,8 +111,20 @@ func checkOptions(t *rhel.ImageType, bp *blueprint.Blueprint, options distro.Ima
 	if err != nil {
 		return nil, err
 	}
+
 	if partitioning != nil {
-		return nil, fmt.Errorf("partitioning customizations are not supported on %s", t.Arch().Distro().Name())
+		for _, partition := range partitioning.Partitions {
+			if t.Arch().Name() == arch.ARCH_AARCH64.String() {
+				if partition.FSType == "swap" {
+					return warnings, fmt.Errorf("swap partition creation is not supported on %s %s", t.Arch().Distro().Name(), t.Arch().Name())
+				}
+				for _, lv := range partition.LogicalVolumes {
+					if lv.FSType == "swap" {
+						return warnings, fmt.Errorf("swap partition creation is not supported on %s %s", t.Arch().Distro().Name(), t.Arch().Name())
+					}
+				}
+			}
+		}
 	}
 
 	if mountpoints != nil && t.RPMOSTree {

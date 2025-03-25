@@ -35,9 +35,9 @@ import (
 //	can always be applied.
 type OSCustomizations struct {
 
-	// Packages to install in addition to the ones required by the
-	// pipeline.
-	ExtraBasePackages []string
+	// Packages to install in addition to the ones required by the pipeline.
+	// These are the statically defined packages for the image type.
+	BasePackages []string
 
 	// Packages to exclude from the base package set. This is useful in
 	// case of weak dependencies, comps groups, or where multiple packages
@@ -219,44 +219,45 @@ func NewOS(buildPipeline Build, platform platform.Platform, repos []rpmmd.RepoCo
 }
 
 func (p *OS) getPackageSetChain(Distro) []rpmmd.PackageSet {
-	packages := p.platform.GetPackages()
+	platformPackages := p.platform.GetPackages()
+
+	var environmentPackages []string
+	if p.Environment != nil {
+		environmentPackages = p.Environment.GetPackages()
+	}
+
+	var partitionTablePackages []string
+	if p.PartitionTable != nil {
+		partitionTablePackages = p.PartitionTable.GetBuildPackages()
+	}
 
 	if p.KernelName != "" {
-		packages = append(packages, p.KernelName)
+		// kernel is considered part of the platform package set
+		platformPackages = append(platformPackages, p.KernelName)
 	}
 
-	// If we have a logical volume we need to include the lvm2 package.
-	// OSTree-based images (commit and container) aren't bootable images and
-	// don't have partition tables.
-	if p.PartitionTable != nil && p.OSTreeRef == "" {
-		packages = append(packages, p.PartitionTable.GetBuildPackages()...)
-	}
-
-	if p.Environment != nil {
-		packages = append(packages, p.Environment.GetPackages()...)
-	}
-
+	customizationPackages := make([]string, 0)
 	if len(p.NTPServers) > 0 {
-		packages = append(packages, "chrony")
+		customizationPackages = append(customizationPackages, "chrony")
 	}
 
 	if p.SElinux != "" {
-		packages = append(packages, fmt.Sprintf("selinux-policy-%s", p.SElinux))
+		customizationPackages = append(customizationPackages, fmt.Sprintf("selinux-policy-%s", p.SElinux))
 	}
 
 	if p.OpenSCAPRemediationConfig != nil {
-		packages = append(packages, "openscap-scanner", "scap-security-guide", "xz")
+		customizationPackages = append(customizationPackages, "openscap-scanner", "scap-security-guide", "xz")
 	}
 
 	// Make sure the right packages are included for subscriptions
 	// rhc always uses insights, and depends on subscription-manager
 	// non-rhc uses subscription-manager and optionally includes Insights
 	if p.Subscription != nil {
-		packages = append(packages, "subscription-manager")
+		customizationPackages = append(customizationPackages, "subscription-manager")
 		if p.Subscription.Rhc {
-			packages = append(packages, "rhc", "insights-client", "rhc-worker-playbook")
+			customizationPackages = append(customizationPackages, "rhc", "insights-client", "rhc-worker-playbook")
 		} else if p.Subscription.Insights {
-			packages = append(packages, "insights-client")
+			customizationPackages = append(customizationPackages, "insights-client")
 		}
 	}
 
@@ -266,18 +267,42 @@ func (p *OS) getPackageSetChain(Distro) []rpmmd.PackageSet {
 		// should already have the required packages, but some minimal image
 		// types, like 'tar' don't, so let's add them for the stage to run and
 		// to enable user management in the image.
-		packages = append(packages, "shadow-utils", "pam", "passwd")
+		customizationPackages = append(customizationPackages, "shadow-utils", "pam", "passwd")
 
+	}
+
+	if p.Firewall != nil {
+		// Make sure firewalld is available in the image.
+		// org.osbuild.firewall runs 'firewall-offline-cmd' in the os tree
+		// using chroot, so we don't need a build package for this.
+		customizationPackages = append(customizationPackages, "firewalld")
 	}
 
 	osRepos := append(p.repos, p.ExtraBaseRepos...)
 
+	// merge all package lists for the pipeline
+	baseOSPackages := make([]string, 0)
+	baseOSPackages = append(baseOSPackages, platformPackages...)
+	baseOSPackages = append(baseOSPackages, environmentPackages...)
+	baseOSPackages = append(baseOSPackages, partitionTablePackages...)
+	baseOSPackages = append(baseOSPackages, p.BasePackages...)
+
 	chain := []rpmmd.PackageSet{
 		{
-			Include:         append(packages, p.ExtraBasePackages...),
+			Include:         baseOSPackages,
 			Exclude:         p.ExcludeBasePackages,
 			Repositories:    osRepos,
 			InstallWeakDeps: p.InstallWeakDeps,
+		},
+		{
+			// Depsolve customization packages separately to avoid conflicts with base
+			// package exclusion.
+			// See https://github.com/osbuild/images/issues/1323
+			Include:      customizationPackages,
+			Repositories: osRepos,
+			// Although 'false' is the default value, set it explicitly to make
+			// it visible that we are not adding weak dependencies.
+			InstallWeakDeps: false,
 		},
 	}
 
@@ -287,13 +312,15 @@ func (p *OS) getPackageSetChain(Distro) []rpmmd.PackageSet {
 			ps := rpmmd.PackageSet{
 				Include:      workloadPackages,
 				Repositories: append(osRepos, p.Workload.GetRepos()...),
+				// Although 'false' is the default value, set it explicitly to make
+				// it visible that we are not adding weak dependencies.
+				InstallWeakDeps: false,
 			}
 
 			workloadModules := p.Workload.GetEnabledModules()
 			if len(workloadModules) > 0 {
 				ps.EnabledModules = workloadModules
 			}
-
 			chain = append(chain, ps)
 		}
 	}
