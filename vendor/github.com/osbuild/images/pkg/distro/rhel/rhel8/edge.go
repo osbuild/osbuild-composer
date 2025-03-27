@@ -1,14 +1,12 @@
 package rhel8
 
 import (
-	"fmt"
-
 	"github.com/osbuild/images/internal/common"
-	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/customizations/fsnode"
 	"github.com/osbuild/images/pkg/datasizes"
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/distro"
+	"github.com/osbuild/images/pkg/distro/defs"
 	"github.com/osbuild/images/pkg/distro/rhel"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/rpmmd"
@@ -20,7 +18,7 @@ func mkEdgeCommitImgType(rd *rhel.Distribution) *rhel.ImageType {
 		"commit.tar",
 		"application/x-tar",
 		map[string]rhel.PackageSetFunc{
-			rhel.OSPkgsKey: edgeCommitPackageSet,
+			rhel.OSPkgsKey: packageSetLoader,
 		},
 		rhel.EdgeCommitImage,
 		[]string{"build"},
@@ -44,11 +42,9 @@ func mkEdgeOCIImgType(rd *rhel.Distribution) *rhel.ImageType {
 		"container.tar",
 		"application/x-tar",
 		map[string]rhel.PackageSetFunc{
-			rhel.OSPkgsKey: edgeCommitPackageSet,
-			rhel.ContainerPkgsKey: func(t *rhel.ImageType) rpmmd.PackageSet {
-				return rpmmd.PackageSet{
-					Include: []string{"nginx"},
-				}
+			rhel.OSPkgsKey: packageSetLoader,
+			rhel.ContainerPkgsKey: func(t *rhel.ImageType) (rpmmd.PackageSet, error) {
+				return defs.PackageSet(t, "edge_container_pipeline_pkgset", nil)
 			},
 		},
 		rhel.EdgeContainerImage,
@@ -107,14 +103,7 @@ func mkEdgeInstallerImgType(rd *rhel.Distribution) *rhel.ImageType {
 		"installer.iso",
 		"application/x-iso9660-image",
 		map[string]rhel.PackageSetFunc{
-			// TODO: non-arch-specific package set handling for installers
-			// This image type requires build packages for installers and
-			// ostree/edge.  For now we only have x86-64 installer build
-			// package sets defined.  When we add installer build package sets
-			// for other architectures, this will need to be moved to the
-			// architecture and the merging will happen in the PackageSets()
-			// method like the other sets.
-			rhel.InstallerPkgsKey: edgeInstallerPackageSet,
+			rhel.InstallerPkgsKey: packageSetLoader,
 		},
 		rhel.EdgeInstallerImage,
 		[]string{"build"},
@@ -146,14 +135,7 @@ func mkEdgeSimplifiedInstallerImgType(rd *rhel.Distribution) *rhel.ImageType {
 		"simplified-installer.iso",
 		"application/x-iso9660-image",
 		map[string]rhel.PackageSetFunc{
-			// TODO: non-arch-specific package set handling for installers
-			// This image type requires build packages for installers and
-			// ostree/edge.  For now we only have x86-64 installer build
-			// package sets defined.  When we add installer build package sets
-			// for other architectures, this will need to be moved to the
-			// architecture and the merging will happen in the PackageSets()
-			// method like the other sets.
-			rhel.InstallerPkgsKey: edgeSimplifiedInstallerPackageSet,
+			rhel.InstallerPkgsKey: packageSetLoader,
 		},
 		rhel.EdgeSimplifiedInstallerImage,
 		[]string{"build"},
@@ -197,7 +179,7 @@ func mkMinimalRawImgType() *rhel.ImageType {
 		"disk.raw.xz",
 		"application/xz",
 		map[string]rhel.PackageSetFunc{
-			rhel.OSPkgsKey: minimalrpmPackageSet,
+			rhel.OSPkgsKey: packageSetLoader,
 		},
 		rhel.DiskImage,
 		[]string{"build"},
@@ -218,219 +200,6 @@ func mkMinimalRawImgType() *rhel.ImageType {
 	it.BasePartitionTables = defaultBasePartitionTables
 
 	return it
-}
-
-// edge commit OS package set
-func edgeCommitPackageSet(t *rhel.ImageType) rpmmd.PackageSet {
-	ps := rpmmd.PackageSet{
-		Include: []string{
-			"attr",
-			"audit",
-			"basesystem",
-			"bash",
-			"bash-completion",
-			"chrony",
-			"clevis",
-			"clevis-dracut",
-			"clevis-luks",
-			"container-selinux",
-			"coreutils",
-			"criu",
-			"cryptsetup",
-			"curl",
-			"dnsmasq",
-			"dosfstools",
-			"dracut-config-generic",
-			"dracut-network",
-			"e2fsprogs",
-			"firewalld",
-			"fuse-overlayfs",
-			"fwupd",
-			"glibc",
-			"glibc-minimal-langpack",
-			"gnupg2",
-			"greenboot",
-			"gzip",
-			"hostname",
-			"ima-evm-utils",
-			"iproute",
-			"iptables",
-			"iputils",
-			"keyutils",
-			"less",
-			"lvm2",
-			"NetworkManager",
-			"NetworkManager-wifi",
-			"NetworkManager-wwan",
-			"nss-altfiles",
-			"openssh-clients",
-			"openssh-server",
-			"passwd",
-			"pinentry",
-			"platform-python",
-			"podman",
-			"policycoreutils",
-			"policycoreutils-python-utils",
-			"polkit",
-			"procps-ng",
-			"redhat-release",
-			"rootfiles",
-			"rpm",
-			"rpm-ostree",
-			"rsync",
-			"selinux-policy-targeted",
-			"setools-console",
-			"setup",
-			"shadow-utils",
-			"shadow-utils",
-			"skopeo",
-			"slirp4netns",
-			"sudo",
-			"systemd",
-			"tar",
-			"tmux",
-			"traceroute",
-			"usbguard",
-			"util-linux",
-			"vim-minimal",
-			"wpa_supplicant",
-			"xz",
-		},
-		Exclude: []string{"rng-tools"},
-	}
-
-	switch t.Arch().Name() {
-	case arch.ARCH_X86_64.String():
-		ps = ps.Append(x8664EdgeCommitPackageSet(t))
-
-	case arch.ARCH_AARCH64.String():
-		ps = ps.Append(aarch64EdgeCommitPackageSet(t))
-	}
-
-	if t.IsRHEL() && common.VersionLessThan(t.Arch().Distro().OsVersion(), "8.6") {
-		ps = ps.Append(rpmmd.PackageSet{
-			Include: []string{
-				"greenboot-grub2",
-				"greenboot-reboot",
-				"greenboot-rpm-ostree-grub2",
-				"greenboot-status",
-			},
-		})
-	} else {
-		// 8.6+ and CS8
-		ps = ps.Append(rpmmd.PackageSet{
-			Include: []string{
-				"fdo-client",
-				"fdo-owner-cli",
-				"greenboot-default-health-checks",
-				"sos",
-			},
-		})
-	}
-
-	return ps
-
-}
-
-func x8664EdgeCommitPackageSet(t *rhel.ImageType) rpmmd.PackageSet {
-	return rpmmd.PackageSet{
-		Include: []string{
-			"efibootmgr",
-			"grub2",
-			"grub2-efi-x64",
-			"iwl1000-firmware",
-			"iwl100-firmware",
-			"iwl105-firmware",
-			"iwl135-firmware",
-			"iwl2000-firmware",
-			"iwl2030-firmware",
-			"iwl3160-firmware",
-			"iwl5000-firmware",
-			"iwl5150-firmware",
-			"iwl6000-firmware",
-			"iwl6050-firmware",
-			"iwl7260-firmware",
-			"microcode_ctl",
-			"shim-x64",
-		},
-		Exclude: nil,
-	}
-}
-
-func aarch64EdgeCommitPackageSet(t *rhel.ImageType) rpmmd.PackageSet {
-	return rpmmd.PackageSet{
-		Include: []string{
-			"efibootmgr",
-			"grub2-efi-aa64",
-			"iwl7260-firmware",
-			"shim-aa64",
-		},
-		Exclude: nil,
-	}
-}
-
-func edgeInstallerPackageSet(t *rhel.ImageType) rpmmd.PackageSet {
-	return anacondaPackageSet(t)
-}
-
-func edgeSimplifiedInstallerPackageSet(t *rhel.ImageType) rpmmd.PackageSet {
-	// common installer packages
-	ps := installerPackageSet(t)
-
-	ps = ps.Append(rpmmd.PackageSet{
-		Include: []string{
-			"attr",
-			"basesystem",
-			"binutils",
-			"bsdtar",
-			"clevis-dracut",
-			"clevis-luks",
-			"cloud-utils-growpart",
-			"coreos-installer",
-			"coreos-installer-dracut",
-			"coreutils",
-			"device-mapper-multipath",
-			"dnsmasq",
-			"dosfstools",
-			"dracut-live",
-			"e2fsprogs",
-			"fcoe-utils",
-			"fdo-init",
-			"gzip",
-			"ima-evm-utils",
-			"iproute",
-			"iptables",
-			"iputils",
-			"iscsi-initiator-utils",
-			"keyutils",
-			"lldpad",
-			"lvm2",
-			"passwd",
-			"policycoreutils",
-			"policycoreutils-python-utils",
-			"procps-ng",
-			"redhat-logos",
-			"rootfiles",
-			"setools-console",
-			"sudo",
-			"traceroute",
-			"util-linux",
-		},
-		Exclude: nil,
-	})
-
-	switch t.Arch().Name() {
-
-	case arch.ARCH_X86_64.String():
-		ps = ps.Append(x8664EdgeCommitPackageSet(t))
-	case arch.ARCH_AARCH64.String():
-		ps = ps.Append(aarch64EdgeCommitPackageSet(t))
-
-	default:
-		panic(fmt.Sprintf("unsupported arch: %s", t.Arch().Name()))
-	}
-
-	return ps
 }
 
 func edgeServices(rd *rhel.Distribution) []string {
