@@ -1,0 +1,974 @@
+---
+.common:
+  distro_build_pkgset: &distro_build_pkgset
+    include:
+      - "dnf"
+      - "dosfstools"
+      - "e2fsprogs"
+      - "glibc"
+      - "lorax-templates-generic"
+      - "lorax-templates-rhel"
+      - "lvm2"
+      - "policycoreutils"
+      - "python3-iniparse"
+      - "qemu-img"
+      - "selinux-policy-targeted"
+      - "systemd"
+      - "tar"
+      - "xfsprogs"
+      - "xz"
+    condition:
+      architecture:
+        x86_64:
+          include:
+            - "grub2-pc"
+        ppc64el:
+          include:
+            - "grub2-ppc64le"
+            - "grub2-ppc64le-modules"
+
+  ec2_base_pkgset: &ec2_base_pkgset
+    include:
+      - "@core"
+      - "authselect-compat"
+      - "chrony"
+      - "cloud-init"
+      - "cloud-utils-growpart"
+      - "dhcp-client"
+      - "yum-utils"
+      - "dracut-config-generic"
+      - "gdisk"
+      - "grub2"
+      - "langpacks-en"
+      - "NetworkManager-cloud-setup"
+      - "redhat-release"
+      - "redhat-release-eula"
+      - "rsync"
+      - "tuned"
+      - "tar"
+    exclude:
+      - "aic94xx-firmware"
+      - "alsa-firmware"
+      - "alsa-tools-firmware"
+      - "biosdevname"
+      - "firewalld"
+      - "iprutils"
+      - "ivtv-firmware"
+      - "iwl1000-firmware"
+      - "iwl100-firmware"
+      - "iwl105-firmware"
+      - "iwl135-firmware"
+      - "iwl2000-firmware"
+      - "iwl2030-firmware"
+      - "iwl3160-firmware"
+      - "iwl3945-firmware"
+      - "iwl4965-firmware"
+      - "iwl5000-firmware"
+      - "iwl5150-firmware"
+      - "iwl6000-firmware"
+      - "iwl6000g2a-firmware"
+      - "iwl6000g2b-firmware"
+      - "iwl6050-firmware"
+      - "iwl7260-firmware"
+      - "libertas-sd8686-firmware"
+      - "libertas-sd8787-firmware"
+      - "libertas-usb8388-firmware"
+      - "plymouth"
+      # RHBZ#2064087
+      - "dracut-config-rescue"
+      # RHBZ#2075815
+      - "qemu-guest-agent"
+    condition:
+      distro_name:
+        rhel:
+          include:
+            - "insights-client"
+
+  sap_pkgset: &sap_pkgset
+    include:
+      # RHBZ#2076763
+      - "@Server"
+      # SAP System Roles
+      # https:#access.redhat.com/sites/default/files/attachments/rhel_system_roles_for_sap_1.pdf
+      - "ansible-core"
+      - "rhel-system-roles-sap"
+      # RHBZ#1959813
+      - "bind-utils"
+      - "nfs-utils"
+      - "tcsh"
+      # RHBZ#1959955
+      - "uuidd"
+      # RHBZ#1959923
+      - "cairo"
+      - "expect"
+      - "graphviz"
+      - "gtk2"
+      - "iptraf-ng"
+      - "krb5-workstation"
+      - "libaio"
+      - "libatomic"
+      - "libicu"
+      - "libtool-ltdl"
+      - "lm_sensors"
+      - "net-tools"
+      - "numactl"
+      - "PackageKit-gtk3-module"
+      - "xorg-x11-xauth"
+      # RHBZ#1960617
+      - "tuned-profiles-sap-hana"
+      # RHBZ#1961168
+      - "libnsl"
+    exclude:
+      - "iwl1000-firmware"
+      - "iwl100-firmware"
+      - "iwl105-firmware"
+      - "iwl135-firmware"
+      - "iwl2000-firmware"
+      - "iwl2030-firmware"
+      - "iwl3160-firmware"
+      - "iwl5000-firmware"
+      - "iwl5150-firmware"
+      - "iwl6000g2a-firmware"
+      - "iwl6000g2b-firmware"
+      - "iwl6050-firmware"
+      - "iwl7260-firmware"
+
+  installer_pkgset: &installer_pkgset
+    include:
+      - "anaconda-dracut"
+      - "curl"
+      - "dracut-config-generic"
+      - "dracut-network"
+      - "hostname"
+      - "iwl100-firmware"
+      - "iwl1000-firmware"
+      - "iwl105-firmware"
+      - "iwl135-firmware"
+      - "iwl2000-firmware"
+      - "iwl2030-firmware"
+      - "iwl3160-firmware"
+      - "iwl5000-firmware"
+      - "iwl5150-firmware"
+      - "iwl6050-firmware"
+      - "iwl7260-firmware"
+      - "kernel"
+      - "less"
+      - "nfs-utils"
+      - "openssh-clients"
+      - "ostree"
+      - "plymouth"
+      - "prefixdevname"
+      - "rng-tools"
+      - "rpcbind"
+      - "selinux-policy-targeted"
+      - "systemd"
+      - "tar"
+      - "xfsprogs"
+      - "xz"
+      # Extra packages that are required by the dracut stage of all installers.
+      # These are weak deps of other packages in the list above, but lets be
+      # explicit about what we need and not rely on the weak deps. Relying
+      # on hard-dependencies for other modules is OK for now.
+      #
+      # add these dynamically based on the modules enabled by each
+      # pipeline.
+      - "mdadm"
+      - "nss-softokn"
+    condition:
+      architecture:
+        x86_64:
+          include:
+            - "biosdevname"
+
+  anaconda_boot_pkgset: &anaconda_boot_pkgset
+    condition:
+      architecture:
+        x86_64:
+          include:
+            # eficommon
+            - "efibootmgr"
+            # XXX: de-dup?
+            # grub-common
+            - "grub2-tools"
+            - "grub2-tools-extra"
+            - "grub2-tools-minimal"
+            # arch specific
+            - "grub2-efi-x64"
+            - "grub2-efi-x64-cdboot"
+            - "grub2-pc"
+            - "grub2-pc-modules"
+            - "shim-x64"
+            - "syslinux"
+            - "syslinux-nonlinux"
+        aarch64:
+          include:
+            # eficommon
+            - "efibootmgr"
+            # XXX: de-dup?
+            # grub-common
+            - "grub2-tools"
+            - "grub2-tools-extra"
+            - "grub2-tools-minimal"
+            # arch specific
+            - "grub2-efi-aa64-cdboot"
+            - "grub2-efi-aa64"
+            - "shim-aa64"
+
+  anaconda_pkgset: &anaconda_pkgset
+    include:
+      - "aajohan-comfortaa-fonts"
+      - "abattis-cantarell-fonts"
+      - "alsa-firmware"
+      - "alsa-tools-firmware"
+      - "anaconda"
+      - "anaconda-dracut"
+      - "anaconda-install-env-deps"
+      - "anaconda-widgets"
+      - "audit"
+      - "bind-utils"
+      - "bitmap-fangsongti-fonts"
+      - "bzip2"
+      - "cryptsetup"
+      - "curl"
+      - "dbus-x11"
+      - "dejavu-sans-fonts"
+      - "dejavu-sans-mono-fonts"
+      - "device-mapper-persistent-data"
+      - "dmidecode"
+      - "dnf"
+      - "dracut-config-generic"
+      - "dracut-network"
+      - "efibootmgr"
+      - "ethtool"
+      - "fcoe-utils"
+      - "ftp"
+      - "gdb-gdbserver"
+      - "gdisk"
+      - "glibc-all-langpacks"
+      - "gnome-kiosk"
+      - "google-noto-sans-cjk-ttc-fonts"
+      - "grub2-tools"
+      - "grub2-tools-extra"
+      - "grub2-tools-minimal"
+      - "grubby"
+      - "gsettings-desktop-schemas"
+      - "hdparm"
+      - "hexedit"
+      - "hostname"
+      - "initscripts"
+      - "ipmitool"
+      - "iwl1000-firmware"
+      - "iwl100-firmware"
+      - "iwl105-firmware"
+      - "iwl135-firmware"
+      - "iwl2000-firmware"
+      - "iwl2030-firmware"
+      - "iwl3160-firmware"
+      - "iwl5000-firmware"
+      - "iwl5150-firmware"
+      - "iwl6000g2a-firmware"
+      - "iwl6000g2b-firmware"
+      - "iwl6050-firmware"
+      - "iwl7260-firmware"
+      - "jomolhari-fonts"
+      - "kacst-farsi-fonts"
+      - "kacst-qurn-fonts"
+      - "kbd"
+      - "kbd-misc"
+      - "kdump-anaconda-addon"
+      - "kernel"
+      - "khmeros-base-fonts"
+      - "less"
+      - "libblockdev-lvm-dbus"
+      - "libibverbs"
+      - "libreport-plugin-bugzilla"
+      - "libreport-plugin-reportuploader"
+      - "librsvg2"
+      - "linux-firmware"
+      - "lklug-fonts"
+      - "lldpad"
+      - "lohit-assamese-fonts"
+      - "lohit-bengali-fonts"
+      - "lohit-devanagari-fonts"
+      - "lohit-gujarati-fonts"
+      - "lohit-gurmukhi-fonts"
+      - "lohit-kannada-fonts"
+      - "lohit-odia-fonts"
+      - "lohit-tamil-fonts"
+      - "lohit-telugu-fonts"
+      - "lsof"
+      - "madan-fonts"
+      - "mtr"
+      - "mt-st"
+      - "net-tools"
+      - "nfs-utils"
+      - "nmap-ncat"
+      - "nm-connection-editor"
+      - "nss-tools"
+      - "openssh-clients"
+      - "openssh-server"
+      - "oscap-anaconda-addon"
+      - "ostree"
+      - "pciutils"
+      - "perl-interpreter"
+      - "pigz"
+      - "plymouth"
+      - "prefixdevname"
+      - "python3-pyatspi"
+      - "rdma-core"
+      - "redhat-release-eula"
+      - "rng-tools"
+      - "rpcbind"
+      - "rpm-ostree"
+      - "rsync"
+      - "rsyslog"
+      - "selinux-policy-targeted"
+      - "sg3_utils"
+      - "sil-abyssinica-fonts"
+      - "sil-padauk-fonts"
+      - "sil-scheherazade-fonts"
+      - "smartmontools"
+      - "smc-meera-fonts"
+      - "spice-vdagent"
+      - "strace"
+      - "systemd"
+      - "tar"
+      - "thai-scalable-waree-fonts"
+      - "tigervnc-server-minimal"
+      - "tigervnc-server-module"
+      - "udisks2"
+      - "udisks2-iscsi"
+      - "usbutils"
+      - "vim-minimal"
+      - "volume_key"
+      - "wget"
+      - "xfsdump"
+      - "xfsprogs"
+      - "xorg-x11-drivers"
+      - "xorg-x11-fonts-misc"
+      - "xorg-x11-server-utils"
+      - "xorg-x11-server-Xorg"
+      - "xorg-x11-xauth"
+      - "xz"
+    condition:
+      architecture:
+        x86_64:
+          include:
+            - "biosdevname"
+            - "dmidecode"
+            - "grub2-tools-efi"
+            - "memtest86+"
+        aarch64:
+          include:
+            - "dmidecode"
+
+image_types:
+  # XXX: not a real pkgset but the "os" pipeline pkgset for image-installer
+  # find a nicer way to represent this
+  bare_metal:
+    package_sets:
+      - *distro_build_pkgset
+      - include:
+          - "@core"
+          - "authselect-compat"
+          - "chrony"
+          - "cockpit-system"
+          - "cockpit-ws"
+          - "dhcp-client"
+          - "dnf-utils"
+          - "dosfstools"
+          - "firewalld"
+          - "iwl1000-firmware"
+          - "iwl100-firmware"
+          - "iwl105-firmware"
+          - "iwl135-firmware"
+          - "iwl2000-firmware"
+          - "iwl2030-firmware"
+          - "iwl3160-firmware"
+          - "iwl5000-firmware"
+          - "iwl5150-firmware"
+          - "iwl6000g2a-firmware"
+          - "iwl6000g2b-firmware"
+          - "iwl6050-firmware"
+          - "iwl7260-firmware"
+          - "lvm2"
+          - "net-tools"
+          - "nfs-utils"
+          - "oddjob"
+          - "oddjob-mkhomedir"
+          - "policycoreutils"
+          - "psmisc"
+          - "python3-jsonschema"
+          - "qemu-guest-agent"
+          - "redhat-release"
+          - "redhat-release-eula"
+          - "rsync"
+          - "tar"
+          - "tcpdump"
+          - "tuned"
+        exclude:
+          - "dracut-config-rescue"
+        condition:
+          distro_name:
+            rhel:
+              include:
+                - "subscription-manager-cockpit"
+
+  qcow2: &qcow2
+    package_sets:
+      - include:
+          - "@core"
+          - "authselect-compat"
+          - "chrony"
+          - "cloud-init"
+          - "cloud-utils-growpart"
+          - "cockpit-system"
+          - "cockpit-ws"
+          - "dnf-utils"
+          - "dosfstools"
+          - "nfs-utils"
+          - "oddjob"
+          - "oddjob-mkhomedir"
+          - "psmisc"
+          - "python3-jsonschema"
+          - "qemu-guest-agent"
+          - "redhat-release"
+          - "redhat-release-eula"
+          - "rsync"
+          - "tar"
+          - "tuned"
+          - "tcpdump"
+        exclude:
+          - "aic94xx-firmware"
+          - "alsa-firmware"
+          - "alsa-lib"
+          - "alsa-tools-firmware"
+          - "biosdevname"
+          - "dnf-plugin-spacewalk"
+          - "dracut-config-rescue"
+          - "fedora-release"
+          - "fedora-repos"
+          - "firewalld"
+          - "iprutils"
+          - "ivtv-firmware"
+          - "iwl1000-firmware"
+          - "iwl100-firmware"
+          - "iwl105-firmware"
+          - "iwl135-firmware"
+          - "iwl2000-firmware"
+          - "iwl2030-firmware"
+          - "iwl3160-firmware"
+          - "iwl3945-firmware"
+          - "iwl4965-firmware"
+          - "iwl5000-firmware"
+          - "iwl5150-firmware"
+          - "iwl6000-firmware"
+          - "iwl6000g2a-firmware"
+          - "iwl6000g2b-firmware"
+          - "iwl6050-firmware"
+          - "iwl7260-firmware"
+          - "langpacks-*"
+          - "langpacks-en"
+          - "libertas-sd8787-firmware"
+          - "nss"
+          - "plymouth"
+          - "rng-tools"
+          - "udisks2"
+        condition:
+          distro_name:
+            rhel:
+              include:
+                - "insights-client"
+                - "subscription-manager-cockpit"
+
+  oci: *qcow2
+
+  vhd: &vhd
+    package_sets:
+      - &vhd_pkgset
+        include:
+          - "@Server"
+          - "bzip2"
+          - "cloud-init"
+          - "cloud-utils-growpart"
+          - "dracut-config-generic"
+          - "efibootmgr"
+          - "gdisk"
+          - "hyperv-daemons"
+          - "kernel-core"
+          - "kernel-modules"
+          - "kernel"
+          - "langpacks-en"
+          - "lvm2"
+          - "NetworkManager"
+          - "NetworkManager-cloud-setup"
+          - "nvme-cli"
+          - "patch"
+          - "rng-tools"
+          - "selinux-policy-targeted"
+          - "uuid"
+          - "WALinuxAgent"
+          - "yum-utils"
+        exclude:
+          - "aic94xx-firmware"
+          - "alsa-firmware"
+          - "alsa-lib"
+          - "alsa-sof-firmware"
+          - "alsa-tools-firmware"
+          - "biosdevname"
+          - "bolt"
+          - "buildah"
+          - "cockpit-podman"
+          - "containernetworking-plugins"
+          - "dnf-plugin-spacewalk"
+          - "dracut-config-rescue"
+          - "glibc-all-langpacks"
+          - "iprutils"
+          - "ivtv-firmware"
+          - "iwl100-firmware"
+          - "iwl1000-firmware"
+          - "iwl105-firmware"
+          - "iwl135-firmware"
+          - "iwl2000-firmware"
+          - "iwl2030-firmware"
+          - "iwl3160-firmware"
+          - "iwl3945-firmware"
+          - "iwl4965-firmware"
+          - "iwl5000-firmware"
+          - "iwl5150-firmware"
+          - "iwl6000-firmware"
+          - "iwl6000g2a-firmware"
+          - "iwl6000g2b-firmware"
+          - "iwl6050-firmware"
+          - "iwl7260-firmware"
+          - "libertas-sd8686-firmware"
+          - "libertas-sd8787-firmware"
+          - "libertas-usb8388-firmware"
+          - "NetworkManager-config-server"
+          - "plymouth"
+          - "podman"
+          - "python3-dnf-plugin-spacewalk"
+          - "python3-hwdata"
+          - "python3-rhnlib"
+          - "rhn-check"
+          - "rhn-client-tools"
+          - "rhn-setup"
+          - "rhnlib"
+          - "rhnsd"
+          - "usb_modeswitch"
+        condition:
+          distro_name:
+            rhel:
+              include:
+                - "insights-client"
+
+  azure_rhui: *vhd
+
+  azure_sap_rhui:
+    package_sets:
+      - *vhd_pkgset
+      - *sap_pkgset
+
+  tar:
+    package_sets:
+      - include:
+          - "policycoreutils"
+          - "selinux-policy-targeted"
+        exclude:
+          - "rng-tools"
+
+  vmdk: &vmdk
+    package_sets:
+      - include:
+          - "@core"
+          - "chrony"
+          - "cloud-init"
+          - "firewalld"
+          - "langpacks-en"
+          - "open-vm-tools"
+          - "tuned"
+        exclude:
+          - "dracut-config-rescue"
+          - "rng-tools"
+
+  ova: *vmdk
+
+  ec2: &ec2
+    package_sets:
+      - *ec2_base_pkgset
+      - exclude:
+          - "alsa-lib"
+
+  ami: *ec2
+
+  ec2_ha:
+    package_sets:
+      - *ec2_base_pkgset
+      - include:
+          - "fence-agents-all"
+          - "pacemaker"
+          - "pcs"
+        exclude:
+          - "alsa-lib"
+
+  ec2_sap:
+    package_sets:
+      - *ec2_base_pkgset
+      - *sap_pkgset
+      - include:
+          - "libcanberra-gtk2"
+        exclude:
+          # COMPOSER-1829
+          - "firewalld"
+
+  wsl: &wsl
+    package_sets:
+      - include:
+          - "alternatives"
+          - "audit-libs"
+          - "basesystem"
+          - "bash"
+          - "ca-certificates"
+          - "cloud-init"
+          - "coreutils-single"
+          - "crypto-policies-scripts"
+          - "curl-minimal"
+          - "dejavu-sans-fonts"
+          - "dnf"
+          - "filesystem"
+          - "findutils"
+          - "gdb-gdbserver"
+          # Differs from official UBI, as we don't include CRB repos
+          # - "gdbm"
+          - "glibc-minimal-langpack"
+          - "gmp"
+          - "gnupg2"
+          - "gobject-introspection"
+          - "hostname"
+          - "langpacks-en"
+          - "libcurl-minimal"
+          - "openssl"
+          - "pam"
+          - "passwd"
+          - "procps-ng"
+          - "python3"
+          - "python3-inotify"
+          - "redhat-release"
+          - "rootfiles"
+          - "rpm"
+          - "sed"
+          - "setup"
+          - "shadow-utils"
+          - "subscription-manager"
+          - "systemd"
+          - "tar"
+          - "tpm2-tss"
+          - "tzdata"
+          - "util-linux"
+          - "vim-minimal"
+          - "yum"
+        exclude:
+          - "gawk-all-langpacks"
+          - "glibc-gconv-extra"
+          - "glibc-langpack-en"
+          - "openssl-pkcs11"
+          - "python-unversioned-command"
+          - "redhat-release-eula"
+          - "rpm-plugin-systemd-inhibit"
+
+  image_installer:
+    package_sets:
+      - *installer_pkgset
+      - *anaconda_pkgset
+
+  gce:
+    package_sets:
+      - include:
+          - "@core"
+          # not in Google's KS
+          - "langpacks-en"
+          - "acpid"
+          - "dhcp-client"
+          - "dnf-automatic"
+          - "net-tools"
+          # - "openssh-server" included in core
+          - "python3"
+          - "rng-tools"
+          - "tar"
+          - "vim"
+          # GCE guest tools
+          - "google-compute-engine"
+          - "google-osconfig-agent"
+          - "gce-disk-expand"
+          # Not explicitly included in GCP kickstart, but present on the image
+          # for time synchronization
+          - "chrony"
+          - "timedatex"
+          # EFI
+          - "grub2-tools"
+          - "grub2-tools-minimal"
+          # Performance tuning
+          - "tuned"
+        exclude:
+          - "alsa-utils"
+          - "b43-fwcutter"
+          - "dmraid"
+          - "dracut-config-rescue"
+          - "eject"
+          - "gpm"
+          - "irqbalance"
+          - "microcode_ctl"
+          - "smartmontools"
+          - "aic94xx-firmware"
+          - "atmel-firmware"
+          - "b43-openfwwf"
+          - "bfa-firmware"
+          - "ipw2100-firmware"
+          - "ipw2200-firmware"
+          - "ivtv-firmware"
+          - "iwl100-firmware"
+          - "iwl105-firmware"
+          - "iwl135-firmware"
+          - "iwl1000-firmware"
+          - "iwl2000-firmware"
+          - "iwl2030-firmware"
+          - "iwl3160-firmware"
+          - "iwl3945-firmware"
+          - "iwl4965-firmware"
+          - "iwl5000-firmware"
+          - "iwl5150-firmware"
+          - "iwl6000-firmware"
+          - "iwl6000g2a-firmware"
+          - "iwl6050-firmware"
+          - "iwl7260-firmware"
+          - "kernel-firmware"
+          - "libertas-usb8388-firmware"
+          - "ql2100-firmware"
+          - "ql2200-firmware"
+          - "ql23xx-firmware"
+          - "ql2400-firmware"
+          - "ql2500-firmware"
+          - "rt61pci-firmware"
+          - "rt73usb-firmware"
+          - "xorg-x11-drv-ati-firmware"
+          - "zd1211-firmware"
+          # RHBZ#2075815
+          - "qemu-guest-agent"
+        condition:
+          distro_name:
+            rhel:
+              include:
+                - "insights-client"
+
+  minimal_raw:
+    package_sets:
+      - include:
+          - "@core"
+          - "initial-setup"
+          - "libxkbcommon"
+          - "NetworkManager-wifi"
+          - "iwl7260-firmware"
+          - "iwl3160-firmware"
+
+  openstack:
+    package_sets:
+      - include:
+          - "@core"
+          - "langpacks-en"
+          - "tuned"
+          # From the lorax kickstart
+          - "cloud-init"
+          - "qemu-guest-agent"
+          - "spice-vdagent"
+        exclude:
+          - "dracut-config-rescue"
+          - "rng-tools"
+
+  edge_commit:
+    package_sets:
+      - &edge_commit_pkgset
+        include:
+          - "redhat-release"
+          - "glibc"
+          - "glibc-minimal-langpack"
+          - "nss-altfiles"
+          - "dracut-config-generic"
+          - "dracut-network"
+          - "basesystem"
+          - "bash"
+          - "platform-python"
+          - "shadow-utils"
+          - "chrony"
+          - "setup"
+          - "shadow-utils"
+          - "sudo"
+          - "systemd"
+          - "coreutils"
+          - "util-linux"
+          - "curl"
+          - "vim-minimal"
+          - "rpm"
+          - "rpm-ostree"
+          - "polkit"
+          - "lvm2"
+          - "cryptsetup"
+          - "pinentry"
+          - "e2fsprogs"
+          - "dosfstools"
+          - "keyutils"
+          - "gnupg2"
+          - "attr"
+          - "xz"
+          - "gzip"
+          - "firewalld"
+          - "iptables"
+          - "NetworkManager"
+          - "NetworkManager-wifi"
+          - "NetworkManager-wwan"
+          - "wpa_supplicant"
+          - "traceroute"
+          - "hostname"
+          - "iproute"
+          - "iputils"
+          - "openssh-clients"
+          - "procps-ng"
+          - "rootfiles"
+          - "openssh-server"
+          - "passwd"
+          - "policycoreutils"
+          - "policycoreutils-python-utils"
+          - "selinux-policy-targeted"
+          - "setools-console"
+          - "less"
+          - "tar"
+          - "rsync"
+          - "usbguard"
+          - "bash-completion"
+          - "tmux"
+          - "ima-evm-utils"
+          - "audit"
+          - "podman"
+          # required for cni networks but not a hard dependency of podman >= 4.2.0 (rhbz#2123210)
+          - "containernetworking-plugins"
+          - "container-selinux"
+          - "skopeo"
+          - "criu"
+          - "slirp4netns"
+          - "fuse-overlayfs"
+          - "clevis"
+          - "clevis-dracut"
+          - "clevis-luks"
+          - "greenboot"
+          - "greenboot-default-health-checks"
+          - "fdo-client"
+          - "fdo-owner-cli"
+          - "sos"
+        exclude:
+          - "rng-tools"
+          - "bootupd"
+        condition:
+          architecture:
+            x86_64: &edge_commit_x86_64_pkgset
+              include:
+                - "grub2"
+                - "grub2-efi-x64"
+                - "efibootmgr"
+                - "shim-x64"
+                - "microcode_ctl"
+                - "iwl1000-firmware"
+                - "iwl100-firmware"
+                - "iwl105-firmware"
+                - "iwl135-firmware"
+                - "iwl2000-firmware"
+                - "iwl2030-firmware"
+                - "iwl3160-firmware"
+                - "iwl5000-firmware"
+                - "iwl5150-firmware"
+                - "iwl6050-firmware"
+                - "iwl7260-firmware"
+            aarch64: &edge_commit_aarch64_pkgset
+              include:
+                - "grub2-efi-aa64"
+                - "efibootmgr"
+                - "shim-aa64"
+                - "iwl7260-firmware"
+          distro_name:
+            centos:
+              include:
+                # XXX: duplicated to >= rhel-9.2
+                - "ignition"
+                - "ignition-edge"
+                - "ssh-key-dir"
+          version_greater_or_equal:
+            "9.2":
+              include:
+                - "ignition"
+                - "ignition-edge"
+                - "ssh-key-dir"
+          version_less_than:
+            "9.6":
+              include:
+                # dnsmasq removed in 9.6+ but kept in older versions
+                - "dnsmasq"
+
+  edge_container:
+    package_sets:
+      - *edge_commit_pkgset
+
+  # XXX: not a real pkgset but the "containerPkgsKey"
+  edge_container_pipeline_pkgset:
+    package_sets:
+      - include:
+          - "nginx"
+
+  edge_installer:
+    package_sets:
+      - *installer_pkgset
+      - *anaconda_pkgset
+
+  edge_simplified_installer:
+    package_sets:
+      - *installer_pkgset
+      - include:
+          - "attr"
+          - "basesystem"
+          - "binutils"
+          - "bsdtar"
+          - "clevis-dracut"
+          - "clevis-luks"
+          - "cloud-utils-growpart"
+          - "coreos-installer"
+          - "coreos-installer-dracut"
+          - "coreutils"
+          - "device-mapper-multipath"
+          - "dnsmasq"
+          - "dosfstools"
+          - "dracut-live"
+          - "e2fsprogs"
+          - "fcoe-utils"
+          - "fdo-init"
+          - "gzip"
+          - "ima-evm-utils"
+          - "iproute"
+          - "iptables"
+          - "iputils"
+          - "iscsi-initiator-utils"
+          - "keyutils"
+          - "lldpad"
+          - "lvm2"
+          - "passwd"
+          - "policycoreutils"
+          - "policycoreutils-python-utils"
+          - "procps-ng"
+          - "redhat-logos"
+          - "rootfiles"
+          - "setools-console"
+          - "sudo"
+          - "traceroute"
+          - "util-linux"
+        condition:
+          architecture:
+            x86_64:
+              *edge_commit_x86_64_pkgset
+            aarch64:
+              *edge_commit_aarch64_pkgset

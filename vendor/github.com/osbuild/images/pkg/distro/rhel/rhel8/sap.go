@@ -3,9 +3,7 @@ package rhel8
 import (
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/distro"
-	"github.com/osbuild/images/pkg/distro/rhel"
 	"github.com/osbuild/images/pkg/osbuild"
-	"github.com/osbuild/images/pkg/rpmmd"
 )
 
 // sapImageConfig returns the SAP specific ImageConfig data
@@ -123,58 +121,4 @@ func sapImageConfig(rd distro.Distro) *distro.ImageConfig {
 	}
 
 	return ic
-}
-
-func SapPackageSet(t *rhel.ImageType) rpmmd.PackageSet {
-	packageSet := rpmmd.PackageSet{
-		Include: []string{
-			// RHBZ#2074107
-			"@Server",
-			// SAP System Roles
-			// https://access.redhat.com/sites/default/files/attachments/rhel_system_roles_for_sap_1.pdf
-			"rhel-system-roles-sap",
-			// RHBZ#1959813
-			"bind-utils",
-			"compat-sap-c++-9",
-			"compat-sap-c++-10", // RHBZ#2074114
-			"nfs-utils",
-			"tcsh",
-			// RHBZ#1959955
-			"uuidd",
-			// RHBZ#1959923
-			"cairo",
-			"expect",
-			"graphviz",
-			"gtk2",
-			"iptraf-ng",
-			"krb5-workstation",
-			"libaio",
-			"libatomic",
-			"libcanberra-gtk2",
-			"libicu",
-			"libpng12",
-			"libtool-ltdl",
-			"lm_sensors",
-			"net-tools",
-			"numactl",
-			"PackageKit-gtk3-module",
-			"xorg-x11-xauth",
-			// RHBZ#1960617
-			"tuned-profiles-sap-hana",
-			// RHBZ#1961168
-			"libnsl",
-		},
-	}
-
-	if common.VersionLessThan(t.Arch().Distro().OsVersion(), "8.6") {
-		packageSet = packageSet.Append(rpmmd.PackageSet{
-			Include: []string{"ansible"},
-		})
-	} else {
-		// 8.6+ and CS8 (image type does not exist on 8.5)
-		packageSet = packageSet.Append(rpmmd.PackageSet{
-			Include: []string{"ansible-core"}, // RHBZ#2077356
-		})
-	}
-	return packageSet
 }
