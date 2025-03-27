@@ -163,3 +163,20 @@ if [ -n "${CI}" ]; then
     # which are outside the build directory
     cp /etc/yum.repos.d/*.repo "$(pwd)"
 fi
+
+# NB: The following is a workaround for the issue that podman falls back to
+# the 'cni' network backend when finding any container images in the local
+# storage when executed for the first time. Since we started embedding
+# container images in our CI runner images, this resulted in failures,
+# because the OS is missing some required CNI plugins. Until we somehow fix
+# this in osbuild, we explicitly set the network backend to 'netavark'.
+# This is relevant only for RHEL-9 / c9s, because Fedora since F40 and el10
+# support only `netavark` backend.
+if [[ $ID == "rhel" && ${VERSION_ID%.*} == "9" ]]; then
+    greenprint "containers.conf: explicitly setting network_backend to 'netavark'"
+    sudo mkdir -p /etc/containers/containers.conf.d
+    sudo tee /etc/containers/containers.conf.d/network_backend.conf > /dev/null << EOF
+[network]
+network_backend = "netavark"
+EOF
+fi
