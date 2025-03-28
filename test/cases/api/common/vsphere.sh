@@ -78,6 +78,18 @@ EOF
     echo "${_ci_metadata_path}"
 }
 
+# Compress and encode the provided file path for cloud-init
+#
+# Returns:
+#   - base64 encoded gzip compressed file as a string
+#
+# Arguments:
+#   $1 - path to the file to encode
+function fileToCloudInitEncodedGzipB64() {
+    local _file_path="$1"
+    gzip -c "${_file_path}" | base64 -w 0
+}
+
 # Create an ISO with the provided cloud-init user-data file
 #
 # Returns:
@@ -111,21 +123,7 @@ function verifyInVSphere() {
     local _filename="$1"
     greenprint "Verifying VMDK image: ${_filename}"
 
-    # Create SSH keys to use
-    local _vsphere_ssh_key="${WORKDIR}/vsphere_ssh_key"
-    ssh-keygen -t rsa-sha2-512 -f "${_vsphere_ssh_key}" -C "${SSH_USER}" -N ""
-
     VSPHERE_VM_NAME="osbuild-composer-vm-${TEST_ID}"
-
-    # create cloud-init ISO with the configuration
-    local _ci_userdata_path
-    _ci_userdata_path="$(createCIUserdata "${SSH_USER}" "${_vsphere_ssh_key}.pub")"
-    local _ci_metadata_path
-    _ci_metadata_path="$(createCIMetadata "${VSPHERE_VM_NAME}")"
-    greenprint "💿 Creating cloud-init user-data ISO"
-    local _ci_iso_path
-    _ci_iso_path="$(createCIUserdataISO "${_ci_userdata_path}" "${_ci_metadata_path}")"
-
     VSPHERE_IMAGE_NAME="${VSPHERE_VM_NAME}.vmdk"
     mv "${_filename}" "${WORKDIR}/${VSPHERE_IMAGE_NAME}"
 
@@ -159,41 +157,39 @@ function verifyInVSphere() {
         -on=false \
         "${VSPHERE_VM_NAME}"
 
+    # Create SSH keys to use
+    local _vsphere_ssh_key="${WORKDIR}/vsphere_ssh_key"
+    ssh-keygen -t rsa-sha2-512 -f "${_vsphere_ssh_key}" -C "${SSH_USER}" -N ""
+
+    # Set cloud-init data for the VM
+    local _ci_userdata_path
+    _ci_userdata_path="$(createCIUserdata "${SSH_USER}" "${_vsphere_ssh_key}.pub")"
+    local _ci_userdata_encoded
+    _ci_userdata_encoded="$(fileToCloudInitEncodedGzipB64 "${_ci_userdata_path}")"
+
+    local _ci_metadata_path
+    _ci_metadata_path="$(createCIMetadata "${VSPHERE_VM_NAME}")"
+    local _ci_metadata_encoded
+    _ci_metadata_encoded="$(fileToCloudInitEncodedGzipB64 "${_ci_metadata_path}")"
+
+    # configure the VM to use the cloud-init data
+    greenprint "💿 Configuring the VM to use the cloud-init data"
+    $GOVC_CMD vm.change \
+        -u "${VC8_GOVMOMI_USERNAME}:${VC8_GOVMOMI_PASSWORD}@${VC8_GOVMOMI_URL}" \
+        -k=true \
+        -dc="${VC8_GOVMOMI_DATACENTER}" \
+        -vm "${VSPHERE_VM_NAME}" \
+        -e "guestinfo.userdata=${_ci_userdata_encoded}" \
+        -e "guestinfo.userdata.encoding=gzip+base64" \
+        -e "guestinfo.metadata=${_ci_metadata_encoded}" \
+        -e "guestinfo.metadata.encoding=gzip+base64"
+
     # tagging vm as testing object
     $GOVC_CMD tags.attach \
         -u "${VC8_GOVMOMI_USERNAME}":"${VC8_GOVMOMI_PASSWORD}"@"${VC8_GOVMOMI_URL}" \
         -k=true \
         -c "osbuild-composer testing" gitlab-ci-test \
         "/${VC8_GOVMOMI_DATACENTER}/vm/${VC8_GOVMOMI_FOLDER}/${VSPHERE_VM_NAME}"
-
-    # upload ISO, create CDROM device and insert the ISO in it
-    greenprint "💿 ⬆️ Uploading the cloud-init user-data ISO to VSphere"
-    VSPHERE_CIDATA_ISO_PATH="${VSPHERE_VM_NAME}/cidata.iso"
-    $GOVC_CMD datastore.upload \
-        -u "${VC8_GOVMOMI_USERNAME}:${VC8_GOVMOMI_PASSWORD}@${VC8_GOVMOMI_URL}" \
-        -k=true \
-        -dc="${VC8_GOVMOMI_DATACENTER}" \
-        -ds="${VC8_GOVMOMI_DATASTORE}" \
-        "${_ci_iso_path}" \
-        "${VSPHERE_CIDATA_ISO_PATH}"
-
-    local _cdrom_device
-    greenprint "🖥️ + 💿 Adding a CD-ROM device to the VM"
-    _cdrom_device="$($GOVC_CMD device.cdrom.add \
-        -u "${VC8_GOVMOMI_USERNAME}:${VC8_GOVMOMI_PASSWORD}@${VC8_GOVMOMI_URL}" \
-        -k=true \
-        -dc="${VC8_GOVMOMI_DATACENTER}" \
-        -vm "${VSPHERE_VM_NAME}")"
-
-    greenprint "💿 Inserting the cloud-init ISO into the CD-ROM device"
-    $GOVC_CMD device.cdrom.insert \
-        -u "${VC8_GOVMOMI_USERNAME}:${VC8_GOVMOMI_PASSWORD}@${VC8_GOVMOMI_URL}" \
-        -k=true \
-        -dc="${VC8_GOVMOMI_DATACENTER}" \
-        -ds="${VC8_GOVMOMI_DATASTORE}" \
-        -vm "${VSPHERE_VM_NAME}" \
-        -device "${_cdrom_device}" \
-        "${VSPHERE_CIDATA_ISO_PATH}"
 
     # start the VM
     greenprint "🔌 Powering up the VSphere VM"
