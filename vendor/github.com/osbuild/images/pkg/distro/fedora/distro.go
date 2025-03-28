@@ -13,7 +13,7 @@ import (
 	"github.com/osbuild/images/pkg/customizations/oscap"
 	"github.com/osbuild/images/pkg/datasizes"
 	"github.com/osbuild/images/pkg/distro"
-	"github.com/osbuild/images/pkg/distro/packagesets"
+	"github.com/osbuild/images/pkg/distro/defs"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/platform"
 	"github.com/osbuild/images/pkg/rpmmd"
@@ -77,7 +77,7 @@ func mkImageInstallerImgType(d distribution) imageType {
 		packageSets: map[string]packageSetFunc{
 			osPkgsKey: func(t *imageType) (rpmmd.PackageSet, error) {
 				// use the minimal raw image type for the OS package set
-				return packagesets.Load(t, "minimal-raw", VersionReplacements())
+				return defs.PackageSet(t, "minimal-raw", VersionReplacements())
 			},
 			installerPkgsKey: packageSetLoader,
 		},
