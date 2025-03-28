@@ -18,9 +18,9 @@ import (
 type DiskCustomization struct {
 	// Type of the partition table: gpt or dos.
 	// Optional, the default depends on the distro and image type.
-	Type       string
-	MinSize    uint64
-	Partitions []PartitionCustomization
+	Type       string                   `json:"type,omitempty" toml:"type,omitempty"`
+	MinSize    uint64                   `json:"minsize,omitempty" toml:"minsize,omitempty"`
+	Partitions []PartitionCustomization `json:"partitions,omitempty" toml:"minsize,omitempty"`
 }
 
 type diskCustomizationMarshaler struct {
@@ -90,15 +90,25 @@ type PartitionCustomization struct {
 // Setting the FSType to "swap" creates a swap area (and the Mountpoint must be
 // empty).
 type FilesystemTypedCustomization struct {
+	// Note that it is marked omitempty because the fields of the embedded
+	// structs are optional in the scope of the [PartitionCustomization].
 	Mountpoint string `json:"mountpoint" toml:"mountpoint"`
-	Label      string `json:"label,omitempty" toml:"label,omitempty"`
-	FSType     string `json:"fs_type,omitempty" toml:"fs_type,omitempty"`
+
+	// Filesystem label
+	Label string `json:"label,omitempty" toml:"label,omitempty"`
+
+	// Filesystem type (ext4, xfs, vfat)
+	FSType string `json:"fs_type,omitempty" toml:"fs_type,omitempty"`
 }
 
 // An LVM volume group with one or more logical volumes.
 type VGCustomization struct {
 	// Volume group name (optional, default will be automatically generated).
-	Name           string            `json:"name" toml:"name"`
+	Name string `json:"name,omitempty" toml:"name,omitempty"`
+
+	// One or more logical volumes for this volume group (required).
+	// Note that it is marked omitempty because the fields of the embedded
+	// structs are optional in the scope of the [PartitionCustomization].
 	LogicalVolumes []LVCustomization `json:"logical_volumes,omitempty" toml:"logical_volumes,omitempty"`
 }
 
@@ -141,17 +151,21 @@ func (lv *LVCustomization) UnmarshalJSON(data []byte) error {
 
 // A btrfs volume consisting of one or more subvolumes.
 type BtrfsVolumeCustomization struct {
-	Subvolumes []BtrfsSubvolumeCustomization
+	Subvolumes []BtrfsSubvolumeCustomization `json:"subvolumes,omitempty" toml:"subvolumes,omitempty"`
 }
 
 type BtrfsSubvolumeCustomization struct {
 	// The name of the subvolume, which defines the location (path) on the
 	// root volume (required).
 	// See https://btrfs.readthedocs.io/en/latest/Subvolumes.html
-	Name string `json:"name" toml:"name"`
+	// Note that it is marked omitempty because the fields of the embedded
+	// structs are optional in the scope of the [PartitionCustomization].
+	Name string `json:"name,omitempty" toml:"name,omitempty"`
 
 	// Mountpoint for the subvolume.
-	Mountpoint string `json:"mountpoint" toml:"mountpoint"`
+	// Note that it is marked omitempty because the fields of the embedded
+	// structs are optional in the scope of the [PartitionCustomization].
+	Mountpoint string `json:"mountpoint,omitempty" toml:"mountpoint,omitempty"`
 }
 
 // Custom JSON unmarshaller that first reads the value of the "type" field and

@@ -103,6 +103,8 @@ github.com/VividCortex/ewma v1.2.0 h1:f58SaIzcDXrSy3kWaHNvuJgJ3Nmz59Zji6XoJR/q1o
 github.com/VividCortex/ewma v1.2.0/go.mod h1:nz4BbCtbLyFDeC9SUHbtcT5644juEuWfUAUnGx7j5l4=
 github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d h1:licZJFw2RwpHMqeKTCYkitsPqHNxTmd4SNR5r94FGM8=
 github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d/go.mod h1:asat636LX7Bqt5lYEZ27JNDcqxfjdBQuJ/MM4CN/Lzo=
+github.com/achilleas-k/blueprint v0.0.0-20250328143618-5234e75739d0 h1:FMzi/y39iFzSl9EOx1lVBeT3J9xt/rYL3hoEVduCt5I=
+github.com/achilleas-k/blueprint v0.0.0-20250328143618-5234e75739d0/go.mod h1:Nf6cZhSb+yL165qe9r8NwtWWRDyfzqI+DVFbLuDqHD0=
 github.com/apapsch/go-jsonmerge/v2 v2.0.0 h1:axGnT1gRIfimI7gJifB699GoE/oq+F2MU7Dml6nw9rQ=
 github.com/apapsch/go-jsonmerge/v2 v2.0.0/go.mod h1:lvDnEdqiQrp0O42VQGgmlKpxL1AP2+08jFMw88y4klk=
 github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 h1:DklsrG3dyBCFEj5IhUbnKptjxatkF07cF2ak3yi77so=
@@ -575,8 +577,6 @@ github.com/openshift-online/ocm-sdk-go v0.1.438 h1:tsLCCUzbLCTL4RZG02y9RuopmGCXp
 github.com/openshift-online/ocm-sdk-go v0.1.438/go.mod h1:CiAu2jwl3ITKOxkeV0Qnhzv4gs35AmpIzVABQLtcI2Y=
 github.com/oracle/oci-go-sdk/v54 v54.0.0 h1:CDLjeSejv2aDpElAJrhKpi6zvT/zhZCZuXchUUZ+LS4=
 github.com/oracle/oci-go-sdk/v54 v54.0.0/go.mod h1:+t+yvcFGVp+3ZnztnyxqXfQDsMlq8U25faBLa+mqCMc=
-github.com/osbuild/blueprint v1.1.0 h1:yhFzW8TprHwPvF1OgzsCQD5W/NfyzZZfG87y5QmE8dM=
-github.com/osbuild/blueprint v1.1.0/go.mod h1:Nf6cZhSb+yL165qe9r8NwtWWRDyfzqI+DVFbLuDqHD0=
 github.com/osbuild/images v0.127.0 h1:O77/Gi4WmBe/YnFveG1U55oe895Lly7nzsYfmwyjqL0=
 github.com/osbuild/images v0.127.0/go.mod h1:Ag87vmyxooiPQBJEDILbypG8/SRIear75YA78NwLix0=
 github.com/osbuild/osbuild-composer/pkg/splunk_logger v0.0.0-20240814102216-0239db53236d h1:r9BFPDv0uuA9k1947Jybcxs36c/pTywWS1gjeizvtcQ=

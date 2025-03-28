@@ -261,3 +261,5 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+replace github.com/osbuild/blueprint => github.com/achilleas-k/blueprint v0.0.0-20250328143618-5234e75739d0
