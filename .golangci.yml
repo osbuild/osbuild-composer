@@ -8,6 +8,7 @@ linters-settings:
     replace-local: false
     replace-allow-list:
       - "github.com/osbuild/images"
+      - "github.com/osbuild/blueprint"
 
 linters:
   enable:
