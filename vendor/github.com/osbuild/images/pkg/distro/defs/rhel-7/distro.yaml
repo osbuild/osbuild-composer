@@ -1,0 +1,157 @@
+---
+.common:
+  azure_rhui_common_pkgset: &azure_rhui_common_pkgset
+    include:
+       - "@base"
+       - "@core"
+       - "authconfig"
+       - "bpftool"
+       - "bzip2"
+       - "chrony"
+       - "cloud-init"
+       - "cloud-utils-growpart"
+       - "dracut-config-generic"
+       - "dracut-norescue"
+       - "efibootmgr"
+       - "firewalld"
+       - "gdisk"
+       - "grub2-efi-x64"
+       - "grub2-pc"
+       - "grub2"
+       - "hyperv-daemons"
+       - "kernel"
+       - "lvm2"
+       - "redhat-release-eula"
+       - "redhat-support-tool"
+       - "rh-dotnetcore11"
+       - "rhn-setup"
+       - "rhui-azure-rhel7"
+       - "rsync"
+       - "shim-x64"
+       - "tar"
+       - "tcpdump"
+       - "WALinuxAgent"
+       - "yum-rhn-plugin"
+       - "yum-utils"
+    exclude:
+       - "dracut-config-rescue"
+       - "mariadb-libs"
+       - "NetworkManager-config-server"
+       - "postfix"
+    condition:
+      distro_name:
+        "rhel":
+          include:
+            - "insights-client"
+
+image_types:
+  azure_rhui:
+    package_sets:
+      - *azure_rhui_common_pkgset
+
+  ec2:
+    package_sets:
+      - include:
+          - "@core"
+          - "authconfig"
+          - "kernel"
+          - "yum-utils"
+          - "cloud-init"
+          - "dracut-config-generic"
+          - "dracut-norescue"
+          - "grub2"
+          - "tar"
+          - "rsync"
+          - "rh-amazon-rhui-client"
+          - "redhat-cloud-client-configuration"
+          - "chrony"
+          - "cloud-utils-growpart"
+          - "gdisk"
+        exclude:
+          - "aic94xx-firmware"
+          - "alsa-firmware"
+          - "alsa-lib"
+          - "alsa-tools-firmware"
+          - "ivtv-firmware"
+          - "iwl1000-firmware"
+          - "iwl100-firmware"
+          - "iwl105-firmware"
+          - "iwl135-firmware"
+          - "iwl2000-firmware"
+          - "iwl2030-firmware"
+          - "iwl3160-firmware"
+          - "iwl3945-firmware"
+          - "iwl4965-firmware"
+          - "iwl5000-firmware"
+          - "iwl5150-firmware"
+          - "iwl6000-firmware"
+          - "iwl6000g2a-firmware"
+          - "iwl6000g2b-firmware"
+          - "iwl6050-firmware"
+          - "iwl7260-firmware"
+          - "libertas-sd8686-firmware"
+          - "libertas-sd8787-firmware"
+          - "libertas-usb8388-firmware"
+          - "biosdevname"
+          - "plymouth"
+          # NM is excluded by the original KS, but it is in the image built from it.
+          # - "NetworkManager"
+          - "iprutils"
+          # linux-firmware is uninstalled by the original KS, but it is a direct dependency of kernel,
+          # so we can't exclude it.
+          # - "linux-firmware"
+          - "firewalld"
+          
+  qcow2:
+    package_sets:
+      - include:
+          - "@core"
+          - "kernel"
+          - "nfs-utils"
+          - "yum-utils"
+          - "cloud-init"
+          # - "ovirt-guest-agent-common"
+          - "rhn-setup"
+          - "yum-rhn-plugin"
+          - "cloud-utils-growpart"
+          - "dracut-config-generic"
+          - "tar"
+          - "tcpdump"
+          - "rsync"
+        exclude:
+          - "biosdevname"
+          - "dracut-config-rescue"
+          - "iprutils"
+          - "NetworkManager-team"
+          - "NetworkManager-tui"
+          - "NetworkManager"
+          - "plymouth"
+          - "aic94xx-firmware"
+          - "alsa-firmware"
+          - "alsa-lib"
+          - "alsa-tools-firmware"
+          - "ivtv-firmware"
+          - "iwl1000-firmware"
+          - "iwl100-firmware"
+          - "iwl105-firmware"
+          - "iwl135-firmware"
+          - "iwl2000-firmware"
+          - "iwl2030-firmware"
+          - "iwl3160-firmware"
+          - "iwl3945-firmware"
+          - "iwl4965-firmware"
+          - "iwl5000-firmware"
+          - "iwl5150-firmware"
+          - "iwl6000-firmware"
+          - "iwl6000g2a-firmware"
+          - "iwl6000g2b-firmware"
+          - "iwl6050-firmware"
+          - "iwl7260-firmware"
+          - "libertas-sd8686-firmware"
+          - "libertas-sd8787-firmware"
+          - "libertas-usb8388-firmware"
+        condition:
+          distro_name:
+            "rhel":
+              include:
+                - "insights-client"

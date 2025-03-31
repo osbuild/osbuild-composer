@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/osbuild/osbuild-composer/internal/blueprint"
+	"github.com/osbuild/blueprint/pkg/blueprint"
 	"github.com/osbuild/osbuild-composer/internal/weldr"
 )
 
