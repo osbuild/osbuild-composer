@@ -295,3 +295,14 @@ jobs:
         echo "Go to https://github.com/osbuild/cloud-cleaner/actions/workflows/run_ib.yml and"
         echo "https://github.com/osbuild/cloud-cleaner/actions/workflows/run_cloudx.yml and"
         echo "manually enable it!"
+
+  check-spec-images-deps:
+    name: "🔍 Check spec file osbuild/images dependencies"
+    runs-on: ubuntu-latest
+    container: registry.fedoraproject.org/fedora:latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Check dependencies in spec file
+      uses: osbuild/images@check-spec-deps-action
