@@ -57,6 +57,7 @@ type Server struct {
 type ServerConfig struct {
 	TenantProviderFields []string
 	JWTEnabled           bool
+	InsightsClientProxy  string
 }
 
 func NewServer(workers *worker.Server, distros *distrofactory.Factory, repos *reporegistry.RepoRegistry, config ServerConfig) *Server {

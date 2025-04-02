@@ -133,7 +133,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		return HTTPErrorWithInternal(ErrorTenantNotFound, err)
 	}
 
-	irs, err := request.GetImageRequests(h.server.distros, h.server.repos)
+	irs, err := request.GetImageRequests(h.server.distros, h.server.repos, h.server.config.InsightsClientProxy)
 	if err != nil {
 		return err
 	}

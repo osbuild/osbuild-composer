@@ -787,7 +787,7 @@ func TestGetPayloadRepositories(t *testing.T) {
 func TestGetSubscriptions(t *testing.T) {
 	// Empty Subscription
 	cr := ComposeRequest{}
-	sub := cr.GetSubscription()
+	sub := cr.GetSubscription("")
 	assert.Equal(t, (*subscription.ImageOptions)(nil), sub)
 
 	// Populated Subscription
@@ -807,8 +807,9 @@ func TestGetSubscriptions(t *testing.T) {
 		Insights:      false,
 		Organization:  "Weyland-Yutani",
 		ServerUrl:     "http://example.org/serverurl",
+		Proxy:         "http://example.org/proxyurl",
 	}
-	sub = cr.GetSubscription()
+	sub = cr.GetSubscription("http://example.org/proxyurl")
 	assert.Equal(t, expected, sub)
 
 }
@@ -1031,7 +1032,7 @@ func TestGetImageRequests_ImageTypeConversion(t *testing.T) {
 					},
 				}
 				// NOTE: repoRegistry can be nil as long as ImageRequest.Repositories has data
-				got, err := request.GetImageRequests(distrofactory.NewDefault(), nil)
+				got, err := request.GetImageRequests(distrofactory.NewDefault(), nil, "")
 				assert.NoError(t, err)
 				require.Len(t, got, 1)
 				assert.Equal(t, tt.expectedImageType, got[0].imageType.Name())
@@ -1055,7 +1056,7 @@ func TestGetImageRequests_NoRepositories(t *testing.T) {
 	}
 	rr, err := reporegistry.New(nil, []fs.FS{repos.FS})
 	require.NoError(t, err)
-	got, err := request.GetImageRequests(distrofactory.NewDefault(), rr)
+	got, err := request.GetImageRequests(distrofactory.NewDefault(), rr, "")
 	assert.NoError(t, err)
 	require.Len(t, got, 1)
 	require.Greater(t, len(got[0].repositories), 0)
@@ -1079,7 +1080,7 @@ func TestGetImageRequests_BlueprintDistro(t *testing.T) {
 	}
 	rr, err := reporegistry.New(nil, []fs.FS{repos.FS})
 	require.NoError(t, err)
-	got, err := request.GetImageRequests(distrofactory.NewDefault(), rr)
+	got, err := request.GetImageRequests(distrofactory.NewDefault(), rr, "")
 	assert.NoError(t, err)
 	require.Len(t, got, 1)
 	require.Greater(t, len(got[0].repositories), 0)
