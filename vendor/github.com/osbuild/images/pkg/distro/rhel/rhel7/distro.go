@@ -7,7 +7,6 @@ import (
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distro/rhel"
-	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/platform"
 )
 
@@ -19,17 +18,11 @@ func defaultDistroImageConfig(d *rhel.Distribution) *distro.ImageConfig {
 		GPGKeyFiles: []string{
 			"/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release",
 		},
-		Sysconfig: []*osbuild.SysconfigStageOptions{
-			{
-				Kernel: &osbuild.SysconfigKernelOptions{
-					UpdateDefault: true,
-					DefaultKernel: "kernel",
-				},
-				Network: &osbuild.SysconfigNetworkOptions{
-					Networking: true,
-					NoZeroConf: true,
-				},
-			},
+		UpdateDefaultKernel: common.ToPtr(true),
+		DefaultKernel:       common.ToPtr("kernel"),
+		Sysconfig: &distro.Sysconfig{
+			Networking: true,
+			NoZeroConf: true,
 		},
 		KernelOptionsBootloader: common.ToPtr(true),
 		NoBLS:                   common.ToPtr(true), // RHEL 7 grub does not support BLS

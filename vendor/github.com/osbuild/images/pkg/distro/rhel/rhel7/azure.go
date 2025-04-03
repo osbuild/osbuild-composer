@@ -49,17 +49,12 @@ var azureDefaultImgConfig = &distro.ImageConfig{
 	},
 	SELinuxForceRelabel: common.ToPtr(true),
 	Authconfig:          &osbuild.AuthconfigStageOptions{},
-	Sysconfig: []*osbuild.SysconfigStageOptions{
-		{
-			Kernel: &osbuild.SysconfigKernelOptions{
-				UpdateDefault: true,
-				DefaultKernel: "kernel-core",
-			},
-			Network: &osbuild.SysconfigNetworkOptions{
-				Networking: true,
-				NoZeroConf: true,
-			},
-		},
+	UpdateDefaultKernel: common.ToPtr(true),
+	DefaultKernel:       common.ToPtr("kernel-core"),
+
+	Sysconfig: &distro.Sysconfig{
+		Networking: true,
+		NoZeroConf: true,
 	},
 	EnabledServices: []string{
 		"cloud-config",

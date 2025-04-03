@@ -1,6 +1,7 @@
 package disk
 
 import (
+	"encoding/json"
 	"fmt"
 	"math/rand"
 	"reflect"
@@ -29,7 +30,7 @@ type ClevisBind struct {
 
 	// If enabled, the passphrase will be removed from the LUKS device at the
 	// end of the build (using the org.osbuild.luks2.remove-key stage).
-	RemovePassphrase bool
+	RemovePassphrase bool `json:"remove_passphrase"`
 }
 
 // LUKSContainer represents a LUKS encrypted volume.
@@ -47,7 +48,7 @@ type LUKSContainer struct {
 	// Parameters for binding the LUKS device.
 	Clevis *ClevisBind
 
-	Payload Entity
+	Payload Entity `json:"payload,omitempty"`
 }
 
 func init() {
@@ -130,4 +131,25 @@ func (lc *LUKSContainer) minSize(size uint64) uint64 {
 		minSize += payload.GetSize()
 	}
 	return minSize
+}
+
+func (lc *LUKSContainer) UnmarshalJSON(data []byte) (err error) {
+	// keep in sync with lvm.go,partition.go,luks.go
+	type alias LUKSContainer
+	var withoutPayload struct {
+		alias
+		Payload     json.RawMessage `json:"payload"`
+		PayloadType string          `json:"payload_type"`
+	}
+	if err := jsonUnmarshalStrict(data, &withoutPayload); err != nil {
+		return fmt.Errorf("cannot unmarshal %q: %w", data, err)
+	}
+	*lc = LUKSContainer(withoutPayload.alias)
+
+	lc.Payload, err = unmarshalJSONPayload(data)
+	return err
+}
+
+func (lc *LUKSContainer) UnmarshalYAML(unmarshal func(any) error) error {
+	return unmarshalYAMLviaJSON(lc, unmarshal)
 }

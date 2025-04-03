@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/customizations/fsnode"
 	"github.com/osbuild/images/pkg/customizations/shell"
 	"github.com/osbuild/images/pkg/customizations/subscription"
@@ -21,7 +22,10 @@ type ImageConfig struct {
 	DisabledServices    []string
 	MaskedServices      []string
 	DefaultTarget       *string
-	Sysconfig           []*osbuild.SysconfigStageOptions
+
+	Sysconfig           *Sysconfig
+	DefaultKernel       *string
+	UpdateDefaultKernel *bool
 
 	// List of files from which to import GPG keys into the RPM database
 	GPGKeyFiles []string
@@ -64,7 +68,8 @@ type ImageConfig struct {
 	Firewall            *osbuild.FirewallStageOptions
 	UdevRules           *osbuild.UdevRulesStageOptions
 	GCPGuestAgentConfig *osbuild.GcpGuestAgentConfigOptions
-	WSLConfig           *osbuild.WSLConfStageOptions
+
+	WSLConfig *WSLConfig
 
 	Files       []*fsnode.File
 	Directories []*fsnode.Directory
@@ -110,6 +115,10 @@ type ImageConfig struct {
 	MountUnits *bool
 }
 
+type WSLConfig struct {
+	BootSystemd bool
+}
+
 // InheritFrom inherits unset values from the provided parent configuration and
 // returns a new structure instance, which is a result of the inheritance.
 func (c *ImageConfig) InheritFrom(parentConfig *ImageConfig) *ImageConfig {
@@ -133,4 +142,77 @@ func (c *ImageConfig) InheritFrom(parentConfig *ImageConfig) *ImageConfig {
 		}
 	}
 	return &finalConfig
+}
+
+func (c *ImageConfig) WSLConfStageOptions() *osbuild.WSLConfStageOptions {
+	if c.WSLConfig == nil {
+		return nil
+	}
+	return &osbuild.WSLConfStageOptions{
+		Boot: osbuild.WSLConfBootOptions{
+			Systemd: c.WSLConfig.BootSystemd,
+		},
+	}
+}
+
+type Sysconfig struct {
+	Networking bool
+	NoZeroConf bool
+
+	CreateDefaultNetworkScripts bool
+}
+
+func (c *ImageConfig) SysconfigStageOptions() []*osbuild.SysconfigStageOptions {
+	var opts *osbuild.SysconfigStageOptions
+
+	if c.DefaultKernel != nil {
+		if opts == nil {
+			opts = &osbuild.SysconfigStageOptions{}
+		}
+		if opts.Kernel == nil {
+			opts.Kernel = &osbuild.SysconfigKernelOptions{}
+		}
+		opts.Kernel.DefaultKernel = *c.DefaultKernel
+	}
+	if c.UpdateDefaultKernel != nil {
+		if opts == nil {
+			opts = &osbuild.SysconfigStageOptions{}
+		}
+		if opts.Kernel == nil {
+			opts.Kernel = &osbuild.SysconfigKernelOptions{}
+		}
+		opts.Kernel.UpdateDefault = *c.UpdateDefaultKernel
+	}
+	if c.Sysconfig != nil {
+		if c.Sysconfig.Networking {
+			if opts == nil {
+				opts = &osbuild.SysconfigStageOptions{}
+			}
+			if opts.Network == nil {
+				opts.Network = &osbuild.SysconfigNetworkOptions{}
+			}
+			opts.Network.Networking = c.Sysconfig.Networking
+			opts.Network.NoZeroConf = c.Sysconfig.NoZeroConf
+			if c.Sysconfig.CreateDefaultNetworkScripts {
+				opts.NetworkScripts = &osbuild.NetworkScriptsOptions{
+					IfcfgFiles: map[string]osbuild.IfcfgFile{
+						"eth0": {
+							Device:    "eth0",
+							Bootproto: osbuild.IfcfgBootprotoDHCP,
+							OnBoot:    common.ToPtr(true),
+							Type:      osbuild.IfcfgTypeEthernet,
+							UserCtl:   common.ToPtr(true),
+							PeerDNS:   common.ToPtr(true),
+							IPv6Init:  common.ToPtr(false),
+						},
+					},
+				}
+			}
+		}
+	}
+
+	if opts == nil {
+		return nil
+	}
+	return []*osbuild.SysconfigStageOptions{opts}
 }

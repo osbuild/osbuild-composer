@@ -99,35 +99,36 @@ type OSCustomizations struct {
 	ShellInit []shell.InitFile
 
 	// TODO: drop osbuild types from the API
-	Firewall            *osbuild.FirewallStageOptions
-	Grub2Config         *osbuild.GRUB2Config
-	Sysconfig           []*osbuild.SysconfigStageOptions
-	SystemdLogind       []*osbuild.SystemdLogindStageOptions
-	CloudInit           []*osbuild.CloudInitStageOptions
-	Modprobe            []*osbuild.ModprobeStageOptions
-	DracutConf          []*osbuild.DracutConfStageOptions
-	SystemdUnit         []*osbuild.SystemdUnitStageOptions
-	Authselect          *osbuild.AuthselectStageOptions
-	SELinuxConfig       *osbuild.SELinuxConfigStageOptions
-	Tuned               *osbuild.TunedStageOptions
-	Tmpfilesd           []*osbuild.TmpfilesdStageOptions
-	PamLimitsConf       []*osbuild.PamLimitsConfStageOptions
-	Sysctld             []*osbuild.SysctldStageOptions
-	DNFConfig           []*osbuild.DNFConfigStageOptions
-	DNFAutomaticConfig  *osbuild.DNFAutomaticConfigStageOptions
-	YUMConfig           *osbuild.YumConfigStageOptions
-	YUMRepos            []*osbuild.YumReposStageOptions
-	SshdConfig          *osbuild.SshdConfigStageOptions
-	GCPGuestAgentConfig *osbuild.GcpGuestAgentConfigOptions
-	AuthConfig          *osbuild.AuthconfigStageOptions
-	PwQuality           *osbuild.PwqualityConfStageOptions
-	NTPServers          []osbuild.ChronyConfigServer
-	WAAgentConfig       *osbuild.WAAgentConfStageOptions
-	UdevRules           *osbuild.UdevRulesStageOptions
-	WSLConfig           *osbuild.WSLConfStageOptions
-	LeapSecTZ           *string
-	Presets             []osbuild.Preset
-	ContainersStorage   *string
+	Firewall             *osbuild.FirewallStageOptions
+	Grub2Config          *osbuild.GRUB2Config
+	Sysconfig            []*osbuild.SysconfigStageOptions
+	SystemdLogind        []*osbuild.SystemdLogindStageOptions
+	CloudInit            []*osbuild.CloudInitStageOptions
+	Modprobe             []*osbuild.ModprobeStageOptions
+	DracutConf           []*osbuild.DracutConfStageOptions
+	SystemdUnit          []*osbuild.SystemdUnitStageOptions
+	Authselect           *osbuild.AuthselectStageOptions
+	SELinuxConfig        *osbuild.SELinuxConfigStageOptions
+	Tuned                *osbuild.TunedStageOptions
+	Tmpfilesd            []*osbuild.TmpfilesdStageOptions
+	PamLimitsConf        []*osbuild.PamLimitsConfStageOptions
+	Sysctld              []*osbuild.SysctldStageOptions
+	DNFConfig            []*osbuild.DNFConfigStageOptions
+	DNFAutomaticConfig   *osbuild.DNFAutomaticConfigStageOptions
+	YUMConfig            *osbuild.YumConfigStageOptions
+	YUMRepos             []*osbuild.YumReposStageOptions
+	SshdConfig           *osbuild.SshdConfigStageOptions
+	GCPGuestAgentConfig  *osbuild.GcpGuestAgentConfigOptions
+	AuthConfig           *osbuild.AuthconfigStageOptions
+	PwQuality            *osbuild.PwqualityConfStageOptions
+	NTPServers           []osbuild.ChronyConfigServer
+	WAAgentConfig        *osbuild.WAAgentConfStageOptions
+	UdevRules            *osbuild.UdevRulesStageOptions
+	WSLConfig            *osbuild.WSLConfStageOptions
+	InsightsClientConfig *osbuild.InsightsClientConfigStageOptions
+	LeapSecTZ            *string
+	Presets              []osbuild.Preset
+	ContainersStorage    *string
 
 	// OpenSCAP config
 	OpenSCAPRemediationConfig *oscap.RemediationConfig
@@ -634,7 +635,11 @@ func (p *OS) serialize() osbuild.Pipeline {
 	}
 
 	if p.SshdConfig != nil {
-		pipeline.AddStage((osbuild.NewSshdConfigStage(p.SshdConfig)))
+		pipeline.AddStage(osbuild.NewSshdConfigStage(p.SshdConfig))
+	}
+
+	if p.InsightsClientConfig != nil {
+		pipeline.AddStage(osbuild.NewInsightsClientConfigStage(p.InsightsClientConfig))
 	}
 
 	if p.AuthConfig != nil {

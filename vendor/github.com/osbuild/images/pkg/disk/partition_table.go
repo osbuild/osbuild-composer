@@ -27,7 +27,7 @@ type PartitionTable struct {
 	// Extra space at the end of the partition table (sectors)
 	ExtraPadding uint64 `json:"extra_padding,omitempty"`
 	// Starting offset of the first partition in the table (Mb)
-	StartOffset uint64 `json:"start_offset,omitempty"`
+	StartOffset uint64 `json:"start_offset,omitempty" yaml:"start_offset,omitempty"`
 }
 
 type PartitioningMode string

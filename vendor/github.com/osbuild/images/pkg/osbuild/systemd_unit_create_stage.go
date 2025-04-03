@@ -244,6 +244,7 @@ func GenSystemdMountStages(pt *disk.PartitionTable) ([]*Stage, error) {
 		}
 
 		options := &SystemdUnitCreateStageOptions{
+			UnitPath: EtcUnitPath, // create all mount units in /etc/systemd/
 			Config: SystemdUnit{
 				Unit: &UnitSection{
 					// Adds the following dependencies for mount units (systemd.mount(5)):

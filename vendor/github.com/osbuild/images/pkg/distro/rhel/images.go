@@ -228,6 +228,9 @@ func osCustomizations(
 	var subscriptionStatus subscription.RHSMStatus
 	if options.Subscription != nil {
 		subscriptionStatus = subscription.RHSMConfigWithSubscription
+		if options.Subscription.Proxy != "" {
+			osc.InsightsClientConfig = &osbuild.InsightsClientConfigStageOptions{Proxy: options.Subscription.Proxy}
+		}
 	} else {
 		subscriptionStatus = subscription.RHSMConfigNoSubscription
 	}
@@ -241,7 +244,7 @@ func osCustomizations(
 
 	osc.ShellInit = imageConfig.ShellInit
 	osc.Grub2Config = imageConfig.Grub2Config
-	osc.Sysconfig = imageConfig.Sysconfig
+	osc.Sysconfig = imageConfig.SysconfigStageOptions()
 	osc.SystemdLogind = imageConfig.SystemdLogind
 	osc.CloudInit = imageConfig.CloudInit
 	osc.Modprobe = imageConfig.Modprobe
@@ -263,7 +266,7 @@ func osCustomizations(
 	osc.WAAgentConfig = imageConfig.WAAgentConfig
 	osc.UdevRules = imageConfig.UdevRules
 	osc.GCPGuestAgentConfig = imageConfig.GCPGuestAgentConfig
-	osc.WSLConfig = imageConfig.WSLConfig
+	osc.WSLConfig = imageConfig.WSLConfStageOptions()
 
 	osc.Files = append(osc.Files, imageConfig.Files...)
 	osc.Directories = append(osc.Directories, imageConfig.Directories...)
