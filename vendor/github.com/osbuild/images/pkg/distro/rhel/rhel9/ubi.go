@@ -38,10 +38,8 @@ func mkWSLImgType() *rhel.ImageType {
 		},
 		Locale:    common.ToPtr("en_US.UTF-8"),
 		NoSElinux: common.ToPtr(true),
-		WSLConfig: &osbuild.WSLConfStageOptions{
-			Boot: osbuild.WSLConfBootOptions{
-				Systemd: true,
-			},
+		WSLConfig: &distro.WSLConfig{
+			BootSystemd: true,
 		},
 	}
 

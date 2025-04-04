@@ -1,11 +1,11 @@
 package osbuild
 
 type SysconfigStageOptions struct {
-	Kernel         *SysconfigKernelOptions  `json:"kernel,omitempty"`
-	Network        *SysconfigNetworkOptions `json:"network,omitempty"`
-	NetworkScripts *NetworkScriptsOptions   `json:"network-scripts,omitempty"`
-	Desktop        *SysconfigDesktopOptions `json:"desktop,omitempty"`
-	LiveSys        *SysconfigLivesysOptions `json:"livesys,omitempty"`
+	Kernel         *SysconfigKernelOptions  `json:"kernel,omitempty" yaml:"kernel,omitempty"`
+	Network        *SysconfigNetworkOptions `json:"network,omitempty" yaml:"network,omitempty"`
+	NetworkScripts *NetworkScriptsOptions   `json:"network-scripts,omitempty" yaml:"network-scripts,omitempty"`
+	Desktop        *SysconfigDesktopOptions `json:"desktop,omitempty" yaml:"desktop,omitempty"`
+	LiveSys        *SysconfigLivesysOptions `json:"livesys,omitempty" yaml:"libesys,omitempty"`
 }
 
 func (SysconfigStageOptions) isStageOptions() {}
@@ -19,12 +19,14 @@ func NewSysconfigStage(options *SysconfigStageOptions) *Stage {
 
 type SysconfigNetworkOptions struct {
 	Networking bool `json:"networking,omitempty"`
-	NoZeroConf bool `json:"no_zero_conf,omitempty"`
+	// XXX: ideally this would be no_zeroconf" (because zeroconf
+	// is the program name) but we need to keep for compatibility
+	NoZeroConf bool `json:"no_zero_conf,omitempty" yaml:"no_zero_conf,omitempty"`
 }
 
 type SysconfigKernelOptions struct {
-	UpdateDefault bool   `json:"update_default,omitempty"`
-	DefaultKernel string `json:"default_kernel,omitempty"`
+	UpdateDefault bool   `json:"update_default,omitempty" yaml:"update_default,omitempty"`
+	DefaultKernel string `json:"default_kernel,omitempty" yaml:"default_kernel,omitempty"`
 }
 
 type SysconfigDesktopOptions struct {

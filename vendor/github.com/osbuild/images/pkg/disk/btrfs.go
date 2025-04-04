@@ -11,10 +11,10 @@ import (
 const DefaultBtrfsCompression = "zstd:1"
 
 type Btrfs struct {
-	UUID       string
-	Label      string
-	Mountpoint string
-	Subvolumes []BtrfsSubvolume
+	UUID       string           `json:"uuid,omitempty" yaml:"uuid,omitempty"`
+	Label      string           `json:"label,omitempty" yaml:"label,omitempty"`
+	Mountpoint string           `json:"mountpoint,omitempty" yaml:"mountpoint,omitempty"`
+	Subvolumes []BtrfsSubvolume `json:"subvolumes,omitempty" yaml:"subvolumes,omitempty"`
 }
 
 func init() {
@@ -107,15 +107,15 @@ func (b *Btrfs) minSize(size uint64) uint64 {
 }
 
 type BtrfsSubvolume struct {
-	Name       string
-	Size       uint64
-	Mountpoint string
-	GroupID    uint64
-	Compress   string
-	ReadOnly   bool
+	Name       string `json:"name" yaml:"name"`
+	Size       uint64 `json:"size" yaml:"size"`
+	Mountpoint string `json:"mountpoint,omitempty" yaml:"mountpoint,omitempty"`
+	GroupID    uint64 `json:"group_id,omitempty" yaml:"group_id,omitempty"`
+	Compress   string `json:"compress,omitempty" yaml:"compress,omitempty"`
+	ReadOnly   bool   `json:"read_only,omitempty" yaml:"read_only,omitempty"`
 
 	// UUID of the parent volume
-	UUID string
+	UUID string `json:"uuid,omitempty" yaml:"uuid,omitempty"`
 }
 
 func (bs *BtrfsSubvolume) Clone() Entity {
