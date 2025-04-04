@@ -1,6 +1,7 @@
 package disk
 
 import (
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"strings"
@@ -16,7 +17,7 @@ type LVMVolumeGroup struct {
 	Name        string
 	Description string
 
-	LogicalVolumes []LVMLogicalVolume
+	LogicalVolumes []LVMLogicalVolume `json:"logical_volumes,omitempty"`
 }
 
 func init() {
@@ -174,6 +175,16 @@ func (vg *LVMVolumeGroup) minSize(size uint64) uint64 {
 	return vg.AlignUp(size)
 }
 
+func (vg *LVMVolumeGroup) UnmarshalJSON(data []byte) error {
+	type alias LVMVolumeGroup
+	var tmp alias
+	if err := json.Unmarshal(data, &tmp); err != nil {
+		return err
+	}
+	*vg = LVMVolumeGroup(tmp)
+	return nil
+}
+
 type LVMLogicalVolume struct {
 	Name    string
 	Size    uint64
@@ -231,4 +242,25 @@ func lvname(path string) string {
 
 	path = strings.TrimLeft(path, "/")
 	return strings.ReplaceAll(path, "/", "_") + "lv"
+}
+
+func (lv *LVMLogicalVolume) UnmarshalJSON(data []byte) (err error) {
+	// keep in sync with lvm.go,partition.go,luks.go
+	type alias LVMLogicalVolume
+	var withoutPayload struct {
+		alias
+		Payload     json.RawMessage `json:"payload"`
+		PayloadType string          `json:"payload_type"`
+	}
+	if err := jsonUnmarshalStrict(data, &withoutPayload); err != nil {
+		return fmt.Errorf("cannot unmarshal %q: %w", data, err)
+	}
+	*lv = LVMLogicalVolume(withoutPayload.alias)
+
+	lv.Payload, err = unmarshalJSONPayload(data)
+	return err
+}
+
+func (lv *LVMLogicalVolume) UnmarshalYAML(unmarshal func(any) error) error {
+	return unmarshalYAMLviaJSON(lv, unmarshal)
 }

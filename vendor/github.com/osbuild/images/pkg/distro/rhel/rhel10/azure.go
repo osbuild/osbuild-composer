@@ -321,17 +321,11 @@ func defaultAzureImageConfig(rd *rhel.Distribution) *distro.ImageConfig {
 				Layouts: []string{"us"},
 			},
 		},
-		Sysconfig: []*osbuild.SysconfigStageOptions{
-			{
-				Kernel: &osbuild.SysconfigKernelOptions{
-					UpdateDefault: true,
-					DefaultKernel: "kernel-core",
-				},
-				Network: &osbuild.SysconfigNetworkOptions{
-					Networking: true,
-					NoZeroConf: true,
-				},
-			},
+		UpdateDefaultKernel: common.ToPtr(true),
+		DefaultKernel:       common.ToPtr("kernel-core"),
+		Sysconfig: &distro.Sysconfig{
+			Networking: true,
+			NoZeroConf: true,
 		},
 		EnabledServices: []string{
 			"firewalld",

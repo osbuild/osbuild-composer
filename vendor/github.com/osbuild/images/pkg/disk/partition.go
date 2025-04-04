@@ -1,10 +1,8 @@
 package disk
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"reflect"
 )
 
 type Partition struct {
@@ -105,7 +103,7 @@ func (p *Partition) IsPReP() bool {
 func (p *Partition) MarshalJSON() ([]byte, error) {
 	type partAlias Partition
 
-	entityName := "no-payload"
+	var entityName string
 	if p.Payload != nil {
 		entityName = p.Payload.EntityName()
 	}
@@ -121,36 +119,23 @@ func (p *Partition) MarshalJSON() ([]byte, error) {
 	return json.Marshal(partWithPayloadType)
 }
 
-func (p *Partition) UnmarshalJSON(data []byte) error {
-	type partAlias Partition
-	var partWithoutPayload struct {
-		partAlias
+func (p *Partition) UnmarshalJSON(data []byte) (err error) {
+	// keep in sync with lvm.go,partition.go,luks.go
+	type alias Partition
+	var withoutPayload struct {
+		alias
 		Payload     json.RawMessage `json:"payload"`
-		PayloadType string          `json:"payload_type,omitempty"`
+		PayloadType string          `json:"payload_type"`
 	}
+	if err := jsonUnmarshalStrict(data, &withoutPayload); err != nil {
+		return fmt.Errorf("cannot unmarshal %q: %w", data, err)
+	}
+	*p = Partition(withoutPayload.alias)
 
-	dec := json.NewDecoder(bytes.NewBuffer(data))
-	if err := dec.Decode(&partWithoutPayload); err != nil {
-		return fmt.Errorf("cannot build partition from %q: %w", data, err)
-	}
-	*p = Partition(partWithoutPayload.partAlias)
-	// no payload, e.g. bios partiton
-	if partWithoutPayload.PayloadType == "no-payload" {
-		return nil
-	}
-
-	entType := payloadEntityMap[partWithoutPayload.PayloadType]
-	if entType == nil {
-		return fmt.Errorf("cannot build partition from %q: unknown payload %q", data, partWithoutPayload.PayloadType)
-	}
-	entValP := reflect.New(entType).Elem().Addr()
-	ent := entValP.Interface()
-	if err := json.Unmarshal(partWithoutPayload.Payload, &ent); err != nil {
-		return err
-	}
-	p.Payload = ent.(PayloadEntity)
-	return nil
+	p.Payload, err = unmarshalJSONPayload(data)
+	return err
 }
+
 func (t *Partition) UnmarshalYAML(unmarshal func(any) error) error {
 	return unmarshalYAMLviaJSON(t, unmarshal)
 }

@@ -4,7 +4,6 @@ import (
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distro/rhel"
-	"github.com/osbuild/images/pkg/osbuild"
 )
 
 func mkWslImgType() *rhel.ImageType {
@@ -24,10 +23,8 @@ func mkWslImgType() *rhel.ImageType {
 	it.DefaultImageConfig = &distro.ImageConfig{
 		Locale:    common.ToPtr("en_US.UTF-8"),
 		NoSElinux: common.ToPtr(true),
-		WSLConfig: &osbuild.WSLConfStageOptions{
-			Boot: osbuild.WSLConfBootOptions{
-				Systemd: true,
-			},
+		WSLConfig: &distro.WSLConfig{
+			BootSystemd: true,
 		},
 	}
 

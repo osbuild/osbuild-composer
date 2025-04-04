@@ -58,8 +58,8 @@ type imageType struct {
 	// bootable image
 	bootable bool
 	// List of valid arches for the image type
-	basePartitionTables    distro.BasePartitionTableMap
-	requiredPartitionSizes map[string]uint64
+	basePartitionTablesFunc func(distro.ImageType) (*disk.PartitionTable, error)
+	requiredPartitionSizes  map[string]uint64
 }
 
 func (t *imageType) Name() string {
@@ -144,9 +144,9 @@ func (t *imageType) getPartitionTable(
 	options distro.ImageOptions,
 	rng *rand.Rand,
 ) (*disk.PartitionTable, error) {
-	basePartitionTable, exists := t.basePartitionTables[t.arch.Name()]
-	if !exists {
-		return nil, fmt.Errorf("unknown arch for partition table: %s", t.arch.Name())
+	basePartitionTable, err := t.basePartitionTablesFunc(t)
+	if err != nil {
+		return nil, err
 	}
 
 	imageSize := t.Size(options.Size)
@@ -185,7 +185,7 @@ func (t *imageType) getPartitionTable(
 	}
 
 	mountpoints := customizations.GetFilesystems()
-	return disk.NewPartitionTable(&basePartitionTable, mountpoints, imageSize, partitioningMode, t.platform.GetArch(), t.requiredPartitionSizes, rng)
+	return disk.NewPartitionTable(basePartitionTable, mountpoints, imageSize, partitioningMode, t.platform.GetArch(), t.requiredPartitionSizes, rng)
 }
 
 func (t *imageType) getDefaultImageConfig() *distro.ImageConfig {
@@ -207,9 +207,12 @@ func (t *imageType) getDefaultInstallerConfig() (*distro.InstallerConfig, error)
 }
 
 func (t *imageType) PartitionType() disk.PartitionTableType {
-	basePartitionTable, exists := t.basePartitionTables[t.arch.Name()]
-	if !exists {
+	if t.basePartitionTablesFunc == nil {
 		return disk.PT_NONE
+	}
+	basePartitionTable, err := t.basePartitionTablesFunc(t)
+	if err != nil {
+		panic(err)
 	}
 
 	return basePartitionTable.Type

@@ -49,6 +49,13 @@ type Composer struct {
 	weldrListener, localWorkerListener, workerListener, apiListener, promListener net.Listener
 }
 
+type ApiOptions struct {
+	EnableTLS           bool
+	EnableMTLS          bool
+	EnableJWT           bool
+	InsightsClientProxy string
+}
+
 func NewComposer(config *ComposerConfigFile, stateDir, cacheDir string) (*Composer, error) {
 	c := Composer{
 		config:   config,
@@ -167,7 +174,7 @@ func (c *Composer) InitMetricsAPI(prometheus net.Listener) {
 	c.promListener = prometheus
 }
 
-func (c *Composer) InitAPI(cert, key string, enableTLS bool, enableMTLS bool, enableJWT bool, l net.Listener) error {
+func (c *Composer) InitAPI(cert, key string, l net.Listener, options ApiOptions) error {
 	config := v2.ServerConfig{
 		JWTEnabled:           c.config.Koji.EnableJWT,
 		TenantProviderFields: c.config.Koji.JWTTenantProviderFields,
@@ -175,18 +182,18 @@ func (c *Composer) InitAPI(cert, key string, enableTLS bool, enableMTLS bool, en
 
 	c.api = cloudapi.NewServer(c.workers, c.distros, c.repos, config)
 
-	if !enableTLS {
+	if !options.EnableTLS {
 		c.apiListener = l
 		return nil
 	}
 
 	// If both are off or both are on, error out
-	if enableJWT == enableMTLS {
+	if options.EnableJWT == options.EnableMTLS {
 		return fmt.Errorf("API: Either mTLS or JWT authentication must be enabled")
 	}
 
 	clientAuth := tls.RequireAndVerifyClientCert
-	if enableJWT {
+	if options.EnableJWT {
 		// jwt enabled => tls listener without client auth
 		clientAuth = tls.NoClientCert
 	}
