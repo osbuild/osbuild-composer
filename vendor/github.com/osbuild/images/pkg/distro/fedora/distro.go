@@ -242,7 +242,6 @@ func mkIotSimplifiedInstallerImgType(d distribution) imageType {
 		buildPipelines:         []string{"build"},
 		payloadPipelines:       []string{"ostree-deployment", "image", "xz", "coi-tree", "efiboot-tree", "bootiso-tree", "bootiso"},
 		exports:                []string{"bootiso"},
-		basePartitionTables:    iotSimplifiedInstallerPartitionTables,
 		kernelOptions:          ostreeDeploymentKernelOptions(),
 		requiredPartitionSizes: requiredDirectorySizes,
 	}
@@ -265,15 +264,14 @@ func mkIotRawImgType(d distribution) imageType {
 			LockRootUser:              common.ToPtr(true),
 			IgnitionPlatform:          common.ToPtr("metal"),
 		},
-		defaultSize:         4 * datasizes.GibiByte,
-		rpmOstree:           true,
-		bootable:            true,
-		image:               iotImage,
-		buildPipelines:      []string{"build"},
-		payloadPipelines:    []string{"ostree-deployment", "image", "xz"},
-		exports:             []string{"xz"},
-		basePartitionTables: iotBasePartitionTables,
-		kernelOptions:       ostreeDeploymentKernelOptions(),
+		defaultSize:      4 * datasizes.GibiByte,
+		rpmOstree:        true,
+		bootable:         true,
+		image:            iotImage,
+		buildPipelines:   []string{"build"},
+		payloadPipelines: []string{"ostree-deployment", "image", "xz"},
+		exports:          []string{"xz"},
+		kernelOptions:    ostreeDeploymentKernelOptions(),
 
 		// Passing an empty map into the required partition sizes disables the
 		// default partition sizes normally set so our `basePartitionTables` can
@@ -304,7 +302,6 @@ func mkIotQcow2ImgType(d distribution) imageType {
 		buildPipelines:         []string{"build"},
 		payloadPipelines:       []string{"ostree-deployment", "image", "qcow2"},
 		exports:                []string{"qcow2"},
-		basePartitionTables:    iotBasePartitionTables,
 		kernelOptions:          ostreeDeploymentKernelOptions(),
 		requiredPartitionSizes: requiredDirectorySizes,
 	}
@@ -329,7 +326,6 @@ func mkQcow2ImgType(d distribution) imageType {
 		buildPipelines:         []string{"build"},
 		payloadPipelines:       []string{"os", "image", "qcow2"},
 		exports:                []string{"qcow2"},
-		basePartitionTables:    defaultBasePartitionTables,
 		requiredPartitionSizes: requiredDirectorySizes,
 	}
 }
@@ -362,7 +358,6 @@ func mkVmdkImgType(d distribution) imageType {
 		buildPipelines:         []string{"build"},
 		payloadPipelines:       []string{"os", "image", "vmdk"},
 		exports:                []string{"vmdk"},
-		basePartitionTables:    defaultBasePartitionTables,
 		requiredPartitionSizes: requiredDirectorySizes,
 	}
 }
@@ -383,7 +378,6 @@ func mkOvaImgType(d distribution) imageType {
 		buildPipelines:         []string{"build"},
 		payloadPipelines:       []string{"os", "image", "vmdk", "ovf", "archive"},
 		exports:                []string{"archive"},
-		basePartitionTables:    defaultBasePartitionTables,
 		requiredPartitionSizes: requiredDirectorySizes,
 	}
 }
@@ -438,10 +432,8 @@ func mkWslImgType(d distribution) imageType {
 			ExcludeDocs: common.ToPtr(true),
 			Locale:      common.ToPtr("C.UTF-8"),
 			Timezone:    common.ToPtr("Etc/UTC"),
-			WSLConfig: &osbuild.WSLConfStageOptions{
-				Boot: osbuild.WSLConfBootOptions{
-					Systemd: true,
-				},
+			WSLConfig: &distro.WSLConfig{
+				BootSystemd: true,
 			},
 		},
 		image:                  containerImage,
@@ -481,7 +473,6 @@ func mkMinimalRawImgType(d distribution) imageType {
 		buildPipelines:         []string{"build"},
 		payloadPipelines:       []string{"os", "image", "xz"},
 		exports:                []string{"xz"},
-		basePartitionTables:    minimalrawPartitionTables,
 		requiredPartitionSizes: requiredDirectorySizes,
 	}
 	if common.VersionGreaterThanOrEqual(d.osVersion, "43") {
@@ -506,16 +497,6 @@ type distribution struct {
 	runner             runner.Runner
 	arches             map[string]distro.Arch
 	defaultImageConfig *distro.ImageConfig
-}
-
-// Fedora based OS image configuration defaults
-var defaultDistroImageConfig = &distro.ImageConfig{
-	Hostname:               common.ToPtr("localhost.localdomain"),
-	Timezone:               common.ToPtr("UTC"),
-	Locale:                 common.ToPtr("C.UTF-8"),
-	DefaultOSCAPDatastream: common.ToPtr(oscap.DefaultFedoraDatastream()),
-	InstallWeakDeps:        common.ToPtr(true),
-	MachineIdUninitialized: common.ToPtr(true),
 }
 
 func defaultDistroInstallerConfig(d *distribution) *distro.InstallerConfig {
@@ -543,15 +524,16 @@ func getDistro(version int) distribution {
 	if version < 0 {
 		panic("Invalid Fedora version (must be positive)")
 	}
+	nameVer := fmt.Sprintf("fedora-%d", version)
 	return distribution{
-		name:               fmt.Sprintf("fedora-%d", version),
+		name:               nameVer,
 		product:            "Fedora",
 		osVersion:          strconv.Itoa(version),
 		releaseVersion:     strconv.Itoa(version),
 		modulePlatformID:   fmt.Sprintf("platform:f%d", version),
 		ostreeRefTmpl:      fmt.Sprintf("fedora/%d/%%s/iot", version),
 		runner:             &runner.Fedora{Version: uint64(version)},
-		defaultImageConfig: defaultDistroImageConfig,
+		defaultImageConfig: common.Must(defs.DistroImageConfig(nameVer)),
 	}
 }
 

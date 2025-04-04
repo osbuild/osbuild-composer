@@ -370,17 +370,11 @@ var defaultAzureImageConfig = &distro.ImageConfig{
 			Layouts: []string{"us"},
 		},
 	},
-	Sysconfig: []*osbuild.SysconfigStageOptions{
-		{
-			Kernel: &osbuild.SysconfigKernelOptions{
-				UpdateDefault: true,
-				DefaultKernel: "kernel-core",
-			},
-			Network: &osbuild.SysconfigNetworkOptions{
-				Networking: true,
-				NoZeroConf: true,
-			},
-		},
+	DefaultKernel:       common.ToPtr("kernel-core"),
+	UpdateDefaultKernel: common.ToPtr(true),
+	Sysconfig: &distro.Sysconfig{
+		Networking: true,
+		NoZeroConf: true,
 	},
 	EnabledServices: []string{
 		"nm-cloud-setup.service",

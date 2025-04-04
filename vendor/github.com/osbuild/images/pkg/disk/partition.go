@@ -1,28 +1,26 @@
 package disk
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"reflect"
 )
 
 type Partition struct {
 	// Start of the partition in bytes
-	Start uint64 `json:"start"`
+	Start uint64 `json:"start,omitempty" yaml:"start,omitempty"`
 	// Size of the partition in bytes
-	Size uint64 `json:"size"`
+	Size uint64 `json:"size" yaml:"size"`
 	// Partition type, e.g. 0x83 for MBR or a UUID for gpt
-	Type string `json:"type,omitempty"`
+	Type string `json:"type,omitempty" yaml:"type,omitempty"`
 	// `Legacy BIOS bootable` (GPT) or `active` (DOS) flag
-	Bootable bool `json:"bootable,omitempty"`
+	Bootable bool `json:"bootable,omitempty" yaml:"bootable,omitempty"`
 
 	// ID of the partition, dos doesn't use traditional UUIDs, therefore this
 	// is just a string.
-	UUID string `json:"uuid,omitempty"`
+	UUID string `json:"uuid,omitempty" yaml:"uuid,omitempty"`
 
 	// If nil, the partition is raw; It doesn't contain a payload.
-	Payload PayloadEntity `json:"payload,omitempty"`
+	Payload PayloadEntity `json:"payload,omitempty" yaml:"payload,omitempty"`
 }
 
 func (p *Partition) Clone() Entity {
@@ -105,14 +103,14 @@ func (p *Partition) IsPReP() bool {
 func (p *Partition) MarshalJSON() ([]byte, error) {
 	type partAlias Partition
 
-	entityName := "no-payload"
+	var entityName string
 	if p.Payload != nil {
 		entityName = p.Payload.EntityName()
 	}
 
 	partWithPayloadType := struct {
 		partAlias
-		PayloadType string `json:"payload_type,omitempty"`
+		PayloadType string `json:"payload_type,omitempty" yaml:"payload_type,omitempty"`
 	}{
 		partAlias(*p),
 		entityName,
@@ -121,36 +119,23 @@ func (p *Partition) MarshalJSON() ([]byte, error) {
 	return json.Marshal(partWithPayloadType)
 }
 
-func (p *Partition) UnmarshalJSON(data []byte) error {
-	type partAlias Partition
-	var partWithoutPayload struct {
-		partAlias
-		Payload     json.RawMessage `json:"payload"`
-		PayloadType string          `json:"payload_type,omitempty"`
+func (p *Partition) UnmarshalJSON(data []byte) (err error) {
+	// keep in sync with lvm.go,partition.go,luks.go
+	type alias Partition
+	var withoutPayload struct {
+		alias
+		Payload     json.RawMessage `json:"payload" yaml:"payload"`
+		PayloadType string          `json:"payload_type" yaml:"payload_type"`
 	}
+	if err := jsonUnmarshalStrict(data, &withoutPayload); err != nil {
+		return fmt.Errorf("cannot unmarshal %q: %w", data, err)
+	}
+	*p = Partition(withoutPayload.alias)
 
-	dec := json.NewDecoder(bytes.NewBuffer(data))
-	if err := dec.Decode(&partWithoutPayload); err != nil {
-		return fmt.Errorf("cannot build partition from %q: %w", data, err)
-	}
-	*p = Partition(partWithoutPayload.partAlias)
-	// no payload, e.g. bios partiton
-	if partWithoutPayload.PayloadType == "no-payload" {
-		return nil
-	}
-
-	entType := payloadEntityMap[partWithoutPayload.PayloadType]
-	if entType == nil {
-		return fmt.Errorf("cannot build partition from %q: unknown payload %q", data, partWithoutPayload.PayloadType)
-	}
-	entValP := reflect.New(entType).Elem().Addr()
-	ent := entValP.Interface()
-	if err := json.Unmarshal(partWithoutPayload.Payload, &ent); err != nil {
-		return err
-	}
-	p.Payload = ent.(PayloadEntity)
-	return nil
+	p.Payload, err = unmarshalJSONPayload(data)
+	return err
 }
+
 func (t *Partition) UnmarshalYAML(unmarshal func(any) error) error {
 	return unmarshalYAMLviaJSON(t, unmarshal)
 }
