@@ -1,6 +1,7 @@
 module github.com/osbuild/osbuild-composer
 
 go 1.22.8
+toolchain go1.24.1
 
 exclude github.com/mattn/go-sqlite3 v2.0.3+incompatible
 
@@ -244,7 +245,7 @@ require (
 	go.opentelemetry.io/otel/sdk v1.34.0 // indirect
 	go.opentelemetry.io/otel/sdk/metric v1.32.0 // indirect
 	go.opentelemetry.io/otel/trace v1.34.0 // indirect
-	golang.org/x/crypto v0.33.0 // indirect
+	golang.org/x/crypto v0.35.0 // indirect
 	golang.org/x/mod v0.23.0 // indirect
 	golang.org/x/net v0.35.0 // indirect
 	golang.org/x/term v0.29.0 // indirect
