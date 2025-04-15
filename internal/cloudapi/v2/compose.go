@@ -1141,6 +1141,15 @@ func (request *ComposeRequest) GetSubscription() (sub *subscription.ImageOptions
 		if request.Customizations.Subscription.InsightsClientProxy != nil {
 			insightsClientProxy = *request.Customizations.Subscription.InsightsClientProxy
 		}
+		var templateName string
+		if request.Customizations.Subscription.TemplateName != nil {
+			templateName = *request.Customizations.Subscription.TemplateName
+		}
+		var templateUUID string
+		if request.Customizations.Subscription.TemplateUuid != nil {
+			templateUUID = *request.Customizations.Subscription.TemplateUuid
+		}
+
 		sub = &subscription.ImageOptions{
 			Organization:  request.Customizations.Subscription.Organization,
 			ActivationKey: request.Customizations.Subscription.ActivationKey,
@@ -1149,6 +1158,8 @@ func (request *ComposeRequest) GetSubscription() (sub *subscription.ImageOptions
 			Insights:      request.Customizations.Subscription.Insights,
 			Rhc:           rhc,
 			Proxy:         insightsClientProxy,
+			TemplateName:  templateName,
+			TemplateUUID:  templateUUID,
 		}
 	}
 
