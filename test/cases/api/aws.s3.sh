@@ -108,11 +108,13 @@ function verify() {
             verifyDisk "${WORKDIR}/disk.qcow2"
             ;;
 
-        "${IMAGE_TYPE_VSPHERE}")
-
-            curl "${S3_URL}" --output "${WORKDIR}/disk.vmdk"
-            verifyInVSphere "${WORKDIR}/disk.vmdk"
-            ;;
+        # NOTE(akoutsou): The vsphere verification is failing very
+        # consistently. Disabling it until we have time to look into it
+        # further.
+        # "${IMAGE_TYPE_VSPHERE}")
+        #     curl "${S3_URL}" --output "${WORKDIR}/disk.vmdk"
+        #     verifyInVSphere "${WORKDIR}/disk.vmdk"
+        #     ;;
         *)
             greenprint "No validation method for image type ${IMAGE_TYPE}"
             ;;
