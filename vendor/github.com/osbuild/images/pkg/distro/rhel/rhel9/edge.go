@@ -33,7 +33,7 @@ func mkEdgeCommitImgType(d *rhel.Distribution) *rhel.ImageType {
 
 	it.DefaultImageConfig = &distro.ImageConfig{
 		EnabledServices: edgeServices,
-		SystemdUnit:     systemdUnits,
+		SystemdDropin:   systemdUnits,
 	}
 	if common.VersionGreaterThanOrEqual(d.OsVersion(), "9.2") || !d.IsRHEL() {
 		it.DefaultImageConfig.EnabledServices = append(
@@ -68,7 +68,7 @@ func mkEdgeOCIImgType(d *rhel.Distribution) *rhel.ImageType {
 
 	it.DefaultImageConfig = &distro.ImageConfig{
 		EnabledServices: edgeServices,
-		SystemdUnit:     systemdUnits,
+		SystemdDropin:   systemdUnits,
 	}
 	if common.VersionGreaterThanOrEqual(d.OsVersion(), "9.2") || !d.IsRHEL() {
 		it.DefaultImageConfig.EnabledServices = append(
@@ -312,7 +312,7 @@ func mkMinimalrawImgType() *rhel.ImageType {
 	it.Compression = "xz"
 	it.DefaultImageConfig = &distro.ImageConfig{
 		EnabledServices: minimalrawServices,
-		SystemdUnit:     systemdUnits,
+		SystemdDropin:   systemdUnits,
 		// NOTE: temporary workaround for a bug in initial-setup that
 		// requires a kickstart file in the root directory.
 		Files: []*fsnode.File{initialSetupKickstart()},
@@ -339,7 +339,7 @@ var (
 		{
 			Unit:     "grub-boot-success.timer",
 			Dropin:   "10-disable-if-greenboot.conf",
-			UnitType: osbuild.Global,
+			UnitType: osbuild.GlobalUnitType,
 			Config: osbuild.SystemdServiceUnitDropin{
 				Unit: &osbuild.SystemdUnitSection{
 					FileExists: "!/usr/libexec/greenboot/greenboot",

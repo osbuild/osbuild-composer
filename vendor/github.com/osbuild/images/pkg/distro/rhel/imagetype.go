@@ -134,6 +134,14 @@ func (t *ImageType) IsRHEL() bool {
 	return t.arch.distro.IsRHEL()
 }
 
+func (t *ImageType) IsAlmaLinux() bool {
+	return t.arch.distro.IsAlmaLinux()
+}
+
+func (t *ImageType) IsAlmaLinuxKitten() bool {
+	return t.arch.distro.IsAlmaLinuxKitten()
+}
+
 func (t *ImageType) ISOLabel() (string, error) {
 	if !t.BootISO {
 		return "", fmt.Errorf("image type %q is not an ISO", t.name)

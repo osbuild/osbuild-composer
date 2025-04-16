@@ -2,6 +2,12 @@
 // OSBuild (schema v2) types.
 package osbuild
 
+const (
+	// should be "^\\/(?!\\.\\.)((?!\\/\\.\\.\\/).)+$" but Go doesn't support lookaheads
+	// therefore we have to instead check for the invalid cases, which is much simpler
+	invalidPathRegex = `((^|\/)[.]{2}(\/|$))|^([^/].*)*$`
+)
+
 // A Manifest represents an OSBuild source and pipeline manifest
 type Manifest struct {
 	Version   string     `json:"version"`

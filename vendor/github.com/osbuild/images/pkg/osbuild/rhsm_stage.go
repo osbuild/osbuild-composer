@@ -1,6 +1,8 @@
 package osbuild
 
 import (
+	"slices"
+
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/customizations/subscription"
 )
@@ -50,6 +52,9 @@ type RHSMStageOptionsSubMan struct {
 type SubManConfigRHSMSection struct {
 	// Whether subscription-manager should manage DNF repos file
 	ManageRepos *bool `json:"manage_repos,omitempty"`
+	// Whether yum/dnf plugins subscription-manager and product-id should be enabled
+	// every-time subscription-manager or subscription-manager-gui is executed
+	AutoEnableYumPlugins *bool `json:"auto_enable_yum_plugins,omitempty"`
 }
 
 // RHSMCERTD configuration section of /etc/rhsm/rhsm.conf
@@ -98,14 +103,27 @@ func NewRHSMStageOptions(config *subscription.RHSMConfig) *RHSMStageOptions {
 	}
 
 	subManConfRhsmManageRepos := config.SubMan.Rhsm.ManageRepos
+	subManConfRhsmAutoEnableYumPlugins := config.SubMan.Rhsm.AutoEnableYumPlugins
 	subManConfRhsmcertdAutoReg := config.SubMan.Rhsmcertd.AutoRegistration
-	if subManConfRhsmcertdAutoReg != nil || subManConfRhsmManageRepos != nil {
+
+	subManConfValues := []*bool{
+		subManConfRhsmManageRepos,
+		subManConfRhsmAutoEnableYumPlugins,
+		subManConfRhsmcertdAutoReg,
+	}
+	if slices.ContainsFunc(subManConfValues, func(val *bool) bool { return val != nil }) {
 		options.SubMan = &RHSMStageOptionsSubMan{}
-		if subManConfRhsmManageRepos != nil {
-			options.SubMan.Rhsm = &SubManConfigRHSMSection{
-				ManageRepos: common.ToPtr(*subManConfRhsmManageRepos),
+
+		if subManConfRhsmManageRepos != nil || subManConfRhsmAutoEnableYumPlugins != nil {
+			options.SubMan.Rhsm = &SubManConfigRHSMSection{}
+			if subManConfRhsmManageRepos != nil {
+				options.SubMan.Rhsm.ManageRepos = common.ToPtr(*subManConfRhsmManageRepos)
+			}
+			if subManConfRhsmAutoEnableYumPlugins != nil {
+				options.SubMan.Rhsm.AutoEnableYumPlugins = common.ToPtr(*subManConfRhsmAutoEnableYumPlugins)
 			}
 		}
+
 		if subManConfRhsmcertdAutoReg != nil {
 			options.SubMan.Rhsmcertd = &SubManConfigRHSMCERTDSection{
 				AutoRegistration: common.ToPtr(*subManConfRhsmcertdAutoReg),

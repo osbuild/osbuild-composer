@@ -41,13 +41,11 @@ func GenFIPSFiles() (files []*fsnode.File) {
 }
 
 func GenFIPSStages() (stages []*Stage) {
-	stages = []*Stage{
+	return []*Stage{
 		NewUpdateCryptoPoliciesStage(
 			&UpdateCryptoPoliciesStageOptions{
 				Policy: "FIPS",
 			}),
 		NewDracutConfStage(FIPSDracutConfStageOptions),
 	}
-	stages = append(stages, GenFileNodesStages(GenFIPSFiles())...)
-	return
 }

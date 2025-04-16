@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path"
+	"strconv"
 	"strings"
 )
 
@@ -24,8 +25,41 @@ func GetHostDistroName() (string, error) {
 	if _, ok := osrelease["ID"]; !ok {
 		return "", errors.New("cannot get the host distro name: missing ID field in os-release")
 	}
+
 	if _, ok := osrelease["VERSION_ID"]; !ok {
 		return "", errors.New("cannot get the host distro name: missing VERSION_ID field in os-release")
+	}
+
+	// In some cases (Alma Linux Kitten) `ID + VERSION_ID` is not the correct
+	// approach to determine the distribution. For Kitten the `/etc/os-release`
+	// file contains a `VERSION_ID` without a minor. We need to special case this:
+	if osrelease["ID"] == "almalinux" {
+		versionParts := strings.Split(osrelease["VERSION_ID"], ".")
+
+		if len(versionParts) > 2 {
+			return "", errors.New("failed to parse version from os-release, too many dotted parts")
+		}
+
+		majorVersion, err := strconv.Atoi(versionParts[0])
+		if err != nil {
+			return "", errors.New("failed to parse major version from os-release")
+		}
+
+		minorVersion := -1
+		if len(versionParts) > 1 {
+			minorVersion, err = strconv.Atoi(versionParts[1])
+			if err != nil {
+				return "", errors.New("failed to parse minor version from os-release")
+			}
+		}
+
+		// If `/etc/os-release` is `almalinux-10` then we select
+		// `almalinux_kitten` as our host distro. Note that it might be possible to
+		// not verify the major version but it's not guaranteed that with an eventual
+		// version 11 we will need to do this swap as well.
+		if majorVersion == 10 && minorVersion == -1 {
+			osrelease["ID"] = "almalinux_kitten"
+		}
 	}
 
 	name := osrelease["ID"] + "-" + osrelease["VERSION_ID"]

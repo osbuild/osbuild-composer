@@ -1,7 +1,7 @@
 package fedora
 
-const VERSION_BRANCHED = "42"
-const VERSION_RAWHIDE = "42"
+const VERSION_BRANCHED = "43"
+const VERSION_RAWHIDE = "43"
 
 // Fedora version 41 and later use a plain squashfs rootfs on the iso instead of
 // compressing an ext4 filesystem.
