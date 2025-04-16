@@ -123,11 +123,15 @@ func osCustomizations(
 	}
 
 	if len(ntpServers) > 0 {
+		chronyServers := make([]osbuild.ChronyConfigServer, 0, len(ntpServers))
 		for _, server := range ntpServers {
-			osc.NTPServers = append(osc.NTPServers, osbuild.ChronyConfigServer{Hostname: server})
+			chronyServers = append(chronyServers, osbuild.ChronyConfigServer{Hostname: server})
+		}
+		osc.ChronyConfig = &osbuild.ChronyStageOptions{
+			Servers: chronyServers,
 		}
 	} else if imageConfig.TimeSynchronization != nil {
-		osc.NTPServers = imageConfig.TimeSynchronization.Servers
+		osc.ChronyConfig = imageConfig.TimeSynchronization
 	}
 
 	// Relabel the tree, unless the `NoSElinux` flag is explicitly set to `true`
@@ -215,6 +219,7 @@ func osCustomizations(
 	osc.CloudInit = imageConfig.CloudInit
 	osc.Modprobe = imageConfig.Modprobe
 	osc.DracutConf = imageConfig.DracutConf
+	osc.SystemdDropin = imageConfig.SystemdDropin
 	osc.SystemdUnit = imageConfig.SystemdUnit
 	osc.Authselect = imageConfig.Authselect
 	osc.SELinuxConfig = imageConfig.SELinuxConfig

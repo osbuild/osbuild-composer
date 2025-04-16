@@ -11,7 +11,17 @@ import (
 	"github.com/osbuild/images/pkg/disk"
 )
 
-const unitFilenameRegex = "^[\\w:.\\\\-]+[@]{0,1}[\\w:.\\\\-]*\\.(service|mount|socket|swap)$"
+const (
+	unitFilenameRegex = "^[\\w:.\\\\-]+[@]{0,1}[\\w:.\\\\-]*\\.(service|mount|socket|swap)$"
+
+	// This is less strict than the corresponding regex in osbuild. In osbuild,
+	// we use lookaheads to validate paths, whereas in images we use an invalid
+	// path regex and invert the check. Validating the paths for the three
+	// values that take a path parameter (file, append, and truncate), would
+	// make the regex too complicated, so we validate a bit less strictly and
+	// let osbuild handle the final validation.
+	systemdStandardOutputRegex = "^(inherit|null|tty|journal|kmsg|journal\\+console|kmsg\\+console|file:.+|append:.+|truncate:.+|socket|fd:.+)$"
+)
 
 type SystemdServiceType string
 type SystemdUnitPath string
@@ -49,6 +59,7 @@ type ServiceSection struct {
 	ExecStart       []string              `json:"ExecStart,omitempty"`
 	Environment     []EnvironmentVariable `json:"Environment,omitempty"`
 	EnvironmentFile []string              `json:"EnvironmentFile,omitempty"`
+	StandardOutput  string                `json:"StandardOutput,omitempty"`
 }
 
 type MountSection struct {
@@ -125,8 +136,12 @@ func (o *SystemdUnitCreateStageOptions) validateService() error {
 	if service := o.Config.Service; service != nil {
 		for _, envVar := range service.Environment {
 			if !vre.MatchString(envVar.Key) {
-				return fmt.Errorf("variable name %q doesn't conform to schema (%s)", envVar.Key, envVarRegex)
+				return fmt.Errorf("variable name %q does not conform to schema (%s)", envVar.Key, envVarRegex)
 			}
+		}
+
+		if stdout := service.StandardOutput; stdout != "" && !regexp.MustCompile(systemdStandardOutputRegex).MatchString(stdout) {
+			return fmt.Errorf("StandardOutput value %q does not conform to schema (%s)", service.StandardOutput, systemdStandardOutputRegex)
 		}
 	}
 

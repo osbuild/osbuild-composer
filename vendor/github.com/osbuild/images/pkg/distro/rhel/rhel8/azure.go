@@ -493,7 +493,7 @@ var defaultAzureImageConfig = &distro.ImageConfig{
 			),
 		},
 	},
-	SystemdUnit: []*osbuild.SystemdUnitStageOptions{
+	SystemdDropin: []*osbuild.SystemdUnitStageOptions{
 		{
 			Unit:   "nm-cloud-setup.service",
 			Dropin: "10-rh-enable-for-azure.conf",

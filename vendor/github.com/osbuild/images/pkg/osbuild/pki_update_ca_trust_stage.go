@@ -9,7 +9,7 @@ import (
 	"github.com/osbuild/images/pkg/customizations/fsnode"
 )
 
-func NewCAStageStage() *Stage {
+func NewUpdateCATrustStage() *Stage {
 	return &Stage{
 		Type: "org.osbuild.pki.update-ca-trust",
 	}

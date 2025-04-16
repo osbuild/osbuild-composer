@@ -577,6 +577,10 @@ image_types:
             rhel:
               include:
                 - "insights-client"
+          version_greater_or_equal:
+            "9.6":
+              exclude:
+                - "microcode_ctl"
 
   azure_rhui: *vhd
 
@@ -663,6 +667,7 @@ image_types:
           - "hostname"
           - "langpacks-en"
           - "libcurl-minimal"
+          - "openssh-server"
           - "openssl"
           - "pam"
           - "passwd"
@@ -676,6 +681,7 @@ image_types:
           - "setup"
           - "shadow-utils"
           - "subscription-manager"
+          - "sudo"
           - "systemd"
           - "tar"
           - "tpm2-tss"

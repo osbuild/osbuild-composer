@@ -1,8 +1,13 @@
 package rhel9
 
 import (
+	_ "embed"
+	"fmt"
+	"os"
+
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/arch"
+	"github.com/osbuild/images/pkg/customizations/fsnode"
 	"github.com/osbuild/images/pkg/datasizes"
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/distro"
@@ -25,7 +30,7 @@ func mkAzureImgType(rd *rhel.Distribution) *rhel.ImageType {
 		[]string{"vpc"},
 	)
 
-	it.KernelOptions = defaultAzureKernelOptions()
+	it.KernelOptions = defaultAzureKernelOptions(rd)
 	it.Bootable = true
 	it.DefaultSize = 4 * datasizes.GibiByte
 	it.DefaultImageConfig = defaultAzureImageConfig(rd)
@@ -50,7 +55,7 @@ func mkAzureInternalImgType(rd *rhel.Distribution) *rhel.ImageType {
 	)
 
 	it.Compression = "xz"
-	it.KernelOptions = defaultAzureKernelOptions()
+	it.KernelOptions = defaultAzureKernelOptions(rd)
 	it.Bootable = true
 	it.DefaultSize = 64 * datasizes.GibiByte
 	it.DefaultImageConfig = defaultAzureImageConfig(rd)
@@ -74,7 +79,7 @@ func mkAzureSapInternalImgType(rd *rhel.Distribution) *rhel.ImageType {
 	)
 
 	it.Compression = "xz"
-	it.KernelOptions = defaultAzureKernelOptions()
+	it.KernelOptions = defaultAzureKernelOptions(rd)
 	it.Bootable = true
 	it.DefaultSize = 64 * datasizes.GibiByte
 	it.DefaultImageConfig = sapAzureImageConfig(rd)
@@ -319,9 +324,16 @@ func azureInternalBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, b
 // IMAGE CONFIG
 
 // use loglevel=3 as described in the RHEL documentation and used in existing RHEL images built by MSFT
-func defaultAzureKernelOptions() []string {
-	return []string{"ro", "loglevel=3", "console=tty1", "console=ttyS0", "earlyprintk=ttyS0", "rootdelay=300"}
+func defaultAzureKernelOptions(rd *rhel.Distribution) []string {
+	kargs := []string{"ro", "loglevel=3", "console=tty1", "console=ttyS0", "earlyprintk=ttyS0", "rootdelay=300"}
+	if rd.IsRHEL() && common.VersionGreaterThanOrEqual(rd.OsVersion(), "9.6") {
+		kargs = append(kargs, "nvme_core.io_timeout=240")
+	}
+	return kargs
 }
+
+//go:embed temp-disk-dataloss-warning.sh
+var datalossWarningScriptContent string
 
 // based on https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/9/html/deploying_rhel_9_on_microsoft_azure/assembly_deploying-a-rhel-image-as-a-virtual-machine-on-microsoft-azure_cloud-content-azure#making-configuration-changes_configure-the-image-azure
 func defaultAzureImageConfig(rd *rhel.Distribution) *distro.ImageConfig {
@@ -458,7 +470,7 @@ func defaultAzureImageConfig(rd *rhel.Distribution) *distro.ImageConfig {
 				),
 			},
 		},
-		SystemdUnit: []*osbuild.SystemdUnitStageOptions{
+		SystemdDropin: []*osbuild.SystemdUnitStageOptions{
 			{
 				Unit:   "nm-cloud-setup.service",
 				Dropin: "10-rh-enable-for-azure.conf",
@@ -474,6 +486,44 @@ func defaultAzureImageConfig(rd *rhel.Distribution) *distro.ImageConfig {
 
 	if rd.IsRHEL() {
 		ic.GPGKeyFiles = append(ic.GPGKeyFiles, "/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release")
+		if common.VersionGreaterThanOrEqual(rd.OsVersion(), "9.6") {
+			ic.Modprobe = append(
+				ic.Modprobe,
+				&osbuild.ModprobeStageOptions{
+					Filename: "blacklist-intel_uncore.conf",
+					Commands: osbuild.ModprobeConfigCmdList{
+						osbuild.NewModprobeConfigCmdBlacklist("intel_uncore"),
+					},
+				},
+				&osbuild.ModprobeStageOptions{
+					Filename: "blacklist-acpi_cpufreq.conf",
+					Commands: osbuild.ModprobeConfigCmdList{
+						osbuild.NewModprobeConfigCmdBlacklist("acpi_cpufreq"),
+					},
+				},
+			)
+
+			ic.WAAgentConfig.Config.ProvisioningUseCloudInit = common.ToPtr(true)
+			ic.WAAgentConfig.Config.ProvisioningEnabled = common.ToPtr(false)
+
+			ic.TimeSynchronization = &osbuild.ChronyStageOptions{
+				Refclocks: []osbuild.ChronyConfigRefclock{
+					{
+						Driver: osbuild.NewChronyDriverPHC("/dev/ptp_hyperv"),
+						Poll:   common.ToPtr(3),
+						Dpoll:  common.ToPtr(-2),
+						Offset: common.ToPtr(0.0),
+					},
+				},
+			}
+
+			datalossWarningScript, datalossSystemdUnit, err := CreateAzureDatalossWarningScriptAndUnit()
+			if err != nil {
+				panic(err)
+			}
+			ic.Files = append(ic.Files, datalossWarningScript)
+			ic.SystemdUnit = append(ic.SystemdUnit, datalossSystemdUnit)
+		}
 	}
 
 	return ic
@@ -481,4 +531,40 @@ func defaultAzureImageConfig(rd *rhel.Distribution) *distro.ImageConfig {
 
 func sapAzureImageConfig(rd *rhel.Distribution) *distro.ImageConfig {
 	return sapImageConfig(rd.OsVersion()).InheritFrom(defaultAzureImageConfig(rd))
+}
+
+// Returns a filenode that embeds a script and a systemd unit to run it on
+// every boot.
+// The script writes a file named DATALOSS_WARNING_README.txt to the root of an
+// Azure ephemeral resource disk, if one is mounted, as a warning against using
+// the disk for data storage.
+// https://docs.microsoft.com/en-us/azure/virtual-machines/linux/managed-disks-overview#temporary-disk
+func CreateAzureDatalossWarningScriptAndUnit() (*fsnode.File, *osbuild.SystemdUnitCreateStageOptions, error) {
+	datalossWarningScriptPath := "/usr/local/sbin/temp-disk-dataloss-warning"
+	datalossWarningScript, err := fsnode.NewFile(datalossWarningScriptPath, common.ToPtr(os.FileMode(0755)), nil, nil, []byte(datalossWarningScriptContent))
+	if err != nil {
+		return nil, nil, fmt.Errorf("rhel9/azure: error creating file node for dataloss warning script: %w", err)
+	}
+
+	systemdUnit := &osbuild.SystemdUnitCreateStageOptions{
+		Filename: "temp-disk-dataloss-warning.service",
+		UnitType: osbuild.SystemUnitType,
+		UnitPath: osbuild.EtcUnitPath,
+		Config: osbuild.SystemdUnit{
+			Unit: &osbuild.UnitSection{
+				Description: "Azure temporary resource disk dataloss warning file creation",
+				After:       []string{"multi-user.target", "cloud-final.service"},
+			},
+			Service: &osbuild.ServiceSection{
+				Type:           osbuild.OneshotServiceType,
+				ExecStart:      []string{datalossWarningScriptPath},
+				StandardOutput: "journal+console",
+			},
+			Install: &osbuild.InstallSection{
+				WantedBy: []string{"default.target"},
+			},
+		},
+	}
+
+	return datalossWarningScript, systemdUnit, nil
 }

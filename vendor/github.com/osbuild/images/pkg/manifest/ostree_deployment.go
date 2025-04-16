@@ -87,6 +87,8 @@ type OSTreeDeployment struct {
 
 	// Use bootupd instead of grub2 as the bootloader
 	UseBootupd bool
+
+	inlineData []string
 }
 
 // NewOSTreeCommitDeployment creates a pipeline for an ostree deployment from a
@@ -440,7 +442,7 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 	}
 
 	if p.FIPS {
-		p.Files = append(p.Files, osbuild.GenFIPSFiles()...)
+		p.addInlineDataAndStages(&pipeline, osbuild.GenFIPSFiles(), ref)
 		for _, stage := range osbuild.GenFIPSStages() {
 			stage.MountOSTree(p.osName, ref, 0)
 			pipeline.AddStage(stage)
@@ -476,11 +478,7 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 	}
 
 	if len(p.Files) > 0 {
-		fileStages := osbuild.GenFileNodesStages(p.Files)
-		for _, stage := range fileStages {
-			stage.MountOSTree(p.osName, ref, 0)
-		}
-		pipeline.AddStages(fileStages...)
+		p.addInlineDataAndStages(&pipeline, p.Files, ref)
 	}
 
 	if len(p.EnabledServices) != 0 || len(p.DisabledServices) != 0 {
@@ -505,14 +503,21 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 }
 
 func (p *OSTreeDeployment) getInline() []string {
-	inlineData := []string{}
+	return p.inlineData
+}
 
-	// inline data for custom files
-	for _, file := range p.Files {
-		inlineData = append(inlineData, string(file.Data()))
+// addInlineDataAndStages generates stages for creating files and adds them to
+// the pipeline. It also adds their data to the inlineData for the pipeline so
+// that the appropriate sources are created.
+func (p *OSTreeDeployment) addInlineDataAndStages(pipeline *osbuild.Pipeline, files []*fsnode.File, ref string) {
+	for _, stage := range osbuild.GenFileNodesStages(files) {
+		stage.MountOSTree(p.osName, ref, 0)
+		pipeline.AddStage(stage)
 	}
 
-	return inlineData
+	for _, file := range files {
+		p.inlineData = append(p.inlineData, string(file.Data()))
+	}
 }
 
 // Creates systemd unit stage by ingesting the servicename and mount-points
@@ -555,7 +560,7 @@ func createMountpointService(serviceName string, mountpoints []string) *osbuild.
 	options := osbuild.SystemdUnitCreateStageOptions{
 		Filename: serviceName,
 		UnitPath: osbuild.EtcUnitPath,
-		UnitType: osbuild.System,
+		UnitType: osbuild.SystemUnitType,
 		Config: osbuild.SystemdUnit{
 			Unit:    &unit,
 			Service: &service,

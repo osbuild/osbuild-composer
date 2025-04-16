@@ -8,8 +8,8 @@ import (
 type unitType string
 
 const (
-	System unitType = "system"
-	Global unitType = "global"
+	SystemUnitType unitType = "system"
+	GlobalUnitType unitType = "global"
 )
 
 type SystemdUnitStageOptions struct {

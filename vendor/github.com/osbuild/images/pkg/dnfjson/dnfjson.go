@@ -102,8 +102,7 @@ func (bs *BaseSolver) NewWithConfig(modulePlatformID, releaseVer, arch, distro s
 	s.arch = arch
 	s.releaseVer = releaseVer
 	s.distro = distro
-	subs, _ := rhsm.LoadSystemSubscriptions()
-	s.subscriptions = subs
+	s.subscriptions, s.subscriptionsErr = rhsm.LoadSystemSubscriptions()
 	return s
 }
 
@@ -154,7 +153,8 @@ type Solver struct {
 	// Proxy to use while depsolving. This is used in DNF's base configuration.
 	proxy string
 
-	subscriptions *rhsm.Subscriptions
+	subscriptions    *rhsm.Subscriptions
+	subscriptionsErr error
 
 	// Stderr is the stderr output from dnfjson, if unset os.Stderr
 	// will be used.
@@ -388,7 +388,7 @@ func (s *Solver) reposFromRPMMD(rpmRepos []rpmmd.RepoConfig) ([]repoConfig, erro
 
 		if rr.RHSM {
 			if s.subscriptions == nil {
-				return nil, fmt.Errorf("This system does not have any valid subscriptions. Subscribe it before specifying rhsm: true in sources.")
+				return nil, fmt.Errorf("This system does not have any valid subscriptions. Subscribe it before specifying rhsm: true in sources (error details: %w)", s.subscriptionsErr)
 			}
 			secrets, err := s.subscriptions.GetSecretsForBaseurl(rr.BaseURLs, s.arch, s.releaseVer)
 			if err != nil {

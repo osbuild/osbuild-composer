@@ -279,6 +279,7 @@ func load(distroNameVer string) (*toplevelYAML, error) {
 	// XXX: we cannot use distroidparser here because of import cycles
 	distroName, distroVersion := splitDistroNameVer(distroNameVer)
 	distroNameMajorVer := strings.SplitN(distroNameVer, ".", 2)[0]
+	distroMajorVer := strings.SplitN(distroVersion, ".", 2)[0]
 
 	// XXX: this is a short term measure, pass a set of
 	// searchPaths down the stack instead
@@ -296,9 +297,12 @@ func load(distroNameVer string) (*toplevelYAML, error) {
 	case "rhel":
 		// rhel yaml files are under ./rhel-$majorVer
 		baseDir = distroNameMajorVer
-	case "centos":
-		// centos yaml is just rhel but we have (sadly) no symlinks
-		// in "go:embed" so we have to have this slightly ugly
+	case "almalinux":
+		// almalinux yaml is just rhel, we take only its major version
+		baseDir = fmt.Sprintf("rhel-%s", distroMajorVer)
+	case "centos", "almalinux_kitten":
+		// centos and kitten yaml is just rhel but we have (sadly) no
+		// symlinks in "go:embed" so we have to have this slightly ugly
 		// workaround
 		baseDir = fmt.Sprintf("rhel-%s", distroVersion)
 	case "fedora", "test-distro":
