@@ -27,7 +27,8 @@ const (
 
 // Subscription Manager [rhsm] configuration
 type SubManRHSMConfig struct {
-	ManageRepos *bool
+	ManageRepos          *bool
+	AutoEnableYumPlugins *bool
 }
 
 // Subscription Manager [rhsmcertd] configuration
@@ -82,6 +83,9 @@ func (c *RHSMConfig) Clone() *RHSMConfig {
 	if c.SubMan.Rhsm.ManageRepos != nil {
 		clone.SubMan.Rhsm.ManageRepos = common.ToPtr(*c.SubMan.Rhsm.ManageRepos)
 	}
+	if c.SubMan.Rhsm.AutoEnableYumPlugins != nil {
+		clone.SubMan.Rhsm.AutoEnableYumPlugins = common.ToPtr(*c.SubMan.Rhsm.AutoEnableYumPlugins)
+	}
 	if c.SubMan.Rhsmcertd.AutoRegistration != nil {
 		clone.SubMan.Rhsmcertd.AutoRegistration = common.ToPtr(*c.SubMan.Rhsmcertd.AutoRegistration)
 	}
@@ -120,6 +124,9 @@ func (c *RHSMConfig) Update(new *RHSMConfig) *RHSMConfig {
 	if new.SubMan.Rhsm.ManageRepos != nil {
 		c.SubMan.Rhsm.ManageRepos = common.ToPtr(*new.SubMan.Rhsm.ManageRepos)
 	}
+	if new.SubMan.Rhsm.AutoEnableYumPlugins != nil {
+		c.SubMan.Rhsm.AutoEnableYumPlugins = common.ToPtr(*new.SubMan.Rhsm.AutoEnableYumPlugins)
+	}
 	if new.SubMan.Rhsmcertd.AutoRegistration != nil {
 		c.SubMan.Rhsmcertd.AutoRegistration = common.ToPtr(*new.SubMan.Rhsmcertd.AutoRegistration)
 	}
@@ -147,8 +154,13 @@ func RHSMConfigFromBP(bpRHSM *blueprint.RHSMCustomization) *RHSMConfig {
 	// NB: YUMPlugins are not exposed to end users as a customization
 
 	if subMan := bpRHSM.Config.SubscriptionManager; subMan != nil {
-		if subMan.RHSMConfig != nil && subMan.RHSMConfig.ManageRepos != nil {
-			c.SubMan.Rhsm.ManageRepos = common.ToPtr(*subMan.RHSMConfig.ManageRepos)
+		if subMan.RHSMConfig != nil {
+			if subMan.RHSMConfig.ManageRepos != nil {
+				c.SubMan.Rhsm.ManageRepos = common.ToPtr(*subMan.RHSMConfig.ManageRepos)
+			}
+			if subMan.RHSMConfig.AutoEnableYumPlugins != nil {
+				c.SubMan.Rhsm.AutoEnableYumPlugins = common.ToPtr(*subMan.RHSMConfig.AutoEnableYumPlugins)
+			}
 		}
 		if subMan.RHSMCertdConfig != nil && subMan.RHSMCertdConfig.AutoRegistration != nil {
 			c.SubMan.Rhsmcertd.AutoRegistration = common.ToPtr(*subMan.RHSMCertdConfig.AutoRegistration)

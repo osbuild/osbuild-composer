@@ -106,7 +106,8 @@ type OSCustomizations struct {
 	CloudInit            []*osbuild.CloudInitStageOptions
 	Modprobe             []*osbuild.ModprobeStageOptions
 	DracutConf           []*osbuild.DracutConfStageOptions
-	SystemdUnit          []*osbuild.SystemdUnitStageOptions
+	SystemdDropin        []*osbuild.SystemdUnitStageOptions
+	SystemdUnit          []*osbuild.SystemdUnitCreateStageOptions
 	Authselect           *osbuild.AuthselectStageOptions
 	SELinuxConfig        *osbuild.SELinuxConfigStageOptions
 	Tuned                *osbuild.TunedStageOptions
@@ -121,12 +122,11 @@ type OSCustomizations struct {
 	GCPGuestAgentConfig  *osbuild.GcpGuestAgentConfigOptions
 	AuthConfig           *osbuild.AuthconfigStageOptions
 	PwQuality            *osbuild.PwqualityConfStageOptions
-	NTPServers           []osbuild.ChronyConfigServer
+	ChronyConfig         *osbuild.ChronyStageOptions
 	WAAgentConfig        *osbuild.WAAgentConfStageOptions
 	UdevRules            *osbuild.UdevRulesStageOptions
 	WSLConfig            *osbuild.WSLConfStageOptions
 	InsightsClientConfig *osbuild.InsightsClientConfigStageOptions
-	LeapSecTZ            *string
 	Presets              []osbuild.Preset
 	ContainersStorage    *string
 
@@ -138,9 +138,13 @@ type OSCustomizations struct {
 	RHSMConfig *subscription.RHSMConfig
 	RHSMFacts  *facts.ImageOptions
 
-	// Custom directories and files to create in the image
+	// Custom directories to create in the image. The stages for the
+	// directories defined here are always added at the end of the pipeline.
 	Directories []*fsnode.Directory
-	Files       []*fsnode.File
+
+	// Custom files to create in the image. The stages for the files defined
+	// here are always added at the end of the pipeline.
+	Files []*fsnode.File
 
 	CACerts []string
 
@@ -168,8 +172,10 @@ type OSCustomizations struct {
 // corresponds to the root filesystem once an instance of the image is running.
 type OS struct {
 	Base
-	// Customizations to apply to the base OS
-	OSCustomizations
+
+	// OSCustomizations to apply to the base OS
+	OSCustomizations OSCustomizations
+
 	// Environment the system will run in
 	Environment environment.Environment
 	// Workload to install on top of the base system
@@ -203,6 +209,8 @@ type OS struct {
 	OSProduct string
 	OSVersion string
 	OSNick    string
+
+	inlineData []string
 }
 
 // NewOS creates a new OS pipeline. build is the build pipeline to use for
@@ -232,37 +240,37 @@ func (p *OS) getPackageSetChain(Distro) []rpmmd.PackageSet {
 		partitionTablePackages = p.PartitionTable.GetBuildPackages()
 	}
 
-	if p.KernelName != "" {
+	if p.OSCustomizations.KernelName != "" {
 		// kernel is considered part of the platform package set
-		platformPackages = append(platformPackages, p.KernelName)
+		platformPackages = append(platformPackages, p.OSCustomizations.KernelName)
 	}
 
 	customizationPackages := make([]string, 0)
-	if len(p.NTPServers) > 0 {
+	if p.OSCustomizations.ChronyConfig != nil {
 		customizationPackages = append(customizationPackages, "chrony")
 	}
 
-	if p.SElinux != "" {
-		customizationPackages = append(customizationPackages, fmt.Sprintf("selinux-policy-%s", p.SElinux))
+	if p.OSCustomizations.SElinux != "" {
+		customizationPackages = append(customizationPackages, fmt.Sprintf("selinux-policy-%s", p.OSCustomizations.SElinux))
 	}
 
-	if p.OpenSCAPRemediationConfig != nil {
+	if p.OSCustomizations.OpenSCAPRemediationConfig != nil {
 		customizationPackages = append(customizationPackages, "openscap-scanner", "scap-security-guide", "xz")
 	}
 
 	// Make sure the right packages are included for subscriptions
 	// rhc always uses insights, and depends on subscription-manager
 	// non-rhc uses subscription-manager and optionally includes Insights
-	if p.Subscription != nil {
+	if p.OSCustomizations.Subscription != nil {
 		customizationPackages = append(customizationPackages, "subscription-manager")
-		if p.Subscription.Rhc {
+		if p.OSCustomizations.Subscription.Rhc {
 			customizationPackages = append(customizationPackages, "rhc", "insights-client", "rhc-worker-playbook")
-		} else if p.Subscription.Insights {
+		} else if p.OSCustomizations.Subscription.Insights {
 			customizationPackages = append(customizationPackages, "insights-client")
 		}
 	}
 
-	if len(p.Users) > 0 {
+	if len(p.OSCustomizations.Users) > 0 {
 		// org.osbuild.users runs useradd, usermod, passwd, and
 		// mkhomedir_helper in the os tree using chroot. Most image types
 		// should already have the required packages, but some minimal image
@@ -272,28 +280,28 @@ func (p *OS) getPackageSetChain(Distro) []rpmmd.PackageSet {
 
 	}
 
-	if p.Firewall != nil {
+	if p.OSCustomizations.Firewall != nil {
 		// Make sure firewalld is available in the image.
 		// org.osbuild.firewall runs 'firewall-offline-cmd' in the os tree
 		// using chroot, so we don't need a build package for this.
 		customizationPackages = append(customizationPackages, "firewalld")
 	}
 
-	osRepos := append(p.repos, p.ExtraBaseRepos...)
+	osRepos := append(p.repos, p.OSCustomizations.ExtraBaseRepos...)
 
 	// merge all package lists for the pipeline
 	baseOSPackages := make([]string, 0)
 	baseOSPackages = append(baseOSPackages, platformPackages...)
 	baseOSPackages = append(baseOSPackages, environmentPackages...)
 	baseOSPackages = append(baseOSPackages, partitionTablePackages...)
-	baseOSPackages = append(baseOSPackages, p.BasePackages...)
+	baseOSPackages = append(baseOSPackages, p.OSCustomizations.BasePackages...)
 
 	chain := []rpmmd.PackageSet{
 		{
 			Include:         baseOSPackages,
-			Exclude:         p.ExcludeBasePackages,
+			Exclude:         p.OSCustomizations.ExcludeBasePackages,
 			Repositories:    osRepos,
-			InstallWeakDeps: p.InstallWeakDeps,
+			InstallWeakDeps: p.OSCustomizations.InstallWeakDeps,
 		},
 		{
 			// Depsolve customization packages separately to avoid conflicts with base
@@ -361,10 +369,10 @@ func (p *OS) getBuildPackages(distro Distro) []string {
 	if p.OSTreeRef != "" {
 		packages = append(packages, "rpm-ostree")
 	}
-	if p.SElinux != "" {
-		packages = append(packages, "policycoreutils", fmt.Sprintf("selinux-policy-%s", p.SElinux))
+	if p.OSCustomizations.SElinux != "" {
+		packages = append(packages, "policycoreutils", fmt.Sprintf("selinux-policy-%s", p.OSCustomizations.SElinux))
 	}
-	if len(p.CloudInit) > 0 {
+	if len(p.OSCustomizations.CloudInit) > 0 {
 		switch distro {
 		case DISTRO_EL7:
 			packages = append(packages, "python3-PyYAML")
@@ -372,7 +380,7 @@ func (p *OS) getBuildPackages(distro Distro) []string {
 			packages = append(packages, "python3-pyyaml")
 		}
 	}
-	if len(p.DNFConfig) > 0 || p.RHSMConfig != nil || p.WSLConfig != nil {
+	if len(p.OSCustomizations.DNFConfig) > 0 || p.OSCustomizations.RHSMConfig != nil || p.OSCustomizations.WSLConfig != nil {
 		packages = append(packages, "python3-iniparse")
 	}
 
@@ -383,7 +391,7 @@ func (p *OS) getBuildPackages(distro Distro) []string {
 		packages = append(packages, "skopeo")
 	}
 
-	if p.OpenSCAPRemediationConfig != nil && p.OpenSCAPRemediationConfig.TailoringConfig != nil {
+	if p.OSCustomizations.OpenSCAPRemediationConfig != nil && p.OSCustomizations.OpenSCAPRemediationConfig.TailoringConfig != nil {
 		packages = append(packages, "openscap-utils")
 	}
 
@@ -434,8 +442,8 @@ func (p *OS) serializeStart(inputs Inputs) {
 		p.ostreeParentSpec = &inputs.Commits[0]
 	}
 
-	if p.KernelName != "" {
-		p.kernelVer = rpmmd.GetVerStrFromPackageSpecListPanic(p.packageSpecs, p.KernelName)
+	if p.OSCustomizations.KernelName != "" {
+		p.kernelVer = rpmmd.GetVerStrFromPackageSpecListPanic(p.packageSpecs, p.OSCustomizations.KernelName)
 	}
 
 	p.repos = append(p.repos, inputs.Depsolved.Repos...)
@@ -463,18 +471,18 @@ func (p *OS) serialize() osbuild.Pipeline {
 	}
 
 	// collect all repos for this pipeline to create the repository options
-	allRepos := append(p.repos, p.ExtraBaseRepos...)
+	allRepos := append(p.repos, p.OSCustomizations.ExtraBaseRepos...)
 	if p.Workload != nil {
 		allRepos = append(allRepos, p.Workload.GetRepos()...)
 	}
 	rpmOptions := osbuild.NewRPMStageOptions(allRepos)
-	if p.ExcludeDocs {
+	if p.OSCustomizations.ExcludeDocs {
 		if rpmOptions.Exclude == nil {
 			rpmOptions.Exclude = &osbuild.Exclude{}
 		}
 		rpmOptions.Exclude.Docs = true
 	}
-	rpmOptions.GPGKeysFromTree = p.GPGKeyFiles
+	rpmOptions.GPGKeysFromTree = p.OSCustomizations.GPGKeyFiles
 	if p.OSTreeRef != "" {
 		rpmOptions.OSTreeBooted = common.ToPtr(true)
 		rpmOptions.DBPath = "/usr/share/rpm"
@@ -488,7 +496,7 @@ func (p *OS) serialize() osbuild.Pipeline {
 	}
 	pipeline.AddStage(osbuild.NewRPMStage(rpmOptions, osbuild.NewRpmStageSourceFilesInputs(p.packageSpecs)))
 
-	if !p.NoBLS {
+	if !p.OSCustomizations.NoBLS {
 		// If the /boot is on a separate partition, the prefix for the BLS stage must be ""
 		if p.PartitionTable == nil || p.PartitionTable.FindMountable("/boot") == nil {
 			pipeline.AddStage(osbuild.NewFixBLSStage(&osbuild.FixBLSStageOptions{}))
@@ -508,52 +516,48 @@ func (p *OS) serialize() osbuild.Pipeline {
 		}
 	}
 
-	if p.Language != "" {
-		pipeline.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: p.Language}))
+	if p.OSCustomizations.Language != "" {
+		pipeline.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: p.OSCustomizations.Language}))
 	}
 
-	if p.Keyboard != nil {
-		keymapOptions := &osbuild.KeymapStageOptions{Keymap: *p.Keyboard}
-		if len(p.X11KeymapLayouts) > 0 {
-			keymapOptions.X11Keymap = &osbuild.X11KeymapOptions{Layouts: p.X11KeymapLayouts}
+	if p.OSCustomizations.Keyboard != nil {
+		keymapOptions := &osbuild.KeymapStageOptions{Keymap: *p.OSCustomizations.Keyboard}
+		if len(p.OSCustomizations.X11KeymapLayouts) > 0 {
+			keymapOptions.X11Keymap = &osbuild.X11KeymapOptions{Layouts: p.OSCustomizations.X11KeymapLayouts}
 		}
 		pipeline.AddStage(osbuild.NewKeymapStage(keymapOptions))
 	}
 
-	if p.Hostname != "" {
-		pipeline.AddStage(osbuild.NewHostnameStage(&osbuild.HostnameStageOptions{Hostname: p.Hostname}))
+	if p.OSCustomizations.Hostname != "" {
+		pipeline.AddStage(osbuild.NewHostnameStage(&osbuild.HostnameStageOptions{Hostname: p.OSCustomizations.Hostname}))
 	}
 
-	if p.Timezone != "" {
-		pipeline.AddStage(osbuild.NewTimezoneStage(&osbuild.TimezoneStageOptions{Zone: p.Timezone}))
+	if p.OSCustomizations.Timezone != "" {
+		pipeline.AddStage(osbuild.NewTimezoneStage(&osbuild.TimezoneStageOptions{Zone: p.OSCustomizations.Timezone}))
 	}
 
-	if len(p.NTPServers) > 0 {
-		chronyOptions := &osbuild.ChronyStageOptions{Servers: p.NTPServers}
-		if p.LeapSecTZ != nil {
-			chronyOptions.LeapsecTz = p.LeapSecTZ
-		}
-		pipeline.AddStage(osbuild.NewChronyStage(chronyOptions))
+	if p.OSCustomizations.ChronyConfig != nil {
+		pipeline.AddStage(osbuild.NewChronyStage(p.OSCustomizations.ChronyConfig))
 	}
 
-	if len(p.Groups) > 0 {
-		pipeline.AddStage(osbuild.GenGroupsStage(p.Groups))
+	if len(p.OSCustomizations.Groups) > 0 {
+		pipeline.AddStage(osbuild.GenGroupsStage(p.OSCustomizations.Groups))
 	}
 
-	if len(p.Users) > 0 {
+	if len(p.OSCustomizations.Users) > 0 {
 		if p.OSTreeRef != "" {
 			// for ostree, writing the key during user creation is
 			// redundant and can cause issues so create users without keys
 			// and write them on first boot
-			usersStageSansKeys, err := osbuild.GenUsersStage(p.Users, true)
+			usersStageSansKeys, err := osbuild.GenUsersStage(p.OSCustomizations.Users, true)
 			if err != nil {
 				// TODO: move encryption into weldr
 				panic("password encryption failed")
 			}
 			pipeline.AddStage(usersStageSansKeys)
-			pipeline.AddStage(osbuild.NewFirstBootStage(usersFirstBootOptions(p.Users)))
+			pipeline.AddStage(osbuild.NewFirstBootStage(usersFirstBootOptions(p.OSCustomizations.Users)))
 		} else {
-			usersStage, err := osbuild.GenUsersStage(p.Users, false)
+			usersStage, err := osbuild.GenUsersStage(p.OSCustomizations.Users, false)
 			if err != nil {
 				// TODO: move encryption into weldr
 				panic("password encryption failed")
@@ -562,125 +566,129 @@ func (p *OS) serialize() osbuild.Pipeline {
 		}
 	}
 
-	if p.Firewall != nil {
-		pipeline.AddStage(osbuild.NewFirewallStage(p.Firewall))
+	if p.OSCustomizations.Firewall != nil {
+		pipeline.AddStage(osbuild.NewFirewallStage(p.OSCustomizations.Firewall))
 	}
 
-	for _, sysconfigConfig := range p.Sysconfig {
+	for _, sysconfigConfig := range p.OSCustomizations.Sysconfig {
 		pipeline.AddStage(osbuild.NewSysconfigStage(sysconfigConfig))
 	}
 
-	for _, systemdLogindConfig := range p.SystemdLogind {
+	for _, systemdLogindConfig := range p.OSCustomizations.SystemdLogind {
 		pipeline.AddStage(osbuild.NewSystemdLogindStage(systemdLogindConfig))
 	}
 
-	for _, cloudInitConfig := range p.CloudInit {
+	for _, cloudInitConfig := range p.OSCustomizations.CloudInit {
 		pipeline.AddStage(osbuild.NewCloudInitStage(cloudInitConfig))
 	}
 
-	for _, modprobeConfig := range p.Modprobe {
+	for _, modprobeConfig := range p.OSCustomizations.Modprobe {
 		pipeline.AddStage(osbuild.NewModprobeStage(modprobeConfig))
 	}
 
-	for _, dracutConfConfig := range p.DracutConf {
+	for _, dracutConfConfig := range p.OSCustomizations.DracutConf {
 		pipeline.AddStage(osbuild.NewDracutConfStage(dracutConfConfig))
 	}
 
-	for _, systemdUnitConfig := range p.SystemdUnit {
+	for _, systemdUnitConfig := range p.OSCustomizations.SystemdDropin {
 		pipeline.AddStage(osbuild.NewSystemdUnitStage(systemdUnitConfig))
 	}
 
-	if p.Authselect != nil {
-		pipeline.AddStage(osbuild.NewAuthselectStage(p.Authselect))
+	for _, systemdUnitCreateConfig := range p.OSCustomizations.SystemdUnit {
+		pipeline.AddStage(osbuild.NewSystemdUnitCreateStage(systemdUnitCreateConfig))
 	}
 
-	if p.SELinuxConfig != nil {
-		pipeline.AddStage(osbuild.NewSELinuxConfigStage(p.SELinuxConfig))
+	if p.OSCustomizations.Authselect != nil {
+		pipeline.AddStage(osbuild.NewAuthselectStage(p.OSCustomizations.Authselect))
 	}
 
-	if p.Tuned != nil {
-		pipeline.AddStage(osbuild.NewTunedStage(p.Tuned))
+	if p.OSCustomizations.SELinuxConfig != nil {
+		pipeline.AddStage(osbuild.NewSELinuxConfigStage(p.OSCustomizations.SELinuxConfig))
 	}
 
-	for _, tmpfilesdConfig := range p.Tmpfilesd {
+	if p.OSCustomizations.Tuned != nil {
+		pipeline.AddStage(osbuild.NewTunedStage(p.OSCustomizations.Tuned))
+	}
+
+	for _, tmpfilesdConfig := range p.OSCustomizations.Tmpfilesd {
 		pipeline.AddStage(osbuild.NewTmpfilesdStage(tmpfilesdConfig))
 	}
 
-	for _, pamLimitsConfConfig := range p.PamLimitsConf {
+	for _, pamLimitsConfConfig := range p.OSCustomizations.PamLimitsConf {
 		pipeline.AddStage(osbuild.NewPamLimitsConfStage(pamLimitsConfConfig))
 	}
 
-	for _, sysctldConfig := range p.Sysctld {
+	for _, sysctldConfig := range p.OSCustomizations.Sysctld {
 		pipeline.AddStage(osbuild.NewSysctldStage(sysctldConfig))
 	}
 
-	for _, dnfConfig := range p.DNFConfig {
+	for _, dnfConfig := range p.OSCustomizations.DNFConfig {
 		pipeline.AddStage(osbuild.NewDNFConfigStage(dnfConfig))
 	}
 
-	if p.DNFAutomaticConfig != nil {
-		pipeline.AddStage(osbuild.NewDNFAutomaticConfigStage(p.DNFAutomaticConfig))
+	if p.OSCustomizations.DNFAutomaticConfig != nil {
+		pipeline.AddStage(osbuild.NewDNFAutomaticConfigStage(p.OSCustomizations.DNFAutomaticConfig))
 	}
 
-	for _, yumRepo := range p.YUMRepos {
+	for _, yumRepo := range p.OSCustomizations.YUMRepos {
 		pipeline.AddStage(osbuild.NewYumReposStage(yumRepo))
 	}
 
-	if p.YUMConfig != nil {
-		pipeline.AddStage(osbuild.NewYumConfigStage(p.YUMConfig))
+	if p.OSCustomizations.YUMConfig != nil {
+		pipeline.AddStage(osbuild.NewYumConfigStage(p.OSCustomizations.YUMConfig))
 	}
 
-	if p.GCPGuestAgentConfig != nil {
-		pipeline.AddStage(osbuild.NewGcpGuestAgentConfigStage(p.GCPGuestAgentConfig))
+	if p.OSCustomizations.GCPGuestAgentConfig != nil {
+		pipeline.AddStage(osbuild.NewGcpGuestAgentConfigStage(p.OSCustomizations.GCPGuestAgentConfig))
 	}
 
-	if p.SshdConfig != nil {
-		pipeline.AddStage(osbuild.NewSshdConfigStage(p.SshdConfig))
+	if p.OSCustomizations.SshdConfig != nil {
+		pipeline.AddStage(osbuild.NewSshdConfigStage(p.OSCustomizations.SshdConfig))
 	}
 
-	if p.InsightsClientConfig != nil {
-		pipeline.AddStage(osbuild.NewInsightsClientConfigStage(p.InsightsClientConfig))
+	if p.OSCustomizations.InsightsClientConfig != nil {
+		pipeline.AddStage(osbuild.NewInsightsClientConfigStage(p.OSCustomizations.InsightsClientConfig))
 	}
 
-	if p.AuthConfig != nil {
-		pipeline.AddStage(osbuild.NewAuthconfigStage(p.AuthConfig))
+	if p.OSCustomizations.AuthConfig != nil {
+		pipeline.AddStage(osbuild.NewAuthconfigStage(p.OSCustomizations.AuthConfig))
 	}
 
-	if p.PwQuality != nil {
-		pipeline.AddStage(osbuild.NewPwqualityConfStage(p.PwQuality))
+	if p.OSCustomizations.PwQuality != nil {
+		pipeline.AddStage(osbuild.NewPwqualityConfStage(p.OSCustomizations.PwQuality))
 	}
 
-	if p.Subscription != nil {
-		subStage, subDirs, subFiles, subServices, err := subscriptionService(*p.Subscription, &subscriptionServiceOptions{InsightsOnBoot: p.OSTreeRef != ""})
+	if p.OSCustomizations.Subscription != nil {
+		subStage, subDirs, subFiles, subServices, err := subscriptionService(*p.OSCustomizations.Subscription, &subscriptionServiceOptions{InsightsOnBoot: p.OSTreeRef != ""})
 		if err != nil {
 			panic(err)
 		}
 		pipeline.AddStage(subStage)
-		p.Directories = append(p.Directories, subDirs...)
-		p.Files = append(p.Files, subFiles...)
-		p.EnabledServices = append(p.EnabledServices, subServices...)
+		p.OSCustomizations.Directories = append(p.OSCustomizations.Directories, subDirs...)
+		p.addInlineDataAndStages(&pipeline, subFiles)
+		p.OSCustomizations.EnabledServices = append(p.OSCustomizations.EnabledServices, subServices...)
 	}
 
-	if p.RHSMConfig != nil {
-		pipeline.AddStage(osbuild.NewRHSMStage(osbuild.NewRHSMStageOptions(p.RHSMConfig)))
+	if p.OSCustomizations.RHSMConfig != nil {
+		pipeline.AddStage(osbuild.NewRHSMStage(osbuild.NewRHSMStageOptions(p.OSCustomizations.RHSMConfig)))
 	}
 
-	if p.WAAgentConfig != nil {
-		pipeline.AddStage(osbuild.NewWAAgentConfStage(p.WAAgentConfig))
+	if p.OSCustomizations.WAAgentConfig != nil {
+		pipeline.AddStage(osbuild.NewWAAgentConfStage(p.OSCustomizations.WAAgentConfig))
 	}
 
-	if p.UdevRules != nil {
-		pipeline.AddStage(osbuild.NewUdevRulesStage(p.UdevRules))
+	if p.OSCustomizations.UdevRules != nil {
+		pipeline.AddStage(osbuild.NewUdevRulesStage(p.OSCustomizations.UdevRules))
 	}
 
 	if pt := p.PartitionTable; pt != nil {
-		rootUUID, kernelOptions, err := osbuild.GenImageKernelOptions(p.PartitionTable, p.MountUnits)
+		rootUUID, kernelOptions, err := osbuild.GenImageKernelOptions(p.PartitionTable, p.OSCustomizations.MountUnits)
 		if err != nil {
 			panic(err)
 		}
-		kernelOptions = append(kernelOptions, p.KernelOptionsAppend...)
+		kernelOptions = append(kernelOptions, p.OSCustomizations.KernelOptionsAppend...)
 
-		if p.FIPS {
+		if p.OSCustomizations.FIPS {
 			kernelOptions = append(kernelOptions, osbuild.GenFIPSKernelOptions(p.PartitionTable)...)
 			pipeline.AddStage(osbuild.NewDracutStage(&osbuild.DracutStageOptions{
 				Kernel:     []string{p.kernelVer},
@@ -688,7 +696,7 @@ func (p *OS) serialize() osbuild.Pipeline {
 			}))
 		}
 
-		fsCfgStages, err := filesystemConfigStages(pt, p.MountUnits)
+		fsCfgStages, err := filesystemConfigStages(pt, p.OSCustomizations.MountUnits)
 		if err != nil {
 			panic(err)
 		}
@@ -699,7 +707,7 @@ func (p *OS) serialize() osbuild.Pipeline {
 		case arch.ARCH_S390X:
 			bootloader = osbuild.NewZiplStage(new(osbuild.ZiplStageOptions))
 		default:
-			if p.NoBLS {
+			if p.OSCustomizations.NoBLS {
 				// BLS entries not supported: use grub2.legacy
 				id := "76a22bf4-f153-4541-b6c7-0332c0dfaeac"
 				product := osbuild.GRUB2Product{
@@ -712,7 +720,7 @@ func (p *OS) serialize() osbuild.Pipeline {
 				hasRescue := err == nil
 				bootloader = osbuild.NewGrub2LegacyStage(
 					osbuild.NewGrub2LegacyStageOptions(
-						p.Grub2Config,
+						p.OSCustomizations.Grub2Config,
 						p.PartitionTable,
 						kernelOptions,
 						p.platform.GetBIOSPlatform(),
@@ -727,7 +735,7 @@ func (p *OS) serialize() osbuild.Pipeline {
 					p.platform.GetUEFIVendor() != "",
 					p.platform.GetBIOSPlatform(),
 					p.platform.GetUEFIVendor(), false)
-				if cfg := p.Grub2Config; cfg != nil {
+				if cfg := p.OSCustomizations.Grub2Config; cfg != nil {
 					// TODO: don't store Grub2Config in OSPipeline, making the overrides unnecessary
 					// grub2.Config.Default is owned and set by `NewGrub2StageOptionsUnified`
 					// and thus we need to preserve it
@@ -737,7 +745,7 @@ func (p *OS) serialize() osbuild.Pipeline {
 
 					options.Config = cfg
 				}
-				if p.KernelOptionsBootloader {
+				if p.OSCustomizations.KernelOptionsBootloader {
 					options.WriteCmdLine = nil
 					if options.UEFI != nil {
 						options.UEFI.Unified = false
@@ -749,22 +757,22 @@ func (p *OS) serialize() osbuild.Pipeline {
 
 		pipeline.AddStage(bootloader)
 
-		if !p.KernelOptionsBootloader || p.platform.GetArch() == arch.ARCH_S390X {
+		if !p.OSCustomizations.KernelOptionsBootloader || p.platform.GetArch() == arch.ARCH_S390X {
 			pipeline = prependKernelCmdlineStage(pipeline, rootUUID, kernelOptions)
 		}
 	}
 
-	if p.RHSMFacts != nil {
+	if p.OSCustomizations.RHSMFacts != nil {
 		rhsmFacts := osbuild.RHSMFacts{
-			ApiType: p.RHSMFacts.APIType.String(),
+			ApiType: p.OSCustomizations.RHSMFacts.APIType.String(),
 		}
 
-		if p.RHSMFacts.OpenSCAPProfileID != "" {
-			rhsmFacts.OpenSCAPProfileID = p.RHSMFacts.OpenSCAPProfileID
+		if p.OSCustomizations.RHSMFacts.OpenSCAPProfileID != "" {
+			rhsmFacts.OpenSCAPProfileID = p.OSCustomizations.RHSMFacts.OpenSCAPProfileID
 		}
 
-		if p.RHSMFacts.CompliancePolicyID != uuid.Nil {
-			rhsmFacts.CompliancePolicyID = p.RHSMFacts.CompliancePolicyID.String()
+		if p.OSCustomizations.RHSMFacts.CompliancePolicyID != uuid.Nil {
+			rhsmFacts.CompliancePolicyID = p.OSCustomizations.RHSMFacts.CompliancePolicyID.String()
 		}
 
 		pipeline.AddStage(osbuild.NewRHSMFactsStage(&osbuild.RHSMFactsStageOptions{
@@ -782,15 +790,6 @@ func (p *OS) serialize() osbuild.Pipeline {
 					},
 				},
 			}))
-	}
-
-	// First create custom directories, because some of the custom files may depend on them
-	if len(p.Directories) > 0 {
-		pipeline.AddStages(osbuild.GenDirectoryNodesStages(p.Directories)...)
-	}
-
-	if len(p.Files) > 0 {
-		pipeline.AddStages(osbuild.GenFileNodesStages(p.Files)...)
 	}
 
 	// write modularity related configuration files
@@ -812,23 +811,32 @@ func (p *OS) serialize() osbuild.Pipeline {
 		}
 
 		failsafeDir, err := fsnode.NewDirectory("/var/lib/dnf/modulefailsafe", nil, nil, nil, true)
-
 		if err != nil {
 			panic("failed to create module failsafe directory")
 		}
 
 		pipeline.AddStages(osbuild.GenDirectoryNodesStages([]*fsnode.Directory{failsafeDir})...)
-		pipeline.AddStages(osbuild.GenFileNodesStages(failsafeFiles)...)
+		p.addInlineDataAndStages(&pipeline, failsafeFiles)
+	}
 
-		p.Files = append(p.Files, failsafeFiles...)
+	// First create custom directories, because some of the custom files may depend on them
+	if len(p.OSCustomizations.Directories) > 0 {
+		pipeline.AddStages(osbuild.GenDirectoryNodesStages(p.OSCustomizations.Directories)...)
+	}
+
+	// Custom files (from the blueprint) are often used to create systemd
+	// units, so let's make sure they get created before the systemd stage that
+	// will probably want to enable them
+	if len(p.OSCustomizations.Files) > 0 {
+		p.addInlineDataAndStages(&pipeline, p.OSCustomizations.Files)
 	}
 
 	enabledServices := []string{}
 	disabledServices := []string{}
 	maskedServices := []string{}
-	enabledServices = append(enabledServices, p.EnabledServices...)
-	disabledServices = append(disabledServices, p.DisabledServices...)
-	maskedServices = append(maskedServices, p.MaskedServices...)
+	enabledServices = append(enabledServices, p.OSCustomizations.EnabledServices...)
+	disabledServices = append(disabledServices, p.OSCustomizations.DisabledServices...)
+	maskedServices = append(maskedServices, p.OSCustomizations.MaskedServices...)
 	if p.Environment != nil {
 		enabledServices = append(enabledServices, p.Environment.GetServices()...)
 	}
@@ -838,33 +846,31 @@ func (p *OS) serialize() osbuild.Pipeline {
 	}
 	if len(enabledServices) != 0 ||
 		len(disabledServices) != 0 ||
-		len(maskedServices) != 0 || p.DefaultTarget != "" {
+		len(maskedServices) != 0 || p.OSCustomizations.DefaultTarget != "" {
 		pipeline.AddStage(osbuild.NewSystemdStage(&osbuild.SystemdStageOptions{
 			EnabledServices:  enabledServices,
 			DisabledServices: disabledServices,
 			MaskedServices:   maskedServices,
-			DefaultTarget:    p.DefaultTarget,
+			DefaultTarget:    p.OSCustomizations.DefaultTarget,
 		}))
 	}
-	if len(p.ShellInit) > 0 {
-		pipeline.AddStage(osbuild.GenShellInitStage(p.ShellInit))
+	if len(p.OSCustomizations.ShellInit) > 0 {
+		pipeline.AddStage(osbuild.GenShellInitStage(p.OSCustomizations.ShellInit))
 	}
 
-	if p.WSLConfig != nil {
-		pipeline.AddStage(osbuild.NewWSLConfStage(p.WSLConfig))
+	if p.OSCustomizations.WSLConfig != nil {
+		pipeline.AddStage(osbuild.NewWSLConfStage(p.OSCustomizations.WSLConfig))
 	}
 
-	if p.FIPS {
-		p.Files = append(p.Files, osbuild.GenFIPSFiles()...)
-		for _, stage := range osbuild.GenFIPSStages() {
-			pipeline.AddStage(stage)
-		}
+	if p.OSCustomizations.FIPS {
+		pipeline.AddStages(osbuild.GenFIPSStages()...)
+		p.addInlineDataAndStages(&pipeline, osbuild.GenFIPSFiles())
 	}
 
 	// NOTE: We need to run the OpenSCAP stages as the last stage before SELinux
 	// since the remediation may change file permissions and other aspects of the
 	// hardened image
-	if remediationConfig := p.OpenSCAPRemediationConfig; remediationConfig != nil {
+	if remediationConfig := p.OSCustomizations.OpenSCAPRemediationConfig; remediationConfig != nil {
 		if remediationConfig.TailoringConfig != nil {
 			tailoringStageOpts := osbuild.NewOscapAutotailorStageOptions(remediationConfig)
 			pipeline.AddStage(osbuild.NewOscapAutotailorStage(tailoringStageOpts))
@@ -873,37 +879,36 @@ func (p *OS) serialize() osbuild.Pipeline {
 		pipeline.AddStage(osbuild.NewOscapRemediationStage(remediationStageOpts))
 	}
 
-	if len(p.Presets) != 0 {
+	if len(p.OSCustomizations.Presets) != 0 {
 		pipeline.AddStage(osbuild.NewSystemdPresetStage(&osbuild.SystemdPresetStageOptions{
-			Presets: p.Presets,
+			Presets: p.OSCustomizations.Presets,
 		}))
 	}
 
-	if len(p.CACerts) > 0 {
-		for _, cc := range p.CACerts {
+	if len(p.OSCustomizations.CACerts) > 0 {
+		for _, cc := range p.OSCustomizations.CACerts {
 			files, err := osbuild.NewCAFileNodes(cc)
 			if err != nil {
 				panic(err.Error())
 			}
 
 			if len(files) > 0 {
-				p.Files = append(p.Files, files...)
-				pipeline.AddStages(osbuild.GenFileNodesStages(files)...)
+				p.addInlineDataAndStages(&pipeline, files)
 			}
 		}
-		pipeline.AddStage(osbuild.NewCAStageStage())
+		pipeline.AddStage(osbuild.NewUpdateCATrustStage())
 	}
 
-	if p.MachineIdUninitialized {
+	if p.OSCustomizations.MachineIdUninitialized {
 		pipeline.AddStage(osbuild.NewMachineIdStage(&osbuild.MachineIdStageOptions{
 			FirstBoot: osbuild.MachineIdFirstBootYes,
 		}))
 	}
 
-	if p.SElinux != "" {
+	if p.OSCustomizations.SElinux != "" {
 		pipeline.AddStage(osbuild.NewSELinuxStage(&osbuild.SELinuxStageOptions{
-			FileContexts:     fmt.Sprintf("etc/selinux/%s/contexts/files/file_contexts", p.SElinux),
-			ForceAutorelabel: p.SELinuxForceRelabel,
+			FileContexts:     fmt.Sprintf("etc/selinux/%s/contexts/files/file_contexts", p.OSCustomizations.SElinux),
+			ForceAutorelabel: p.OSCustomizations.SELinuxForceRelabel,
 		}))
 	}
 
@@ -980,12 +985,16 @@ func (p *OS) Platform() platform.Platform {
 }
 
 func (p *OS) getInline() []string {
-	inlineData := []string{}
+	return p.inlineData
+}
 
-	// inline data for custom files
-	for _, file := range p.Files {
-		inlineData = append(inlineData, string(file.Data()))
+// addInlineDataAndStages generates stages for creating files and adds them to
+// the pipeline. It also adds their data to the inlineData for the pipeline so
+// that the appropriate sources are created.
+func (p *OS) addInlineDataAndStages(pipeline *osbuild.Pipeline, files []*fsnode.File) {
+	pipeline.AddStages(osbuild.GenFileNodesStages(files)...)
+
+	for _, file := range files {
+		p.inlineData = append(p.inlineData, string(file.Data()))
 	}
-
-	return inlineData
 }

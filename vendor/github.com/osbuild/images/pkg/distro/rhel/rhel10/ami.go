@@ -245,8 +245,15 @@ func defaultEc2ImageConfig() *distro.ImageConfig {
 					osbuild.NewModprobeConfigCmdBlacklist("amdgpu"),
 				},
 			},
+			// https://issues.redhat.com/browse/RHEL-71926
+			{
+				Filename: "blacklist-i2c_piix4.conf",
+				Commands: osbuild.ModprobeConfigCmdList{
+					osbuild.NewModprobeConfigCmdBlacklist("i2c_piix4"),
+				},
+			},
 		},
-		SystemdUnit: []*osbuild.SystemdUnitStageOptions{
+		SystemdDropin: []*osbuild.SystemdUnitStageOptions{
 			// RHBZ#1822863
 			{
 				Unit:   "nm-cloud-setup.service",

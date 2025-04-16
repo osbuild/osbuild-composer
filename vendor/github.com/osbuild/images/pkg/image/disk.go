@@ -66,7 +66,7 @@ func (img *DiskImage) InstantiateManifest(m *manifest.Manifest,
 	osPipeline.OSNick = img.OSNick
 
 	if img.InstallWeakDeps != nil {
-		osPipeline.InstallWeakDeps = *img.InstallWeakDeps
+		osPipeline.OSCustomizations.InstallWeakDeps = *img.InstallWeakDeps
 	}
 
 	rawImagePipeline := manifest.NewRawImage(buildPipeline, osPipeline)

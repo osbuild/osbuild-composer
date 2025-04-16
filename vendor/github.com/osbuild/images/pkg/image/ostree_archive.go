@@ -62,7 +62,7 @@ func (img *OSTreeArchive) InstantiateManifest(m *manifest.Manifest,
 	osPipeline.Workload = img.Workload
 	osPipeline.OSTreeParent = img.OSTreeParent
 	osPipeline.OSTreeRef = img.OSTreeRef
-	osPipeline.InstallWeakDeps = img.InstallWeakDeps
+	osPipeline.OSCustomizations.InstallWeakDeps = img.InstallWeakDeps
 
 	ostreeCommitPipeline := manifest.NewOSTreeCommit(buildPipeline, osPipeline, img.OSTreeRef)
 	ostreeCommitPipeline.OSVersion = img.OSVersion

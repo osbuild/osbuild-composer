@@ -6,11 +6,8 @@ import (
 )
 
 const (
-	// should be "^\\/(?!\\.\\.)((?!\\/\\.\\.\\/).)+$" but Go doesn't support lookaheads
-	// therefore we have to instead check for the invalid cases, which is much simpler
-	chownStageInvalidPathRegex = `((^|\/)[.]{2}(\/|$))|^([^/].*)*$`
-	chownStageUsernameRegex    = `^[A-Za-z0-9_.][A-Za-z0-9_.-]{0,31}$`
-	chownStageGroupnameRegex   = `^[A-Za-z0-9_][A-Za-z0-9_-]{0,31}$`
+	chownStageUsernameRegex  = `^[A-Za-z0-9_.][A-Za-z0-9_.-]{0,31}$`
+	chownStageGroupnameRegex = `^[A-Za-z0-9_][A-Za-z0-9_-]{0,31}$`
 )
 
 type ChownStageOptions struct {
@@ -21,7 +18,7 @@ func (ChownStageOptions) isStageOptions() {}
 
 func (o *ChownStageOptions) validate() error {
 	for path, options := range o.Items {
-		invalidPathRegex := regexp.MustCompile(chownStageInvalidPathRegex)
+		invalidPathRegex := regexp.MustCompile(invalidPathRegex)
 		if invalidPathRegex.FindAllString(path, -1) != nil {
 			return fmt.Errorf("chown path %q matches invalid path pattern (%s)", path, invalidPathRegex.String())
 		}

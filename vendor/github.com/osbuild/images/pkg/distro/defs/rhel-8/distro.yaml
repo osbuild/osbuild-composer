@@ -313,7 +313,6 @@
        - "libibverbs"
        - "libreport-plugin-bugzilla"
        - "libreport-plugin-reportuploader"
-       - "libreport-rhel-anaconda-bugzilla"
        - "librsvg2"
        - "linux-firmware"
        - "lklug-fonts"
@@ -381,6 +380,13 @@
         aarch64:
           include:
             - "dmidecode"
+      distro_name:
+        rhel:
+          include:
+            - "libreport-rhel-anaconda-bugzilla"
+        centos:
+          include:
+            - "libreport-rhel-anaconda-bugzilla"
 
   gce_common_pkgset: &gce_common_pkgset
     include:
@@ -977,8 +983,10 @@ image_types:
           - "gobject-introspection"
           - "hostname"
           - "langpacks-en"
+          - "openssh-server"
           - "pam"
           - "passwd"
+          - "procps-ng"
           - "python3"
           - "python3-inotify"
           - "python3-systemd"
@@ -989,6 +997,7 @@ image_types:
           - "setup"
           - "shadow-utils"
           - "subscription-manager"
+          - "sudo"
           - "systemd"
           - "tar"
           - "tpm2-tss"
