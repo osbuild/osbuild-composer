@@ -2222,6 +2222,11 @@ components:
           example: true
           description: |
             Optional flag to use rhc to register the system, which also always enables Insights.
+        insights_client_proxy:
+          type: string
+          format: uri
+          description: |
+            Optional value to set proxy option when registering the system to Insights
     User:
       type: object
       additionalProperties: false
