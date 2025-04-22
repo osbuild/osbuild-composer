@@ -395,6 +395,7 @@ image_types:
           - "patch"
           - "rng-tools"
           - "selinux-policy-targeted"
+          - "system-reinstall-bootc"
           - "uuid"
           - "WALinuxAgent"
           - "yum-utils"
@@ -503,6 +504,7 @@ image_types:
           - "redhat-release"
           - "redhat-release-eula"
           - "rsync"
+          - "system-reinstall-bootc"
           - "tuned"
           - "tar"
         exclude:

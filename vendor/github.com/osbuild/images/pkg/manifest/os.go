@@ -127,6 +127,7 @@ type OSCustomizations struct {
 	UdevRules            *osbuild.UdevRulesStageOptions
 	WSLConfig            *osbuild.WSLConfStageOptions
 	InsightsClientConfig *osbuild.InsightsClientConfigStageOptions
+	NetworkManager       *osbuild.NMConfStageOptions
 	Presets              []osbuild.Preset
 	ContainersStorage    *string
 
@@ -648,6 +649,10 @@ func (p *OS) serialize() osbuild.Pipeline {
 
 	if p.OSCustomizations.InsightsClientConfig != nil {
 		pipeline.AddStage(osbuild.NewInsightsClientConfigStage(p.OSCustomizations.InsightsClientConfig))
+	}
+
+	if p.OSCustomizations.NetworkManager != nil {
+		pipeline.AddStage(osbuild.NewNMConfStage(p.OSCustomizations.NetworkManager))
 	}
 
 	if p.OSCustomizations.AuthConfig != nil {
