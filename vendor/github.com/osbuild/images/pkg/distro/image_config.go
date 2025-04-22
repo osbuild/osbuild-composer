@@ -69,6 +69,7 @@ type ImageConfig struct {
 	Firewall            *osbuild.FirewallStageOptions
 	UdevRules           *osbuild.UdevRulesStageOptions
 	GCPGuestAgentConfig *osbuild.GcpGuestAgentConfigOptions
+	NetworkManager      *osbuild.NMConfStageOptions
 
 	WSLConfig *WSLConfig
 

@@ -83,6 +83,10 @@
         rhel:
           include:
             - "insights-client"
+      version_greater_or_equal:
+        "9.6":
+          include:
+            - "system-reinstall-bootc"
 
   sap_pkgset: &sap_pkgset
     include:
@@ -579,6 +583,8 @@ image_types:
                 - "insights-client"
           version_greater_or_equal:
             "9.6":
+              include:
+                - "system-reinstall-bootc"
               exclude:
                 - "microcode_ctl"
 
