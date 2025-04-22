@@ -222,19 +222,23 @@ gcp.sh:
   variables:
     SCRIPT: gcp.sh
 
-vmware.sh_vmdk:
-  extends: .integration
-  rules:
-    - !reference [.rules_x86_64, rules]
-  variables:
-    SCRIPT: vmware.sh vmdk
+# [thozza, 2025-04-22] NB: These tests are broken at the moment
+# due to the VCenter instance that we use. Reenable them in the future
+# if we fixed the issues and make another change into 10.0 branch.
+#
+# vmware.sh_vmdk:
+#   extends: .integration
+#   rules:
+#     - !reference [.rules_x86_64, rules]
+#   variables:
+#     SCRIPT: vmware.sh vmdk
 
-vmware.sh_ova:
-  extends: .integration
-  rules:
-    - !reference [.rules_x86_64, rules]
-  variables:
-    SCRIPT: vmware.sh ova
+# vmware.sh_ova:
+#   extends: .integration
+#   rules:
+#     - !reference [.rules_x86_64, rules]
+#   variables:
+#     SCRIPT: vmware.sh ova
 
 filesystem.sh:
   extends: .integration
