@@ -90,7 +90,7 @@ fi
 
 # Get a list of all installed distros and compare it with a pattern matching host distribution
 # Filter out beta and centos-stream, see GH issue #2257
-INSTALLED_DISTROS=$(find "/usr/share/osbuild-composer/repositories" -name '*.json' -printf '%P\n' | awk -F "." '{ print $1 }' | grep -Ev 'beta|stream' | sort)
+INSTALLED_DISTROS=$(find "/usr/share/osbuild-composer/repositories" -name '*.json' -printf '%P\n' | sed 's/\.[^.]*$//' | grep -Ev 'beta|stream' | sort)
 INSTALLED_REMAINDER=$(echo "$INSTALLED_DISTROS" | grep -v -E "$PATTERN")
 # Check if there are any extra distros that match the host pattern but are not recognized
 UNRECOGNIZED_DISTROS=$(echo "${INSTALLED_DISTROS}" | grep -v "${RECOGNIZED_DISTROS}")
@@ -115,7 +115,7 @@ REPO_PATH="images/data/repositories/"
 # ALL_EXPECTED_DISTROS - all distros matching host pattern
 # ALL_REMAINDERS - all the unrecognized distros
 # Filter out beta and centos-stream, see GH issue #2257
-ALL_DISTROS=$(find "$REPO_PATH" -name '*.json' -printf '%P\n' | grep -v 'no-aux-key' | awk -F "." '{ print $1 }')
+ALL_DISTROS=$(find "$REPO_PATH" -name '*.json' -printf '%P\n' | grep -v 'no-aux-key' | sed 's/\.[^.]*$//')
 ALL_EXPECTED_DISTROS=$(echo "$ALL_DISTROS" | grep -E "$PATTERN" | grep -Ev 'beta|stream' | sort)
 # Warning: filter out the remaining distros by matching whole words to avoid matching
 # the value rhel-9X by the pattern rhel-9!
