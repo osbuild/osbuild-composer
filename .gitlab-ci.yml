@@ -288,18 +288,6 @@ ubi-wsl.sh:
     matrix:
       - <<: *RPM_RUNNERS_RHEL
 
-weldr-distro-dot-notation+aliases:
-  stage: test
-  extends: .terraform
-  rules:
-    - !reference [.rules_x86_64, rules]
-  script:
-    - schutzbot/deploy.sh
-    - /usr/libexec/tests/osbuild-composer/weldr-distro-dot-notation-and-aliases.sh
-  parallel:
-    matrix:
-      - <<: *RPM_RUNNERS_RHEL
-
 .generic_s3:
   extends: .libvirt_integration
 
