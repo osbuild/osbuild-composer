@@ -846,8 +846,14 @@ func TestGetImageRequests_ImageTypeConversion(t *testing.T) {
 	}{
 		{
 			requestedImageType: ImageTypesAws,
-			requestedDistros:   []string{fedora, rhel8, centos8, rhel9, centos9},
+			requestedDistros:   []string{rhel8, centos8, rhel9, centos9},
 			expectedImageType:  "ami",
+			expectedTargetName: target.TargetNameAWS,
+		},
+		{
+			requestedImageType: ImageTypesAws,
+			requestedDistros:   []string{fedora},
+			expectedImageType:  "server-ami",
 			expectedTargetName: target.TargetNameAWS,
 		},
 		{
@@ -870,8 +876,14 @@ func TestGetImageRequests_ImageTypeConversion(t *testing.T) {
 		},
 		{
 			requestedImageType: ImageTypesAzure,
-			requestedDistros:   []string{fedora, rhel8, centos8, rhel9, centos9},
+			requestedDistros:   []string{rhel8, centos8, rhel9, centos9},
 			expectedImageType:  "vhd",
+			expectedTargetName: target.TargetNameAzureImage,
+		},
+		{
+			requestedImageType: ImageTypesAzure,
+			requestedDistros:   []string{fedora},
+			expectedImageType:  "server-vhd",
 			expectedTargetName: target.TargetNameAzureImage,
 		},
 		{
@@ -930,14 +942,26 @@ func TestGetImageRequests_ImageTypeConversion(t *testing.T) {
 		},
 		{
 			requestedImageType: ImageTypesGuestImage,
-			requestedDistros:   []string{fedora, rhel8, centos8, rhel9, centos9},
+			requestedDistros:   []string{rhel8, centos8, rhel9, centos9},
 			expectedImageType:  "qcow2",
 			expectedTargetName: target.TargetNameAWSS3,
 		},
 		{
+			requestedImageType: ImageTypesGuestImage,
+			requestedDistros:   []string{fedora},
+			expectedImageType:  "server-qcow2",
+			expectedTargetName: target.TargetNameAWSS3,
+		},
+		{
 			requestedImageType: ImageTypesImageInstaller,
-			requestedDistros:   []string{fedora, rhel8, centos8, rhel9, centos9},
+			requestedDistros:   []string{rhel8, centos8, rhel9, centos9},
 			expectedImageType:  "image-installer",
+			expectedTargetName: target.TargetNameAWSS3,
+		},
+		{
+			requestedImageType: ImageTypesImageInstaller,
+			requestedDistros:   []string{fedora},
+			expectedImageType:  "minimal-installer",
 			expectedTargetName: target.TargetNameAWSS3,
 		},
 		{
@@ -967,7 +991,7 @@ func TestGetImageRequests_ImageTypeConversion(t *testing.T) {
 		{
 			requestedImageType: ImageTypesIotRawImage,
 			requestedDistros:   []string{fedora},
-			expectedImageType:  "iot-raw-image",
+			expectedImageType:  "iot-raw-xz",
 			expectedTargetName: target.TargetNameAWSS3,
 		},
 		{
@@ -979,31 +1003,55 @@ func TestGetImageRequests_ImageTypeConversion(t *testing.T) {
 		{
 			requestedImageType: ImageTypesLiveInstaller,
 			requestedDistros:   []string{fedora},
-			expectedImageType:  "live-installer",
+			expectedImageType:  "workstation-live-installer",
 			expectedTargetName: target.TargetNameAWSS3,
 		},
 		{
 			requestedImageType: ImageTypesMinimalRaw,
-			requestedDistros:   []string{fedora, rhel8, centos8, rhel9, centos9},
+			requestedDistros:   []string{rhel8, centos8, rhel9, centos9},
 			expectedImageType:  "minimal-raw",
 			expectedTargetName: target.TargetNameAWSS3,
 		},
 		{
+			requestedImageType: ImageTypesMinimalRaw,
+			requestedDistros:   []string{fedora},
+			expectedImageType:  "minimal-raw-xz",
+			expectedTargetName: target.TargetNameAWSS3,
+		},
+		{
 			requestedImageType: ImageTypesOci,
-			requestedDistros:   []string{fedora, rhel8, centos8, rhel9, centos9},
+			requestedDistros:   []string{rhel8, centos8, rhel9, centos9},
 			expectedImageType:  "oci",
 			expectedTargetName: target.TargetNameOCIObjectStorage,
 		},
 		{
+			requestedImageType: ImageTypesOci,
+			requestedDistros:   []string{fedora},
+			expectedImageType:  "server-oci",
+			expectedTargetName: target.TargetNameOCIObjectStorage,
+		},
+		{
 			requestedImageType: ImageTypesVsphere,
-			requestedDistros:   []string{fedora, rhel8, centos8, rhel9, centos9},
+			requestedDistros:   []string{rhel8, centos8, rhel9, centos9},
 			expectedImageType:  "vmdk",
 			expectedTargetName: target.TargetNameAWSS3,
 		},
 		{
+			requestedImageType: ImageTypesVsphere,
+			requestedDistros:   []string{fedora},
+			expectedImageType:  "server-vmdk",
+			expectedTargetName: target.TargetNameAWSS3,
+		},
+		{
 			requestedImageType: ImageTypesVsphereOva,
-			requestedDistros:   []string{fedora, rhel8, centos8, rhel9, centos9},
+			requestedDistros:   []string{rhel8, centos8, rhel9, centos9},
 			expectedImageType:  "ova",
+			expectedTargetName: target.TargetNameAWSS3,
+		},
+		{
+			requestedImageType: ImageTypesVsphereOva,
+			requestedDistros:   []string{fedora},
+			expectedImageType:  "server-ova",
 			expectedTargetName: target.TargetNameAWSS3,
 		},
 		{
