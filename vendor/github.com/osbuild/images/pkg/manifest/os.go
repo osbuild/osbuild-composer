@@ -848,6 +848,7 @@ func (p *OS) serialize() osbuild.Pipeline {
 	if p.Workload != nil {
 		enabledServices = append(enabledServices, p.Workload.GetServices()...)
 		disabledServices = append(disabledServices, p.Workload.GetDisabledServices()...)
+		maskedServices = append(maskedServices, p.Workload.GetMaskedServices()...)
 	}
 	if len(enabledServices) != 0 ||
 		len(disabledServices) != 0 ||

@@ -6,6 +6,7 @@ type Custom struct {
 	EnabledModules   []string
 	Services         []string
 	DisabledServices []string
+	MaskedServices   []string
 }
 
 func (p *Custom) GetPackages() []string {
@@ -20,8 +21,12 @@ func (p *Custom) GetServices() []string {
 	return p.Services
 }
 
-// TODO: Does this belong here? What kind of workload requires
-// services to be disabled?
+// TODO: Do these belong here? What kind of workload requires
+// services to be disabled or masked?
 func (p *Custom) GetDisabledServices() []string {
 	return p.DisabledServices
+}
+
+func (p *Custom) GetMaskedServices() []string {
+	return p.MaskedServices
 }

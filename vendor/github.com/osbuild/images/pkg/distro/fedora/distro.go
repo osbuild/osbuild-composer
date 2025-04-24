@@ -70,14 +70,14 @@ func ostreeDeploymentKernelOptions() []string {
 // Image Definitions
 func mkImageInstallerImgType(d distribution) imageType {
 	return imageType{
-		name:        "image-installer",
-		nameAliases: []string{"fedora-image-installer"},
+		name:        "minimal-installer",
+		nameAliases: []string{"image-installer", "fedora-image-installer"},
 		filename:    "installer.iso",
 		mimeType:    "application/x-iso9660-image",
 		packageSets: map[string]packageSetFunc{
 			osPkgsKey: func(t *imageType) (rpmmd.PackageSet, error) {
 				// use the minimal raw image type for the OS package set
-				return defs.PackageSet(t, "minimal-raw", VersionReplacements())
+				return defs.PackageSet(t, "minimal-raw-xz", VersionReplacements())
 			},
 			installerPkgsKey: packageSetLoader,
 		},
@@ -99,8 +99,8 @@ func mkImageInstallerImgType(d distribution) imageType {
 
 func mkLiveInstallerImgType(d distribution) imageType {
 	return imageType{
-		name:        "live-installer",
-		nameAliases: []string{},
+		name:        "workstation-live-installer",
+		nameAliases: []string{"live-installer"},
 		filename:    "live-installer.iso",
 		mimeType:    "application/x-iso9660-image",
 		packageSets: map[string]packageSetFunc{
@@ -249,8 +249,8 @@ func mkIotSimplifiedInstallerImgType(d distribution) imageType {
 
 func mkIotRawImgType(d distribution) imageType {
 	return imageType{
-		name:        "iot-raw-image",
-		nameAliases: []string{"fedora-iot-raw-image"},
+		name:        "iot-raw-xz",
+		nameAliases: []string{"iot-raw-image", "fedora-iot-raw-image"},
 		filename:    "image.raw.xz",
 		compression: "xz",
 		mimeType:    "application/xz",
@@ -282,7 +282,8 @@ func mkIotRawImgType(d distribution) imageType {
 
 func mkIotQcow2ImgType(d distribution) imageType {
 	return imageType{
-		name:        "iot-qcow2-image",
+		name:        "iot-qcow2",
+		nameAliases: []string{"iot-qcow2-image"}, // kept for backwards compatibility
 		filename:    "image.qcow2",
 		mimeType:    "application/x-qemu-disk",
 		packageSets: map[string]packageSetFunc{},
@@ -309,7 +310,8 @@ func mkIotQcow2ImgType(d distribution) imageType {
 
 func mkQcow2ImgType(d distribution) imageType {
 	return imageType{
-		name:        "qcow2",
+		name:        "server-qcow2",
+		nameAliases: []string{"qcow2"}, // kept for backwards compatibility
 		filename:    "disk.qcow2",
 		mimeType:    "application/x-qemu-disk",
 		environment: &environment.KVM{},
@@ -344,9 +346,10 @@ var (
 
 func mkVmdkImgType(d distribution) imageType {
 	return imageType{
-		name:     "vmdk",
-		filename: "disk.vmdk",
-		mimeType: "application/x-vmdk",
+		name:        "server-vmdk",
+		nameAliases: []string{"vmdk"}, // kept for backwards compatibility
+		filename:    "disk.vmdk",
+		mimeType:    "application/x-vmdk",
 		packageSets: map[string]packageSetFunc{
 			osPkgsKey: packageSetLoader,
 		},
@@ -364,9 +367,10 @@ func mkVmdkImgType(d distribution) imageType {
 
 func mkOvaImgType(d distribution) imageType {
 	return imageType{
-		name:     "ova",
-		filename: "image.ova",
-		mimeType: "application/ovf",
+		name:        "server-ova",
+		nameAliases: []string{"ova"}, // kept for backwards compatibility
+		filename:    "image.ova",
+		mimeType:    "application/ovf",
 		packageSets: map[string]packageSetFunc{
 			osPkgsKey: packageSetLoader,
 		},
@@ -407,9 +411,10 @@ func mkContainerImgType(d distribution) imageType {
 
 func mkWslImgType(d distribution) imageType {
 	return imageType{
-		name:     "wsl",
-		filename: "wsl.tar",
-		mimeType: "application/x-tar",
+		name:        "wsl",
+		nameAliases: []string{"server-wsl"}, // this is the eventual name, and `wsl` the alias but we've been having issues with CI renaming it
+		filename:    "wsl.tar",
+		mimeType:    "application/x-tar",
 		packageSets: map[string]packageSetFunc{
 			osPkgsKey: packageSetLoader,
 		},
@@ -447,7 +452,8 @@ func mkWslImgType(d distribution) imageType {
 
 func mkMinimalRawImgType(d distribution) imageType {
 	it := imageType{
-		name:        "minimal-raw",
+		name:        "minimal-raw-xz",
+		nameAliases: []string{"minimal-raw"}, // kept for backwards compatibility
 		filename:    "disk.raw.xz",
 		compression: "xz",
 		mimeType:    "application/xz",
@@ -691,10 +697,12 @@ func newDistro(version int) distro.Distro {
 	qcow2ImgType := mkQcow2ImgType(rd)
 
 	ociImgType := qcow2ImgType
-	ociImgType.name = "oci"
+	ociImgType.name = "server-oci"
+	ociImgType.nameAliases = []string{"oci"} // kept for backwards compatibility
 
 	amiImgType := qcow2ImgType
-	amiImgType.name = "ami"
+	amiImgType.name = "server-ami"
+	amiImgType.nameAliases = []string{"ami"} // kept for backwards compatibility
 	amiImgType.filename = "image.raw"
 	amiImgType.mimeType = "application/octet-stream"
 	amiImgType.payloadPipelines = []string{"os", "image"}
@@ -702,10 +710,12 @@ func newDistro(version int) distro.Distro {
 	amiImgType.environment = &environment.EC2{}
 
 	openstackImgType := qcow2ImgType
-	openstackImgType.name = "openstack"
+	openstackImgType.name = "server-openstack"
+	openstackImgType.nameAliases = []string{"openstack"} // kept for backwards compatibility
 
 	vhdImgType := qcow2ImgType
-	vhdImgType.name = "vhd"
+	vhdImgType.name = "server-vhd"
+	vhdImgType.nameAliases = []string{"vhd"} // kept for backwards compatibility
 	vhdImgType.filename = "disk.vhd"
 	vhdImgType.mimeType = "application/x-vhd"
 	vhdImgType.payloadPipelines = []string{"os", "image", "vpc"}
@@ -725,6 +735,7 @@ func newDistro(version int) distro.Distro {
 
 	minimalrawZstdImgType := mkMinimalRawImgType(rd)
 	minimalrawZstdImgType.name = "minimal-raw-zst"
+	minimalrawZstdImgType.nameAliases = []string{}
 	minimalrawZstdImgType.filename = "disk.raw.zst"
 	minimalrawZstdImgType.mimeType = "application/zstd"
 	minimalrawZstdImgType.compression = "zstd"
