@@ -272,18 +272,19 @@ image_config:
     timezone: "UTC"
 
 image_types:
-  qcow2: &qcow2
+  server_qcow2: &server_qcow2
     partition_table:
       <<: *default_partition_tables
     package_sets:
-      - *cloud_base_pkgset
-      - include:
-          - "qemu-guest-agent"
-  ami: *qcow2
-  oci: *qcow2
-  openstack: *qcow2
+     - *cloud_base_pkgset
+     - include:
+         - "qemu-guest-agent"
 
-  vhd:
+  server_ami: *server_qcow2
+  server_oci: *server_qcow2
+  server_openstack: *server_qcow2
+
+  server_vhd:
     partition_table:
       <<: *default_partition_tables
     package_sets:
@@ -291,7 +292,7 @@ image_types:
       - include:
           - "WALinuxAgent"
 
-  vmdk: &vmdk
+  server_vmdk: &server_vmdk
     partition_table:
       <<: *default_partition_tables
     package_sets:
@@ -313,7 +314,7 @@ image_types:
           - "grubby-deprecated"
           - "extlinux-bootloader"
 
-  ova: *vmdk
+  server_ova: *server_vmdk
 
   # NOTE: keep in sync with official fedora-iot definitions:
   # https://pagure.io/fedora-iot/ostree/blob/main/f/fedora-iot-base.yaml
@@ -437,7 +438,7 @@ image_types:
 
   iot_container: *iot_commit
 
-  iot_raw_image:
+  iot_raw_xz:
     partition_table:
       <<: *iot_base_partition_tables
     partition_table_override:
@@ -447,7 +448,7 @@ image_types:
             - partition_index: 2
               fstab_options: "defaults,ro"
 
-  iot_qcow2_image:
+  iot_qcow2:
     partition_table:
       <<: *iot_base_partition_tables
 
@@ -722,7 +723,7 @@ image_types:
       - include:
           - "fedora-release-iot"
 
-  live_installer:
+  workstation_live_installer:
     package_sets:
       - include:
           - "@workstation-product-environment"
@@ -754,7 +755,7 @@ image_types:
               include:
                 - "anaconda-webui"
 
-  image_installer: *anaconda
+  minimal_installer: *anaconda
 
   container: &container
     package_sets:
@@ -878,6 +879,7 @@ image_types:
               exclude:
                 - "firewalld"
   minimal_raw_zst: *minimal_raw
+  minimal_raw_xz: *minimal_raw
 
   iot_simplified_installer:
     partition_table:

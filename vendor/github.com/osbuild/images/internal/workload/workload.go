@@ -8,6 +8,7 @@ type Workload interface {
 	GetRepos() []rpmmd.RepoConfig
 	GetServices() []string
 	GetDisabledServices() []string
+	GetMaskedServices() []string
 }
 
 type BaseWorkload struct {
@@ -31,5 +32,9 @@ func (p BaseWorkload) GetServices() []string {
 }
 
 func (p BaseWorkload) GetDisabledServices() []string {
+	return []string{}
+}
+
+func (p BaseWorkload) GetMaskedServices() []string {
 	return []string{}
 }
