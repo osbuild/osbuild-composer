@@ -286,6 +286,7 @@ func (t *imageType) Manifest(bp *blueprint.Blueprint,
 		if services := bp.Customizations.GetServices(); services != nil {
 			cw.Services = services.Enabled
 			cw.DisabledServices = services.Disabled
+			cw.MaskedServices = services.Masked
 		}
 		w = cw
 	}
@@ -361,7 +362,7 @@ func (t *imageType) checkOptions(bp *blueprint.Blueprint, options distro.ImageOp
 		}
 	}
 
-	if t.name == "iot-raw-image" || t.name == "iot-qcow2-image" {
+	if t.name == "iot-raw-xz" || t.name == "iot-qcow2" {
 		allowed := []string{"User", "Group", "Directories", "Files", "Services", "FIPS"}
 		if err := customizations.CheckAllowed(allowed...); err != nil {
 			return warnings, fmt.Errorf(distro.UnsupportedCustomizationError, t.name, strings.Join(allowed, ", "))
@@ -410,13 +411,13 @@ func (t *imageType) checkOptions(bp *blueprint.Blueprint, options distro.ImageOp
 					return warnings, fmt.Errorf("ignition.firstboot requires a provisioning url")
 				}
 			}
-		} else if t.name == "iot-installer" || t.name == "image-installer" {
+		} else if t.name == "iot-installer" || t.name == "minimal-installer" {
 			// "Installer" is actually not allowed for image-installer right now, but this is checked at the end
 			allowed := []string{"User", "Group", "FIPS", "Installer", "Timezone", "Locale"}
 			if err := customizations.CheckAllowed(allowed...); err != nil {
 				return warnings, fmt.Errorf(distro.UnsupportedCustomizationError, t.name, strings.Join(allowed, ", "))
 			}
-		} else if t.name == "live-installer" {
+		} else if t.name == "workstation-live-installer" {
 			allowed := []string{"Installer"}
 			if err := customizations.CheckAllowed(allowed...); err != nil {
 				return warnings, fmt.Errorf(distro.NoCustomizationsAllowedError, t.name)

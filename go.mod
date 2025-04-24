@@ -30,7 +30,7 @@ require (
 	github.com/getsentry/sentry-go v0.28.1
 	github.com/gobwas/glob v0.2.3
 	github.com/golang-jwt/jwt/v4 v4.5.2
-	github.com/google/go-cmp v0.6.0
+	github.com/google/go-cmp v0.7.0
 	github.com/google/uuid v1.6.0
 	github.com/gophercloud/gophercloud v1.14.0
 	github.com/hashicorp/go-retryablehttp v0.7.7
@@ -45,7 +45,7 @@ require (
 	github.com/openshift-online/ocm-sdk-go v0.1.438
 	github.com/oracle/oci-go-sdk/v54 v54.0.0
 	github.com/osbuild/blueprint v1.6.0
-	github.com/osbuild/images v0.137.0
+	github.com/osbuild/images v0.139.0
 	github.com/osbuild/osbuild-composer/pkg/splunk_logger v0.0.0-20240814102216-0239db53236d
 	github.com/osbuild/pulp-client v0.1.0
 	github.com/prometheus/client_golang v1.20.5
@@ -201,7 +201,7 @@ require (
 	github.com/oasdiff/yaml3 v0.0.0-20250309153720-d2182401db90 // indirect
 	github.com/oklog/ulid v1.3.1 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
-	github.com/opencontainers/image-spec v1.1.0 // indirect
+	github.com/opencontainers/image-spec v1.1.1 // indirect
 	github.com/opencontainers/runtime-spec v1.2.0 // indirect
 	github.com/opencontainers/selinux v1.11.1 // indirect
 	github.com/ostreedev/ostree-go v0.0.0-20210805093236-719684c64e4f // indirect
