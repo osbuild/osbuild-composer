@@ -193,7 +193,7 @@ jobs:
           make srpm
 
       - name: Run rpmlint
-        run: rpmlint rpmbuild/SRPMS/*
+        run: rpmlint --config rpmlint.config rpmbuild/SRPMS/*
 
   gitlab-ci-helper:
     name: "Gitlab CI trigger helper"
