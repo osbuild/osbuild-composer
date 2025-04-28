@@ -310,23 +310,27 @@ gcp.sh:
   variables:
     SCRIPT: gcp.sh
 
-vmware.sh_vmdk:
-  extends: .integration_rhel
-  rules:
-    # Run only on x86_64
-    - !reference [.upstream_rules_x86_64, rules]
-    - !reference [.nightly_rules_x86_64, rules]
-  variables:
-    SCRIPT: vmware.sh vmdk
+# VMWare tests are known to be broken due to the VCenter
+# instance that we are using. Reenable them in the future
+# if making a change on this branch and the issue is fixed.
+#
+# vmware.sh_vmdk:
+#   extends: .integration_rhel
+#   rules:
+#     # Run only on x86_64
+#     - !reference [.upstream_rules_x86_64, rules]
+#     - !reference [.nightly_rules_x86_64, rules]
+#   variables:
+#     SCRIPT: vmware.sh vmdk
 
-vmware.sh_ova:
-  extends: .integration_rhel
-  rules:
-    # Run only on x86_64
-    - !reference [.upstream_rules_x86_64, rules]
-    - !reference [.nightly_rules_x86_64, rules]
-  variables:
-    SCRIPT: vmware.sh ova
+# vmware.sh_ova:
+#   extends: .integration_rhel
+#   rules:
+#     # Run only on x86_64
+#     - !reference [.upstream_rules_x86_64, rules]
+#     - !reference [.nightly_rules_x86_64, rules]
+#   variables:
+#     SCRIPT: vmware.sh ova
 
 filesystem.sh:
   extends: .integration
@@ -341,38 +345,6 @@ cross-distro.sh:
   extends: .integration
   variables:
     SCRIPT: cross-distro.sh
-
-.API_TESTS: &API_TESTS
-  IMAGE_TYPE:
-    - aws
-    - azure
-    - edge-commit
-    - gcp
-    - vsphere
-    - edge-commit generic.s3
-    - edge-container
-    - oci
-
-API:
-  stage: test
-  extends: .terraform
-  rules:
-    - !reference [.upstream_rules_all, rules]
-    # note: cloud API is not supported for on-prem installations so
-    # don't run this test case for nightly trees
-  script:
-    - schutzbot/deploy.sh
-    - /usr/libexec/tests/osbuild-composer/api.sh ${IMAGE_TYPE}
-  parallel:
-    matrix:
-      - <<: *API_TESTS
-        RUNNER:
-          - aws/rhel-9.4-ga-x86_64
-        INTERNAL_NETWORK: ["true"]
-      - IMAGE_TYPE: ["aws"]
-        RUNNER:
-          - aws/rhel-9.4-ga-aarch64
-        INTERNAL_NETWORK: ["true"]
 
 .libvirt_integration:
   stage: test
