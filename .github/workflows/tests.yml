@@ -106,10 +106,10 @@ jobs:
     name: "⌨ Lint"
     runs-on: ubuntu-latest
     steps:
-      - name: Set up Go 1.18
+      - name: Set up Go 1.18.10
         uses: actions/setup-go@v3
         with:
-          go-version: 1.18
+          go-version: 1.18.10
         id: go
 
       - name: Check out code into the Go module directory
@@ -136,14 +136,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
-      - name: Set up Go 1.18
-        uses: actions/setup-go@v3
+      # NB: the golang version is higher to resolve issues when golang.org/dl
+      # tries to install the specific version of Go when calling ./tools/prepare-source.sh
+      - name: Set up Go 1.22
+        uses: actions/setup-go@v5
         with:
-          go-version: 1.18
+          go-version: 1.22
         id: go
 
       - name: Check out code into the Go module directory
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
