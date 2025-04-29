@@ -278,8 +278,7 @@ func TestGetBlueprintFromCustomizations(t *testing.T) {
 		},
 	))
 
-	var btrfsSize Minsize
-	require.NoError(t, btrfsSize.FromMinsize0(100*datasizes.MiB))
+	btrfsSize := "100 MiB"
 
 	var btrfsPart Partition
 	require.NoError(t, btrfsPart.FromBtrfsVolume(
@@ -299,9 +298,8 @@ func TestGetBlueprintFromCustomizations(t *testing.T) {
 		},
 	))
 
-	var vgSize, lvSize Minsize
-	require.NoError(t, vgSize.FromMinsize0(10*datasizes.GiB))
-	require.NoError(t, lvSize.FromMinsize0(3*datasizes.GiB))
+	vgSize := "10 GiB"
+	lvSize := "3 GiB"
 
 	var vgPart Partition
 	require.NoError(t, vgPart.FromVolumeGroup(
@@ -329,8 +327,7 @@ func TestGetBlueprintFromCustomizations(t *testing.T) {
 		},
 	))
 
-	var diskSize Minsize
-	require.NoError(t, diskSize.FromMinsize1("20 GiB"))
+	diskSize := "20 GiB"
 
 	// Construct the compose request with customizations
 	cr = ComposeRequest{Customizations: &Customizations{
@@ -536,8 +533,7 @@ func TestGetBlueprintFromCompose(t *testing.T) {
 		},
 	))
 
-	var btrfsSize Minsize
-	require.NoError(t, btrfsSize.FromMinsize0(100*datasizes.MiB))
+	btrfsSize := "100 MiB"
 
 	var btrfsPart Partition
 	require.NoError(t, btrfsPart.FromBtrfsVolume(
@@ -557,9 +553,8 @@ func TestGetBlueprintFromCompose(t *testing.T) {
 		},
 	))
 
-	var vgSize, lvSize Minsize
-	require.NoError(t, vgSize.FromMinsize0(10*datasizes.GiB))
-	require.NoError(t, lvSize.FromMinsize0(3*datasizes.GiB))
+	vgSize := "10 GiB"
+	lvSize := "3 GiB"
 
 	var vgPart Partition
 	require.NoError(t, vgPart.FromVolumeGroup(
@@ -587,11 +582,8 @@ func TestGetBlueprintFromCompose(t *testing.T) {
 		},
 	))
 
-	var fsSize Minsize
-	require.NoError(t, fsSize.FromMinsize0(1099511627776))
-
-	var diskSize Minsize
-	require.NoError(t, diskSize.FromMinsize1("20 GiB"))
+	fsSize := "1099511627776"
+	diskSize := "20 GiB"
 
 	// Construct the compose request with a blueprint
 	cr = ComposeRequest{Blueprint: &Blueprint{
@@ -1214,50 +1206,29 @@ func TestDecodeMinsize(t *testing.T) {
 		expErrSubstr string
 	}
 
-	msStr := func(s string) *Minsize {
-		var ms Minsize
-		if err := ms.FromMinsize1(s); err != nil {
-			panic(err)
-		}
-		return &ms
-	}
-
-	msInt := func(i uint64) *Minsize {
-		var ms Minsize
-		if err := ms.FromMinsize0(i); err != nil {
-			panic(err)
-		}
-		return &ms
-	}
-
 	testCases := []testCase{
 		{
 			in:     nil,
 			expOut: 0,
 		},
 		{
-			in:     msInt(10),
+			in:     common.ToPtr("10"),
 			expOut: 10,
 		},
 		{
-			in:     msInt(41 * datasizes.MiB),
+			in:     common.ToPtr("41 MiB"),
 			expOut: 41 * datasizes.MiB,
 		},
 		{
-			in:     msStr("10"),
-			expOut: 10,
-		},
-		{
-			in:     msStr("32 GiB"),
+			in:     common.ToPtr("32 GiB"),
 			expOut: 32 * datasizes.GiB,
 		},
-
 		{
-			in:           msStr("not a number"),
+			in:           common.ToPtr("not a number"),
 			expErrSubstr: "the size string doesn't contain any number: not a number",
 		},
 		{
-			in:           msStr("10 GiBi"),
+			in:           common.ToPtr("10 GiBi"),
 			expErrSubstr: "unknown data size units in string: 10 GiBi",
 		},
 	}

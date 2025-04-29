@@ -2723,13 +2723,9 @@ components:
           description: |
             The filesystem type for the logical volume
     minsize:
-      oneOf:
-        - x-go-type: uint64
-          example: 2147483648
-          description: 'size in bytes'
-        - type: string
-          example: "2 GiB"
-          description: 'size with data units'
+      type: string
+      example: "2 GiB"
+      description: 'size with data units'
 
   parameters:
     page:
