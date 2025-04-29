@@ -46,8 +46,6 @@ func mkImageInstallerImgType() *rhel.ImageType {
 	it.DefaultInstallerConfig = &distro.InstallerConfig{
 		AdditionalDracutModules: []string{
 			"nvdimm", // non-volatile DIMM firmware (provides nfit, cuse, and nd_e820)
-			"prefixdevname",
-			"prefixdevname-tools",
 			"net-lib",
 		},
 		AdditionalDrivers: []string{

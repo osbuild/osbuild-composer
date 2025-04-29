@@ -1,13 +1,8 @@
 package rhel9
 
 import (
-	_ "embed"
-	"fmt"
-	"os"
-
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/arch"
-	"github.com/osbuild/images/pkg/customizations/fsnode"
 	"github.com/osbuild/images/pkg/datasizes"
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/distro"
@@ -338,9 +333,6 @@ func defaultAzureKernelOptions(rd *rhel.Distribution, a arch.Arch) []string {
 	return kargs
 }
 
-//go:embed temp-disk-dataloss-warning.sh
-var datalossWarningScriptContent string
-
 // based on https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/9/html/deploying_rhel_9_on_microsoft_azure/assembly_deploying-a-rhel-image-as-a-virtual-machine-on-microsoft-azure_cloud-content-azure#making-configuration-changes_configure-the-image-azure
 func defaultAzureImageConfig(rd *rhel.Distribution) *distro.ImageConfig {
 	ic := &distro.ImageConfig{
@@ -523,7 +515,7 @@ func defaultAzureImageConfig(rd *rhel.Distribution) *distro.ImageConfig {
 				},
 			}
 
-			datalossWarningScript, datalossSystemdUnit, err := CreateAzureDatalossWarningScriptAndUnit()
+			datalossWarningScript, datalossSystemdUnit, err := rhel.CreateAzureDatalossWarningScriptAndUnit()
 			if err != nil {
 				panic(err)
 			}
@@ -549,40 +541,4 @@ func defaultAzureImageConfig(rd *rhel.Distribution) *distro.ImageConfig {
 
 func sapAzureImageConfig(rd *rhel.Distribution) *distro.ImageConfig {
 	return sapImageConfig(rd.OsVersion()).InheritFrom(defaultAzureImageConfig(rd))
-}
-
-// Returns a filenode that embeds a script and a systemd unit to run it on
-// every boot.
-// The script writes a file named DATALOSS_WARNING_README.txt to the root of an
-// Azure ephemeral resource disk, if one is mounted, as a warning against using
-// the disk for data storage.
-// https://docs.microsoft.com/en-us/azure/virtual-machines/linux/managed-disks-overview#temporary-disk
-func CreateAzureDatalossWarningScriptAndUnit() (*fsnode.File, *osbuild.SystemdUnitCreateStageOptions, error) {
-	datalossWarningScriptPath := "/usr/local/sbin/temp-disk-dataloss-warning"
-	datalossWarningScript, err := fsnode.NewFile(datalossWarningScriptPath, common.ToPtr(os.FileMode(0755)), nil, nil, []byte(datalossWarningScriptContent))
-	if err != nil {
-		return nil, nil, fmt.Errorf("rhel9/azure: error creating file node for dataloss warning script: %w", err)
-	}
-
-	systemdUnit := &osbuild.SystemdUnitCreateStageOptions{
-		Filename: "temp-disk-dataloss-warning.service",
-		UnitType: osbuild.SystemUnitType,
-		UnitPath: osbuild.EtcUnitPath,
-		Config: osbuild.SystemdUnit{
-			Unit: &osbuild.UnitSection{
-				Description: "Azure temporary resource disk dataloss warning file creation",
-				After:       []string{"multi-user.target", "cloud-final.service"},
-			},
-			Service: &osbuild.ServiceSection{
-				Type:           osbuild.OneshotServiceType,
-				ExecStart:      []string{datalossWarningScriptPath},
-				StandardOutput: "journal+console",
-			},
-			Install: &osbuild.InstallSection{
-				WantedBy: []string{"default.target"},
-			},
-		},
-	}
-
-	return datalossWarningScript, systemdUnit, nil
 }

@@ -30,8 +30,6 @@ func mkImageInstaller() *rhel.ImageType {
 
 	it.DefaultInstallerConfig = &distro.InstallerConfig{
 		AdditionalDracutModules: []string{
-			"prefixdevname",
-			"prefixdevname-tools",
 			"ifcfg",
 		},
 	}

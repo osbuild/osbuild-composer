@@ -88,7 +88,7 @@ func mkEdgeRawImgType() *rhel.ImageType {
 	it.DefaultSize = 10 * datasizes.GibiByte
 	it.RPMOSTree = true
 	it.Bootable = true
-	it.BasePartitionTables = edgeBasePartitionTables
+	it.BasePartitionTables = partitionTables
 	it.UnsupportedPartitioningModes = []disk.PartitioningMode{
 		disk.AutoLVMPartitioningMode,
 		disk.LVMPartitioningMode,
@@ -117,8 +117,6 @@ func mkEdgeInstallerImgType(rd *rhel.Distribution) *rhel.ImageType {
 	}
 	it.DefaultInstallerConfig = &distro.InstallerConfig{
 		AdditionalDracutModules: []string{
-			"prefixdevname",
-			"prefixdevname-tools",
 			"ifcfg",
 		},
 	}
@@ -164,7 +162,7 @@ func mkEdgeSimplifiedInstallerImgType(rd *rhel.Distribution) *rhel.ImageType {
 	it.Bootable = true
 	it.BootISO = true
 	it.ISOLabelFn = distroISOLabelFunc
-	it.BasePartitionTables = edgeBasePartitionTables
+	it.BasePartitionTables = partitionTables
 	it.UnsupportedPartitioningModes = []disk.PartitioningMode{
 		disk.AutoLVMPartitioningMode,
 		disk.LVMPartitioningMode,
@@ -197,7 +195,7 @@ func mkMinimalRawImgType() *rhel.ImageType {
 	it.KernelOptions = []string{"ro"}
 	it.Bootable = true
 	it.DefaultSize = 2 * datasizes.GibiByte
-	it.BasePartitionTables = defaultBasePartitionTables
+	it.BasePartitionTables = partitionTables
 
 	return it
 }
