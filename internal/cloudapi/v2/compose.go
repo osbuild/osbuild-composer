@@ -1429,13 +1429,5 @@ func decodeMinsize(size *Minsize) (uint64, error) {
 		return 0, nil
 	}
 
-	if sizeStr, err := size.AsMinsize1(); err == nil {
-		return datasizes.Parse(sizeStr)
-	}
-
-	if sizeUint, err := size.AsMinsize0(); err == nil {
-		return sizeUint, err
-	}
-
-	return 0, fmt.Errorf("failed to convert value \"%v\" to number", size)
+	return datasizes.Parse(*size)
 }
