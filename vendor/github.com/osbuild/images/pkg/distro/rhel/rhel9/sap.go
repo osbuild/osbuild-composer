@@ -1,6 +1,7 @@
 package rhel9
 
 import (
+	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/osbuild"
 )
@@ -103,16 +104,6 @@ func sapImageConfig(osVersion string) *distro.ImageConfig {
 			),
 		},
 		// E4S/EUS
-		DNFConfig: []*osbuild.DNFConfigStageOptions{
-			osbuild.NewDNFConfigStageOptions(
-				[]osbuild.DNFVariable{
-					{
-						Name:  "releasever",
-						Value: osVersion,
-					},
-				},
-				nil,
-			),
-		},
+		DNFSetReleaseVerVar: common.ToPtr(true),
 	}
 }

@@ -35,52 +35,123 @@
       - &efi_system_partition_uuid "68B2905B-DF3E-4FB3-80FA-49D1E773AA33"
       - &efi_filesystem_uuid "7B77-95E7"
 
+    # the invidual partitions for easier composibility
+    partitions:
+      - &default_partition_table_part_bios
+        size: 1_048_576  # 1 MiB
+        bootable: true
+        type: *bios_boot_partition_guid
+        uuid: *bios_boot_partition_uuid
+      - &default_partition_table_part_efi
+        size: 209_715_200  # 200 MiB
+        type: *efi_system_partition_guid
+        uuid: *efi_system_partition_uuid
+        payload_type: "filesystem"
+        payload:
+          type: vfat
+          uuid: *efi_filesystem_uuid
+          mountpoint: "/boot/efi"
+          label: "EFI-SYSTEM"
+          fstab_options: "defaults,uid=0,gid=0,umask=077,shortname=winnt"
+          fstab_freq: 0
+          fstab_passno: 2
+      - &default_partition_table_part_boot
+        size: 524_288_000  # 500 * MiB
+        type: *filesystem_data_guid
+        uuid: *data_partition_uuid
+        payload_type: "filesystem"
+        payload:
+          type: "ext4"
+          mountpoint: "/boot"
+          label: "boot"
+          fstab_options: "defaults"
+          fstab_freq: 0
+          fstab_passno: 0
+      - &default_partition_table_part_root
+        size: 2_147_483_648  # 2 * datasizes.GibiByte,
+        type: *filesystem_data_guid
+        uuid: *root_partition_uuid
+        payload_type: "filesystem"
+        payload: &default_partition_table_part_root_payload
+          type: "ext4"
+          label: "root"
+          mountpoint: "/"
+          fstab_options: "defaults"
+          fstab_freq: 0
+          fstab_passno: 0
+      # iot partitions
+      - &iot_base_partition_table_part_efi
+        size: 525_336_576  # 501 * datasizes.MebiByte
+        type: *efi_system_partition_guid
+        uuid: *efi_system_partition_uuid
+        payload_type: "filesystem"
+        payload:
+          type: vfat
+          uuid: *efi_filesystem_uuid
+          mountpoint: "/boot/efi"
+          label: "EFI-SYSTEM"
+          fstab_options: "umask=0077,shortname=winnt"
+          fstab_freq: 0
+          fstab_passno: 2
+      - &iot_base_partition_table_part_boot
+        size: 1_073_741_824  # 1 * datasizes.GibiByte,
+        type: *filesystem_data_guid
+        uuid: *data_partition_uuid
+        payload_type: "filesystem"
+        payload:
+          type: "ext4"
+          label: "boot"
+          mountpoint: "/boot"
+          fstab_options: "defaults"
+          fstab_freq: 1
+          fstab_passno: 2
+      - &iot_base_partition_table_part_root
+        size: 2_693_791_744  # 2569 * datasizes.MebiByte,
+        type: *filesystem_data_guid
+        uuid: *root_partition_uuid
+        payload_type: "filesystem"
+        payload: &iot_base_partition_table_part_root_payload
+          type: "ext4"
+          label: "root"
+          mountpoint: "/"
+          fstab_options: "defaults,ro"
+          fstab_freq: 1
+          fstab_passno: 1
+      # identical to above but has "fstab_options"
+      - &iot_base_partition_table_part_root_fstab_ro
+        <<: *iot_base_partition_table_part_root
+        payload:
+          <<: *iot_base_partition_table_part_root_payload
+          fstab_options: "defaults,ro"
+      # minimal raw aarch64
+      - &iot_base_partition_table_part_efi_aarch64
+        <<: *iot_base_partition_table_part_efi
+        bootable: true
+        type: *fat16_bdosid
+        uuid: ""
+      - &iot_base_partition_table_part_boot_aarch64
+        <<: *iot_base_partition_table_part_boot
+        type: *filesystem_linux_dosid
+        uuid: ""
+      - &iot_base_partition_table_part_root_aarch64
+        <<: *iot_base_partition_table_part_root
+        type: *filesystem_linux_dosid
+        uuid: ""
+      - &iot_base_partition_table_part_root_fstab_ro_aarch64
+        <<: *iot_base_partition_table_part_root_aarch64
+        payload:
+          <<: *iot_base_partition_table_part_root_payload
+          fstab_options: "defaults,ro"
+      
     default_partition_tables: &default_partition_tables
       x86_64:
         uuid: "D209C89E-EA5E-4FBD-B161-B461CCE297E0"
         type: "gpt"
         partitions:
-          - size: 1_048_576  # 1 MiB
-            bootable: true
-            type: *bios_boot_partition_guid
-            uuid: *bios_boot_partition_uuid
-          - &default_partition_table_part_efi
-            size: 209_715_200  # 200 MiB
-            type: *efi_system_partition_guid
-            uuid: *efi_system_partition_uuid
-            payload_type: "filesystem"
-            payload:
-              type: vfat
-              uuid: *efi_filesystem_uuid
-              mountpoint: "/boot/efi"
-              label: "EFI-SYSTEM"
-              fstab_options: "defaults,uid=0,gid=0,umask=077,shortname=winnt"
-              fstab_freq: 0
-              fstab_passno: 2
-          - &default_partition_table_part_boot
-            size: 524_288_000  # 500 * MiB
-            type: *filesystem_data_guid
-            uuid: *data_partition_uuid
-            payload_type: "filesystem"
-            payload:
-              type: "ext4"
-              mountpoint: "/boot"
-              label: "boot"
-              fstab_options: "defaults"
-              fstab_freq: 0
-              fstab_passno: 0
-          - &default_partition_table_part_root
-            size: 2_147_483_648  # 2 * datasizes.GibiByte,
-            type: *filesystem_data_guid
-            uuid: *root_partition_uuid
-            payload_type: "filesystem"
-            payload:
-              type: "ext4"
-              label: "root"
-              mountpoint: "/"
-              fstab_options: "defaults"
-              fstab_freq: 0
-              fstab_passno: 0
+          - *default_partition_table_part_bios
+          - *default_partition_table_part_efi
+          - *default_partition_table_part_boot
+          - *default_partition_table_part_root
       aarch64: &default_partition_table_aarch64
         uuid: "D209C89E-EA5E-4FBD-B161-B461CCE297E0"
         type: "gpt"
@@ -154,63 +225,22 @@
       riscv64: *minimal_raw_partition_table_aarch64
 
     iot_base_partition_tables: &iot_base_partition_tables
-      x86_64:
+      x86_64: &iot_base_partition_table_x86_64
         uuid: "D209C89E-EA5E-4FBD-B161-B461CCE297E0"
         type: "gpt"
         start_offset: 8_388_608  # 8 * datasizes.MebiByte
         partitions:
-          - &iot_base_partition_table_part_efi
-            size: 525_336_576  # 501 * datasizes.MebiByte
-            type: *efi_system_partition_guid
-            uuid: *efi_system_partition_uuid
-            payload_type: "filesystem"
-            payload:
-              type: vfat
-              uuid: *efi_filesystem_uuid
-              mountpoint: "/boot/efi"
-              label: "EFI-SYSTEM"
-              fstab_options: "umask=0077,shortname=winnt"
-              fstab_freq: 0
-              fstab_passno: 2
-          - &iot_base_partition_table_part_boot
-            size: 1_073_741_824  # 1 * datasizes.GibiByte,
-            type: *filesystem_data_guid
-            uuid: *data_partition_uuid
-            payload_type: "filesystem"
-            payload:
-              type: "ext4"
-              label: "boot"
-              mountpoint: "/boot"
-              fstab_options: "defaults"
-              fstab_freq: 1
-              fstab_passno: 2
-          - &iot_base_partition_table_part_root
-            size: 2_693_791_744  # 2569 * datasizes.MebiByte,
-            type: *filesystem_data_guid
-            uuid: *root_partition_uuid
-            payload_type: "filesystem"
-            payload:
-              type: "ext4"
-              label: "root"
-              mountpoint: "/"
-              fstab_options: "defaults,ro"
-              fstab_freq: 1
-              fstab_passno: 1
+          - *iot_base_partition_table_part_efi
+          - *iot_base_partition_table_part_boot
+          - *iot_base_partition_table_part_root
       aarch64: &iot_base_partition_table_aarch64
         uuid: "0xc1748067"
         type: "dos"
         start_offset: 8_388_608  # 8 * datasizes.MebiByte
         partitions:
-          - <<: *iot_base_partition_table_part_efi
-            bootable: true
-            type: *fat16_bdosid
-            uuid: ""
-          - <<: *iot_base_partition_table_part_boot
-            type: *filesystem_linux_dosid
-            uuid: ""
-          - <<: *iot_base_partition_table_part_root
-            type: *filesystem_linux_dosid
-            uuid: ""
+          - *iot_base_partition_table_part_efi_aarch64
+          - *iot_base_partition_table_part_boot_aarch64
+          - *iot_base_partition_table_part_root_aarch64
 
     iot_simplified_installer_partition_tables: &iot_simplified_installer_partition_tables
       x86_64: &iot_simplified_installer_partition_tables_x86
@@ -441,13 +471,22 @@ image_types:
   iot_raw_xz:
     partition_table:
       <<: *iot_base_partition_tables
-    partition_table_override:
+    partition_tables_override:
       condition:
         version_greater_or_equal:
           "42":
-            - partition_index: 2
-              fstab_options: "defaults,ro"
-
+            x86_64:
+              <<: *iot_base_partition_table_x86_64
+              partitions:
+                - *iot_base_partition_table_part_efi
+                - *iot_base_partition_table_part_boot
+                - *iot_base_partition_table_part_root_fstab_ro
+            aarch64:
+              <<: *iot_base_partition_table_aarch64
+              partitions:
+                - *iot_base_partition_table_part_efi_aarch64
+                - *iot_base_partition_table_part_boot_aarch64
+                - *iot_base_partition_table_part_root_fstab_ro_aarch64
   iot_qcow2:
     partition_table:
       <<: *iot_base_partition_tables
@@ -668,6 +707,7 @@ image_types:
           - "perl-interpreter"
           - "pigz"
           - "plymouth"
+          - "prefixdevname"
           - "python3-pyatspi"
           - "rdma-core"
           - "realtek-firmware"

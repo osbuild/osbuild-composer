@@ -529,11 +529,245 @@
           include:
             - "insights-client"
             - "subscription-manager-cockpit"
-    
+
+  partitioning:
+    ids:
+      - &prep_partition_dosid "41"
+      - &filesystem_linux_dosid "83"
+      - &fat16_bdosid "06"
+    guids:
+      - &bios_boot_partition_guid "21686148-6449-6E6F-744E-656564454649"
+      - &efi_system_partition_guid "C12A7328-F81F-11D2-BA4B-00A0C93EC93B"
+      - &filesystem_data_guid "0FC63DAF-8483-4772-8E79-3D69D8477DE4"
+      - &xboot_ldr_partition_guid "BC13C2FF-59E6-4262-A352-B275FD6F7172"
+    # static UUIDs for partitions and filesystems
+    # NOTE(akoutsou): These are unnecessary and have stuck around since the
+    # beginning where (I believe) the goal was to have predictable,
+    # reproducible partition tables. They might be removed soon in favour of
+    # proper, random UUIDs, with reproducibility being controlled by fixing
+    # rng seeds.
+    uuids:
+      - &bios_boot_partition_uuid "FAC7F1FB-3E8D-4137-A512-961DE09A5549"
+      - &root_partition_uuid "6264D520-3FB9-423F-8AB8-7A0A8E3D3562"
+      - &data_partition_uuid "CB07C243-BC44-4717-853E-28852021225B"
+      - &efi_system_partition_uuid "68B2905B-DF3E-4FB3-80FA-49D1E773AA33"
+      - &efi_filesystem_uuid "7B77-95E7"
+
+    partitions:
+      - &default_partition_table_part_bios
+        size: 1_048_576  # 1 MiB
+        bootable: true
+        type: *bios_boot_partition_guid
+        uuid: *bios_boot_partition_uuid
+      - &default_partition_table_part_efi
+        size: 104_857_600  # 100 MiB
+        type: *efi_system_partition_guid
+        uuid: *efi_system_partition_uuid
+        payload_type: "filesystem"
+        payload:
+          type: vfat
+          uuid: *efi_filesystem_uuid
+          mountpoint: "/boot/efi"
+          label: "EFI-SYSTEM"
+          fstab_options: "defaults,uid=0,gid=0,umask=077,shortname=winnt"
+          fstab_freq: 0
+          fstab_passno: 2
+      - &default_partition_table_part_root
+        size: 2_147_483_648  # 2 * datasizes.GibiByte,
+        type: *filesystem_data_guid
+        uuid: *root_partition_uuid
+        payload_type: "filesystem"
+        payload: &default_partition_table_part_root_payload
+          type: "xfs"
+          label: "root"
+          mountpoint: "/"
+          fstab_options: "defaults"
+          fstab_freq: 0
+          fstab_passno: 0
+      # ec2
+      - &ec2_partition_table_part_boot
+        size: 1_073_741_824  # 1 GiB
+        type: *filesystem_data_guid
+        uuid: *data_partition_uuid
+        payload_type: "filesystem"
+        payload:
+          type: "xfs"
+          mountpoint: "/boot"
+          fstab_options: "defaults"
+          fstab_freq: 0
+          fstab_passno: 0
+      - &ec2_partition_table_part_boot512
+        <<: *ec2_partition_table_part_boot
+        size: 536_870_912  # 512MiB
+
+    default_partition_tables: &default_partition_tables
+      x86_64:
+        uuid: "D209C89E-EA5E-4FBD-B161-B461CCE297E0"
+        type: "gpt"
+        partitions:
+          - *default_partition_table_part_bios
+          - *default_partition_table_part_efi
+          - *default_partition_table_part_root
+      aarch64: &default_partition_table_aarch64
+        uuid: "D209C89E-EA5E-4FBD-B161-B461CCE297E0"
+        type: "gpt"
+        partitions:
+          - *default_partition_table_part_efi
+          - *default_partition_table_part_root
+      ppc64le:
+        uuid: "0x14fc63d2"
+        type: "dos"
+        partitions:
+          - size: 4_194_304  # 4 MiB
+            bootable: true
+            type: *prep_partition_dosid
+          - &default_partition_table_part_root_ppc64le
+            size: 2_147_483_648  # 2 * datasizes.GibiByte,
+            payload_type: "filesystem"
+            payload:
+              <<: *default_partition_table_part_root_payload
+              label: ""
+      s390x:
+        uuid: "0x14fc63d2"
+        type: "dos"
+        partitions:
+          - <<: *default_partition_table_part_root_ppc64le
+            bootable: true
+
+    edge_base_partition_tables: &edge_base_partition_tables
+      x86_64:
+        uuid: "D209C89E-EA5E-4FBD-B161-B461CCE297E0"
+        type: "gpt"
+        partitions:
+          - *default_partition_table_part_bios
+          - &edge_base_partition_table_part_efi
+            size: 133_169_152  # 127 MiB
+            type: *efi_system_partition_guid
+            uuid: *efi_system_partition_uuid
+            payload_type: "filesystem"
+            payload:
+              type: vfat
+              uuid: *efi_filesystem_uuid
+              mountpoint: "/boot/efi"
+              label: "EFI-SYSTEM"
+              fstab_options: "defaults,uid=0,gid=0,umask=077,shortname=winnt"
+              fstab_freq: 0
+              fstab_passno: 2
+          - &edge_base_partition_table_part_boot
+            size: 402_653_184  # 384 * MiB
+            type: *filesystem_data_guid
+            uuid: *data_partition_uuid
+            payload_type: "filesystem"
+            payload:
+              type: "xfs"
+              mountpoint: "/boot"
+              label: "boot"
+              fstab_options: "defaults"
+              fstab_freq: 1
+              fstab_passno: 1
+          - &edge_base_partition_table_part_root
+            size: 2_147_483_648  # 2 * datasizes.GibiByte,
+            type: *filesystem_data_guid
+            uuid: *root_partition_uuid
+            payload_type: "luks"
+            payload:
+              label: "crypt_root"
+              cipher: "cipher_null"
+              passphrase: "osbuild"
+              pbkdf:
+                memory: 32
+                iterations: 4
+                parallelism: 1
+              clevis:
+                pin: "null"
+                policy: "{}"
+                remove_passphrase: true
+              payload_type: "filesystem"
+              payload:
+                type: "xfs"
+                label: "root"
+                mountpoint: "/"
+                fstab_options: "defaults"
+                fstab_freq: 0
+                fstab_passno: 0
+      aarch64: &edge_base_partition_table_aarch64
+        uuid: "D209C89E-EA5E-4FBD-B161-B461CCE297E0"
+        type: "gpt"
+        partitions:
+          - <<: *edge_base_partition_table_part_efi
+            type: *efi_system_partition_guid
+            uuid: *efi_system_partition_uuid
+          - *edge_base_partition_table_part_boot
+          - *edge_base_partition_table_part_root
+
+    ec2_partition_tables: &ec2_partition_tables
+      x86_64: &ec2_partition_table_x86_64
+        uuid: "D209C89E-EA5E-4FBD-B161-B461CCE297E0"
+        type: "gpt"
+        partitions:
+          - *default_partition_table_part_bios
+          - &ec2_partition_table_part_efi
+            size: 209_715_200  # 200 MiB
+            type: *efi_system_partition_guid
+            uuid: *efi_system_partition_uuid
+            payload_type: "filesystem"
+            payload:
+              type: vfat
+              uuid: *efi_filesystem_uuid
+              mountpoint: "/boot/efi"
+              label: "EFI-SYSTEM"
+              fstab_options: "defaults,uid=0,gid=0,umask=077,shortname=winnt"
+              fstab_freq: 0
+              fstab_passno: 2
+          - &ec2_partition_table_part_root
+            size: 2_147_483_648  # 2 * datasizes.GibiByte,
+            type: *filesystem_data_guid
+            uuid: *root_partition_uuid
+            payload_type: "filesystem"
+            payload:
+              type: "xfs"
+              label: "root"
+              mountpoint: "/"
+              fstab_options: "defaults"
+              fstab_freq: 0
+              fstab_passno: 0
+      aarch64: &ec2_partition_table_aarch64
+        uuid: "D209C89E-EA5E-4FBD-B161-B461CCE297E0"
+        type: "gpt"
+        partitions:
+          - *ec2_partition_table_part_efi
+          - *ec2_partition_table_part_boot
+          - *ec2_partition_table_part_root
+
+  ec2_partition_tables_override: &ec2_partition_tables_override
+    condition:
+      version_less_than:
+        "8.10":
+          aarch64:
+            <<: *ec2_partition_table_aarch64
+            partitions:
+              - *ec2_partition_table_part_efi
+              - *ec2_partition_table_part_boot512
+              - *ec2_partition_table_part_root
+        "8.9":
+          x86_64:
+            <<: *ec2_partition_table_x86_64
+            partitions:
+              - *default_partition_table_part_bios
+              - *ec2_partition_table_part_root
+      distro_name:
+        # we need this override to ensure that centos always gets
+        # the latest partition-tables, otherwise "centos-8" is
+        # less than "8 <= 8.9"
+        "centos":
+          x86_64:
+            <<: *ec2_partition_table_x86_64
+          aarch64:
+            <<: *ec2_partition_table_aarch64
+
 image_config:
   default:
     default_kernel: "kernel"
-    # XXX: this needs to be conditional for centos and rhel
     default_oscap_datastream: "/usr/share/xml/scap/ssg/content/ssg-rhel8-ds.xml"
     install_weak_deps: true
     kernel_options_bootloader: true
@@ -605,6 +839,10 @@ image_types:
                 - "subscription-manager-cockpit"
 
   ec2: &ec2
+    partition_table:
+      <<: *ec2_partition_tables
+    partition_tables_override:
+      <<: *ec2_partition_tables_override
     package_sets:
       - *ec2_common_pkgset
       - include:
@@ -618,6 +856,7 @@ image_types:
                 - "redhat-cloud-client-configuration"
 
   ec2_ha:
+    <<: *ec2
     package_sets:
       - *ec2_common_pkgset
       - include:
@@ -634,10 +873,12 @@ image_types:
                 - "redhat-cloud-client-configuration"
 
   ami:
+    <<: *ec2
     package_sets:
       - *ec2_common_pkgset
 
   ec2_sap:
+    <<: *ec2
     package_sets:
       - *ec2_common_pkgset
       - *sap_pkgset
@@ -688,6 +929,8 @@ image_types:
           - "firewalld"
 
   vhd:
+    partition_table:
+      <<: *default_partition_tables
     package_sets:
       - *azure_common_pkgset
       - &azure_pkgset
@@ -846,7 +1089,13 @@ image_types:
       - *anaconda_pkgset
       - *anaconda_boot_pkgset
 
+  edge_raw_image:
+    partition_table:
+      <<: *edge_base_partition_tables
+
   edge_simplified_installer:
+    partition_table:
+      <<: *edge_base_partition_tables
     package_sets:
       # TODO: non-arch-specific package set handling for installers
       # This image type requires build packages for installers and
@@ -910,7 +1159,9 @@ image_types:
       - include:
           - "nginx"
 
-  vmdk:
+  vmdk: &vmdk
+    partition_table:
+      <<: *default_partition_tables
     package_sets: &vmdk_pkgsets
       - include:
           - "@core"
@@ -924,27 +1175,32 @@ image_types:
           - "dracut-config-rescue"
           - "rng-tools"
 
-  ova:
-    package_sets: *vmdk_pkgsets
+  ova: *vmdk
 
-  gce:
+  gce: &gce
+    partition_table:
+      <<: *default_partition_tables
     package_sets:
       - *gce_common_pkgset
 
   gce_rhui:
+    <<: *gce
     package_sets:
       - *gce_common_pkgset
       - include:
           - "google-rhui-client-rhel8"
 
-  qcow2:
+  qcow2: &qcow2
+    partition_table:
+      <<: *default_partition_tables
     package_sets: &qcow2_pkgset
       - *qcow2_common_pkgset
 
-  oci:
-    package_sets: *qcow2_pkgset
+  oci: *qcow2
 
   openstack:
+    partition_table:
+      <<: *default_partition_tables
     package_sets:
       - include:
           - "@Core"
@@ -1066,6 +1322,8 @@ image_types:
           - "xz"
 
   minimal_raw:
+    partition_table:
+      <<: *default_partition_tables
     package_sets:
       - include:
           - "@core"

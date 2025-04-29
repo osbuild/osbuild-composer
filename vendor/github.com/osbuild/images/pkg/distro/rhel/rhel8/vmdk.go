@@ -26,7 +26,7 @@ func mkVmdkImgType() *rhel.ImageType {
 	it.KernelOptions = vmdkKernelOptions()
 	it.Bootable = true
 	it.DefaultSize = 4 * datasizes.GibiByte
-	it.BasePartitionTables = defaultBasePartitionTables
+	it.BasePartitionTables = partitionTables
 
 	return it
 }
@@ -48,7 +48,7 @@ func mkOvaImgType() *rhel.ImageType {
 	it.KernelOptions = vmdkKernelOptions()
 	it.Bootable = true
 	it.DefaultSize = 4 * datasizes.GibiByte
-	it.BasePartitionTables = defaultBasePartitionTables
+	it.BasePartitionTables = partitionTables
 
 	return it
 }

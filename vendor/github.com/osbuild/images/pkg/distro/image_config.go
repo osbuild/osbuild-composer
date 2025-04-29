@@ -44,20 +44,22 @@ type ImageConfig struct {
 
 	// for RHSM configuration, we need to potentially distinguish the case
 	// when the user want the image to be subscribed on first boot and when not
-	RHSMConfig          map[subscription.RHSMStatus]*subscription.RHSMConfig
-	SystemdLogind       []*osbuild.SystemdLogindStageOptions
-	CloudInit           []*osbuild.CloudInitStageOptions
-	Modprobe            []*osbuild.ModprobeStageOptions
-	DracutConf          []*osbuild.DracutConfStageOptions
-	SystemdDropin       []*osbuild.SystemdUnitStageOptions
-	SystemdUnit         []*osbuild.SystemdUnitCreateStageOptions
-	Authselect          *osbuild.AuthselectStageOptions
-	SELinuxConfig       *osbuild.SELinuxConfigStageOptions
-	Tuned               *osbuild.TunedStageOptions
-	Tmpfilesd           []*osbuild.TmpfilesdStageOptions
-	PamLimitsConf       []*osbuild.PamLimitsConfStageOptions
-	Sysctld             []*osbuild.SysctldStageOptions
+	RHSMConfig    map[subscription.RHSMStatus]*subscription.RHSMConfig
+	SystemdLogind []*osbuild.SystemdLogindStageOptions
+	CloudInit     []*osbuild.CloudInitStageOptions
+	Modprobe      []*osbuild.ModprobeStageOptions
+	DracutConf    []*osbuild.DracutConfStageOptions
+	SystemdDropin []*osbuild.SystemdUnitStageOptions
+	SystemdUnit   []*osbuild.SystemdUnitCreateStageOptions
+	Authselect    *osbuild.AuthselectStageOptions
+	SELinuxConfig *osbuild.SELinuxConfigStageOptions
+	Tuned         *osbuild.TunedStageOptions
+	Tmpfilesd     []*osbuild.TmpfilesdStageOptions
+	PamLimitsConf []*osbuild.PamLimitsConfStageOptions
+	Sysctld       []*osbuild.SysctldStageOptions
+	// Do not use DNFConfig directly, call "DNFConfigOptions()"
 	DNFConfig           []*osbuild.DNFConfigStageOptions
+	DNFSetReleaseVerVar *bool
 	SshdConfig          *osbuild.SshdConfigStageOptions
 	Authconfig          *osbuild.AuthconfigStageOptions
 	PwQuality           *osbuild.PwqualityConfStageOptions
@@ -144,6 +146,35 @@ func (c *ImageConfig) InheritFrom(parentConfig *ImageConfig) *ImageConfig {
 		}
 	}
 	return &finalConfig
+}
+
+func (c *ImageConfig) DNFConfigOptions(osVersion string) []*osbuild.DNFConfigStageOptions {
+	if c.DNFSetReleaseVerVar == nil || !*c.DNFSetReleaseVerVar {
+		return c.DNFConfig
+	}
+
+	// We currently have no use-case where we set both a custom
+	// DNFConfig and DNFSetReleaseVerVar. If we have one this needs
+	// to change and we need to decide if we want two dnf
+	// configurations or if we want to merge the variable into all
+	// existing once (exactly once) and we need to consider what to
+	// do about potentially conflicting (manually set) "releasever"
+	// values by the user.
+	if c.DNFConfig != nil {
+		err := fmt.Errorf("internal error: currently DNFConfig and DNFSetReleaseVerVar cannot be used together, please reporting this as a feature request")
+		panic(err)
+	}
+	return []*osbuild.DNFConfigStageOptions{
+		osbuild.NewDNFConfigStageOptions(
+			[]osbuild.DNFVariable{
+				{
+					Name:  "releasever",
+					Value: osVersion,
+				},
+			},
+			nil,
+		),
+	}
 }
 
 func (c *ImageConfig) WSLConfStageOptions() *osbuild.WSLConfStageOptions {

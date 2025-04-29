@@ -32,7 +32,7 @@ func mkGceImgType(rd distro.Distro) *rhel.ImageType {
 	it.Bootable = true
 	it.DefaultSize = 20 * datasizes.GibiByte
 	// TODO: the base partition table still contains the BIOS boot partition, but the image is UEFI-only
-	it.BasePartitionTables = defaultBasePartitionTables
+	it.BasePartitionTables = partitionTables
 
 	return it
 }
@@ -56,7 +56,7 @@ func mkGceRhuiImgType(rd distro.Distro) *rhel.ImageType {
 	it.Bootable = true
 	it.DefaultSize = 20 * datasizes.GibiByte
 	// TODO: the base partition table still contains the BIOS boot partition, but the image is UEFI-only
-	it.BasePartitionTables = defaultBasePartitionTables
+	it.BasePartitionTables = partitionTables
 
 	return it
 }

@@ -227,7 +227,7 @@ func osCustomizations(
 	osc.Tmpfilesd = imageConfig.Tmpfilesd
 	osc.PamLimitsConf = imageConfig.PamLimitsConf
 	osc.Sysctld = imageConfig.Sysctld
-	osc.DNFConfig = imageConfig.DNFConfig
+	osc.DNFConfig = imageConfig.DNFConfigOptions(t.arch.distro.osVersion)
 	osc.SshdConfig = imageConfig.SshdConfig
 	osc.AuthConfig = imageConfig.Authconfig
 	osc.PwQuality = imageConfig.PwQuality
@@ -508,6 +508,9 @@ func imageInstallerImage(workload workload.Workload,
 		img.AdditionalDrivers = append(img.AdditionalDrivers, installerConfig.AdditionalDrivers...)
 	}
 
+	// On Fedora anaconda needs dbus-broker, but isn't added when dracut runs.
+	img.AdditionalDracutModules = append(img.AdditionalDracutModules, "dbus-broker")
+
 	d := t.arch.distro
 
 	img.Product = d.product
@@ -527,7 +530,7 @@ func imageInstallerImage(workload workload.Workload,
 
 	img.Filename = t.Filename()
 
-	img.RootfsCompression = "lz4"
+	img.RootfsCompression = "xz" // This also triggers using the bcj filter
 	if common.VersionGreaterThanOrEqual(img.OSVersion, VERSION_ROOTFS_SQUASHFS) {
 		img.RootfsType = manifest.SquashfsRootfs
 	}
@@ -730,6 +733,9 @@ func iotInstallerImage(workload workload.Workload,
 		img.AdditionalDrivers = append(img.AdditionalDrivers, installerConfig.AdditionalDrivers...)
 	}
 
+	// On Fedora anaconda needs dbus-broker, but isn't added when dracut runs.
+	img.AdditionalDracutModules = append(img.AdditionalDracutModules, "dbus-broker")
+
 	img.Product = d.product
 	img.Variant = "IoT"
 	img.OSVersion = d.osVersion
@@ -743,7 +749,7 @@ func iotInstallerImage(workload workload.Workload,
 
 	img.Filename = t.Filename()
 
-	img.RootfsCompression = "lz4"
+	img.RootfsCompression = "xz" // This also triggers using the bcj filter
 	if common.VersionGreaterThanOrEqual(img.OSVersion, VERSION_ROOTFS_SQUASHFS) {
 		img.RootfsType = manifest.SquashfsRootfs
 	}

@@ -7,12 +7,14 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
-
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 
+	"github.com/hashicorp/go-version"
 	"github.com/sirupsen/logrus"
+	"golang.org/x/exp/maps"
 	"gopkg.in/yaml.v3"
 
 	"github.com/osbuild/images/internal/common"
@@ -53,7 +55,7 @@ type imageType struct {
 	// archStr->partitionTable
 	PartitionTables map[string]*disk.PartitionTable `yaml:"partition_table"`
 	// override specific aspects of the partition table
-	PartitionTablesOverrides *partitionTablesOverrides `yaml:"partition_table_override"`
+	PartitionTablesOverrides *partitionTablesOverrides `yaml:"partition_tables_override"`
 }
 
 type packageSet struct {
@@ -70,60 +72,44 @@ type pkgSetConditions struct {
 }
 
 type partitionTablesOverrides struct {
-	Conditional *partitionTablesOverwriteConditional `yaml:"condition"`
+	Condition *partitionTablesOverwriteCondition `yaml:"condition"`
 }
 
-func (po *partitionTablesOverrides) Apply(it distro.ImageType, pt *disk.PartitionTable, replacements map[string]string) error {
-	if po == nil {
-		return nil
-	}
-	cond := po.Conditional
-	_, distroVersion := splitDistroNameVer(it.Arch().Distro().Name())
+type partitionTablesOverwriteCondition struct {
+	DistroName            map[string]map[string]*disk.PartitionTable `yaml:"distro_name,omitempty"`
+	VersionGreaterOrEqual map[string]map[string]*disk.PartitionTable `yaml:"version_greater_or_equal,omitempty"`
+	VersionLessThan       map[string]map[string]*disk.PartitionTable `yaml:"version_less_than,omitempty"`
+}
 
-	for gteqVer, geOverrides := range cond.VersionGreaterOrEqual {
-		if r, ok := replacements[gteqVer]; ok {
-			gteqVer = r
+// XXX: use slices.Backward() once we move to go1.23
+// hint: use "git blame" on this comment and just revert
+// the commit that adds it and you will have the 1.23 version
+func backward[Slice ~[]E, E any](s Slice) []E {
+	out := make([]E, 0, len(s))
+	for i := len(s) - 1; i >= 0; i-- {
+		out = append(out, s[i])
+	}
+	return out
+}
+
+// XXX: use slices.SortedFunc() once we move to go1.23
+// hint: use "git blame" on this comment and just revert
+// the commit that adds it and you will have the 1.23 version
+func versionLessThanSortedKeys[T any](m map[string]T) []string {
+	versions := maps.Keys(m)
+	slices.SortFunc(versions, func(a, b string) int {
+		ver1 := version.Must(version.NewVersion(a))
+		ver2 := version.Must(version.NewVersion(b))
+		switch {
+		case ver1 == ver2:
+			return 0
+		case ver2.LessThan(ver1):
+			return -1
+		default:
+			return 1
 		}
-		if common.VersionGreaterThanOrEqual(distroVersion, gteqVer) {
-			for _, overrideOp := range geOverrides {
-				if err := overrideOp.Apply(pt); err != nil {
-					return err
-				}
-			}
-		}
-	}
-
-	return nil
-}
-
-type partitionTablesOverwriteConditional struct {
-	VersionGreaterOrEqual map[string][]partitionTablesOverrideOp `yaml:"version_greater_or_equal,omitempty"`
-}
-
-type partitionTablesOverrideOp struct {
-	PartitionIndex int    `yaml:"partition_index"`
-	Size           uint64 `yaml:"size"`
-	FSTabOptions   string `yaml:"fstab_options"`
-}
-
-func (op *partitionTablesOverrideOp) Apply(pt *disk.PartitionTable) error {
-	selectPart := op.PartitionIndex
-	if selectPart > len(pt.Partitions) {
-		return fmt.Errorf("override %q part %v outside of partitionTable %+v", op, selectPart, pt)
-	}
-	if op.Size > 0 {
-		pt.Partitions[selectPart].Size = op.Size
-	}
-	if op.FSTabOptions != "" {
-		part := pt.Partitions[selectPart]
-		fs, ok := part.Payload.(*disk.Filesystem)
-		if !ok {
-			return fmt.Errorf("override %q part %v for fstab_options expecting filesystem got %T", op, selectPart, part)
-		}
-		fs.FSTabOptions = op.FSTabOptions
-	}
-
-	return nil
+	})
+	return versions
 }
 
 // DistroImageConfig returns the distro wide ImageConfig.
@@ -200,7 +186,9 @@ func PackageSet(it distro.ImageType, overrideTypeName string, replacements map[s
 					Exclude: distroNameSet.Exclude,
 				})
 			}
-
+			// note that we don't need to order here, as
+			// packageSets are strictly additive the order
+			// is irrelevant
 			for ltVer, ltSet := range pkgSet.Condition.VersionLessThan {
 				if r, ok := replacements[ltVer]; ok {
 					ltVer = r
@@ -253,13 +241,44 @@ func PartitionTable(it distro.ImageType, replacements map[string]string) (*disk.
 	arch := it.Arch()
 	archName := arch.Name()
 
+	if imgType.PartitionTablesOverrides != nil {
+		cond := imgType.PartitionTablesOverrides.Condition
+		distroName, distroVersion := splitDistroNameVer(it.Arch().Distro().Name())
+
+		for _, ltVer := range versionLessThanSortedKeys(cond.VersionLessThan) {
+			ltOverrides := cond.VersionLessThan[ltVer]
+			if r, ok := replacements[ltVer]; ok {
+				ltVer = r
+			}
+			if common.VersionLessThan(distroVersion, ltVer) {
+				for arch, overridePt := range ltOverrides {
+					imgType.PartitionTables[arch] = overridePt
+				}
+			}
+		}
+
+		for _, gteqVer := range backward(versionLessThanSortedKeys(cond.VersionGreaterOrEqual)) {
+			geOverrides := cond.VersionGreaterOrEqual[gteqVer]
+			if r, ok := replacements[gteqVer]; ok {
+				gteqVer = r
+			}
+			if common.VersionGreaterThanOrEqual(distroVersion, gteqVer) {
+				for arch, overridePt := range geOverrides {
+					imgType.PartitionTables[arch] = overridePt
+				}
+			}
+		}
+
+		if distroNameOverrides, ok := cond.DistroName[distroName]; ok {
+			for arch, overridePt := range distroNameOverrides {
+				imgType.PartitionTables[arch] = overridePt
+			}
+		}
+	}
+
 	pt, ok := imgType.PartitionTables[archName]
 	if !ok {
 		return nil, fmt.Errorf("%w (%q): %q", ErrNoPartitionTableForArch, typeName, archName)
-	}
-
-	if err := imgType.PartitionTablesOverrides.Apply(it, pt, replacements); err != nil {
-		return nil, err
 	}
 
 	return pt, nil

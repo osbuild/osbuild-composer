@@ -260,7 +260,7 @@ func osCustomizations(
 	osc.Tmpfilesd = imageConfig.Tmpfilesd
 	osc.PamLimitsConf = imageConfig.PamLimitsConf
 	osc.Sysctld = imageConfig.Sysctld
-	osc.DNFConfig = imageConfig.DNFConfig
+	osc.DNFConfig = imageConfig.DNFConfigOptions(t.arch.distro.osVersion)
 	osc.DNFAutomaticConfig = imageConfig.DNFAutomaticConfig
 	osc.YUMConfig = imageConfig.YumConfig
 	osc.SshdConfig = imageConfig.SshdConfig

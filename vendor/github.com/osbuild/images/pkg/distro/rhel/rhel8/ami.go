@@ -39,7 +39,7 @@ func mkAmiImgTypeX86_64() *rhel.ImageType {
 	it.KernelOptions = amiX86KernelOptions()
 	it.Bootable = true
 	it.DefaultSize = 10 * datasizes.GibiByte
-	it.BasePartitionTables = ec2PartitionTables
+	it.BasePartitionTables = partitionTables
 
 	return it
 }
@@ -63,7 +63,7 @@ func mkEc2ImgTypeX86_64(rd *rhel.Distribution) *rhel.ImageType {
 	it.KernelOptions = amiX86KernelOptions()
 	it.Bootable = true
 	it.DefaultSize = 10 * datasizes.GibiByte
-	it.BasePartitionTables = ec2PartitionTables
+	it.BasePartitionTables = partitionTables
 
 	return it
 }
@@ -87,7 +87,7 @@ func mkEc2HaImgTypeX86_64(rd *rhel.Distribution) *rhel.ImageType {
 	it.KernelOptions = amiX86KernelOptions()
 	it.Bootable = true
 	it.DefaultSize = 10 * datasizes.GibiByte
-	it.BasePartitionTables = ec2PartitionTables
+	it.BasePartitionTables = partitionTables
 
 	return it
 }
@@ -110,7 +110,7 @@ func mkAmiImgTypeAarch64() *rhel.ImageType {
 	it.KernelOptions = amiAarch64KernelOptions()
 	it.Bootable = true
 	it.DefaultSize = 10 * datasizes.GibiByte
-	it.BasePartitionTables = ec2PartitionTables
+	it.BasePartitionTables = partitionTables
 
 	return it
 }
@@ -134,7 +134,7 @@ func mkEc2ImgTypeAarch64(rd *rhel.Distribution) *rhel.ImageType {
 	it.KernelOptions = amiAarch64KernelOptions()
 	it.Bootable = true
 	it.DefaultSize = 10 * datasizes.GibiByte
-	it.BasePartitionTables = ec2PartitionTables
+	it.BasePartitionTables = partitionTables
 
 	return it
 }
@@ -158,7 +158,7 @@ func mkEc2SapImgTypeX86_64(rd *rhel.Distribution) *rhel.ImageType {
 	it.KernelOptions = amiSapKernelOptions()
 	it.Bootable = true
 	it.DefaultSize = 10 * datasizes.GibiByte
-	it.BasePartitionTables = ec2PartitionTables
+	it.BasePartitionTables = partitionTables
 
 	return it
 }

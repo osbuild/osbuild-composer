@@ -238,7 +238,6 @@
 image_config:
   default:
     default_kernel: "kernel"
-    # XXX: this needs to be conditional for centos and rhel  
     default_oscap_datastream: "/usr/share/xml/scap/ssg/content/ssg-rhel10-ds.xml"
     install_weak_deps: true
     locale: "C.UTF-8"
@@ -434,6 +433,7 @@ image_types:
           - "libertas-sd8686-firmware"
           - "libertas-sd8787-firmware"
           - "libertas-usb8388-firmware"
+          - "microcode_ctl"
           - "NetworkManager-config-server"
           - "plymouth"
           - "podman"
@@ -767,6 +767,9 @@ image_types:
           # - "gce-disk-expand"
           # cloud-init is a replacement for- "google-compute-engine" remove once the package is available
           - "cloud-init"
+          # 'cloud-utils-growpart' is needed by cloud-init to be able to resize the root partition. Remove once
+          # we move to GCP guest tools
+          - cloud-utils-growpart
           # Not explicitly included in GCP kickstart, but present on the image
           # for time synchronization
           - "chrony"

@@ -3,6 +3,7 @@ package rhel10
 import (
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/arch"
+	"github.com/osbuild/images/pkg/customizations/fsnode"
 	"github.com/osbuild/images/pkg/datasizes"
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/distro"
@@ -11,7 +12,7 @@ import (
 )
 
 // Azure image type
-func mkAzureImgType(rd *rhel.Distribution) *rhel.ImageType {
+func mkAzureImgType(rd *rhel.Distribution, a arch.Arch) *rhel.ImageType {
 	it := rhel.NewImageType(
 		"vhd",
 		"disk.vhd",
@@ -25,7 +26,7 @@ func mkAzureImgType(rd *rhel.Distribution) *rhel.ImageType {
 		[]string{"vpc"},
 	)
 
-	it.KernelOptions = defaultAzureKernelOptions()
+	it.KernelOptions = defaultAzureKernelOptions(a)
 	it.Bootable = true
 	it.DefaultSize = 4 * datasizes.GibiByte
 	it.DefaultImageConfig = defaultAzureImageConfig(rd)
@@ -35,7 +36,7 @@ func mkAzureImgType(rd *rhel.Distribution) *rhel.ImageType {
 }
 
 // Azure RHEL-internal image type
-func mkAzureInternalImgType(rd *rhel.Distribution) *rhel.ImageType {
+func mkAzureInternalImgType(rd *rhel.Distribution, a arch.Arch) *rhel.ImageType {
 	it := rhel.NewImageType(
 		"azure-rhui",
 		"disk.vhd.xz",
@@ -50,7 +51,7 @@ func mkAzureInternalImgType(rd *rhel.Distribution) *rhel.ImageType {
 	)
 
 	it.Compression = "xz"
-	it.KernelOptions = defaultAzureKernelOptions()
+	it.KernelOptions = defaultAzureKernelOptions(a)
 	it.Bootable = true
 	it.DefaultSize = 64 * datasizes.GibiByte
 	it.DefaultImageConfig = defaultAzureImageConfig(rd)
@@ -59,7 +60,7 @@ func mkAzureInternalImgType(rd *rhel.Distribution) *rhel.ImageType {
 	return it
 }
 
-func mkAzureSapInternalImgType(rd *rhel.Distribution) *rhel.ImageType {
+func mkAzureSapInternalImgType(rd *rhel.Distribution, a arch.Arch) *rhel.ImageType {
 	it := rhel.NewImageType(
 		"azure-sap-rhui",
 		"disk.vhd.xz",
@@ -74,7 +75,7 @@ func mkAzureSapInternalImgType(rd *rhel.Distribution) *rhel.ImageType {
 	)
 
 	it.Compression = "xz"
-	it.KernelOptions = defaultAzureKernelOptions()
+	it.KernelOptions = defaultAzureKernelOptions(a)
 	it.Bootable = true
 	it.DefaultSize = 64 * datasizes.GibiByte
 	it.DefaultImageConfig = sapAzureImageConfig(rd)
@@ -307,13 +308,23 @@ func azureInternalBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, b
 
 // IMAGE CONFIG
 
-// use loglevel=3 as described in the RHEL documentation and used in existing RHEL images built by MSFT
-func defaultAzureKernelOptions() []string {
-	return []string{"ro", "loglevel=3", "console=tty1", "console=ttyS0", "earlyprintk=ttyS0", "rootdelay=300"}
+func defaultAzureKernelOptions(a arch.Arch) []string {
+	kargs := []string{"ro", "loglevel=3", "nvme_core.io_timeout=240"}
+	switch a {
+	case arch.ARCH_AARCH64:
+		kargs = append(kargs, "console=ttyAMA0")
+	case arch.ARCH_X86_64:
+		kargs = append(kargs, "console=tty1", "console=ttyS0", "earlyprintk=ttyS0", "rootdelay=300")
+	}
+	return kargs
 }
 
 // based on https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/9/html/deploying_rhel_9_on_microsoft_azure/assembly_deploying-a-rhel-image-as-a-virtual-machine-on-microsoft-azure_cloud-content-azure#making-configuration-changes_configure-the-image-azure
 func defaultAzureImageConfig(rd *rhel.Distribution) *distro.ImageConfig {
+	datalossWarningScript, datalossSystemdUnit, err := rhel.CreateAzureDatalossWarningScriptAndUnit()
+	if err != nil {
+		panic(err)
+	}
 	ic := &distro.ImageConfig{
 		Keyboard: &osbuild.KeymapStageOptions{
 			Keymap: "us",
@@ -333,6 +344,7 @@ func defaultAzureImageConfig(rd *rhel.Distribution) *distro.ImageConfig {
 			"nm-cloud-setup.timer",
 			"sshd",
 			"waagent",
+			datalossSystemdUnit.Filename,
 		},
 		SshdConfig: &osbuild.SshdConfigStageOptions{
 			Config: osbuild.SshdConfigConfig{
@@ -369,6 +381,18 @@ func defaultAzureImageConfig(rd *rhel.Distribution) *distro.ImageConfig {
 				Filename: "blacklist-skylake-edac.conf",
 				Commands: osbuild.ModprobeConfigCmdList{
 					osbuild.NewModprobeConfigCmdBlacklist("skx_edac"),
+				},
+			},
+			{
+				Filename: "blacklist-intel_uncore.conf",
+				Commands: osbuild.ModprobeConfigCmdList{
+					osbuild.NewModprobeConfigCmdBlacklist("intel_uncore"),
+				},
+			},
+			{
+				Filename: "blacklist-acpi_cpufreq.conf",
+				Commands: osbuild.ModprobeConfigCmdList{
+					osbuild.NewModprobeConfigCmdBlacklist("acpi_cpufreq"),
 				},
 			},
 		},
@@ -412,8 +436,10 @@ func defaultAzureImageConfig(rd *rhel.Distribution) *distro.ImageConfig {
 		},
 		WAAgentConfig: &osbuild.WAAgentConfStageOptions{
 			Config: osbuild.WAAgentConfig{
-				RDFormat:     common.ToPtr(false),
-				RDEnableSwap: common.ToPtr(false),
+				RDFormat:                 common.ToPtr(false),
+				RDEnableSwap:             common.ToPtr(false),
+				ProvisioningUseCloudInit: common.ToPtr(true),
+				ProvisioningEnabled:      common.ToPtr(false),
 			},
 		},
 		Grub2Config: &osbuild.GRUB2Config{
@@ -457,6 +483,29 @@ func defaultAzureImageConfig(rd *rhel.Distribution) *distro.ImageConfig {
 			},
 		},
 		DefaultTarget: common.ToPtr("multi-user.target"),
+		TimeSynchronization: &osbuild.ChronyStageOptions{
+			Refclocks: []osbuild.ChronyConfigRefclock{
+				{
+					Driver: osbuild.NewChronyDriverPHC("/dev/ptp_hyperv"),
+					Poll:   common.ToPtr(3),
+					Dpoll:  common.ToPtr(-2),
+					Offset: common.ToPtr(0.0),
+				},
+			},
+		},
+		Files:       []*fsnode.File{datalossWarningScript},
+		SystemdUnit: []*osbuild.SystemdUnitCreateStageOptions{datalossSystemdUnit},
+		NetworkManager: &osbuild.NMConfStageOptions{
+			Path: "/etc/NetworkManager/conf.d/99-azure-unmanaged-devices.conf",
+			Settings: osbuild.NMConfStageSettings{
+				Keyfile: &osbuild.NMConfSettingsKeyfile{
+					UnmanagedDevices: []string{
+						"driver:mlx4_core",
+						"driver:mlx5_core",
+					},
+				},
+			},
+		},
 	}
 
 	if rd.IsRHEL() {

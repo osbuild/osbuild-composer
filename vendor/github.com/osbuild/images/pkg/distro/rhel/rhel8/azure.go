@@ -83,7 +83,7 @@ func mkAzureByosImgType() *rhel.ImageType {
 	it.KernelOptions = defaultAzureKernelOptions()
 	it.Bootable = true
 	it.DefaultSize = 4 * datasizes.GibiByte
-	it.BasePartitionTables = defaultBasePartitionTables
+	it.BasePartitionTables = partitionTables
 
 	return it
 }
@@ -107,7 +107,7 @@ func mkAzureImgType() *rhel.ImageType {
 	it.KernelOptions = defaultAzureKernelOptions()
 	it.Bootable = true
 	it.DefaultSize = 4 * datasizes.GibiByte
-	it.BasePartitionTables = defaultBasePartitionTables
+	it.BasePartitionTables = partitionTables
 
 	return it
 }

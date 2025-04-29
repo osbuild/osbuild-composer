@@ -173,6 +173,8 @@ func (p *AnacondaInstaller) getBuildPackages(Distro) []string {
 	return packages
 }
 
+// getPackageSetChain returns the packages to install
+// It will also include weak deps for the Live installer type
 func (p *AnacondaInstaller) getPackageSetChain(Distro) []rpmmd.PackageSet {
 	packages := p.anacondaBootPackageSet()
 
@@ -189,7 +191,7 @@ func (p *AnacondaInstaller) getPackageSetChain(Distro) []rpmmd.PackageSet {
 			Include:         append(packages, p.ExtraPackages...),
 			Exclude:         p.ExcludePackages,
 			Repositories:    append(p.repos, p.ExtraRepos...),
-			InstallWeakDeps: true,
+			InstallWeakDeps: p.Type == AnacondaInstallerTypeLive,
 		},
 	}
 }
@@ -229,8 +231,13 @@ func (p *AnacondaInstaller) serialize() osbuild.Pipeline {
 	}
 
 	pipeline := p.Base.serialize()
+	options := osbuild.NewRPMStageOptions(p.repos)
+	// Documentation is only installed on live installer images
+	if p.Type != AnacondaInstallerTypeLive {
+		options.Exclude = &osbuild.Exclude{Docs: true}
+	}
 
-	pipeline.AddStage(osbuild.NewRPMStage(osbuild.NewRPMStageOptions(p.repos), osbuild.NewRpmStageSourceFilesInputs(p.packageSpecs)))
+	pipeline.AddStage(osbuild.NewRPMStage(options, osbuild.NewRpmStageSourceFilesInputs(p.packageSpecs)))
 	pipeline.AddStage(osbuild.NewBuildstampStage(&osbuild.BuildstampStageOptions{
 		Arch:    p.platform.GetArch().String(),
 		Product: p.product,
@@ -266,6 +273,13 @@ func (p *AnacondaInstaller) serialize() osbuild.Pipeline {
 	return pipeline
 }
 
+// payloadStages creates the stages needed to boot Anaconda
+// - root and install users
+// - lorax postinstall templates to setup the boot environment
+// - Anaconda spoke configuration
+// - Generic initrd with support for the boot iso
+// - SELinux in permissive mode
+// - Default Anaconda kickstart (optional)
 func (p *AnacondaInstaller) payloadStages() []*osbuild.Stage {
 	stages := make([]*osbuild.Stage, 0)
 
@@ -290,14 +304,6 @@ func (p *AnacondaInstaller) payloadStages() []*osbuild.Stage {
 	}
 	stages = append(stages, osbuild.NewUsersStage(usersStageOptions))
 
-	var LoraxPath string
-
-	if p.UseRHELLoraxTemplates {
-		LoraxPath = "80-rhel/runtime-postinstall.tmpl"
-	} else {
-		LoraxPath = "99-generic/runtime-postinstall.tmpl"
-	}
-
 	var anacondaStageOptions *osbuild.AnacondaStageOptions
 	if p.UseLegacyAnacondaConfig {
 		anacondaStageOptions = osbuild.NewAnacondaStageOptionsLegacy(p.AdditionalAnacondaModules, p.DisabledAnacondaModules)
@@ -306,25 +312,17 @@ func (p *AnacondaInstaller) payloadStages() []*osbuild.Stage {
 	}
 	stages = append(stages, osbuild.NewAnacondaStage(anacondaStageOptions))
 
+	LoraxPath := "99-generic/runtime-postinstall.tmpl"
+	if p.UseRHELLoraxTemplates {
+		LoraxPath = "80-rhel/runtime-postinstall.tmpl"
+	}
 	stages = append(stages, osbuild.NewLoraxScriptStage(&osbuild.LoraxScriptStageOptions{
 		Path:     LoraxPath,
 		BaseArch: p.platform.GetArch().String(),
 	}))
 
-	dracutModules := append(
-		p.AdditionalDracutModules,
-		"anaconda",
-		"rdma",
-		"rngd",
-		"multipath",
-		"fcoe",
-		"fcoe-uefi",
-		"iscsi",
-		"lunmask",
-		"nfs",
-	)
-	dracutOptions := dracutStageOptions(p.kernelVer, p.Biosdevname, dracutModules)
-	dracutOptions.AddDrivers = p.AdditionalDrivers
+	// Create a generic initrd suitable for booting Anaconda and activating supported hardware
+	dracutOptions := p.dracutStageOptions()
 	stages = append(stages, osbuild.NewDracutStage(dracutOptions))
 
 	stages = append(stages, osbuild.NewSELinuxConfigStage(&osbuild.SELinuxConfigStageOptions{State: osbuild.SELinuxStatePermissive}))
@@ -360,6 +358,13 @@ func (p *AnacondaInstaller) payloadStages() []*osbuild.Stage {
 	return stages
 }
 
+// liveStages creates the stages needed to boot a live image with Anaconda installed
+// - root user
+// - livesys service to setup the live environment
+// - Configure GNOME livesys session
+// - Generic initrd with support for the boot iso
+// - SELinux in permissive mode
+// - Default Anaconda kickstart (optional)
 func (p *AnacondaInstaller) liveStages() []*osbuild.Stage {
 	stages := make([]*osbuild.Stage, 0)
 
@@ -390,14 +395,8 @@ func (p *AnacondaInstaller) liveStages() []*osbuild.Stage {
 
 	stages = append(stages, osbuild.GenFileNodesStages(p.Files)...)
 
-	dracutModules := append(
-		p.AdditionalDracutModules,
-		"anaconda",
-		"rdma",
-		"rngd",
-	)
-	dracutOptions := dracutStageOptions(p.kernelVer, p.Biosdevname, dracutModules)
-	dracutOptions.AddDrivers = p.AdditionalDrivers
+	// Create a generic initrd suitable for booting the live iso and activating supported hardware
+	dracutOptions := p.dracutStageOptions()
 	stages = append(stages, osbuild.NewDracutStage(dracutOptions))
 
 	if p.SElinux != "" {
@@ -409,57 +408,56 @@ func (p *AnacondaInstaller) liveStages() []*osbuild.Stage {
 	return stages
 }
 
-func dracutStageOptions(kernelVer string, biosdevname bool, additionalModules []string) *osbuild.DracutStageOptions {
-	kernel := []string{kernelVer}
-	modules := []string{
-		"bash",
-		"systemd",
-		"fips",
-		"systemd-initrd",
-		"modsign",
-		"nss-softokn",
-		"i18n",
-		"convertfs",
-		"network-manager",
-		"network",
-		"url-lib",
-		"drm",
-		"plymouth",
-		"crypt",
-		"dm",
-		"dmsquash-live",
-		"kernel-modules",
-		"kernel-modules-extra",
-		"kernel-network-modules",
-		"livenet",
-		"lvm",
-		"mdraid",
-		"qemu",
-		"qemu-net",
-		"resume",
-		"rootfs-block",
-		"terminfo",
-		"udev-rules",
-		"dracut-systemd",
-		"pollcdrom",
-		"usrmount",
-		"base",
-		"fs-lib",
-		"img-lib",
-		"shutdown",
-		"uefi-lib",
+// dracutStageOptions returns the basic dracut setup with anaconda support
+// This is based on the dracut generic config (also called no-hostonly) with
+// additional modules needed to support booting the iso and running Anaconda.
+//
+// NOTE: The goal is to let dracut maintain support for most of the modules and
+// only add what is needed to support the boot iso and anaconda. When new
+// hardware support is needed in the inird it just needs to be added to dracut,
+// not everything that uses dracut (eg. anaconda, lorax, osbuild).
+func (p *AnacondaInstaller) dracutStageOptions() *osbuild.DracutStageOptions {
+	// Common settings
+	options := osbuild.DracutStageOptions{
+		Kernel:         []string{p.kernelVer},
+		EarlyMicrocode: false,
+		AddModules:     []string{"pollcdrom", "qemu", "qemu-net"},
+		Extra:          []string{"--xz"},
+		AddDrivers:     p.AdditionalDrivers,
+	}
+	options.AddModules = append(options.AddModules, p.AdditionalDracutModules...)
+
+	if p.Biosdevname {
+		options.AddModules = append(options.AddModules, "biosdevname")
 	}
 
-	if biosdevname {
-		modules = append(modules, "biosdevname")
+	switch p.Type {
+	case AnacondaInstallerTypePayload:
+		// Lorax calls the boot.iso dracut with:
+		// --nomdadmconf --nolvmconf --xz --install '/.buildstamp' --no-early-microcode
+		// --add 'fips anaconda pollcdrom qemu qemu-net prefixdevname-tools'
+		options.Install = []string{"./buildstamp"}
+		options.AddModules = append(options.AddModules, []string{
+			"fips",
+			"anaconda",
+			"prefixdevname-tools",
+		}...)
+		options.Extra = append(options.Extra, []string{
+			"--nomdadmconf",
+			"--nolvmconf",
+		}...)
+	case AnacondaInstallerTypeLive:
+		// livemedia-creator calls the live iso dracut with:
+		// --xz --no-hostonly -no-early-microcode --debug
+		// --add 'livenet dmsquash-live dmsquash-live-ntfs convertfs pollcdrom qemu qemu-net'
+		options.AddModules = append(options.AddModules, []string{
+			"livenet",
+			"dmsquash-live",
+			"convertfs",
+		}...)
 	}
 
-	modules = append(modules, additionalModules...)
-	return &osbuild.DracutStageOptions{
-		Kernel:  kernel,
-		Modules: modules,
-		Install: []string{"/.buildstamp"},
-	}
+	return &options
 }
 
 func (p *AnacondaInstaller) Platform() platform.Platform {
