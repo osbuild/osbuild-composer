@@ -469,32 +469,37 @@ func (rbp *Blueprint) GetCustomizationsFromBlueprintRequest() (*blueprint.Custom
 		}
 
 		conf := rhsm.Config
-		if conf.DnfPlugins != nil {
+		if dnfPlugins := conf.DnfPlugins; dnfPlugins != nil {
 			bpRhsm.Config.DNFPlugins = &blueprint.SubManDNFPluginsConfig{}
-			if conf.DnfPlugins.ProductId != nil && conf.DnfPlugins.ProductId.Enabled != nil {
+			if dnfPlugins.ProductId != nil && dnfPlugins.ProductId.Enabled != nil {
 				bpRhsm.Config.DNFPlugins.ProductID = &blueprint.DNFPluginConfig{
-					Enabled: common.ToPtr(*conf.DnfPlugins.ProductId.Enabled),
+					Enabled: common.ToPtr(*dnfPlugins.ProductId.Enabled),
 				}
 			}
-			if conf.DnfPlugins.SubscriptionManager != nil && conf.DnfPlugins.SubscriptionManager.Enabled != nil {
+			if dnfPlugins.SubscriptionManager != nil && dnfPlugins.SubscriptionManager.Enabled != nil {
 				bpRhsm.Config.DNFPlugins.SubscriptionManager = &blueprint.DNFPluginConfig{
-					Enabled: common.ToPtr(*conf.DnfPlugins.SubscriptionManager.Enabled),
+					Enabled: common.ToPtr(*dnfPlugins.SubscriptionManager.Enabled),
 				}
 			}
 		}
 
-		if conf.SubscriptionManager != nil {
-			bpRhsm.Config.SubscriptionManager = &blueprint.SubManConfig{}
-			if conf.SubscriptionManager.Rhsm != nil && conf.SubscriptionManager.Rhsm.ManageRepos != nil {
-				bpRhsm.Config.SubscriptionManager.RHSMConfig = &blueprint.SubManRHSMConfig{
-					ManageRepos: common.ToPtr(*conf.SubscriptionManager.Rhsm.ManageRepos),
+		if subMan := conf.SubscriptionManager; subMan != nil {
+			bpSubMan := &blueprint.SubManConfig{}
+			if subMan.Rhsm != nil {
+				bpSubMan.RHSMConfig = &blueprint.SubManRHSMConfig{}
+				if subMan.Rhsm.ManageRepos != nil {
+					bpSubMan.RHSMConfig.ManageRepos = common.ToPtr(*subMan.Rhsm.ManageRepos)
+				}
+				if subMan.Rhsm.AutoEnableYumPlugins != nil {
+					bpSubMan.RHSMConfig.AutoEnableYumPlugins = common.ToPtr(*subMan.Rhsm.AutoEnableYumPlugins)
 				}
 			}
-			if conf.SubscriptionManager.Rhsmcertd != nil && conf.SubscriptionManager.Rhsmcertd.AutoRegistration != nil {
-				bpRhsm.Config.SubscriptionManager.RHSMCertdConfig = &blueprint.SubManRHSMCertdConfig{
-					AutoRegistration: common.ToPtr(*conf.SubscriptionManager.Rhsmcertd.AutoRegistration),
+			if subMan.Rhsmcertd != nil && subMan.Rhsmcertd.AutoRegistration != nil {
+				bpSubMan.RHSMCertdConfig = &blueprint.SubManRHSMCertdConfig{
+					AutoRegistration: common.ToPtr(*subMan.Rhsmcertd.AutoRegistration),
 				}
 			}
+			bpRhsm.Config.SubscriptionManager = bpSubMan
 		}
 
 		c.RHSM = bpRhsm
@@ -1054,18 +1059,23 @@ func (request *ComposeRequest) GetBlueprintFromCustomizations() (blueprint.Bluep
 			}
 		}
 
-		if conf.SubscriptionManager != nil {
-			bpRhsm.Config.SubscriptionManager = &blueprint.SubManConfig{}
-			if conf.SubscriptionManager.Rhsm != nil && conf.SubscriptionManager.Rhsm.ManageRepos != nil {
-				bpRhsm.Config.SubscriptionManager.RHSMConfig = &blueprint.SubManRHSMConfig{
-					ManageRepos: common.ToPtr(*conf.SubscriptionManager.Rhsm.ManageRepos),
+		if subMan := conf.SubscriptionManager; subMan != nil {
+			bpSubMan := &blueprint.SubManConfig{}
+			if subMan.Rhsm != nil {
+				bpSubMan.RHSMConfig = &blueprint.SubManRHSMConfig{}
+				if subMan.Rhsm.ManageRepos != nil {
+					bpSubMan.RHSMConfig.ManageRepos = common.ToPtr(*subMan.Rhsm.ManageRepos)
+				}
+				if subMan.Rhsm.AutoEnableYumPlugins != nil {
+					bpSubMan.RHSMConfig.AutoEnableYumPlugins = common.ToPtr(*subMan.Rhsm.AutoEnableYumPlugins)
 				}
 			}
-			if conf.SubscriptionManager.Rhsmcertd != nil && conf.SubscriptionManager.Rhsmcertd.AutoRegistration != nil {
-				bpRhsm.Config.SubscriptionManager.RHSMCertdConfig = &blueprint.SubManRHSMCertdConfig{
-					AutoRegistration: common.ToPtr(*conf.SubscriptionManager.Rhsmcertd.AutoRegistration),
+			if subMan.Rhsmcertd != nil && subMan.Rhsmcertd.AutoRegistration != nil {
+				bpSubMan.RHSMCertdConfig = &blueprint.SubManRHSMCertdConfig{
+					AutoRegistration: common.ToPtr(*subMan.Rhsmcertd.AutoRegistration),
 				}
 			}
+			bpRhsm.Config.SubscriptionManager = bpSubMan
 		}
 
 		bp.Customizations.RHSM = bpRhsm

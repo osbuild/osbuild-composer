@@ -472,7 +472,8 @@ RHSM_CUSTOMIZATION_BLOCK=$(cat <<EOF
         },
         "subscription_manager": {
           "rhsm": {
-            "manage_repos": true
+            "manage_repos": true,
+            "auto_enable_yum_plugins": false
           },
           "rhsmcertd": {
             "auto_registration": false

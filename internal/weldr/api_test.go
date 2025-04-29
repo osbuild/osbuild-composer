@@ -572,7 +572,8 @@ func TestBlueprintsCustomizationInfoToml(t *testing.T) {
         },
         "subscription_manager": {
           "rhsm": {
-            "manage_repos": true
+            "manage_repos": true,
+            "auto_enable_yum_plugins": false
           },
           "rhsmcertd": {
             "auto_registration": false
@@ -693,7 +694,8 @@ func TestBlueprintsCustomizationInfoToml(t *testing.T) {
 					},
 					SubscriptionManager: &blueprint.SubManConfig{
 						RHSMConfig: &blueprint.SubManRHSMConfig{
-							ManageRepos: common.ToPtr(true),
+							ManageRepos:          common.ToPtr(true),
+							AutoEnableYumPlugins: common.ToPtr(false),
 						},
 						RHSMCertdConfig: &blueprint.SubManRHSMCertdConfig{
 							AutoRegistration: common.ToPtr(false),
