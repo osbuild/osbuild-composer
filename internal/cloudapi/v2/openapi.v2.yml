@@ -1405,6 +1405,8 @@ components:
       properties:
         manage_repos:
           type: boolean
+        auto_enable_yum_plugins:
+          type: boolean
     SubManRHSMCertdConfig:
       type: object
       properties:
