@@ -331,6 +331,10 @@ case $ID in
         ensure_subscription
         case $MAJOR in
             9)
+                if ! nvrGreaterOrEqual "osbuild-composer" "132.1"; then
+                    yellowprint "WARNING: osbuild-composer version lower than 132.1 is known to have issues with el8 on el9 cross-distro builds. Skipping test."
+                    exit 0
+                fi
                 # There are no new RHEL-8 releases, so just use the distro alias
                 test_cross_build_distro "rhel-8"
                 ;;
