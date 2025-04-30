@@ -55,32 +55,19 @@ init:
     - if: '$CI_PIPELINE_SOURCE != "schedule" && $SKIP_CI == "true"'
       when: manual
 
-.upstream_rules_all:
+.rules_all:
   rules:
-    - if: '$CI_PIPELINE_SOURCE != "schedule"'
+    - if: '$CI_PIPELINE_SOURCE != "schedule" && $RUNNER'
 
-.upstream_rules_x86_64:
+.rules_x86_64:
   rules:
     - if: '$CI_PIPELINE_SOURCE != "schedule" && $RUNNER =~ "/^.*(x86_64).*$/"'
-
-.nightly_rules_all:
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9.2-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-8.8-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "8"'
-
-.nightly_rules_x86_64:
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9.2-[^ga][\S]+/ && $RUNNER =~ "/^.*(x86_64).*$/" && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-8.8-[^ga][\S]+/ && $RUNNER =~ "/^.*(x86_64).*$/" && $NIGHTLY == "true" && $RHEL_MAJOR == "8"'
 
 
 .RPM_RUNNERS_RHEL: &RPM_RUNNERS_RHEL
   RUNNER:
-    - aws/rhel-8.8-nightly-x86_64
-    - aws/rhel-8.8-nightly-aarch64
-    - aws/rhel-9.2-nightly-x86_64
-    - aws/rhel-9.2-nightly-aarch64
-
+    - aws/rhel-9.2-ga-x86_64
+    - aws/rhel-9.2-ga-aarch64
   INTERNAL_NETWORK: ["true"]
 
 RPM:
@@ -92,28 +79,13 @@ RPM:
     - sh "schutzbot/mockbuild.sh"
   parallel:
     matrix:
-      - RUNNER:
-          - aws/fedora-36-x86_64
-          - aws/fedora-36-aarch64
-          - aws/fedora-37-x86_64
-          - aws/fedora-37-aarch64
-          - aws/rhel-8.4-ga-x86_64
-          - aws/rhel-8.4-ga-aarch64
-          - aws/rhel-8.7-ga-x86_64
-          - aws/rhel-8.7-ga-aarch64
-          - aws/rhel-9.1-ga-x86_64
-          - aws/rhel-9.1-ga-aarch64
-          - aws/centos-stream-8-x86_64
-          - aws/centos-stream-8-aarch64
-          - aws/centos-stream-9-x86_64
-          - aws/centos-stream-9-aarch64
       - <<: *RPM_RUNNERS_RHEL
 
 Build -tests RPM for RHEL:
   stage: rpmbuild
   extends: .terraform
   rules:
-    - !reference [.nightly_rules_all, rules]
+    - !reference [.rules_all, rules]
   script:
     - sh "schutzbot/mockbuild.sh"
   interruptible: true
@@ -124,202 +96,60 @@ Build -tests RPM for RHEL:
     matrix:
       - <<: *RPM_RUNNERS_RHEL
 
-Container:
-  stage: rpmbuild
-  extends: .terraform
-  rules:
-    - !reference [.build_rules, rules]
-  script:
-    - sh "schutzbot/containerbuild.sh"
-  parallel:
-    matrix:
-      - RUNNER:
-          - aws/rhel-8.7-ga-x86_64
-
-Packer:
-  stage: test
-  extends: .terraform
-  rules:
-    - if: '$CI_PIPELINE_SOURCE != "schedule"'
-  script:
-    - tools/appsre-build-worker-packer.sh
-  variables:
-    RUNNER: aws/rhel-9.1-ga-x86_64
-
-Prepare-rhel-internal:
-  stage: prepare-rhel-internal
-  extends: .terraform
-  rules:
-    - !reference [.nightly_rules_all, rules]
-  script:
-    - schutzbot/prepare-rhel-internal.sh
-  artifacts:
-    paths:
-      - rhel-${RHEL_MAJOR}.json
-      - rhel${RHEL_MAJOR}internal.repo
-      - COMPOSE_ID
-  parallel:
-    matrix:
-      - RUNNER:
-          # NOTE: 1 runner prepares for all arches b/c subsequent jobs download
-          # artifacts from all previous jobs and the last one wins
-          - aws/rhel-8.8-nightly-x86_64
-          - aws/rhel-9.2-nightly-x86_64
-        INTERNAL_NETWORK: ["true"]
-
 Base:
   stage: test
   extends: .terraform
   rules:
-    - !reference [.upstream_rules_all, rules]
-    - !reference [.nightly_rules_all, rules]
+    - !reference [.rules_all, rules]
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/base_tests.sh
   parallel:
     matrix:
-      - RUNNER:
-          - aws/fedora-36-x86_64
-          - aws/fedora-36-aarch64
-          - aws/fedora-37-x86_64
-          - aws/fedora-37-aarch64
-          - aws/rhel-8.4-ga-x86_64
-          - aws/rhel-8.4-ga-aarch64
-          - aws/rhel-8.7-ga-x86_64
-          - aws/rhel-8.7-ga-aarch64
-          - aws/rhel-9.1-ga-x86_64
-          - aws/rhel-9.1-ga-aarch64
-          - aws/centos-stream-8-x86_64
-          - aws/centos-stream-8-aarch64
-      - RUNNER:
-          - aws/rhel-8.8-nightly-x86_64
-          - aws/rhel-8.8-nightly-aarch64
-          - aws/rhel-9.2-nightly-x86_64
-          - aws/rhel-9.2-nightly-aarch64
-          - aws/centos-stream-9-x86_64
-          - aws/centos-stream-9-aarch64
-        INTERNAL_NETWORK: ["true"]
-
-Manifests:
-  stage: test
-  extends: .terraform
-  rules:
-    - !reference [.upstream_rules_all, rules]
-    - !reference [.nightly_rules_all, rules]
-  script:
-    - schutzbot/deploy.sh
-    - /usr/libexec/tests/osbuild-composer/manifest_tests.sh
-  parallel:
-    matrix:
-      - RUNNER:
-          - aws/rhel-9.2-nightly-x86_64
-        INTERNAL_NETWORK: ["true"]
+      - <<: *RPM_RUNNERS_RHEL
 
 .regression:
   stage: test
   extends: .terraform
   rules:
-    - !reference [.upstream_rules_all, rules]
-    - !reference [.nightly_rules_all, rules]
+    - !reference [.rules_all, rules]
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/${SCRIPT}
   parallel:
     matrix:
-      - RUNNER:
-          - aws/fedora-36-x86_64
-          - aws/fedora-36-aarch64
-          - aws/fedora-37-x86_64
-          - aws/fedora-37-aarch64
-          - aws/centos-stream-8-x86_64
-          - aws/centos-stream-8-aarch64
-      - RUNNER:
-          - aws/rhel-8.4-ga-x86_64
-          - aws/rhel-8.4-ga-aarch64
-          - aws/rhel-8.7-ga-x86_64
-          - aws/rhel-8.7-ga-aarch64
-          - aws/rhel-9.1-ga-x86_64
-          - aws/rhel-9.1-ga-aarch64
-          - aws/rhel-8.8-nightly-x86_64
-          - aws/rhel-8.8-nightly-aarch64
-          - aws/rhel-9.2-nightly-x86_64
-          - aws/rhel-9.2-nightly-aarch64
-          - aws/centos-stream-9-x86_64
-          - aws/centos-stream-9-aarch64
-        INTERNAL_NETWORK: ["true"]
+      - <<: *RPM_RUNNERS_RHEL
 
 regression-bigiso:
   extends: .regression
   rules: 
     # WHITELIST: Run only on x86_64 and rhel like systems
-    - if: $RUNNER =~ "/^.*(rhel-8.*x86_64|rhel-9.*x86_64|centos-stream-8.*x86_64|centos-stream-9.*x86_64).*$/" && $CI_PIPELINE_SOURCE != "schedule"
+    - !reference [.rules_x86_64, rules]
   variables:
     SCRIPT: regression-bigiso.sh
 
 regression-composer-works-behind-satellite-fallback:
   extends: .regression
-  rules: 
-    # BLACKLIST: Skipped on subscribed RHEL machines
-    - if: $RUNNER !~ "/^.*(rhel-.*-ga|centos|fedora).*$/" && $CI_PIPELINE_SOURCE != "schedule"
-    - !reference [.nightly_rules_all, rules]
   variables:
     SCRIPT: regression-composer-works-behind-satellite-fallback.sh
 
 regression-composer-works-behind-satellite:
   extends: .regression
-  rules: 
-    # BLACKLIST: Skipped on subscribed RHEL machines
-    - if: $RUNNER !~ "/^.*(rhel-.*-ga|centos|fedora).*$/" && $CI_PIPELINE_SOURCE != "schedule"
-    - !reference [.nightly_rules_all, rules]
   variables:
     SCRIPT: regression-composer-works-behind-satellite.sh
 
 regression-excluded-dependency:
   extends: .regression
-  rules: 
-    # WHITELIST
-    - if: $RUNNER =~ "/^.*(rhel-8.*|rhel-9.*|centos-stream-8|centos-stream-9).*$/" && $CI_PIPELINE_SOURCE != "schedule"
-    - !reference [.nightly_rules_all, rules]
   variables:
     SCRIPT: regression-excluded-dependency.sh
 
 regression-include-excluded-packages:
   extends: .regression
-  rules: 
-    # BLACKLIST: Skipped on fedora systems
-    - if: $RUNNER !~ "/^.*(fedora).*$/" && $CI_PIPELINE_SOURCE != "schedule"
-    - !reference [.nightly_rules_all, rules]
   variables:
     SCRIPT: regression-include-excluded-packages.sh
 
-regression-old-worker-new-composer:
-  parallel:
-    matrix:
-      - RUNNER:
-          - aws/rhel-8.7-ga-x86_64
-          - aws/rhel-9.1-ga-x86_64
-        INTERNAL_NETWORK: ["true"]
-  extends: .regression
-  variables:
-    SCRIPT: regression-old-worker-new-composer.sh
-
-regression-insecure-repo:
-  parallel:
-    matrix:
-      - RUNNER:
-          - aws/rhel-9.1-ga-x86_64
-        INTERNAL_NETWORK: ["true"]
-  extends: .regression
-  variables:
-    SCRIPT: regression-insecure-repo.sh
-
-
 regression-no-explicit-rootfs-definition:
   extends: .regression
-  rules: 
-    # BLACKLIST: Skipped on fedora systems
-    - if: $RUNNER !~ "/^.*(fedora).*$/" && $CI_PIPELINE_SOURCE != "schedule"
-    - !reference [.nightly_rules_all, rules]
   variables:
     SCRIPT: regression-no-explicit-rootfs-definition.sh
 
@@ -327,41 +157,26 @@ Image Tests:
   stage: test
   extends: .terraform
   rules:
-    - !reference [.nightly_rules_all, rules]
+    - !reference [.rules_all, rules]
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/image_tests.sh
   parallel:
     matrix:
-      - RUNNER:
-          - aws/rhel-8.4-ga-x86_64
-          - aws/rhel-8.4-ga-aarch64
-          - aws/rhel-8.8-nightly-x86_64
-          - aws/rhel-8.8-nightly-aarch64
-          - aws/rhel-9.2-nightly-x86_64
-          - aws/rhel-9.2-nightly-aarch64
-        INTERNAL_NETWORK: ["true"]
+      - <<: *RPM_RUNNERS_RHEL
 
 OSTree:
   stage: test
   extends: .terraform/openstack
   rules:
-    - !reference [.upstream_rules_all, rules]
+    - !reference [.rules_all, rules]
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/ostree.sh
   parallel:
     matrix:
       - RUNNER:
-          - rhos-01/fedora-36-x86_64
-          - rhos-01/fedora-37-x86_64
-          - rhos-01/rhel-8.4-ga-x86_64
-          - rhos-01/rhel-8.7-ga-x86_64
-          - rhos-01/rhel-9.1-ga-x86_64
-          - rhos-01/rhel-8.8-nightly-x86_64
-          - rhos-01/rhel-9.2-nightly-x86_64
-          - rhos-01/centos-stream-8-x86_64
-          - rhos-01/centos-stream-9-x86_64
+          - rhos-01/rhel-9.2-ga-x86_64
 
 New OSTree:
   stage: test
@@ -372,12 +187,7 @@ New OSTree:
   parallel:
     matrix:
       - RUNNER:
-          - rhos-01/fedora-36-x86_64
-          - rhos-01/fedora-37-x86_64
-          - rhos-01/rhel-8.8-nightly-x86_64
-          - rhos-01/rhel-9.2-nightly-x86_64
-          - rhos-01/centos-stream-8-x86_64
-          - rhos-01/centos-stream-9-x86_64
+          - rhos-01/rhel-9.2-ga-x86_64
 
 OSTree simplified installer:
   stage: test
@@ -388,27 +198,20 @@ OSTree simplified installer:
   parallel:
     matrix:
       - RUNNER:
-          - rhos-01/rhel-8.8-nightly-x86_64
-          - rhos-01/centos-stream-8-x86_64
-          - rhos-01/rhel-9.2-nightly-x86_64
-          - rhos-01/centos-stream-9-x86_64
+          - rhos-01/rhel-9.2-ga-x86_64
 
 OSTree raw image:
   stage: test
   extends: OSTree
   rules:
-    - !reference [.upstream_rules_all, rules]
+    - !reference [.rules_all, rules]
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/ostree-raw-image.sh
   parallel:
     matrix:
       - RUNNER:
-          - rhos-01/rhel-8.8-nightly-x86_64
-          - rhos-01/centos-stream-8-x86_64
-          - rhos-01/rhel-9.2-nightly-x86_64
-          - rhos-01/centos-stream-9-x86_64
-          - rhos-01/fedora-37-x86_64
+          - rhos-01/rhel-9.2-ga-x86_64
 
 Rebase OSTree BIOS:
   stage: test
@@ -419,10 +222,7 @@ Rebase OSTree BIOS:
   parallel:
     matrix:
       - RUNNER:
-          - rhos-01/rhel-8.8-nightly-x86_64
-          - rhos-01/rhel-9.2-nightly-x86_64
-          - rhos-01/centos-stream-8-x86_64
-          - rhos-01/centos-stream-9-x86_64
+          - rhos-01/rhel-9.2-ga-x86_64
 
 Rebase OSTree UEFI:
   stage: test
@@ -433,105 +233,22 @@ Rebase OSTree UEFI:
   parallel:
     matrix:
       - RUNNER:
-          - rhos-01/rhel-8.8-nightly-x86_64
-          - rhos-01/rhel-9.2-nightly-x86_64
-          - rhos-01/centos-stream-8-x86_64
-          - rhos-01/centos-stream-9-x86_64
-
-Minimal raw:
-  stage: test
-  extends: OSTree
-  script:
-    - schutzbot/deploy.sh
-    - /usr/libexec/tests/osbuild-composer/minimal-raw.sh
-  parallel:
-    matrix:
-      - RUNNER:
-          - rhos-01/fedora-37-x86_64
+          - rhos-01/rhel-9.2-ga-x86_64
 
 .integration_base:
   stage: test
   extends: .terraform
   rules:
-    - !reference [.upstream_rules_all, rules]
-    - !reference [.nightly_rules_all, rules]
+    - !reference [.rules_all, rules]
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/${SCRIPT}
-
-.rhel_runners: &rhel_runners
-    RUNNER:
-      - aws/centos-stream-8-x86_64
-      - aws/rhel-8.4-ga-x86_64
-      - aws/rhel-8.7-ga-x86_64
-      - aws/rhel-9.1-ga-x86_64
-      - aws/rhel-8.8-nightly-x86_64
-      - aws/rhel-8.8-nightly-aarch64
-      - aws/rhel-9.2-nightly-x86_64
-      - aws/rhel-9.2-nightly-aarch64
-      - aws/centos-stream-9-x86_64
-    INTERNAL_NETWORK: ["true"]
-
-.integration_rhel:
-  extends: .integration_base
   parallel:
     matrix:
-      - *rhel_runners
-
-.fedora_runners: &fedora_runners
-    RUNNER:
-      - aws/fedora-36-x86_64
-      - aws/fedora-37-x86_64
-
-.integration_fedora:
-  extends: .integration_base
-  parallel:
-    matrix:
-      - *fedora_runners
+      - <<: *RPM_RUNNERS_RHEL
 
 .integration:
   extends: .integration_base
-  parallel:
-    matrix:
-      - *fedora_runners
-      - *rhel_runners
-
-koji.sh (cloud upload):
-  stage: test
-  extends: .terraform
-  rules:
-    - !reference [.upstream_rules_all, rules]
-  script:
-    - schutzbot/deploy.sh
-    - /usr/libexec/tests/osbuild-composer/koji.sh cloud-upload ${CLOUD_TARGET} ${IMAGE_TYPE}
-  parallel:
-    matrix:
-      - RUNNER:
-          # Brew workers use RHEL-8.7
-          - aws/rhel-8.7-ga-x86_64
-        INTERNAL_NETWORK: ["true"]
-        CLOUD_TARGET: aws
-        IMAGE_TYPE: aws-rhui
-      - RUNNER:
-          # Brew workers use RHEL-8.6
-          - aws/rhel-8.7-ga-x86_64
-        INTERNAL_NETWORK: ["true"]
-        CLOUD_TARGET: azure
-        IMAGE_TYPE: azure-rhui
-      - RUNNER:
-          # Brew workers use RHEL-8.6
-          - aws/rhel-8.7-ga-x86_64
-        INTERNAL_NETWORK: ["true"]
-        CLOUD_TARGET: gcp
-        IMAGE_TYPE: gcp-rhui
-
-koji.sh (cloudapi):
-  extends: .integration
-  # Not supported in nightly pipelines
-  rules:
-    - !reference [.upstream_rules_all, rules]
-  variables:
-    SCRIPT: koji.sh
 
 aws.sh:
   extends: .integration
@@ -542,26 +259,23 @@ azure.sh:
   extends: .integration
   rules:
     # Run only on x86_64
-    - !reference [.upstream_rules_x86_64, rules]
-    - !reference [.nightly_rules_x86_64, rules]
+    - !reference [.rules_x86_64, rules]
   variables:
     SCRIPT: azure.sh
 
 # The required GCE image type is not supported on Fedora
 gcp.sh:
-  extends: .integration_rhel
+  extends: .integration
   rules: 
-    - !reference [.upstream_rules_x86_64, rules]
-    - !reference [.nightly_rules_x86_64, rules]
+    - !reference [.rules_x86_64, rules]
   variables:
     SCRIPT: gcp.sh
 
 vmware.sh:
-  extends: .integration_rhel
+  extends: .integration
   rules:
     # Run only on x86_64
-    - !reference [.upstream_rules_x86_64, rules]
-    - !reference [.nightly_rules_x86_64, rules]
+    - !reference [.rules_x86_64, rules]
   variables:
     SCRIPT: vmware.sh
 
@@ -575,63 +289,18 @@ cross-distro.sh:
   variables:
     SCRIPT: cross-distro.sh
 
-.API_TESTS: &API_TESTS
-  IMAGE_TYPE:
-    - aws
-    - azure
-    - edge-commit
-    - gcp
-    - vsphere
-    - edge-commit generic.s3
-    - edge-container
-
-API:
-  stage: test
-  extends: .terraform
-  rules:
-    - !reference [.upstream_rules_all, rules]
-    # note: cloud API is not supported for on-prem installations so
-    # don't run this test case for nightly trees
-  script:
-    - schutzbot/deploy.sh
-    - /usr/libexec/tests/osbuild-composer/api.sh ${IMAGE_TYPE}
-  parallel:
-    matrix:
-      - <<: *API_TESTS
-        RUNNER:
-          - aws/rhel-8.7-ga-x86_64
-          - aws/rhel-9.1-ga-x86_64
-          - aws/rhel-8.8-nightly-x86_64
-          - aws/rhel-9.2-nightly-x86_64
-        INTERNAL_NETWORK: ["true"]
-      - IMAGE_TYPE: ["iot-commit"]
-        RUNNER:
-          - aws/fedora-36-x86_64
-          - aws/fedora-37-x86_64
-      - IMAGE_TYPE: ["aws"]
-        RUNNER:
-          - aws/rhel-8.7-ga-aarch64
-          - aws/rhel-9.1-ga-aarch64
-        INTERNAL_NETWORK: ["true"]
-
 .libvirt_integration:
   stage: test
   extends: .terraform/gcp
   rules:
-    - !reference [.upstream_rules_all, rules]
-    - !reference [.nightly_rules_all, rules]
+    - !reference [.rules_all, rules]
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/${SCRIPT}
   parallel:
     matrix:
       - RUNNER:
-          - gcp/centos-stream-8-x86_64
-          - gcp/rhel-8.7-ga-x86_64
-          - gcp/rhel-9.1-ga-x86_64
-          - gcp/rhel-8.8-nightly-x86_64
-          - gcp/rhel-9.2-nightly-x86_64
-          - gcp/centos-stream-9-x86_64
+          - gcp/rhel-9.2-ga-x86_64
         INTERNAL_NETWORK: ["true"]
 
 libvirt.sh:
@@ -641,10 +310,6 @@ libvirt.sh:
 
 .generic_s3:
   extends: .libvirt_integration
-  rules:
-    # BLACKLIST
-    - if: $RUNNER !~ "/^.*(rhel-8.8|rhel-9.2).*$/" && $CI_PIPELINE_SOURCE != "schedule" && $NIGHTLY != "true"
-    - !reference [.nightly_rules_all, rules]
 
 generic_s3_http.sh:
   extends: .generic_s3
@@ -666,56 +331,18 @@ aws_s3.sh:
   variables:
     SCRIPT: aws_s3.sh
 
-RHEL 9 on 8:
-  stage: test
-  extends: .terraform
-  rules:
-    - !reference [.upstream_rules_all, rules]
-  script:
-    - schutzbot/deploy.sh
-    - /usr/libexec/tests/osbuild-composer/koji.sh
-  variables:
-    RUNNER: aws/rhel-8.7-ga-x86_64
-    INTERNAL_NETWORK: "true"
-    DISTRO_CODE: rhel-91
-
-Multi-tenancy:
-  stage: test
-  extends: .terraform
-  rules:
-    - if: '$CI_PIPELINE_SOURCE != "schedule"'
-  script:
-    - schutzbot/deploy.sh
-    - /usr/libexec/tests/osbuild-composer/multi-tenancy.sh
-  variables:
-    # only 8.7 GA b/c the Image Builder service runs on RHEL 8
-    RUNNER: aws/rhel-8.7-ga-x86_64
-    INTERNAL_NETWORK: "true"
-
 OpenSCAP:
   stage: test
   extends: .terraform
   rules:
-    - !reference [.upstream_rules_all, rules]
+    - !reference [.rules_all, rules]
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/oscap.sh
   parallel:
     matrix:
       - RUNNER:
-          - rhos-01/rhel-8.8-nightly-x86_64
-          - rhos-01/rhel-9.2-nightly-x86_64
-
-Upgrade:
-  stage: test
-  extends: .terraform/openstack
-  rules:
-    - !reference [.nightly_rules_all, rules]
-  script:
-    - schutzbot/deploy.sh
-    - /usr/libexec/tests/osbuild-composer/upgrade8to9.sh
-  variables:
-    RUNNER: rhos-01/rhel-9.2-nightly-x86_64
+          - rhos-01/rhel-9.2-ga-x86_64
 
 NIGHTLY_FAIL:
   stage: finish
@@ -740,74 +367,14 @@ Installer:
   stage: test
   extends: .terraform/openstack
   rules:
-    - !reference [.upstream_rules_all, rules]
-    - !reference [.nightly_rules_all, rules]
+    - !reference [.rules_all, rules]
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/installers.sh
   parallel:
     matrix:
       - RUNNER:
-          - rhos-01/rhel-8.8-nightly-x86_64
-          - rhos-01/rhel-9.2-nightly-x86_64
-          - rhos-01/centos-stream-9-x86_64
-
-Manifest-diff:
-  stage: test
-  extends: .terraform
-  rules:
-    # don't run on main
-    - if: '$CI_COMMIT_BRANCH != "main"'
-  script:
-    - ./test/cases/diff-manifests.sh
-  variables:
-    RUNNER: aws/rhel-9.1-ga-x86_64
-    INTERNAL_NETWORK: "true"
-    GIT_STRATEGY: "clone"
-    GIT_CHECKOUT: "true"
-    GIT_DEPTH: 500
-  artifacts:
-    paths:
-      - manifests.diff
-
-SonarQube:
-  stage: test
-  extends: .terraform
-  rules:
-    - if: '$CI_PIPELINE_SOURCE != "schedule" && $CI_COMMIT_BRANCH == "main"'
-  script:
-    - schutzbot/sonarqube.sh
-  variables:
-    RUNNER: aws/centos-stream-8-x86_64
-    INTERNAL_NETWORK: "true"
-    GIT_DEPTH: 0
-
-ContainerUpload:
-  stage: test
-  extends: .terraform
-  rules:
-    - !reference [.upstream_rules_all, rules]
-  script:
-    - schutzbot/deploy.sh
-    - /usr/libexec/tests/osbuild-composer/container-upload.sh
-  variables:
-    RUNNER: aws/fedora-37-x86_64
-    INTERNAL_NETWORK: "false"
-
-ContainerEmbedding:
-  stage: test
-  extends: .terraform
-  rules:
-    - !reference [.upstream_rules_all, rules]
-  script:
-    - schutzbot/deploy.sh
-    - /usr/libexec/tests/osbuild-composer/container-embedding.sh
-  parallel:
-    matrix:
-      - INTERNAL_NETWORK: "true"
-        RUNNER:
-        - aws/centos-stream-8-x86_64
-        - aws/centos-stream-9-x86_64
+          - rhos-01/rhel-9.2-ga-x86_64
 
 finish:
   stage: finish
