@@ -4,11 +4,7 @@ set -euo pipefail
 # Get OS and architecture details.
 source /usr/libexec/osbuild-composer-test/set-env-variables.sh
 
-if [[ -n "$CI_BUILD_ID" ]]; then
-    BUILD_ID="${BUILD_ID:-${CI_BUILD_ID}}"
-else
-    BUILD_ID="${BUILD_ID:-$(uuidgen)}"
-fi
+BUILD_ID="${BUILD_ID:-$(uuidgen)}"
 
 WORKING_DIRECTORY=/usr/libexec/osbuild-composer
 IMAGE_TEST_CASE_RUNNER=/usr/libexec/osbuild-composer-test/osbuild-image-tests

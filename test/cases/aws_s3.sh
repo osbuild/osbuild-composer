@@ -31,6 +31,7 @@ trap cleanup EXIT
 # especially when running the test in CI where we may need to clean up
 # resources in case the test unexpectedly fails or is canceled
 CI="${CI:-false}"
+CI_BUILD_ID=${CI_BUILD_ID:-$(uuidgen)}
 if [[ "$CI" == true ]]; then
   # in CI, imitate GenerateCIArtifactName() from internal/test/helpers.go
   TEST_ID="$DISTRO_CODE-$ARCH-$CI_COMMIT_BRANCH-$CI_BUILD_ID"
