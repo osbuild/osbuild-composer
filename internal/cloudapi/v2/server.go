@@ -339,7 +339,7 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 
 			job := worker.ContainerResolveJob{
 				Arch:  arch.Name(),
-				Specs: make([]worker.ContainerSpec, len(ir.blueprint.Containers)),
+				Specs: workerResolveSpecs,
 			}
 
 			jobId, err := s.workers.EnqueueContainerResolveJob(&job, channel)
