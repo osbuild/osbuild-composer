@@ -26,9 +26,9 @@ func mkVMDKImgType() *rhel.ImageType {
 	)
 
 	it.DefaultImageConfig = &distro.ImageConfig{
-		Locale: common.ToPtr("en_US.UTF-8"),
+		Locale:        common.ToPtr("en_US.UTF-8"),
+		KernelOptions: vmdkKernelOptions(),
 	}
-	it.KernelOptions = vmdkKernelOptions()
 	it.Bootable = true
 	it.DefaultSize = 4 * datasizes.GibiByte
 	it.BasePartitionTables = defaultBasePartitionTables
@@ -51,9 +51,9 @@ func mkOVAImgType() *rhel.ImageType {
 	)
 
 	it.DefaultImageConfig = &distro.ImageConfig{
-		Locale: common.ToPtr("en_US.UTF-8"),
+		Locale:        common.ToPtr("en_US.UTF-8"),
+		KernelOptions: vmdkKernelOptions(),
 	}
-	it.KernelOptions = vmdkKernelOptions()
 	it.Bootable = true
 	it.DefaultSize = 4 * datasizes.GibiByte
 	it.BasePartitionTables = defaultBasePartitionTables

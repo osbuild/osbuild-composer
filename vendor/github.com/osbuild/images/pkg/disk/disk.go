@@ -29,6 +29,7 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/arch"
 )
 
@@ -267,7 +268,7 @@ func (t *PartitionTableType) UnmarshalJSON(data []byte) error {
 }
 
 func (t *PartitionTableType) UnmarshalYAML(unmarshal func(any) error) error {
-	return unmarshalYAMLviaJSON(t, unmarshal)
+	return common.UnmarshalYAMLviaJSON(t, unmarshal)
 }
 
 func NewPartitionTableType(s string) (PartitionTableType, error) {

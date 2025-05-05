@@ -36,7 +36,7 @@ func mkAmiImgTypeX86_64() *rhel.ImageType {
 	)
 
 	it.DefaultImageConfig = defaultAMIImageConfigX86_64()
-	it.KernelOptions = amiX86KernelOptions()
+	it.DefaultImageConfig.KernelOptions = amiX86KernelOptions()
 	it.Bootable = true
 	it.DefaultSize = 10 * datasizes.GibiByte
 	it.BasePartitionTables = partitionTables
@@ -60,7 +60,7 @@ func mkEc2ImgTypeX86_64(rd *rhel.Distribution) *rhel.ImageType {
 
 	it.Compression = "xz"
 	it.DefaultImageConfig = defaultEc2ImageConfigX86_64(rd)
-	it.KernelOptions = amiX86KernelOptions()
+	it.DefaultImageConfig.KernelOptions = amiX86KernelOptions()
 	it.Bootable = true
 	it.DefaultSize = 10 * datasizes.GibiByte
 	it.BasePartitionTables = partitionTables
@@ -84,7 +84,7 @@ func mkEc2HaImgTypeX86_64(rd *rhel.Distribution) *rhel.ImageType {
 
 	it.Compression = "xz"
 	it.DefaultImageConfig = defaultEc2ImageConfigX86_64(rd)
-	it.KernelOptions = amiX86KernelOptions()
+	it.DefaultImageConfig.KernelOptions = amiX86KernelOptions()
 	it.Bootable = true
 	it.DefaultSize = 10 * datasizes.GibiByte
 	it.BasePartitionTables = partitionTables
@@ -107,7 +107,7 @@ func mkAmiImgTypeAarch64() *rhel.ImageType {
 	)
 
 	it.DefaultImageConfig = defaultAMIImageConfig()
-	it.KernelOptions = amiAarch64KernelOptions()
+	it.DefaultImageConfig.KernelOptions = amiAarch64KernelOptions()
 	it.Bootable = true
 	it.DefaultSize = 10 * datasizes.GibiByte
 	it.BasePartitionTables = partitionTables
@@ -131,7 +131,7 @@ func mkEc2ImgTypeAarch64(rd *rhel.Distribution) *rhel.ImageType {
 
 	it.Compression = "xz"
 	it.DefaultImageConfig = defaultEc2ImageConfig(rd)
-	it.KernelOptions = amiAarch64KernelOptions()
+	it.DefaultImageConfig.KernelOptions = amiAarch64KernelOptions()
 	it.Bootable = true
 	it.DefaultSize = 10 * datasizes.GibiByte
 	it.BasePartitionTables = partitionTables
@@ -155,7 +155,7 @@ func mkEc2SapImgTypeX86_64(rd *rhel.Distribution) *rhel.ImageType {
 
 	it.Compression = "xz"
 	it.DefaultImageConfig = defaultEc2SapImageConfigX86_64(rd)
-	it.KernelOptions = amiSapKernelOptions()
+	it.DefaultImageConfig.KernelOptions = amiSapKernelOptions()
 	it.Bootable = true
 	it.DefaultSize = 10 * datasizes.GibiByte
 	it.BasePartitionTables = partitionTables

@@ -1,8 +1,10 @@
 package platform
 
 import (
+	"encoding/json"
 	"fmt"
 
+	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/arch"
 )
 
@@ -40,6 +42,38 @@ func (f ImageFormat) String() string {
 	default:
 		panic(fmt.Errorf("unknown image format %d", f))
 	}
+}
+
+func (f *ImageFormat) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return err
+	}
+	switch s {
+	case "unset":
+		*f = FORMAT_UNSET
+	case "raw":
+		*f = FORMAT_RAW
+	case "iso":
+		*f = FORMAT_ISO
+	case "qcow2":
+		*f = FORMAT_QCOW2
+	case "vmdk":
+		*f = FORMAT_VMDK
+	case "vhd":
+		*f = FORMAT_VHD
+	case "gce":
+		*f = FORMAT_GCE
+	case "ova":
+		*f = FORMAT_OVA
+	default:
+		panic(fmt.Errorf("unknown image format %q", s))
+	}
+	return nil
+}
+
+func (f *ImageFormat) UnmarshalYAML(unmarshal func(any) error) error {
+	return common.UnmarshalYAMLviaJSON(f, unmarshal)
 }
 
 type Platform interface {

@@ -232,6 +232,7 @@ func mkIotSimplifiedInstallerImgType(d distribution) imageType {
 			OSTreeConfSysrootReadOnly: common.ToPtr(true),
 			LockRootUser:              common.ToPtr(true),
 			IgnitionPlatform:          common.ToPtr("metal"),
+			KernelOptions:             ostreeDeploymentKernelOptions(),
 		},
 		defaultSize:            10 * datasizes.GibiByte,
 		rpmOstree:              true,
@@ -242,7 +243,6 @@ func mkIotSimplifiedInstallerImgType(d distribution) imageType {
 		buildPipelines:         []string{"build"},
 		payloadPipelines:       []string{"ostree-deployment", "image", "xz", "coi-tree", "efiboot-tree", "bootiso-tree", "bootiso"},
 		exports:                []string{"bootiso"},
-		kernelOptions:          ostreeDeploymentKernelOptions(),
 		requiredPartitionSizes: requiredDirectorySizes,
 	}
 }
@@ -263,6 +263,7 @@ func mkIotRawImgType(d distribution) imageType {
 			OSTreeConfSysrootReadOnly: common.ToPtr(true),
 			LockRootUser:              common.ToPtr(true),
 			IgnitionPlatform:          common.ToPtr("metal"),
+			KernelOptions:             ostreeDeploymentKernelOptions(),
 		},
 		defaultSize:      4 * datasizes.GibiByte,
 		rpmOstree:        true,
@@ -271,7 +272,6 @@ func mkIotRawImgType(d distribution) imageType {
 		buildPipelines:   []string{"build"},
 		payloadPipelines: []string{"ostree-deployment", "image", "xz"},
 		exports:          []string{"xz"},
-		kernelOptions:    ostreeDeploymentKernelOptions(),
 
 		// Passing an empty map into the required partition sizes disables the
 		// default partition sizes normally set so our `basePartitionTables` can
@@ -295,6 +295,7 @@ func mkIotQcow2ImgType(d distribution) imageType {
 			OSTreeConfSysrootReadOnly: common.ToPtr(true),
 			LockRootUser:              common.ToPtr(true),
 			IgnitionPlatform:          common.ToPtr("qemu"),
+			KernelOptions:             ostreeDeploymentKernelOptions(),
 		},
 		defaultSize:            10 * datasizes.GibiByte,
 		rpmOstree:              true,
@@ -303,7 +304,6 @@ func mkIotQcow2ImgType(d distribution) imageType {
 		buildPipelines:         []string{"build"},
 		payloadPipelines:       []string{"ostree-deployment", "image", "qcow2"},
 		exports:                []string{"qcow2"},
-		kernelOptions:          ostreeDeploymentKernelOptions(),
 		requiredPartitionSizes: requiredDirectorySizes,
 	}
 }
@@ -320,8 +320,8 @@ func mkQcow2ImgType(d distribution) imageType {
 		},
 		defaultImageConfig: &distro.ImageConfig{
 			DefaultTarget: common.ToPtr("multi-user.target"),
+			KernelOptions: cloudKernelOptions(),
 		},
-		kernelOptions:          cloudKernelOptions(),
 		bootable:               true,
 		defaultSize:            5 * datasizes.GibiByte,
 		image:                  diskImage,
@@ -341,6 +341,7 @@ var (
 			"cloud-final.service",
 			"cloud-init-local.service",
 		},
+		KernelOptions: cloudKernelOptions(),
 	}
 )
 
@@ -354,7 +355,6 @@ func mkVmdkImgType(d distribution) imageType {
 			osPkgsKey: packageSetLoader,
 		},
 		defaultImageConfig:     vmdkDefaultImageConfig,
-		kernelOptions:          cloudKernelOptions(),
 		bootable:               true,
 		defaultSize:            2 * datasizes.GibiByte,
 		image:                  diskImage,
@@ -375,7 +375,6 @@ func mkOvaImgType(d distribution) imageType {
 			osPkgsKey: packageSetLoader,
 		},
 		defaultImageConfig:     vmdkDefaultImageConfig,
-		kernelOptions:          cloudKernelOptions(),
 		bootable:               true,
 		defaultSize:            2 * datasizes.GibiByte,
 		image:                  diskImage,
@@ -470,9 +469,9 @@ func mkMinimalRawImgType(d distribution) imageType {
 				Timeout: 5,
 			},
 			InstallWeakDeps: common.ToPtr(common.VersionLessThan(d.osVersion, VERSION_MINIMAL_WEAKDEPS)),
+			KernelOptions:   defaultKernelOptions(),
 		},
 		rpmOstree:              false,
-		kernelOptions:          defaultKernelOptions(),
 		bootable:               true,
 		defaultSize:            2 * datasizes.GibiByte,
 		image:                  diskImage,
@@ -488,7 +487,7 @@ func mkMinimalRawImgType(d distribution) imageType {
 
 		// when using systemd mount units we also want them to be mounted rw
 		// while the default options are not
-		it.kernelOptions = []string{"rw"}
+		it.defaultImageConfig.KernelOptions = []string{"rw"}
 	}
 	return it
 }

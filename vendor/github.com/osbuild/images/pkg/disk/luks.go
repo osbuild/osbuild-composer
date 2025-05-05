@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/datasizes"
 )
 
@@ -151,5 +152,5 @@ func (lc *LUKSContainer) UnmarshalJSON(data []byte) (err error) {
 }
 
 func (lc *LUKSContainer) UnmarshalYAML(unmarshal func(any) error) error {
-	return unmarshalYAMLviaJSON(lc, unmarshal)
+	return common.UnmarshalYAMLviaJSON(lc, unmarshal)
 }

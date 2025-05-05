@@ -2,6 +2,7 @@ package rhel8
 
 import (
 	"github.com/osbuild/images/pkg/datasizes"
+	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distro/rhel"
 )
 
@@ -22,8 +23,9 @@ func mkVmdkImgType() *rhel.ImageType {
 		[]string{"os", "image", "vmdk"},
 		[]string{"vmdk"},
 	)
-
-	it.KernelOptions = vmdkKernelOptions()
+	it.DefaultImageConfig = &distro.ImageConfig{
+		KernelOptions: vmdkKernelOptions(),
+	}
 	it.Bootable = true
 	it.DefaultSize = 4 * datasizes.GibiByte
 	it.BasePartitionTables = partitionTables
@@ -44,8 +46,9 @@ func mkOvaImgType() *rhel.ImageType {
 		[]string{"os", "image", "vmdk", "ovf", "archive"},
 		[]string{"archive"},
 	)
-
-	it.KernelOptions = vmdkKernelOptions()
+	it.DefaultImageConfig = &distro.ImageConfig{
+		KernelOptions: vmdkKernelOptions(),
+	}
 	it.Bootable = true
 	it.DefaultSize = 4 * datasizes.GibiByte
 	it.BasePartitionTables = partitionTables

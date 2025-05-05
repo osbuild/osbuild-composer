@@ -3,6 +3,8 @@ package disk
 import (
 	"encoding/json"
 	"fmt"
+
+	"github.com/osbuild/images/internal/common"
 )
 
 type Partition struct {
@@ -137,5 +139,5 @@ func (p *Partition) UnmarshalJSON(data []byte) (err error) {
 }
 
 func (t *Partition) UnmarshalYAML(unmarshal func(any) error) error {
-	return unmarshalYAMLviaJSON(t, unmarshal)
+	return common.UnmarshalYAMLviaJSON(t, unmarshal)
 }

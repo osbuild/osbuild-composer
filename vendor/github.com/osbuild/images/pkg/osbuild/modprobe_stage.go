@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
+
+	"github.com/osbuild/images/internal/common"
 )
 
 const modprobeCfgFilenameRegex = "^[\\w.-]{1,250}\\.conf$"
@@ -93,6 +95,10 @@ func (configFile *ModprobeConfigCmdList) UnmarshalJSON(data []byte) error {
 	}
 
 	return nil
+}
+
+func (configFile *ModprobeConfigCmdList) UnmarshalYAML(unmarshal func(any) error) error {
+	return common.UnmarshalYAMLviaJSON(configFile, unmarshal)
 }
 
 // ModprobeConfigCmdBlacklist represents the 'blacklist' command in the

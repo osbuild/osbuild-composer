@@ -41,8 +41,9 @@ func osCustomizations(
 		osc.KernelName = c.GetKernel().Name
 
 		var kernelOptions []string
-		if len(t.kernelOptions) > 0 {
-			kernelOptions = append(kernelOptions, t.kernelOptions...)
+		// XXX: keep in sync with the identical copy in rhel/images.go
+		if t.defaultImageConfig != nil && len(t.defaultImageConfig.KernelOptions) > 0 {
+			kernelOptions = append(kernelOptions, t.defaultImageConfig.KernelOptions...)
 		}
 		if bpKernel := c.GetKernel(); bpKernel.Append != "" {
 			kernelOptions = append(kernelOptions, bpKernel.Append)
@@ -268,8 +269,8 @@ func ostreeDeploymentCustomizations(
 	deploymentConf := manifest.OSTreeDeploymentCustomizations{}
 
 	var kernelOptions []string
-	if len(t.kernelOptions) > 0 {
-		kernelOptions = append(kernelOptions, t.kernelOptions...)
+	if len(t.defaultImageConfig.KernelOptions) > 0 {
+		kernelOptions = append(kernelOptions, t.defaultImageConfig.KernelOptions...)
 	}
 	if bpKernel := c.GetKernel(); bpKernel != nil && bpKernel.Append != "" {
 		kernelOptions = append(kernelOptions, bpKernel.Append)
