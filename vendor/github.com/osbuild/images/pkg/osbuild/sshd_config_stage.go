@@ -3,6 +3,8 @@ package osbuild
 import (
 	"encoding/json"
 	"fmt"
+
+	"github.com/osbuild/images/internal/common"
 )
 
 type SshdConfigConfig struct {
@@ -73,6 +75,10 @@ func (c *SshdConfigConfig) UnmarshalJSON(data []byte) error {
 	c.PermitRootLogin = permitRootLogin
 
 	return nil
+}
+
+func (c *SshdConfigConfig) UnmarshalYAML(unmarshal func(any) error) error {
+	return common.UnmarshalYAMLviaJSON(c, unmarshal)
 }
 
 type SshdConfigStageOptions struct {

@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/datasizes"
 )
 
@@ -262,5 +263,5 @@ func (lv *LVMLogicalVolume) UnmarshalJSON(data []byte) (err error) {
 }
 
 func (lv *LVMLogicalVolume) UnmarshalYAML(unmarshal func(any) error) error {
-	return unmarshalYAMLviaJSON(lv, unmarshal)
+	return common.UnmarshalYAMLviaJSON(lv, unmarshal)
 }

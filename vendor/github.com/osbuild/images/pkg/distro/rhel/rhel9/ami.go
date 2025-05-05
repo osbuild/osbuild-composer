@@ -161,10 +161,10 @@ func mkEc2ImgTypeX86_64() *rhel.ImageType {
 	)
 
 	it.Compression = "xz"
-	it.KernelOptions = amiKernelOptions()
 	it.Bootable = true
 	it.DefaultSize = 10 * datasizes.GibiByte
 	it.DefaultImageConfig = defaultEc2ImageConfigX86_64()
+	it.DefaultImageConfig.KernelOptions = amiKernelOptions()
 	it.BasePartitionTables = defaultBasePartitionTables
 
 	return it
@@ -184,10 +184,10 @@ func mkAMIImgTypeX86_64() *rhel.ImageType {
 		[]string{"image"},
 	)
 
-	it.KernelOptions = amiKernelOptions()
 	it.Bootable = true
 	it.DefaultSize = 10 * datasizes.GibiByte
 	it.DefaultImageConfig = defaultEc2ImageConfigX86_64()
+	it.DefaultImageConfig.KernelOptions = amiKernelOptions()
 	it.BasePartitionTables = defaultBasePartitionTables
 
 	return it
@@ -208,10 +208,10 @@ func mkEC2SapImgTypeX86_64(osVersion string) *rhel.ImageType {
 	)
 
 	it.Compression = "xz"
-	it.KernelOptions = []string{"console=ttyS0,115200n8", "console=tty0", "net.ifnames=0", "nvme_core.io_timeout=4294967295", "processor.max_cstate=1", "intel_idle.max_cstate=1"}
 	it.Bootable = true
 	it.DefaultSize = 10 * datasizes.GibiByte
 	it.DefaultImageConfig = sapImageConfig(osVersion).InheritFrom(defaultEc2ImageConfigX86_64())
+	it.DefaultImageConfig.KernelOptions = []string{"console=ttyS0,115200n8", "console=tty0", "net.ifnames=0", "nvme_core.io_timeout=4294967295", "processor.max_cstate=1", "intel_idle.max_cstate=1"}
 	it.BasePartitionTables = defaultBasePartitionTables
 
 	return it
@@ -232,10 +232,10 @@ func mkEc2HaImgTypeX86_64() *rhel.ImageType {
 	)
 
 	it.Compression = "xz"
-	it.KernelOptions = amiKernelOptions()
 	it.Bootable = true
 	it.DefaultSize = 10 * datasizes.GibiByte
 	it.DefaultImageConfig = defaultEc2ImageConfigX86_64()
+	it.DefaultImageConfig.KernelOptions = amiKernelOptions()
 	it.BasePartitionTables = defaultBasePartitionTables
 
 	return it
@@ -255,10 +255,10 @@ func mkAMIImgTypeAarch64() *rhel.ImageType {
 		[]string{"image"},
 	)
 
-	it.KernelOptions = []string{"console=ttyS0,115200n8", "console=tty0", "net.ifnames=0", "nvme_core.io_timeout=4294967295", "iommu.strict=0"}
 	it.Bootable = true
 	it.DefaultSize = 10 * datasizes.GibiByte
 	it.DefaultImageConfig = defaultEc2ImageConfig()
+	it.DefaultImageConfig.KernelOptions = []string{"console=ttyS0,115200n8", "console=tty0", "net.ifnames=0", "nvme_core.io_timeout=4294967295", "iommu.strict=0"}
 	it.BasePartitionTables = defaultBasePartitionTables
 
 	return it
@@ -279,10 +279,10 @@ func mkEC2ImgTypeAarch64() *rhel.ImageType {
 	)
 
 	it.Compression = "xz"
-	it.KernelOptions = []string{"console=ttyS0,115200n8", "console=tty0", "net.ifnames=0", "nvme_core.io_timeout=4294967295", "iommu.strict=0"}
 	it.Bootable = true
 	it.DefaultSize = 10 * datasizes.GibiByte
 	it.DefaultImageConfig = defaultEc2ImageConfig()
+	it.DefaultImageConfig.KernelOptions = []string{"console=ttyS0,115200n8", "console=tty0", "net.ifnames=0", "nvme_core.io_timeout=4294967295", "iommu.strict=0"}
 	it.BasePartitionTables = defaultBasePartitionTables
 
 	return it

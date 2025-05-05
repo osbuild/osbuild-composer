@@ -26,6 +26,7 @@ type ImageConfig struct {
 	Sysconfig           *Sysconfig `yaml:"sysconfig,omitempty"`
 	DefaultKernel       *string    `yaml:"default_kernel,omitempty"`
 	UpdateDefaultKernel *bool      `yaml:"update_default_kernel,omitempty"`
+	KernelOptions       []string   `yaml:"kernel_options,omitempty"`
 
 	// List of files from which to import GPG keys into the RPM database
 	GPGKeyFiles []string `yaml:"gpgkey_files,omitempty"`

@@ -16,6 +16,9 @@ type ImageOptions struct {
 	Insights      bool   `json:"insights"`
 	Rhc           bool   `json:"rhc"`
 	Proxy         string `json:"proxy"`
+	TemplateName  string `json:"template_name"`
+	TemplateUUID  string `json:"template_uuid"`
+	PatchURL      string `json:"patch_url"`
 }
 
 type RHSMStatus string

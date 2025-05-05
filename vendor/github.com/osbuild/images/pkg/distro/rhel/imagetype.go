@@ -78,7 +78,6 @@ type ImageType struct {
 	Compression            string // TODO: remove from image definition and make it a transport option
 	DefaultImageConfig     *distro.ImageConfig
 	DefaultInstallerConfig *distro.InstallerConfig
-	KernelOptions          []string
 	DefaultSize            uint64
 
 	// bootISO: installable ISO

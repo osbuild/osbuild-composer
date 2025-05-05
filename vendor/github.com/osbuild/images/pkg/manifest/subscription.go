@@ -3,6 +3,7 @@ package manifest
 import (
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	"github.com/osbuild/images/pkg/customizations/fsnode"
 	"github.com/osbuild/images/pkg/customizations/subscription"
@@ -116,12 +117,24 @@ func subscriptionService(subscriptionOptions subscription.ImageOptions, serviceO
 
 	var commands []string
 	if subscriptionOptions.Rhc {
+		var curlToAssociateSystem string
 		// Use rhc for registration instead of subscription manager
-		commands = []string{fmt.Sprintf("/usr/bin/rhc connect --organization=${ORG_ID} --activation-key=${ACTIVATION_KEY} --server %s", subscriptionOptions.ServerUrl)}
+		rhcConnect := fmt.Sprintf("/usr/bin/rhc connect --organization=${ORG_ID} --activation-key=${ACTIVATION_KEY} --server %s", subscriptionOptions.ServerUrl)
+		if subscriptionOptions.TemplateUUID != "" {
+			curlToAssociateSystem = getCurlToAssociateSystem(subscriptionOptions)
+		} else if subscriptionOptions.TemplateName != "" {
+			rhcConnect += fmt.Sprintf(" --content-template %s", subscriptionOptions.TemplateName)
+		}
+		commands = append(commands, rhcConnect)
 		// insights-client creates the .gnupg directory during boot process, and is labeled incorrectly
 		commands = append(commands, "restorecon -R /root/.gnupg")
 		// execute the rhc post install script as the selinuxenabled check doesn't work in the buildroot container
 		commands = append(commands, "/usr/sbin/semanage permissive --add rhcd_t")
+		// register to template if template uuid is specified
+		if curlToAssociateSystem != "" {
+			commands = append(commands, curlToAssociateSystem)
+			commands = append(commands, "/usr/sbin/subscription-manager refresh")
+		}
 		if insightsOnBoot {
 			icDir, icFile, err := runInsightsClientOnBoot()
 			if err != nil {
@@ -138,6 +151,12 @@ func subscriptionService(subscriptionOptions subscription.ImageOptions, serviceO
 			commands = append(commands, "/usr/bin/insights-client --register")
 			// insights-client creates the .gnupg directory during boot process, and is labeled incorrectly
 			commands = append(commands, "restorecon -R /root/.gnupg")
+			// register to template if template is specified
+			if subscriptionOptions.TemplateUUID != "" {
+				curlToAssociateSystem := getCurlToAssociateSystem(subscriptionOptions)
+				commands = append(commands, curlToAssociateSystem)
+				commands = append(commands, "/usr/sbin/subscription-manager refresh")
+			}
 			if insightsOnBoot {
 				icDir, icFile, err := runInsightsClientOnBoot()
 				if err != nil {
@@ -228,4 +247,14 @@ ExecStartPre=
 [Install]
 WantedBy=multi-user.target
 `
+}
+
+func getCurlToAssociateSystem(subscriptionOptions subscription.ImageOptions) string {
+	patchURL := strings.TrimSuffix(subscriptionOptions.PatchURL, "/")
+	addTemplateURL := fmt.Sprintf("%s/templates/%s/subscribed-systems", patchURL, subscriptionOptions.TemplateUUID)
+	curlToAssociateSystem := fmt.Sprintf("curl -v --retry 5 --cert /etc/pki/consumer/cert.pem --key /etc/pki/consumer/key.pem -X PATCH %s", addTemplateURL)
+	if subscriptionOptions.Proxy != "" {
+		curlToAssociateSystem += fmt.Sprintf(" --proxy %s", subscriptionOptions.Proxy)
+	}
+	return curlToAssociateSystem
 }

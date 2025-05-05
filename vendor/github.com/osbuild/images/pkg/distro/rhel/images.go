@@ -40,8 +40,9 @@ func osCustomizations(
 		osc.KernelName = c.GetKernel().Name
 
 		var kernelOptions []string
-		if len(t.KernelOptions) > 0 {
-			kernelOptions = append(kernelOptions, t.KernelOptions...)
+		// XXX: keep in sync with the identical copy in fedora/images.go
+		if t.DefaultImageConfig != nil && len(t.DefaultImageConfig.KernelOptions) > 0 {
+			kernelOptions = append(kernelOptions, t.DefaultImageConfig.KernelOptions...)
 		}
 		if bpKernel := c.GetKernel(); bpKernel.Append != "" {
 			kernelOptions = append(kernelOptions, bpKernel.Append)
@@ -311,8 +312,8 @@ func ostreeDeploymentCustomizations(
 	deploymentConf := manifest.OSTreeDeploymentCustomizations{}
 
 	var kernelOptions []string
-	if len(t.KernelOptions) > 0 {
-		kernelOptions = append(kernelOptions, t.KernelOptions...)
+	if len(t.DefaultImageConfig.KernelOptions) > 0 {
+		kernelOptions = append(kernelOptions, t.DefaultImageConfig.KernelOptions...)
 	}
 	if bpKernel := c.GetKernel(); bpKernel != nil && bpKernel.Append != "" {
 		kernelOptions = append(kernelOptions, bpKernel.Append)

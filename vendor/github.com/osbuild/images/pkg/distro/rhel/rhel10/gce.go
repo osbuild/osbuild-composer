@@ -27,7 +27,7 @@ func mkGCEImageType() *rhel.ImageType {
 	)
 
 	it.DefaultImageConfig = baseGCEImageConfig()
-	it.KernelOptions = gceKernelOptions()
+	it.DefaultImageConfig.KernelOptions = gceKernelOptions()
 	it.DefaultSize = 20 * datasizes.GibiByte
 	it.Bootable = true
 	// TODO: the base partition table still contains the BIOS boot partition, but the image is UEFI-only

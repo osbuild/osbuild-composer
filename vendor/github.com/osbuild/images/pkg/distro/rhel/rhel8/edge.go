@@ -77,13 +77,13 @@ func mkEdgeRawImgType() *rhel.ImageType {
 
 	it.NameAliases = []string{"rhel-edge-raw-image"}
 	it.Compression = "xz"
-	it.KernelOptions = []string{"modprobe.blacklist=vc4"}
 	it.DefaultImageConfig = &distro.ImageConfig{
 		Keyboard: &osbuild.KeymapStageOptions{
 			Keymap: "us",
 		},
-		Locale:       common.ToPtr("C.UTF-8"),
-		LockRootUser: common.ToPtr(true),
+		Locale:        common.ToPtr("C.UTF-8"),
+		LockRootUser:  common.ToPtr(true),
+		KernelOptions: []string{"modprobe.blacklist=vc4"},
 	}
 	it.DefaultSize = 10 * datasizes.GibiByte
 	it.RPMOSTree = true
@@ -142,14 +142,14 @@ func mkEdgeSimplifiedInstallerImgType(rd *rhel.Distribution) *rhel.ImageType {
 	)
 
 	it.NameAliases = []string{"rhel-edge-simplified-installer"}
-	it.KernelOptions = []string{"modprobe.blacklist=vc4"}
 	it.DefaultImageConfig = &distro.ImageConfig{
 		EnabledServices: edgeServices(rd),
 		Keyboard: &osbuild.KeymapStageOptions{
 			Keymap: "us",
 		},
-		Locale:       common.ToPtr("C.UTF-8"),
-		LockRootUser: common.ToPtr(true),
+		Locale:        common.ToPtr("C.UTF-8"),
+		LockRootUser:  common.ToPtr(true),
+		KernelOptions: []string{"modprobe.blacklist=vc4"},
 	}
 	it.DefaultInstallerConfig = &distro.InstallerConfig{
 		AdditionalDracutModules: []string{
@@ -190,9 +190,9 @@ func mkMinimalRawImgType() *rhel.ImageType {
 		EnabledServices: minimalrawServices,
 		// NOTE: temporary workaround for a bug in initial-setup that
 		// requires a kickstart file in the root directory.
-		Files: []*fsnode.File{initialSetupKickstart()},
+		Files:         []*fsnode.File{initialSetupKickstart()},
+		KernelOptions: []string{"ro"},
 	}
-	it.KernelOptions = []string{"ro"}
 	it.Bootable = true
 	it.DefaultSize = 2 * datasizes.GibiByte
 	it.BasePartitionTables = partitionTables
