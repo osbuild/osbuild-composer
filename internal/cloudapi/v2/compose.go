@@ -14,6 +14,7 @@ import (
 	"github.com/osbuild/images/pkg/customizations/subscription"
 	"github.com/osbuild/images/pkg/datasizes"
 	"github.com/osbuild/images/pkg/disk"
+	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distrofactory"
 	"github.com/osbuild/images/pkg/reporegistry"
 	"github.com/osbuild/images/pkg/rhsm/facts"
@@ -1251,8 +1252,13 @@ func (request *ComposeRequest) GetImageRequests(distroFactory *distrofactory.Fac
 			repos = append(repos, dr...)
 		}
 
-		// Get the initial ImageOptions with image size set
-		imageOptions := ir.GetImageOptions(imageType, bp)
+		// Initialise the image options from the image request and
+		// customizations
+		imageOptions := distro.ImageOptions{}
+
+		if ir.Size != nil {
+			imageOptions.Size = *ir.Size
+		}
 
 		if request.Koji == nil {
 			imageOptions.Facts = &facts.ImageOptions{
