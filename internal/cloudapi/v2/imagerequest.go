@@ -7,8 +7,6 @@ import (
 
 	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/google/uuid"
-	"github.com/osbuild/blueprint/pkg/blueprint"
-	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/ostree"
 	"github.com/osbuild/images/pkg/platform"
@@ -16,27 +14,6 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/target"
 )
-
-// GetImageOptions returns the initial ImageOptions with Size and PartitioningMode set
-// The size is set to the largest of:
-//   - Default size for the image type
-//   - Blueprint filesystem customizations
-//   - Requested size
-//
-// The partitioning mode is set to AutoLVM which will select LVM if there are additional mountpoints
-func (ir *ImageRequest) GetImageOptions(imageType distro.ImageType, bp blueprint.Blueprint) distro.ImageOptions {
-	// NOTE: The size is in bytes
-	var size uint64
-	minSize := bp.Customizations.GetFilesystemsMinSize()
-	if ir.Size == nil {
-		size = imageType.Size(minSize)
-	} else if bp.Customizations != nil && minSize > 0 && minSize > *ir.Size {
-		size = imageType.Size(minSize)
-	} else {
-		size = imageType.Size(*ir.Size)
-	}
-	return distro.ImageOptions{Size: size, PartitioningMode: disk.AutoLVMPartitioningMode}
-}
 
 func newAWSTarget(options UploadOptions, imageType distro.ImageType) (*target.Target, error) {
 	var awsUploadOptions AWSEC2UploadOptions
