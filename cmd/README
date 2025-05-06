@@ -1,0 +1,36 @@
+Binaries
+========
+
+osbuild-composer: The main binary, the service that maintains the queue and schedules all
+jobs. This is started as the main process by systemd or container runtime.
+
+osbuild-worker: The worker binary that handles jobs from the job queue locally.
+
+osbuild-worker-executor: The binary that runs osbuild to build an image on an isolated VM.
+
+osbuild-koji: Submits builds to Koji.
+
+osbuild-jobsite-*: Provides an isolated set of services to run builds in. They can be separated
+from the rest of the system through network segmentation or other means. The jobsite and what's
+in it are only available to things inside it.
+
+Service binaries
+================
+
+osbuild-service-maintenance: Vacuum the database and remove old jobs. Also used to cleanup
+cloud instances.
+
+Development and test tools
+==========================
+
+gen-manifests
+mock-dnf-json
+osbuild-auth-tests
+osbuild-composer-cli-tests
+osbuild-composer-dbjobqueue-tests
+osbuild-dnf-json-tests
+osbuild-image-tests
+osbuild-koji-tests
+osbuild-mock-openid-provider
+osbuild-store-dump
+osbuild-upload-*
