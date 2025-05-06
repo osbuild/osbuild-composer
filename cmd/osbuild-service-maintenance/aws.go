@@ -4,12 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"slices"
 	"sync"
 	"time"
 
 	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
-	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/semaphore"
 
 	"github.com/osbuild/osbuild-composer/internal/cloud/awscloud"
@@ -33,7 +33,7 @@ func AWSCleanup(maxConcurrentRequests int, dryRun bool, accessKeyID, accessKey s
 			return err
 		}
 	} else {
-		logrus.Infof("One of AWS_ACCESS_KEY_ID or AWS_SECRET_ACCESS_KEY is missing, trying default credentials…")
+		log.Printf("One of AWS_ACCESS_KEY_ID or AWS_SECRET_ACCESS_KEY is missing, trying default credentials…")
 		a, err = awscloud.NewDefault(region)
 		if err != nil {
 			return err
@@ -48,7 +48,7 @@ func AWSCleanup(maxConcurrentRequests int, dryRun bool, accessKeyID, accessKey s
 	for _, region := range regions {
 		a, err := awscloud.New(region, accessKeyID, accessKey, "")
 		if err != nil {
-			logrus.Errorf("Unable to create new aws session for region %s: %v", region, err)
+			log.Printf("Unable to create new aws session for region %s: %v", region, err)
 			continue
 		}
 
@@ -56,24 +56,24 @@ func AWSCleanup(maxConcurrentRequests int, dryRun bool, accessKeyID, accessKey s
 		sem := semaphore.NewWeighted(int64(maxConcurrentRequests))
 		images, err := a.DescribeImagesByTag("Name", "composer-api-*")
 		if err != nil {
-			logrus.Errorf("Unable to describe images for region %s: %v", region, err)
+			log.Printf("Unable to describe images for region %s: %v", region, err)
 			continue
 		}
 
 		for index, image := range images {
 			// TODO are these actual concerns?
 			if image.ImageId == nil {
-				logrus.Infof("ImageId is nil %v", image)
+				log.Printf("ImageId is nil %v", image)
 				continue
 			}
 			if image.CreationDate == nil {
-				logrus.Infof("Image %v has nil creationdate", *image.ImageId)
+				log.Printf("Image %v has nil creationdate", *image.ImageId)
 				continue
 			}
 
 			created, err := time.Parse(time.RFC3339, *image.CreationDate)
 			if err != nil {
-				logrus.Infof("Unable to parse date %s for image %s", *image.CreationDate, *image.ImageId)
+				log.Printf("Unable to parse date %s for image %s", *image.CreationDate, *image.ImageId)
 				continue
 			}
 
@@ -82,12 +82,12 @@ func AWSCleanup(maxConcurrentRequests int, dryRun bool, accessKeyID, accessKey s
 			}
 
 			if dryRun {
-				logrus.Infof("Dry run, aws image %s in region %s, with creation date %s would be removed", *image.ImageId, region, *image.CreationDate)
+				log.Printf("Dry run, aws image %s in region %s, with creation date %s would be removed", *image.ImageId, region, *image.CreationDate)
 				continue
 			}
 
 			if err = sem.Acquire(ctx, 1); err != nil {
-				logrus.Errorf("Error acquiring semaphore: %v", err)
+				log.Printf("Error acquiring semaphore: %v", err)
 				continue
 			}
 			wg.Add(1)
@@ -98,32 +98,30 @@ func AWSCleanup(maxConcurrentRequests int, dryRun bool, accessKeyID, accessKey s
 
 				err := a.RemoveSnapshotAndDeregisterImage(&images[i])
 				if err != nil {
-					logrus.Errorf("Cleanup for image %s in region %s failed: %v", *images[i].ImageId, region, err)
+					log.Printf("Cleanup for image %s in region %s failed: %v", *images[i].ImageId, region, err)
 				}
 			}(index)
 		}
 		wg.Wait()
 	}
 
-	// using `errs` to collect all errors as we want to
-	// continue execution if only one cleanup fails
 	var errs []error
 
 	err = terminateOrphanedSecureInstances(a, dryRun)
 	if err != nil {
-		logrus.Errorf("Error in terminating secure instances: %v, continuing other cleanup.", err)
+		log.Printf("Error in terminating secure instances: %v, continuing other cleanup.", err)
 		errs = append(errs, err)
 	}
 
 	err = searchSGAndCleanup(ctx, a, dryRun)
 	if err != nil {
-		logrus.Errorf("Error in cleaning up security groups: %v", err)
+		log.Printf("Error in cleaning up security groups: %v", err)
 		errs = append(errs, err)
 	}
 
 	err = searchLTAndCleanup(ctx, a, dryRun)
 	if err != nil {
-		logrus.Errorf("Error in cleaning up launch templates: %v", err)
+		log.Printf("Error in cleaning up launch templates: %v", err)
 		errs = append(errs, err)
 	}
 
@@ -143,7 +141,7 @@ func terminateOrphanedSecureInstances(a *awscloud.AWS, dryRun bool) error {
 	for _, data := range instanceData {
 		parent, err := a.DescribeInstancesByInstanceID(data.Parent)
 		if err != nil {
-			logrus.Errorf("Error getting info of %s (parent of %s): %v", data.Parent, data.Child, err)
+			log.Printf("Error getting info of %s (parent of %s): %v", data.Parent, data.Child, err)
 			continue
 		}
 
@@ -153,7 +151,7 @@ func terminateOrphanedSecureInstances(a *awscloud.AWS, dryRun bool) error {
 	}
 
 	instanceIDs = filterOnTooOld(instanceIDs, reservations)
-	logrus.Infof("Cleaning up executor instances: %v", instanceIDs)
+	log.Printf("Cleaning up executor instances: %v", instanceIDs)
 	if !dryRun {
 		if len(instanceIDs) > 0 {
 			err = a.TerminateInstances(instanceIDs)
@@ -162,7 +160,7 @@ func terminateOrphanedSecureInstances(a *awscloud.AWS, dryRun bool) error {
 			}
 		}
 	} else {
-		logrus.Info("Dry run, didn't actually terminate any instances")
+		log.Print("Dry run, didn't actually terminate any instances")
 	}
 	return nil
 }
@@ -171,7 +169,7 @@ func filterOnTooOld(instanceIDs []string, reservations []ec2types.Reservation) [
 	for _, res := range reservations {
 		for _, i := range res.Instances {
 			if i.LaunchTime.Before(time.Now().Add(-time.Hour * 2)) {
-				logrus.Infof("Instance %s is too old", *i.InstanceId)
+				log.Printf("Instance %s is too old", *i.InstanceId)
 				if !slices.Contains(instanceIDs, *i.InstanceId) {
 					instanceIDs = append(instanceIDs, *i.InstanceId)
 				}
@@ -201,19 +199,19 @@ func getChildParentAssociations(reservations []ec2types.Reservation) []ChildToPa
 
 func checkValidParent(childId string, parent []ec2types.Reservation) bool {
 	if len(parent) == 0 {
-		logrus.Infof("Instance %s has no parent, removing it", childId)
+		log.Printf("Instance %s has no parent, removing it", childId)
 		return false
 	}
 	if len(parent) != 1 {
-		logrus.Errorf("Instance %s has %d parents. That should never happen, not changing anything here.", childId, len(parent))
+		log.Printf("Instance %s has %d parents. That should never happen, not changing anything here.", childId, len(parent))
 		return true
 	}
 	if len(parent[0].Instances) == 0 {
-		logrus.Infof("Instance %s has no parent instance, removing it", childId)
+		log.Printf("Instance %s has no parent instance, removing it", childId)
 		return false
 	}
 	if len(parent[0].Instances) != 1 {
-		logrus.Errorf("Instance %s has %d parent instances. That should never happen, not changing anything here.", childId, len(parent[0].Instances))
+		log.Printf("Instance %s has %d parent instances. That should never happen, not changing anything here.", childId, len(parent[0].Instances))
 		return true
 	}
 
@@ -221,7 +219,7 @@ func checkValidParent(childId string, parent []ec2types.Reservation) bool {
 	if parentState != ec2types.InstanceStateNameTerminated {
 		return true
 	}
-	logrus.Infof("Instance %s has a parent (%s) in state %s, so we'll terminate %s.", childId, *parent[0].Instances[0].InstanceId, parentState, childId)
+	log.Printf("Instance %s has a parent (%s) in state %s, so we'll terminate %s.", childId, *parent[0].Instances[0].InstanceId, parentState, childId)
 	return false
 }
 
@@ -233,7 +231,7 @@ func searchSGAndCleanup(ctx context.Context, a *awscloud.AWS, dryRun bool) error
 
 	for _, sg := range securityGroups {
 		if sg.GroupId == nil || sg.GroupName == nil {
-			logrus.Errorf(
+			log.Printf(
 				"Security Group needs to have a GroupId (%v) and a GroupName (%v).",
 				sg.GroupId,
 				sg.GroupName)
@@ -241,22 +239,22 @@ func searchSGAndCleanup(ctx context.Context, a *awscloud.AWS, dryRun bool) error
 		}
 		reservations, err := a.DescribeInstancesBySecurityGroupID(*sg.GroupId)
 		if err != nil {
-			logrus.Errorf("Failed to describe security group %s: %v", *sg.GroupId, err)
+			log.Printf("Failed to describe security group %s: %v", *sg.GroupId, err)
 			continue
 		}
 
 		// If no instance is running/pending, delete the SG
 		if allTerminated(reservations) {
-			logrus.Infof("Deleting security group: %s (%s)", *sg.GroupName, *sg.GroupId)
+			log.Printf("Deleting security group: %s (%s)", *sg.GroupName, *sg.GroupId)
 			if !dryRun {
 				err := a.DeleteSecurityGroupById(ctx, sg.GroupId)
 
 				if err != nil {
-					logrus.Errorf("Failed to delete security group %s: %v", *sg.GroupId, err)
+					log.Printf("Failed to delete security group %s: %v", *sg.GroupId, err)
 				}
 			}
 		} else {
-			logrus.Debugf("Security group %s has non terminated instances associated with it.", *sg.GroupId)
+			log.Printf("Security group %s has non terminated instances associated with it.", *sg.GroupId)
 		}
 	}
 	return nil
@@ -283,7 +281,7 @@ func searchLTAndCleanup(ctx context.Context, a *awscloud.AWS, dryRun bool) error
 
 	for _, lt := range launchTemplates {
 		if lt.LaunchTemplateName == nil || lt.LaunchTemplateId == nil {
-			logrus.Errorf(
+			log.Printf(
 				"Launch template needs to have a LaunchTemplateName (%v) and a LaunchTemplateId (%v).",
 				lt.LaunchTemplateName,
 				lt.LaunchTemplateId)
@@ -292,21 +290,21 @@ func searchLTAndCleanup(ctx context.Context, a *awscloud.AWS, dryRun bool) error
 
 		reservations, err := a.DescribeInstancesByLaunchTemplateID(*lt.LaunchTemplateId)
 		if err != nil {
-			logrus.Errorf("Failed to describe launch template %s: %v", *lt.LaunchTemplateId, err)
+			log.Printf("Failed to describe launch template %s: %v", *lt.LaunchTemplateId, err)
 			continue
 		}
 
 		if allTerminated(reservations) {
-			logrus.Infof("Deleting launch template: %s (%s)\n", *lt.LaunchTemplateName, *lt.LaunchTemplateId)
+			log.Printf("Deleting launch template: %s (%s)\n", *lt.LaunchTemplateName, *lt.LaunchTemplateId)
 			if !dryRun {
 				err := a.DeleteLaunchTemplateById(ctx, lt.LaunchTemplateId)
 
 				if err != nil {
-					logrus.Errorf("Failed to delete launch template %s: %v", *lt.LaunchTemplateId, err)
+					log.Printf("Failed to delete launch template %s: %v", *lt.LaunchTemplateId, err)
 				}
 			}
 		} else {
-			fmt.Printf("Launch template %s has non terminated instances associated with it.\n", *lt.LaunchTemplateId)
+			log.Printf("Launch template %s has non terminated instances associated with it.\n", *lt.LaunchTemplateId)
 		}
 	}
 	return nil
