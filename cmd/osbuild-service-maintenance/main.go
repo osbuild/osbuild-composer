@@ -3,18 +3,15 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"sync"
 	"time"
-
-	"github.com/sirupsen/logrus"
 )
 
 func main() {
-	logrus.SetReportCaller(true)
-
 	// 14 days
 	cutoff := time.Now().Add(-(time.Hour * 24 * 14))
-	logrus.Infof("Cutoff date: %v", cutoff)
+	log.Printf("Cutoff date: %v", cutoff)
 
 	conf := Config{
 		MaxConcurrentRequests: 20,
@@ -24,15 +21,15 @@ func main() {
 	}
 	err := LoadConfigFromEnv(&conf)
 	if err != nil {
-		logrus.Fatal(err)
+		log.Fatal(err)
 	}
 
 	if conf.DryRun {
-		logrus.Info("Dry run, no state will be changed")
+		log.Println("Dry run, no state will be changed")
 	}
 
 	if conf.MaxConcurrentRequests == 0 {
-		logrus.Fatal("Max concurrent requests is 0")
+		log.Fatal("Max concurrent requests is 0")
 	}
 
 	var wg sync.WaitGroup
@@ -40,14 +37,14 @@ func main() {
 	go func() {
 		defer wg.Done()
 		if !conf.EnableAWSMaintenance {
-			logrus.Info("AWS maintenance not enabled, skipping")
+			log.Println("AWS maintenance not enabled, skipping")
 			return
 		}
 
-		logrus.Info("Cleaning up AWS")
+		log.Println("Cleaning up AWS")
 		err := AWSCleanup(conf.MaxConcurrentRequests, conf.DryRun, conf.AWSAccessKeyID, conf.AWSSecretAccessKey, cutoff)
 		if err != nil {
-			logrus.Errorf("AWS cleanup failed: %v", err)
+			log.Printf("AWS cleanup failed: %v", err)
 		}
 	}()
 
@@ -55,40 +52,40 @@ func main() {
 	go func() {
 		defer wg.Done()
 		if !conf.EnableGCPMaintenance {
-			logrus.Info("GCP maintenance not enabled, skipping")
+			log.Println("GCP maintenance not enabled, skipping")
 			return
 		}
 
-		logrus.Info("Cleaning up GCP")
+		log.Println("Cleaning up GCP")
 		var gcpConf GCPCredentialsConfig
 		err := LoadConfigFromEnv(&gcpConf)
 		if err != nil {
-			logrus.Error("Unable to load GCP config from environment")
+			log.Println("Unable to load GCP config from environment")
 			return
 		}
 
 		if !gcpConf.valid() {
-			logrus.Error("GCP credentials invalid, fields missing")
+			log.Println("GCP credentials invalid, fields missing")
 			return
 		}
 
 		creds, err := json.Marshal(&gcpConf)
 		if err != nil {
-			logrus.Errorf("Unable to marshal gcp conf: %v", err)
+			log.Printf("Unable to marshal gcp conf: %v", err)
 			return
 		}
 
 		err = GCPCleanup(creds, conf.MaxConcurrentRequests, conf.DryRun, cutoff)
 		if err != nil {
-			logrus.Errorf("GCP Cleanup failed: %v", err)
+			log.Printf("GCP Cleanup failed: %v", err)
 		}
 	}()
 
 	wg.Wait()
-	logrus.Info("🦀🦀🦀 cloud cleanup done 🦀🦀🦀")
+	log.Println("🦀🦀🦀 cloud cleanup done 🦀🦀🦀")
 
 	if !conf.EnableDBMaintenance {
-		logrus.Info("🦀🦀🦀 DB maintenance not enabled, skipping  🦀🦀🦀")
+		log.Println("🦀🦀🦀 DB maintenance not enabled, skipping  🦀🦀🦀")
 		return
 	}
 	dbURL := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s",
@@ -101,7 +98,7 @@ func main() {
 	)
 	err = DBCleanup(dbURL, conf.DryRun, cutoff)
 	if err != nil {
-		logrus.Fatalf("Error during DBCleanup: %v", err)
+		log.Fatalf("Error during DBCleanup: %v", err)
 	}
-	logrus.Info("🦀🦀🦀 dbqueue cleanup done 🦀🦀🦀")
+	log.Println("🦀🦀🦀 dbqueue cleanup done 🦀🦀🦀")
 }
