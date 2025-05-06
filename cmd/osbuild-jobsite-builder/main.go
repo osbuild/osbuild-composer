@@ -9,6 +9,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/exec"
@@ -17,12 +18,11 @@ import (
 	"strings"
 	"sync"
 	"time"
-
-	"github.com/sirupsen/logrus"
 )
 
 const (
 	ExitOk int = iota
+	ExitError
 )
 
 type State int
@@ -79,10 +79,11 @@ func init() {
 
 	flag.Parse()
 
-	logrus.SetLevel(logrus.InfoLevel)
-
+	opts := &slog.HandlerOptions{Level: slog.LevelInfo}
 	if argJSON {
-		logrus.SetFormatter(&logrus.JSONFormatter{})
+		slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, opts)))
+	} else {
+		slog.SetDefault(slog.New(slog.NewTextHandler(os.Stdout, opts)))
 	}
 }
 
@@ -127,14 +128,15 @@ func (builder *Builder) GetState() State {
 
 func (builder *Builder) GuardState(stateWanted State) {
 	if stateCurrent := builder.GetState(); stateWanted != stateCurrent {
-		logrus.Fatalf("Builder.GuardState: Requested guard for %d but we're in %d. Exit", stateWanted, stateCurrent)
+		slog.Error("Builder.GuardState: Guard state mismatch", "requested", stateWanted, "current", stateCurrent)
+		os.Exit(ExitError)
 	}
 }
 
 func (builder *Builder) RegisterHandler(h Handler) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if err := h(w, r); err != nil {
-			logrus.Fatal(err)
+			slog.Error("Handler: error", "error", err)
 		}
 	})
 }
@@ -143,14 +145,12 @@ func (builder *Builder) HandleClaim(w http.ResponseWriter, r *http.Request) erro
 	builder.GuardState(StateClaim)
 
 	if r.Method != "POST" {
-		logrus.WithFields(
-			logrus.Fields{"method": r.Method},
-		).Fatal("Builder.HandleClaim: unexpected request method")
+		slog.Error("Builder.HandleClaim: unexpected request method", "method", r.Method)
 	}
 
 	fmt.Fprintf(w, "%s", "done")
 
-	logrus.Info("Builder.HandleClaim: Done")
+	slog.Info("Builder.HandleClaim: Done")
 
 	builder.SetState(StateProvision)
 
@@ -164,7 +164,7 @@ func (builder *Builder) HandleProvision(w http.ResponseWriter, r *http.Request) 
 		return fmt.Errorf("Builder.HandleProvision: Unexpected request method")
 	}
 
-	logrus.WithFields(logrus.Fields{"argBuildPath": argBuildPath}).Debug("Builder.HandleProvision: Opening manifest.json")
+	slog.Debug("Builder.HandleProvision: Opening manifest.json", "argBuildPath", argBuildPath)
 
 	dst, err := os.OpenFile(
 		path.Join(argBuildPath, "manifest.json"),
@@ -182,7 +182,7 @@ func (builder *Builder) HandleProvision(w http.ResponseWriter, r *http.Request) 
 		return fmt.Errorf("Builder.HandleProvision: Failed to open manifest.json")
 	}
 
-	logrus.Debug("Builder.HandleProvision: Writing manifest.json")
+	slog.Debug("Builder.HandleProvision: Writing manifest.json")
 
 	_, err = io.Copy(dst, r.Body)
 
@@ -196,7 +196,7 @@ func (builder *Builder) HandleProvision(w http.ResponseWriter, r *http.Request) 
 		return fmt.Errorf("Builder.HandleProvision: Failed to write response")
 	}
 
-	logrus.Info("Builder.HandleProvision: Done")
+	slog.Info("Builder.HandleProvision: Done")
 
 	builder.SetState(StatePopulate)
 
@@ -256,7 +256,7 @@ func (builder *Builder) HandlePopulate(w http.ResponseWriter, r *http.Request) e
 		return fmt.Errorf("Builder.HandlePopulate: Failed to write response")
 	}
 
-	logrus.Info("Builder.HandlePopulate: Done")
+	slog.Info("Builder.HandlePopulate: Done")
 
 	builder.SetState(StateBuild)
 
@@ -279,7 +279,8 @@ func (builder *Builder) HandleBuild(w http.ResponseWriter, r *http.Request) erro
 	}
 
 	if builder.Build != nil {
-		logrus.Fatal("HandleBuild: Build started but Build was non-nil")
+		slog.Error("HandleBuild: Build started but Build was non-nil")
+		os.Exit(ExitError)
 	}
 
 	args := []string{
@@ -306,7 +307,7 @@ func (builder *Builder) HandleBuild(w http.ResponseWriter, r *http.Request) erro
 	)
 	builder.Build.Process.Env = envs
 
-	logrus.Infof("BackgroundProcess: Starting %s with %s", builder.Build.Process, envs)
+	slog.Info("BackgroundProcess: Starting", "process", builder.Build.Process, "env", envs)
 
 	builder.Build.Stdout = &bytes.Buffer{}
 	builder.Build.Process.Stdout = builder.Build.Stdout
@@ -325,14 +326,14 @@ func (builder *Builder) HandleBuild(w http.ResponseWriter, r *http.Request) erro
 		builder.Build.Error = builder.Build.Process.Wait()
 		builder.Build.Done = true
 
-		logrus.Info("BackgroundProcess: Exited")
+		slog.Info("BackgroundProcess: Exited")
 	}()
 
 	go func() {
 		scanner := bufio.NewScanner(builder.Build.Stderr)
 		for scanner.Scan() {
 			m := scanner.Text()
-			logrus.Infof("BackgroundProcess: Stderr: %s", m)
+			slog.Info("BackgroundProcess: Stderr", "text", m)
 		}
 	}()
 
@@ -370,7 +371,7 @@ func (builder *Builder) HandleProgress(w http.ResponseWriter, r *http.Request) e
 		w.WriteHeader(http.StatusAccepted)
 	}
 
-	logrus.Info("Builder.HandleBuild: Done")
+	slog.Info("Builder.HandleBuild: Done")
 	return nil
 }
 
@@ -404,7 +405,7 @@ func (builder *Builder) HandleExport(w http.ResponseWriter, r *http.Request) err
 		return fmt.Errorf("Builder.HandleExport: Failed to write response: %s", err)
 	}
 
-	logrus.Info("Builder.HandleExport: Done")
+	slog.Info("Builder.HandleExport: Done")
 
 	builder.SetState(StateDone)
 
@@ -433,16 +434,15 @@ func (builder *Builder) Serve() error {
 }
 
 func main() {
-	logrus.WithFields(
-		logrus.Fields{
-			"argJSON":             argJSON,
-			"argBuilderHost":      argBuilderHost,
-			"argBuilderPort":      argBuilderPort,
-			"argTimeoutClaim":     argTimeoutClaim,
-			"argTimeoutProvision": argTimeoutProvision,
-			"argTimeoutBuild":     argTimeoutBuild,
-			"argTimeoutExport":    argTimeoutExport,
-		}).Info("main: Starting up")
+	slog.With(
+		slog.Bool("argJSON", argJSON),
+		slog.String("argBuilderHost", argBuilderHost),
+		slog.Int("argBuilderPort", argBuilderPort),
+		slog.Int("argTimeoutClaim", argTimeoutClaim),
+		slog.Int("argTimeoutProvision", argTimeoutProvision),
+		slog.Int("argTimeoutBuild", argTimeoutBuild),
+		slog.Int("argTimeoutExport", argTimeoutExport),
+	).Info("main: Starting up")
 
 	builder := Builder{
 		State:        StateClaim,
@@ -465,14 +465,15 @@ func main() {
 			if state == StateDone {
 				ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 				if err := builder.net.Shutdown(ctx); err != nil {
-					logrus.Errorf("main: server shutdown failed: %v", err)
+					slog.Error("main: server shutdown failed", "err", err)
 				}
 				cancel()
-				logrus.Info("main: Shutting down successfully")
+				slog.Info("main: Shutting down successfully")
 				os.Exit(ExitOk)
 			}
 		case err := <-errs:
-			logrus.Fatal(err)
+			slog.Error("ErrorChannel", "err", err)
+			os.Exit(ExitError)
 		}
 	}
 }

@@ -3,10 +3,10 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/jackc/pgx/v4"
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -94,31 +94,30 @@ func (d *db) LogVacuumStats() error {
 			return err
 		}
 
-		logrus.Infof("Stats for table %s", relName)
-		logrus.Infof("  Total table size: %s", relSize)
-		logrus.Info("  Tuples:")
-		logrus.Infof("    Inserted: %d", ins)
-		logrus.Infof("    Updated: %d", upd)
-		logrus.Infof("    Deleted: %d", del)
-		logrus.Infof("    Live: %d", live)
-		logrus.Infof("    Dead: %d", dead)
-		logrus.Info("  Vacuum stats:")
-		logrus.Infof("    Vacuum count: %d", vc)
-		logrus.Infof("    AutoVacuum count: %d", avc)
-		logrus.Infof("    Last vacuum: %v", lvc)
-		logrus.Infof("    Last autovacuum: %v", lavc)
-		logrus.Info("  Analyze stats:")
-		logrus.Infof("    Analyze count: %d", ac)
-		logrus.Infof("    AutoAnalyze count: %d", aac)
-		logrus.Infof("    Last analyze: %v", lan)
-		logrus.Infof("    Last autoanalyze: %v", laan)
-		logrus.Info("---")
+		log.Printf("Stats for table %s", relName)
+		log.Printf("  Total table size: %s", relSize)
+		log.Println("  Tuples:")
+		log.Printf("    Inserted: %d", ins)
+		log.Printf("    Updated: %d", upd)
+		log.Printf("    Deleted: %d", del)
+		log.Printf("    Live: %d", live)
+		log.Printf("    Dead: %d", dead)
+		log.Println("  Vacuum stats:")
+		log.Printf("    Vacuum count: %d", vc)
+		log.Printf("    AutoVacuum count: %d", avc)
+		log.Printf("    Last vacuum: %v", lvc)
+		log.Printf("    Last autovacuum: %v", lavc)
+		log.Println("  Analyze stats:")
+		log.Printf("    Analyze count: %d", ac)
+		log.Printf("    AutoAnalyze count: %d", aac)
+		log.Printf("    Last analyze: %v", lan)
+		log.Printf("    Last autoanalyze: %v", laan)
+		log.Println("---")
 	}
 	if rows.Err() != nil {
 		return rows.Err()
 	}
 	return nil
-
 }
 
 func DBCleanup(dbURL string, dryRun bool, cutoff time.Time) error {
@@ -129,7 +128,7 @@ func DBCleanup(dbURL string, dryRun bool, cutoff time.Time) error {
 
 	err = db.LogVacuumStats()
 	if err != nil {
-		logrus.Errorf("Error running vacuum stats: %v", err)
+		log.Printf("Error running vacuum stats: %v", err)
 	}
 
 	var rows int64
@@ -138,21 +137,21 @@ func DBCleanup(dbURL string, dryRun bool, cutoff time.Time) error {
 		if dryRun {
 			rows, err = db.ExpiredJobCount()
 			if err != nil {
-				logrus.Warningf("Error querying expired jobs: %v", err)
+				log.Printf("Error querying expired jobs: %v", err)
 			}
-			logrus.Infof("Dryrun, expired job count: %d", rows)
+			log.Printf("Dryrun, expired job count: %d", rows)
 			break
 		}
 
 		rows, err = db.DeleteJobs()
 		if err != nil {
-			logrus.Errorf("Error deleting jobs: %v, %d rows affected", rows, err)
+			log.Printf("Error deleting jobs: %v, %d rows affected", err, rows)
 			return err
 		}
 
 		err = db.VacuumAnalyze()
 		if err != nil {
-			logrus.Errorf("Error running vacuum analyze: %v", err)
+			log.Printf("Error running vacuum analyze: %v", err)
 			return err
 		}
 
@@ -160,12 +159,12 @@ func DBCleanup(dbURL string, dryRun bool, cutoff time.Time) error {
 			break
 		}
 
-		logrus.Infof("Deleted results for %d", rows)
+		log.Printf("Deleted results for %d", rows)
 	}
 
 	err = db.LogVacuumStats()
 	if err != nil {
-		logrus.Errorf("Error running vacuum stats: %v", err)
+		log.Printf("Error running vacuum stats: %v", err)
 	}
 
 	return nil
