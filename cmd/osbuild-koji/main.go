@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"path"
 	"time"
@@ -11,7 +12,6 @@ import (
 	"github.com/osbuild/images/pkg/platform"
 	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/upload/koji"
-	"github.com/sirupsen/logrus"
 )
 
 func main() {
@@ -51,7 +51,7 @@ func main() {
 	defer func() {
 		err := k.Logout()
 		if err != nil {
-			logrus.Warn("logging out of koji failed ", err)
+			log.Printf("logging out of koji failed: %s ", err)
 		}
 	}()
 
