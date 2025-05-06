@@ -4,11 +4,13 @@ package main
 import (
 	"archive/tar"
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"os"
@@ -18,8 +20,6 @@ import (
 	"strings"
 	"syscall"
 	"time"
-
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -94,15 +94,16 @@ func init() {
 
 	flag.Parse()
 
-	logrus.SetLevel(logrus.InfoLevel)
-
+	opts := &slog.HandlerOptions{Level: slog.LevelInfo}
 	if argJSON {
-		logrus.SetFormatter(&logrus.JSONFormatter{})
+		slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, opts)))
+	} else {
+		slog.SetDefault(slog.New(slog.NewTextHandler(os.Stdout, opts)))
 	}
 }
 
 func main() {
-	logrus.Info("main: Starting up")
+	slog.Info("main: Starting up")
 
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
@@ -115,19 +116,13 @@ func main() {
 	for {
 		select {
 		case sig := <-sigs:
-			logrus.WithFields(
-				logrus.Fields{
-					"signal": sig,
-				}).Info("main: Exiting on signal")
+			slog.Info("main: Exiting on signal", "signal", sig)
 			os.Exit(ExitSignal)
 		case err := <-errs:
-			logrus.WithFields(
-				logrus.Fields{
-					"error": err,
-				}).Info("main: Exiting on error")
+			slog.Info("main: Exiting on error", "error", err)
 			os.Exit(ExitError)
 		case <-done:
-			logrus.Info("main: Shutting down succesfully")
+			slog.Info("main: Shutting down succesfully")
 			os.Exit(ExitOk)
 		}
 	}
@@ -175,15 +170,16 @@ func Dance(done chan<- struct{}, errs chan<- error) {
 }
 
 func Request(method string, path string, body io.Reader, bodySeeker io.ReadSeeker) (*http.Response, error) {
+	ctx := context.Background()
 	cli := &http.Client{}
 	url := fmt.Sprintf("http://%s:%d/%s", argBuilderHost, argBuilderPort, path)
 
 	var req *http.Request
 	var err error
 	if bodySeeker != nil {
-		req, err = http.NewRequest(method, url, bodySeeker)
+		req, err = http.NewRequestWithContext(ctx, method, url, bodySeeker)
 	} else {
-		req, err = http.NewRequest(method, url, body)
+		req, err = http.NewRequestWithContext(ctx, method, url, body)
 	}
 	if err != nil {
 		return nil, err
@@ -193,7 +189,7 @@ func Request(method string, path string, body io.Reader, bodySeeker io.ReadSeeke
 	// download when the exports are requested.
 	req.Header.Set("Accept-Encoding", "identity")
 
-	logrus.Debugf("Request: Making a %s request to %s", method, url)
+	slog.DebugContext(ctx, "Request: Making a request", "method", method, "url", url)
 
 	for {
 		res, err := cli.Do(req)
@@ -249,7 +245,7 @@ func StepClaim() error {
 			return
 		}
 
-		logrus.Info("StepClaim: Done")
+		slog.Info("StepClaim: Done")
 
 		close(done)
 	})
@@ -271,7 +267,7 @@ func StepProvision(manifest []byte) error {
 			return
 		}
 
-		logrus.Info("StepProvision: Done")
+		slog.Info("StepProvision: Done")
 
 		close(done)
 	})
@@ -357,7 +353,7 @@ func StepPopulate() error {
 			return
 		}
 
-		logrus.Info("StepPopulate: Done")
+		slog.Info("StepPopulate: Done")
 
 		close(done)
 	})
@@ -373,7 +369,8 @@ func StepBuild() error {
 		dat, err := json.Marshal(arg)
 
 		if err != nil {
-			logrus.Fatalf("StepBuild: Failed to marshal data: %s", err)
+			slog.Error("StepBuild: Failed to marshal data", "err", err)
+			os.Exit(ExitError)
 		}
 
 		res, err := Request("POST", "build", bytes.NewBuffer(dat), nil)
@@ -390,7 +387,7 @@ func StepBuild() error {
 			return
 		}
 
-		logrus.Info("StepBuild: Done")
+		slog.Info("StepBuild: Done")
 
 		close(done)
 	})
@@ -409,7 +406,7 @@ func StepProgress() error {
 			defer res.Body.Close()
 
 			if res.StatusCode == http.StatusAccepted {
-				logrus.Info("StepProgress: Build is pending. Retry")
+				slog.Info("StepProgress: Build is pending. Retry")
 				time.Sleep(5 * time.Second)
 				continue
 			}
@@ -427,7 +424,7 @@ func StepProgress() error {
 			break
 		}
 
-		logrus.Info("StepProgress: Done")
+		slog.Info("StepProgress: Done")
 
 		close(done)
 	})
@@ -454,7 +451,7 @@ func StepExport() error {
 			dstDir := filepath.Dir(dstPath)
 
 			if _, err := os.Stat(dstDir); os.IsNotExist(err) {
-				logrus.Infof("StepExport: Destination directory does not exist. Creating %s", dstDir)
+				slog.Info("StepExport: Destination directory does not exist. Creating", "dir", dstDir)
 				if err := os.MkdirAll(dstDir, 0700); err != nil {
 					errs <- fmt.Errorf("StepExport: Failed to create destination directory: %s", err)
 				}
@@ -479,7 +476,7 @@ func StepExport() error {
 			}
 		}
 
-		logrus.Info("StepExport: Done")
+		slog.Info("StepExport: Done")
 
 		close(done)
 	})
