@@ -532,7 +532,6 @@ filesystem.sh:
       - CUSTOMIZATION_TYPE: "disk-plain"
         RUNNER:
           - aws/rhel-9.5-ga-x86_64
-          - aws/rhel-10.0-nightly-x86_64
           - aws/rhel-10.1-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
       - CUSTOMIZATION_TYPE: "disk-lvm"
@@ -591,7 +590,7 @@ API:
           - oci
           - vsphere
         RUNNER:
-          - aws/rhel-10.0-nightly-x86_64
+          - aws/rhel-10.1-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
       - IMAGE_TYPE: ["iot-commit"]
         RUNNER:
@@ -653,7 +652,7 @@ API-module-hotfixes:
           - gcp/rhel-9.7-nightly-x86_64
           # TODO: replace the rhos-01 runner with this gcp runner once it's available
           # - gcp/rhel-10.0-nightly-x86_64
-          - gcp/rhel-10.1-nightly-x86_64
+          - rhos-01/rhel-10.1-nightly-x86_64
           - gcp/centos-stream-9-x86_64
         INTERNAL_NETWORK: ["true"]
 
@@ -677,7 +676,7 @@ ubi-wsl.sh:
       - RUNNER:
           - aws/rhel-8.10-ga-x86_64
           - aws/rhel-9.5-ga-x86_64
-          - aws/rhel-10.0-nightly-x86_64
+          - aws/rhel-10.1-nightly-x86_64
         INTERNAL_NETWORK: "true"
 
 weldr-distro-dot-notation+aliases:
@@ -751,7 +750,7 @@ RHEL 10 on 9 (Koji):
   variables:
     RUNNER: aws/rhel-9.5-ga-x86_64
     INTERNAL_NETWORK: "true"
-    DISTRO_CODE: rhel-10.0
+    DISTRO_CODE: rhel-10.1
 
 Multi-tenancy:
   stage: test
