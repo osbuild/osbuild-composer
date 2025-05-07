@@ -313,7 +313,7 @@ func (h *apiHandlers) GetComposeList(ctx echo.Context) error {
 	}
 
 	// Gather up the details of each job
-	var stats []ComposeStatus
+	stats := []ComposeStatus{}
 	for _, jid := range jobs {
 		s, err := h.getJobIDComposeStatus(jid)
 		if err != nil {
