@@ -1887,6 +1887,10 @@ func TestComposesRoute(t *testing.T) {
 	srv, _, _, cancel := newV2Server(t, t.TempDir(), false, false)
 	defer cancel()
 
+	// List empty root composes
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", "/api/image-builder-composer/v2/composes/", ``,
+		http.StatusOK, `[]`)
+
 	// Make a compose so it has something to list
 	reply := test.TestRouteWithReply(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
 	{
