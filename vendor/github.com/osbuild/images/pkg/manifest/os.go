@@ -669,7 +669,7 @@ func (p *OS) serialize() osbuild.Pipeline {
 			panic(err)
 		}
 		pipeline.AddStage(subStage)
-		p.OSCustomizations.Directories = append(p.OSCustomizations.Directories, subDirs...)
+		pipeline.AddStages(osbuild.GenDirectoryNodesStages(subDirs)...)
 		p.addInlineDataAndStages(&pipeline, subFiles)
 		p.OSCustomizations.EnabledServices = append(p.OSCustomizations.EnabledServices, subServices...)
 	}

@@ -1,8 +1,12 @@
 package osbuild
 
-type InsightsClientConfigStageOptions struct {
+type InsightsClientConfig struct {
 	Proxy string `json:"proxy,omitempty"`
 	Path  string `json:"path,omitempty"`
+}
+
+type InsightsClientConfigStageOptions struct {
+	Config InsightsClientConfig `json:"config"`
 }
 
 func (InsightsClientConfigStageOptions) isStageOptions() {}

@@ -7,10 +7,6 @@ type Directory struct {
 	ensureParentDirs bool
 }
 
-func (d *Directory) IsDir() bool {
-	return true
-}
-
 func (d *Directory) EnsureParentDirs() bool {
 	if d == nil {
 		return false

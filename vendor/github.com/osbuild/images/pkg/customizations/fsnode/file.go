@@ -9,10 +9,6 @@ type File struct {
 	data []byte
 }
 
-func (f *File) IsDir() bool {
-	return false
-}
-
 func (f *File) Data() []byte {
 	if f == nil {
 		return nil

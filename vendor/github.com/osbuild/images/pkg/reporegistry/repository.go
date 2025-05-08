@@ -6,9 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/sirupsen/logrus"
-
 	"github.com/osbuild/images/pkg/distroidparser"
+	"github.com/osbuild/images/pkg/olog"
 	"github.com/osbuild/images/pkg/rpmmd"
 )
 
@@ -54,7 +53,7 @@ func loadAllRepositoriesFromFS(confPaths []fs.FS) (rpmmd.DistrosRepoConfigs, err
 				// without a dot to separate major and minor release versions
 				distro, err := distroidparser.DefaultParser.Standardize(distroIDStr)
 				if err != nil {
-					logrus.Warnf("failed to parse distro ID string, using it as is: %v", err)
+					olog.Printf("WARNING: failed to parse distro ID string, using it as is: %v", err)
 					// NB: Before the introduction of distro ID standardization, the filename
 					//     was used as the distro ID. This is kept for backward compatibility
 					//     if the filename can't be parsed.
@@ -76,7 +75,7 @@ func loadAllRepositoriesFromFS(confPaths []fs.FS) (rpmmd.DistrosRepoConfigs, err
 					return nil, err
 				}
 
-				logrus.Infof("Loaded repository configuration file: %s", fileEntry.Name())
+				olog.Printf("Loaded repository configuration file: %s", fileEntry.Name())
 
 				distrosRepoConfigs[distro] = distroRepos
 			}

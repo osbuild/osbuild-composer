@@ -10,16 +10,6 @@ import (
 const usernameRegex = `^[A-Za-z0-9_.][A-Za-z0-9_.-]{0,31}$`
 const groupnameRegex = `^[A-Za-z0-9_][A-Za-z0-9_-]{0,31}$`
 
-type FsNode interface {
-	Path() string
-	Mode() *os.FileMode
-	// User can return either a string (user name/group name), an int64 (UID/GID) or nil
-	User() interface{}
-	// Group can return either a string (user name/group name), an int64 (UID/GID) or nil
-	Group() interface{}
-	IsDir() bool
-}
-
 type baseFsNode struct {
 	path  string
 	mode  *os.FileMode
@@ -126,8 +116,4 @@ func (f *baseFsNode) validate() error {
 	}
 
 	return nil
-}
-
-func (f *baseFsNode) IsDir() bool {
-	panic("IsDir() called on baseFsNode")
 }
