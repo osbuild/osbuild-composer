@@ -13,7 +13,6 @@ import (
 	"strings"
 
 	"github.com/hashicorp/go-version"
-	"github.com/sirupsen/logrus"
 	"golang.org/x/exp/maps"
 	"gopkg.in/yaml.v3"
 
@@ -21,6 +20,7 @@ import (
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/experimentalflags"
+	"github.com/osbuild/images/pkg/olog"
 	"github.com/osbuild/images/pkg/rpmmd"
 )
 
@@ -304,7 +304,7 @@ func load(distroNameVer string) (*toplevelYAML, error) {
 	// searchPaths down the stack instead
 	var dataFS fs.FS = DataFS
 	if overrideDir := experimentalflags.String("yamldir"); overrideDir != "" {
-		logrus.Warnf("using experimental override dir %q", overrideDir)
+		olog.Printf("WARNING: using experimental override dir %q", overrideDir)
 		dataFS = os.DirFS(overrideDir)
 	}
 

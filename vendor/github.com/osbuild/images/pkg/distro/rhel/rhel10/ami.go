@@ -265,9 +265,6 @@ func defaultEc2ImageConfig() *distro.ImageConfig {
 				},
 			},
 		},
-		Authselect: &osbuild.AuthselectStageOptions{
-			Profile: "sssd",
-		},
 		SshdConfig: &osbuild.SshdConfigStageOptions{
 			Config: osbuild.SshdConfigConfig{
 				PasswordAuthentication: common.ToPtr(false),
