@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	"github.com/osbuild/images/pkg/olog"
 	"gopkg.in/ini.v1"
 )
 
@@ -111,7 +111,7 @@ func LoadSystemSubscriptions() (*Subscriptions, error) {
 	if err != nil {
 		// Consumer secrets are only needed when resolving
 		// ostree content (see commit 632f272)
-		logrus.Warnf("Failed to load consumer certs: %v", err)
+		olog.Printf("WARNING: Failed to load consumer certs: %v", err)
 	}
 
 	subscriptions, err1 := getListOfSubscriptions()
