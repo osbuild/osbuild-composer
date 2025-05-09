@@ -8,9 +8,10 @@ import os
 import sys
 import subprocess
 import time
-from urllib.parse import urlparse
-
 import requests
+import re
+from urllib.parse import urlparse
+from pathlib import Path
 
 SNAPSHOTS_URL="https://rpmrepo.osbuild.org/v2/enumerate"
 SNAPSHOTS_TIMEOUT = 2 * 60
@@ -70,11 +71,9 @@ def check_baseurl(repo, snapshots):
     newer = None
     url = urlparse(repo)
     snapshot = os.path.basename(url.path)
-
     # Is this snapshot valid?
     if snapshot not in snapshots:
         invalid = f"{snapshot} is not a valid snapshot name"
-
     # is this snapshot old?
     base = snapshot.rsplit("-", 1)[0]
     newest = snapshot
@@ -85,13 +84,11 @@ def check_baseurl(repo, snapshots):
             newest = s
     if newest != snapshot:
         newer = f"{snapshot} has a newer version - {newest}"
-
     return invalid, newer
 
 
 def check_snapshot_urls(urls, snapshots, skip=["test/data/manifests"], errors_only=False):
     """check the urls against the current list of snapshots
-
     Returns:
         0 if all were valid and no newer snapshots are available
         2 if there were invalid snapshots
@@ -114,10 +111,8 @@ def check_snapshot_urls(urls, snapshots, skip=["test/data/manifests"], errors_on
                         messages[f]["invalid"].append(invalid)
                 else:
                     messages[f] = {"invalid": [invalid], "newer": []}
-
         if errors_only:
             continue
-
         if newer:
             # Add this to each file's newer message list
             for f in urls[url]:
@@ -129,7 +124,6 @@ def check_snapshot_urls(urls, snapshots, skip=["test/data/manifests"], errors_on
                         messages[f]["newer"].append(newer)
                 else:
                     messages[f] = {"newer": [newer], "invalid": []}
-
     # Print the messages for each file
     for f in messages:
         print(f"{f}:")
@@ -137,9 +131,24 @@ def check_snapshot_urls(urls, snapshots, skip=["test/data/manifests"], errors_on
             print(f"    ERROR: {msg}")
         for msg in messages[f]["newer"]:
             print(f"    NEWER: {msg}")
+    return ret, messages
 
-    return ret
-
+def update_snapshots(messages):
+    for target_file in list(messages.keys()):
+        if Path(target_file).exists():
+            new_entry = messages[target_file].get("newer")
+            if new_entry:
+                for line in new_entry:
+                    match = re.search(r'(.*) has a newer version - (.*)', line)
+                    if match:
+                        old, new = match.groups()
+                        command = f"sed -i 's/{old}/{new}/g' {target_file}"
+                        os.system(command)
+            print(f'{target_file} was updated')
+        elif not Path(target_file).exists():
+            print(f'{target_file} not found')
+        else:
+            print("No newer changes found")
 
 # parse cmdline args
 def parse_args():
@@ -152,13 +161,13 @@ def parse_args():
                         help="URL to use for the list of rpmrepo snapshots")
     parser.add_argument("--errors-only", action="store_true",
                         help="Only return errors")
+    parser.add_argument("-u", "--update", help="Update the files with the new snapshot address", action='store_true')
     parser.add_argument("directory")
     return parser.parse_args()
 
 def main():
     args = parse_args()
     urls = find_snapshot_urls(args.directory)
-
     snapshots = None
     if args.cache:
         try:
@@ -173,7 +182,11 @@ def main():
             print(f"Cannot download snapshots from {args.url}")
             sys.exit(1)
 
-    return check_snapshot_urls(urls, snapshots, errors_only=args.errors_only)
+        ret, messages = check_snapshot_urls(urls, snapshots, errors_only=args.errors_only)
+        if  args.update:
+            update_snapshots(messages)
+        else:
+            return ret
 
 
 if __name__=='__main__':
