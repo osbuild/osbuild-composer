@@ -274,7 +274,7 @@ jobs:
       run: |
         make process-templates
 
-    - uses: stackrox/kube-linter-action@v1.0.6
+    - uses: stackrox/kube-linter-action@v1.0.7
       with:
         directory: processed-templates
         config: templates/.kube-linter-config.yml
