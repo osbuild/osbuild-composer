@@ -10,4 +10,4 @@ ExecStart=/usr/local/libexec/worker-initialization-scripts/set_executor_hostname
 ExecStart=/usr/local/libexec/worker-initialization-scripts/worker_executor.sh
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=cloud-init.target
