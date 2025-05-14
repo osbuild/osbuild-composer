@@ -24,4 +24,4 @@ ExecStart=/usr/local/libexec/worker-initialization-scripts/worker_service.sh
 ExecStopPost=/usr/local/libexec/worker-initialization-scripts/on_exit.sh
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=cloud-init.target
