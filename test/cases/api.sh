@@ -580,7 +580,13 @@ function sendCompose() {
                  --output "$OUTPUT" \
                  https://localhost/api/image-builder-composer/v2/compose)
 
+    if [ "$HTTPSTATUS" != "201" ]; then
+        redprint "Sending compose request failed:"
+        cat "$OUTPUT"
+    fi
+
     test "$HTTPSTATUS" = "201"
+
     COMPOSE_ID=$(jq -r '.id' "$OUTPUT")
 }
 
