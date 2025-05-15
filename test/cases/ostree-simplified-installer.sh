@@ -39,7 +39,7 @@ do
 done
 # Prepare service api server config filef
 sudo /usr/local/bin/yq -iy '.service_info.diskencryption_clevis |= [{disk_label: "/dev/vda4", reencrypt: true, binding: {pin: "tpm2", config: "{}"}}]' /etc/fdo/aio/configs/serviceinfo_api_server.yml
-if [[ "$VERSION_ID" == "9.6" || "$VERSION_ID" == "9" ]]; then
+if [[ "$VERSION_ID" == "9.7" || "$VERSION_ID" == "9" ]]; then
     # Modify manufacturing server config to process fdo
     # guest interface during onboarding
     sudo sed -i 's/SerialNumber/MACAddress/g' /etc/fdo/aio/configs/manufacturing_server.yml
@@ -622,7 +622,7 @@ manufacturing_server_url="http://${FDO_SERVER_ADDRESS}:8080"
 diun_pub_key_insecure="true"
 EOF
 
-if [[ "$VERSION_ID" == "9.6" || "$VERSION_ID" == "9" ]]; then
+if [[ "$VERSION_ID" == "9.7" || "$VERSION_ID" == "9" ]]; then
     tee -a "$BLUEPRINT_FILE" > /dev/null << EOF
 di_mfg_string_type_mac_iface="${MFG_GUEST_INT_NAME}"
 EOF
@@ -807,7 +807,7 @@ manufacturing_server_url="http://${FDO_SERVER_ADDRESS}:8080"
 diun_pub_key_hash="${DIUN_PUB_KEY_HASH}"
 EOF
 
-if [[ "$VERSION_ID" == "9.6" || "$VERSION_ID" == "9" ]]; then
+if [[ "$VERSION_ID" == "9.7" || "$VERSION_ID" == "9" ]]; then
     tee -a "$BLUEPRINT_FILE" > /dev/null << EOF
 di_mfg_string_type_mac_iface="${MFG_GUEST_INT_NAME}"
 EOF
@@ -992,7 +992,7 @@ diun_pub_key_root_certs="""
 ${DIUN_PUB_KEY_ROOT_CERTS}"""
 EOF
 
-if [[ "$VERSION_ID" == "9.6" || "$VERSION_ID" == "9" ]]; then
+if [[ "$VERSION_ID" == "9.7" || "$VERSION_ID" == "9" ]]; then
     tee -a "$BLUEPRINT_FILE" > /dev/null << EOF
 di_mfg_string_type_mac_iface="${MFG_GUEST_INT_NAME}"
 EOF
