@@ -79,6 +79,14 @@ func (db *JSONDatabase) List() ([]string, error) {
 	return names, nil
 }
 
+// Delete will delete the file from the database
+func (db *JSONDatabase) Delete(name string) error {
+	if len(name) == 0 {
+		return fmt.Errorf("missing jsondb document name")
+	}
+	return os.Remove(filepath.Join(db.dir, name+".json"))
+}
+
 // Writes `document` to `name`, overwriting a previous document if it exists.
 // `document` must be serializable to JSON.
 func (db *JSONDatabase) Write(name string, document interface{}) error {
