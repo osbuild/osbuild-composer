@@ -249,6 +249,7 @@ sudo systemctl start httpd || echo "Starting httpd failed"
 sudo systemctl status httpd
 
 greenprint "Verify dnf can use this configuration"
+sleep 7200
 sudo dnf install --repo=repo1 --repo=repo2 zsh -y
 
 greenprint "Rewrite osbuild-composer repository configuration"
