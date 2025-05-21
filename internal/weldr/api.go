@@ -4,7 +4,7 @@ import (
 	"archive/tar"
 	"bytes"
 	"context"
-	"crypto/rand"
+	crand "crypto/rand"
 	"crypto/sha256"
 	"encoding/json"
 	"errors"
@@ -14,12 +14,15 @@ import (
 	"log"
 	"math"
 	"math/big"
+	"math/rand"
 	"net"
 	"net/http"
+	"net/http/pprof"
 	"net/url"
 	"os"
 	"path"
 	"regexp"
+	"runtime"
 	"sort"
 	"strconv"
 	"strings"
@@ -215,6 +218,14 @@ func setupRouter(api *API) *API {
 	api.router.NotFound = http.HandlerFunc(notFoundHandler)
 
 	api.router.GET("/api/status", api.statusHandler)
+	if os.Getenv("OSBUILD_COMPOSER_ENABLE_PPROF") != "" {
+		api.router.HandlerFunc("GET", "/api/pprof/", pprof.Index)
+		api.router.HandlerFunc("GET", "/api/pprof/cmdline", pprof.Cmdline)
+		api.router.HandlerFunc("GET", "/api/pprof/profile", pprof.Profile)
+		api.router.HandlerFunc("GET", "/api/pprof/symbol", pprof.Symbol)
+		api.router.HandlerFunc("GET", "/api/pprof/trace", pprof.Trace)
+	}
+
 	api.router.GET("/api/v:version/projects/source/list", api.sourceListHandler)
 	api.router.GET("/api/v:version/projects/source/info/", api.sourceEmptyInfoHandler)
 	api.router.GET("/api/v:version/projects/source/info/:sources", api.sourceInfoHandler)
@@ -599,7 +610,26 @@ func statusResponseError(writer http.ResponseWriter, code int, errors ...respons
 	common.PanicOnError(err)
 }
 
+var emptyMsgs = []string{}
+var MemoryStatus = os.Getenv("OSBUILD_COMPOSER_MEMORY_STATUS")
+var GCRate float64
+
+func init() {
+	GCRate, _ = strconv.ParseFloat(os.Getenv("OSBUILD_COMPOSER_GC_STATUS_RATE"), 64)
+}
+
 func (api *API) statusHandler(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
+	type meminfo struct {
+		Alloc      uint64 `json:"alloc"`
+		TotalAlloc uint64 `json:"total_alloc"`
+		HeapAlloc  uint64 `json:"heap_alloc"`
+		HeapSys    uint64 `json:"heap_sys"`
+		NumGC      uint32 `json:"num_gc"`
+		NextGC     uint64 `json:"next_gc"`
+		LastGC     uint64 `json:"last_gc"`
+		Goroutines int    `json:"goroutines"`
+	}
+
 	type reply struct {
 		API           string   `json:"api"`
 		DBSupported   bool     `json:"db_supported"`
@@ -608,8 +638,25 @@ func (api *API) statusHandler(writer http.ResponseWriter, request *http.Request,
 		Backend       string   `json:"backend"`
 		Build         string   `json:"build"`
 		Messages      []string `json:"msgs"`
+		Memory        *meminfo `json:"memory,omitempty"`
 	}
 
+	var mi *meminfo
+	if MemoryStatus != "" {
+		// This slows down the API call by approximately 50%
+		ms := runtime.MemStats{}
+		runtime.ReadMemStats(&ms)
+		mi = &meminfo{
+			Alloc:      ms.Alloc,
+			TotalAlloc: ms.TotalAlloc,
+			HeapAlloc:  ms.HeapAlloc,
+			HeapSys:    ms.HeapSys,
+			NumGC:      ms.NumGC,
+			NextGC:     ms.NextGC,
+			LastGC:     ms.LastGC,
+			Goroutines: runtime.NumGoroutine(),
+		}
+	}
 	err := json.NewEncoder(writer).Encode(reply{
 		API:           "1",
 		DBSupported:   true,
@@ -617,9 +664,16 @@ func (api *API) statusHandler(writer http.ResponseWriter, request *http.Request,
 		SchemaVersion: "0",
 		Backend:       "osbuild-composer",
 		Build:         common.BuildVersion(),
-		Messages:      make([]string, 0),
+		Messages:      emptyMsgs,
+		Memory:        mi,
 	})
 	common.PanicOnError(err)
+
+	// Run GC if OSBUILD_COMPOSER_GC_STATUS_RATE is set to a value between 0 and 1.0
+	// #nosec G404
+	if 1.0-rand.Float64() < GCRate {
+		runtime.GC()
+	}
 }
 
 func (api *API) sourceListHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
@@ -2527,7 +2581,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		size = imageType.Size(cr.Size)
 	}
 
-	bigSeed, err := rand.Int(rand.Reader, big.NewInt(math.MaxInt64))
+	bigSeed, err := crand.Int(crand.Reader, big.NewInt(math.MaxInt64))
 	if err != nil {
 		panic("cannot generate a manifest seed: " + err.Error())
 	}

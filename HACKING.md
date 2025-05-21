@@ -115,3 +115,62 @@ You can use curl to access the Cloud API:
 ```
 curl --unix-socket /run/cloudapi/api.socket -XGET http://localhost/api/image-builder-composer/v2/openapi
 ```
+
+## Profiling and debugging
+
+To print memory statistics of the composer Go runtime, set `OSBUILD_COMPOSER_MEMORY_STATUS=1` environment variable and observe some key statistics via the status Weldr API call:
+
+```
+curl -s --unix-socket /run/weldr/api.socket -XGET http://localhost/api/status | json_reformat
+```
+
+Example result:
+
+```
+{
+    "api": "1",
+    "db_supported": true,
+    "db_version": "0",
+    "schema_version": "0",
+    "backend": "osbuild-composer",
+    "build": "git-rev:99f5fec6666b6f682133c1dc5c378f9a619fd16b",
+    "msgs": [
+
+    ],
+    "memory": {
+        "alloc": 25448544,
+        "total_alloc": 69720968,
+        "heap_alloc": 25448544,
+        "heap_sys": 37060608,
+        "num_gc": 8,
+        "next_gc": 31541706,
+        "last_gc": 1747894693326907779
+    }
+}
+```
+
+It is possible to enable Go pprof HTTP endpoint which can be used via web browser or `pprof` command line to inspect internals of a running process. To enable this feature, set `OSBUILD_COMPOSER_ENABLE_PPROF=1` environment variable. Note this will slow down the application significantly, only keep this option for necessary time.
+
+An example how to set mentioned variables:
+
+```
+mkdir -p /etc/systemd/system/osbuild-composer.service.d/
+echo -e "[Service]\nEnvironment=\"OSBUILD_COMPOSER_MEMORY_STATUS=1\"" > /etc/systemd/system/osbuild-composer.service.d/10-memory-stats.conf
+echo -e "[Service]\nEnvironment=\"OSBUILD_COMPOSER_ENABLE_PPROF=1\"" > /etc/systemd/system/osbuild-composer.service.d/10-enable-pprof.conf
+systemctl daemon-reload
+```
+
+## Enforcing garbage collection
+
+To enforce GC run on Weldr API `api/status` calls, set `OSBUILD_COMPOSER_GC_STATUS_RATE` environmental variable to number between 0.0 and 1.0 where 0 means do not schedule at all and 1.0 meaning schedule it every call. This can be a temporary workaround if a memory leak is found until it is fixed.
+
+## Capturing core
+
+It can be useful to install `debuginfo` packages and capture core dump of a running process for further inspection:
+
+    gcore PID
+
+It can be loaded up via
+
+    dlv core /usr/libexec/osbuild-composer/osbuild-composer core.885812
+

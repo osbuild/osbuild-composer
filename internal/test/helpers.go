@@ -59,8 +59,10 @@ func internalRequest(api http.Handler, method, path, body string) *http.Response
 	return resp.Result()
 }
 
+var TestExternal = os.Getenv("OSBUILD_COMPOSER_TEST_EXTERNAL")
+
 func SendHTTP(api http.Handler, external bool, method, path, body string) *http.Response {
-	if len(os.Getenv("OSBUILD_COMPOSER_TEST_EXTERNAL")) > 0 {
+	if len(TestExternal) > 0 {
 		if !external {
 			return nil
 		}
@@ -92,19 +94,28 @@ func dropFields(obj interface{}, fields ...string) {
 	}
 }
 
-func TestRoute(t *testing.T, api http.Handler, external bool, method, path, body string, expectedStatus int, expectedJSON string, ignoreFields ...string) {
+type TestingT interface {
+	Errorf(format string, args ...any)
+	FailNow()
+	Skip(args ...any)
+	Helper()
+}
+
+func TestRoute(t TestingT, api http.Handler, external bool, method, path, body string, expectedStatus int, expectedJSON string, ignoreFields ...string) {
 	t.Helper()
 	_ = TestRouteWithReply(t, api, external, method, path, body, expectedStatus, expectedJSON, ignoreFields...)
 }
 
 // TestRouteWithReply tests the given API endpoint and if the test passes, it returns the raw JSON reply.
-func TestRouteWithReply(t *testing.T, api http.Handler, external bool, method, path, body string, expectedStatus int, expectedJSON string, ignoreFields ...string) (replyJSON []byte) {
+func TestRouteWithReply(t TestingT, api http.Handler, external bool, method, path, body string, expectedStatus int, expectedJSON string, ignoreFields ...string) (replyJSON []byte) {
 	t.Helper()
 
 	resp := SendHTTP(api, external, method, path, body)
 	if resp == nil {
 		t.Skip("This test is for internal testing only")
+		return
 	}
+	defer resp.Body.Close()
 
 	var err error
 	replyJSON, err = io.ReadAll(resp.Body)
@@ -132,8 +143,10 @@ func TestRouteWithReply(t *testing.T, api http.Handler, external bool, method, p
 	err = json.Unmarshal([]byte(expectedJSON), &expected)
 	require.NoErrorf(t, err, "%s: expected JSON is invalid", path)
 
-	dropFields(reply, ignoreFields...)
-	dropFields(expected, ignoreFields...)
+	if len(ignoreFields) > 0 {
+		dropFields(reply, ignoreFields...)
+		dropFields(expected, ignoreFields...)
+	}
 
 	require.Equal(t, expected, reply)
 
@@ -146,6 +159,7 @@ func TestTOMLRoute(t *testing.T, api http.Handler, external bool, method, path, 
 	resp := SendHTTP(api, external, method, path, body)
 	if resp == nil {
 		t.Skip("This test is for internal testing only")
+		return
 	}
 
 	replyTOML, err := io.ReadAll(resp.Body)

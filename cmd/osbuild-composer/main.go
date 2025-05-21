@@ -7,8 +7,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/coreos/go-systemd/activation"
-	"github.com/coreos/go-systemd/journal"
+	"github.com/coreos/go-systemd/v22/activation"
+	"github.com/coreos/go-systemd/v22/journal"
 	"github.com/getsentry/sentry-go"
 	sentrylogrus "github.com/getsentry/sentry-go/logrus"
 	_ "github.com/osbuild/images/data/repositories"
@@ -80,10 +80,12 @@ func main() {
 	}
 
 	logrus.Info("Loaded configuration:")
-	err = DumpConfig(*config, logrus.StandardLogger().WriterLevel(logrus.InfoLevel))
+	dumpWriter := logrus.StandardLogger().WriterLevel(logrus.DebugLevel)
+	err = DumpConfig(*config, dumpWriter)
 	if err != nil {
 		logrus.Fatalf("Error printing configuration: %v", err)
 	}
+	dumpWriter.Close()
 
 	if config.DeploymentChannel != "" {
 		logrus.AddHook(&slogger.EnvironmentHook{Channel: config.DeploymentChannel})

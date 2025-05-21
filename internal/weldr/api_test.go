@@ -210,6 +210,17 @@ func TestBasic(t *testing.T) {
 	}
 }
 
+func BenchmarkStatus(b *testing.B) {
+	api, sf := createTestWeldrAPI(b.TempDir(), test_distro.TestDistro1Name, test_distro.TestArchName, rpmmd_mock.BaseFixture, nil)
+	b.Cleanup(sf.Cleanup)
+
+	b.ResetTimer()
+	b.ReportAllocs()
+	for range b.N {
+		test.TestRoute(b, api, true, "GET", "/api/status", ``, http.StatusOK, `{"api":"1","db_supported":true,"db_version":"0","schema_version":"0","backend":"osbuild-composer","build":"devel","msgs":[]}`, "memory")
+	}
+}
+
 func TestBlueprintsNew(t *testing.T) {
 	var cases = []struct {
 		Method         string

@@ -8,11 +8,10 @@ import (
 // Store context in request logger to propagate correlation ids
 func LoggerMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		c.SetLogger(&EchoLogrusLogger{
-			Logger: logrus.StandardLogger(),
-			Ctx:    c.Request().Context(),
-		})
+		ell := NewEchoLogrusLogger(logrus.StandardLogger(), c.Request().Context())
+		defer ell.Close()
 
+		c.SetLogger(ell)
 		return next(c)
 	}
 }

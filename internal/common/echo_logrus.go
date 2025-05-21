@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"io"
+	"runtime"
 
 	lslog "github.com/labstack/gommon/log"
 	"github.com/sirupsen/logrus"
@@ -11,13 +12,35 @@ import (
 
 // EchoLogrusLogger extend logrus.Logger
 type EchoLogrusLogger struct {
-	*logrus.Logger
-	Ctx context.Context
+	logger *logrus.Logger
+	ctx    context.Context
+	writer *io.PipeWriter
 }
 
-var commonLogger = &EchoLogrusLogger{
-	Logger: logrus.StandardLogger(),
-	Ctx:    context.Background(),
+func NewEchoLogrusLogger(logger *logrus.Logger, ctx context.Context) *EchoLogrusLogger {
+	return &EchoLogrusLogger{
+		logger: logger,
+		ctx:    ctx,
+		writer: logger.WithContext(ctx).Writer(),
+	}
+}
+
+var commonLogger *EchoLogrusLogger
+
+func init() {
+	commonLogger = &EchoLogrusLogger{
+		logger: logrus.StandardLogger(),
+		ctx:    context.Background(),
+		writer: logrus.StandardLogger().WithContext(context.Background()).Writer(),
+	}
+
+	runtime.SetFinalizer(commonLogger, close)
+}
+
+func close(l *EchoLogrusLogger) {
+	if l.writer != nil {
+		l.writer.Close()
+	}
 }
 
 func Logger() *EchoLogrusLogger {
@@ -39,8 +62,14 @@ func toEchoLevel(level logrus.Level) lslog.Lvl {
 	return lslog.OFF
 }
 
+func (l *EchoLogrusLogger) Close() {
+	if l.writer != nil {
+		l.writer.Close()
+	}
+}
+
 func (l *EchoLogrusLogger) Output() io.Writer {
-	return l.Out
+	return l.writer
 }
 
 func (l *EchoLogrusLogger) SetOutput(w io.Writer) {
@@ -48,7 +77,7 @@ func (l *EchoLogrusLogger) SetOutput(w io.Writer) {
 }
 
 func (l *EchoLogrusLogger) Level() lslog.Lvl {
-	return toEchoLevel(l.Logger.Level)
+	return toEchoLevel(l.logger.Level)
 }
 
 func (l *EchoLogrusLogger) SetLevel(v lslog.Lvl) {
@@ -66,11 +95,11 @@ func (l *EchoLogrusLogger) SetPrefix(p string) {
 }
 
 func (l *EchoLogrusLogger) Print(i ...interface{}) {
-	l.Logger.WithContext(l.Ctx).Print(i...)
+	l.logger.WithContext(l.ctx).Print(i...)
 }
 
 func (l *EchoLogrusLogger) Printf(format string, args ...interface{}) {
-	l.Logger.WithContext(l.Ctx).Printf(format, args...)
+	l.logger.WithContext(l.ctx).Printf(format, args...)
 }
 
 func (l *EchoLogrusLogger) Printj(j lslog.JSON) {
@@ -78,15 +107,15 @@ func (l *EchoLogrusLogger) Printj(j lslog.JSON) {
 	if err != nil {
 		panic(err)
 	}
-	l.Logger.WithContext(l.Ctx).Println(string(b))
+	l.logger.WithContext(l.ctx).Println(string(b))
 }
 
 func (l *EchoLogrusLogger) Debug(i ...interface{}) {
-	l.Logger.WithContext(l.Ctx).Debug(i...)
+	l.logger.WithContext(l.ctx).Debug(i...)
 }
 
 func (l *EchoLogrusLogger) Debugf(format string, args ...interface{}) {
-	l.Logger.WithContext(l.Ctx).Debugf(format, args...)
+	l.logger.WithContext(l.ctx).Debugf(format, args...)
 }
 
 func (l *EchoLogrusLogger) Debugj(j lslog.JSON) {
@@ -94,15 +123,15 @@ func (l *EchoLogrusLogger) Debugj(j lslog.JSON) {
 	if err != nil {
 		panic(err)
 	}
-	l.Logger.WithContext(l.Ctx).Debugln(string(b))
+	l.logger.WithContext(l.ctx).Debugln(string(b))
 }
 
 func (l *EchoLogrusLogger) Info(i ...interface{}) {
-	l.Logger.WithContext(l.Ctx).Info(i...)
+	l.logger.WithContext(l.ctx).Info(i...)
 }
 
 func (l *EchoLogrusLogger) Infof(format string, args ...interface{}) {
-	l.Logger.WithContext(l.Ctx).Infof(format, args...)
+	l.logger.WithContext(l.ctx).Infof(format, args...)
 }
 
 func (l *EchoLogrusLogger) Infoj(j lslog.JSON) {
@@ -110,15 +139,15 @@ func (l *EchoLogrusLogger) Infoj(j lslog.JSON) {
 	if err != nil {
 		panic(err)
 	}
-	l.Logger.WithContext(l.Ctx).Infoln(string(b))
+	l.logger.WithContext(l.ctx).Infoln(string(b))
 }
 
 func (l *EchoLogrusLogger) Warn(i ...interface{}) {
-	l.Logger.WithContext(l.Ctx).Warn(i...)
+	l.logger.WithContext(l.ctx).Warn(i...)
 }
 
 func (l *EchoLogrusLogger) Warnf(format string, args ...interface{}) {
-	l.Logger.WithContext(l.Ctx).Warnf(format, args...)
+	l.logger.WithContext(l.ctx).Warnf(format, args...)
 }
 
 func (l *EchoLogrusLogger) Warnj(j lslog.JSON) {
@@ -126,15 +155,15 @@ func (l *EchoLogrusLogger) Warnj(j lslog.JSON) {
 	if err != nil {
 		panic(err)
 	}
-	l.Logger.WithContext(l.Ctx).Warnln(string(b))
+	l.logger.WithContext(l.ctx).Warnln(string(b))
 }
 
 func (l *EchoLogrusLogger) Error(i ...interface{}) {
-	l.Logger.WithContext(l.Ctx).Error(i...)
+	l.logger.WithContext(l.ctx).Error(i...)
 }
 
 func (l *EchoLogrusLogger) Errorf(format string, args ...interface{}) {
-	l.Logger.WithContext(l.Ctx).Errorf(format, args...)
+	l.logger.WithContext(l.ctx).Errorf(format, args...)
 }
 
 func (l *EchoLogrusLogger) Errorj(j lslog.JSON) {
@@ -142,15 +171,15 @@ func (l *EchoLogrusLogger) Errorj(j lslog.JSON) {
 	if err != nil {
 		panic(err)
 	}
-	l.Logger.WithContext(l.Ctx).Errorln(string(b))
+	l.logger.WithContext(l.ctx).Errorln(string(b))
 }
 
 func (l *EchoLogrusLogger) Fatal(i ...interface{}) {
-	l.Logger.WithContext(l.Ctx).Fatal(i...)
+	l.logger.WithContext(l.ctx).Fatal(i...)
 }
 
 func (l *EchoLogrusLogger) Fatalf(format string, args ...interface{}) {
-	l.Logger.WithContext(l.Ctx).Fatalf(format, args...)
+	l.logger.WithContext(l.ctx).Fatalf(format, args...)
 }
 
 func (l *EchoLogrusLogger) Fatalj(j lslog.JSON) {
@@ -158,15 +187,15 @@ func (l *EchoLogrusLogger) Fatalj(j lslog.JSON) {
 	if err != nil {
 		panic(err)
 	}
-	l.Logger.WithContext(l.Ctx).Fatalln(string(b))
+	l.logger.WithContext(l.ctx).Fatalln(string(b))
 }
 
 func (l *EchoLogrusLogger) Panic(i ...interface{}) {
-	l.Logger.WithContext(l.Ctx).Panic(i...)
+	l.logger.WithContext(l.ctx).Panic(i...)
 }
 
 func (l *EchoLogrusLogger) Panicf(format string, args ...interface{}) {
-	l.Logger.WithContext(l.Ctx).Panicf(format, args...)
+	l.logger.WithContext(l.ctx).Panicf(format, args...)
 }
 
 func (l *EchoLogrusLogger) Panicj(j lslog.JSON) {
@@ -174,9 +203,11 @@ func (l *EchoLogrusLogger) Panicj(j lslog.JSON) {
 	if err != nil {
 		panic(err)
 	}
-	l.Logger.WithContext(l.Ctx).Panicln(string(b))
+	l.logger.WithContext(l.ctx).Panicln(string(b))
 }
 
+// Write method is heavily used by the stdlib log package and called
+// from the weldr API.
 func (l *EchoLogrusLogger) Write(p []byte) (n int, err error) {
-	return l.Logger.WithContext(l.Ctx).Writer().Write(p)
+	return l.writer.Write(p)
 }
