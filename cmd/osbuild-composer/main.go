@@ -7,8 +7,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/coreos/go-systemd/activation"
-	"github.com/coreos/go-systemd/journal"
+	"github.com/coreos/go-systemd/v22/activation"
+	"github.com/coreos/go-systemd/v22/journal"
 	"github.com/getsentry/sentry-go"
 	sentrylogrus "github.com/getsentry/sentry-go/logrus"
 	_ "github.com/osbuild/images/data/repositories"
