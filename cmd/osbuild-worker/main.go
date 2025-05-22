@@ -190,11 +190,13 @@ var run = func() {
 	}
 
 	logrus.Info("Composer configuration:")
-	encoder := toml.NewEncoder(logrus.StandardLogger().WriterLevel(logrus.InfoLevel))
+	configWriter := logrus.StandardLogger().WriterLevel(logrus.DebugLevel)
+	encoder := toml.NewEncoder(configWriter)
 	err = encoder.Encode(&config)
 	if err != nil {
 		logrus.Fatalf("Could not print config: %v", err)
 	}
+	configWriter.Close()
 
 	if config.DeploymentChannel != "" {
 		logrus.AddHook(&slogger.EnvironmentHook{Channel: config.DeploymentChannel})
