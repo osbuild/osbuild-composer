@@ -3,6 +3,7 @@ package worker_test
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -32,7 +33,14 @@ import (
 )
 
 func newTestServer(t *testing.T, tempdir string, config worker.Config, acceptArtifacts bool) *worker.Server {
-	q, err := fsjobqueue.New(tempdir)
+	// NOTE: jobs and artifacts directories need to be next to each other. artifacts inside the fsjobqueue
+	// directory makes it crash when trying to list all the jobs because it isn't a UUID.
+	jobsDir := path.Join(tempdir, "jobs")
+	err := os.Mkdir(jobsDir, 0755)
+	if err != nil && !os.IsExist(err) {
+		t.Fatalf("cannot create jobs directory %s: %v", jobsDir, err)
+	}
+	q, err := fsjobqueue.New(jobsDir)
 	if err != nil {
 		t.Fatalf("error creating fsjobqueue: %v", err)
 	}
@@ -41,7 +49,7 @@ func newTestServer(t *testing.T, tempdir string, config worker.Config, acceptArt
 		artifactsDir := path.Join(tempdir, "artifacts")
 		err := os.Mkdir(artifactsDir, 0755)
 		if err != nil && !os.IsExist(err) {
-			t.Fatalf("cannot create state directory %s: %v", artifactsDir, err)
+			t.Fatalf("cannot create artifacts directory %s: %v", artifactsDir, err)
 		}
 		config.ArtifactsDir = artifactsDir
 	}
@@ -1606,4 +1614,75 @@ func TestJobHeartbeats(t *testing.T) {
 	require.Equal(t, clienterrors.ErrorJobMissingHeartbeat, jobRes.JobError.ID)
 	require.Equal(t, float64(0), promtest.ToFloat64(prometheus.PendingJobs))
 	require.Equal(t, float64(0), promtest.ToFloat64(prometheus.RunningJobs))
+}
+
+func makeFakeArtifact(tempdir string, id uuid.UUID, filename string) error {
+	d := path.Join(tempdir, "artifacts", id.String())
+	err := os.Mkdir(d, 0755)
+	if err != nil {
+		return err
+	}
+	if len(filename) > 0 {
+		p := path.Join(d, filename)
+		fp, err := os.Create(p)
+		if err != nil {
+			return err
+		}
+		return fp.Close()
+	}
+
+	return nil
+}
+
+func artifactUUIDExists(tempdir string, id uuid.UUID) bool {
+	dir := path.Join(tempdir, "artifacts", id.String())
+	_, err := os.Stat(dir)
+	return !errors.Is(err, os.ErrNotExist)
+}
+
+func TestCleanupArtifacts(t *testing.T) {
+	distroStruct := newTestDistro(t)
+	arch, err := distroStruct.GetArch(test_distro.TestArchName)
+	if err != nil {
+		t.Fatalf("error getting arch from distro: %v", err)
+	}
+	imageType, err := arch.GetImageType(test_distro.TestImageTypeName)
+	if err != nil {
+		t.Fatalf("error getting image type from arch: %v", err)
+	}
+	manifest, _, err := imageType.Manifest(nil, distro.ImageOptions{Size: imageType.Size(0)}, nil, nil)
+	if err != nil {
+		t.Fatalf("error creating osbuild manifest: %v", err)
+	}
+	tempdir := t.TempDir()
+	server := newTestServer(t, tempdir, defaultConfig, true)
+	mf, err := manifest.Serialize(nil, nil, nil, nil)
+	if err != nil {
+		t.Fatalf("error creating osbuild manifest: %v", err)
+	}
+
+	jobID, err := server.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: mf}, "")
+	require.NoError(t, err)
+
+	// Make a fake artifact for the existing jobid
+	err = makeFakeArtifact(tempdir, jobID, "not-a-real.img")
+	require.Nil(t, err)
+
+	// Make an artifact directory for a job that is already gone
+	lostJobID := uuid.New()
+	err = makeFakeArtifact(tempdir, lostJobID, "not-a-real.img")
+	require.Nil(t, err)
+
+	// Make an artifact directory with no files
+	emptyJobID := uuid.New()
+	err = makeFakeArtifact(tempdir, emptyJobID, "")
+	require.Nil(t, err)
+
+	// This should remove lostJobID and not jobID
+	err = server.CleanupArtifacts()
+	require.Nil(t, err)
+
+	assert.True(t, artifactUUIDExists(tempdir, jobID))
+	assert.False(t, artifactUUIDExists(tempdir, lostJobID))
+	assert.False(t, artifactUUIDExists(tempdir, emptyJobID))
 }
