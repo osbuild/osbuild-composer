@@ -80,10 +80,12 @@ func main() {
 	}
 
 	logrus.Info("Loaded configuration:")
-	err = DumpConfig(*config, logrus.StandardLogger().WriterLevel(logrus.InfoLevel))
+	dumpWriter := logrus.StandardLogger().WriterLevel(logrus.DebugLevel)
+	err = DumpConfig(*config, dumpWriter)
 	if err != nil {
 		logrus.Fatalf("Error printing configuration: %v", err)
 	}
+	dumpWriter.Close()
 
 	if config.DeploymentChannel != "" {
 		logrus.AddHook(&slogger.EnvironmentHook{Channel: config.DeploymentChannel})
