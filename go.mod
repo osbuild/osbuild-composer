@@ -25,7 +25,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.177.0
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.61.0
 	github.com/aws/smithy-go v1.22.1
-	github.com/coreos/go-systemd v0.0.0-20191104093116-d3cd4ed1dbcf
+	github.com/coreos/go-systemd/v22 v22.5.0
 	github.com/getkin/kin-openapi v0.131.0
 	github.com/getsentry/sentry-go v0.28.1
 	github.com/gobwas/glob v0.2.3
