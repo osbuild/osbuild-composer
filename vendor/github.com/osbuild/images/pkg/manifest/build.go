@@ -43,6 +43,8 @@ type BuildrootFromPackages struct {
 	// buildroot itself when running setfiles. Once osbuild has
 	// this then this option would become "useChrootSetfiles"
 	disableSelinux bool
+
+	selinuxPolicy string
 }
 
 type BuildOptions struct {
@@ -54,10 +56,22 @@ type BuildOptions struct {
 	// currently needed when using (experimental) cross-arch building.
 	DisableSELinux bool
 
+	// The SELinux policy to use in the buildroot, defaults to 'targeted' if not specified
+	SELinuxPolicy string
+
 	// BootstrapPipeline add the given bootstrap pipeline to the
 	// build pipeline. This is only needed when doing cross-arch
 	// building
 	BootstrapPipeline Build
+}
+
+// policy or default returns the selinuxPolicy or (if unset) the
+// default policy
+func policyOrDefault(selinuxPolicy string) string {
+	if selinuxPolicy != "" {
+		return selinuxPolicy
+	}
+	return "targeted"
 }
 
 // NewBuild creates a new build pipeline from the repositories in repos
@@ -75,6 +89,7 @@ func NewBuild(m *Manifest, runner runner.Runner, repos []rpmmd.RepoConfig, opts 
 		repos:              filterRepos(repos, name),
 		containerBuildable: opts.ContainerBuildable,
 		disableSelinux:     opts.DisableSELinux,
+		selinuxPolicy:      policyOrDefault(opts.SELinuxPolicy),
 	}
 
 	m.addPipeline(pipeline)
@@ -93,10 +108,11 @@ func (p *BuildrootFromPackages) addDependent(dep Pipeline) {
 func (p *BuildrootFromPackages) getPackageSetChain(distro Distro) []rpmmd.PackageSet {
 	// TODO: make the /usr/bin/cp dependency conditional
 	// TODO: make the /usr/bin/xz dependency conditional
+	policyPackage := fmt.Sprintf("selinux-policy-%s", p.selinuxPolicy)
 	packages := []string{
-		"selinux-policy-targeted", // needed to build the build pipeline
-		"coreutils",               // /usr/bin/cp - used all over
-		"xz",                      // usage unclear
+		policyPackage, // needed to build the build pipeline
+		"coreutils",   // /usr/bin/cp - used all over
+		"xz",          // usage unclear
 	}
 
 	packages = append(packages, p.runner.GetBuildPackages()...)
@@ -143,7 +159,7 @@ func (p *BuildrootFromPackages) serialize() osbuild.Pipeline {
 	pipeline.AddStage(osbuild.NewRPMStage(osbuild.NewRPMStageOptions(p.repos), osbuild.NewRpmStageSourceFilesInputs(p.packageSpecs)))
 	if !p.disableSelinux {
 		pipeline.AddStage(osbuild.NewSELinuxStage(&osbuild.SELinuxStageOptions{
-			FileContexts: "etc/selinux/targeted/contexts/files/file_contexts",
+			FileContexts: fmt.Sprintf("etc/selinux/%s/contexts/files/file_contexts", p.selinuxPolicy),
 			Labels:       p.getSELinuxLabels(),
 		},
 		))
@@ -182,6 +198,7 @@ type BuildrootFromContainer struct {
 
 	containerBuildable bool
 	disableSelinux     bool
+	selinuxPolicy      string
 }
 
 // NewBuildFromContainer creates a new build pipeline from the given
@@ -200,6 +217,7 @@ func NewBuildFromContainer(m *Manifest, runner runner.Runner, containerSources [
 
 		containerBuildable: opts.ContainerBuildable,
 		disableSelinux:     opts.DisableSELinux,
+		selinuxPolicy:      policyOrDefault(opts.SELinuxPolicy),
 	}
 	m.addPipeline(pipeline)
 	return pipeline
@@ -273,7 +291,7 @@ func (p *BuildrootFromContainer) serialize() osbuild.Pipeline {
 	if !p.disableSelinux {
 		pipeline.AddStage(osbuild.NewSELinuxStage(
 			&osbuild.SELinuxStageOptions{
-				FileContexts: "etc/selinux/targeted/contexts/files/file_contexts",
+				FileContexts: fmt.Sprintf("etc/selinux/%s/contexts/files/file_contexts", p.selinuxPolicy),
 				ExcludePaths: []string{"/sysroot"},
 				Labels:       p.getSELinuxLabels(),
 			},

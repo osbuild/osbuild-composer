@@ -2,31 +2,21 @@ package rhel10
 
 import (
 	"github.com/osbuild/images/pkg/datasizes"
-	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distro/rhel"
 )
 
-func vmdkKernelOptions() []string {
-	return []string{"ro"}
-}
-
-func mkVMDKImgType() *rhel.ImageType {
+func mkVMDKImgType(d *rhel.Distribution) *rhel.ImageType {
 	it := rhel.NewImageType(
 		"vmdk",
 		"disk.vmdk",
 		"application/x-vmdk",
-		map[string]rhel.PackageSetFunc{
-			rhel.OSPkgsKey: packageSetLoader,
-		},
+		packageSetLoader,
 		rhel.DiskImage,
 		[]string{"build"},
 		[]string{"os", "image", "vmdk"},
 		[]string{"vmdk"},
 	)
-
-	it.DefaultImageConfig = &distro.ImageConfig{
-		KernelOptions: vmdkKernelOptions(),
-	}
+	it.DefaultImageConfig = imageConfig(d, "x86_64", "vmdk")
 	it.Bootable = true
 	it.DefaultSize = 4 * datasizes.GibiByte
 	it.BasePartitionTables = defaultBasePartitionTables
@@ -34,23 +24,18 @@ func mkVMDKImgType() *rhel.ImageType {
 	return it
 }
 
-func mkOVAImgType() *rhel.ImageType {
+func mkOVAImgType(d *rhel.Distribution) *rhel.ImageType {
 	it := rhel.NewImageType(
 		"ova",
 		"image.ova",
 		"application/ovf",
-		map[string]rhel.PackageSetFunc{
-			rhel.OSPkgsKey: packageSetLoader,
-		},
+		packageSetLoader,
 		rhel.DiskImage,
 		[]string{"build"},
 		[]string{"os", "image", "vmdk", "ovf", "archive"},
 		[]string{"archive"},
 	)
-
-	it.DefaultImageConfig = &distro.ImageConfig{
-		KernelOptions: vmdkKernelOptions(),
-	}
+	it.DefaultImageConfig = imageConfig(d, "x86_64", "ova")
 	it.Bootable = true
 	it.DefaultSize = 4 * datasizes.GibiByte
 	it.BasePartitionTables = defaultBasePartitionTables

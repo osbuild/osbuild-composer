@@ -8,10 +8,10 @@ import (
 )
 
 type SshdConfigConfig struct {
-	PasswordAuthentication          *bool                `json:"PasswordAuthentication,omitempty"`
-	ChallengeResponseAuthentication *bool                `json:"ChallengeResponseAuthentication,omitempty"`
-	ClientAliveInterval             *int                 `json:"ClientAliveInterval,omitempty"`
-	PermitRootLogin                 PermitRootLoginValue `json:"PermitRootLogin,omitempty"`
+	PasswordAuthentication          *bool                `json:"PasswordAuthentication,omitempty" yaml:"PasswordAuthentication,omitempty"`
+	ChallengeResponseAuthentication *bool                `json:"ChallengeResponseAuthentication,omitempty" yaml:"ChallengeResponseAuthentication,omitempty"`
+	ClientAliveInterval             *int                 `json:"ClientAliveInterval,omitempty" yaml:"ClientAliveInterval,omitempty"`
+	PermitRootLogin                 PermitRootLoginValue `json:"PermitRootLogin,omitempty" yaml:"PermitRootLogin,omitempty"`
 }
 
 // PermitRootLoginValue is defined to represent all valid types of the
@@ -45,10 +45,10 @@ const (
 // Unexported struct used for Unmarshalling of SshdConfigConfig due to
 // 'PermitRootLogin' being a boolean or a string.
 type rawSshdConfigConfig struct {
-	PasswordAuthentication          *bool       `json:"PasswordAuthentication,omitempty"`
-	ChallengeResponseAuthentication *bool       `json:"ChallengeResponseAuthentication,omitempty"`
-	ClientAliveInterval             *int        `json:"ClientAliveInterval,omitempty"`
-	PermitRootLogin                 interface{} `json:"PermitRootLogin,omitempty"`
+	PasswordAuthentication          *bool       `json:"PasswordAuthentication,omitempty" yaml:"PasswordAuthentication,omitempty"`
+	ChallengeResponseAuthentication *bool       `json:"ChallengeResponseAuthentication,omitempty" yaml:"ChallengeResponseAuthentication,omitempty"`
+	ClientAliveInterval             *int        `json:"ClientAliveInterval,omitempty" yaml:"ClientAliveInterval,omitempty"`
+	PermitRootLogin                 interface{} `json:"PermitRootLogin,omitempty" yaml:"PermitRootLogin,omitempty"`
 }
 
 func (c *SshdConfigConfig) UnmarshalJSON(data []byte) error {
@@ -82,7 +82,7 @@ func (c *SshdConfigConfig) UnmarshalYAML(unmarshal func(any) error) error {
 }
 
 type SshdConfigStageOptions struct {
-	Config SshdConfigConfig `json:"config"`
+	Config SshdConfigConfig `json:"config" yaml:"config"`
 }
 
 func (SshdConfigStageOptions) isStageOptions() {}

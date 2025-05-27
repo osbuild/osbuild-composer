@@ -16,9 +16,7 @@ func mkVMDKImgType() *rhel.ImageType {
 		"vmdk",
 		"disk.vmdk",
 		"application/x-vmdk",
-		map[string]rhel.PackageSetFunc{
-			rhel.OSPkgsKey: packageSetLoader,
-		},
+		packageSetLoader,
 		rhel.DiskImage,
 		[]string{"build"},
 		[]string{"os", "image", "vmdk"},
@@ -41,9 +39,7 @@ func mkOVAImgType() *rhel.ImageType {
 		"ova",
 		"image.ova",
 		"application/ovf",
-		map[string]rhel.PackageSetFunc{
-			rhel.OSPkgsKey: packageSetLoader,
-		},
+		packageSetLoader,
 		rhel.DiskImage,
 		[]string{"build"},
 		[]string{"os", "image", "vmdk", "ovf", "archive"},

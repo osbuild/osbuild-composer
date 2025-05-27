@@ -8,6 +8,6 @@ import (
 	"github.com/osbuild/images/pkg/rpmmd"
 )
 
-func packageSetLoader(t *rhel.ImageType) (rpmmd.PackageSet, error) {
-	return defs.PackageSet(t, "", nil)
+func packageSetLoader(t *rhel.ImageType) (map[string]rpmmd.PackageSet, error) {
+	return defs.PackageSets(t, nil)
 }

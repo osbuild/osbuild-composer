@@ -740,7 +740,12 @@ func (p *OS) serialize() osbuild.Pipeline {
 					p.platform.GetUEFIVendor() != "",
 					p.platform.GetBIOSPlatform(),
 					p.platform.GetUEFIVendor(), false)
-				if cfg := p.OSCustomizations.Grub2Config; cfg != nil {
+
+				// Avoid a race condition because Grub2Config may be shared when set (yay pointers!)
+				if p.OSCustomizations.Grub2Config != nil {
+					// Make a COPY of it
+					cfg := *p.OSCustomizations.Grub2Config
+
 					// TODO: don't store Grub2Config in OSPipeline, making the overrides unnecessary
 					// grub2.Config.Default is owned and set by `NewGrub2StageOptionsUnified`
 					// and thus we need to preserve it
@@ -748,7 +753,8 @@ func (p *OS) serialize() osbuild.Pipeline {
 						cfg.Default = options.Config.Default
 					}
 
-					options.Config = cfg
+					// Point to the COPY with the possibly new Default value
+					options.Config = &cfg
 				}
 				if p.OSCustomizations.KernelOptionsBootloader {
 					options.WriteCmdLine = nil

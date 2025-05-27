@@ -32,7 +32,7 @@ type GcpGuestAgentConfigInstanceSetup struct {
 	HostKeyTypes     []string `json:"host_key_types,omitempty"`
 	OptimizeLocalSsd *bool    `json:"optimize_local_ssd,omitempty"`
 	NetworkEnabled   *bool    `json:"network_enabled,omitempty"`
-	SetBotoConfig    *bool    `json:"set_boto_config,omitempty"`
+	SetBotoConfig    *bool    `json:"set_boto_config,omitempty" yaml:"set_boto_config,omitempty"`
 	SetHostKeys      *bool    `json:"set_host_keys,omitempty"`
 	SetMultiqueue    *bool    `json:"set_multiqueue,omitempty"`
 }
@@ -59,14 +59,14 @@ type GcpGuestAgentConfigNetworkInterfaces struct {
 type GcpGuestAgentConfig struct {
 	Accounts          *GcpGuestAgentConfigAccounts          `json:"Accounts,omitempty"`
 	Daemons           *GcpGuestAgentConfigDaemons           `json:"Daemons,omitempty"`
-	InstanceSetup     *GcpGuestAgentConfigInstanceSetup     `json:"InstanceSetup,omitempty"`
+	InstanceSetup     *GcpGuestAgentConfigInstanceSetup     `json:"InstanceSetup,omitempty" yaml:"InstanceSetup,omitempty"`
 	IpForwarding      *GcpGuestAgentConfigIpForwarding      `json:"IpForwarding,omitempty"`
 	MetadataScripts   *GcpGuestAgentConfigMetadataScripts   `json:"MetadataScripts,omitempty"`
 	NetworkInterfaces *GcpGuestAgentConfigNetworkInterfaces `json:"NetworkInterfaces,omitempty"`
 }
 
 type GcpGuestAgentConfigOptions struct {
-	ConfigScope GcpGuestAgentConfigScopeValue `json:"config_scope,omitempty"`
+	ConfigScope GcpGuestAgentConfigScopeValue `json:"config_scope,omitempty" yaml:"config_scope,omitempty"`
 	Config      *GcpGuestAgentConfig          `json:"config"`
 }
 

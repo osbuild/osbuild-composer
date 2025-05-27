@@ -1,11 +1,56 @@
 package disk
 
 import (
+	"encoding/json"
+	"fmt"
 	"math/rand"
 	"reflect"
 
 	"github.com/google/uuid"
 )
+
+type MkfsOption int
+
+const ( // MkfsOption type enum
+	MkfsVerity MkfsOption = iota // Enable fs-verity option if needed (typically for EXT4)
+)
+
+func getMkfsOptionMapping() []string {
+	return []string{"verity"}
+}
+
+// String converts MkfsOption into a human readable string
+func (option MkfsOption) String() string {
+	return getMkfsOptionMapping()[int(option)]
+}
+
+func unmarshalHelper(data []byte, mapping []string) (int, error) {
+	var stringInput string
+	err := json.Unmarshal(data, &stringInput)
+	if err != nil {
+		return 0, err
+	}
+	for n, str := range mapping {
+		if str == stringInput {
+			return n, nil
+		}
+	}
+	return 0, fmt.Errorf("invalid mkfsoption: %s", stringInput)
+}
+
+// UnmarshalJSON converts a JSON string into an MkfsOption
+func (option *MkfsOption) UnmarshalJSON(data []byte) error {
+	val, err := unmarshalHelper(data, getMkfsOptionMapping())
+	if err != nil {
+		return err
+	}
+	*option = MkfsOption(val)
+	return nil
+}
+
+func (option MkfsOption) MarshalJSON() ([]byte, error) {
+	return json.Marshal(getMkfsOptionMapping()[option])
+}
 
 // Filesystem related functions
 type Filesystem struct {
@@ -22,6 +67,8 @@ type Filesystem struct {
 	FSTabFreq uint64 `json:"fstab_freq,omitempty" yaml:"fstab_freq,omitempty"`
 	// The sixth field of fstab(5); fs_passno
 	FSTabPassNo uint64 `json:"fstab_passno,omitempty" yaml:"fstab_passno,omitempty"`
+	// Custom mkfs options
+	MkfsOptions []MkfsOption `json:"mkfs_options,omitempty" yaml:"mkfs_options,omitempty"`
 }
 
 func init() {
@@ -46,6 +93,7 @@ func (fs *Filesystem) Clone() Entity {
 		FSTabOptions: fs.FSTabOptions,
 		FSTabFreq:    fs.FSTabFreq,
 		FSTabPassNo:  fs.FSTabPassNo,
+		MkfsOptions:  fs.MkfsOptions,
 	}
 }
 

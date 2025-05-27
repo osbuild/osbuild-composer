@@ -13,9 +13,7 @@ func mkQcow2ImgType(rd *rhel.Distribution) *rhel.ImageType {
 		"qcow2",
 		"disk.qcow2",
 		"application/x-qemu-disk",
-		map[string]rhel.PackageSetFunc{
-			rhel.OSPkgsKey: packageSetLoader,
-		},
+		packageSetLoader,
 		rhel.DiskImage,
 		[]string{"build"},
 		[]string{"os", "image", "qcow2"},
@@ -35,9 +33,7 @@ func mkOCIImgType(rd *rhel.Distribution) *rhel.ImageType {
 		"oci",
 		"disk.qcow2",
 		"application/x-qemu-disk",
-		map[string]rhel.PackageSetFunc{
-			rhel.OSPkgsKey: packageSetLoader,
-		},
+		packageSetLoader,
 		rhel.DiskImage,
 		[]string{"build"},
 		[]string{"os", "image", "qcow2"},
@@ -57,9 +53,7 @@ func mkOpenstackImgType() *rhel.ImageType {
 		"openstack",
 		"disk.qcow2",
 		"application/x-qemu-disk",
-		map[string]rhel.PackageSetFunc{
-			rhel.OSPkgsKey: packageSetLoader,
-		},
+		packageSetLoader,
 		rhel.DiskImage,
 		[]string{"build"},
 		[]string{"os", "image", "qcow2"},

@@ -14,9 +14,7 @@ func mkGceImgType(rd distro.Distro) *rhel.ImageType {
 		"gce",
 		"image.tar.gz",
 		"application/gzip",
-		map[string]rhel.PackageSetFunc{
-			rhel.OSPkgsKey: packageSetLoader,
-		},
+		packageSetLoader,
 		rhel.DiskImage,
 		[]string{"build"},
 		[]string{"os", "image", "archive"},
@@ -37,9 +35,7 @@ func mkGceRhuiImgType(rd distro.Distro) *rhel.ImageType {
 		"gce-rhui",
 		"image.tar.gz",
 		"application/gzip",
-		map[string]rhel.PackageSetFunc{
-			rhel.OSPkgsKey: packageSetLoader,
-		},
+		packageSetLoader,
 		rhel.DiskImage,
 		[]string{"build"},
 		[]string{"os", "image", "archive"},

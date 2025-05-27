@@ -1,7 +1,11 @@
 package fsnode
 
 import (
+	"bytes"
+	"encoding/json"
 	"os"
+
+	"github.com/osbuild/images/internal/common"
 )
 
 type File struct {
@@ -14,6 +18,27 @@ func (f *File) Data() []byte {
 		return nil
 	}
 	return f.data
+}
+
+func (f *File) UnmarshalJSON(data []byte) error {
+	var v struct {
+		baseFsNodeJSON
+		Data string `json:"data,omitempty"`
+	}
+	dec := json.NewDecoder(bytes.NewBuffer(data))
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(&v); err != nil {
+		return err
+	}
+	f.baseFsNode.baseFsNodeJSON = v.baseFsNodeJSON
+	f.data = []byte(v.Data)
+
+	return f.validate()
+
+}
+
+func (f *File) UnmarshalYAML(unmarshal func(any) error) error {
+	return common.UnmarshalYAMLviaJSON(f, unmarshal)
 }
 
 // NewFile creates a new file with the given path, data, mode, user and group.

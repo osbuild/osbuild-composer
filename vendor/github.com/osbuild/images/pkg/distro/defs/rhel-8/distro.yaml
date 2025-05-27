@@ -263,113 +263,113 @@
 
   anaconda_pkgset: &anaconda_pkgset
     include:
-       - "aajohan-comfortaa-fonts"
-       - "abattis-cantarell-fonts"
-       - "alsa-firmware"
-       - "alsa-tools-firmware"
-       - "anaconda"
-       - "anaconda-install-env-deps"
-       - "anaconda-widgets"
-       - "audit"
-       - "bind-utils"
-       - "bitmap-fangsongti-fonts"
-       - "bzip2"
-       - "cryptsetup"
-       - "dbus-x11"
-       - "dejavu-sans-fonts"
-       - "dejavu-sans-mono-fonts"
-       - "device-mapper-persistent-data"
-       - "dnf"
-       - "dump"
-       - "ethtool"
-       - "fcoe-utils"
-       - "ftp"
-       - "gdb-gdbserver"
-       - "gdisk"
-       - "gfs2-utils"
-       - "glibc-all-langpacks"
-       - "google-noto-sans-cjk-ttc-fonts"
-       - "gsettings-desktop-schemas"
-       - "hdparm"
-       - "hexedit"
-       - "initscripts"
-       - "ipmitool"
-       - "iwl3945-firmware"
-       - "iwl4965-firmware"
-       - "iwl6000g2a-firmware"
-       - "iwl6000g2b-firmware"
-       - "jomolhari-fonts"
-       - "kacst-farsi-fonts"
-       - "kacst-qurn-fonts"
-       - "kbd"
-       - "kbd-misc"
-       - "kdump-anaconda-addon"
-       - "khmeros-base-fonts"
-       - "libblockdev-lvm-dbus"
-       - "libertas-sd8686-firmware"
-       - "libertas-sd8787-firmware"
-       - "libertas-usb8388-firmware"
-       - "libertas-usb8388-olpc-firmware"
-       - "libibverbs"
-       - "libreport-plugin-bugzilla"
-       - "libreport-plugin-reportuploader"
-       - "librsvg2"
-       - "linux-firmware"
-       - "lklug-fonts"
-       - "lldpad"
-       - "lohit-assamese-fonts"
-       - "lohit-bengali-fonts"
-       - "lohit-devanagari-fonts"
-       - "lohit-gujarati-fonts"
-       - "lohit-gurmukhi-fonts"
-       - "lohit-kannada-fonts"
-       - "lohit-odia-fonts"
-       - "lohit-tamil-fonts"
-       - "lohit-telugu-fonts"
-       - "lsof"
-       - "madan-fonts"
-       - "metacity"
-       - "mtr"
-       - "mt-st"
-       - "net-tools"
-       - "nmap-ncat"
-       - "nm-connection-editor"
-       - "nss-tools"
-       - "openssh-server"
-       - "oscap-anaconda-addon"
-       - "pciutils"
-       - "perl-interpreter"
-       - "pigz"
-       - "python3-pyatspi"
-       - "rdma-core"
-       - "redhat-release-eula"
-       - "rpm-ostree"
-       - "rsync"
-       - "rsyslog"
-       - "sg3_utils"
-       - "sil-abyssinica-fonts"
-       - "sil-padauk-fonts"
-       - "sil-scheherazade-fonts"
-       - "smartmontools"
-       - "smc-meera-fonts"
-       - "spice-vdagent"
-       - "strace"
-       - "system-storage-manager"
-       - "thai-scalable-waree-fonts"
-       - "tigervnc-server-minimal"
-       - "tigervnc-server-module"
-       - "udisks2"
-       - "udisks2-iscsi"
-       - "usbutils"
-       - "vim-minimal"
-       - "volume_key"
-       - "wget"
-       - "xfsdump"
-       - "xorg-x11-drivers"
-       - "xorg-x11-fonts-misc"
-       - "xorg-x11-server-utils"
-       - "xorg-x11-server-Xorg"
-       - "xorg-x11-xauth"
+      - "aajohan-comfortaa-fonts"
+      - "abattis-cantarell-fonts"
+      - "alsa-firmware"
+      - "alsa-tools-firmware"
+      - "anaconda"
+      - "anaconda-install-env-deps"
+      - "anaconda-widgets"
+      - "audit"
+      - "bind-utils"
+      - "bitmap-fangsongti-fonts"
+      - "bzip2"
+      - "cryptsetup"
+      - "dbus-x11"
+      - "dejavu-sans-fonts"
+      - "dejavu-sans-mono-fonts"
+      - "device-mapper-persistent-data"
+      - "dnf"
+      - "dump"
+      - "ethtool"
+      - "fcoe-utils"
+      - "ftp"
+      - "gdb-gdbserver"
+      - "gdisk"
+      - "gfs2-utils"
+      - "glibc-all-langpacks"
+      - "google-noto-sans-cjk-ttc-fonts"
+      - "gsettings-desktop-schemas"
+      - "hdparm"
+      - "hexedit"
+      - "initscripts"
+      - "ipmitool"
+      - "iwl3945-firmware"
+      - "iwl4965-firmware"
+      - "iwl6000g2a-firmware"
+      - "iwl6000g2b-firmware"
+      - "jomolhari-fonts"
+      - "kacst-farsi-fonts"
+      - "kacst-qurn-fonts"
+      - "kbd"
+      - "kbd-misc"
+      - "kdump-anaconda-addon"
+      - "khmeros-base-fonts"
+      - "libblockdev-lvm-dbus"
+      - "libertas-sd8686-firmware"
+      - "libertas-sd8787-firmware"
+      - "libertas-usb8388-firmware"
+      - "libertas-usb8388-olpc-firmware"
+      - "libibverbs"
+      - "libreport-plugin-bugzilla"
+      - "libreport-plugin-reportuploader"
+      - "librsvg2"
+      - "linux-firmware"
+      - "lklug-fonts"
+      - "lldpad"
+      - "lohit-assamese-fonts"
+      - "lohit-bengali-fonts"
+      - "lohit-devanagari-fonts"
+      - "lohit-gujarati-fonts"
+      - "lohit-gurmukhi-fonts"
+      - "lohit-kannada-fonts"
+      - "lohit-odia-fonts"
+      - "lohit-tamil-fonts"
+      - "lohit-telugu-fonts"
+      - "lsof"
+      - "madan-fonts"
+      - "metacity"
+      - "mtr"
+      - "mt-st"
+      - "net-tools"
+      - "nmap-ncat"
+      - "nm-connection-editor"
+      - "nss-tools"
+      - "openssh-server"
+      - "oscap-anaconda-addon"
+      - "pciutils"
+      - "perl-interpreter"
+      - "pigz"
+      - "python3-pyatspi"
+      - "rdma-core"
+      - "redhat-release-eula"
+      - "rpm-ostree"
+      - "rsync"
+      - "rsyslog"
+      - "sg3_utils"
+      - "sil-abyssinica-fonts"
+      - "sil-padauk-fonts"
+      - "sil-scheherazade-fonts"
+      - "smartmontools"
+      - "smc-meera-fonts"
+      - "spice-vdagent"
+      - "strace"
+      - "system-storage-manager"
+      - "thai-scalable-waree-fonts"
+      - "tigervnc-server-minimal"
+      - "tigervnc-server-module"
+      - "udisks2"
+      - "udisks2-iscsi"
+      - "usbutils"
+      - "vim-minimal"
+      - "volume_key"
+      - "wget"
+      - "xfsdump"
+      - "xorg-x11-drivers"
+      - "xorg-x11-fonts-misc"
+      - "xorg-x11-server-utils"
+      - "xorg-x11-server-Xorg"
+      - "xorg-x11-xauth"
     condition:
       architecture:
         x86_64:
@@ -391,12 +391,12 @@
   gce_common_pkgset: &gce_common_pkgset
     include:
       - "@core"
-      - "langpacks-en" # not in Google's KS
+      - "langpacks-en"  # not in Google's KS
       - "acpid"
       - "dhcp-client"
       - "dnf-automatic"
       - "net-tools"
-      #- "openssh-server" included in core
+      #  - "openssh-server" included in core
       - "python3"
       - "rng-tools"
       - "tar"
@@ -568,7 +568,7 @@
           type: vfat
           uuid: *efi_filesystem_uuid
           mountpoint: "/boot/efi"
-          label: "EFI-SYSTEM"
+          label: "ESP"
           fstab_options: "defaults,uid=0,gid=0,umask=077,shortname=winnt"
           fstab_freq: 0
           fstab_passno: 2
@@ -649,7 +649,7 @@
               type: vfat
               uuid: *efi_filesystem_uuid
               mountpoint: "/boot/efi"
-              label: "EFI-SYSTEM"
+              label: "ESP"
               fstab_options: "defaults,uid=0,gid=0,umask=077,shortname=winnt"
               fstab_freq: 0
               fstab_passno: 2
@@ -715,7 +715,7 @@
               type: vfat
               uuid: *efi_filesystem_uuid
               mountpoint: "/boot/efi"
-              label: "EFI-SYSTEM"
+              label: "ESP"
               fstab_options: "defaults,uid=0,gid=0,umask=077,shortname=winnt"
               fstab_freq: 0
               fstab_passno: 2
@@ -771,7 +771,7 @@ image_config:
     default_oscap_datastream: "/usr/share/xml/scap/ssg/content/ssg-rhel8-ds.xml"
     install_weak_deps: true
     kernel_options_bootloader: true
-    locale:   "en_US.UTF-8"
+    locale: "en_US.UTF-8"
     sysconfig:
       networking: true
       no_zero_conf: true
@@ -786,57 +786,58 @@ image_types:
   # XXX: not a real pkgset but the "os" pipeline pkgset for image-installer
   # find a nicer way to represent this
   bare_metal:
-    package_sets:
-      - include:
-          - "@core"
-          - "authselect-compat"
-          - "chrony"
-          - "cockpit-system"
-          - "cockpit-ws"
-          - "dhcp-client"
-          - "dnf"
-          - "dnf-utils"
-          - "dosfstools"
-          - "dracut-norescue"
-          - "iwl1000-firmware"
-          - "iwl100-firmware"
-          - "iwl105-firmware"
-          - "iwl135-firmware"
-          - "iwl2000-firmware"
-          - "iwl2030-firmware"
-          - "iwl3160-firmware"
-          - "iwl3945-firmware"
-          - "iwl4965-firmware"
-          - "iwl5000-firmware"
-          - "iwl5150-firmware"
-          - "iwl6000-firmware"
-          - "iwl6000g2a-firmware"
-          - "iwl6000g2b-firmware"
-          - "iwl6050-firmware"
-          - "iwl7260-firmware"
-          - "lvm2"
-          - "net-tools"
-          - "NetworkManager"
-          - "nfs-utils"
-          - "oddjob"
-          - "oddjob-mkhomedir"
-          - "policycoreutils"
-          - "psmisc"
-          - "python3-jsonschema"
-          - "qemu-guest-agent"
-          - "redhat-release"
-          - "redhat-release-eula"
-          - "rsync"
-          - "selinux-policy-targeted"
-          - "tar"
-          - "tcpdump"
-          - "yum"
-        condition:
-          distro_name:
-            rhel:
-              include:
-                - "insights-client"
-                - "subscription-manager-cockpit"
+    package_sets: &bare_metal_pkgset
+      os:
+        - include:
+            - "@core"
+            - "authselect-compat"
+            - "chrony"
+            - "cockpit-system"
+            - "cockpit-ws"
+            - "dhcp-client"
+            - "dnf"
+            - "dnf-utils"
+            - "dosfstools"
+            - "dracut-norescue"
+            - "iwl1000-firmware"
+            - "iwl100-firmware"
+            - "iwl105-firmware"
+            - "iwl135-firmware"
+            - "iwl2000-firmware"
+            - "iwl2030-firmware"
+            - "iwl3160-firmware"
+            - "iwl3945-firmware"
+            - "iwl4965-firmware"
+            - "iwl5000-firmware"
+            - "iwl5150-firmware"
+            - "iwl6000-firmware"
+            - "iwl6000g2a-firmware"
+            - "iwl6000g2b-firmware"
+            - "iwl6050-firmware"
+            - "iwl7260-firmware"
+            - "lvm2"
+            - "net-tools"
+            - "NetworkManager"
+            - "nfs-utils"
+            - "oddjob"
+            - "oddjob-mkhomedir"
+            - "policycoreutils"
+            - "psmisc"
+            - "python3-jsonschema"
+            - "qemu-guest-agent"
+            - "redhat-release"
+            - "redhat-release-eula"
+            - "rsync"
+            - "selinux-policy-targeted"
+            - "tar"
+            - "tcpdump"
+            - "yum"
+          condition:
+            distro_name:
+              rhel:
+                include:
+                  - "insights-client"
+                  - "subscription-manager-cockpit"
 
   ec2: &ec2
     partition_table:
@@ -844,239 +845,270 @@ image_types:
     partition_tables_override:
       <<: *ec2_partition_tables_override
     package_sets:
-      - *ec2_common_pkgset
-      - include:
-          - "rh-amazon-rhui-client"
-        exclude:
-          - "alsa-lib"
-        condition:
-          version_greater_or_equal:
-            "8.7":
-              include:
-                - "redhat-cloud-client-configuration"
+      os:
+        - *ec2_common_pkgset
+        - include:
+            - "rh-amazon-rhui-client"
+          exclude:
+            - "alsa-lib"
+          condition:
+            version_greater_or_equal:
+              "8.7":
+                include:
+                  - "redhat-cloud-client-configuration"
 
-  ec2_ha:
+  "ec2-ha":
     <<: *ec2
     package_sets:
-      - *ec2_common_pkgset
-      - include:
-          - "fence-agents-all"
-          - "pacemaker"
-          - "pcs"
-          - "rh-amazon-rhui-client-ha"
-        exclude:
-          - "alsa-lib"
-        condition:
-          version_greater_or_equal:
-            "8.7":
-              include:
-                - "redhat-cloud-client-configuration"
+      os:
+        - *ec2_common_pkgset
+        - include:
+            - "fence-agents-all"
+            - "pacemaker"
+            - "pcs"
+            - "rh-amazon-rhui-client-ha"
+          exclude:
+            - "alsa-lib"
+          condition:
+            version_greater_or_equal:
+              "8.7":
+                include:
+                  - "redhat-cloud-client-configuration"
 
   ami:
     <<: *ec2
     package_sets:
-      - *ec2_common_pkgset
+      os:
+        - *ec2_common_pkgset
 
-  ec2_sap:
+  "ec2-sap":
     <<: *ec2
     package_sets:
-      - *ec2_common_pkgset
-      - *sap_pkgset
-      - condition:
-          version_less_than:
-            "8.10":
-              include:
-                - "rh-amazon-rhui-client-sap-bundle-e4s"
-          version_greater_or_equal:
-            "8.10":
-              include:
-                - "rh-amazon-rhui-client-sap-bundle"
-            "8.7":
-              include:
-                - "redhat-cloud-client-configuration"
+      os:
+        - *ec2_common_pkgset
+        - *sap_pkgset
+        - condition:
+            version_less_than:
+              "8.10":
+                include:
+                  - "rh-amazon-rhui-client-sap-bundle-e4s"
+            version_greater_or_equal:
+              "8.10":
+                include:
+                  - "rh-amazon-rhui-client-sap-bundle"
+              "8.7":
+                include:
+                  - "redhat-cloud-client-configuration"
 
-  azure_rhui:
+  "azure-rhui":
     package_sets:
-      - *azure_common_pkgset
-      - include:
-          - "firewalld"
-          - "rhui-azure-rhel8"
-        exclude:
-          - "alsa-lib"
+      os:
+        - *azure_common_pkgset
+        - include:
+            - "firewalld"
+            - "rhui-azure-rhel8"
+          exclude:
+            - "alsa-lib"
 
-  azure_sap_rhui:
+  "azure-sap-rhui":
     package_sets:
-      - *azure_common_pkgset
-      - *sap_pkgset
-      - include:
-          - "firewalld"
-        condition:
-          version_greater_or_equal:
-            "8.10":
-              include:
-                - "rhui-azure-rhel8-base-sap-ha"
-          version_less_than:
-            "8.10":
-              include:
-                - "rhui-azure-rhel8-sap-ha"
+      os:
+        - *azure_common_pkgset
+        - *sap_pkgset
+        - include:
+            - "firewalld"
+          condition:
+            version_greater_or_equal:
+              "8.10":
+                include:
+                  - "rhui-azure-rhel8-base-sap-ha"
+            version_less_than:
+              "8.10":
+                include:
+                  - "rhui-azure-rhel8-sap-ha"
 
-  azure_eap7_rhui:
+  "azure-eap7-rhui":
     package_sets:
-      - *azure_common_pkgset
-      - include:
-          - "rhui-azure-rhel8"
-        exclude:
-          - "firewalld"
+      os:
+        - *azure_common_pkgset
+        - include:
+            - "rhui-azure-rhel8"
+          exclude:
+            - "firewalld"
 
   vhd:
     partition_table:
       <<: *default_partition_tables
     package_sets:
-      - *azure_common_pkgset
-      - &azure_pkgset
-        include:
-          - "firewalld"
-        exclude:
-          - "alsa-lib"
+      os:
+        - *azure_common_pkgset
+        - &azure_pkgset
+          include:
+            - "firewalld"
+          exclude:
+            - "alsa-lib"
 
-  image_installer:
+  "image-installer":
     package_sets:
-      - *installer_pkgset
-      - *anaconda_pkgset
-      - *anaconda_boot_pkgset
+      <<: *bare_metal_pkgset
+      installer:
+        - *installer_pkgset
+        - *anaconda_pkgset
+        - *anaconda_boot_pkgset
 
   tar:
     package_sets:
-      - include:
-          - "policycoreutils"
-          - "selinux-policy-targeted"
-        exclude:
-          - "rng-tools"
+      os:
+        - include:
+            - "policycoreutils"
+            - "selinux-policy-targeted"
+          exclude:
+            - "rng-tools"
 
-
-  edge_commit:
+  "edge-commit":
     package_sets:
-      - &edge_commit_pkgset
-        include:
-          - "attr"
-          - "audit"
-          - "basesystem"
-          - "bash"
-          - "bash-completion"
-          - "chrony"
-          - "clevis"
-          - "clevis-dracut"
-          - "clevis-luks"
-          - "container-selinux"
-          - "coreutils"
-          - "criu"
-          - "cryptsetup"
-          - "curl"
-          - "dnsmasq"
-          - "dosfstools"
-          - "dracut-config-generic"
-          - "dracut-network"
-          - "e2fsprogs"
-          - "firewalld"
-          - "fuse-overlayfs"
-          - "fwupd"
-          - "glibc"
-          - "glibc-minimal-langpack"
-          - "gnupg2"
-          - "greenboot"
-          - "gzip"
-          - "hostname"
-          - "ima-evm-utils"
-          - "iproute"
-          - "iptables"
-          - "iputils"
-          - "keyutils"
-          - "less"
-          - "lvm2"
-          - "NetworkManager"
-          - "NetworkManager-wifi"
-          - "NetworkManager-wwan"
-          - "nss-altfiles"
-          - "openssh-clients"
-          - "openssh-server"
-          - "passwd"
-          - "pinentry"
-          - "platform-python"
-          - "podman"
-          - "policycoreutils"
-          - "policycoreutils-python-utils"
-          - "polkit"
-          - "procps-ng"
-          - "redhat-release"
-          - "rootfiles"
-          - "rpm"
-          - "rpm-ostree"
-          - "rsync"
-          - "selinux-policy-targeted"
-          - "setools-console"
-          - "setup"
-          - "shadow-utils"
-          - "shadow-utils"
-          - "skopeo"
-          - "slirp4netns"
-          - "sudo"
-          - "systemd"
-          - "tar"
-          - "tmux"
-          - "traceroute"
-          - "usbguard"
-          - "util-linux"
-          - "vim-minimal"
-          - "wpa_supplicant"
-          - "xz"
-        exclude:
-          - "rng-tools"
-        condition:
-          architecture:
-            x86_64: &edge_commit_x86_64_pkgset
-              include:
-                - "efibootmgr"
-                - "grub2"
-                - "grub2-efi-x64"
-                - "iwl1000-firmware"
-                - "iwl100-firmware"
-                - "iwl105-firmware"
-                - "iwl135-firmware"
-                - "iwl2000-firmware"
-                - "iwl2030-firmware"
-                - "iwl3160-firmware"
-                - "iwl5000-firmware"
-                - "iwl5150-firmware"
-                - "iwl6000-firmware"
-                - "iwl6050-firmware"
-                - "iwl7260-firmware"
-                - "microcode_ctl"
-                - "shim-x64"
-            aarch64: &edge_commit_aarch64_pkgset
-              include:
-                - "grub2-efi-aa64"
-                - "efibootmgr"
-                - "shim-aa64"
-                - "iwl7260-firmware"
-          version_less_than:
-            "8.6":
-              include:
-                - "greenboot-grub2"
-                - "greenboot-reboot"
-                - "greenboot-rpm-ostree-grub2"
-                - "greenboot-status"
-          version_greater_or_equal:
-            "8.6": &edge_commit_new_rhel
-              include:
-                - "fdo-client"
-                - "fdo-owner-cli"
-                - "greenboot-default-health-checks"
-                - "sos"
-          distro_name:
-            centos:
-              *edge_commit_new_rhel
+      os:
+        - &edge_commit_pkgset
+          include:
+            - "attr"
+            - "audit"
+            - "basesystem"
+            - "bash"
+            - "bash-completion"
+            - "chrony"
+            - "clevis"
+            - "clevis-dracut"
+            - "clevis-luks"
+            - "container-selinux"
+            - "coreutils"
+            - "criu"
+            - "cryptsetup"
+            - "curl"
+            - "dnsmasq"
+            - "dosfstools"
+            - "dracut-config-generic"
+            - "dracut-network"
+            - "e2fsprogs"
+            - "firewalld"
+            - "fuse-overlayfs"
+            - "fwupd"
+            - "glibc"
+            - "glibc-minimal-langpack"
+            - "gnupg2"
+            - "greenboot"
+            - "gzip"
+            - "hostname"
+            - "ima-evm-utils"
+            - "iproute"
+            - "iptables"
+            - "iputils"
+            - "keyutils"
+            - "less"
+            - "lvm2"
+            - "NetworkManager"
+            - "NetworkManager-wifi"
+            - "NetworkManager-wwan"
+            - "nss-altfiles"
+            - "openssh-clients"
+            - "openssh-server"
+            - "passwd"
+            - "pinentry"
+            - "platform-python"
+            - "podman"
+            - "policycoreutils"
+            - "policycoreutils-python-utils"
+            - "polkit"
+            - "procps-ng"
+            - "redhat-release"
+            - "rootfiles"
+            - "rpm"
+            - "rpm-ostree"
+            - "rsync"
+            - "selinux-policy-targeted"
+            - "setools-console"
+            - "setup"
+            - "shadow-utils"
+            - "shadow-utils"
+            - "skopeo"
+            - "slirp4netns"
+            - "sudo"
+            - "systemd"
+            - "tar"
+            - "tmux"
+            - "traceroute"
+            - "usbguard"
+            - "util-linux"
+            - "vim-minimal"
+            - "wpa_supplicant"
+            - "xz"
+          exclude:
+            - "rng-tools"
+          condition:
+            architecture:
+              x86_64: &edge_commit_x86_64_pkgset
+                include:
+                  - "efibootmgr"
+                  - "grub2"
+                  - "grub2-efi-x64"
+                  - "iwl1000-firmware"
+                  - "iwl100-firmware"
+                  - "iwl105-firmware"
+                  - "iwl135-firmware"
+                  - "iwl2000-firmware"
+                  - "iwl2030-firmware"
+                  - "iwl3160-firmware"
+                  - "iwl5000-firmware"
+                  - "iwl5150-firmware"
+                  - "iwl6000-firmware"
+                  - "iwl6050-firmware"
+                  - "iwl7260-firmware"
+                  - "microcode_ctl"
+                  - "shim-x64"
+              aarch64: &edge_commit_aarch64_pkgset
+                include:
+                  - "grub2-efi-aa64"
+                  - "efibootmgr"
+                  - "shim-aa64"
+                  - "iwl7260-firmware"
+            version_less_than:
+              "8.6":
+                include:
+                  - "greenboot-grub2"
+                  - "greenboot-reboot"
+                  - "greenboot-rpm-ostree-grub2"
+                  - "greenboot-status"
+            version_greater_or_equal:
+              "8.6": &edge_commit_new_rhel
+                include:
+                  - "fdo-client"
+                  - "fdo-owner-cli"
+                  - "greenboot-default-health-checks"
+                  - "sos"
+            distro_name:
+              centos:
+                *edge_commit_new_rhel
 
-  edge_installer:
+  "edge-installer":
+    package_sets:
+      installer:
+        # TODO: non-arch-specific package set handling for installers
+        # This image type requires build packages for installers and
+        # ostree/edge.  For now we only have x86-64 installer build
+        # package sets defined.  When we add installer build package sets
+        # for other architectures, this will need to be moved to the
+        # architecture and the merging will happen in the PackageSets()
+        # method like the other sets.
+        - *installer_pkgset
+        - *anaconda_pkgset
+        - *anaconda_boot_pkgset
+
+  "edge-raw-image":
+    partition_table:
+      <<: *edge_base_partition_tables
+
+  "edge-simplified-installer":
+    partition_table:
+      <<: *edge_base_partition_tables
     package_sets:
       # TODO: non-arch-specific package set handling for installers
       # This image type requires build packages for installers and
@@ -1085,95 +1117,80 @@ image_types:
       # for other architectures, this will need to be moved to the
       # architecture and the merging will happen in the PackageSets()
       # method like the other sets.
-      - *installer_pkgset
-      - *anaconda_pkgset
-      - *anaconda_boot_pkgset
+      installer:
+        - *installer_pkgset
+        - include:
+            - "attr"
+            - "basesystem"
+            - "binutils"
+            - "bsdtar"
+            - "clevis-dracut"
+            - "clevis-luks"
+            - "cloud-utils-growpart"
+            - "coreos-installer"
+            - "coreos-installer-dracut"
+            - "coreutils"
+            - "device-mapper-multipath"
+            - "dnsmasq"
+            - "dosfstools"
+            - "dracut-live"
+            - "e2fsprogs"
+            - "fcoe-utils"
+            - "fdo-init"
+            - "gzip"
+            - "ima-evm-utils"
+            - "iproute"
+            - "iptables"
+            - "iputils"
+            - "iscsi-initiator-utils"
+            - "keyutils"
+            - "lldpad"
+            - "lvm2"
+            - "passwd"
+            - "policycoreutils"
+            - "policycoreutils-python-utils"
+            - "procps-ng"
+            - "redhat-logos"
+            - "rootfiles"
+            - "setools-console"
+            - "sudo"
+            - "traceroute"
+            - "util-linux"
+          condition:
+            architecture:
+              x86_64:
+                *edge_commit_x86_64_pkgset
+              aarch64:
+                *edge_commit_aarch64_pkgset
 
-  edge_raw_image:
-    partition_table:
-      <<: *edge_base_partition_tables
-
-  edge_simplified_installer:
-    partition_table:
-      <<: *edge_base_partition_tables
+  "edge-container":
     package_sets:
-      # TODO: non-arch-specific package set handling for installers
-      # This image type requires build packages for installers and
-      # ostree/edge.  For now we only have x86-64 installer build
-      # package sets defined.  When we add installer build package sets
-      # for other architectures, this will need to be moved to the
-      # architecture and the merging will happen in the PackageSets()
-      # method like the other sets.
-      - *installer_pkgset
-      - include:
-          - "attr"
-          - "basesystem"
-          - "binutils"
-          - "bsdtar"
-          - "clevis-dracut"
-          - "clevis-luks"
-          - "cloud-utils-growpart"
-          - "coreos-installer"
-          - "coreos-installer-dracut"
-          - "coreutils"
-          - "device-mapper-multipath"
-          - "dnsmasq"
-          - "dosfstools"
-          - "dracut-live"
-          - "e2fsprogs"
-          - "fcoe-utils"
-          - "fdo-init"
-          - "gzip"
-          - "ima-evm-utils"
-          - "iproute"
-          - "iptables"
-          - "iputils"
-          - "iscsi-initiator-utils"
-          - "keyutils"
-          - "lldpad"
-          - "lvm2"
-          - "passwd"
-          - "policycoreutils"
-          - "policycoreutils-python-utils"
-          - "procps-ng"
-          - "redhat-logos"
-          - "rootfiles"
-          - "setools-console"
-          - "sudo"
-          - "traceroute"
-          - "util-linux"
-        condition:
-          architecture:
-            x86_64:
-              *edge_commit_x86_64_pkgset
-            aarch64:
-              *edge_commit_aarch64_pkgset
-
-  edge_container:
-    package_sets:
-      - *edge_commit_pkgset
+      os:
+        - *edge_commit_pkgset
 
   # XXX: not a real pkgset but the "containerPkgsKey"
-  edge_container_pipeline_pkgset:
+  "edge-container-pipeline-pkgset":
     package_sets:
-      - include:
-          - "nginx"
+      os:
+        - include:
+            - "nginx"
 
   vmdk: &vmdk
     partition_table:
       <<: *default_partition_tables
     package_sets: &vmdk_pkgsets
-      - include:
-          - "@core"
-          - "chrony"
-          - "cloud-init"
-          - "firewalld"
-          - "langpacks-en"
-          - "open-vm-tools"
-          - "selinux-policy-targeted"
-        exclude:
-          - "dracut-config-rescue"
-          - "rng-tools"
+      os:
+        - include:
+            - "@core"
+            - "chrony"
+            - "cloud-init"
+            - "firewalld"
+            - "langpacks-en"
+            - "open-vm-tools"
+            - "selinux-policy-targeted"
+          exclude:
+            - "dracut-config-rescue"
+            - "rng-tools"
 
   ova: *vmdk
 
@@ -1181,20 +1198,23 @@ image_types:
     partition_table:
       <<: *default_partition_tables
     package_sets:
-      - *gce_common_pkgset
+      os:
+        - *gce_common_pkgset
 
-  gce_rhui:
+  "gce-rhui":
     <<: *gce
     package_sets:
-      - *gce_common_pkgset
-      - include:
-          - "google-rhui-client-rhel8"
+      os:
+        - *gce_common_pkgset
+        - include:
+            - "google-rhui-client-rhel8"
 
   qcow2: &qcow2
     partition_table:
       <<: *default_partition_tables
     package_sets: &qcow2_pkgset
-      - *qcow2_common_pkgset
+      os:
+        - *qcow2_common_pkgset
 
   oci: *qcow2
 
@@ -1202,133 +1222,136 @@ image_types:
     partition_table:
       <<: *default_partition_tables
     package_sets:
-      - include:
-          - "@Core"
-          - "langpacks-en"
-          # From the lorax kickstart
-          - "selinux-policy-targeted"
-          - "cloud-init"
-          - "qemu-guest-agent"
-          - "spice-vdagent"
-        exclude:
-          - "dracut-config-rescue"
-          - "rng-tools"
+      os:
+        - include:
+            - "@Core"
+            - "langpacks-en"
+            # From the lorax kickstart
+            - "selinux-policy-targeted"
+            - "cloud-init"
+            - "qemu-guest-agent"
+            - "spice-vdagent"
+          exclude:
+            - "dracut-config-rescue"
+            - "rng-tools"
 
   wsl:
     package_sets:
-      - include:
-          - "alternatives"
-          - "audit-libs"
-          - "basesystem"
-          - "bash"
-          - "brotli"
-          - "ca-certificates"
-          - "coreutils-single"
-          - "crypto-policies-scripts"
-          - "curl"
-          - "libcurl"
-          - "dnf"
-          - "filesystem"
-          - "findutils"
-          - "gdb-gdbserver"
-          # Differs from official UBI, as we don't include CRB repos
-          # - "gdbm"
-          - "glibc-minimal-langpack"
-          - "gmp"
-          - "gnupg2"
-          - "gobject-introspection"
-          - "hostname"
-          - "langpacks-en"
-          - "openssh-server"
-          - "pam"
-          - "passwd"
-          - "procps-ng"
-          - "python3"
-          - "python3-inotify"
-          - "python3-systemd"
-          - "redhat-release"
-          - "rootfiles"
-          - "rpm"
-          - "sed"
-          - "setup"
-          - "shadow-utils"
-          - "subscription-manager"
-          - "sudo"
-          - "systemd"
-          - "tar"
-          - "tpm2-tss"
-          - "tzdata"
-          - "util-linux"
-          - "vim-minimal"
-          - "yum"
-        exclude:
-          - "aic94xx-firmware"
-          - "alsa-firmware"
-          - "alsa-lib"
-          - "alsa-tools-firmware"
-          - "biosdevname"
-          - "cpio"
-          - "diffutils"
-          - "dnf-plugin-spacewalk"
-          - "dracut"
-          - "elfutils-debuginfod-client"
-          - "fedora-release"
-          - "fedora-repos"
-          - "fontpackages-filesystem"
-          - "gawk-all-langpacks"
-          - "gettext"
-          - "glibc-gconv-extra"
-          - "glibc-langpack-en"
-          - "gnupg2-smime"
-          - "grub2-common"
-          - "hardlink"
-          - "iprutils"
-          - "ivtv-firmware"
-          - "kbd"
-          - "kmod"
-          - "kpartx"
-          - "libcroco"
-          - "libcrypt-compat"
-          - "libevent"
-          - "libkcapi"
-          - "libkcapi-hmaccalc"
-          - "libsecret"
-          - "libselinux-utils"
-          - "libxkbcommon"
-          - "libertas-sd8787-firmware"
-          - "memstrack"
-          - "nss"
-          - "openssl"
-          - "openssl-pkcs11"
-          - "os-prober"
-          - "pigz"
-          - "pinentry"
-          - "plymouth"
-          - "policycoreutils"
-          - "python3-unbound"
-          - "redhat-release-eula"
-          - "rng-tools"
-          - "rpm-plugin-selinux"
-          - "rpm-plugin-systemd-inhibit"
-          - "selinux-policy"
-          - "selinux"
-          - "selinux-policy-targeted"
-          - "shared-mime-info"
-          - "systemd-udev"
-          - "trousers"
-          - "udisks2"
-          - "unbound-libs"
-          - "xkeyboard-config"
-          - "xz"
+      os:
+        - include:
+            - "alternatives"
+            - "audit-libs"
+            - "basesystem"
+            - "bash"
+            - "brotli"
+            - "ca-certificates"
+            - "coreutils-single"
+            - "crypto-policies-scripts"
+            - "curl"
+            - "libcurl"
+            - "dnf"
+            - "filesystem"
+            - "findutils"
+            - "gdb-gdbserver"
+            # Differs from official UBI, as we don't include CRB repos
+            # - "gdbm"
+            - "glibc-minimal-langpack"
+            - "gmp"
+            - "gnupg2"
+            - "gobject-introspection"
+            - "hostname"
+            - "langpacks-en"
+            - "openssh-server"
+            - "pam"
+            - "passwd"
+            - "procps-ng"
+            - "python3"
+            - "python3-inotify"
+            - "python3-systemd"
+            - "redhat-release"
+            - "rootfiles"
+            - "rpm"
+            - "sed"
+            - "setup"
+            - "shadow-utils"
+            - "subscription-manager"
+            - "sudo"
+            - "systemd"
+            - "tar"
+            - "tpm2-tss"
+            - "tzdata"
+            - "util-linux"
+            - "vim-minimal"
+            - "yum"
+          exclude:
+            - "aic94xx-firmware"
+            - "alsa-firmware"
+            - "alsa-lib"
+            - "alsa-tools-firmware"
+            - "biosdevname"
+            - "cpio"
+            - "diffutils"
+            - "dnf-plugin-spacewalk"
+            - "dracut"
+            - "elfutils-debuginfod-client"
+            - "fedora-release"
+            - "fedora-repos"
+            - "fontpackages-filesystem"
+            - "gawk-all-langpacks"
+            - "gettext"
+            - "glibc-gconv-extra"
+            - "glibc-langpack-en"
+            - "gnupg2-smime"
+            - "grub2-common"
+            - "hardlink"
+            - "iprutils"
+            - "ivtv-firmware"
+            - "kbd"
+            - "kmod"
+            - "kpartx"
+            - "libcroco"
+            - "libcrypt-compat"
+            - "libevent"
+            - "libkcapi"
+            - "libkcapi-hmaccalc"
+            - "libsecret"
+            - "libselinux-utils"
+            - "libxkbcommon"
+            - "libertas-sd8787-firmware"
+            - "memstrack"
+            - "nss"
+            - "openssl"
+            - "openssl-pkcs11"
+            - "os-prober"
+            - "pigz"
+            - "pinentry"
+            - "plymouth"
+            - "policycoreutils"
+            - "python3-unbound"
+            - "redhat-release-eula"
+            - "rng-tools"
+            - "rpm-plugin-selinux"
+            - "rpm-plugin-systemd-inhibit"
+            - "selinux-policy"
+            - "selinux"
+            - "selinux-policy-targeted"
+            - "shared-mime-info"
+            - "systemd-udev"
+            - "trousers"
+            - "udisks2"
+            - "unbound-libs"
+            - "xkeyboard-config"
+            - "xz"
 
-  minimal_raw:
+  "minimal-raw":
     partition_table:
       <<: *default_partition_tables
     package_sets:
-      - include:
-          - "@core"
-          - "initial-setup"
-          - "libxkbcommon"
-          - "NetworkManager-wifi"
-          - "iwl7260-firmware"
-          - "iwl3160-firmware"
+      os:
+        - include:
+            - "@core"
+            - "initial-setup"
+            - "libxkbcommon"
+            - "NetworkManager-wifi"
+            - "iwl7260-firmware"
+            - "iwl3160-firmware"
