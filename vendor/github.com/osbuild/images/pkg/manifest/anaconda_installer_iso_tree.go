@@ -1,6 +1,7 @@
 package manifest
 
 import (
+	"encoding/json"
 	"fmt"
 	"path"
 	"path/filepath"
@@ -24,6 +25,29 @@ const ( // Rootfs type enum
 	SquashfsRootfs                       // Create a plain squashfs rootfs
 	ErofsRootfs                          // Create a plain erofs rootfs
 )
+
+func (r *RootfsType) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return err
+	}
+	switch s {
+	case "squashfs-ext4", "":
+		*r = SquashfsExt4Rootfs
+	case "squashfs":
+		*r = SquashfsRootfs
+	case "erofs":
+		*r = ErofsRootfs
+	default:
+		return fmt.Errorf("unknown RootfsType: %q", s)
+	}
+
+	return nil
+}
+
+func (r *RootfsType) UnmarshalYAML(unmarshal func(any) error) error {
+	return common.UnmarshalYAMLviaJSON(r, unmarshal)
+}
 
 type ISOBootType uint64
 

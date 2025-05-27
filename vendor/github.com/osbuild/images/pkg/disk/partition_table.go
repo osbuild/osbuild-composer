@@ -51,6 +51,11 @@ const (
 	DefaultPartitioningMode PartitioningMode = ""
 )
 
+// DefaultBootPartitionSize is the default size of the /boot partition if it
+// needs to be auto-created. This happens if the custom partitioning don't
+// specify one, but the image requires one to boot (/ is on btrfs, or an LV).
+const DefaultBootPartitionSize = 1 * datasizes.GiB
+
 // NewPartitionTable takes an existing base partition table and some parameters
 // and returns a new version of the base table modified to satisfy the
 // parameters.
@@ -725,7 +730,7 @@ func (pt *PartitionTable) ensureLVM() error {
 	// we need a /boot partition to boot LVM, ensure one exists
 	bootPath := entityPath(pt, "/boot")
 	if bootPath == nil {
-		_, err := pt.CreateMountpoint("/boot", 512*datasizes.MiB)
+		_, err := pt.CreateMountpoint("/boot", DefaultBootPartitionSize)
 
 		if err != nil {
 			return err
@@ -784,7 +789,7 @@ func (pt *PartitionTable) ensureBtrfs(architecture arch.Arch) error {
 	// we need a /boot partition to boot btrfs, ensure one exists
 	bootPath := entityPath(pt, "/boot")
 	if bootPath == nil {
-		_, err := pt.CreateMountpoint("/boot", 512*datasizes.MiB)
+		_, err := pt.CreateMountpoint("/boot", DefaultBootPartitionSize)
 		if err != nil {
 			return fmt.Errorf("failed to create /boot partition when ensuring btrfs: %w", err)
 		}
@@ -1066,7 +1071,7 @@ func addBootPartition(pt *PartitionTable, bootFsType FSType) error {
 	}
 	bootPart := Partition{
 		Type: partType,
-		Size: 512 * datasizes.MiB,
+		Size: DefaultBootPartitionSize,
 		Payload: &Filesystem{
 			Type:         bootFsType.String(),
 			Label:        bootLabel,
@@ -1078,6 +1083,20 @@ func addBootPartition(pt *PartitionTable, bootFsType FSType) error {
 	return nil
 }
 
+func hasESP(disk *blueprint.DiskCustomization) bool {
+	if disk == nil {
+		return false
+	}
+
+	for _, part := range disk.Partitions {
+		if part.Type == "plain" && part.Mountpoint == "/boot/efi" {
+			return true
+		}
+	}
+
+	return false
+}
+
 // addPartitionsForBootMode creates partitions to satisfy the boot mode requirements:
 //   - BIOS/legacy: adds a 1 MiB BIOS boot partition.
 //   - UEFI: adds a 200 MiB EFI system partition.
@@ -1086,7 +1105,7 @@ func addBootPartition(pt *PartitionTable, bootFsType FSType) error {
 // The function will append the new partitions to the end of the existing
 // partition table therefore it is best to call this function early to put them
 // near the front (as is conventional).
-func addPartitionsForBootMode(pt *PartitionTable, bootMode platform.BootMode) error {
+func addPartitionsForBootMode(pt *PartitionTable, disk *blueprint.DiskCustomization, bootMode platform.BootMode) error {
 	switch bootMode {
 	case platform.BOOT_LEGACY:
 		// add BIOS boot partition
@@ -1097,12 +1116,14 @@ func addPartitionsForBootMode(pt *PartitionTable, bootMode platform.BootMode) er
 		pt.Partitions = append(pt.Partitions, part)
 		return nil
 	case platform.BOOT_UEFI:
-		// add ESP
-		part, err := mkESP(200*datasizes.MiB, pt.Type)
-		if err != nil {
-			return err
+		// add ESP if needed
+		if !hasESP(disk) {
+			part, err := mkESP(200*datasizes.MiB, pt.Type)
+			if err != nil {
+				return err
+			}
+			pt.Partitions = append(pt.Partitions, part)
 		}
-		pt.Partitions = append(pt.Partitions, part)
 		return nil
 	case platform.BOOT_HYBRID:
 		// add both
@@ -1110,11 +1131,14 @@ func addPartitionsForBootMode(pt *PartitionTable, bootMode platform.BootMode) er
 		if err != nil {
 			return err
 		}
-		esp, err := mkESP(200*datasizes.MiB, pt.Type)
-		if err != nil {
-			return err
+		pt.Partitions = append(pt.Partitions, bios)
+		if !hasESP(disk) {
+			esp, err := mkESP(200*datasizes.MiB, pt.Type)
+			if err != nil {
+				return err
+			}
+			pt.Partitions = append(pt.Partitions, esp)
 		}
-		pt.Partitions = append(pt.Partitions, bios, esp)
 		return nil
 	case platform.BOOT_NONE:
 		return nil
@@ -1149,7 +1173,7 @@ func mkESP(size uint64, ptType PartitionTableType) (Partition, error) {
 			Type:         "vfat",
 			UUID:         EFIFilesystemUUID,
 			Mountpoint:   "/boot/efi",
-			Label:        "EFI-SYSTEM",
+			Label:        "ESP",
 			FSTabOptions: "defaults,uid=0,gid=0,umask=077,shortname=winnt",
 			FSTabFreq:    0,
 			FSTabPassNo:  2,
@@ -1268,8 +1292,7 @@ func NewCustomPartitionTable(customizations *blueprint.DiskCustomization, option
 	// add any partition(s) that are needed for booting (like /boot/efi)
 	// if needed
 	//
-	// TODO: switch to ensure ESP in case customizations already include it
-	if err := addPartitionsForBootMode(pt, options.BootMode); err != nil {
+	if err := addPartitionsForBootMode(pt, customizations, options.BootMode); err != nil {
 		return nil, fmt.Errorf("%s %w", errPrefix, err)
 	}
 	// add the /boot partition (if it is needed)
@@ -1279,9 +1302,15 @@ func NewCustomPartitionTable(customizations *blueprint.DiskCustomization, option
 	// add user customized partitions
 	for _, part := range customizations.Partitions {
 		if part.PartType != "" {
-			// check the partition type now that we also know the partition table type
+			// check the partition details now that we also know the partition table type
 			if err := part.ValidatePartitionTypeID(pt.Type.String()); err != nil {
 				return nil, fmt.Errorf("%s error validating partition type ID for %q: %w", errPrefix, part.Mountpoint, err)
+			}
+			if err := part.ValidatePartitionID(pt.Type.String()); err != nil {
+				return nil, fmt.Errorf("%s error validating partition ID for %q: %w", errPrefix, part.Mountpoint, err)
+			}
+			if err := part.ValidatePartitionLabel(pt.Type.String()); err != nil {
+				return nil, fmt.Errorf("%s error validating partition label for %q: %w", errPrefix, part.Mountpoint, err)
 			}
 		}
 
@@ -1377,6 +1406,8 @@ func addPlainPartition(pt *PartitionTable, partition blueprint.PartitionCustomiz
 
 	newpart := Partition{
 		Type:    partType,
+		UUID:    partition.PartUUID,
+		Label:   partition.PartLabel,
 		Size:    partition.MinSize,
 		Payload: payload,
 	}
@@ -1449,6 +1480,8 @@ func addLVMPartition(pt *PartitionTable, partition blueprint.PartitionCustomizat
 
 	newpart := Partition{
 		Type:     partType,
+		UUID:     partition.PartUUID,
+		Label:    partition.PartLabel,
 		Size:     partition.MinSize,
 		Bootable: false,
 		Payload:  newvg,
@@ -1482,6 +1515,8 @@ func addBtrfsPartition(pt *PartitionTable, partition blueprint.PartitionCustomiz
 	}
 	newpart := Partition{
 		Type:     partType,
+		UUID:     partition.PartUUID,
+		Label:    partition.PartLabel,
 		Bootable: false,
 		Payload:  newvol,
 		Size:     partition.MinSize,

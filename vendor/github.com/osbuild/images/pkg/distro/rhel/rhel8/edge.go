@@ -6,10 +6,8 @@ import (
 	"github.com/osbuild/images/pkg/datasizes"
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/distro"
-	"github.com/osbuild/images/pkg/distro/defs"
 	"github.com/osbuild/images/pkg/distro/rhel"
 	"github.com/osbuild/images/pkg/osbuild"
-	"github.com/osbuild/images/pkg/rpmmd"
 )
 
 func mkEdgeCommitImgType(rd *rhel.Distribution) *rhel.ImageType {
@@ -17,9 +15,7 @@ func mkEdgeCommitImgType(rd *rhel.Distribution) *rhel.ImageType {
 		"edge-commit",
 		"commit.tar",
 		"application/x-tar",
-		map[string]rhel.PackageSetFunc{
-			rhel.OSPkgsKey: packageSetLoader,
-		},
+		packageSetLoader,
 		rhel.EdgeCommitImage,
 		[]string{"build"},
 		[]string{"os", "ostree-commit", "commit-archive"},
@@ -41,12 +37,7 @@ func mkEdgeOCIImgType(rd *rhel.Distribution) *rhel.ImageType {
 		"edge-container",
 		"container.tar",
 		"application/x-tar",
-		map[string]rhel.PackageSetFunc{
-			rhel.OSPkgsKey: packageSetLoader,
-			rhel.ContainerPkgsKey: func(t *rhel.ImageType) (rpmmd.PackageSet, error) {
-				return defs.PackageSet(t, "edge_container_pipeline_pkgset", nil)
-			},
-		},
+		packageSetLoader,
 		rhel.EdgeContainerImage,
 		[]string{"build"},
 		[]string{"os", "ostree-commit", "container-tree", "container"},
@@ -102,9 +93,7 @@ func mkEdgeInstallerImgType(rd *rhel.Distribution) *rhel.ImageType {
 		"edge-installer",
 		"installer.iso",
 		"application/x-iso9660-image",
-		map[string]rhel.PackageSetFunc{
-			rhel.InstallerPkgsKey: packageSetLoader,
-		},
+		packageSetLoader,
 		rhel.EdgeInstallerImage,
 		[]string{"build"},
 		[]string{"anaconda-tree", "rootfs-image", "efiboot-tree", "bootiso-tree", "bootiso"},
@@ -132,9 +121,7 @@ func mkEdgeSimplifiedInstallerImgType(rd *rhel.Distribution) *rhel.ImageType {
 		"edge-simplified-installer",
 		"simplified-installer.iso",
 		"application/x-iso9660-image",
-		map[string]rhel.PackageSetFunc{
-			rhel.InstallerPkgsKey: packageSetLoader,
-		},
+		packageSetLoader,
 		rhel.EdgeSimplifiedInstallerImage,
 		[]string{"build"},
 		[]string{"ostree-deployment", "image", "xz", "coi-tree", "efiboot-tree", "bootiso-tree", "bootiso"},
@@ -176,9 +163,7 @@ func mkMinimalRawImgType() *rhel.ImageType {
 		"minimal-raw",
 		"disk.raw.xz",
 		"application/xz",
-		map[string]rhel.PackageSetFunc{
-			rhel.OSPkgsKey: packageSetLoader,
-		},
+		packageSetLoader,
 		rhel.DiskImage,
 		[]string{"build"},
 		[]string{"os", "image", "xz"},

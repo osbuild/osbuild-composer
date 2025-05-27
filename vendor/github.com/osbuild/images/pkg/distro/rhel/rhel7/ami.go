@@ -18,9 +18,7 @@ func mkEc2ImgTypeX86_64() *rhel.ImageType {
 		"ec2",
 		"image.raw.xz",
 		"application/xz",
-		map[string]rhel.PackageSetFunc{
-			rhel.OSPkgsKey: packageSetLoader,
-		},
+		packageSetLoader,
 		rhel.DiskImage,
 		[]string{"build"},
 		[]string{"os", "image", "xz"},

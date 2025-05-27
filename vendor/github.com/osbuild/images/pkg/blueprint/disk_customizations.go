@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"slices"
 	"strings"
+	"unicode/utf16"
 
 	"github.com/google/uuid"
 	"github.com/osbuild/images/pkg/datasizes"
@@ -71,6 +72,14 @@ type PartitionCustomization struct {
 	// If not set, the type will be automatically set based on the mountpoint
 	// or the payload type.
 	PartType string `json:"part_type,omitempty" toml:"part_type,omitempty"`
+
+	// The partition label for GPT partitions, not supported for dos partitions.
+	// Note: This is not the same as the label, which can be set in "Label"
+	PartLabel string `json:"part_label,omitempty" toml:"part_label,omitempty"`
+
+	// The partition GUID for GPT partitions, not supported for dos partitions.
+	// Note: This is the unique uuid, not the type guid, that is PartType
+	PartUUID string `json:"part_uuid,omitempty" toml:"part_uuid,omitempty"`
 
 	BtrfsVolumeCustomization
 
@@ -162,9 +171,11 @@ type BtrfsSubvolumeCustomization struct {
 func (v *PartitionCustomization) UnmarshalJSON(data []byte) error {
 	errPrefix := "JSON unmarshal:"
 	var typeSniffer struct {
-		Type     string `json:"type"`
-		MinSize  any    `json:"minsize"`
-		PartType string `json:"part_type"`
+		Type      string `json:"type"`
+		MinSize   any    `json:"minsize"`
+		PartType  string `json:"part_type"`
+		PartLabel string `json:"part_label"`
+		PartUUID  string `json:"part_uuid"`
 	}
 	if err := json.Unmarshal(data, &typeSniffer); err != nil {
 		return fmt.Errorf("%s %w", errPrefix, err)
@@ -194,6 +205,8 @@ func (v *PartitionCustomization) UnmarshalJSON(data []byte) error {
 
 	v.Type = partType
 	v.PartType = typeSniffer.PartType
+	v.PartLabel = typeSniffer.PartLabel
+	v.PartUUID = typeSniffer.PartUUID
 
 	if typeSniffer.MinSize == nil {
 		return fmt.Errorf("minsize is required")
@@ -213,11 +226,13 @@ func (v *PartitionCustomization) UnmarshalJSON(data []byte) error {
 // the type is "plain", none of the fields for btrfs or lvm are used.
 func decodePlain(v *PartitionCustomization, data []byte) error {
 	var plain struct {
-		// Type, minsize, and part_type are handled by the caller. These are added here to
+		// Type, minsize, and part_* are handled by the caller. These are added here to
 		// satisfy "DisallowUnknownFields" when decoding.
-		Type     string `json:"type"`
-		MinSize  any    `json:"minsize"`
-		PartType string `json:"part_type"`
+		Type      string `json:"type"`
+		MinSize   any    `json:"minsize"`
+		PartType  string `json:"part_type"`
+		PartLabel string `json:"part_label"`
+		PartUUID  string `json:"part_uuid"`
 		FilesystemTypedCustomization
 	}
 
@@ -237,11 +252,13 @@ func decodePlain(v *PartitionCustomization, data []byte) error {
 // the type is btrfs, none of the fields for plain or lvm are used.
 func decodeBtrfs(v *PartitionCustomization, data []byte) error {
 	var btrfs struct {
-		// Type, minsize, and part_type are handled by the caller. These are added here to
+		// Type, minsize, and part_* are handled by the caller. These are added here to
 		// satisfy "DisallowUnknownFields" when decoding.
-		Type     string `json:"type"`
-		MinSize  any    `json:"minsize"`
-		PartType string `json:"part_type"`
+		Type      string `json:"type"`
+		MinSize   any    `json:"minsize"`
+		PartType  string `json:"part_type"`
+		PartLabel string `json:"part_label"`
+		PartUUID  string `json:"part_uuid"`
 		BtrfsVolumeCustomization
 	}
 
@@ -261,11 +278,13 @@ func decodeBtrfs(v *PartitionCustomization, data []byte) error {
 // is lvm, none of the fields for plain or btrfs are used.
 func decodeLVM(v *PartitionCustomization, data []byte) error {
 	var vg struct {
-		// Type, minsize, and part_type are handled by the caller. These are added here to
+		// Type, minsize, and part_* are handled by the caller. These are added here to
 		// satisfy "DisallowUnknownFields" when decoding.
-		Type     string `json:"type"`
-		MinSize  any    `json:"minsize"`
-		PartType string `json:"part_type"`
+		Type      string `json:"type"`
+		MinSize   any    `json:"minsize"`
+		PartType  string `json:"part_type"`
+		PartLabel string `json:"part_label"`
+		PartUUID  string `json:"part_uuid"`
 		VGCustomization
 	}
 
@@ -381,6 +400,12 @@ func (p *DiskCustomization) Validate() error {
 	var errs []error
 	for _, part := range p.Partitions {
 		if err := part.ValidatePartitionTypeID(p.Type); err != nil {
+			errs = append(errs, err)
+		}
+		if err := part.ValidatePartitionID(p.Type); err != nil {
+			errs = append(errs, err)
+		}
+		if err := part.ValidatePartitionLabel(p.Type); err != nil {
 			errs = append(errs, err)
 		}
 		switch part.Type {
@@ -520,6 +545,48 @@ func (p *PartitionCustomization) ValidatePartitionTypeID(ptType string) error {
 		}
 	default:
 		// ignore: handled elsewhere
+	}
+
+	return nil
+}
+
+// ValidatePartitionID returns an error if the partition ID is not
+// valid given the partition table type. If the partition table type is an
+// empty string, the function returns an error only if the partition type ID is
+// invalid for both gpt and dos partition tables.
+func (p *PartitionCustomization) ValidatePartitionID(ptType string) error {
+	// Empty PartUUID is fine, it will be selected automatically if needed
+	if p.PartUUID == "" {
+		return nil
+	}
+
+	if ptType == "dos" {
+		return fmt.Errorf("part_type is not supported for dos partition tables")
+	}
+
+	_, uuidErr := uuid.Parse(p.PartUUID)
+	if uuidErr != nil {
+		return fmt.Errorf("invalid partition part_uuid %q (must be a valid UUID): %w", p.PartUUID, uuidErr)
+	}
+
+	return nil
+}
+
+// ValidatePartitionID returns an error if the partition ID is not
+// valid given the partition table type.
+func (p *PartitionCustomization) ValidatePartitionLabel(ptType string) error {
+	// Empty PartLabel is fine
+	if p.PartLabel == "" {
+		return nil
+	}
+
+	if ptType == "dos" {
+		return fmt.Errorf("part_label is not supported for dos partition tables")
+	}
+
+	// GPT Labels are up to 36 utf-16 chars
+	if len(utf16.Encode([]rune(p.PartLabel))) > 36 {
+		return fmt.Errorf("part_label is not a valid GPT label, it is too long")
 	}
 
 	return nil

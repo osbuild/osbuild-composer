@@ -3,6 +3,8 @@ package osbuild
 import (
 	"encoding/json"
 	"fmt"
+
+	"github.com/osbuild/images/internal/common"
 )
 
 // PamLimitsConfStageOptions represents a single pam_limits module configuration file.
@@ -151,4 +153,8 @@ func (l *PamLimitsConfigLine) UnmarshalJSON(data []byte) error {
 	l.Value = value
 
 	return nil
+}
+
+func (l *PamLimitsConfigLine) UnmarshalYAML(unmarshal func(any) error) error {
+	return common.UnmarshalYAMLviaJSON(l, unmarshal)
 }

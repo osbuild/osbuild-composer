@@ -4,6 +4,6 @@ package distro
 // part of an Installer image type.
 type InstallerConfig struct {
 	// Additional dracut modules and drivers to enable
-	AdditionalDracutModules []string
-	AdditionalDrivers       []string
+	AdditionalDracutModules []string `yaml:"additional_dracut_modules"`
+	AdditionalDrivers       []string `yaml:"additional_drivers"`
 }

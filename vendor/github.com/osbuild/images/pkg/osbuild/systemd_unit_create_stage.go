@@ -41,75 +41,75 @@ const (
 )
 
 type UnitSection struct {
-	Description              string   `json:"Description,omitempty"`
-	DefaultDependencies      *bool    `json:"DefaultDependencies,omitempty"`
-	ConditionPathExists      []string `json:"ConditionPathExists,omitempty"`
-	ConditionPathIsDirectory []string `json:"ConditionPathIsDirectory,omitempty"`
-	Requires                 []string `json:"Requires,omitempty"`
-	Wants                    []string `json:"Wants,omitempty"`
-	After                    []string `json:"After,omitempty"`
-	Before                   []string `json:"Before,omitempty"`
+	Description              string   `json:"Description,omitempty" yaml:"Description,omitempty"`
+	DefaultDependencies      *bool    `json:"DefaultDependencies,omitempty" yaml:"DefaultDependencies,omitempty"`
+	ConditionPathExists      []string `json:"ConditionPathExists,omitempty" yaml:"ConditionPathExists,omitempty"`
+	ConditionPathIsDirectory []string `json:"ConditionPathIsDirectory,omitempty" yaml:"ConditionPathIsDirectory,omitempty"`
+	Requires                 []string `json:"Requires,omitempty" yaml:"Requires,omitempty"`
+	Wants                    []string `json:"Wants,omitempty" yaml:"Wants,omitempty"`
+	After                    []string `json:"After,omitempty" yaml:"After,omitempty"`
+	Before                   []string `json:"Before,omitempty" yaml:"Before,omitempty"`
 }
 
 type ServiceSection struct {
-	Type            SystemdServiceType    `json:"Type,omitempty"`
-	RemainAfterExit bool                  `json:"RemainAfterExit,omitempty"`
-	ExecStartPre    []string              `json:"ExecStartPre,omitempty"`
-	ExecStopPost    []string              `json:"ExecStopPost,omitempty"`
-	ExecStart       []string              `json:"ExecStart,omitempty"`
-	Environment     []EnvironmentVariable `json:"Environment,omitempty"`
-	EnvironmentFile []string              `json:"EnvironmentFile,omitempty"`
-	StandardOutput  string                `json:"StandardOutput,omitempty"`
+	Type            SystemdServiceType    `json:"Type,omitempty" yaml:"Type,omitempty"`
+	RemainAfterExit bool                  `json:"RemainAfterExit,omitempty" yaml:"RemainAfterExit,omitempty"`
+	ExecStartPre    []string              `json:"ExecStartPre,omitempty" yaml:"ExecStartPre,omitempty"`
+	ExecStopPost    []string              `json:"ExecStopPost,omitempty" yaml:"ExecStopPost,omitempty"`
+	ExecStart       []string              `json:"ExecStart,omitempty" yaml:"ExecStart,omitempty"`
+	Environment     []EnvironmentVariable `json:"Environment,omitempty" yaml:"Environment,omitempty"`
+	EnvironmentFile []string              `json:"EnvironmentFile,omitempty" yaml:"EnvironmentFile,omitempty"`
+	StandardOutput  string                `json:"StandardOutput,omitempty" yaml:"StandardOutput,omitempty"`
 }
 
 type MountSection struct {
-	What    string `json:"What"`
-	Where   string `json:"Where"`
-	Type    string `json:"Type,omitempty"`
-	Options string `json:"Options,omitempty"`
+	What    string `json:"What" yaml:"What"`
+	Where   string `json:"Where" yaml:"Where"`
+	Type    string `json:"Type,omitempty" yaml:"Type,omitempty"`
+	Options string `json:"Options,omitempty" yaml:"Options,omitempty"`
 }
 
 type SwapSection struct {
-	What       string `json:"What"`
-	Priority   *int   `json:"Priority,omitempty"`
-	Options    string `json:"Options,omitempty"`
-	TimeoutSec string `json:"TimeoutSec,omitempty"`
+	What       string `json:"What" yaml:"What"`
+	Priority   *int   `json:"Priority,omitempty" yaml:"Priority,omitempty"`
+	Options    string `json:"Options,omitempty" yaml:"Options,omitempty"`
+	TimeoutSec string `json:"TimeoutSec,omitempty" yaml:"TimeoutSec,omitempty"`
 }
 
 type SocketSection struct {
-	Service                string `json:"Service,omitempty"`
-	ListenStream           string `json:"ListenStream,omitempty"`
-	ListenDatagram         string `json:"ListenDatagram,omitempty"`
-	ListenSequentialPacket string `json:"ListenSequentialPacket,omitempty"`
-	ListenFifo             string `json:"ListenFifo,omitempty"`
-	SocketUser             string `json:"SocketUser,omitempty"`
-	SocketGroup            string `json:"SocketGroup,omitempty"`
-	SocketMode             string `json:"SocketMode,omitempty"`
-	DirectoryMode          string `json:"DirectoryMode,omitempty"`
-	Accept                 string `json:"Accept,omitempty"`
-	RuntimeDirectory       string `json:"RuntimeDirectory,omitempty"`
-	RemoveOnStop           string `json:"RemoveOnStop,omitempty"`
+	Service                string `json:"Service,omitempty" yaml:"Service,omitempty"`
+	ListenStream           string `json:"ListenStream,omitempty" yaml:"ListenStream,omitempty"`
+	ListenDatagram         string `json:"ListenDatagram,omitempty" yaml:"ListenDatagram,omitempty"`
+	ListenSequentialPacket string `json:"ListenSequentialPacket,omitempty" yaml:"ListenSequentialPacket,omitempty"`
+	ListenFifo             string `json:"ListenFifo,omitempty" yaml:"ListenFifo,omitempty"`
+	SocketUser             string `json:"SocketUser,omitempty" yaml:"SocketUser,omitempty"`
+	SocketGroup            string `json:"SocketGroup,omitempty" yaml:"SocketGroup,omitempty"`
+	SocketMode             string `json:"SocketMode,omitempty" yaml:"SocketMode,omitempty"`
+	DirectoryMode          string `json:"DirectoryMode,omitempty" yaml:"DirectoryMode,omitempty"`
+	Accept                 string `json:"Accept,omitempty" yaml:"Accept,omitempty"`
+	RuntimeDirectory       string `json:"RuntimeDirectory,omitempty" yaml:"RuntimeDirectory,omitempty"`
+	RemoveOnStop           string `json:"RemoveOnStop,omitempty" yaml:"RemoveOnStop,omitempty"`
 }
 
 type InstallSection struct {
-	RequiredBy []string `json:"RequiredBy,omitempty"`
-	WantedBy   []string `json:"WantedBy,omitempty"`
+	RequiredBy []string `json:"RequiredBy,omitempty" yaml:"RequiredBy,omitempty"`
+	WantedBy   []string `json:"WantedBy,omitempty" yaml:"WantedBy,omitempty"`
 }
 
 type SystemdUnit struct {
-	Unit    *UnitSection    `json:"Unit"`
-	Service *ServiceSection `json:"Service,omitempty"`
-	Mount   *MountSection   `json:"Mount,omitempty"`
-	Socket  *SocketSection  `json:"Socket,omitempty"`
-	Swap    *SwapSection    `json:"Swap,omitempty"`
-	Install *InstallSection `json:"Install,omitempty"`
+	Unit    *UnitSection    `json:"Unit" yaml:"Unit"`
+	Service *ServiceSection `json:"Service,omitempty" yaml:"Service,omitempty"`
+	Mount   *MountSection   `json:"Mount,omitempty" yaml:"Mount,omitempty"`
+	Socket  *SocketSection  `json:"Socket,omitempty" yaml:"Socket,omitempty"`
+	Swap    *SwapSection    `json:"Swap,omitempty" yaml:"Swap,omitempty"`
+	Install *InstallSection `json:"Install,omitempty" yaml:"Install,omitempty"`
 }
 
 type SystemdUnitCreateStageOptions struct {
-	Filename string          `json:"filename"`
-	UnitType unitType        `json:"unit-type,omitempty"` // unitType defined in ./systemd_unit_stage.go
-	UnitPath SystemdUnitPath `json:"unit-path,omitempty"`
-	Config   SystemdUnit     `json:"config"`
+	Filename string          `json:"filename" yaml:"filename"`
+	UnitType unitType        `json:"unit-type,omitempty" yaml:"unit-type,omitempty"` // unitType defined in ./systemd_unit_stage.go
+	UnitPath SystemdUnitPath `json:"unit-path,omitempty" yaml:"unit-path,omitempty"`
+	Config   SystemdUnit     `json:"config" yaml:"config"`
 }
 
 func (SystemdUnitCreateStageOptions) isStageOptions() {}

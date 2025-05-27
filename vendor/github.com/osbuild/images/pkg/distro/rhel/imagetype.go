@@ -49,7 +49,7 @@ var requiredDirectorySizes = map[string]uint64{
 
 type ImageFunc func(workload workload.Workload, t *ImageType, customizations *blueprint.Customizations, options distro.ImageOptions, packageSets map[string]rpmmd.PackageSet, containers []container.SourceSpec, rng *rand.Rand) (image.ImageKind, error)
 
-type PackageSetFunc func(t *ImageType) (rpmmd.PackageSet, error)
+type PackageSetFunc func(t *ImageType) (map[string]rpmmd.PackageSet, error)
 
 type BasePartitionTableFunc func(t *ImageType) (disk.PartitionTable, bool)
 
@@ -62,7 +62,7 @@ type ImageType struct {
 	name             string
 	filename         string
 	mimeType         string
-	packageSets      map[string]PackageSetFunc
+	packageSets      PackageSetFunc
 	buildPipelines   []string
 	payloadPipelines []string
 	exports          []string
@@ -306,12 +306,14 @@ func (t *ImageType) Manifest(bp *blueprint.Blueprint,
 	// of the same name from the distro and arch
 	staticPackageSets := make(map[string]rpmmd.PackageSet)
 
-	for name, getter := range t.packageSets {
-		pkgSets, err := getter(t)
+	if t.packageSets != nil {
+		pkgSets, err := t.packageSets(t)
 		if err != nil {
 			return nil, nil, err
 		}
-		staticPackageSets[name] = pkgSets
+		for name, pkgSet := range pkgSets {
+			staticPackageSets[name] = pkgSet
+		}
 	}
 
 	// amend with repository information and collect payload repos
@@ -428,7 +430,7 @@ func (t *ImageType) checkOptions(bp *blueprint.Blueprint, options distro.ImageOp
 
 func NewImageType(
 	name, filename, mimeType string,
-	pkgSets map[string]PackageSetFunc,
+	pkgSets PackageSetFunc,
 	imgFunc ImageFunc,
 	buildPipelines, payloadPipelines, exports []string,
 ) *ImageType {

@@ -368,6 +368,31 @@ func diskImage(workload workload.Workload,
 	return img, nil
 }
 
+func tarImage(workload workload.Workload,
+	t *imageType,
+	bp *blueprint.Blueprint,
+	options distro.ImageOptions,
+	packageSets map[string]rpmmd.PackageSet,
+	containers []container.SourceSpec,
+	rng *rand.Rand) (image.ImageKind, error) {
+	img := image.NewArchive()
+
+	img.Platform = t.platform
+
+	var err error
+	img.OSCustomizations, err = osCustomizations(t, packageSets[osPkgsKey], containers, bp.Customizations)
+	if err != nil {
+		return nil, err
+	}
+
+	img.Environment = t.environment
+	img.Workload = workload
+
+	img.Filename = t.Filename()
+
+	return img, nil
+}
+
 func containerImage(workload workload.Workload,
 	t *imageType,
 	bp *blueprint.Blueprint,
@@ -423,10 +448,6 @@ func liveInstallerImage(workload workload.Workload,
 
 	img.Filename = t.Filename()
 
-	if common.VersionGreaterThanOrEqual(img.OSVersion, VERSION_ROOTFS_SQUASHFS) {
-		img.RootfsType = manifest.SquashfsRootfs
-	}
-
 	// Enable grub2 BIOS iso on x86_64 only
 	if img.Platform.GetArch() == arch.ARCH_X86_64 {
 		img.ISOBoot = manifest.Grub2ISOBoot
@@ -444,6 +465,11 @@ func liveInstallerImage(workload workload.Workload,
 	if installerConfig != nil {
 		img.AdditionalDracutModules = append(img.AdditionalDracutModules, installerConfig.AdditionalDracutModules...)
 		img.AdditionalDrivers = append(img.AdditionalDrivers, installerConfig.AdditionalDrivers...)
+	}
+
+	imgConfig := t.getDefaultImageConfig()
+	if imgConfig != nil && imgConfig.IsoRootfsType != nil {
+		img.RootfsType = *imgConfig.IsoRootfsType
 	}
 
 	return img, nil
@@ -493,6 +519,7 @@ func imageInstallerImage(workload workload.Workload,
 		img.AdditionalAnacondaModules = append(img.AdditionalAnacondaModules, instCust.Modules.Enable...)
 		img.DisabledAnacondaModules = append(img.DisabledAnacondaModules, instCust.Modules.Disable...)
 	}
+	img.AdditionalAnacondaModules = append(img.AdditionalAnacondaModules, anaconda.ModuleUsers)
 
 	img.Platform = t.platform
 	img.Workload = workload
@@ -532,8 +559,9 @@ func imageInstallerImage(workload workload.Workload,
 	img.Filename = t.Filename()
 
 	img.RootfsCompression = "xz" // This also triggers using the bcj filter
-	if common.VersionGreaterThanOrEqual(img.OSVersion, VERSION_ROOTFS_SQUASHFS) {
-		img.RootfsType = manifest.SquashfsRootfs
+	imgConfig := t.getDefaultImageConfig()
+	if imgConfig != nil && imgConfig.IsoRootfsType != nil {
+		img.RootfsType = *imgConfig.IsoRootfsType
 	}
 
 	// Enable grub2 BIOS iso on x86_64 only
@@ -751,8 +779,9 @@ func iotInstallerImage(workload workload.Workload,
 	img.Filename = t.Filename()
 
 	img.RootfsCompression = "xz" // This also triggers using the bcj filter
-	if common.VersionGreaterThanOrEqual(img.OSVersion, VERSION_ROOTFS_SQUASHFS) {
-		img.RootfsType = manifest.SquashfsRootfs
+	imgConfig := t.getDefaultImageConfig()
+	if imgConfig != nil && imgConfig.IsoRootfsType != nil {
+		img.RootfsType = *imgConfig.IsoRootfsType
 	}
 
 	// Enable grub2 BIOS iso on x86_64 only
@@ -945,14 +974,4 @@ func makeOSTreePayloadCommit(options *ostree.ImageOptions, defaultRef string) (o
 		Ref:  commitRef,
 		RHSM: options.RHSM,
 	}, nil
-}
-
-// initialSetupKickstart returns the File configuration for a kickstart file
-// that's required to enable initial-setup to run on first boot.
-func initialSetupKickstart() *fsnode.File {
-	file, err := fsnode.NewFile("/root/anaconda-ks.cfg", nil, "root", "root", []byte("# Run initial-setup on first boot\n# Created by osbuild\nfirstboot --reconfig\n"))
-	if err != nil {
-		panic(err)
-	}
-	return file
 }

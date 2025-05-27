@@ -1,8 +1,11 @@
 package osbuild
 
 import (
+	"encoding/json"
 	"fmt"
 	"regexp"
+
+	"github.com/osbuild/images/internal/common"
 )
 
 const (
@@ -64,6 +67,65 @@ type ChronyConfigRefclock struct {
 	Poll   *int           `json:"poll,omitempty"`
 	Dpoll  *int           `json:"dpoll,omitempty"`
 	Offset *float64       `json:"offset,omitempty"`
+}
+
+type chronyConfigRefclockData struct {
+	Driver *json.RawMessage
+
+	Poll   *int     `json:"poll,omitempty"`
+	Dpoll  *int     `json:"dpoll,omitempty"`
+	Offset *float64 `json:"offset,omitempty"`
+}
+
+func (c *ChronyConfigRefclock) UnmarshalJSON(data []byte) (err error) {
+	var d chronyConfigRefclockData
+	if err := json.Unmarshal(data, &d); err != nil {
+		return err
+	}
+	c.Poll = d.Poll
+	c.Dpoll = d.Dpoll
+	c.Offset = d.Offset
+
+	var peek struct {
+		Name string
+	}
+	if err := json.Unmarshal(*d.Driver, &peek); err != nil {
+		return err
+	}
+	switch peek.Name {
+	case "PPS":
+		var drv ChronyDriverPPS
+		if err := json.Unmarshal(*d.Driver, &drv); err != nil {
+			return err
+		}
+		c.Driver = &drv
+	case "SHM":
+		var drv ChronyDriverSHM
+		if err := json.Unmarshal(*d.Driver, &drv); err != nil {
+			return err
+		}
+		c.Driver = &drv
+	case "SOCK":
+		var drv ChronyDriverSOCK
+		if err := json.Unmarshal(*d.Driver, &drv); err != nil {
+			return err
+		}
+		c.Driver = &drv
+	case "PHC":
+		var drv ChronyDriverPHC
+		if err := json.Unmarshal(*d.Driver, &drv); err != nil {
+			return err
+		}
+		c.Driver = &drv
+	default:
+		return fmt.Errorf("unsupported reflock name: %q", peek.Name)
+	}
+
+	return c.validate()
+}
+
+func (c *ChronyConfigRefclock) UnmarshalYAML(unmarshal func(any) error) error {
+	return common.UnmarshalYAMLviaJSON(c, unmarshal)
 }
 
 func (o ChronyConfigRefclock) validate() error {

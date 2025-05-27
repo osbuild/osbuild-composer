@@ -6,7 +6,7 @@ type FirewallStageOptions struct {
 	Ports            []string       `json:"ports,omitempty"`
 	EnabledServices  []string       `json:"enabled_services,omitempty"`
 	DisabledServices []string       `json:"disabled_services,omitempty"`
-	DefaultZone      string         `json:"default_zone,omitempty"`
+	DefaultZone      string         `json:"default_zone,omitempty" yaml:"default_zone,omitempty"`
 	Zones            []FirewallZone `json:"zones,omitempty"`
 }
 
