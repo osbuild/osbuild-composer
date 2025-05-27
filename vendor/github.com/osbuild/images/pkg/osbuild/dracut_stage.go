@@ -20,7 +20,7 @@ type DracutStageOptions struct {
 	Drivers []string `json:"drivers,omitempty"`
 
 	// Add a specific kernel module
-	AddDrivers []string `json:"add_drivers,omitempty"`
+	AddDrivers []string `json:"add_drivers,omitempty" yaml:"add_drivers,omitempty"`
 
 	// Add driver and ensure that they are tried to be loaded
 	ForceDrivers []string `json:"force_drivers,omitempty"`

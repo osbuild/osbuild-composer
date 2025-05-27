@@ -16,9 +16,7 @@ func mkAzureImgType(rd *rhel.Distribution, a arch.Arch) *rhel.ImageType {
 		"vhd",
 		"disk.vhd",
 		"application/x-vhd",
-		map[string]rhel.PackageSetFunc{
-			rhel.OSPkgsKey: packageSetLoader,
-		},
+		packageSetLoader,
 		rhel.DiskImage,
 		[]string{"build"},
 		[]string{"os", "image", "vpc"},
@@ -40,9 +38,7 @@ func mkAzureInternalImgType(rd *rhel.Distribution, a arch.Arch) *rhel.ImageType 
 		"azure-rhui",
 		"disk.vhd.xz",
 		"application/xz",
-		map[string]rhel.PackageSetFunc{
-			rhel.OSPkgsKey: packageSetLoader,
-		},
+		packageSetLoader,
 		rhel.DiskImage,
 		[]string{"build"},
 		[]string{"os", "image", "vpc", "xz"},
@@ -64,9 +60,7 @@ func mkAzureSapInternalImgType(rd *rhel.Distribution, a arch.Arch) *rhel.ImageTy
 		"azure-sap-rhui",
 		"disk.vhd.xz",
 		"application/xz",
-		map[string]rhel.PackageSetFunc{
-			rhel.OSPkgsKey: packageSetLoader,
-		},
+		packageSetLoader,
 		rhel.DiskImage,
 		[]string{"build"},
 		[]string{"os", "image", "vpc", "xz"},

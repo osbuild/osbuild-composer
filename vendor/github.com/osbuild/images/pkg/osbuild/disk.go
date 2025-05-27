@@ -19,6 +19,7 @@ func sfdiskStageOptions(pt *disk.PartitionTable) *SfdiskStageOptions {
 			Size:     pt.BytesToSectors(p.Size),
 			Type:     p.Type,
 			UUID:     p.UUID,
+			Name:     p.Label,
 		}
 	}
 	stageOptions := &SfdiskStageOptions{
@@ -40,6 +41,7 @@ func sgdiskStageOptions(pt *disk.PartitionTable) *SgdiskStageOptions {
 			Start:    pt.BytesToSectors(p.Start),
 			Size:     pt.BytesToSectors(p.Size),
 			Type:     p.Type,
+			Name:     p.Label,
 		}
 
 		if p.UUID != "" {

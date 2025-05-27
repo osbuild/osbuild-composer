@@ -2,9 +2,7 @@ package rhel10
 
 import (
 	"github.com/osbuild/images/pkg/distro"
-	"github.com/osbuild/images/pkg/distro/defs"
 	"github.com/osbuild/images/pkg/distro/rhel"
-	"github.com/osbuild/images/pkg/rpmmd"
 )
 
 func mkTarImgType() *rhel.ImageType {
@@ -12,9 +10,7 @@ func mkTarImgType() *rhel.ImageType {
 		"tar",
 		"root.tar.xz",
 		"application/x-tar",
-		map[string]rhel.PackageSetFunc{
-			rhel.OSPkgsKey: packageSetLoader,
-		},
+		packageSetLoader,
 		rhel.TarImage,
 		[]string{"build"},
 		[]string{"os", "archive"},
@@ -27,12 +23,7 @@ func mkImageInstallerImgType() *rhel.ImageType {
 		"image-installer",
 		"installer.iso",
 		"application/x-iso9660-image",
-		map[string]rhel.PackageSetFunc{
-			rhel.OSPkgsKey: func(t *rhel.ImageType) (rpmmd.PackageSet, error) {
-				return defs.PackageSet(t, "bare-metal", nil)
-			},
-			rhel.InstallerPkgsKey: packageSetLoader,
-		},
+		packageSetLoader,
 		rhel.ImageInstallerImage,
 		[]string{"build"},
 		[]string{"anaconda-tree", "efiboot-tree", "os", "bootiso-tree", "bootiso"},

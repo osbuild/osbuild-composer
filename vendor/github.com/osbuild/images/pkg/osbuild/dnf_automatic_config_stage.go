@@ -13,9 +13,9 @@ const (
 // DNFAutomaticConfigCommands represents the 'commands' configuration section.
 type DNFAutomaticConfigCommands struct {
 	// Whether packages comprising the available updates should be installed
-	ApplyUpdates *bool `json:"apply_updates,omitempty"`
+	ApplyUpdates *bool `json:"apply_updates,omitempty" yaml:"apply_updates,omitempty"`
 	// What kind of upgrades to look at
-	UpgradeType DNFAutomaticUpgradeTypeValue `json:"upgrade_type,omitempty"`
+	UpgradeType DNFAutomaticUpgradeTypeValue `json:"upgrade_type,omitempty" yaml:"upgrade_type,omitempty"`
 }
 
 // DNFAutomaticConfig represents DNF Automatic configuration.

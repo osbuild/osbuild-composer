@@ -17,9 +17,7 @@ func mkGCEImageType() *rhel.ImageType {
 		"gce",
 		"image.tar.gz",
 		"application/gzip",
-		map[string]rhel.PackageSetFunc{
-			rhel.OSPkgsKey: packageSetLoader,
-		},
+		packageSetLoader,
 		rhel.DiskImage,
 		[]string{"build"},
 		[]string{"os", "image", "archive"},

@@ -1,8 +1,11 @@
 package osbuild
 
 import (
+	"encoding/json"
 	"fmt"
 	"regexp"
+
+	"github.com/osbuild/images/internal/common"
 )
 
 type udevOpType int
@@ -132,6 +135,50 @@ type UdevRules []UdevRule
 
 type UdevRule interface {
 	isUdevRule()
+}
+
+func (u *UdevRules) UnmarshalJSON(data []byte) error {
+	var rawRules []map[string]interface{}
+	if err := json.Unmarshal(data, &rawRules); err != nil {
+		return err
+	}
+
+	var newRules []UdevRule
+	for _, rawRule := range rawRules {
+		if v, ok := rawRule["comment"].([]interface{}); ok {
+			var vs []string
+			for _, vv := range v {
+				vs = append(vs, vv.(string))
+			}
+			newRules = append(newRules, NewUdevRuleComment(vs))
+		} else if v, ok := rawRule["rule"].([]interface{}); ok {
+			var vkv []map[string]interface{}
+			for _, vv := range v {
+				vkv = append(vkv, vv.(map[string]interface{}))
+			}
+			var kvs []UdevKV
+			for _, rawKV := range vkv {
+				var k, a, o, v string
+				k, _ = rawKV["K"].(string)
+				a, _ = rawKV["A"].(string)
+				o, _ = rawKV["O"].(string)
+				v, _ = rawKV["V"].(string)
+				kvs = append(kvs, UdevKV{
+					K: k,
+					A: a,
+					O: o,
+					V: v,
+				})
+			}
+			newRules = append(newRules, NewUdevRule(kvs))
+		}
+	}
+	*u = newRules
+	return nil
+}
+
+func (u *UdevRules) UnmarshalYAML(unmarshal func(any) error) error {
+	return common.UnmarshalYAMLviaJSON(u, unmarshal)
 }
 
 // Comments

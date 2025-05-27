@@ -87,17 +87,6 @@ func checkOptions(t *rhel.ImageType, bp *blueprint.Blueprint, options distro.Ima
 		// TODO: consider additional checks, such as those in "edge-simplified-installer"
 	}
 
-	// warn that user & group customizations on edge-commit, edge-container are deprecated
-	// TODO(edge): directly error if these options are provided when rhel-9.5's time arrives
-	if t.Name() == "edge-commit" || t.Name() == "edge-container" {
-		if customizations.GetUsers() != nil {
-			warnings = append(warnings, fmt.Sprintf("Please note that user customizations on %q image type are deprecated and will be removed in the near future\n", t.Name()))
-		}
-		if customizations.GetGroups() != nil {
-			warnings = append(warnings, fmt.Sprintf("Please note that group customizations on %q image type are deprecated and will be removed in the near future\n", t.Name()))
-		}
-	}
-
 	if kernelOpts := customizations.GetKernel(); kernelOpts.Append != "" && t.RPMOSTree && t.Name() != "edge-raw-image" && t.Name() != "edge-simplified-installer" {
 		return warnings, fmt.Errorf("kernel boot parameter customizations are not supported for ostree types")
 	}

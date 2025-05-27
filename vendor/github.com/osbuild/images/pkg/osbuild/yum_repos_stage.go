@@ -14,17 +14,17 @@ const repoIDRegex = "^[\\w.\\-:]+$"
 // YumRepository represents a single DNF / YUM repository.
 type YumRepository struct {
 	Id             string   `json:"id"`
-	BaseURLs       []string `json:"baseurl,omitempty"`
+	BaseURLs       []string `json:"baseurl,omitempty" yaml:"baseurl,omitempty"`
 	Cost           *int     `json:"cost,omitempty"`
 	Enabled        *bool    `json:"enabled,omitempty"`
 	Priority       *int     `json:"priority,omitempty"`
-	GPGKey         []string `json:"gpgkey,omitempty"`
+	GPGKey         []string `json:"gpgkey,omitempty" yaml:"gpgkey,omitempty"`
 	Metalink       string   `json:"metalink,omitempty"`
 	Mirrorlist     string   `json:"mirrorlist,omitempty"`
 	ModuleHotfixes *bool    `json:"module_hotfixes,omitempty"`
 	Name           string   `json:"name,omitempty"`
-	GPGCheck       *bool    `json:"gpgcheck,omitempty"`
-	RepoGPGCheck   *bool    `json:"repo_gpgcheck,omitempty"`
+	GPGCheck       *bool    `json:"gpgcheck,omitempty" yaml:"gpgcheck,omitempty"`
+	RepoGPGCheck   *bool    `json:"repo_gpgcheck,omitempty" yaml:"repo_gpgcheck,omitempty"`
 	SSLVerify      *bool    `json:"sslverify,omitempty"`
 }
 

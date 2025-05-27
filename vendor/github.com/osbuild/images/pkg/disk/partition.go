@@ -21,6 +21,9 @@ type Partition struct {
 	// is just a string.
 	UUID string `json:"uuid,omitempty" yaml:"uuid,omitempty"`
 
+	// Partition name (not filesystem label), only supported for GPT
+	Label string `json:"label,omitempty" yaml:"label,omitempty"`
+
 	// If nil, the partition is raw; It doesn't contain a payload.
 	Payload PayloadEntity `json:"payload,omitempty" yaml:"payload,omitempty"`
 }
@@ -36,6 +39,7 @@ func (p *Partition) Clone() Entity {
 		Type:     p.Type,
 		Bootable: p.Bootable,
 		UUID:     p.UUID,
+		Label:    p.Label,
 	}
 
 	if p.Payload != nil {

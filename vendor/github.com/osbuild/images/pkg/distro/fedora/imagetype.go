@@ -28,7 +28,7 @@ import (
 
 type imageFunc func(workload workload.Workload, t *imageType, bp *blueprint.Blueprint, options distro.ImageOptions, packageSets map[string]rpmmd.PackageSet, containers []container.SourceSpec, rng *rand.Rand) (image.ImageKind, error)
 
-type packageSetFunc func(t *imageType) (rpmmd.PackageSet, error)
+type packageSetFunc func(t *imageType) (map[string]rpmmd.PackageSet, error)
 
 type isoLabelFunc func(t *imageType) string
 
@@ -42,7 +42,7 @@ type imageType struct {
 	filename               string
 	compression            string
 	mimeType               string
-	packageSets            map[string]packageSetFunc
+	packageSets            packageSetFunc
 	defaultImageConfig     *distro.ImageConfig
 	defaultInstallerConfig *distro.InstallerConfig
 	defaultSize            uint64
@@ -237,12 +237,12 @@ func (t *imageType) Manifest(bp *blueprint.Blueprint,
 	staticPackageSets := make(map[string]rpmmd.PackageSet)
 
 	// don't add any static packages if Minimal was selected
-	if !bp.Minimal {
-		for name, getter := range t.packageSets {
-			pkgSet, err := getter(t)
-			if err != nil {
-				return nil, nil, err
-			}
+	if !bp.Minimal && t.packageSets != nil {
+		pkgSets, err := t.packageSets(t)
+		if err != nil {
+			return nil, nil, err
+		}
+		for name, pkgSet := range pkgSets {
 			staticPackageSets[name] = pkgSet
 		}
 	}

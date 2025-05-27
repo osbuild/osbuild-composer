@@ -14,9 +14,7 @@ func mkQcow2ImgType() *rhel.ImageType {
 		"qcow2",
 		"disk.qcow2",
 		"application/x-qemu-disk",
-		map[string]rhel.PackageSetFunc{
-			rhel.OSPkgsKey: packageSetLoader,
-		},
+		packageSetLoader,
 		rhel.DiskImage,
 		[]string{"build"},
 		[]string{"os", "image", "qcow2"},

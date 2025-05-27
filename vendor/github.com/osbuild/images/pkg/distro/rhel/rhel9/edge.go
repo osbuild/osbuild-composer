@@ -8,10 +8,8 @@ import (
 	"github.com/osbuild/images/pkg/datasizes"
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/distro"
-	"github.com/osbuild/images/pkg/distro/defs"
 	"github.com/osbuild/images/pkg/distro/rhel"
 	"github.com/osbuild/images/pkg/osbuild"
-	"github.com/osbuild/images/pkg/rpmmd"
 )
 
 func mkEdgeCommitImgType(d *rhel.Distribution) *rhel.ImageType {
@@ -19,9 +17,7 @@ func mkEdgeCommitImgType(d *rhel.Distribution) *rhel.ImageType {
 		"edge-commit",
 		"commit.tar",
 		"application/x-tar",
-		map[string]rhel.PackageSetFunc{
-			rhel.OSPkgsKey: packageSetLoader,
-		},
+		packageSetLoader,
 		rhel.EdgeCommitImage,
 		[]string{"build"},
 		[]string{"os", "ostree-commit", "commit-archive"},
@@ -51,12 +47,7 @@ func mkEdgeOCIImgType(d *rhel.Distribution) *rhel.ImageType {
 		"edge-container",
 		"container.tar",
 		"application/x-tar",
-		map[string]rhel.PackageSetFunc{
-			rhel.OSPkgsKey: packageSetLoader,
-			rhel.ContainerPkgsKey: func(t *rhel.ImageType) (rpmmd.PackageSet, error) {
-				return defs.PackageSet(t, "edge_container_pipeline_pkgset", nil)
-			},
-		},
+		packageSetLoader,
 		rhel.EdgeContainerImage,
 		[]string{"build"},
 		[]string{"os", "ostree-commit", "container-tree", "container"},
@@ -126,9 +117,7 @@ func mkEdgeInstallerImgType() *rhel.ImageType {
 		"edge-installer",
 		"installer.iso",
 		"application/x-iso9660-image",
-		map[string]rhel.PackageSetFunc{
-			rhel.InstallerPkgsKey: packageSetLoader,
-		},
+		packageSetLoader,
 		rhel.EdgeInstallerImage,
 		[]string{"build"},
 		[]string{"anaconda-tree", "rootfs-image", "efiboot-tree", "bootiso-tree", "bootiso"},
@@ -163,16 +152,14 @@ func mkEdgeSimplifiedInstallerImgType(d *rhel.Distribution) *rhel.ImageType {
 		"edge-simplified-installer",
 		"simplified-installer.iso",
 		"application/x-iso9660-image",
-		map[string]rhel.PackageSetFunc{
-			// TODO: non-arch-specific package set handling for installers
-			// This image type requires build packages for installers and
-			// ostree/edge.  For now we only have x86-64 installer build
-			// package sets defined.  When we add installer build package sets
-			// for other architectures, this will need to be moved to the
-			// architecture and the merging will happen in the PackageSets()
-			// method like the other sets.
-			rhel.InstallerPkgsKey: packageSetLoader,
-		},
+		// TODO: non-arch-specific package set handling for installers
+		// This image type requires build packages for installers and
+		// ostree/edge.  For now we only have x86-64 installer build
+		// package sets defined.  When we add installer build package sets
+		// for other architectures, this will need to be moved to the
+		// architecture and the merging will happen in the PackageSets()
+		// method like the other sets.
+		packageSetLoader,
 		rhel.EdgeSimplifiedInstallerImage,
 		[]string{"build"},
 		[]string{"ostree-deployment", "image", "xz", "coi-tree", "efiboot-tree", "bootiso-tree", "bootiso"},
@@ -298,9 +285,7 @@ func mkMinimalrawImgType() *rhel.ImageType {
 		"minimal-raw",
 		"disk.raw.xz",
 		"application/xz",
-		map[string]rhel.PackageSetFunc{
-			rhel.OSPkgsKey: packageSetLoader,
-		},
+		packageSetLoader,
 		rhel.DiskImage,
 		[]string{"build"},
 		[]string{"os", "image", "xz"},
@@ -380,7 +365,7 @@ func minimalrawPartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 						Type:         "vfat",
 						UUID:         disk.EFIFilesystemUUID,
 						Mountpoint:   "/boot/efi",
-						Label:        "EFI-SYSTEM",
+						Label:        "ESP",
 						FSTabOptions: "defaults,uid=0,gid=0,umask=077,shortname=winnt",
 						FSTabFreq:    0,
 						FSTabPassNo:  2,
@@ -428,7 +413,7 @@ func minimalrawPartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 						Type:         "vfat",
 						UUID:         disk.EFIFilesystemUUID,
 						Mountpoint:   "/boot/efi",
-						Label:        "EFI-SYSTEM",
+						Label:        "ESP",
 						FSTabOptions: "defaults,uid=0,gid=0,umask=077,shortname=winnt",
 						FSTabFreq:    0,
 						FSTabPassNo:  2,
@@ -488,7 +473,7 @@ func edgeBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 						Type:         "vfat",
 						UUID:         disk.EFIFilesystemUUID,
 						Mountpoint:   "/boot/efi",
-						Label:        "EFI-SYSTEM",
+						Label:        "ESP",
 						FSTabOptions: "defaults,uid=0,gid=0,umask=077,shortname=winnt",
 						FSTabFreq:    0,
 						FSTabPassNo:  2,
@@ -559,7 +544,7 @@ func edgeBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 						Type:         "vfat",
 						UUID:         disk.EFIFilesystemUUID,
 						Mountpoint:   "/boot/efi",
-						Label:        "EFI-SYSTEM",
+						Label:        "ESP",
 						FSTabOptions: "defaults,uid=0,gid=0,umask=077,shortname=winnt",
 						FSTabFreq:    0,
 						FSTabPassNo:  2,
