@@ -102,7 +102,7 @@ fi
 # determine the 'osbuild/images' repository version used by the osbuild-composer
 sudo dnf install -y golang
 COMPOSER_DEPS=$(go version -m /usr/libexec/osbuild-composer/osbuild-composer)
-IMAGES_VERSION=$(echo "$COMPOSER_DEPS" | sed -n 's|^\t\+dep\t\+github\.com/osbuild/images\t\+\(v[0-9.]\+\)\t\+$|\1|p')
+IMAGES_VERSION=$(echo "$COMPOSER_DEPS" | sed -n 's|^\t\+dep\t\+github\.com/osbuild/images\t\+\(v[0-9.a-zA-Z-]\+\)\t\+$|\1|p')
 if [ -z "$IMAGES_VERSION" ]; then
     echo "ERROR: Unable to determine osbuild/images version from osbuild-composer binary. Composer deps:"
     echo "$COMPOSER_DEPS"
