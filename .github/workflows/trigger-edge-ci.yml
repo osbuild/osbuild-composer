@@ -1,0 +1,40 @@
+name: Trigger EDGE CI
+
+on:
+  workflow_run:
+    workflows: ["Tests"]
+    types: [completed]
+
+jobs:
+  trigger-edge-ci:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-22.04
+    env:
+      GITHUB_USER: ${{ secrets.SCHUTZBOT_GITHUB_USERNAME }}
+      GITHUB_ACCESS_TOKEN: ${{ secrets.SCHUTZBOT_GITHUB_ACCESS_TOKEN }}
+    steps:
+      - name: Install Dependencies
+        run: |
+          sudo apt install -y jq
+
+      - name: Extract Pull Request Number from Event
+        id: pr_data
+        run: |
+          # Debug the event data
+          cat "$GITHUB_EVENT_PATH"
+          PR_NUMBER=$(jq -r '.pull_requests[0].number // ""' "$GITHUB_EVENT_PATH")
+          echo "PR_NUMBER=${PR_NUMBER}" >> "$GITHUB_ENV"
+
+      - name: Trigger EDGE CI
+        # Tests are triggered only for Pull Requests to the main branch
+        if: ${{ env.GITHUB_BASE_REF == 'main' && env.PR_NUMBER != '' }}
+        env:
+          PR_NUMBER: ${{ env.PR_NUMBER }}
+        run: |
+          curl \
+            -u "${GITHUB_USER}:${GITHUB_ACCESS_TOKEN}" \
+            -X POST \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/osbuild/rhel-edge-ci/dispatches \
+            # Note: The 'pr_number' is currently prefixed with 'PR-' due to a limitation in the 'rhel-edge-ci' repository.
+            -d '{"event_type":"osbuild-composer-ci","client_payload":{"pr_number":"PR-${PR_NUMBER}"}}"
