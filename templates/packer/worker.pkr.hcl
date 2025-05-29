@@ -23,8 +23,8 @@ build {
   source "amazon-ebs.image_builder" {
     name = "rhel-9-x86_64"
 
-    # Use a static RHEL 9.0 Cloud Access Image.
-    source_ami = "ami-0f7c7d22de9e097ea"
+    # RHEL-9.6.0_HVM_GA-20250423-x86_64-0-Access2-GP3
+    source_ami = "ami-01a52a1073599b7c8"
     ssh_username = "ec2-user"
     instance_type = "c6a.large"
     aws_polling {
@@ -57,8 +57,8 @@ build {
   source "amazon-ebs.image_builder" {
     name = "rhel-9-aarch64"
 
-    # Use a static RHEL 9.0 Cloud Access Image.
-    source_ami = "ami-019ece25c0f135889"
+    # RHEL-9.6.0_HVM_GA-20250423-arm64-0-Access2-GP3
+    source_ami = "ami-089b86d2f4d27cd98"
     ssh_username = "ec2-user"
     instance_type = "c6g.large"
     aws_polling {
