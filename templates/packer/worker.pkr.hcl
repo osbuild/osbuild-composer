@@ -89,23 +89,23 @@ build {
   }
 
   source "amazon-ebs.image_builder"  {
-    name = "fedora-40-x86_64"
+    name = "fedora-42-x86_64"
 
-    # Fedora-Cloud-Base-AmazonEC2.x86_64-40-1.14-hvm-us-east-1-gp3-0
-    source_ami = "ami-004f552bba0e5f64f"
+    # Fedora-Cloud-Base-AmazonEC2.x86_64-42-1.1
+    source_ami = "ami-07df3bb06da88a158"
     ssh_username = "fedora"
     instance_type = "c6a.large"
 
     # Set a name for the resulting AMI.
-    ami_name = "${var.image_name}-fedora-40-x86_64"
+    ami_name = "${var.image_name}-fedora-42-x86_64"
 
     # Apply tags to the resulting AMI/EBS snapshot.
     tags = {
       AppCode = "IMGB-001"
-      Name = "${var.image_name}-fedora-40-x86_64"
+      Name = "${var.image_name}-fedora-42-x86_64"
       composer_commit = "${var.composer_commit}"
       os = "fedora"
-      os_version = "40"
+      os_version = "42"
       arch = "x86_64"
     }
 
@@ -116,33 +116,26 @@ build {
       volume_size           = 6
       volume_type           = "gp3"
     }
-
-    # go doesn't like modern Fedora crypto policies
-    # see https://github.com/hashicorp/packer/issues/10074
-    user_data = <<EOF
-#!/bin/bash
-update-crypto-policies --set LEGACY
-EOF
   }
 
   source "amazon-ebs.image_builder"  {
-    name = "fedora-40-aarch64"
+    name = "fedora-42-aarch64"
 
-    # Fedora-Cloud-Base-AmazonEC2.aarch64-40-20241024.0
-    source_ami = "ami-05c254a81747590f5"
+    # Fedora-Cloud-Base-AmazonEC2.aarch64-42-1.1
+    source_ami = "ami-045ca5703b2046e49"
     ssh_username = "fedora"
     instance_type = "c6g.large"
 
     # Set a name for the resulting AMI.
-    ami_name = "${var.image_name}-fedora-40-aarch64"
+    ami_name = "${var.image_name}-fedora-42-aarch64"
 
     # Apply tags to the resulting AMI/EBS snapshot.
     tags = {
       AppCode = "IMGB-001"
-      Name = "${var.image_name}-fedora-40-aarch64"
+      Name = "${var.image_name}-fedora-42-aarch64"
       composer_commit = "${var.composer_commit}"
       os = "fedora"
-      os_version = "40"
+      os_version = "42"
       arch = "aarch64"
     }
 
@@ -153,19 +146,12 @@ EOF
       volume_size           = 6
       volume_type           = "gp3"
     }
-
-    # go doesn't like modern Fedora crypto policies
-    # see https://github.com/hashicorp/packer/issues/10074
-    user_data = <<EOF
-#!/bin/bash
-update-crypto-policies --set LEGACY
-EOF
   }
 
-  # Ansible is quite broken on fedora 40, using python 3.10 + not using
+  # Ansible is quite broken on Fedora, using python 3.10+ not using
   # the dnf module seems to work.
   provisioner "shell" {
-    only = ["amazon-ebs.fedora-40-x86_64", "amazon-ebs.fedora-40-aarch64"]
+    only = ["amazon-ebs.fedora-42-x86_64", "amazon-ebs.fedora-42-aarch64"]
     inline = [
       "sudo dnf install -y python3.10",
     ]
