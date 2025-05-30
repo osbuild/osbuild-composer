@@ -50,12 +50,12 @@ type DNFPluginConfig struct {
 }
 
 type SubManDNFPluginsConfig struct {
-	ProductID           DNFPluginConfig
-	SubscriptionManager DNFPluginConfig
+	ProductID           DNFPluginConfig `yaml:"product_id,omitempty"`
+	SubscriptionManager DNFPluginConfig `yaml:"subscription_manager,omitempty"`
 }
 
 type RHSMConfig struct {
-	DnfPlugins SubManDNFPluginsConfig
+	DnfPlugins SubManDNFPluginsConfig `yaml:"dnf_plugin,omitempty"`
 	YumPlugins SubManDNFPluginsConfig
 	SubMan     SubManConfig
 }

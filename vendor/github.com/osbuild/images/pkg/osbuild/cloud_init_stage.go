@@ -25,17 +25,17 @@ func NewCloudInitStage(options *CloudInitStageOptions) *Stage {
 
 // Represents a cloud-init configuration file
 type CloudInitConfigFile struct {
-	SystemInfo     *CloudInitConfigSystemInfo `json:"system_info,omitempty"`
+	SystemInfo     *CloudInitConfigSystemInfo `json:"system_info,omitempty" yaml:"system_info,omitempty"`
 	Reporting      *CloudInitConfigReporting  `json:"reporting,omitempty"`
 	Datasource     *CloudInitConfigDatasource `json:"datasource,omitempty"`
-	DatasourceList []string                   `json:"datasource_list,omitempty"`
+	DatasourceList []string                   `json:"datasource_list,omitempty" yaml:"datasource_list,omitempty"`
 	Output         *CloudInitConfigOutput     `json:"output,omitempty"`
 	Network        *CloudInitConfigNetwork    `json:"network,omitempty"`
 }
 
 // Represents the 'system_info' configuration section
 type CloudInitConfigSystemInfo struct {
-	DefaultUser *CloudInitConfigDefaultUser `json:"default_user,omitempty"`
+	DefaultUser *CloudInitConfigDefaultUser `json:"default_user,omitempty" yaml:"default_user,omitempty"`
 }
 
 // Represents the 'reporting' configuration section
@@ -54,7 +54,7 @@ type CloudInitConfigDatasource struct {
 }
 
 type CloudInitConfigDatasourceAzure struct {
-	ApplyNetworkConfig bool `json:"apply_network_config"`
+	ApplyNetworkConfig bool `json:"apply_network_config" yaml:"apply_network_config"`
 }
 
 // Represents the 'output' configuration section

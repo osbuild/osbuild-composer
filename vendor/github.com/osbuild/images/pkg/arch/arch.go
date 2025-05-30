@@ -1,7 +1,11 @@
 package arch
 
 import (
+	"encoding/json"
+	"fmt"
 	"runtime"
+
+	"github.com/osbuild/images/internal/common"
 )
 
 type Arch uint64
@@ -34,27 +38,40 @@ func (a Arch) String() string {
 	}
 }
 
-func FromString(a string) Arch {
+func (a *Arch) UnmarshalJSON(data []byte) (err error) {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return err
+	}
+	*a, err = FromString(s)
+	return err
+}
+
+func (a *Arch) UnmarshalYAML(unmarshal func(any) error) error {
+	return common.UnmarshalYAMLviaJSON(a, unmarshal)
+}
+
+func FromString(a string) (Arch, error) {
 	switch a {
 	case "amd64", "x86_64":
-		return ARCH_X86_64
+		return ARCH_X86_64, nil
 	case "arm64", "aarch64":
-		return ARCH_AARCH64
+		return ARCH_AARCH64, nil
 	case "s390x":
-		return ARCH_S390X
+		return ARCH_S390X, nil
 	case "ppc64le":
-		return ARCH_PPC64LE
+		return ARCH_PPC64LE, nil
 	case "riscv64":
-		return ARCH_RISCV64
+		return ARCH_RISCV64, nil
 	default:
-		panic("unsupported architecture")
+		return ARCH_UNSET, fmt.Errorf("unsupported architecture %q", a)
 	}
 }
 
 var runtimeGOARCH = runtime.GOARCH
 
 func Current() Arch {
-	return FromString(runtimeGOARCH)
+	return common.Must(FromString(runtimeGOARCH))
 }
 
 func IsX86_64() bool {

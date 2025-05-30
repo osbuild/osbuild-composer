@@ -12,9 +12,7 @@ func mkWSLImgType() *rhel.ImageType {
 		"wsl",
 		"disk.tar.gz",
 		"application/x-tar",
-		map[string]rhel.PackageSetFunc{
-			rhel.OSPkgsKey: packageSetLoader,
-		},
+		packageSetLoader,
 		rhel.TarImage,
 		[]string{"build"},
 		[]string{"os", "archive"},

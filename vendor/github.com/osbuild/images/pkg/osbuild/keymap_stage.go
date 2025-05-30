@@ -7,7 +7,7 @@ import (
 
 type KeymapStageOptions struct {
 	Keymap    string            `json:"keymap"`
-	X11Keymap *X11KeymapOptions `json:"x11-keymap,omitempty"`
+	X11Keymap *X11KeymapOptions `json:"x11-keymap,omitempty" yaml:"x11-keymap,omitempty"`
 }
 
 func (KeymapStageOptions) isStageOptions() {}

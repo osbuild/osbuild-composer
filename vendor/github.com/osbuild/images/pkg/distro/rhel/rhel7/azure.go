@@ -16,9 +16,7 @@ func mkAzureRhuiImgType() *rhel.ImageType {
 		"azure-rhui",
 		"disk.vhd.xz",
 		"application/xz",
-		map[string]rhel.PackageSetFunc{
-			rhel.OSPkgsKey: packageSetLoader,
-		},
+		packageSetLoader,
 		rhel.DiskImage,
 		[]string{"build"},
 		[]string{"os", "image", "vpc", "xz"},

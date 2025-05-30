@@ -38,7 +38,7 @@ type NMConfSettingsGlobalDNSDomainConfig struct {
 }
 
 type NMConfSettingsKeyfile struct {
-	UnmanagedDevices []string `json:"unmanaged-devices,omitempty"`
+	UnmanagedDevices []string `json:"unmanaged-devices,omitempty" yaml:"unmanaged-devices,omitempty"`
 }
 
 type NMConfDeviceConfig struct {

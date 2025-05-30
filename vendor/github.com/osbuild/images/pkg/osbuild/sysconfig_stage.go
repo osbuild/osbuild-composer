@@ -5,7 +5,7 @@ type SysconfigStageOptions struct {
 	Network        *SysconfigNetworkOptions `json:"network,omitempty" yaml:"network,omitempty"`
 	NetworkScripts *NetworkScriptsOptions   `json:"network-scripts,omitempty" yaml:"network-scripts,omitempty"`
 	Desktop        *SysconfigDesktopOptions `json:"desktop,omitempty" yaml:"desktop,omitempty"`
-	LiveSys        *SysconfigLivesysOptions `json:"livesys,omitempty" yaml:"libesys,omitempty"`
+	LiveSys        *SysconfigLivesysOptions `json:"livesys,omitempty" yaml:"livesys,omitempty"`
 }
 
 func (SysconfigStageOptions) isStageOptions() {}

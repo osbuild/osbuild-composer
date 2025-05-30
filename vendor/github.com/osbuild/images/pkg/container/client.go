@@ -370,8 +370,8 @@ func (cl *Client) resolveContainerImageArch(ctx context.Context, ref types.Image
 	if err != nil {
 		return nil, err
 	}
-	a := arch.FromString(info.Architecture)
-	return &a, nil
+	a, err := arch.FromString(info.Architecture)
+	return &a, err
 }
 
 func (cl *Client) getLocalImageIDFromDigest(instance digest.Digest) (string, error) {
