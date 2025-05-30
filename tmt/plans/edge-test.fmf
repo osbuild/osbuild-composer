@@ -88,7 +88,7 @@ provision:
       enabled: false
     - when: distro == fedora
       enabled: false
-    - when: distro == rhel-9-6
+    - when: distro == rhel-9-7
       enabled: false
 
 /edge-x86-minimal:
@@ -116,5 +116,5 @@ provision:
   adjust+:
     - when: distro == cs-9
       enabled: false
-    - when: distro == rhel-9-6
+    - when: distro == rhel-9-7
       enabled: false
