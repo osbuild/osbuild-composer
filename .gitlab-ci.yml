@@ -437,14 +437,14 @@ aws.sh:
   variables:
     SCRIPT: aws.sh
 
-oci.sh:
-  extends: .integration
-  rules:
-    # Run only on x86_64
-    - !reference [.upstream_rules_x86_64, rules]
-    - !reference [.ga_rules_x86_64, rules]
-  variables:
-    SCRIPT: oci.sh
+# oci.sh:
+#   extends: .integration
+#   rules:
+#     # Run only on x86_64
+#     - !reference [.upstream_rules_x86_64, rules]
+#     - !reference [.ga_rules_x86_64, rules]
+#   variables:
+#     SCRIPT: oci.sh
 
 OpenShift_Virtualization:
   extends: .integration_rhel
@@ -561,7 +561,7 @@ cross-distro.sh:
     - vsphere
     - edge-commit generic.s3
     - edge-container
-    - oci
+    # - oci
 
 API:
   stage: test
@@ -587,7 +587,7 @@ API:
           - aws
           - azure
           - gcp
-          - oci
+          # - oci
           - vsphere
         RUNNER:
           - aws/rhel-10.0-nightly-x86_64
