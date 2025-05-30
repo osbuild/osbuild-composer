@@ -78,6 +78,8 @@ const (
 	ErrorTenantNotInContext                       ServiceErrorCode = 1020
 	ErrorGettingComposeList                       ServiceErrorCode = 1021
 	ErrorArtifactNotFound                         ServiceErrorCode = 1022
+	ErrorDeletingJob                              ServiceErrorCode = 1023
+	ErrorDeletingArtifacts                        ServiceErrorCode = 1024
 
 	// Errors contained within this file
 	ErrorUnspecified          ServiceErrorCode = 10000
@@ -163,6 +165,8 @@ func getServiceErrors() serviceErrors {
 		serviceError{ErrorGettingJobType, http.StatusInternalServerError, "Unable to get job type of existing job"},
 		serviceError{ErrorTenantNotInContext, http.StatusInternalServerError, "Unable to retrieve tenant from request context"},
 		serviceError{ErrorGettingComposeList, http.StatusInternalServerError, "Unable to get list of composes"},
+		serviceError{ErrorDeletingJob, http.StatusInternalServerError, "Unable to delete job"},
+		serviceError{ErrorDeletingArtifacts, http.StatusInternalServerError, "Unable to delete job artifacts"},
 
 		serviceError{ErrorUnspecified, http.StatusInternalServerError, "Unspecified internal error "},
 		serviceError{ErrorNotHTTPError, http.StatusInternalServerError, "Error is not an instance of HTTPError"},

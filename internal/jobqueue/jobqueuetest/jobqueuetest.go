@@ -7,15 +7,18 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/osbuild/osbuild-composer/internal/worker"
-	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
 	"os"
+	"sort"
 	"sync"
 	"testing"
 	"time"
 
+	"github.com/osbuild/osbuild-composer/internal/worker"
+	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
+
 	"github.com/google/uuid"
 	"github.com/osbuild/osbuild-composer/pkg/jobqueue"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -58,6 +61,8 @@ func TestJobQueue(t *testing.T, makeJobQueue MakeJobQueue) {
 	t.Run("100-dequeuers", wrap(test100dequeuers))
 	t.Run("workers", wrap(testWorkers))
 	t.Run("fail", wrap(testFail))
+	t.Run("all-root-jobs", wrap(testAllRootJobs))
+	t.Run("delete-jobs", wrap(testDeleteJobs))
 }
 
 func pushTestJob(t *testing.T, q jobqueue.JobQueue, jobType string, args interface{}, dependencies []uuid.UUID, channel string) uuid.UUID {
@@ -814,5 +819,122 @@ func testFail(t *testing.T, q jobqueue.JobQueue) {
 		require.Less(t, startTime, tmr)
 		require.Greater(t, endTime, tmr)
 	}
+}
 
+// sortUUIDs is a helper to sort a list of UUIDs
+func sortUUIDs(entries []uuid.UUID) {
+	sort.Slice(entries, func(i, j int) bool {
+		return entries[i].String() < entries[j].String()
+	})
+}
+
+// Test listing all root jobs
+func testAllRootJobs(t *testing.T, q jobqueue.JobQueue) {
+	var rootJobs []uuid.UUID
+
+	// root with no dependencies
+	jidRoot1 := pushTestJob(t, q, "oneRoot", nil, nil, "OneRootJob")
+	rootJobs = append(rootJobs, jidRoot1)
+
+	// root with 2 dependencies
+	jid1 := pushTestJob(t, q, "twoDeps", nil, nil, "TwoDepJobs")
+	jid2 := pushTestJob(t, q, "twoDeps", nil, nil, "TwoDepJobs")
+	jidRoot2 := pushTestJob(t, q, "twoDeps", nil, []uuid.UUID{jid1, jid2}, "TwoDepJobs")
+	rootJobs = append(rootJobs, jidRoot2)
+
+	// root with 2 dependencies, one shared with the previous root
+	jid3 := pushTestJob(t, q, "sharedDeps", nil, nil, "SharedDepJobs")
+	jidRoot3 := pushTestJob(t, q, "sharedDeps", nil, []uuid.UUID{jid1, jid3}, "SharedDepJobs")
+	rootJobs = append(rootJobs, jidRoot3)
+
+	sortUUIDs(rootJobs)
+	roots, err := q.AllRootJobIDs(context.Background())
+	require.Nil(t, err)
+	require.Greater(t, len(roots), 0)
+	sortUUIDs(roots)
+	require.Equal(t, rootJobs, roots)
+}
+
+// Test Deleting jobs
+func testDeleteJobs(t *testing.T, q jobqueue.JobQueue) {
+	// root with no dependencies
+	t.Run("no dependencies", func(t *testing.T) {
+		jidRoot1 := pushTestJob(t, q, "oneRoot", nil, nil, "OneRootJob")
+		err := q.DeleteJob(context.Background(), jidRoot1)
+		require.Nil(t, err)
+		jobs, err := q.AllRootJobIDs(context.Background())
+		require.Nil(t, err)
+		require.Equal(t, 0, len(jobs))
+	})
+
+	// root with 2 dependencies
+	t.Run("two dependencies", func(t *testing.T) {
+		jid1 := pushTestJob(t, q, "twoDeps", nil, nil, "TwoDepJobs")
+		jid2 := pushTestJob(t, q, "twoDeps", nil, nil, "TwoDepJobs")
+		jidRoot2 := pushTestJob(t, q, "twoDeps", nil, []uuid.UUID{jid1, jid2}, "TwoDepJobs")
+
+		// root with 2 dependencies, one shared with the previous root
+		jid3 := pushTestJob(t, q, "sharedDeps", nil, nil, "SharedDepJobs")
+		jidRoot3 := pushTestJob(t, q, "sharedDeps", nil, []uuid.UUID{jid1, jid3}, "SharedDepJobs")
+
+		// This should only remove jidRoot2 and jid2, leaving jidRoot3, jid1, jid3
+		err := q.DeleteJob(context.Background(), jidRoot2)
+		require.Nil(t, err)
+		jobs, err := q.AllRootJobIDs(context.Background())
+		require.Nil(t, err)
+		require.Equal(t, 1, len(jobs))
+		assert.Equal(t, []uuid.UUID{jidRoot3}, jobs)
+
+		// This should remove the rest
+		err = q.DeleteJob(context.Background(), jidRoot3)
+		require.Nil(t, err)
+		jobs, err = q.AllRootJobIDs(context.Background())
+		require.Nil(t, err)
+		require.Equal(t, 0, len(jobs))
+
+		// Make sure all the jobs are deleted
+		allJobs := []uuid.UUID{jidRoot2, jidRoot3, jid1, jid2, jid3}
+		for _, jobId := range allJobs {
+			jobType, _, _, _, err := q.Job(jobId)
+			assert.Error(t, err, jobType)
+		}
+	})
+
+	// Koji job with 2 images
+	t.Run("koji job simulation", func(t *testing.T) {
+		kojiInit := pushTestJob(t, q, "init", nil, nil, "KojiJob")
+
+		finalJobs := []uuid.UUID{kojiInit}
+		imageJobs := []uuid.UUID{}
+		// Make 2 images, each one has:
+		//     depsolve job
+		//     ostree job
+		//     manifest job
+		//     osbuild job
+		for i := 0; i < 2; i++ {
+			kojiDepsolve := pushTestJob(t, q, "depsolve", nil, nil, "KojiJob")
+			kojiOSTree := pushTestJob(t, q, "ostree", nil, nil, "KojiJob")
+			kojiManifest := pushTestJob(t, q, "manifest", nil, []uuid.UUID{kojiOSTree, kojiDepsolve}, "KojiJob")
+			finalJobs = append(finalJobs, pushTestJob(t, q, "osbuild", nil, []uuid.UUID{kojiInit, kojiManifest, kojiDepsolve}, "KojiJob"))
+
+			// Track the jobs inside the osbuild job for testing
+			imageJobs = append(imageJobs, kojiDepsolve, kojiOSTree, kojiManifest)
+		}
+		kojiRoot := pushTestJob(t, q, "final", nil, finalJobs, "KojiJob")
+
+		// Delete the koji job
+		err := q.DeleteJob(context.Background(), kojiRoot)
+		require.Nil(t, err)
+		jobs, err := q.AllRootJobIDs(context.Background())
+		require.Nil(t, err)
+		require.Equal(t, 0, len(jobs))
+
+		// Make sure all the jobs are deleted
+		kojiJobs := append(finalJobs, imageJobs...)
+		kojiJobs = append(kojiJobs, kojiRoot)
+		for _, jobId := range kojiJobs {
+			jobType, _, _, _, err := q.Job(jobId)
+			assert.Error(t, err, jobType)
+		}
+	})
 }
