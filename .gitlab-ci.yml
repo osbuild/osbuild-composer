@@ -72,13 +72,13 @@ init:
 
 .nightly_rules_all:
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9.6-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-10.0-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "10"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9.7-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-10.1-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "10"'
 
 .nightly_rules_x86_64:
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9.6-[^ga][\S]+/ && $RUNNER =~ "/^.*(x86_64).*$/" && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-10.0-[^ga][\S]+/ && $RUNNER =~ "/^.*(x86_64).*$/" && $NIGHTLY == "true" && $RHEL_MAJOR == "10"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9.7-[^ga][\S]+/ && $RUNNER =~ "/^.*(x86_64).*$/" && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-10.1-[^ga][\S]+/ && $RUNNER =~ "/^.*(x86_64).*$/" && $NIGHTLY == "true" && $RHEL_MAJOR == "10"'
 
 .ga_rules_all:
   rules:
@@ -91,10 +91,10 @@ init:
 
 .RPM_RUNNERS_RHEL: &RPM_RUNNERS_RHEL
   RUNNER:
-    - aws/rhel-9.6-nightly-x86_64
-    - aws/rhel-9.6-nightly-aarch64
-    - aws/rhel-10.0-nightly-x86_64
-    - aws/rhel-10.0-nightly-aarch64
+    - aws/rhel-9.7-nightly-x86_64
+    - aws/rhel-9.7-nightly-aarch64
+    - aws/rhel-10.1-nightly-x86_64
+    - aws/rhel-10.1-nightly-aarch64
 
   INTERNAL_NETWORK: ["true"]
 
@@ -178,8 +178,8 @@ Prepare-rhel-internal:
       - RUNNER:
           # NOTE: 1 runner prepares for all arches b/c subsequent jobs download
           # artifacts from all previous jobs and the last one wins
-          - aws/rhel-9.6-nightly-x86_64
-          - aws/rhel-10.0-nightly-x86_64
+          - aws/rhel-9.7-nightly-x86_64
+          - aws/rhel-10.1-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
 
 Base:
@@ -202,10 +202,10 @@ Base:
           - aws/rhel-9.5-ga-x86_64
           - aws/rhel-9.5-ga-aarch64
       - RUNNER:
-          - aws/rhel-9.6-nightly-x86_64
-          - aws/rhel-9.6-nightly-aarch64
-          - aws/rhel-10.0-nightly-x86_64
-          - aws/rhel-10.0-nightly-aarch64
+          - aws/rhel-9.7-nightly-x86_64
+          - aws/rhel-9.7-nightly-aarch64
+          - aws/rhel-10.1-nightly-x86_64
+          - aws/rhel-10.1-nightly-aarch64
           - aws/centos-stream-9-x86_64
           - aws/centos-stream-9-aarch64
           - aws/centos-stream-10-x86_64
@@ -232,10 +232,10 @@ Base:
           - aws/rhel-8.10-ga-aarch64
           - aws/rhel-9.5-ga-x86_64
           - aws/rhel-9.5-ga-aarch64
-          - aws/rhel-9.6-nightly-x86_64
-          - aws/rhel-9.6-nightly-aarch64
-          - aws/rhel-10.0-nightly-x86_64
-          - aws/rhel-10.0-nightly-aarch64
+          - aws/rhel-9.7-nightly-x86_64
+          - aws/rhel-9.7-nightly-aarch64
+          - aws/rhel-10.1-nightly-x86_64
+          - aws/rhel-10.1-nightly-aarch64
           - aws/centos-stream-9-x86_64
           - aws/centos-stream-9-aarch64
           - aws/centos-stream-10-x86_64
@@ -326,10 +326,10 @@ Image Tests:
       - RUNNER:
           - aws/rhel-8.10-ga-x86_64
           - aws/rhel-8.10-ga-aarch64
-          - aws/rhel-9.6-nightly-x86_64
-          - aws/rhel-9.6-nightly-aarch64
-          - aws/rhel-10.0-nightly-x86_64
-          - aws/rhel-10.0-nightly-aarch64
+          - aws/rhel-9.7-nightly-x86_64
+          - aws/rhel-9.7-nightly-aarch64
+          - aws/rhel-10.1-nightly-x86_64
+          - aws/rhel-10.1-nightly-aarch64
         INTERNAL_NETWORK: ["true"]
 
 Trigger-rhel-edge-ci:
@@ -357,8 +357,8 @@ Trigger-rhel-edge-ci:
     RUNNER:
       - aws/rhel-8.10-ga-x86_64
       - aws/rhel-9.5-ga-x86_64
-      - aws/rhel-9.6-nightly-x86_64
-      - aws/rhel-10.0-nightly-x86_64
+      - aws/rhel-9.7-nightly-x86_64
+      - aws/rhel-10.1-nightly-x86_64
       - aws/centos-stream-9-x86_64
       - aws/centos-stream-10-x86_64
     INTERNAL_NETWORK: ["true"]
@@ -455,8 +455,8 @@ OpenShift_Virtualization:
   parallel:
     matrix:
       - RUNNER:
-          - aws/rhel-9.6-nightly-x86_64
-          - aws/rhel-10.0-nightly-x86_64
+          - aws/rhel-9.7-nightly-x86_64
+          - aws/rhel-10.1-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
 
 azure.sh:
@@ -532,11 +532,11 @@ filesystem.sh:
       - CUSTOMIZATION_TYPE: "disk-plain"
         RUNNER:
           - aws/rhel-9.5-ga-x86_64
-          - aws/rhel-10.0-nightly-x86_64
+          - aws/rhel-10.1-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
       - CUSTOMIZATION_TYPE: "disk-lvm"
         RUNNER:
-          - aws/rhel-9.6-nightly-x86_64
+          - aws/rhel-9.7-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
       - CUSTOMIZATION_TYPE: "disk-lvm"
         RUNNER:
@@ -580,7 +580,7 @@ API:
         RUNNER:
           - aws/rhel-8.10-ga-x86_64
           - aws/rhel-9.5-ga-x86_64
-          - aws/rhel-9.6-nightly-x86_64
+          - aws/rhel-9.7-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
       # el10 for now supports only a subset of image types
       - IMAGE_TYPE:
@@ -590,7 +590,7 @@ API:
           # - oci
           - vsphere
         RUNNER:
-          - aws/rhel-10.0-nightly-x86_64
+          - aws/rhel-10.1-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
       - IMAGE_TYPE: ["iot-commit"]
         RUNNER:
@@ -649,10 +649,10 @@ API-module-hotfixes:
       - RUNNER:
           - gcp/rhel-8.10-ga-x86_64
           - gcp/rhel-9.5-ga-x86_64
-          - gcp/rhel-9.6-nightly-x86_64
+          - gcp/rhel-9.7-nightly-x86_64
           # TODO: replace the rhos-01 runner with this gcp runner once it's available
           # - gcp/rhel-10.0-nightly-x86_64
-          - rhos-01/rhel-10.0-nightly-x86_64
+          - rhos-01/rhel-10.1-nightly-x86_64
           - gcp/centos-stream-9-x86_64
         INTERNAL_NETWORK: ["true"]
 
@@ -676,7 +676,7 @@ ubi-wsl.sh:
       - RUNNER:
           - aws/rhel-8.10-ga-x86_64
           - aws/rhel-9.5-ga-x86_64
-          - aws/rhel-10.0-nightly-x86_64
+          - aws/rhel-10.1-nightly-x86_64
         INTERNAL_NETWORK: "true"
 
 weldr-distro-dot-notation+aliases:
@@ -693,14 +693,14 @@ weldr-distro-dot-notation+aliases:
     matrix:
       - RUNNER:
           - aws/rhel-8.8-ga-x86_64
-          - aws/rhel-9.6-nightly-x86_64
+          - aws/rhel-9.7-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
 
 .generic_s3:
   extends: .libvirt_integration
   rules:
     # BLACKLIST
-    - if: $RUNNER !~ "/^.*(rhel-9.6).*$/" && $CI_PIPELINE_SOURCE != "schedule" && $NIGHTLY != "true" && $RUNNER !~ /[\S]+rhel-[\S]+-(?:(?:ga)|(?:eus))[\S]+/
+    - if: $RUNNER !~ "/^.*(rhel-9.7).*$/" && $CI_PIPELINE_SOURCE != "schedule" && $NIGHTLY != "true" && $RUNNER !~ /[\S]+rhel-[\S]+-(?:(?:ga)|(?:eus))[\S]+/
     - !reference [.nightly_rules_all, rules]
     - !reference [.ga_rules_all, rules]
 
@@ -750,7 +750,7 @@ RHEL 10 on 9 (Koji):
   variables:
     RUNNER: aws/rhel-9.5-ga-x86_64
     INTERNAL_NETWORK: "true"
-    DISTRO_CODE: rhel-10.0
+    DISTRO_CODE: rhel-10.1
 
 Multi-tenancy:
   stage: test
@@ -775,8 +775,8 @@ Upgrade:
   parallel:
     matrix:
       - RUNNER:
-          - rhos-01/rhel-9.6-nightly-x86_64-large
-          - rhos-01/rhel-10.0-nightly-x86_64-large
+          - rhos-01/rhel-9.7-nightly-x86_64-large
+          - rhos-01/rhel-10.1-nightly-x86_64-large
 
 NIGHTLY_FAIL:
   stage: finish
@@ -821,10 +821,7 @@ Installer:
   extends: .terraform/openstack
   rules:
     - !reference [.upstream_rules_all, rules]
-    # Disable Installer test for RHEL 10.0 nightly pipeline because fix for dracut issue won't make to nightly composes
-    # For more info see: https://issues.redhat.com/browse/RHEL-80160
-    # - !reference [.nightly_rules_all, rules]
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9.6-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
+    - !reference [.nightly_rules_all, rules]
     - !reference [.ga_rules_all, rules]
   script:
     - schutzbot/deploy.sh
@@ -832,9 +829,9 @@ Installer:
   parallel:
     matrix:
       - RUNNER:
-          - rhos-01/rhel-9.6-nightly-x86_64
+          - rhos-01/rhel-9.7-nightly-x86_64
           - rhos-01/centos-stream-9-x86_64
-          - rhos-01/rhel-10.0-nightly-x86_64
+          - rhos-01/rhel-10.1-nightly-x86_64
           - rhos-01/centos-stream-10-x86_64
 
 ContainerUpload:
@@ -867,8 +864,8 @@ ContainerEmbedding:
         RUNNER:
         - aws/centos-stream-9-x86_64
         - aws/centos-stream-10-x86_64
-        - aws/rhel-9.6-nightly-x86_64
-        - aws/rhel-10.0-nightly-x86_64
+        - aws/rhel-9.7-nightly-x86_64
+        - aws/rhel-10.1-nightly-x86_64
 
 WorkerExecutor:
   stage: test
