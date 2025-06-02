@@ -12,7 +12,6 @@ import (
 	"github.com/osbuild/blueprint/pkg/blueprint"
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/distro"
-	"github.com/osbuild/images/pkg/distro/fedora"
 	"github.com/osbuild/images/pkg/distrofactory"
 	"github.com/osbuild/images/pkg/dnfjson"
 	"github.com/osbuild/images/pkg/manifest"
@@ -130,7 +129,7 @@ func main() {
 
 	const fedoraID = "fedora-37"
 
-	d := fedora.DistroFactory(fedoraID)
+	d := distrofactory.NewDefault().GetDistro(fedoraID)
 	a, err := d.GetArch(arch.ARCH_X86_64.String())
 	if err != nil {
 		panic(err)
@@ -154,7 +153,7 @@ func main() {
 	}
 	rpmmdCache := path.Join(homeDir, ".cache/osbuild-composer/rpmmd")
 
-	df := distrofactory.New(fedora.DistroFactory)
+	df := distrofactory.NewDefault()
 
 	s := store.New(&cwd, df, nil)
 	if s == nil {
