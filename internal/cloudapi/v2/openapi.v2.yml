@@ -2683,6 +2683,8 @@ components:
         - $ref: '#/components/schemas/VolumeGroup'
     FilesystemTyped:
       type: object
+      required:
+        - fs_type
       properties:
         type:
           type: string
@@ -2767,6 +2769,8 @@ components:
             $ref: '#/components/schemas/LogicalVolume'
     LogicalVolume:
       type: object
+      required:
+        - fs_type
       properties:
         name:
           type: string

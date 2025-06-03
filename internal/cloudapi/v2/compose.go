@@ -1367,7 +1367,7 @@ func convertDiskCustomizations(disk *Disk) (*blueprint.DiskCustomization, error)
 				FilesystemTypedCustomization: blueprint.FilesystemTypedCustomization{
 					Mountpoint: common.DerefOrDefault(fs.Mountpoint),
 					Label:      common.DerefOrDefault(fs.Label),
-					FSType:     string(common.DerefOrDefault(fs.FsType)),
+					FSType:     string(fs.FsType),
 				},
 			}
 		case string(Btrfs):
@@ -1422,7 +1422,7 @@ func convertDiskCustomizations(disk *Disk) (*blueprint.DiskCustomization, error)
 					FilesystemTypedCustomization: blueprint.FilesystemTypedCustomization{
 						Mountpoint: common.DerefOrDefault(lv.Mountpoint),
 						Label:      common.DerefOrDefault(lv.Label),
-						FSType:     string(common.DerefOrDefault(lv.FsType)),
+						FSType:     string(lv.FsType),
 					},
 				}
 				bpPartition.LogicalVolumes = append(bpPartition.LogicalVolumes, bpLV)
