@@ -227,6 +227,7 @@ func GetTestBlueprint() blueprint.Blueprint {
 								FilesystemTypedCustomization: blueprint.FilesystemTypedCustomization{
 									Mountpoint: "/home",
 									Label:      "home",
+									FSType:     "ext4",
 								},
 							},
 						},
@@ -272,7 +273,7 @@ func TestGetBlueprintFromCustomizations(t *testing.T) {
 		FilesystemTyped{
 			Type:       common.ToPtr(Plain),
 			Minsize:    nil,
-			FsType:     common.ToPtr(FilesystemTypedFsTypeXfs),
+			FsType:     FilesystemTypedFsTypeXfs,
 			Label:      common.ToPtr("data"),
 			Mountpoint: common.ToPtr("/data"),
 		},
@@ -310,14 +311,14 @@ func TestGetBlueprintFromCustomizations(t *testing.T) {
 			PartType: common.ToPtr("E6D6D379-F507-44C2-A23C-238F2A3DF928"),
 			LogicalVolumes: []LogicalVolume{
 				{
-					FsType:     common.ToPtr(LogicalVolumeFsTypeExt4),
+					FsType:     LogicalVolumeFsTypeExt4,
 					Label:      nil,
 					Minsize:    nil,
 					Mountpoint: common.ToPtr("/"),
 					Name:       common.ToPtr("rootlv"),
 				},
 				{
-					FsType:     nil,
+					FsType:     LogicalVolumeFsTypeExt4,
 					Label:      common.ToPtr("home"),
 					Minsize:    &lvSize,
 					Mountpoint: common.ToPtr("/home"),
@@ -527,7 +528,7 @@ func TestGetBlueprintFromCompose(t *testing.T) {
 		FilesystemTyped{
 			Type:       common.ToPtr(Plain),
 			Minsize:    nil,
-			FsType:     common.ToPtr(FilesystemTypedFsTypeXfs),
+			FsType:     FilesystemTypedFsTypeXfs,
 			Label:      common.ToPtr("data"),
 			Mountpoint: common.ToPtr("/data"),
 		},
@@ -565,14 +566,14 @@ func TestGetBlueprintFromCompose(t *testing.T) {
 			PartType: common.ToPtr("E6D6D379-F507-44C2-A23C-238F2A3DF928"),
 			LogicalVolumes: []LogicalVolume{
 				{
-					FsType:     common.ToPtr(LogicalVolumeFsTypeExt4),
+					FsType:     LogicalVolumeFsTypeExt4,
 					Label:      nil,
 					Minsize:    nil,
 					Mountpoint: common.ToPtr("/"),
 					Name:       common.ToPtr("rootlv"),
 				},
 				{
-					FsType:     nil,
+					FsType:     LogicalVolumeFsTypeExt4,
 					Label:      common.ToPtr("home"),
 					Minsize:    &lvSize,
 					Mountpoint: common.ToPtr("/home"),
