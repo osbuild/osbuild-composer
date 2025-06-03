@@ -506,14 +506,9 @@ func (rbp *Blueprint) GetCustomizationsFromBlueprintRequest() (*blueprint.Custom
 		c.RHSM = bpRhsm
 	}
 
-	disk, err := convertDiskCustomizations(rbpc.Disk)
-	if err != nil {
-		return nil, err
-	}
-	c.Disk = disk
 	bpDisk, err := convertDiskCustomizations(rbpc.Disk)
 	if err != nil {
-		return nil, err
+		return nil, HTTPErrorWithInternal(ErrorInvalidCustomization, err)
 	}
 	c.Disk = bpDisk
 
@@ -1085,7 +1080,7 @@ func (request *ComposeRequest) GetBlueprintFromCustomizations() (blueprint.Bluep
 
 	bp.Customizations.Disk, err = convertDiskCustomizations(request.Customizations.Disk)
 	if err != nil {
-		return bp, err
+		return bp, HTTPErrorWithInternal(ErrorInvalidCustomization, err)
 	}
 
 	if cacerts := request.Customizations.Cacerts; cacerts != nil {
