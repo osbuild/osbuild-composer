@@ -274,7 +274,7 @@ func TestGetBlueprintFromCustomizations(t *testing.T) {
 			Minsize:    nil,
 			FsType:     common.ToPtr(FilesystemTypedFsTypeXfs),
 			Label:      common.ToPtr("data"),
-			Mountpoint: "/data",
+			Mountpoint: common.ToPtr("/data"),
 		},
 	))
 
@@ -313,14 +313,14 @@ func TestGetBlueprintFromCustomizations(t *testing.T) {
 					FsType:     common.ToPtr(LogicalVolumeFsTypeExt4),
 					Label:      nil,
 					Minsize:    nil,
-					Mountpoint: "/",
+					Mountpoint: common.ToPtr("/"),
 					Name:       common.ToPtr("rootlv"),
 				},
 				{
 					FsType:     nil,
 					Label:      common.ToPtr("home"),
 					Minsize:    &lvSize,
-					Mountpoint: "/home",
+					Mountpoint: common.ToPtr("/home"),
 					Name:       common.ToPtr("homelv"),
 				},
 			},
@@ -529,7 +529,7 @@ func TestGetBlueprintFromCompose(t *testing.T) {
 			Minsize:    nil,
 			FsType:     common.ToPtr(FilesystemTypedFsTypeXfs),
 			Label:      common.ToPtr("data"),
-			Mountpoint: "/data",
+			Mountpoint: common.ToPtr("/data"),
 		},
 	))
 
@@ -568,14 +568,14 @@ func TestGetBlueprintFromCompose(t *testing.T) {
 					FsType:     common.ToPtr(LogicalVolumeFsTypeExt4),
 					Label:      nil,
 					Minsize:    nil,
-					Mountpoint: "/",
+					Mountpoint: common.ToPtr("/"),
 					Name:       common.ToPtr("rootlv"),
 				},
 				{
 					FsType:     nil,
 					Label:      common.ToPtr("home"),
 					Minsize:    &lvSize,
-					Mountpoint: "/home",
+					Mountpoint: common.ToPtr("/home"),
 					Name:       common.ToPtr("homelv"),
 				},
 			},

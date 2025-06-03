@@ -1364,7 +1364,7 @@ func convertDiskCustomizations(disk *Disk) (*blueprint.DiskCustomization, error)
 				PartType: common.DerefOrDefault(fs.PartType),
 				MinSize:  fsSize,
 				FilesystemTypedCustomization: blueprint.FilesystemTypedCustomization{
-					Mountpoint: fs.Mountpoint,
+					Mountpoint: common.DerefOrDefault(fs.Mountpoint),
 					Label:      common.DerefOrDefault(fs.Label),
 					FSType:     string(common.DerefOrDefault(fs.FsType)),
 				},
@@ -1419,7 +1419,7 @@ func convertDiskCustomizations(disk *Disk) (*blueprint.DiskCustomization, error)
 					Name:    common.DerefOrDefault(lv.Name),
 					MinSize: lvSize,
 					FilesystemTypedCustomization: blueprint.FilesystemTypedCustomization{
-						Mountpoint: lv.Mountpoint,
+						Mountpoint: common.DerefOrDefault(lv.Mountpoint),
 						Label:      common.DerefOrDefault(lv.Label),
 						FSType:     string(common.DerefOrDefault(lv.FsType)),
 					},
