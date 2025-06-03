@@ -283,7 +283,7 @@ func TestGetBlueprintFromCustomizations(t *testing.T) {
 	var btrfsPart Partition
 	require.NoError(t, btrfsPart.FromBtrfsVolume(
 		BtrfsVolume{
-			Type:    common.ToPtr(Btrfs),
+			Type:    Btrfs,
 			Minsize: &btrfsSize,
 			Subvolumes: []BtrfsSubvolume{
 				{
@@ -304,7 +304,7 @@ func TestGetBlueprintFromCustomizations(t *testing.T) {
 	var vgPart Partition
 	require.NoError(t, vgPart.FromVolumeGroup(
 		VolumeGroup{
-			Type:     common.ToPtr(Lvm),
+			Type:     Lvm,
 			Name:     common.ToPtr("vg000001"),
 			Minsize:  &vgSize,
 			PartType: common.ToPtr("E6D6D379-F507-44C2-A23C-238F2A3DF928"),
@@ -538,7 +538,7 @@ func TestGetBlueprintFromCompose(t *testing.T) {
 	var btrfsPart Partition
 	require.NoError(t, btrfsPart.FromBtrfsVolume(
 		BtrfsVolume{
-			Type:    common.ToPtr(Btrfs),
+			Type:    Btrfs,
 			Minsize: &btrfsSize,
 			Subvolumes: []BtrfsSubvolume{
 				{
@@ -559,7 +559,7 @@ func TestGetBlueprintFromCompose(t *testing.T) {
 	var vgPart Partition
 	require.NoError(t, vgPart.FromVolumeGroup(
 		VolumeGroup{
-			Type:     common.ToPtr(Lvm),
+			Type:     Lvm,
 			Minsize:  &vgSize,
 			Name:     common.ToPtr("vg000001"),
 			PartType: common.ToPtr("E6D6D379-F507-44C2-A23C-238F2A3DF928"),
