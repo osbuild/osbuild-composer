@@ -1433,7 +1433,7 @@ func convertDiskCustomizations(disk *Disk) (*blueprint.DiskCustomization, error)
 		}
 		bpDisk.Partitions = append(bpDisk.Partitions, bpPartition)
 	}
-	return bpDisk, nil
+	return bpDisk, bpDisk.Validate()
 }
 
 func decodeMinsize(size *Minsize) (uint64, error) {
