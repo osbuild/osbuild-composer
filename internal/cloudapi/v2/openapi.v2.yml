@@ -2683,8 +2683,6 @@ components:
         - $ref: '#/components/schemas/VolumeGroup'
     FilesystemTyped:
       type: object
-      required:
-        - mountpoint
       properties:
         type:
           type: string
@@ -2707,8 +2705,9 @@ components:
             - ext4
             - xfs
             - vfat
+            - swap
           description: |
-            The filesystem type
+            The filesystem type. Swap partitions must have an empty mountpoint.
     BtrfsVolume:
       type: object
       required:
@@ -2767,8 +2766,6 @@ components:
             $ref: '#/components/schemas/LogicalVolume'
     LogicalVolume:
       type: object
-      required:
-        - mountpoint
       properties:
         name:
           type: string
@@ -2786,8 +2783,9 @@ components:
             - ext4
             - xfs
             - vfat
+            - swap
           description: |
-            The filesystem type for the logical volume
+            The filesystem type for the logical volume. Swap LVs must have an empty mountpoint.
     minsize:
       type: string
       example: "2 GiB"
