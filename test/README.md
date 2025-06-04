@@ -324,6 +324,15 @@ section and run `/usr/libexec/tests/osbuild-composer/api.sh gcp`.
 
 [gcp_creds]: https://cloud.google.com/docs/authentication/getting-started#setting_the_environment_variable
 
+#### Setting up Oracle (OCI) integration tests
+
+The following environment variables are required:
+
+- `OCI_PRIVATE_KEY`
+- `OCI_SECRETS`
+
+details where to get them are in our internal-guides.
+
 ## Downstream testing notes
 
 To make it easier for us to test & verify downstream builds we are going to
