@@ -38,7 +38,7 @@ region=${OCI_REGION}
 EOF
 
 function installClient() {
-    if ! hash oci; then
+    if ! hash oci 2>/dev/null; then
         echo "Using 'oci' from a container"
         sudo "${CONTAINER_RUNTIME}" pull "${CONTAINER_IMAGE_CLOUD_TOOLS}"
 
