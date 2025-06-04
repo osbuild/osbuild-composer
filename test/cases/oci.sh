@@ -201,7 +201,7 @@ echo "$RET" | jq '.data[0]' | tee "$OCI_IMAGE_DATA" > /dev/null
 OCI_IMAGE_ID=$(jq -r '.id' "$OCI_IMAGE_DATA")
 greenprint  "🔍 Found $OCI_IMAGE_ID, searching shape availability"
 
-SHAPE="VM.Standard.E4.Flex"
+SHAPE="VM.Standard.E5.Flex"
 OCI_AVAILABILITY_DOMAIN="$(get_availability_domain_by_shape "$SHAPE")"
 
 # Build instance in OCI with our image.
