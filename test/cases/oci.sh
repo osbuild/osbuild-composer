@@ -85,7 +85,7 @@ tenancy=${OCI_TENANCY}
 region=${OCI_REGION}
 EOF
 
-if ! hash oci; then
+if ! hash oci 2>/dev/null; then
     echo "Using 'oci' from a container"
     sudo "${CONTAINER_RUNTIME}" pull ${CONTAINER_IMAGE_CLOUD_TOOLS}
 
@@ -101,6 +101,8 @@ else
     echo "Using pre-installed 'oci' from the system"
     OCI_CMD="oci --config-file $OCI_CONFIG --region $OCI_REGION"
 fi
+
+echo -n "OCI version: "
 $OCI_CMD --version
 $OCI_CMD setup repair-file-permissions --file "${TEMPDIR}/priv_key.pem"
 $OCI_CMD setup repair-file-permissions --file "$OCI_CONFIG"
