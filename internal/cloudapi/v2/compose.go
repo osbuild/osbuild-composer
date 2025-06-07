@@ -506,14 +506,9 @@ func (rbp *Blueprint) GetCustomizationsFromBlueprintRequest() (*blueprint.Custom
 		c.RHSM = bpRhsm
 	}
 
-	disk, err := convertDiskCustomizations(rbpc.Disk)
-	if err != nil {
-		return nil, err
-	}
-	c.Disk = disk
 	bpDisk, err := convertDiskCustomizations(rbpc.Disk)
 	if err != nil {
-		return nil, err
+		return nil, HTTPErrorWithInternal(ErrorInvalidCustomization, err)
 	}
 	c.Disk = bpDisk
 
@@ -1085,7 +1080,7 @@ func (request *ComposeRequest) GetBlueprintFromCustomizations() (blueprint.Bluep
 
 	bp.Customizations.Disk, err = convertDiskCustomizations(request.Customizations.Disk)
 	if err != nil {
-		return bp, err
+		return bp, HTTPErrorWithInternal(ErrorInvalidCustomization, err)
 	}
 
 	if cacerts := request.Customizations.Cacerts; cacerts != nil {
@@ -1340,6 +1335,7 @@ func convertDiskCustomizations(disk *Disk) (*blueprint.DiskCustomization, error)
 	if err != nil {
 		return nil, err
 	}
+
 	bpDisk := &blueprint.DiskCustomization{
 		MinSize: diskSize,
 		Type:    string(common.DerefOrDefault(disk.Type)),
@@ -1355,7 +1351,7 @@ func convertDiskCustomizations(disk *Disk) (*blueprint.DiskCustomization, error)
 
 		var bpPartition blueprint.PartitionCustomization
 		switch partType := common.DerefOrDefault(sniffer.Type); string(partType) {
-		case string(Plain):
+		case string(Plain), "":
 			fs, err := partition.AsFilesystemTyped()
 			if err != nil {
 				return nil, fmt.Errorf("failed to deserialize disk customization partition %d with type %q", idx, partType)
@@ -1369,9 +1365,9 @@ func convertDiskCustomizations(disk *Disk) (*blueprint.DiskCustomization, error)
 				PartType: common.DerefOrDefault(fs.PartType),
 				MinSize:  fsSize,
 				FilesystemTypedCustomization: blueprint.FilesystemTypedCustomization{
-					Mountpoint: fs.Mountpoint,
+					Mountpoint: common.DerefOrDefault(fs.Mountpoint),
 					Label:      common.DerefOrDefault(fs.Label),
-					FSType:     string(common.DerefOrDefault(fs.FsType)),
+					FSType:     string(fs.FsType),
 				},
 			}
 		case string(Btrfs):
@@ -1385,7 +1381,7 @@ func convertDiskCustomizations(disk *Disk) (*blueprint.DiskCustomization, error)
 			}
 
 			bpPartition = blueprint.PartitionCustomization{
-				Type:     string(common.DerefOrDefault(btrfsVol.Type)),
+				Type:     string(btrfsVol.Type),
 				PartType: common.DerefOrDefault(btrfsVol.PartType),
 				MinSize:  volSize,
 			}
@@ -1407,7 +1403,7 @@ func convertDiskCustomizations(disk *Disk) (*blueprint.DiskCustomization, error)
 				return nil, err
 			}
 			bpPartition = blueprint.PartitionCustomization{
-				Type:     string(common.DerefOrDefault(vg.Type)),
+				Type:     string(vg.Type),
 				PartType: common.DerefOrDefault(vg.PartType),
 				MinSize:  vgSize,
 				VGCustomization: blueprint.VGCustomization{
@@ -1424,9 +1420,9 @@ func convertDiskCustomizations(disk *Disk) (*blueprint.DiskCustomization, error)
 					Name:    common.DerefOrDefault(lv.Name),
 					MinSize: lvSize,
 					FilesystemTypedCustomization: blueprint.FilesystemTypedCustomization{
-						Mountpoint: lv.Mountpoint,
+						Mountpoint: common.DerefOrDefault(lv.Mountpoint),
 						Label:      common.DerefOrDefault(lv.Label),
-						FSType:     string(common.DerefOrDefault(lv.FsType)),
+						FSType:     string(lv.FsType),
 					},
 				}
 				bpPartition.LogicalVolumes = append(bpPartition.LogicalVolumes, bpLV)
@@ -1437,8 +1433,7 @@ func convertDiskCustomizations(disk *Disk) (*blueprint.DiskCustomization, error)
 		}
 		bpDisk.Partitions = append(bpDisk.Partitions, bpPartition)
 	}
-
-	return bpDisk, nil
+	return bpDisk, bpDisk.Validate()
 }
 
 func decodeMinsize(size *Minsize) (uint64, error) {
