@@ -13,6 +13,18 @@ const (
 	TarArchiveFormatV7     TarArchiveFormat = "v7"
 )
 
+type TarArchiveCompression string
+
+// valid values for the 'compression' Tar stage option
+const (
+	// `auto` means based on filename
+	TarArchiveCompressionAuto TarArchiveCompression = "auto"
+
+	TarArchiveCompressionXz   TarArchiveCompression = "xz"
+	TarArchiveCompressionGzip TarArchiveCompression = "gzip"
+	TarArchiveCompressionZstd TarArchiveCompression = "zstd"
+)
+
 type TarRootNode string
 
 // valid values for the 'root-node' Tar stage option
@@ -27,6 +39,9 @@ type TarStageOptions struct {
 
 	// Archive format to use
 	Format TarArchiveFormat `json:"format,omitempty"`
+
+	// Compression to use, defaults to "auto" which is based on filename
+	Compression TarArchiveCompression `json:"compression,omitempty"`
 
 	// Enable support for POSIX ACLs
 	ACLs *bool `json:"acls,omitempty"`
@@ -67,6 +82,25 @@ func (o TarStageOptions) validate() error {
 		}
 		if !valid {
 			return fmt.Errorf("'format' option does not allow %q as a value", o.Format)
+		}
+	}
+
+	if o.Compression != "" {
+		allowedArchiveCompressionValues := []TarArchiveCompression{
+			TarArchiveCompressionAuto,
+			TarArchiveCompressionXz,
+			TarArchiveCompressionGzip,
+			TarArchiveCompressionZstd,
+		}
+		valid := false
+		for _, value := range allowedArchiveCompressionValues {
+			if o.Compression == value {
+				valid = true
+				break
+			}
+		}
+		if !valid {
+			return fmt.Errorf("'compression' option does not allow %q as a value", o.Compression)
 		}
 	}
 

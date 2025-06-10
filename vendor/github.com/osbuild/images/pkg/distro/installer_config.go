@@ -6,4 +6,7 @@ type InstallerConfig struct {
 	// Additional dracut modules and drivers to enable
 	AdditionalDracutModules []string `yaml:"additional_dracut_modules"`
 	AdditionalDrivers       []string `yaml:"additional_drivers"`
+
+	// SquashfsRootfs will set SquashfsRootfs as rootfs in the iso image
+	SquashfsRootfs *bool `yaml:"squashfs_rootfs"`
 }

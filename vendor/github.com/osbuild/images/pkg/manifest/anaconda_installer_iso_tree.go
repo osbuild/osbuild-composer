@@ -105,6 +105,8 @@ type AnacondaInstallerISOTree struct {
 	// Pipeline object where subscription-related files are created for copying
 	// onto the ISO.
 	SubscriptionPipeline *Subscription
+
+	InstallRootfsType disk.FSType
 }
 
 func NewAnacondaInstallerISOTree(buildPipeline Build, anacondaPipeline *AnacondaInstaller, rootfsPipeline *ISORootfsImg, bootTreePipeline *EFIBootTree) *AnacondaInstallerISOTree {
@@ -552,6 +554,19 @@ func (p *AnacondaInstallerISOTree) bootcInstallerKickstartStages() []*osbuild.St
 		panic(fmt.Sprintf("failed to create kickstart stage options: %v", err))
 	}
 
+	// Workaround for lack of --target-imgref in Anaconda, xref https://github.com/osbuild/images/issues/380
+	kickstartOptions.Post = append(kickstartOptions.Post, osbuild.PostOptions{
+		ErrorOnFail: true,
+		Commands: []string{
+			fmt.Sprintf("bootc switch --mutate-in-place --transport registry %s", p.containerSpec.LocalName),
+			"# used during automatic image testing as finished marker",
+			"if [ -c /dev/ttyS0 ]; then",
+			"  # continue on errors here, because we used to omit --erroronfail",
+			`  echo "Install finished" > /dev/ttyS0 || true`,
+			"fi",
+		},
+	})
+
 	// kickstart.New() already validates the options but they may have been
 	// modified since then, so validate them before we create the stages
 	if err := p.Kickstart.Validate(); err != nil {
@@ -612,32 +627,31 @@ func (p *AnacondaInstallerISOTree) bootcInstallerKickstartStages() []*osbuild.St
 
 	stages = append(stages, osbuild.NewKickstartStage(kickstartOptions))
 
-	// and what we can't do in a separate kickstart that we include
-	targetContainerTransport := "registry"
-
 	// Because osbuild core only supports a subset of options, we append to the
 	// base here with some more hardcoded defaults
 	// that should very likely become configurable.
-	hardcodedKickstartBits := `
-reqpart --add-boot
+	var hardcodedKickstartBits string
 
-part swap --fstype=swap --size=1024
-part / --fstype=ext4 --grow
+	// using `autopart` because  `part / --fstype=btrfs` didn't work
+	rootFsType := p.InstallRootfsType
+	if rootFsType == disk.FS_NONE {
+		// if the rootfs type is not set, we default to ext4
+		rootFsType = disk.FS_EXT4
+	}
+	switch rootFsType {
+	case disk.FS_BTRFS:
+		hardcodedKickstartBits = `
+autopart --nohome --type=btrfs
+`
+	default:
+		hardcodedKickstartBits = fmt.Sprintf(`
+autopart --nohome --type=plain --fstype=%s
+`, rootFsType.String())
+	}
 
+	hardcodedKickstartBits += `
 reboot --eject
 `
-
-	// Workaround for lack of --target-imgref in Anaconda, xref https://github.com/osbuild/images/issues/380
-	hardcodedKickstartBits += fmt.Sprintf(`%%post --erroronfail
-bootc switch --mutate-in-place --transport %s %s
-
-# used during automatic image testing as finished marker
-if [ -c /dev/ttyS0 ]; then
-    # continue on errors here, because we used to omit --erroronfail
-    echo "Install finished" > /dev/ttyS0 || true
-fi
-%%end
-`, targetContainerTransport, p.containerSpec.LocalName)
 
 	kickstartFile, err := kickstartOptions.IncludeRaw(hardcodedKickstartBits)
 	if err != nil {
@@ -733,10 +747,10 @@ func (p *AnacondaInstallerISOTree) makeKickstartStages(stageOptions *osbuild.Kic
 		}
 	}
 
+	if sudoersPost := makeKickstartSudoersPost(kickstartOptions.SudoNopasswd); sudoersPost != nil {
+		stageOptions.Post = append(stageOptions.Post, *sudoersPost)
+	}
 	stages = append(stages, osbuild.NewKickstartStage(stageOptions))
-
-	hardcodedKickstartBits := ""
-	hardcodedKickstartBits += makeKickstartSudoersPost(kickstartOptions.SudoNopasswd)
 
 	if p.SubscriptionPipeline != nil {
 		subscriptionPath := "/subscription"
@@ -757,7 +771,7 @@ func (p *AnacondaInstallerISOTree) makeKickstartStages(stageOptions *osbuild.Kic
 			systemPath = "/mnt/sysroot"
 
 		}
-		hardcodedKickstartBits += makeKickstartSubscriptionPost(subscriptionPath, systemPath)
+		stageOptions.Post = append(stageOptions.Post, makeKickstartSubscriptionPost(subscriptionPath, systemPath)...)
 
 		// include a readme file on the ISO in the subscription path to explain what it's for
 		subscriptionReadme, err := fsnode.NewFile(
@@ -773,16 +787,6 @@ This directory contains files necessary for registering the system on first boot
 		p.Files = append(p.Files, subscriptionReadme)
 	}
 
-	if hardcodedKickstartBits != "" {
-		// Because osbuild core only supports a subset of options,
-		// we append to the base here with hardcoded wheel group with NOPASSWD option
-		kickstartFile, err := stageOptions.IncludeRaw(hardcodedKickstartBits)
-		if err != nil {
-			panic(err)
-		}
-
-		p.Files = append(p.Files, kickstartFile)
-	}
 	stages = append(stages, osbuild.GenFileNodesStages(p.Files)...)
 
 	return stages
@@ -795,44 +799,43 @@ func makeISORootPath(p string) string {
 	return fmt.Sprintf("file://%s", fullpath)
 }
 
-func makeKickstartSudoersPost(names []string) string {
+func makeKickstartSudoersPost(names []string) *osbuild.PostOptions {
 	if len(names) == 0 {
-		return ""
+		return nil
 	}
-	echoLineFmt := `echo -e "%[1]s\tALL=(ALL)\tNOPASSWD: ALL" > "/etc/sudoers.d/%[1]s"
-chmod 0440 /etc/sudoers.d/%[1]s`
+	echoLineFmt := `echo -e "%[1]s\tALL=(ALL)\tNOPASSWD: ALL" > "/etc/sudoers.d/%[1]s"`
+	chmodLineFmt := `chmod 0440 /etc/sudoers.d/%[1]s`
 
 	filenames := make(map[string]bool)
 	sort.Strings(names)
-	entries := make([]string, 0, len(names))
+	post := &osbuild.PostOptions{}
 	for _, name := range names {
 		if filenames[name] {
 			continue
 		}
-		entries = append(entries, fmt.Sprintf(echoLineFmt, name))
+		post.Commands = append(post.Commands,
+			fmt.Sprintf(echoLineFmt, name),
+			fmt.Sprintf(chmodLineFmt, name),
+		)
 		filenames[name] = true
 	}
 
-	kickstartSudoersPost := `
-%%post
-%s
-restorecon -rvF /etc/sudoers.d
-%%end
-`
-	return fmt.Sprintf(kickstartSudoersPost, strings.Join(entries, "\n"))
-
+	post.Commands = append(post.Commands, "restorecon -rvF /etc/sudoers.d")
+	return post
 }
 
-func makeKickstartSubscriptionPost(source, dest string) string {
-	// we need to use --nochroot so the command can access files on the ISO
+func makeKickstartSubscriptionPost(source, dest string) []osbuild.PostOptions {
 	fullSourcePath := filepath.Join("/run/install/repo", source, "etc/*")
-	kickstartSubscriptionPost := `
-%%post --nochroot
-cp -r %s %s
-%%end
-%%post
-systemctl enable osbuild-subscription-register.service
-%%end
-`
-	return fmt.Sprintf(kickstartSubscriptionPost, fullSourcePath, dest)
+	return []osbuild.PostOptions{
+		{
+			// we need to use --nochroot so the command can access files on the ISO
+			NoChroot: true,
+			Commands: []string{
+				fmt.Sprintf("cp -r %s %s", fullSourcePath, dest),
+			},
+		},
+		{
+			Commands: []string{"systemctl enable osbuild-subscription-register.service"},
+		},
+	}
 }

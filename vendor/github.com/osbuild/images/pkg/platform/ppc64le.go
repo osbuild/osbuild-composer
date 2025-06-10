@@ -47,3 +47,7 @@ func (p *PPC64LE) GetBuildPackages() []string {
 
 	return packages
 }
+
+func (p *PPC64LE) GetBootloader() Bootloader {
+	return BOOTLOADER_GRUB2
+}
