@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/blueprint"
 	"github.com/osbuild/images/pkg/datasizes"
@@ -26,7 +27,7 @@ type PartitionTable struct {
 	SectorSize uint64 `json:"sector_size,omitempty" yaml:"sector_size,omitempty"`
 	// Extra space at the end of the partition table (sectors)
 	ExtraPadding uint64 `json:"extra_padding,omitempty" yaml:"extra_padding,omitempty"`
-	// Starting offset of the first partition in the table (Mb)
+	// Starting offset of the first partition in the table (in bytes)
 	StartOffset uint64 `json:"start_offset,omitempty" yaml:"start_offset,omitempty"`
 }
 
@@ -170,6 +171,27 @@ func NewPartitionTable(basePT *PartitionTable, mountpoints []blueprint.Filesyste
 	newPT.GenerateUUIDs(rng)
 
 	return newPT, nil
+}
+
+func (pt *PartitionTable) UnmarshalJSON(data []byte) (err error) {
+	for _, field := range []string{"size", "start_offset"} {
+		data, err = datasizes.ParseSizeInJSONMapping(field, data)
+		if err != nil {
+			return fmt.Errorf("error parsing %q in partition table: %w", field, err)
+		}
+	}
+
+	type aliasStruct PartitionTable
+	var alias aliasStruct
+	if err := jsonUnmarshalStrict(data, &alias); err != nil {
+		return fmt.Errorf("cannot unmarshal %q: %w", data, err)
+	}
+	*pt = PartitionTable(alias)
+	return err
+}
+
+func (pt *PartitionTable) UnmarshalYAML(unmarshal func(any) error) error {
+	return common.UnmarshalYAMLviaJSON(pt, unmarshal)
 }
 
 func (pt *PartitionTable) Clone() Entity {

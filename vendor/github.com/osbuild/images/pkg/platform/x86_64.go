@@ -8,6 +8,7 @@ type X86 struct {
 	BasePlatform
 	BIOS       bool
 	UEFIVendor string
+	Bootloader Bootloader
 }
 
 func (p *X86) GetArch() arch.Arch {
@@ -28,18 +29,28 @@ func (p *X86) GetUEFIVendor() string {
 func (p *X86) GetPackages() []string {
 	packages := p.BasePlatform.FirmwarePackages
 
-	if p.BIOS {
-		packages = append(packages,
-			"dracut-config-generic",
-			"grub2-pc")
-	}
+	switch p.GetBootloader() {
+	case BOOTLOADER_GRUB2:
+		if p.BIOS {
+			packages = append(packages,
+				"dracut-config-generic",
+				"grub2-pc")
+		}
 
-	if p.UEFIVendor != "" {
+		if p.UEFIVendor != "" {
+			packages = append(packages,
+				"dracut-config-generic",
+				"efibootmgr",
+				"grub2-efi-x64",
+				"shim-x64")
+		}
+	case BOOTLOADER_UKI:
 		packages = append(packages,
-			"dracut-config-generic",
 			"efibootmgr",
-			"grub2-efi-x64",
-			"shim-x64")
+			"kernel-uki-virt-addons", // provides useful cmdline utilities for the UKI
+			"shim-x64",
+			"uki-direct",
+		)
 	}
 
 	return packages
@@ -51,4 +62,11 @@ func (p *X86) GetBuildPackages() []string {
 		packages = append(packages, "grub2-pc")
 	}
 	return packages
+}
+
+func (p *X86) GetBootloader() Bootloader {
+	if p.Bootloader == BOOTLOADER_NONE {
+		return BOOTLOADER_GRUB2
+	}
+	return p.Bootloader
 }

@@ -9,5 +9,5 @@ import (
 )
 
 func packageSetLoader(t *rhel.ImageType) (map[string]rpmmd.PackageSet, error) {
-	return defs.PackageSets(t, nil)
+	return defs.PackageSets(t)
 }

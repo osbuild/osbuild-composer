@@ -246,6 +246,11 @@ func lvname(path string) string {
 }
 
 func (lv *LVMLogicalVolume) UnmarshalJSON(data []byte) (err error) {
+	data, err = datasizes.ParseSizeInJSONMapping("size", data)
+	if err != nil {
+		return fmt.Errorf("error parsing size in LVM LV: %w", err)
+	}
+
 	// keep in sync with lvm.go,partition.go,luks.go
 	type alias LVMLogicalVolume
 	var withoutPayload struct {

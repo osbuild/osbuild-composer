@@ -7,7 +7,7 @@ import (
 )
 
 func defaultBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
-	partitionTable, err := defs.PartitionTable(t, nil)
+	partitionTable, err := defs.PartitionTable(t)
 	if err != nil {
 		// XXX: have a check to differenciate ErrNoEnt and else
 		return disk.PartitionTable{}, false

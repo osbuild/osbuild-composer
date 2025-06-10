@@ -69,3 +69,24 @@ func mkAzureSapInternalImgType(rd *rhel.Distribution, a arch.Arch) *rhel.ImageTy
 
 	return it
 }
+
+// Azure Confidential VM
+func mkAzureCVMImgType(rd *rhel.Distribution) *rhel.ImageType {
+	it := rhel.NewImageType(
+		"azure-cvm",
+		"disk.vhd",
+		"application/x-vhd",
+		packageSetLoader,
+		rhel.DiskImage,
+		[]string{"build"},
+		[]string{"os", "image", "vpc"},
+		[]string{"vpc"},
+	)
+
+	it.Bootable = true
+	it.DefaultSize = 32 * datasizes.GibiByte
+	it.DefaultImageConfig = imageConfig(rd, "x86_64", "azure-cvm")
+	it.BasePartitionTables = defaultBasePartitionTables
+
+	return it
+}

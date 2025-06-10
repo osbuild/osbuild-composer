@@ -40,3 +40,7 @@ func (p *RISCV64) GetBuildPackages() []string {
 func (p *RISCV64) GetUEFIVendor() string {
 	return p.UEFIVendor
 }
+
+func (p *RISCV64) GetBootloader() Bootloader {
+	return BOOTLOADER_GRUB2
+}

@@ -72,12 +72,12 @@
         uuid: "D209C89E-EA5E-4FBD-B161-B461CCE297E0"
         type: "gpt"
         partitions:
-          - size: 1_048_576  # 1 MiB
+          - size: "1 MiB"
             bootable: true
             type: *bios_boot_partition_guid
             uuid: *bios_boot_partition_uuid
           - &default_partition_table_part_efi
-            size: 209_715_200  # 200 MiB
+            size: "200 MiB"
             type: *efi_system_partition_guid
             uuid: *efi_system_partition_uuid
             payload_type: "filesystem"
@@ -90,7 +90,7 @@
               fstab_freq: 0
               fstab_passno: 2
           - &default_partition_table_part_boot
-            size: 524_288_000  # 500 * MiB
+            size: "500 MiB"
             type: *filesystem_data_guid
             uuid: *data_partition_uuid
             payload_type: "filesystem"
@@ -102,7 +102,7 @@
               fstab_freq: 0
               fstab_passno: 0
           - &default_partition_table_part_root
-            size: 2_147_483_648  # 2 * datasizes.GibiByte,
+            size: "2 GiB"
             type: *filesystem_data_guid
             uuid: *root_partition_uuid
             payload_type: "filesystem"
