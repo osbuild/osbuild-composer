@@ -86,7 +86,8 @@
             value: "4194304"
           - key: "vm.max_map_count"
             value: "2147483647"
-    dnf_set_release_ver_var: true
+    dnf_config:
+      set_release_ver_var: true
 
   sap_pkgset: &sap_pkgset
     include:
@@ -224,6 +225,7 @@
       - &filesystem_data_guid "0FC63DAF-8483-4772-8E79-3D69D8477DE4"
       - &xboot_ldr_partition_guid "BC13C2FF-59E6-4262-A352-B275FD6F7172"
       - &lvm_partition_guid "E6D6D379-F507-44C2-A23C-238F2A3DF928"
+      - &root_partition_x86_64_guid "4F68BCE3-E8CD-4DB1-96E7-FBCAF984B709"
     # static UUIDs for partitions and filesystems
     # NOTE(akoutsou): These are unnecessary and have stuck around since the
     # beginning where (I believe) the goal was to have predictable,
@@ -242,12 +244,12 @@
         uuid: "D209C89E-EA5E-4FBD-B161-B461CCE297E0"
         type: "gpt"
         partitions:
-          - size: 1_048_576  # 1 MiB
+          - size: "1 MiB"
             bootable: true
             type: *bios_boot_partition_guid
             uuid: *bios_boot_partition_uuid
           - &default_partition_table_part_efi
-            size: 209_715_200  # 200 MiB
+            size: "200 MiB"
             type: *efi_system_partition_guid
             uuid: *efi_system_partition_uuid
             payload_type: "filesystem"
@@ -260,7 +262,7 @@
               fstab_freq: 0
               fstab_passno: 2
           - &default_partition_table_part_root
-            size: 2_147_483_648  # 2 * datasizes.GibiByte,
+            size: "2 GiB"
             type: *filesystem_data_guid
             uuid: *root_partition_uuid
             payload_type: "filesystem"
@@ -281,11 +283,11 @@
         uuid: "0x14fc63d2"
         type: "dos"
         partitions:
-          - size: 4_194_304  # 4 MiB
+          - size: "4 MiB"
             bootable: true
             type: *prep_partition_dosid
           - &default_partition_table_part_root_ppc64le
-            size: 2_147_483_648  # 2 * datasizes.GibiByte,
+            size: "2 GiB"
             payload_type: "filesystem"
             payload:
               <<: *default_partition_table_part_root_payload
@@ -296,6 +298,193 @@
         partitions:
           - <<: *default_partition_table_part_root_ppc64le
             bootable: true
+
+  azure_image_config: &azure_image_config
+    # from CreateAzureDatalossWarningScriptAndUnit
+    files:
+      - path: &dataloss_script "/usr/local/sbin/temp-disk-dataloss-warning"
+        mode: 0755
+        data: |
+          #!/bin/sh
+          # /usr/local/sbin/temp-disk-dataloss-warning
+          # Write dataloss warning file on mounted Azure resource disk
+
+          AZURE_RESOURCE_DISK_PART1="/dev/disk/cloud/azure_resource-part1"
+
+          MOUNTPATH=$(grep "$AZURE_RESOURCE_DISK_PART1" /etc/fstab | tr '\t' ' ' | cut -d' ' -f2)
+          if [ -z "$MOUNTPATH" ]; then
+              echo "There is no mountpoint of $AZURE_RESOURCE_DISK_PART1 in /etc/fstab"
+              exit 0
+          fi
+
+          if [ "$MOUNTPATH" = "none" ]; then
+              echo "Mountpoint of $AZURE_RESOURCE_DISK_PART1 is not a path"
+              exit 1
+          fi
+
+          if ! mountpoint -q "$MOUNTPATH"; then
+              echo "$AZURE_RESOURCE_DISK_PART1 is not mounted at $MOUNTPATH"
+              exit 1
+          fi
+
+          echo "Creating a dataloss warning file at ${MOUNTPATH}/DATALOSS_WARNING_README.txt"
+
+          cat <<'EOF' > "${MOUNTPATH}/DATALOSS_WARNING_README.txt"
+          WARNING: THIS IS A TEMPORARY DISK.
+
+          Any data stored on this drive is SUBJECT TO LOSS and THERE IS NO WAY TO RECOVER IT.
+
+          Please do not use this disk for storing any personal or application data.
+
+          EOF
+    systemd_unit:
+      - filename: &dataloss_systemd_unit_filename "temp-disk-dataloss-warning.service"
+        "unit-type": "system"
+        "unit-path": "etc"
+        config:
+          "Unit":
+            Description: "Azure temporary resource disk dataloss warning file creation"
+            After: ["multi-user.target", "cloud-final.service"]
+          "Service":
+            Type: "oneshot"
+            ExecStart: [*dataloss_script]
+            StandardOutput: "journal+console"
+          "Install":
+            WantedBy: ["default.target"]
+    keyboard:
+      keymap: "us"
+      "x11-keymap":
+        layouts: ["us"]
+    update_default_kernel: true
+    default_kernel: "kernel-core"
+    sysconfig:
+      networking: true
+      no_zero_conf: true
+    enabled_services:
+      - "firewalld"
+      - "nm-cloud-setup.service"
+      - "nm-cloud-setup.timer"
+      - "sshd"
+      - "waagent"
+      - *dataloss_systemd_unit_filename
+    sshd_config:
+      config:
+        ClientAliveInterval: 180
+    modprobe:
+      - filename: "blacklist-amdgpu.conf"
+        commands:
+          - command: blacklist
+            modulename: "amdgpu"
+      - filename: "blacklist-intel-cstate.conf"
+        commands:
+          - command: blacklist
+            modulename: "intel_cstate"
+      - filename: "blacklist-floppy.conf"
+        commands:
+          - command: blacklist
+            modulename: "floppy"
+      - filename: "blacklist-nouveau.conf"
+        commands:
+          - command: blacklist
+            modulename: "nouveau"
+          - command: blacklist
+            modulename: "lbm-nouveau"
+      - filename: "blacklist-skylake-edac.conf"
+        commands:
+          - command: blacklist
+            modulename: "skx_edac"
+      - filename: "blacklist-intel_uncore.conf"
+        commands:
+          - command: blacklist
+            modulename: "intel_uncore"
+      - filename: "blacklist-acpi_cpufreq.conf"
+        commands:
+          - command: blacklist
+            modulename: "acpi_cpufreq"
+    pwquality:
+      config:
+        minlen: 6
+        minclass: 3
+        dcredit: 0
+        ucredit: 0
+        lcredit: 0
+        ocredit: 0
+    waagent_config:
+      config:
+        "ResourceDisk.Format": false
+        "ResourceDisk.EnableSwap": false
+        "Provisioning.UseCloudInit": true
+        "Provisioning.Enabled": false
+    grub2_config:
+      disable_recovery: true
+      disable_submenu: true
+      distributor: "$(sed 's, release .*$,,g' /etc/system-release)"
+      terminal: ["serial", "console"]
+      serial: "serial --speed=115200 --unit=0 --word=8 --parity=no --stop=1"
+      timeout: 10
+      timeout_style: "countdown"
+    udev_rules:
+      filename: "/etc/udev/rules.d/68-azure-sriov-nm-unmanaged.rules"
+      rules:
+        - comment:
+            - "Accelerated Networking on Azure exposes a new SRIOV interface to the VM."
+            - "This interface is transparently bonded to the synthetic interface,"
+            - "so NetworkManager should just ignore any SRIOV interfaces."
+        - rule:
+            - K: "SUBSYSTEM"
+              O: "=="
+              V: "net"
+            - K: "DRIVERS"
+              O: "=="
+              V: "hv_pci"
+            - K: "ACTION"
+              O: "=="
+              V: "add"
+            - K: "ENV"
+              A: "NM_UNMANAGED"
+              O: "="
+              V: "1"
+    systemd_dropin:
+      - unit: "nm-cloud-setup.service"
+        dropin: "10-rh-enable-for-azure.conf"
+        config:
+          service:
+            environment:
+              - key: "NM_CLOUD_SETUP_AZURE"
+                value: "yes"
+    default_target: "multi-user.target"
+    network_manager:
+      path: "/etc/NetworkManager/conf.d/99-azure-unmanaged-devices.conf"
+      settings:
+        keyfile:
+          "unmanaged-devices":
+            - "driver:mlx4_core"
+            - "driver:mlx5_core"
+    condition:
+      distro_name:
+        rhel:
+          gpgkey_files:
+            - "/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release"
+      architecture:
+        x86_64:
+          kernel_options:
+            # common
+            - "ro"
+            - "loglevel=3"
+            - "nvme_core.io_timeout=240"
+            # x86
+            - "console=tty1"
+            - "console=ttyS0"
+            - "earlyprintk=ttyS0"
+            - "rootdelay=300"
+        aarch64:
+          kernel_options:
+            # common
+            - "ro"
+            - "loglevel=3"
+            - "nvme_core.io_timeout=240"
+            # aarch64
+            - "console=ttyAMA0"
 
 image_config:
   default:
@@ -450,107 +639,15 @@ image_types:
   vhd: &vhd
     # based on https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/9/html/deploying_rhel_9_on_microsoft_azure/assembly_deploying-a-rhel-image-as-a-virtual-machine-on-microsoft-azure_cloud-content-azure#making-configuration-changes_configure-the-image-azure
     image_config: &image_config_vhd
-      # from CreateAzureDatalossWarningScriptAndUnit
-      files:
-        - path: &dataloss_script "/usr/local/sbin/temp-disk-dataloss-warning"
-          mode: 0755
-          data: |
-            #!/bin/sh
-            # /usr/local/sbin/temp-disk-dataloss-warning
-            # Write dataloss warning file on mounted Azure resource disk
-
-            AZURE_RESOURCE_DISK_PART1="/dev/disk/cloud/azure_resource-part1"
-
-            MOUNTPATH=$(grep "$AZURE_RESOURCE_DISK_PART1" /etc/fstab | tr '\t' ' ' | cut -d' ' -f2)
-            if [ -z "$MOUNTPATH" ]; then
-                echo "There is no mountpoint of $AZURE_RESOURCE_DISK_PART1 in /etc/fstab"
-                exit 0
-            fi
-
-            if [ "$MOUNTPATH" = "none" ]; then
-                echo "Mountpoint of $AZURE_RESOURCE_DISK_PART1 is not a path"
-                exit 1
-            fi
-
-            if ! mountpoint -q "$MOUNTPATH"; then
-                echo "$AZURE_RESOURCE_DISK_PART1 is not mounted at $MOUNTPATH"
-                exit 1
-            fi
-
-            echo "Creating a dataloss warning file at ${MOUNTPATH}/DATALOSS_WARNING_README.txt"
-
-            cat <<'EOF' > "${MOUNTPATH}/DATALOSS_WARNING_README.txt"
-            WARNING: THIS IS A TEMPORARY DISK.
-
-            Any data stored on this drive is SUBJECT TO LOSS and THERE IS NO WAY TO RECOVER IT.
-
-            Please do not use this disk for storing any personal or application data.
-
-            EOF
-      systemd_unit:
-        - filename: &dataloss_systemd_unit_filename "temp-disk-dataloss-warning.service"
-          "unit-type": "system"
-          "unit-path": "etc"
-          config:
-            "Unit":
-              Description: "Azure temporary resource disk dataloss warning file creation"
-              After: ["multi-user.target", "cloud-final.service"]
-            "Service":
-              Type: "oneshot"
-              ExecStart: [*dataloss_script]
-              StandardOutput: "journal+console"
-            "Install":
-              WantedBy: ["default.target"]
-      keyboard:
-        keymap: "us"
-        "x11-keymap":
-          layouts: ["us"]
-      update_default_kernel: true
-      default_kernel: "kernel-core"
-      sysconfig:
-        networking: true
-        no_zero_conf: true
-      enabled_services:
-        - "firewalld"
-        - "nm-cloud-setup.service"
-        - "nm-cloud-setup.timer"
-        - "sshd"
-        - "waagent"
-        - *dataloss_systemd_unit_filename
-      sshd_config:
-        config:
-          ClientAliveInterval: 180
-      modprobe:
-        - filename: "blacklist-amdgpu.conf"
-          commands:
-            - command: blacklist
-              modulename: "amdgpu"
-        - filename: "blacklist-intel-cstate.conf"
-          commands:
-            - command: blacklist
-              modulename: "intel_cstate"
-        - filename: "blacklist-floppy.conf"
-          commands:
-            - command: blacklist
-              modulename: "floppy"
-        - filename: "blacklist-nouveau.conf"
-          commands:
-            - command: blacklist
-              modulename: "nouveau"
-            - command: blacklist
-              modulename: "lbm-nouveau"
-        - filename: "blacklist-skylake-edac.conf"
-          commands:
-            - command: blacklist
-              modulename: "skx_edac"
-        - filename: "blacklist-intel_uncore.conf"
-          commands:
-            - command: blacklist
-              modulename: "intel_uncore"
-        - filename: "blacklist-acpi_cpufreq.conf"
-          commands:
-            - command: blacklist
-              modulename: "acpi_cpufreq"
+      <<: *azure_image_config
+      time_synchronization:
+        refclocks:
+          - driver:
+              name: "PHC"
+              path: "/dev/ptp_hyperv"
+            poll: 3
+            dpoll: -2
+            offset: 0.0
       cloud_init:
         - filename: "10-azure-kvp.cfg"
           config:
@@ -566,98 +663,6 @@ image_types:
                 apply_network_config: false
             datasource_list:
               - "Azure"
-      pwquality:
-        config:
-          minlen: 6
-          minclass: 3
-          dcredit: 0
-          ucredit: 0
-          lcredit: 0
-          ocredit: 0
-      waagent_config:
-        config:
-          "ResourceDisk.Format": false
-          "ResourceDisk.EnableSwap": false
-          "Provisioning.UseCloudInit": true
-          "Provisioning.Enabled": false
-      grub2_config:
-        disable_recovery: true
-        disable_submenu: true
-        distributor: "$(sed 's, release .*$,,g' /etc/system-release)"
-        terminal: ["serial", "console"]
-        serial: "serial --speed=115200 --unit=0 --word=8 --parity=no --stop=1"
-        timeout: 10
-        timeout_style: "countdown"
-      udev_rules:
-        filename: "/etc/udev/rules.d/68-azure-sriov-nm-unmanaged.rules"
-        rules:
-          - comment:
-              - "Accelerated Networking on Azure exposes a new SRIOV interface to the VM."
-              - "This interface is transparently bonded to the synthetic interface,"
-              - "so NetworkManager should just ignore any SRIOV interfaces."
-          - rule:
-              - K: "SUBSYSTEM"
-                O: "=="
-                V: "net"
-              - K: "DRIVERS"
-                O: "=="
-                V: "hv_pci"
-              - K: "ACTION"
-                O: "=="
-                V: "add"
-              - K: "ENV"
-                A: "NM_UNMANAGED"
-                O: "="
-                V: "1"
-      systemd_dropin:
-        - unit: "nm-cloud-setup.service"
-          dropin: "10-rh-enable-for-azure.conf"
-          config:
-            service:
-              environment:
-                - key: "NM_CLOUD_SETUP_AZURE"
-                  value: "yes"
-      default_target: "multi-user.target"
-      time_synchronization:
-        refclocks:
-          - driver:
-              name: "PHC"
-              path: "/dev/ptp_hyperv"
-            poll: 3
-            dpoll: -2
-            offset: 0.0
-      network_manager:
-        path: "/etc/NetworkManager/conf.d/99-azure-unmanaged-devices.conf"
-        settings:
-          keyfile:
-            "unmanaged-devices":
-              - "driver:mlx4_core"
-              - "driver:mlx5_core"
-      condition:
-        distro_name:
-          rhel:
-            gpgkey_files:
-              - "/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release"
-        architecture:
-          x86_64:
-            kernel_options:
-              # common
-              - "ro"
-              - "loglevel=3"
-              - "nvme_core.io_timeout=240"
-              # x86
-              - "console=tty1"
-              - "console=ttyS0"
-              - "earlyprintk=ttyS0"
-              - "rootdelay=300"
-          aarch64:
-            kernel_options:
-              # common
-              - "ro"
-              - "loglevel=3"
-              - "nvme_core.io_timeout=240"
-              # aarch64
-              - "console=ttyAMA0"
     partition_table:
       <<: *default_partition_tables
     package_sets:
@@ -746,10 +751,10 @@ image_types:
       x86_64:
         uuid: "D209C89E-EA5E-4FBD-B161-B461CCE297E0"
         type: "gpt"
-        size: 68_719_476_736  # 64 * datasizes.GibiByte
+        size: "64 GiB"
         partitions:
           - &azure_rhui_part_boot_efi
-            size: 524_288_000   # 500 * datasizes.MebiByte
+            size: "500 MiB"
             type: *efi_system_partition_guid
             UUID: *efi_system_partition_uuid
             payload_type: "filesystem"
@@ -762,7 +767,7 @@ image_types:
               fstab_passno: 2
           # NB: we currently don't support /boot on LVM
           - &azure_rhui_part_boot
-            size: 1_073_741_824   # 1 * datasizes.GibiByte
+            size: "1 GiB"
             type: *filesystem_data_guid
             uuid: *data_partition_uuid
             payload_type: "filesystem"
@@ -772,7 +777,7 @@ image_types:
               fstab_options: "defaults"
               fstab_freq: 0
               fstab_passno: 0
-          - size: 2_097_152  # 2 * datasizes.MebiByte
+          - size: "2 MiB"
             bootable: true
             type: *bios_boot_partition_guid
             uuid: *bios_boot_partition_uuid
@@ -784,7 +789,7 @@ image_types:
               name: "rootvg"
               description: "built with lvm2 and osbuild"
               logical_volumes:
-                - size: 1_073_741_824  # 1 * datasizes.GibiByte
+                - size: "1 GiB"
                   name: "homelv"
                   payload_type: "filesystem"
                   payload:
@@ -792,7 +797,7 @@ image_types:
                     label: "home"
                     mountpoint: "/home"
                     fstab_options: "defaults"
-                - size: 2_147_483_648  # 2 * datasizes.GibiByte
+                - size: "2 GiB"
                   name: "rootlv"
                   payload_type: "filesystem"
                   payload:
@@ -800,7 +805,7 @@ image_types:
                     label: "root"
                     mountpoint: "/"
                     fstab_options: "defaults"
-                - size: 2_147_483_648  # 2 * datasizes.GibiByte
+                - size: "2 GiB"
                   name: "tmplv"
                   payload_type: "filesystem"
                   payload:
@@ -808,7 +813,7 @@ image_types:
                     label: "tmp"
                     mountpoint: "/tmp"
                     fstab_options: "defaults"
-                - size: 10_737_418_240  # 10 * datasizes.GibiByte
+                - size: "10 GiB"
                   name: "usrlv"
                   payload_type: "filesystem"
                   payload:
@@ -816,7 +821,7 @@ image_types:
                     label: "usr"
                     mountpoint: "/usr"
                     fstab_options: "defaults"
-                - size: 10_737_418_240  # 10 * datasizes.GibiByte
+                - size: "10 GiB"
                   name: "varlv"
                   payload_type: "filesystem"
                   payload:
@@ -827,7 +832,7 @@ image_types:
       aarch64:
         uuid: "D209C89E-EA5E-4FBD-B161-B461CCE297E0"
         type: "gpt"
-        size: 68_719_476_736  # 64 * datasizes.GibiByte
+        size: "64 GiB"
         partitions:
           - *azure_rhui_part_boot_efi
           # NB: we currently don't support /boot on LVM
@@ -1283,9 +1288,10 @@ image_types:
       keyboard:
         keymap: "us"
       dnf_config:
-        - config:
-            main:
-              ipresolve: "4"
+        options:
+          - config:
+              main:
+                ipresolve: "4"
       dnf_automatic_config:
         config:
           commands:
@@ -1415,3 +1421,69 @@ image_types:
               rhel:
                 include:
                   - "insights-client"
+
+  "azure-cvm":
+    image_config:
+      <<: *azure_image_config
+      default_kernel: "kernel-uki-virt"
+      default_kernel_name: "kernel-uki-virt"
+      no_bls: true
+      cloud_init:
+        - filename: "91-azure_datasource.cfg"
+          config:
+            datasource:
+              azure:
+                apply_network_config: false
+            datasource_list:
+              - "Azure"
+    package_sets:
+      os:
+        - include:
+            - "@minimal-environment"
+            - "chrony"
+            - "cloud-init"
+            - "cloud-utils-growpart"
+            - "cryptsetup"
+            - "NetworkManager-cloud-setup"
+            - "openssh-server"
+            - "redhat-cloud-client-configuration"
+            - "redhat-release"
+            - "tpm2-tools"
+            - "WALinuxAgent"
+        - exclude:
+            - "dracut-config-rescue"
+            - "grubby"
+            - "iwl*"
+            # In EL9 we exclude linux-firmware* (note the asterisk).
+            # In EL10, packages in the minimal-environment group require
+            # linux-firmware-whence, so we only exclude the linux-firmware
+            # package here.
+            - "linux-firmware"
+            - "os-prober"
+    partition_table:
+      x86_64:
+        uuid: "D209C89E-EA5E-4FBD-B161-B461CCE297E0"
+        type: "gpt"
+        partitions:
+          - size: 264_241_152  # 52 MiB
+            type: *efi_system_partition_guid
+            uuid: *efi_system_partition_uuid
+            payload_type: "filesystem"
+            payload:
+              type: vfat
+              uuid: *efi_filesystem_uuid
+              mountpoint: "/boot/efi"
+              label: "ESP"
+              fstab_options: "defaults,uid=0,gid=0,umask=077,shortname=winnt"
+              fstab_freq: 0
+              fstab_passno: 2
+          - size: 5_368_709_120  # 5 * datasizes.GibiByte,
+            type: *root_partition_x86_64_guid
+            payload_type: "filesystem"
+            payload:
+              type: "ext4"
+              label: "root"
+              mountpoint: "/"
+              fstab_options: "defaults"
+              fstab_freq: 0
+              fstab_passno: 0

@@ -208,5 +208,15 @@ func checkOptions(t *rhel.ImageType, bp *blueprint.Blueprint, options distro.Ima
 		}
 	}
 
+	// don't support setting any kernel customizations for image types with
+	// UKIs
+	// NOTE: this is very ugly and stupid, it should not be based on the image
+	// type name, but we want to redo this whole function anyway
+	// NOTE: we can't use customizations.GetKernel() because it returns
+	// 'Name: "kernel"' when unset.
+	if t.Name() == "azure-cvm" && customizations != nil && customizations.Kernel != nil {
+		return warnings, fmt.Errorf("kernel customizations are not supported for %q", t.Name())
+	}
+
 	return warnings, nil
 }

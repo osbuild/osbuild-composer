@@ -23,11 +23,20 @@ type RPMStageOptions struct {
 
 	// Create the '/run/ostree-booted' marker
 	OSTreeBooted *bool `json:"ostree_booted,omitempty"`
+
+	// Set environment variables understood by kernel-install and plugins (kernel-install(8))
+	KernelInstallEnv *KernelInstallEnv `json:"kernel_install_env,omitempty"`
 }
 
 type Exclude struct {
 	// Do not install documentation.
 	Docs bool `json:"docs,omitempty"`
+}
+
+type KernelInstallEnv struct {
+	// Sets $BOOT_ROOT for kernel-install to override
+	// $KERNEL_INSTALL_BOOT_ROOT, the installation location for boot entries
+	BootRoot string `json:"boot_root,omitempty"`
 }
 
 // RPMPackage represents one RPM, as referenced by its content hash

@@ -66,6 +66,7 @@
           - "efibootmgr"
           - "grub2-efi-x64"
           - "shim-x64"
+      bootloader: "grub2"
     x86_64_bios_platform: &x86_64_bios_platform
       <<: *x86_64_uefi_platform
       bios_platform: "i386-pc"
@@ -77,6 +78,7 @@
       build_packages:
         bios:
           - "grub2-pc"
+      bootloader: "grub2"
     # XXX: the name is not 100% accurate, this platform is also used for iot-container, iot-commit
     x86_64_installer_platform: &x86_64_installer_platform
       <<: *x86_64_bios_platform
@@ -88,6 +90,7 @@
           - "iwlwifi-dvm-firmware"
           - "iwlwifi-mvm-firmware"
           - "microcode_ctl"
+      bootloader: "grub2"
     aarch64_platform: &aarch64_platform
       arch: "aarch64"
       uefi_vendor: "fedora"
@@ -100,6 +103,7 @@
           - "grub2-efi-aa64"
           - "grub2-tools"
           - "shim-aa64"
+      bootloader: "grub2"
     aarch64_installer_platform: &aarch64_installer_platform
       arch: "aarch64"
       uefi_vendor: "fedora"
@@ -112,6 +116,7 @@
           - "iwlwifi-mvm-firmware"
           - "realtek-firmware"
           - "uboot-images-armv8"
+      bootloader: "grub2"
     ppc64le_bios_platform: &ppc64le_bios_platform
       arch: "ppc64le"
       bios_platform: "powerpc-ieee1275"
@@ -127,6 +132,7 @@
         bios:
           - "grub2-ppc64le"
           - "grub2-ppc64le-modules"
+      bootloader: "grub2"
     s390x_zipl_platform: &s390x_zipl_platform
       arch: "s390x"
       zipl_support: true
@@ -140,6 +146,7 @@
       build_packages:
         zipl:
           - "s390utils-base"
+      bootloader: "zipl"
     riscv64_uefi_platform: &riscv64_uefi_platform
       arch: "riscv64"
       uefi_vendor: "uefi"
@@ -153,15 +160,25 @@
           - "grub2-efi-riscv64"
           - "grub2-efi-riscv64-modules"
           - "shim-unsigned-riscv64"
+      bootloader: "grub2"
+
 
   installer_config: &default_installer_config
     additional_dracut_modules:
       - "net-lib"
+    squashfs_rootfs: true
     condition:
       version_less_than:
         "42":
+          # config is fully replaced
           additional_dracut_modules:
             - "ifcfg"
+          squashfs_rootfs: true
+        "41":
+          # config is fully replaced
+          additional_dracut_modules:
+            - "ifcfg"
+          squashfs_rootfs: false
 
   image_config:
     iot_enabled_services: &image_config_iot_enabled_services
@@ -237,12 +254,12 @@
     # the invidual partitions for easier composibility
     partitions:
       - &default_partition_table_part_bios
-        size: 1_048_576  # 1 MiB
+        size: "1 MiB"
         bootable: true
         type: *bios_boot_partition_guid
         uuid: *bios_boot_partition_uuid
       - &default_partition_table_part_efi
-        size: 209_715_200  # 200 MiB
+        size: "200 MiB"
         type: *efi_system_partition_guid
         uuid: *efi_system_partition_uuid
         payload_type: "filesystem"
@@ -255,7 +272,7 @@
           fstab_freq: 0
           fstab_passno: 2
       - &default_partition_table_part_boot
-        size: 1_073_741_824  # 1 * datasizes.GibiByte,
+        size: "1 GiB"
         type: *filesystem_data_guid
         uuid: *data_partition_uuid
         payload_type: "filesystem"
@@ -267,7 +284,7 @@
           fstab_freq: 0
           fstab_passno: 0
       - &default_partition_table_part_root
-        size: 2_147_483_648  # 2 * datasizes.GibiByte,
+        size: "2 GiB"
         type: *filesystem_data_guid
         uuid: *root_partition_uuid
         payload_type: "filesystem"
@@ -280,7 +297,7 @@
           fstab_passno: 0
       # iot partitions
       - &iot_base_partition_table_part_efi
-        size: 525_336_576  # 501 * datasizes.MebiByte
+        size: "501 MiB"
         type: *efi_system_partition_guid
         uuid: *efi_system_partition_uuid
         payload_type: "filesystem"
@@ -293,7 +310,7 @@
           fstab_freq: 0
           fstab_passno: 2
       - &iot_base_partition_table_part_boot
-        size: 1_073_741_824  # 1 * datasizes.GibiByte,
+        size: "1 GiB"
         type: *filesystem_data_guid
         uuid: *data_partition_uuid
         payload_type: "filesystem"
@@ -305,7 +322,7 @@
           fstab_freq: 1
           fstab_passno: 2
       - &iot_base_partition_table_part_root
-        size: 2_693_791_744  # 2569 * datasizes.MebiByte,
+        size: "2569 MiB"
         type: *filesystem_data_guid
         uuid: *root_partition_uuid
         payload_type: "filesystem"
@@ -362,11 +379,11 @@
         uuid: "0x14fc63d2"
         type: "dos"
         partitions:
-          - size: 4_194_304  # 4 MiB
+          - size: "4 MiB"
             bootable: true
             type: *prep_partition_dosid
           - &default_partition_table_part_boot_ppc64le
-            size: 1_073_741_824  # 1 * datasizes.GibiByte,
+            size: "1 GiB"
             payload_type: "filesystem"
             payload:
               type: "ext4"
@@ -376,7 +393,7 @@
               fstab_freq: 0
               fstab_passno: 0
           - &default_partition_table_part_root_ppc64le
-            size: 2_147_483_648  # 2 * datasizes.GibiByte,
+            size: "2 GiB"
             payload_type: "filesystem"
             payload:
               type: "ext4"
@@ -397,7 +414,7 @@
       x86_64:
         uuid: "D209C89E-EA5E-4FBD-B161-B461CCE297E0"
         type: "gpt"
-        start_offset: 8_388_608  # 8 * datasizes.MebiByte
+        start_offset: "8 MiB"
         partitions:
           - *default_partition_table_part_efi
           - &minimal_raw_partition_table_part_boot
@@ -408,7 +425,7 @@
       aarch64: &minimal_raw_partition_table_aarch64
         uuid: "0xc1748067"
         type: "dos"
-        start_offset: 8_388_608  # 8 * datasizes.MebiByte
+        start_offset: "8 MiB"
         partitions:
           - <<: *default_partition_table_part_efi
             bootable: true
@@ -426,7 +443,7 @@
       x86_64: &iot_base_partition_table_x86_64
         uuid: "D209C89E-EA5E-4FBD-B161-B461CCE297E0"
         type: "gpt"
-        start_offset: 8_388_608  # 8 * datasizes.MebiByte
+        start_offset: "8 MiB"
         partitions:
           - *iot_base_partition_table_part_efi
           - *iot_base_partition_table_part_boot
@@ -434,7 +451,7 @@
       aarch64: &iot_base_partition_table_aarch64
         uuid: "0xc1748067"
         type: "dos"
-        start_offset: 8_388_608  # 8 * datasizes.MebiByte
+        start_offset: "8 MiB"
         partitions:
           - *iot_base_partition_table_part_efi_aarch64
           - *iot_base_partition_table_part_boot_aarch64
@@ -446,7 +463,7 @@
         type: "gpt"
         partitions:
           - *iot_base_partition_table_part_efi
-          - size: 1_073_741_824  # 1 * datasizes.GibiByte,
+          - size: "1 GiB"
             type: *xboot_ldr_partition_guid
             uuid: *data_partition_uuid
             payload_type: "filesystem"
@@ -477,7 +494,7 @@
                 name: "rootvg"
                 description: "built with lvm2 and osbuild"
                 logical_volumes:
-                  - size: 8_589_934_592  # 8 * datasizes.GibiByte,
+                  - size: "8 GiB"
                     name: "rootlv"
                     payload_type: "filesystem"
                     payload:
@@ -500,6 +517,48 @@ image_config:
     timezone: "UTC"
 
 image_types:
+  "server-vagrant-libvirt": &server_vagrant_libvirt
+    filename: "vagrant-libvirt.box"
+    mime_type: "application/x-tar"
+    environment: *kvm_env
+    bootable: true
+    default_size: 5_368_709_120  # 5 * datasizes.GibiByte
+    image_func: "disk"
+    build_pipelines: ["build"]
+    payload_pipelines: ["os", "image", "vagrant", "archive"]
+    exports: ["archive"]
+    required_partition_sizes: *default_required_dir_sizes
+    image_config: &image_config_vagrant
+      default_target: "multi-user.target"
+      kernel_options: *cloud_kernel_options
+      users:
+        # yamllint disable rule:line-length
+        - name: "vagrant"
+          # yamllint disable rule:line-length
+          key: |
+            ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA6NF8iallvQVp22WDkTkyrtvp9eWW6A8YVr+kz4TjGYe7gHzIw+niNltGEFHzD8+v1I2YJ6oXevct1YeS0o9HZyN1Q9qgCgzUFtdOKLv6IedplqoPkcmF0aYet2PkEDo3MlTBckFXPITAMzF8dJSIFo9D8HfdOV0IAdx4O7PtixWKn5y2hMNG0zQPyUecp4pzC6kivAIhyfHilFR61RGL+GPXQ2MWZWFYbAGjyiYJnAmCP3NOTd0jMZEnDkbUvxhMmBYSdETk1rRgm+R4LOzFUGaHqHDLKLX+FIPKcF96hrucXzcWyLbIbEgE98OHlnVYCzRdK8jlqm8tehUc9c9WhQ== vagrant insecure public key
+            ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIN1YdxBpNlzxDqfJyw/QKow1F+wvG9hXGoqiysfJOn5Y vagrant insecure public key
+        # yamllint enable rule:line-length
+      files:
+        - path: "/etc/sudoers.d/vagrant"
+          user: "root"
+          group: "root"
+          mode: 440
+          data: |
+            vagrant ALL=(ALL) NOPASSWD: ALL
+    partition_table:
+      <<: *default_partition_tables
+    package_sets:
+      os:
+        - *cloud_base_pkgset
+        - include:
+            - "qemu-guest-agent"
+    platforms:
+      - <<: *x86_64_bios_platform
+        image_format: "vagrant_libvirt"
+      - <<: *aarch64_platform
+        image_format: "vagrant_libvirt"
+
   "server-qcow2": &server_qcow2
     name_aliases: ["qcow2"]
     filename: "disk.qcow2"
@@ -811,6 +870,9 @@ image_types:
     rpm_ostree: true
     bootable: true
     image_func: "iot"
+    ostree:
+      name: "fedora"
+      remote: "fedora-iot"
     build_pipelines: ["build"]
     payload_pipelines: ["ostree-deployment", "image", "xz"]
     exports: ["xz"]
@@ -885,6 +947,9 @@ image_types:
     rpm_ostree: true
     bootable: true
     image_func: "iot"
+    ostree:
+      name: "fedora"
+      remote: "fedora-iot"
     build_pipelines: ["build"]
     payload_pipelines: ["ostree-deployment", "image", "qcow2"]
     exports: ["qcow2"]
@@ -1069,6 +1134,7 @@ image_types:
             - "uboot-images-armv8"
         boot_files:
           - ["/usr/share/uboot/rpi_arm64/u-boot.bin", "/boot/efi/rpi-u-boot.bin"]
+        bootloader: "grub2"
       - *riscv64_uefi_platform
     image_config:
       # NOTE: temporary workaround for a bug in initial-setup that
@@ -1328,6 +1394,9 @@ image_types:
     boot_iso: true
     image_func: "iot_installer"
     iso_label: "IoT"
+    ostree:
+      name: "fedora-iot"
+      remote: "fedora-iot"
     build_pipelines: ["build"]
     payload_pipelines:
       - "anaconda-tree"
@@ -1407,7 +1476,9 @@ image_types:
             - "sdubby"
           condition:
             version_greater_or_equal:
-              VERSION_RAWHIDE:
+              # XXX: this was VERSION_RAWHIDE, if we need this again lets add
+              # "alias" to defs.DistroYAML
+              43:
                 include:
                   - "anaconda-webui"
     platforms:
@@ -1424,6 +1495,8 @@ image_types:
     image_func: "image_installer"
     # We don't know the variant of the OS pipeline being installed
     iso_label: "Unknown"
+    # We don't know the variant that goes into the OS pipeline that gets installed
+    variant: "Unknown"
     build_pipelines: ["build"]
     payload_pipelines:
       - "anaconda-tree"
@@ -1433,6 +1506,22 @@ image_types:
       - "bootiso"
     exports: ["bootiso"]
     required_partition_sizes: *default_required_dir_sizes
+    installer_config:
+      additional_dracut_modules:
+        - "net-lib"
+        - "dbus-broker"
+      squashfs_rootfs: true
+      condition:
+        # on match the config is fully replaced
+        version_less_than:
+          "41":
+            additional_dracut_modules: &additional_dracut_f41
+              - "ifcfg"
+              - "dbus-broker"
+            squashfs_rootfs: false
+          "42":
+            additional_dracut_modules: *additional_dracut_f41
+            squashfs_rootfs: true
     image_config:
       locale: "en_US.UTF-8"
       iso_rootfs_type: "squashfs"
@@ -1605,6 +1694,9 @@ image_types:
     default_size: 10_737_418_240  # 10 * datasizes.GibiByte
     image_func: "iot_simplified_installer"
     iso_label: "IoT"
+    ostree:
+      name: "fedora"
+      remote: "fedora-iot"
     build_pipelines: ["build"]
     payload_pipelines:
       - "ostree-deployment"
@@ -1616,7 +1708,8 @@ image_types:
       - "bootiso"
     exports: ["bootiso"]
     required_partition_sizes: *default_required_dir_sizes
-    installer_config: *default_installer_config
+    installer_config:
+      <<: *default_installer_config
     image_config:
       <<: *image_config_iot
       ignition_platform: "metal"

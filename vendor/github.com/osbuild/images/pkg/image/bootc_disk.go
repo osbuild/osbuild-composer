@@ -60,12 +60,54 @@ func (img *BootcDiskImage) InstantiateManifestFromContainers(m *manifest.Manifes
 	if img.BuildSELinux != "" {
 		policy = img.BuildSELinux
 	}
+
+	var copyFilesFrom map[string][]string
+	var ensureDirs []*fsnode.Directory
+
+	if *img.ContainerSource != *img.BuildContainerSource {
+		// If we're using a different build container from the target container then we copy
+		// the bootc customization file directories from the target container. This includes the
+		// bootc install customization, and /usr/lib/ostree/prepare-root.conf which configures
+		// e.g. composefs and fs-verity setup.
+		//
+		// To ensure that these copies never fail we also create the source and target
+		// directories as needed.
+
+		pipelineName := "target"
+		// files to copy have slash at end to copy directory contents, not directory itself
+		copyFiles := []string{"/usr/lib/bootc/install/", "/usr/lib/ostree/"}
+		ensureDirPaths := []string{"/usr/lib/bootc/install", "/usr/lib/ostree"}
+
+		copyFilesFrom = map[string][]string{pipelineName: copyFiles}
+		for _, path := range ensureDirPaths {
+			// Note: Mode/User/Group must be nil here to make  GenDirectoryNodesStages use dirExistOk
+			dir, err := fsnode.NewDirectory(path, nil, nil, nil, true)
+			if err != nil {
+				return err
+			}
+			ensureDirs = append(ensureDirs, dir)
+		}
+
+		targetContainers := []container.SourceSpec{*img.ContainerSource}
+		targetBuildPipeline := manifest.NewBuildFromContainer(m, runner, targetContainers,
+			&manifest.BuildOptions{
+				PipelineName:       pipelineName,
+				ContainerBuildable: true,
+				SELinuxPolicy:      policy,
+				EnsureDirs:         ensureDirs,
+			})
+		targetBuildPipeline.Checkpoint()
+	}
+
 	buildContainers := []container.SourceSpec{*img.BuildContainerSource}
 	buildPipeline := manifest.NewBuildFromContainer(m, runner, buildContainers,
 		&manifest.BuildOptions{
 			ContainerBuildable: true,
 			SELinuxPolicy:      policy,
+			CopyFilesFrom:      copyFilesFrom,
+			EnsureDirs:         ensureDirs,
 		})
+
 	buildPipeline.Checkpoint()
 
 	// In the bootc flow, we reuse the host container context for tools;

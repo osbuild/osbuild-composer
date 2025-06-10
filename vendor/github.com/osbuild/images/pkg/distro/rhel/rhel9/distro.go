@@ -346,6 +346,22 @@ func newDistro(name string, major, minor int) *rhel.Distribution {
 			},
 			mkEC2ImgTypeAarch64(),
 		)
+
+		// CVM is only available starting from 9.6
+		if common.VersionGreaterThanOrEqual(rd.OsVersion(), "9.6") {
+			azureX64CVMPlatform := &platform.X86{
+				UEFIVendor: rd.Vendor(),
+				BasePlatform: platform.BasePlatform{
+					ImageFormat: platform.FORMAT_VHD,
+				},
+				Bootloader: platform.BOOTLOADER_UKI,
+			}
+			x86_64.AddImageTypes(
+				azureX64CVMPlatform,
+				mkAzureCVMImgType(rd),
+			)
+
+		}
 	}
 
 	rd.AddArches(x86_64, aarch64, ppc64le, s390x)

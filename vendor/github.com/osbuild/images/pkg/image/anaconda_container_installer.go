@@ -10,6 +10,7 @@ import (
 	"github.com/osbuild/images/pkg/customizations/anaconda"
 	"github.com/osbuild/images/pkg/customizations/kickstart"
 	"github.com/osbuild/images/pkg/datasizes"
+	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/platform"
@@ -58,6 +59,9 @@ type AnacondaContainerInstaller struct {
 	// Locale for the installer. This should be set to the same locale as the
 	// ISO OS payload, if known.
 	Locale string
+
+	// Filesystem type for the installed system as opposed to that of the ISO.
+	InstallRootfsType disk.FSType
 }
 
 func NewAnacondaContainerInstaller(container container.SourceSpec, ref string) *AnacondaContainerInstaller {
@@ -149,6 +153,8 @@ func (img *AnacondaContainerInstaller) InstantiateManifest(m *manifest.Manifest,
 	if img.FIPS {
 		isoTreePipeline.KernelOpts = append(isoTreePipeline.KernelOpts, "fips=1")
 	}
+
+	isoTreePipeline.InstallRootfsType = img.InstallRootfsType
 
 	isoPipeline := manifest.NewISO(buildPipeline, isoTreePipeline, img.ISOLabel)
 	isoPipeline.SetFilename(img.Filename)
