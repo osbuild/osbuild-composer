@@ -99,7 +99,7 @@ case "${ID}-${VERSION_ID}" in
         OS_VARIANT="centos-stream9"
         BOOT_ARGS="uefi,firmware.feature0.name=secure-boot,firmware.feature0.enabled=no"
         ;;
-    "fedora-40")
+    "fedora-42")
         OS_VARIANT="fedora-unknown"
         ;;
     *)

@@ -109,10 +109,10 @@ RPM:
   parallel:
     matrix:
       - RUNNER:
-          - aws/fedora-40-x86_64
-          - aws/fedora-40-aarch64
           - aws/fedora-41-x86_64
           - aws/fedora-41-aarch64
+          - aws/fedora-42-x86_64
+          - aws/fedora-42-aarch64
           - aws/rhel-8.10-ga-x86_64
           - aws/rhel-8.10-ga-aarch64
           - aws/rhel-9.5-ga-x86_64
@@ -524,7 +524,7 @@ filesystem.sh:
     matrix:
       - CUSTOMIZATION_TYPE: "disk-btrfs"
         RUNNER:
-          - aws/fedora-40-x86_64
+          - aws/fedora-42-x86_64
       - CUSTOMIZATION_TYPE: "filesystem"
         RUNNER:
           - aws/rhel-8.10-ga-x86_64
@@ -645,7 +645,7 @@ API-module-hotfixes:
   parallel:
     matrix:
       - RUNNER:
-          - rhos-01/fedora-40-x86_64
+          - rhos-01/fedora-42-x86_64
       - RUNNER:
           - gcp/rhel-8.10-ga-x86_64
           - gcp/rhel-9.5-ga-x86_64
