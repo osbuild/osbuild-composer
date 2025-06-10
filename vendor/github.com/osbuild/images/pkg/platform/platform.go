@@ -3,6 +3,7 @@ package platform
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/arch"
@@ -19,7 +20,46 @@ const ( // image format enum
 	FORMAT_VHD
 	FORMAT_GCE
 	FORMAT_OVA
+	FORMAT_VAGRANT_LIBVIRT
 )
+
+type Bootloader int
+
+const ( // bootloader enum
+	BOOTLOADER_NONE Bootloader = iota
+	BOOTLOADER_GRUB2
+	BOOTLOADER_ZIPL
+	BOOTLOADER_UKI
+)
+
+func (b *Bootloader) UnmarshalJSON(data []byte) (err error) {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return err
+	}
+	*b, err = FromString(s)
+	return err
+}
+
+func (b *Bootloader) UnmarshalYAML(unmarshal func(any) error) error {
+	return common.UnmarshalYAMLviaJSON(b, unmarshal)
+}
+
+func FromString(b string) (Bootloader, error) {
+	// ignore case
+	switch strings.ToLower(b) {
+	case "grub2":
+		return BOOTLOADER_GRUB2, nil
+	case "zipl":
+		return BOOTLOADER_ZIPL, nil
+	case "uki":
+		return BOOTLOADER_UKI, nil
+	case "", "none":
+		return BOOTLOADER_NONE, nil
+	default:
+		return BOOTLOADER_NONE, fmt.Errorf("unsupported bootloader %q", b)
+	}
+}
 
 func (f ImageFormat) String() string {
 	switch f {
@@ -39,6 +79,8 @@ func (f ImageFormat) String() string {
 		return "gce"
 	case FORMAT_OVA:
 		return "ova"
+	case FORMAT_VAGRANT_LIBVIRT:
+		return "vagrant_libvirt"
 	default:
 		panic(fmt.Errorf("unknown image format %d", f))
 	}
@@ -66,6 +108,8 @@ func (f *ImageFormat) UnmarshalJSON(data []byte) error {
 		*f = FORMAT_GCE
 	case "ova":
 		*f = FORMAT_OVA
+	case "vagrant_libvirt":
+		*f = FORMAT_VAGRANT_LIBVIRT
 	default:
 		panic(fmt.Errorf("unknown image format %q", s))
 	}
@@ -86,6 +130,7 @@ type Platform interface {
 	GetPackages() []string
 	GetBuildPackages() []string
 	GetBootFiles() [][2]string
+	GetBootloader() Bootloader
 }
 
 type BasePlatform struct {
@@ -124,4 +169,8 @@ func (p BasePlatform) GetBuildPackages() []string {
 
 func (p BasePlatform) GetBootFiles() [][2]string {
 	return [][2]string{}
+}
+
+func (p BasePlatform) GetBootloader() Bootloader {
+	return BOOTLOADER_NONE
 }

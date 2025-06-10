@@ -104,6 +104,8 @@ func sapImageConfig(osVersion string) *distro.ImageConfig {
 			),
 		},
 		// E4S/EUS
-		DNFSetReleaseVerVar: common.ToPtr(true),
+		DNFConfig: &distro.DNFConfig{
+			SetReleaseVerVar: common.ToPtr(true),
+		},
 	}
 }

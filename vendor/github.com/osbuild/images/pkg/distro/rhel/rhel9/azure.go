@@ -77,6 +77,27 @@ func mkAzureSapInternalImgType(rd *rhel.Distribution, a arch.Arch) *rhel.ImageTy
 	return it
 }
 
+// Azure Confidential VM
+func mkAzureCVMImgType(rd *rhel.Distribution) *rhel.ImageType {
+	it := rhel.NewImageType(
+		"azure-cvm",
+		"disk.vhd",
+		"application/x-vhd",
+		packageSetLoader,
+		rhel.DiskImage,
+		[]string{"build"},
+		[]string{"os", "image", "vpc"},
+		[]string{"vpc"},
+	)
+
+	it.Bootable = true
+	it.DefaultSize = 32 * datasizes.GibiByte
+	it.DefaultImageConfig = azureCVMImageConfig(rd)
+	it.BasePartitionTables = azureCVMPartitionTables
+
+	return it
+}
+
 // PARTITION TABLES
 func azureInternalBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 	var bootSize uint64
@@ -327,8 +348,9 @@ func defaultAzureKernelOptions(rd *rhel.Distribution, a arch.Arch) []string {
 	return kargs
 }
 
-// based on https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/9/html/deploying_rhel_9_on_microsoft_azure/assembly_deploying-a-rhel-image-as-a-virtual-machine-on-microsoft-azure_cloud-content-azure#making-configuration-changes_configure-the-image-azure
-func defaultAzureImageConfig(rd *rhel.Distribution) *distro.ImageConfig {
+// Base ImageConfig for Azure images. Should not be used directly since the
+// default ImageConfig adds a few extra bits.
+func baseAzureImageConfig(rd *rhel.Distribution) *distro.ImageConfig {
 	ic := &distro.ImageConfig{
 		Timezone: common.ToPtr("Etc/UTC"),
 		Locale:   common.ToPtr("en_US.UTF-8"),
@@ -386,34 +408,6 @@ func defaultAzureImageConfig(rd *rhel.Distribution) *distro.ImageConfig {
 				Filename: "blacklist-skylake-edac.conf",
 				Commands: osbuild.ModprobeConfigCmdList{
 					osbuild.NewModprobeConfigCmdBlacklist("skx_edac"),
-				},
-			},
-		},
-		CloudInit: []*osbuild.CloudInitStageOptions{
-			{
-				Filename: "10-azure-kvp.cfg",
-				Config: osbuild.CloudInitConfigFile{
-					Reporting: &osbuild.CloudInitConfigReporting{
-						Logging: &osbuild.CloudInitConfigReportingHandlers{
-							Type: "log",
-						},
-						Telemetry: &osbuild.CloudInitConfigReportingHandlers{
-							Type: "hyperv",
-						},
-					},
-				},
-			},
-			{
-				Filename: "91-azure_datasource.cfg",
-				Config: osbuild.CloudInitConfigFile{
-					Datasource: &osbuild.CloudInitConfigDatasource{
-						Azure: &osbuild.CloudInitConfigDatasourceAzure{
-							ApplyNetworkConfig: false,
-						},
-					},
-					DatasourceList: []string{
-						"Azure",
-					},
 				},
 			},
 		},
@@ -498,17 +492,6 @@ func defaultAzureImageConfig(rd *rhel.Distribution) *distro.ImageConfig {
 			ic.WAAgentConfig.Config.ProvisioningUseCloudInit = common.ToPtr(true)
 			ic.WAAgentConfig.Config.ProvisioningEnabled = common.ToPtr(false)
 
-			ic.TimeSynchronization = &osbuild.ChronyStageOptions{
-				Refclocks: []osbuild.ChronyConfigRefclock{
-					{
-						Driver: osbuild.NewChronyDriverPHC("/dev/ptp_hyperv"),
-						Poll:   common.ToPtr(3),
-						Dpoll:  common.ToPtr(-2),
-						Offset: common.ToPtr(0.0),
-					},
-				},
-			}
-
 			datalossWarningScript, datalossSystemdUnit, err := rhel.CreateAzureDatalossWarningScriptAndUnit()
 			if err != nil {
 				panic(err)
@@ -533,6 +516,118 @@ func defaultAzureImageConfig(rd *rhel.Distribution) *distro.ImageConfig {
 	return ic
 }
 
+// based on https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/9/html/deploying_rhel_9_on_microsoft_azure/assembly_deploying-a-rhel-image-as-a-virtual-machine-on-microsoft-azure_cloud-content-azure#making-configuration-changes_configure-the-image-azure
+func defaultAzureImageConfig(rd *rhel.Distribution) *distro.ImageConfig {
+	ic := &distro.ImageConfig{
+		CloudInit: []*osbuild.CloudInitStageOptions{
+			{
+				Filename: "10-azure-kvp.cfg",
+				Config: osbuild.CloudInitConfigFile{
+					Reporting: &osbuild.CloudInitConfigReporting{
+						Logging: &osbuild.CloudInitConfigReportingHandlers{
+							Type: "log",
+						},
+						Telemetry: &osbuild.CloudInitConfigReportingHandlers{
+							Type: "hyperv",
+						},
+					},
+				},
+			},
+			{
+				Filename: "91-azure_datasource.cfg",
+				Config: osbuild.CloudInitConfigFile{
+					Datasource: &osbuild.CloudInitConfigDatasource{
+						Azure: &osbuild.CloudInitConfigDatasourceAzure{
+							ApplyNetworkConfig: false,
+						},
+					},
+					DatasourceList: []string{
+						"Azure",
+					},
+				},
+			},
+		},
+	}
+
+	if rd.IsRHEL() && common.VersionGreaterThanOrEqual(rd.OsVersion(), "9.6") {
+		ic.TimeSynchronization = &osbuild.ChronyStageOptions{
+			Refclocks: []osbuild.ChronyConfigRefclock{
+				{
+					Driver: osbuild.NewChronyDriverPHC("/dev/ptp_hyperv"),
+					Poll:   common.ToPtr(3),
+					Dpoll:  common.ToPtr(-2),
+					Offset: common.ToPtr(0.0),
+				},
+			},
+		}
+	}
+
+	return ic.InheritFrom(baseAzureImageConfig(rd))
+}
+
 func sapAzureImageConfig(rd *rhel.Distribution) *distro.ImageConfig {
 	return sapImageConfig(rd.OsVersion()).InheritFrom(defaultAzureImageConfig(rd))
+}
+
+func azureCVMImageConfig(rd *rhel.Distribution) *distro.ImageConfig {
+	ic := &distro.ImageConfig{
+		DefaultKernelName: common.ToPtr("kernel-uki-virt"),
+		NoBLS:             common.ToPtr(true),
+		CloudInit: []*osbuild.CloudInitStageOptions{
+			{
+				Filename: "91-azure_datasource.cfg",
+				Config: osbuild.CloudInitConfigFile{
+					Datasource: &osbuild.CloudInitConfigDatasource{
+						Azure: &osbuild.CloudInitConfigDatasourceAzure{
+							ApplyNetworkConfig: false,
+						},
+					},
+					DatasourceList: []string{
+						"Azure",
+					},
+				},
+			},
+		},
+	}
+	return ic.InheritFrom(baseAzureImageConfig(rd))
+}
+
+func azureCVMPartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
+	switch t.Arch().Name() {
+	case arch.ARCH_X86_64.String():
+		return disk.PartitionTable{
+			UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
+			Type: disk.PT_GPT,
+			Partitions: []disk.Partition{
+				{
+					Size: 252 * datasizes.MebiByte,
+					Type: disk.EFISystemPartitionGUID,
+					UUID: disk.EFISystemPartitionUUID,
+					Payload: &disk.Filesystem{
+						Type:         "vfat",
+						UUID:         disk.EFIFilesystemUUID,
+						Mountpoint:   "/boot/efi",
+						Label:        "EFI-SYSTEM",
+						FSTabOptions: "defaults,uid=0,gid=0,umask=077,shortname=winnt",
+						FSTabFreq:    0,
+						FSTabPassNo:  2,
+					},
+				},
+				{
+					Size: 5 * datasizes.GibiByte,
+					Type: disk.RootPartitionX86_64GUID,
+					Payload: &disk.Filesystem{
+						Type:         "ext4",
+						Label:        "root",
+						Mountpoint:   "/",
+						FSTabOptions: "defaults",
+						FSTabFreq:    0,
+						FSTabPassNo:  0,
+					},
+				},
+			},
+		}, true
+	default:
+		return disk.PartitionTable{}, false
+	}
 }

@@ -9,7 +9,7 @@ import (
 )
 
 func partitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
-	partitionTable, err := defs.PartitionTable(t, nil)
+	partitionTable, err := defs.PartitionTable(t)
 	if errors.Is(err, defs.ErrNoPartitionTableForImgType) {
 		return disk.PartitionTable{}, false
 	}

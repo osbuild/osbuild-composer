@@ -2,11 +2,13 @@ package common
 
 import (
 	"bytes"
+	"encoding/binary"
 	"fmt"
 	"io"
 	"os/exec"
 	"sort"
 	"strings"
+	"unicode/utf16"
 )
 
 func PanicOnError(err error) {
@@ -67,4 +69,16 @@ func Must[T any](val T, err error) T {
 		panic(err)
 	}
 	return val
+}
+
+// EncodeUTF16le encodes a source string to UTF-16LE.
+func EncodeUTF16le(src string) []byte {
+	runes := []rune(src)
+	u16data := utf16.Encode(runes)
+
+	dest := make([]byte, 0, len(u16data)*2)
+	for _, c := range u16data {
+		dest = binary.LittleEndian.AppendUint16(dest, c)
+	}
+	return dest
 }

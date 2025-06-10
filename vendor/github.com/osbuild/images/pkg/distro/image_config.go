@@ -8,6 +8,7 @@ import (
 	"github.com/osbuild/images/pkg/customizations/fsnode"
 	"github.com/osbuild/images/pkg/customizations/shell"
 	"github.com/osbuild/images/pkg/customizations/subscription"
+	"github.com/osbuild/images/pkg/customizations/users"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/osbuild"
 )
@@ -28,6 +29,17 @@ type ImageConfig struct {
 	DefaultKernel       *string    `yaml:"default_kernel,omitempty"`
 	UpdateDefaultKernel *bool      `yaml:"update_default_kernel,omitempty"`
 	KernelOptions       []string   `yaml:"kernel_options,omitempty"`
+
+	// The name of the default kernel to use for the image type.
+	// NOTE: Currently this overrides the kernel named in the blueprint. The
+	// only image type that uses it is the azure-cvm, which doesn't allow
+	// kernel selection. The option should generally be a fallback for when the
+	// blueprint doesn't specify a kernel.
+	//
+	// This option has no effect on the DefaultKernel option under Sysconfig.
+	// If both options are set, they should have the same value.
+	// These two options should be unified.
+	DefaultKernelName *string `yaml:"default_kernel_name"`
 
 	// List of files from which to import GPG keys into the RPM database
 	GPGKeyFiles []string `yaml:"gpgkey_files,omitempty"`
@@ -60,9 +72,8 @@ type ImageConfig struct {
 	PamLimitsConf []*osbuild.PamLimitsConfStageOptions `yaml:"pam_limits_conf,omitempty"`
 	Sysctld       []*osbuild.SysctldStageOptions
 	// Do not use DNFConfig directly, call "DNFConfigOptions()"
-	DNFConfig           []*osbuild.DNFConfigStageOptions `yaml:"dnf_config,omitempty"`
-	DNFSetReleaseVerVar *bool                            `yaml:"dnf_set_release_ver_var,omitempty"`
-	SshdConfig          *osbuild.SshdConfigStageOptions  `yaml:"sshd_config"`
+	DNFConfig           *DNFConfig                      `yaml:"dnf_config"`
+	SshdConfig          *osbuild.SshdConfigStageOptions `yaml:"sshd_config"`
 	Authconfig          *osbuild.AuthconfigStageOptions
 	PwQuality           *osbuild.PwqualityConfStageOptions
 	WAAgentConfig       *osbuild.WAAgentConfStageOptions        `yaml:"waagent_config,omitempty"`
@@ -76,6 +87,8 @@ type ImageConfig struct {
 	NetworkManager      *osbuild.NMConfStageOptions         `yaml:"network_manager,omitempty"`
 
 	WSLConfig *WSLConfig `yaml:"wsl_config,omitempty"`
+
+	Users []users.User
 
 	Files       []*fsnode.File
 	Directories []*fsnode.Directory
@@ -125,6 +138,11 @@ type ImageConfig struct {
 	IsoRootfsType *manifest.RootfsType `yaml:"iso_rootfs_type,omitempty"`
 }
 
+type DNFConfig struct {
+	Options          []*osbuild.DNFConfigStageOptions
+	SetReleaseVerVar *bool `yaml:"set_release_ver_var"`
+}
+
 type WSLConfig struct {
 	BootSystemd bool `yaml:"boot_systemd,omitempty"`
 }
@@ -155,8 +173,11 @@ func (c *ImageConfig) InheritFrom(parentConfig *ImageConfig) *ImageConfig {
 }
 
 func (c *ImageConfig) DNFConfigOptions(osVersion string) []*osbuild.DNFConfigStageOptions {
-	if c.DNFSetReleaseVerVar == nil || !*c.DNFSetReleaseVerVar {
-		return c.DNFConfig
+	if c.DNFConfig == nil {
+		return nil
+	}
+	if c.DNFConfig.SetReleaseVerVar == nil || !*c.DNFConfig.SetReleaseVerVar {
+		return c.DNFConfig.Options
 	}
 
 	// We currently have no use-case where we set both a custom
@@ -166,7 +187,7 @@ func (c *ImageConfig) DNFConfigOptions(osVersion string) []*osbuild.DNFConfigSta
 	// existing once (exactly once) and we need to consider what to
 	// do about potentially conflicting (manually set) "releasever"
 	// values by the user.
-	if c.DNFConfig != nil {
+	if c.DNFConfig.SetReleaseVerVar != nil && c.DNFConfig.Options != nil {
 		err := fmt.Errorf("internal error: currently DNFConfig and DNFSetReleaseVerVar cannot be used together, please reporting this as a feature request")
 		panic(err)
 	}

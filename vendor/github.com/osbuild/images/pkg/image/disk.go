@@ -80,6 +80,17 @@ func (img *DiskImage) InstantiateManifest(m *manifest.Manifest,
 		qcow2Pipeline := manifest.NewQCOW2(buildPipeline, rawImagePipeline)
 		qcow2Pipeline.Compat = img.Platform.GetQCOW2Compat()
 		imagePipeline = qcow2Pipeline
+	case platform.FORMAT_VAGRANT_LIBVIRT:
+		qcow2Pipeline := manifest.NewQCOW2(buildPipeline, rawImagePipeline)
+		qcow2Pipeline.Compat = img.Platform.GetQCOW2Compat()
+
+		vagrantPipeline := manifest.NewVagrant(buildPipeline, qcow2Pipeline)
+
+		tarPipeline := manifest.NewTar(buildPipeline, vagrantPipeline, "archive")
+		tarPipeline.Format = osbuild.TarArchiveFormatUstar
+		tarPipeline.SetFilename(img.Filename)
+
+		imagePipeline = tarPipeline
 	case platform.FORMAT_VHD:
 		vpcPipeline := manifest.NewVPC(buildPipeline, rawImagePipeline)
 		vpcPipeline.ForceSize = img.VPCForceSize

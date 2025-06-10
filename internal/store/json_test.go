@@ -15,7 +15,6 @@ import (
 	"github.com/osbuild/blueprint/pkg/blueprint"
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/distro"
-	"github.com/osbuild/images/pkg/distro/fedora"
 	"github.com/osbuild/images/pkg/distro/test_distro"
 	"github.com/osbuild/images/pkg/distrofactory"
 	"github.com/osbuild/images/pkg/rpmmd"
@@ -308,7 +307,7 @@ func Test_upgrade(t *testing.T) {
 
 			cleanup := setupTestHostDistro("fedora-37", arch.ARCH_X86_64.String())
 			t.Cleanup(cleanup)
-			factory := distrofactory.New(fedora.DistroFactory)
+			factory := distrofactory.NewDefault()
 
 			store := newStoreFromV0(storeStruct, factory, nil)
 			assert.Equal(1, len(store.blueprints))

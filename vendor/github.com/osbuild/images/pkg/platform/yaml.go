@@ -20,6 +20,8 @@ type PlatformConf struct {
 	Packages      map[string][]string `yaml:"packages"`
 	BuildPackages map[string][]string `yaml:"build_packages"`
 	BootFiles     [][2]string         `yaml:"boot_files"`
+
+	Bootloader Bootloader `yaml:"bootloader"`
 }
 
 // ensure PlatformConf implements the Platform interface
@@ -59,4 +61,8 @@ func (pc *PlatformConf) GetBuildPackages() []string {
 }
 func (pc *PlatformConf) GetBootFiles() [][2]string {
 	return pc.BootFiles
+}
+
+func (pc *PlatformConf) GetBootloader() Bootloader {
+	return pc.Bootloader
 }

@@ -555,12 +555,12 @@
 
     partitions:
       - &default_partition_table_part_bios
-        size: 1_048_576  # 1 MiB
+        size: "1 MiB"
         bootable: true
         type: *bios_boot_partition_guid
         uuid: *bios_boot_partition_uuid
       - &default_partition_table_part_efi
-        size: 104_857_600  # 100 MiB
+        size: "100 MiB"
         type: *efi_system_partition_guid
         uuid: *efi_system_partition_uuid
         payload_type: "filesystem"
@@ -573,7 +573,7 @@
           fstab_freq: 0
           fstab_passno: 2
       - &default_partition_table_part_root
-        size: 2_147_483_648  # 2 * datasizes.GibiByte,
+        size: "2 GiB"
         type: *filesystem_data_guid
         uuid: *root_partition_uuid
         payload_type: "filesystem"
@@ -586,7 +586,7 @@
           fstab_passno: 0
       # ec2
       - &ec2_partition_table_part_boot
-        size: 1_073_741_824  # 1 GiB
+        size: "1 GiB"
         type: *filesystem_data_guid
         uuid: *data_partition_uuid
         payload_type: "filesystem"
@@ -598,7 +598,7 @@
           fstab_passno: 0
       - &ec2_partition_table_part_boot512
         <<: *ec2_partition_table_part_boot
-        size: 536_870_912  # 512MiB
+        size: "512 MiB"
 
     default_partition_tables: &default_partition_tables
       x86_64:
@@ -618,11 +618,11 @@
         uuid: "0x14fc63d2"
         type: "dos"
         partitions:
-          - size: 4_194_304  # 4 MiB
+          - size: "4 MiB"
             bootable: true
             type: *prep_partition_dosid
           - &default_partition_table_part_root_ppc64le
-            size: 2_147_483_648  # 2 * datasizes.GibiByte,
+            size: "2 GiB"
             payload_type: "filesystem"
             payload:
               <<: *default_partition_table_part_root_payload
@@ -641,7 +641,7 @@
         partitions:
           - *default_partition_table_part_bios
           - &edge_base_partition_table_part_efi
-            size: 133_169_152  # 127 MiB
+            size: "127 MiB"
             type: *efi_system_partition_guid
             uuid: *efi_system_partition_uuid
             payload_type: "filesystem"
@@ -654,7 +654,7 @@
               fstab_freq: 0
               fstab_passno: 2
           - &edge_base_partition_table_part_boot
-            size: 402_653_184  # 384 * MiB
+            size: "384 MiB"
             type: *filesystem_data_guid
             uuid: *data_partition_uuid
             payload_type: "filesystem"
@@ -666,7 +666,7 @@
               fstab_freq: 1
               fstab_passno: 1
           - &edge_base_partition_table_part_root
-            size: 2_147_483_648  # 2 * datasizes.GibiByte,
+            size: "2 GiB"
             type: *filesystem_data_guid
             uuid: *root_partition_uuid
             payload_type: "luks"
@@ -707,7 +707,7 @@
         partitions:
           - *default_partition_table_part_bios
           - &ec2_partition_table_part_efi
-            size: 209_715_200  # 200 MiB
+            size: "200 MiB"
             type: *efi_system_partition_guid
             uuid: *efi_system_partition_uuid
             payload_type: "filesystem"
@@ -720,7 +720,7 @@
               fstab_freq: 0
               fstab_passno: 2
           - &ec2_partition_table_part_root
-            size: 2_147_483_648  # 2 * datasizes.GibiByte,
+            size: "2 GiB"
             type: *filesystem_data_guid
             uuid: *root_partition_uuid
             payload_type: "filesystem"

@@ -391,12 +391,12 @@
 
     partitions:
       - &default_partition_table_part_bios
-        size: 1_048_576  # 1 MiB
+        size: "1 MiB"
         bootable: true
         type: *bios_boot_partition_guid
         uuid: *bios_boot_partition_uuid
       - &default_partition_table_part_efi
-        size: 209_715_200  # 200 MiB
+        size: "200 MiB"
         type: *efi_system_partition_guid
         uuid: *efi_system_partition_uuid
         payload_type: "filesystem"
@@ -409,7 +409,7 @@
           fstab_freq: 0
           fstab_passno: 2
       - &default_partition_table_part_boot
-        size: 1_073_741_824  # 1 GiB
+        size: "1 GiB"
         type: *xboot_ldr_partition_guid
         uuid: *data_partition_uuid
         payload_type: "filesystem"
@@ -421,7 +421,7 @@
           fstab_freq: 0
           fstab_passno: 0
       - &default_partition_table_part_root
-        size: 2_147_483_648  # 2 * datasizes.GibiByte,
+        size: "2 GiB"
         type: *filesystem_data_guid
         uuid: *root_partition_uuid
         payload_type: "filesystem"
@@ -434,22 +434,22 @@
           fstab_passno: 0
       # ppc64
       - &default_partition_table_part_bios_ppc64le
-        size: 4_194_304  # 4 MiB
+        size: "4 MiB"
         bootable: true
         type: *prep_partition_dosid
       - &default_partition_table_part_boot_ppc64le
-        size: 1_073_741_824  # 1 GiB
+        size: "1 GiB"
         payload_type: "filesystem"
         payload:
           <<: *default_partition_table_part_boot_payload
       - &default_partition_table_part_boot512_ppc64le
         <<: *default_partition_table_part_boot_ppc64le
-        size: 524_288_000  # 500 MiB
+        size: "500 MiB"
       - &default_partition_table_part_boot600_ppc64le
         <<: *default_partition_table_part_boot_ppc64le
-        size: 629_145_600  # 600 MiB
+        size: "600 MiB"
       - &default_partition_table_part_root_ppc64le
-        size: 2_147_483_648  # 2 * datasizes.GibiByte,
+        size: "2 GiB"
         payload_type: "filesystem"
         payload:
           <<: *default_partition_table_part_root_payload
@@ -1182,3 +1182,25 @@ image_types:
                 *edge_commit_x86_64_pkgset
               aarch64:
                 *edge_commit_aarch64_pkgset
+
+  "azure-cvm":
+    package_sets:
+      os:
+        - include:
+            - "@minimal-environment"
+            - "chrony"
+            - "cloud-init"
+            - "cloud-utils-growpart"
+            - "cryptsetup"
+            - "NetworkManager-cloud-setup"
+            - "openssh-server"
+            - "redhat-cloud-client-configuration"
+            - "redhat-release"
+            - "tpm2-tools"
+            - "WALinuxAgent"
+        - exclude:
+            - "dracut-config-rescue"
+            - "iwl*"
+            - "linux-firmware*"
+            - "grubby"
+            - "os-prober"

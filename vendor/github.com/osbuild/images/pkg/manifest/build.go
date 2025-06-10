@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/osbuild/images/pkg/container"
+	"github.com/osbuild/images/pkg/customizations/fsnode"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/images/pkg/runner"
@@ -63,6 +64,15 @@ type BuildOptions struct {
 	// build pipeline. This is only needed when doing cross-arch
 	// building
 	BootstrapPipeline Build
+
+	// In some cases we have multiple build pipelines
+	PipelineName string
+
+	// Copy in files from other pipeline
+	CopyFilesFrom map[string][]string
+
+	// Ensure directories exist
+	EnsureDirs []*fsnode.Directory
 }
 
 // policy or default returns the selinuxPolicy or (if unset) the
@@ -82,6 +92,9 @@ func NewBuild(m *Manifest, runner runner.Runner, repos []rpmmd.RepoConfig, opts 
 	}
 
 	name := "build"
+	if opts.PipelineName != "" {
+		name = opts.PipelineName
+	}
 	pipeline := &BuildrootFromPackages{
 		Base:               NewBase(name, opts.BootstrapPipeline),
 		runner:             runner,
@@ -199,6 +212,9 @@ type BuildrootFromContainer struct {
 	containerBuildable bool
 	disableSelinux     bool
 	selinuxPolicy      string
+
+	copyFilesFrom map[string][]string
+	ensureDirs    []*fsnode.Directory
 }
 
 // NewBuildFromContainer creates a new build pipeline from the given
@@ -209,6 +225,9 @@ func NewBuildFromContainer(m *Manifest, runner runner.Runner, containerSources [
 	}
 
 	name := "build"
+	if opts.PipelineName != "" {
+		name = opts.PipelineName
+	}
 	pipeline := &BuildrootFromContainer{
 		Base:       NewBase(name, opts.BootstrapPipeline),
 		runner:     runner,
@@ -218,6 +237,9 @@ func NewBuildFromContainer(m *Manifest, runner runner.Runner, containerSources [
 		containerBuildable: opts.ContainerBuildable,
 		disableSelinux:     opts.DisableSELinux,
 		selinuxPolicy:      policyOrDefault(opts.SELinuxPolicy),
+
+		copyFilesFrom: opts.CopyFilesFrom,
+		ensureDirs:    opts.EnsureDirs,
 	}
 	m.addPipeline(pipeline)
 	return pipeline
@@ -288,6 +310,27 @@ func (p *BuildrootFromContainer) serialize() osbuild.Pipeline {
 		panic(err)
 	}
 	pipeline.AddStage(stage)
+
+	for _, stage := range osbuild.GenDirectoryNodesStages(p.ensureDirs) {
+		pipeline.AddStage(stage)
+	}
+
+	for copyFilesFrom, copyFiles := range p.copyFilesFrom {
+		inputName := "copy-tree"
+		paths := []osbuild.CopyStagePath{}
+		for _, copyPath := range copyFiles {
+			paths = append(paths, osbuild.CopyStagePath{
+				From: fmt.Sprintf("input://%s%s", inputName, copyPath),
+				To:   fmt.Sprintf("tree://%s", copyPath),
+			})
+		}
+
+		pipeline.AddStage(osbuild.NewCopyStageSimple(
+			&osbuild.CopyStageOptions{Paths: paths},
+			osbuild.NewPipelineTreeInputs(inputName, copyFilesFrom),
+		))
+	}
+
 	if !p.disableSelinux {
 		pipeline.AddStage(osbuild.NewSELinuxStage(
 			&osbuild.SELinuxStageOptions{
