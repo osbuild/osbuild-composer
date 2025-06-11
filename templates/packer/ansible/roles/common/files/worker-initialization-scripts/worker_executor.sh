@@ -32,5 +32,5 @@ sinks:
 EOF
 sudo systemctl enable --now vector
 
-echo "Starting osbuild-jobsite-builder."
+echo "Starting worker executor"
 /usr/libexec/osbuild-composer/osbuild-worker-executor -host 0.0.0.0

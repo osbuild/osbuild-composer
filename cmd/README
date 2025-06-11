@@ -10,10 +10,6 @@ osbuild-worker-executor: The binary that runs osbuild to build an image on an is
 
 osbuild-koji: Submits builds to Koji.
 
-osbuild-jobsite-*: Provides an isolated set of services to run builds in. They can be separated
-from the rest of the system through network segmentation or other means. The jobsite and what's
-in it are only available to things inside it.
-
 Service binaries
 ================
 
