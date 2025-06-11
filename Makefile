@@ -149,8 +149,6 @@ build: $(BUILDDIR)/bin/ build-maintenance
 	go build -o $<osbuild-upload-oci ./cmd/osbuild-upload-oci/
 	go build -o $<osbuild-upload-generic-s3 ./cmd/osbuild-upload-generic-s3/
 	go build -o $<osbuild-mock-openid-provider ./cmd/osbuild-mock-openid-provider
-	go build -o $<osbuild-jobsite-manager ./cmd/osbuild-jobsite-manager
-	go build -o $<osbuild-jobsite-builder ./cmd/osbuild-jobsite-builder
 	# also build the test binaries
 	go test -c -tags=integration -o $<osbuild-composer-cli-tests ./cmd/osbuild-composer-cli-tests/main_test.go
 	go test -c -tags=integration -o $<osbuild-weldr-tests ./internal/client/
