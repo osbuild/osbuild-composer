@@ -107,7 +107,10 @@ func sapImageConfig(rd distro.Distro) *distro.ImageConfig {
 
 	if common.VersionLessThan(rd.OsVersion(), "8.10") {
 		// E4S/EUS
-		ic.DNFSetReleaseVerVar = common.ToPtr(true)
+		if ic.DNFConfig == nil {
+			ic.DNFConfig = &distro.DNFConfig{}
+		}
+		ic.DNFConfig.SetReleaseVerVar = common.ToPtr(true)
 	}
 
 	return ic

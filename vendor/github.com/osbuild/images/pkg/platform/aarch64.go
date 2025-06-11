@@ -32,6 +32,10 @@ func (p *Aarch64) GetPackages() []string {
 	return packages
 }
 
+func (p *Aarch64) GetBootloader() Bootloader {
+	return BOOTLOADER_GRUB2
+}
+
 type Aarch64_Fedora struct {
 	BasePlatform
 	UEFIVendor string
@@ -63,4 +67,8 @@ func (p *Aarch64_Fedora) GetPackages() []string {
 
 func (p *Aarch64_Fedora) GetBootFiles() [][2]string {
 	return p.BootFiles
+}
+
+func (p *Aarch64_Fedora) GetBootloader() Bootloader {
+	return BOOTLOADER_GRUB2
 }

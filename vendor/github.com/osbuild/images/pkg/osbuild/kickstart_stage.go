@@ -38,6 +38,7 @@ type KickstartStageOptions struct {
 	AutoPart     *AutoPartOptions     `json:"autopart,omitempty"`
 	Network      []NetworkOptions     `json:"network,omitempty"`
 	Bootloader   *BootloaderOptions   `json:"bootloader,omitempty"`
+	Post         []PostOptions        `json:"%post,omitempty"`
 }
 
 type BootloaderOptions struct {
@@ -116,6 +117,14 @@ type RootPasswordOptions struct {
 	IsCrypted bool   `json:"iscrypted,omitempty"`
 	AllowSSH  bool   `json:"allow_ssh,omitempty"`
 	Password  string `json:"password,omitempty"`
+}
+
+type PostOptions struct {
+	ErrorOnFail bool     `json:"erroronfail,omitempty"`
+	Interpreter string   `json:"interpreter,omitempty"`
+	Log         string   `json:"log,omitempty"`
+	NoChroot    bool     `json:"nochroot,omitempty"`
+	Commands    []string `json:"commands"`
 }
 
 func (KickstartStageOptions) isStageOptions() {}
