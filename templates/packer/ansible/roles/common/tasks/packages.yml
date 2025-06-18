@@ -127,7 +127,7 @@
   shell: |
     dnf copr enable -y @osbuild/osbuild-composer
     COMPOSER_COMMIT_SHORT=$(echo {{ COMPOSER_COMMIT }} | head -c 9)
-    COMPOSER_RPMS=$(dnf search -q --showduplicates osbuild-composer | grep -E "osbuild-composer-worker-[0-9]+.*g$COMPOSER_COMMIT_SHORT.*{{ ansible_architecture }}" | cut -f 1 -d ':')
+    COMPOSER_RPMS=$(dnf search -q --showduplicates osbuild-composer | grep -E "osbuild-composer-worker-[0-9]+.*g$COMPOSER_COMMIT_SHORT.*{{ ansible_architecture }}" | cut -f 1-2 -d ':')
     if [ -z $COMPOSER_RPMS ]; then
       echo $COMPOSER_COMMIT_SHORT worker rpms not available for on @osbuild/osbuild-composer copr
       exit 1
