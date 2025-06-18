@@ -142,6 +142,7 @@ func getServiceErrors() serviceErrors {
 		serviceError{ErrorMismatchedDistribution, http.StatusBadRequest, "Invalid request, Blueprint and Cloud API request Distribution must match"},
 		serviceError{ErrorMismatchedArchitecture, http.StatusBadRequest, "Invalid request, Blueprint and Cloud API request Architecture must match"},
 		serviceError{ErrorBadRequest, http.StatusBadRequest, "Invalid request, see details for more information"},
+		serviceError{ErrorDeletingJob, http.StatusBadRequest, "Unable to delete job"},
 
 		serviceError{ErrorFailedToInitializeBlueprint, http.StatusInternalServerError, "Failed to initialize blueprint"},
 		serviceError{ErrorFailedToGenerateManifestSeed, http.StatusInternalServerError, "Failed to generate manifest seed"},
@@ -165,7 +166,6 @@ func getServiceErrors() serviceErrors {
 		serviceError{ErrorGettingJobType, http.StatusInternalServerError, "Unable to get job type of existing job"},
 		serviceError{ErrorTenantNotInContext, http.StatusInternalServerError, "Unable to retrieve tenant from request context"},
 		serviceError{ErrorGettingComposeList, http.StatusInternalServerError, "Unable to get list of composes"},
-		serviceError{ErrorDeletingJob, http.StatusInternalServerError, "Unable to delete job"},
 		serviceError{ErrorDeletingArtifacts, http.StatusInternalServerError, "Unable to delete job artifacts"},
 
 		serviceError{ErrorUnspecified, http.StatusInternalServerError, "Unspecified internal error "},
