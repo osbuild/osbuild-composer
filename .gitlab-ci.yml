@@ -332,15 +332,18 @@ Image Tests:
           - aws/rhel-10.1-nightly-aarch64
         INTERNAL_NETWORK: ["true"]
 
-Trigger-rhel-edge-ci:
-  rules:
-    - if: '$CI_PIPELINE_SOURCE != "schedule"'
-  stage: test
-  interruptible: true
-  tags:
-    - shell
-  script:
-    - 'curl -u "${SCHUTZBOT_LOGIN}" -X POST -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/osbuild/rhel-edge-ci/dispatches -d "{\"event_type\":\"osbuild-composer-ci\",\"client_payload\":{\"pr_number\":\"${CI_COMMIT_BRANCH}\"}}"'
+# NB (thozza): The rhel-edge-ci job is currently disabled because the tests have been consistently failing for a while.
+# The tests need to be investigated and fixed before re-enabling the job.
+# See https://issues.redhat.com/browse/HMS-8719
+# Trigger-rhel-edge-ci:
+#   rules:
+#     - if: '$CI_PIPELINE_SOURCE != "schedule"'
+#   stage: test
+#   interruptible: true
+#   tags:
+#     - shell
+#   script:
+#     - 'curl -u "${SCHUTZBOT_LOGIN}" -X POST -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/osbuild/rhel-edge-ci/dispatches -d "{\"event_type\":\"osbuild-composer-ci\",\"client_payload\":{\"pr_number\":\"${CI_COMMIT_BRANCH}\"}}"'
 
 .integration_base:
   stage: test
