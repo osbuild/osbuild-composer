@@ -831,8 +831,11 @@ Installer:
       - RUNNER:
           - rhos-01/rhel-9.7-nightly-x86_64
           - rhos-01/centos-stream-9-x86_64
-          - rhos-01/rhel-10.1-nightly-x86_64
-          - rhos-01/centos-stream-10-x86_64
+          # NB (thozza): The test is disabled for RHEL 10.1 due to https://issues.redhat.com/browse/RHEL-96222
+          # Re-enable it once kernel-6.12.0-97.el10 lands in the repositories.
+          # See https://issues.redhat.com/browse/HMS-8718
+          # - rhos-01/rhel-10.1-nightly-x86_64
+          # - rhos-01/centos-stream-10-x86_64
 
 ContainerUpload:
   stage: test
