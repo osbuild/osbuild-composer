@@ -40,3 +40,7 @@ func (p *S390X) GetBuildPackages() []string {
 
 	return packages
 }
+
+func (p *S390X) GetBootloader() Bootloader {
+	return BOOTLOADER_ZIPL
+}

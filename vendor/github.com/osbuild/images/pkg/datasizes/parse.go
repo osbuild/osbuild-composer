@@ -1,6 +1,7 @@
 package datasizes
 
 import (
+	"encoding/json"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -49,8 +50,31 @@ func Parse(size string) (uint64, error) {
 		}
 	}
 
-	// In case the strign didn't match any of the above regexes, return nil
+	// In case the string didn't match any of the above regexes, return nil
 	// even if a number was found. This is to prevent users from submitting
 	// unknown units.
 	return 0, fmt.Errorf("unknown data size units in string: %s", size)
+}
+
+// ParseSizeInJSONMapping will process the given JSON data, assuming it
+// contains a mapping. It will convert the value of the given field to a size
+// in bytes using the Parse function if the field exists and is a string.
+func ParseSizeInJSONMapping(field string, data []byte) ([]byte, error) {
+	var mapping map[string]any
+	if err := json.Unmarshal(data, &mapping); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal JSON data: %w", err)
+	}
+
+	if rawSize, ok := mapping[field]; ok {
+		// If the size is a string, parse it and replace the value in the map
+		if sizeStr, ok := rawSize.(string); ok {
+			size, err := Parse(sizeStr)
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse size field named %q to bytes: %w", field, err)
+			}
+			mapping[field] = size
+		}
+	}
+
+	return json.Marshal(mapping)
 }

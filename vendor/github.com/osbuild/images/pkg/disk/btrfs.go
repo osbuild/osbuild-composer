@@ -6,6 +6,8 @@ import (
 	"reflect"
 
 	"github.com/google/uuid"
+	"github.com/osbuild/images/internal/common"
+	"github.com/osbuild/images/pkg/datasizes"
 )
 
 const DefaultBtrfsCompression = "zstd:1"
@@ -116,6 +118,25 @@ type BtrfsSubvolume struct {
 
 	// UUID of the parent volume
 	UUID string `json:"uuid,omitempty" yaml:"uuid,omitempty"`
+}
+
+func (sv *BtrfsSubvolume) UnmarshalJSON(data []byte) (err error) {
+	data, err = datasizes.ParseSizeInJSONMapping("size", data)
+	if err != nil {
+		return fmt.Errorf("error parsing size in btrfs subvolume: %w", err)
+	}
+
+	type aliasStruct BtrfsSubvolume
+	var alias aliasStruct
+	if err := jsonUnmarshalStrict(data, &alias); err != nil {
+		return fmt.Errorf("cannot unmarshal %q: %w", data, err)
+	}
+	*sv = BtrfsSubvolume(alias)
+	return err
+}
+
+func (sv *BtrfsSubvolume) UnmarshalYAML(unmarshal func(any) error) error {
+	return common.UnmarshalYAMLviaJSON(sv, unmarshal)
 }
 
 func (bs *BtrfsSubvolume) Clone() Entity {

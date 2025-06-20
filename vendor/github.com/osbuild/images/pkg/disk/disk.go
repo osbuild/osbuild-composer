@@ -206,6 +206,24 @@ func (f FSType) String() string {
 	}
 }
 
+func (f *FSType) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return err
+	}
+
+	new, err := NewFSType(s)
+	if err != nil {
+		return err
+	}
+	*f = new
+	return nil
+}
+
+func (f *FSType) UnmarshalYAML(unmarshal func(any) error) error {
+	return common.UnmarshalYAMLviaJSON(f, unmarshal)
+}
+
 func NewFSType(s string) (FSType, error) {
 	switch s {
 	case "":
