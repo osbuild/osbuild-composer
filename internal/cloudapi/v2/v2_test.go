@@ -1328,7 +1328,11 @@ func TestComposeRhcSubscription(t *testing.T) {
 				"server_url": "subscription.rhsm.redhat.com",
 				"base_url": "http://cdn.redhat.com/",
 				"insights": false,
-				"rhc": true
+				"rhc": true,
+				"proxy": "http://proxy.example.com",
+				"template_name": "template-name",
+				"template_uuid": "template-uuid",
+				"patch_url": "http://patch.example.com"
 			},
 			"packages": [ "pkg1", "pkg2" ]
 		},
