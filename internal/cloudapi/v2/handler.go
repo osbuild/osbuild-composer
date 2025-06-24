@@ -181,6 +181,8 @@ func imageTypeFromApiImageType(it ImageTypes, arch distro.Arch) string {
 		return "gce-rhui"
 	case ImageTypesAzure:
 		return "vhd"
+	case ImageTypesAzureCvm:
+		return "azure-cvm"
 	case ImageTypesAzureRhui:
 		return "azure-rhui"
 	case ImageTypesAzureEap7Rhui:

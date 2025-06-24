@@ -889,6 +889,12 @@ func TestGetImageRequests_ImageTypeConversion(t *testing.T) {
 			expectedTargetName: target.TargetNameAzureImage,
 		},
 		{
+			requestedImageType: ImageTypesAzureCvm,
+			requestedDistros:   []string{rhel9},
+			expectedImageType:  "azure-cvm",
+			expectedTargetName: target.TargetNameAzureImage,
+		},
+		{
 			requestedImageType: ImageTypesAzureRhui,
 			requestedDistros:   []string{rhel8, rhel9},
 			expectedImageType:  "azure-rhui",
