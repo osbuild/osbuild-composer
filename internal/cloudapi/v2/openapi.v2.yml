@@ -1212,6 +1212,7 @@ components:
         - aws-rhui
         - aws-sap-rhui
         - azure
+        - azure-cvm
         - azure-eap7-rhui
         - azure-rhui
         - azure-sap-rhui
