@@ -1,0 +1,22 @@
+---
+name: "Updates Go dependencies via gobump"
+
+on:  # yamllint disable-line rule:truthy
+  workflow_dispatch:
+  schedule:
+    # Every Sunday at 15:00
+    - cron: "0 15 * * 0"
+
+jobs:
+  bump-deps-ubuntu:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run gobump-deps action
+        uses: lzap/gobump@v1
+        with:
+          go_version: "1.22.0"
+          token: ${{ secrets.GITHUB_TOKEN }}
+          exec_pr: ./tools/prepare-source.sh
