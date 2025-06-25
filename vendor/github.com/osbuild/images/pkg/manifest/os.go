@@ -392,6 +392,13 @@ func (p *OS) serialize() osbuild.Pipeline {
 	if p.OSTreeRef != "" {
 		rpmOptions.OSTreeBooted = common.ToPtr(true)
 		rpmOptions.DBPath = "/usr/share/rpm"
+		// The dracut-config-rescue package will create a rescue kernel when
+		// installed. This creates an issue with ostree-based images because
+		// rpm-ostree requires that only one kernel exists in the image.
+		// Disabling dracut for ostree-based systems resolves this issue.
+		// Dracut will be run by rpm-ostree itself while composing the image.
+		// https://github.com/osbuild/images/issues/624
+		rpmOptions.DisableDracut = true
 	}
 	pipeline.AddStage(osbuild.NewRPMStage(rpmOptions, osbuild.NewRpmStageSourceFilesInputs(p.packageSpecs)))
 
