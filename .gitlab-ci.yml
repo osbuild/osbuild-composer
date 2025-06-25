@@ -76,12 +76,16 @@ init:
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9.4-[^ga][\S]+/ && $RUNNER =~ "/^.*(x86_64).*$/" && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-8.10-[^ga][\S]+/ && $RUNNER =~ "/^.*(x86_64).*$/" && $NIGHTLY == "true" && $RHEL_MAJOR == "8"'
 
+.ga_rules_all:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-[\S]+-(?:(?:ga)|(?:eus))[\S]+/ && $NIGHTLY == "false"'
 
 .RPM_RUNNERS_RHEL: &RPM_RUNNERS_RHEL
   RUNNER:
     - aws/rhel-9.4-ga-x86_64
     - aws/rhel-9.4-ga-aarch64
-
+    - aws/rhel-8.10-ga-x86_64
+    - aws/rhel-8.10-ga-aarch64
   INTERNAL_NETWORK: ["true"]
 
 RPM:
@@ -128,6 +132,7 @@ Prepare-rhel-internal:
           # NOTE: 1 runner prepares for all arches b/c subsequent jobs download
           # artifacts from all previous jobs and the last one wins
           - aws/rhel-9.4-ga-x86_64
+          - aws/rhel-8.10-ga-x86_64
         INTERNAL_NETWORK: ["true"]
 
 Base:
@@ -220,6 +225,9 @@ regression-no-explicit-rootfs-definition:
   variables:
     SCRIPT: regression-no-explicit-rootfs-definition.sh
 
+
+
+
 Image Tests:
   stage: test
   extends: .terraform
@@ -232,15 +240,6 @@ Image Tests:
     matrix:
       - <<: *RPM_RUNNERS_RHEL
 
-Trigger-rhel-edge-ci:
-  rules:
-    - if: '$CI_PIPELINE_SOURCE != "schedule"'
-  stage: test
-  interruptible: true
-  tags:
-    - shell
-  script:
-    - 'curl -u "${SCHUTZBOT_LOGIN}" -X POST -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/osbuild/rhel-edge-ci/dispatches -d "{\"event_type\":\"osbuild-composer-ci\",\"client_payload\":{\"pr_number\":\"${CI_COMMIT_BRANCH}\"}}"'
 
 .integration_base:
   stage: test
@@ -256,6 +255,8 @@ Trigger-rhel-edge-ci:
     RUNNER:
       - aws/rhel-9.4-ga-x86_64
       - aws/rhel-9.4-ga-aarch64
+      - aws/rhel-8.10-ga-x86_64
+      - aws/rhel-8.10-ga-aarch64
     INTERNAL_NETWORK: ["true"]
 
 .integration_rhel:
@@ -310,28 +311,6 @@ gcp.sh:
   variables:
     SCRIPT: gcp.sh
 
-# VMWare tests are known to be broken due to the VCenter
-# instance that we are using. Reenable them in the future
-# if making a change on this branch and the issue is fixed.
-#
-# vmware.sh_vmdk:
-#   extends: .integration_rhel
-#   rules:
-#     # Run only on x86_64
-#     - !reference [.upstream_rules_x86_64, rules]
-#     - !reference [.nightly_rules_x86_64, rules]
-#   variables:
-#     SCRIPT: vmware.sh vmdk
-
-# vmware.sh_ova:
-#   extends: .integration_rhel
-#   rules:
-#     # Run only on x86_64
-#     - !reference [.upstream_rules_x86_64, rules]
-#     - !reference [.nightly_rules_x86_64, rules]
-#   variables:
-#     SCRIPT: vmware.sh ova
-
 filesystem.sh:
   extends: .integration
   parallel:
@@ -341,17 +320,13 @@ filesystem.sh:
   variables:
     SCRIPT: filesystem.sh
 
-cross-distro.sh:
-  extends: .integration
-  variables:
-    SCRIPT: cross-distro.sh
-
 .libvirt_integration:
   stage: test
   extends: .terraform/gcp
   rules:
     - !reference [.upstream_rules_all, rules]
     - !reference [.nightly_rules_all, rules]
+    - !reference [.ga_rules_all, rules]
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/${SCRIPT}
@@ -359,6 +334,7 @@ cross-distro.sh:
     matrix:
       - RUNNER:
           - gcp/rhel-9.4-ga-x86_64
+          - gcp/rhel-8.10-ga-x86_64
         INTERNAL_NETWORK: ["true"]
 
 libvirt.sh:
@@ -378,35 +354,9 @@ weldr-distro-dot-notation+aliases:
   parallel:
     matrix:
       - RUNNER:
+          - aws/rhel-8.10-ga-x86_64
           - aws/rhel-9.4-ga-x86_64
         INTERNAL_NETWORK: ["true"]
-
-.generic_s3:
-  extends: .libvirt_integration
-  rules:
-    # BLACKLIST
-    - if: $RUNNER !~ "/^.*(rhel-8.10|rhel-9.4).*$/" && $CI_PIPELINE_SOURCE != "schedule" && $NIGHTLY != "true"
-    - !reference [.nightly_rules_all, rules]
-
-generic_s3_http.sh:
-  extends: .generic_s3
-  variables:
-    SCRIPT: generic_s3_http.sh
-
-generic_s3_https_secure.sh:
-  extends: .generic_s3
-  variables:
-    SCRIPT: generic_s3_https_secure.sh
-
-generic_s3_https_insecure.sh:
-  extends: .generic_s3
-  variables:
-    SCRIPT: generic_s3_https_insecure.sh
-
-aws_s3.sh:
-  extends: .generic_s3
-  variables:
-    SCRIPT: aws_s3.sh
 
 OpenSCAP:
   stage: test
@@ -420,17 +370,7 @@ OpenSCAP:
     matrix:
       - RUNNER:
           - rhos-01/rhel-9.4-ga-x86_64
-
-Upgrade:
-  stage: test
-  extends: .terraform/openstack
-  rules:
-    - !reference [.nightly_rules_all, rules]
-  script:
-    - schutzbot/deploy.sh
-    - /usr/libexec/tests/osbuild-composer/upgrade8to9.sh
-  variables:
-    RUNNER: rhos-01/rhel-9.4-ga-x86_64-large
+          - rhos-01/rhel-8.10-ga-x86_64
 
 NIGHTLY_FAIL:
   stage: finish
@@ -463,19 +403,8 @@ Installer:
   parallel:
     matrix:
       - RUNNER:
+          - rhos-01/rhel-8.10-ga-x86_64
           - rhos-01/rhel-9.4-ga-x86_64
-
-SonarQube:
-  stage: test
-  extends: .terraform
-  rules:
-    - if: '$CI_PIPELINE_SOURCE != "schedule" && $CI_COMMIT_BRANCH == "main"'
-  script:
-    - schutzbot/sonarqube.sh
-  variables:
-    RUNNER: aws/centos-stream-8-x86_64
-    INTERNAL_NETWORK: "true"
-    GIT_DEPTH: 0
 
 ContainerEmbedding:
   stage: test
@@ -490,8 +419,10 @@ ContainerEmbedding:
     matrix:
       - INTERNAL_NETWORK: "true"
         RUNNER:
-        - aws/rhel-9.4-ga-x86_64
-        - aws/rhel-9.4-ga-aarch64
+          - aws/rhel-9.4-ga-x86_64
+          - aws/rhel-9.4-ga-aarch64
+          - aws/rhel-8.10-ga-x86_64
+          - aws/rhel-8.10-ga-aarch64
 
 finish:
   stage: finish
