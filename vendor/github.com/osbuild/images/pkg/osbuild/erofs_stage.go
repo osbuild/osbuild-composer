@@ -6,7 +6,8 @@ type ErofsCompression struct {
 }
 
 type ErofsStageOptions struct {
-	Filename string `json:"filename"`
+	Filename     string   `json:"filename"`
+	ExcludePaths []string `json:"exclude_paths,omitempty"`
 
 	Compression     *ErofsCompression `json:"compression,omitempty"`
 	ExtendedOptions []string          `json:"options,omitempty"`

@@ -30,13 +30,13 @@ const (
 
 // Subscription Manager [rhsm] configuration
 type SubManRHSMConfig struct {
-	ManageRepos          *bool
+	ManageRepos          *bool `yaml:"manage_repos,omitempty"`
 	AutoEnableYumPlugins *bool
 }
 
 // Subscription Manager [rhsmcertd] configuration
 type SubManRHSMCertdConfig struct {
-	AutoRegistration *bool
+	AutoRegistration *bool `yaml:"auto_registration,omitempty"`
 }
 
 // Subscription Manager 'rhsm.conf' configuration
@@ -56,7 +56,7 @@ type SubManDNFPluginsConfig struct {
 
 type RHSMConfig struct {
 	DnfPlugins SubManDNFPluginsConfig `yaml:"dnf_plugin,omitempty"`
-	YumPlugins SubManDNFPluginsConfig
+	YumPlugins SubManDNFPluginsConfig `yaml:"yum_plugin,omitempty"`
 	SubMan     SubManConfig
 }
 

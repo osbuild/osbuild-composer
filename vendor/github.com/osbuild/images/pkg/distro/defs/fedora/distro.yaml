@@ -167,15 +167,18 @@
     additional_dracut_modules:
       - "net-lib"
     squashfs_rootfs: true
-    condition:
-      version_less_than:
-        "42":
-          # config is fully replaced
+    conditions:
+      "f41 uses ifcfg in dract but already a squashfs rootfs":
+        when:
+          version_equal: "41"
+        override:
           additional_dracut_modules:
             - "ifcfg"
           squashfs_rootfs: true
-        "41":
-          # config is fully replaced
+      "f40 and lower uses ifcfg in dracut and no squashfs rootfs":
+        when:
+          version_less_than: "41"
+        override:
           additional_dracut_modules:
             - "ifcfg"
           squashfs_rootfs: false
@@ -195,9 +198,11 @@
         - "redboot-auto-reboot"
         - "redboot-task-runner"
       kernel_options: *ostree_deployment_kernel_options
-      condition:
-        version_less_than:
-          "42":
+      conditions:
+        "f41 and below used zezere and parsec":
+          when:
+            version_less_than: "42"
+          merge:
             enabled_services:
               - "NetworkManager.service"
               - "firewalld.service"
@@ -532,13 +537,12 @@ image_types:
       default_target: "multi-user.target"
       kernel_options: *cloud_kernel_options
       users:
-        # yamllint disable rule:line-length
         - name: "vagrant"
           # yamllint disable rule:line-length
           key: |
             ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA6NF8iallvQVp22WDkTkyrtvp9eWW6A8YVr+kz4TjGYe7gHzIw+niNltGEFHzD8+v1I2YJ6oXevct1YeS0o9HZyN1Q9qgCgzUFtdOKLv6IedplqoPkcmF0aYet2PkEDo3MlTBckFXPITAMzF8dJSIFo9D8HfdOV0IAdx4O7PtixWKn5y2hMNG0zQPyUecp4pzC6kivAIhyfHilFR61RGL+GPXQ2MWZWFYbAGjyiYJnAmCP3NOTd0jMZEnDkbUvxhMmBYSdETk1rRgm+R4LOzFUGaHqHDLKLX+FIPKcF96hrucXzcWyLbIbEgE98OHlnVYCzRdK8jlqm8tehUc9c9WhQ== vagrant insecure public key
             ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIN1YdxBpNlzxDqfJyw/QKow1F+wvG9hXGoqiysfJOn5Y vagrant insecure public key
-        # yamllint enable rule:line-length
+          # yamllint enable rule:line-length
       files:
         - path: "/etc/sudoers.d/vagrant"
           user: "root"
@@ -823,26 +827,39 @@ image_types:
             - "xfsprogs"
             - "xz"
             - "zram-generator"
-          condition:
-            version_less_than:
-              "41":
+          conditions:
+            "f40 and below use dnsmasq":
+              when:
+                version_less_than: "41"
+              append:
                 include:
                   - "dnsmasq"
-              "42":
+            "f41 and below uses parsec/zezere":
+              when:
+                version_less_than: "42"
+              append:
                 include:
                   - "dbus-parsec"
                   - "kernel-tools"
                   - "parsec"
                   - "policycoreutils-python-utils"
                   - "zezere-ignition"
-              "43":
+            "f42 and below uses basesystem":
+              when:
+                version_less_than: "43"
+              append:
                 include:
                   - "basesystem"
-            version_greater_or_equal:
-              "41":
+            "f41+ needs bootupd":
+              when:
+                version_greater_or_equal: "41"
+              append:
                 include:
                   - "bootupd"
-              "43":
+            "f43+ needs the filesystem pkg":
+              when:
+                version_greater_or_equal: "43"
+              append:
                 include:
                   - "filesystem"
 
@@ -923,9 +940,11 @@ image_types:
     partition_table:
       <<: *iot_base_partition_tables
     partition_tables_override:
-      condition:
-        version_greater_or_equal:
-          "42":
+      conditions:
+        "conditions for iot-raw-xz":
+          when:
+            version_greater_or_equal: "42"
+          override:
             x86_64:
               <<: *iot_base_partition_table_x86_64
               partitions:
@@ -1086,22 +1105,30 @@ image_types:
             - "nodejs"
             - "plymouth"         # for (datacenter/cloud oriented) servers we want to see the details by default.  https:#lists.fedoraproject.org/archives/list/devel@lists.fedoraproject.org/thread/HSMISZ3ETWQ4ETVLWZQJ55ARZT27AAV3/
             - "systemd-networkd"  # we use NetworkManager
-          condition:
-            architecture:
-              aarch64:
+          conditions:
+            "iot-bootable-container aarch64 extras":
+              when:
+                arch: "aarch64"
+              append:
                 include:
                   - "irqbalance"
                   - "ostree-grub2"
                 exclude:
                   - "perl"
                   - "perl-interpreter"
-              ppc64le:
+            "iot-bootable-container ppc64le extras":
+              when:
+                arch: "ppc64le"
+              append:
                 include:
                   - "irqbalance"
                   - "librtas"
                   - "powerpc-utils-core"
                   - "ppc64-diag-rtas"
-              x86_64:
+            "iot-bootable-container x86_64 extras":
+              when:
+                arch: "x86_64"
+              append:
                 include:
                   - "irqbalance"
                 exclude:
@@ -1157,9 +1184,11 @@ image_types:
         - "sshd.service"
       kernel_options:
         - "rw"
-      condition:
-        version_less_than:
-          "43":
+      conditions:
+        "f42 and below was quite different":
+          when:
+            version_less_than: "43"
+          merge:
             install_weak_deps: true
             mount_units: false
             enabled_services:
@@ -1184,16 +1213,20 @@ image_types:
             - "iwlwifi-mvm-firmware"
           exclude:
             - "dracut-config-rescue"
-          condition:
-            architecture:
-              riscv64:
+          conditions:
+            "riscv64 specific pkgs for minimal-raw-xz":
+              when:
+                arch: "riscv64"
+              append:
                 include:
                   # missing from @core in riscv64
                   - "dnf5"
                   - "policycoreutils"
                   - "selinux-policy-targeted"
-            version_greater_or_equal:
-              "43":
+            "no firewalld on f43+":
+              when:
+                version_greater_or_equal: "43"
+              append:
                 exclude:
                   - "firewalld"
   "minimal-raw-zst":
@@ -1374,15 +1407,20 @@ image_types:
             - "metacity"
             - "xrdb"
             - "xz"
-          condition:
-            architecture:
-              x86_64:
+          conditions:
+            "x86_64 specific anaconda pkgs":
+              when:
+                arch: "x86_64"
+              append:
                 include:
                   - "biosdevname"
                   - "dmidecode"
                   - "grub2-tools-efi"
                   - "memtest86+"
-              aarch64:
+            "aarch64 specific anaconda pkgs":
+              when:
+                arch: "aarch64"
+              append:
                 include:
                   - "dmidecode"
 
@@ -1410,9 +1448,11 @@ image_types:
       <<: *image_config_iot_enabled_services
       locale: "en_US.UTF-8"
       iso_rootfs_type: "squashfs"
-      condition:
-        version_less_than:
-          41:
+      conditions:
+        "f40 and below uses ext4 based iso rootfs":
+          when:
+            version_less_than: "41"
+          merge:
             iso_rootfs_type: "squashfs-ext4"
     package_sets:
       installer:
@@ -1443,11 +1483,12 @@ image_types:
     image_config:
       locale: "en_US.UTF-8"
       iso_rootfs_type: "squashfs"
-      condition:
-        version_less_than:
-          41:
+      conditions:
+        "f40 and below uses ext4 based iso rootfs":
+          when:
+            version_less_than: "41"
+          merge:
             iso_rootfs_type: "squashfs-ext4"
-
     package_sets:
       installer:
         - include:
@@ -1474,11 +1515,13 @@ image_types:
             - "gfs2-utils"
             - "reiserfs-utils"
             - "sdubby"
-          condition:
-            version_greater_or_equal:
-              # XXX: this was VERSION_RAWHIDE, if we need this again lets add
-              # "alias" to defs.DistroYAML
-              43:
+          conditions:
+            "include anaconda webui in 43+":
+              when:
+                version_greater_or_equal: "43"
+              append:
+                # XXX: this was VERSION_RAWHIDE, if we need this again lets add
+                # "alias" to defs.DistroYAML
                 include:
                   - "anaconda-webui"
     platforms:
@@ -1511,23 +1554,29 @@ image_types:
         - "net-lib"
         - "dbus-broker"
       squashfs_rootfs: true
-      condition:
-        # on match the config is fully replaced
-        version_less_than:
-          "41":
-            additional_dracut_modules: &additional_dracut_f41
+      conditions:
+        "on f40 we use ifcfg instead of net-lib":
+          when:
+            version_equal: "40"
+          override:
+            additional_dracut_modules: &additional_dracut_f40
               - "ifcfg"
               - "dbus-broker"
             squashfs_rootfs: false
-          "42":
-            additional_dracut_modules: *additional_dracut_f41
+        "on f41 use squashfs_rootfs":
+          when:
+            version_equal: "41"
+          override:
+            additional_dracut_modules: *additional_dracut_f40
             squashfs_rootfs: true
     image_config:
       locale: "en_US.UTF-8"
       iso_rootfs_type: "squashfs"
-      condition:
-        version_less_than:
-          41:
+      conditions:
+        "on f40 and below we used ext4 on squashfs":
+          when:
+            version_less_than: "41"
+          merge:
             iso_rootfs_type: "squashfs-ext4"
     platforms:
       - *x86_64_installer_platform
@@ -1608,6 +1657,7 @@ image_types:
     # correct suffix, see:
     # https://learn.microsoft.com/en-us/windows/wsl/build-custom-distro#what-are-wsl-root-filesystem-tar-files
     filename: "image.wsl"
+    compression: "xz"
     mime_type: "application/x-tar"
     image_func: "tar"
     build_pipelines: ["build"]
@@ -1618,11 +1668,14 @@ image_types:
       - arch: "x86_64"
     image_config:
       <<: *image_config_container
-      condition:
-        version_less_than:
-          "42":
-            wsl_config:
-              boot_systemd: true
+      conditions:
+        "on f42 and below we use cloud-init instead of wsl-setup":
+          when:
+            version_less_than: "42"
+          merge:
+            wsl:
+              config:
+                boot_systemd: true
             cloud_init:
               - filename: "99_wsl.cfg"
                 config:
@@ -1672,18 +1725,25 @@ image_types:
             - "trousers"
             - "whois-nls"
             - "xkeyboard-config"
-          condition:
-            version_greater_or_equal:
-              "41":
-                exclude:
-                  - "fuse-libs"
-              "42":
+          conditions:
+            "new f42 use the wsl-setup for setup":
+              when:
+                version_greater_or_equal: "42"
+              append:
                 include:
                   - "wsl-setup"
-            version_less_than:
-              "42":
+            "only f41 and below need cloud-init":
+              when:
+                version_less_than: "42"
+              append:
                 include:
                   - "cloud-init"
+            "f41+ drops fuse-libs":
+              when:
+                version_greater_or_equal: "41"
+              append:
+                exclude:
+                  - "fuse-libs"
 
   "iot-simplified-installer":
     filename: "simplified-installer.iso"
@@ -1757,9 +1817,11 @@ image_types:
             - "traceroute"
             - "util-linux"
             - "shadow-utils"  # includes passwd
-          condition:
-            version_less_than:
-              "41":
+          conditions:
+            "dnsmasq got deprecated in f41":
+              when:
+                version_less_than: "41"
+              append:
                 include:
                   - "dnsmasq"  # deprecated for F41+
     platforms:

@@ -99,37 +99,38 @@ type OSCustomizations struct {
 	ShellInit []shell.InitFile
 
 	// TODO: drop osbuild types from the API
-	Firewall             *osbuild.FirewallStageOptions
-	Grub2Config          *osbuild.GRUB2Config
-	Sysconfig            []*osbuild.SysconfigStageOptions
-	SystemdLogind        []*osbuild.SystemdLogindStageOptions
-	CloudInit            []*osbuild.CloudInitStageOptions
-	Modprobe             []*osbuild.ModprobeStageOptions
-	DracutConf           []*osbuild.DracutConfStageOptions
-	SystemdDropin        []*osbuild.SystemdUnitStageOptions
-	SystemdUnit          []*osbuild.SystemdUnitCreateStageOptions
-	Authselect           *osbuild.AuthselectStageOptions
-	SELinuxConfig        *osbuild.SELinuxConfigStageOptions
-	Tuned                *osbuild.TunedStageOptions
-	Tmpfilesd            []*osbuild.TmpfilesdStageOptions
-	PamLimitsConf        []*osbuild.PamLimitsConfStageOptions
-	Sysctld              []*osbuild.SysctldStageOptions
-	DNFConfig            []*osbuild.DNFConfigStageOptions
-	DNFAutomaticConfig   *osbuild.DNFAutomaticConfigStageOptions
-	YUMConfig            *osbuild.YumConfigStageOptions
-	YUMRepos             []*osbuild.YumReposStageOptions
-	SshdConfig           *osbuild.SshdConfigStageOptions
-	GCPGuestAgentConfig  *osbuild.GcpGuestAgentConfigOptions
-	AuthConfig           *osbuild.AuthconfigStageOptions
-	PwQuality            *osbuild.PwqualityConfStageOptions
-	ChronyConfig         *osbuild.ChronyStageOptions
-	WAAgentConfig        *osbuild.WAAgentConfStageOptions
-	UdevRules            *osbuild.UdevRulesStageOptions
-	WSLConfig            *osbuild.WSLConfStageOptions
-	InsightsClientConfig *osbuild.InsightsClientConfigStageOptions
-	NetworkManager       *osbuild.NMConfStageOptions
-	Presets              []osbuild.Preset
-	ContainersStorage    *string
+	Firewall              *osbuild.FirewallStageOptions
+	Grub2Config           *osbuild.GRUB2Config
+	Sysconfig             []*osbuild.SysconfigStageOptions
+	SystemdLogind         []*osbuild.SystemdLogindStageOptions
+	CloudInit             []*osbuild.CloudInitStageOptions
+	Modprobe              []*osbuild.ModprobeStageOptions
+	DracutConf            []*osbuild.DracutConfStageOptions
+	SystemdDropin         []*osbuild.SystemdUnitStageOptions
+	SystemdUnit           []*osbuild.SystemdUnitCreateStageOptions
+	Authselect            *osbuild.AuthselectStageOptions
+	SELinuxConfig         *osbuild.SELinuxConfigStageOptions
+	Tuned                 *osbuild.TunedStageOptions
+	Tmpfilesd             []*osbuild.TmpfilesdStageOptions
+	PamLimitsConf         []*osbuild.PamLimitsConfStageOptions
+	Sysctld               []*osbuild.SysctldStageOptions
+	DNFConfig             []*osbuild.DNFConfigStageOptions
+	DNFAutomaticConfig    *osbuild.DNFAutomaticConfigStageOptions
+	YUMConfig             *osbuild.YumConfigStageOptions
+	YUMRepos              []*osbuild.YumReposStageOptions
+	SshdConfig            *osbuild.SshdConfigStageOptions
+	GCPGuestAgentConfig   *osbuild.GcpGuestAgentConfigOptions
+	AuthConfig            *osbuild.AuthconfigStageOptions
+	PwQuality             *osbuild.PwqualityConfStageOptions
+	ChronyConfig          *osbuild.ChronyStageOptions
+	WAAgentConfig         *osbuild.WAAgentConfStageOptions
+	UdevRules             *osbuild.UdevRulesStageOptions
+	WSLConfig             *osbuild.WSLConfStageOptions
+	WSLDistributionConfig *osbuild.WSLDistributionConfStageOptions
+	InsightsClientConfig  *osbuild.InsightsClientConfigStageOptions
+	NetworkManager        *osbuild.NMConfStageOptions
+	Presets               []osbuild.Preset
+	ContainersStorage     *string
 
 	// OpenSCAP config
 	OpenSCAPRemediationConfig *oscap.RemediationConfig
@@ -381,7 +382,7 @@ func (p *OS) getBuildPackages(distro Distro) []string {
 			packages = append(packages, "python3-pyyaml")
 		}
 	}
-	if len(p.OSCustomizations.DNFConfig) > 0 || p.OSCustomizations.RHSMConfig != nil || p.OSCustomizations.WSLConfig != nil {
+	if len(p.OSCustomizations.DNFConfig) > 0 || p.OSCustomizations.RHSMConfig != nil || p.OSCustomizations.WSLConfig != nil || p.OSCustomizations.WSLDistributionConfig != nil {
 		packages = append(packages, "python3-iniparse")
 	}
 
@@ -850,6 +851,17 @@ func (p *OS) serialize() osbuild.Pipeline {
 
 	if p.OSCustomizations.WSLConfig != nil {
 		pipeline.AddStage(osbuild.NewWSLConfStage(p.OSCustomizations.WSLConfig))
+	}
+
+	if p.OSCustomizations.WSLDistributionConfig != nil {
+		// We format in our version string into the name field, if there's no %s in there nothing
+		// special will happen.
+		p.OSCustomizations.WSLDistributionConfig.OOBE.DefaultName = fmt.Sprintf(
+			p.OSCustomizations.WSLDistributionConfig.OOBE.DefaultName,
+			p.OSVersion,
+		)
+
+		pipeline.AddStage(osbuild.NewWSLDistributionConfStage(p.OSCustomizations.WSLDistributionConfig))
 	}
 
 	if p.OSCustomizations.FIPS {
