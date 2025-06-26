@@ -5,7 +5,7 @@ import (
 )
 
 type YumConfigConfig struct {
-	HttpCaching *string `json:"http_caching,omitempty"`
+	HttpCaching *string `json:"http_caching,omitempty" yaml:"http_caching,omitempty"`
 }
 
 type YumConfigPlugins struct {

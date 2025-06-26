@@ -11,14 +11,11 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
-	"slices"
 	"sort"
 	"sync"
 	"text/template"
 
 	"github.com/gobwas/glob"
-	"github.com/hashicorp/go-version"
-	"golang.org/x/exp/maps"
 	"gopkg.in/yaml.v3"
 
 	"github.com/osbuild/images/internal/common"
@@ -85,7 +82,7 @@ type DistroYAML struct {
 	OSTreeRefTmpl    string            `yaml:"ostree_ref_tmpl"`
 	Runner           runner.RunnerConf `yaml:"runner"`
 
-	// ISOLabelTmpl can contain {{.Product}},{{.OsVersion}},{{.Arch}},{{.ImgTypeLabel}}
+	// ISOLabelTmpl can contain {{.Product}},{{.OsVersion}},{{.Arch}},{{.ISOLabel}}
 	ISOLabelTmpl string `yaml:"iso_label_tmpl"`
 
 	DefaultFSType disk.FSType `yaml:"default_fs_type"`
@@ -186,12 +183,44 @@ type imageTypesYAML struct {
 }
 
 type distroImageConfig struct {
-	Default   *distro.ImageConfig          `yaml:"default"`
-	Condition *distroImageConfigConditions `yaml:"condition,omitempty"`
+	Default    *distro.ImageConfig                     `yaml:"default"`
+	Conditions map[string]*distroImageConfigConditions `yaml:"conditions,omitempty"`
+}
+
+// multiple whenConditions are considred AND
+type whenCondition struct {
+	DistroName            string `yaml:"distro_name,omitempty"`
+	Architecture          string `yaml:"arch,omitempty"`
+	VersionLessThan       string `yaml:"version_less_than,omitempty"`
+	VersionGreaterOrEqual string `yaml:"version_greater_or_equal,omitempty"`
+	VersionEqual          string `yaml:"version_equal,omitempty"`
+}
+
+func (wc *whenCondition) Eval(id *distro.ID, archStr string) bool {
+	match := true
+
+	if wc.DistroName != "" {
+		match = match && (wc.DistroName == id.Name)
+	}
+	if wc.Architecture != "" {
+		match = match && (wc.Architecture == archStr)
+	}
+	if wc.VersionLessThan != "" {
+		match = match && (common.VersionLessThan(versionStringForVerCmp(*id), wc.VersionLessThan))
+	}
+	if wc.VersionGreaterOrEqual != "" {
+		match = match && (common.VersionGreaterThanOrEqual(versionStringForVerCmp(*id), wc.VersionGreaterOrEqual))
+	}
+	if wc.VersionEqual != "" {
+		match = match && (id.VersionString() == wc.VersionEqual)
+	}
+
+	return match
 }
 
 type distroImageConfigConditions struct {
-	DistroName map[string]*distro.ImageConfig `yaml:"distro_name,omitempty"`
+	When  whenCondition       `yaml:"when,omitempty"`
+	Merge *distro.ImageConfig `yaml:"merge,omitempty"`
 }
 
 // XXX: this should eventually implement the "distro.ImageType"
@@ -259,78 +288,62 @@ func (it *imageType) Name() string {
 
 type imageConfig struct {
 	*distro.ImageConfig `yaml:",inline"`
-	Condition           *conditionsImgConf `yaml:"condition,omitempty"`
+	Conditions          map[string]*conditionsImgConf `yaml:"conditions,omitempty"`
 }
 
 type conditionsImgConf struct {
-	Architecture    map[string]*distro.ImageConfig `yaml:"architecture,omitempty"`
-	DistroName      map[string]*distro.ImageConfig `yaml:"distro_name,omitempty"`
-	VersionLessThan map[string]*distro.ImageConfig `yaml:"version_less_than,omitempty"`
+	When  whenCondition       `yaml:"when,omitempty"`
+	Merge *distro.ImageConfig `yaml:"merge"`
 }
 
 type installerConfig struct {
 	*distro.InstallerConfig `yaml:",inline"`
-	Condition               *conditionsInstallerConf `yaml:"condition,omitempty"`
+	Conditions              map[string]*conditionsInstallerConf `yaml:"conditions,omitempty"`
 }
 
 type conditionsInstallerConf struct {
-	Architecture    map[string]*distro.InstallerConfig `yaml:"architecture,omitempty"`
-	DistroName      map[string]*distro.InstallerConfig `yaml:"distro_name,omitempty"`
-	VersionLessThan map[string]*distro.InstallerConfig `yaml:"version_less_than,omitempty"`
+	When     whenCondition           `yaml:"when,omitempty"`
+	Override *distro.InstallerConfig `yaml:"override,omitempty"`
 }
 
 type packageSet struct {
-	Include   []string          `yaml:"include"`
-	Exclude   []string          `yaml:"exclude"`
-	Condition *pkgSetConditions `yaml:"condition,omitempty"`
+	Include    []string                     `yaml:"include"`
+	Exclude    []string                     `yaml:"exclude"`
+	Conditions map[string]*pkgSetConditions `yaml:"conditions,omitempty"`
 }
 
 type pkgSetConditions struct {
-	Architecture          map[string]packageSet `yaml:"architecture,omitempty"`
-	VersionLessThan       map[string]packageSet `yaml:"version_less_than,omitempty"`
-	VersionGreaterOrEqual map[string]packageSet `yaml:"version_greater_or_equal,omitempty"`
-	DistroName            map[string]packageSet `yaml:"distro_name,omitempty"`
+	When   whenCondition `yaml:"when,omitempty"`
+	Append struct {
+		Include []string `yaml:"include"`
+		Exclude []string `yaml:"exclude"`
+	} `yaml:"append,omitempty"`
 }
 
 type partitionTablesOverrides struct {
-	Condition *partitionTablesOverwriteCondition `yaml:"condition"`
+	Conditions map[string]*partitionTablesOverwriteCondition `yaml:"conditions"`
 }
 
 type partitionTablesOverwriteCondition struct {
-	DistroName            map[string]map[string]*disk.PartitionTable `yaml:"distro_name,omitempty"`
-	VersionGreaterOrEqual map[string]map[string]*disk.PartitionTable `yaml:"version_greater_or_equal,omitempty"`
-	VersionLessThan       map[string]map[string]*disk.PartitionTable `yaml:"version_less_than,omitempty"`
+	When     whenCondition                   `yaml:"when,omitempty"`
+	Override map[string]*disk.PartitionTable `yaml:"override"`
 }
 
-// XXX: use slices.Backward() once we move to go1.23
-// hint: use "git blame" on this comment and just revert
-// the commit that adds it and you will have the 1.23 version
-func backward[Slice ~[]E, E any](s Slice) []E {
-	out := make([]E, 0, len(s))
-	for i := len(s) - 1; i >= 0; i-- {
-		out = append(out, s[i])
+// versionStringForVerCmp is a special version string for our version
+// compare that will assume that any version with no minor is
+// automatically higher than any compare with a minor version.
+//
+// The rational is that "centos-9" is always higher than any "rhel-9.X"
+// version for our version compare (centos is always "rolling").
+//
+// TODO: this should become an explicit chose in "distro.yaml" but until
+// we have everything converted to generic.Distro accessing the properites
+// from an image type is very hard so we start here.
+func versionStringForVerCmp(u distro.ID) string {
+	if u.MinorVersion == -1 {
+		u.MinorVersion = 999
 	}
-	return out
-}
-
-// XXX: use slices.SortedFunc() once we move to go1.23
-// hint: use "git blame" on this comment and just revert
-// the commit that adds it and you will have the 1.23 version
-func versionLessThanSortedKeys[T any](m map[string]T) []string {
-	versions := maps.Keys(m)
-	slices.SortFunc(versions, func(a, b string) int {
-		ver1 := version.Must(version.NewVersion(a))
-		ver2 := version.Must(version.NewVersion(b))
-		switch {
-		case ver1 == ver2:
-			return 0
-		case ver2.LessThan(ver1):
-			return -1
-		default:
-			return 1
-		}
-	})
-	return versions
+	return u.VersionString()
 }
 
 // DistroImageConfig returns the distro wide ImageConfig.
@@ -343,17 +356,16 @@ func DistroImageConfig(distroNameVer string) (*distro.ImageConfig, error) {
 	}
 	imgConfig := toplevel.ImageConfig.Default
 
-	cond := toplevel.ImageConfig.Condition
-	if cond != nil {
+	condMap := toplevel.ImageConfig.Conditions
+	if condMap != nil {
 		id, err := distro.ParseID(distroNameVer)
 		if err != nil {
 			return nil, err
 		}
-		// XXX: we shoudl probably use a similar pattern like
-		// for the partition table overrides (via
-		// findElementIndexByJSONTag) but this if fine for now
-		if distroNameCnf, ok := cond.DistroName[id.Name]; ok {
-			imgConfig = distroNameCnf.InheritFrom(imgConfig)
+		for _, cond := range condMap {
+			if cond.When.Eval(id, "") {
+				imgConfig = cond.Merge.InheritFrom(imgConfig)
+			}
 		}
 	}
 
@@ -369,10 +381,6 @@ func PackageSets(it distro.ImageType) (map[string]rpmmd.PackageSet, error) {
 	archName := arch.Name()
 	distribution := arch.Distro()
 	distroNameVer := distribution.Name()
-	id, err := distro.ParseID(distroNameVer)
-	if err != nil {
-		return nil, err
-	}
 
 	// each imagetype can have multiple package sets, so that we can
 	// use yaml aliases/anchors to de-duplicate them
@@ -395,37 +403,17 @@ func PackageSets(it distro.ImageType) (map[string]rpmmd.PackageSet, error) {
 				Exclude: pkgSet.Exclude,
 			})
 
-			if pkgSet.Condition != nil {
-				// process conditions
-				if archSet, ok := pkgSet.Condition.Architecture[archName]; ok {
-					rpmmdPkgSet = rpmmdPkgSet.Append(rpmmd.PackageSet{
-						Include: archSet.Include,
-						Exclude: archSet.Exclude,
-					})
-				}
-				if distroNameSet, ok := pkgSet.Condition.DistroName[id.Name]; ok {
-					rpmmdPkgSet = rpmmdPkgSet.Append(rpmmd.PackageSet{
-						Include: distroNameSet.Include,
-						Exclude: distroNameSet.Exclude,
-					})
-				}
-				// note that we don't need to order here, as
-				// packageSets are strictly additive the order
-				// is irrelevant
-				for ltVer, ltSet := range pkgSet.Condition.VersionLessThan {
-					if common.VersionLessThan(id.VersionString(), ltVer) {
-						rpmmdPkgSet = rpmmdPkgSet.Append(rpmmd.PackageSet{
-							Include: ltSet.Include,
-							Exclude: ltSet.Exclude,
-						})
-					}
+			if pkgSet.Conditions != nil {
+				id, err := distro.ParseID(distroNameVer)
+				if err != nil {
+					return nil, err
 				}
 
-				for gteqVer, gteqSet := range pkgSet.Condition.VersionGreaterOrEqual {
-					if common.VersionGreaterThanOrEqual(id.VersionString(), gteqVer) {
+				for _, cond := range pkgSet.Conditions {
+					if cond.When.Eval(id, archName) {
 						rpmmdPkgSet = rpmmdPkgSet.Append(rpmmd.PackageSet{
-							Include: gteqSet.Include,
-							Exclude: gteqSet.Exclude,
+							Include: cond.Append.Include,
+							Exclude: cond.Append.Exclude,
 						})
 					}
 				}
@@ -465,33 +453,13 @@ func PartitionTable(it distro.ImageType) (*disk.PartitionTable, error) {
 	}
 
 	if imgType.PartitionTablesOverrides != nil {
-		cond := imgType.PartitionTablesOverrides.Condition
 		id, err := distro.ParseID(it.Arch().Distro().Name())
 		if err != nil {
 			return nil, err
 		}
-
-		for _, ltVer := range versionLessThanSortedKeys(cond.VersionLessThan) {
-			ltOverrides := cond.VersionLessThan[ltVer]
-			if common.VersionLessThan(id.VersionString(), ltVer) {
-				if newPt, ok := ltOverrides[archName]; ok {
-					pt = newPt
-				}
-			}
-		}
-
-		for _, gteqVer := range backward(versionLessThanSortedKeys(cond.VersionGreaterOrEqual)) {
-			geOverrides := cond.VersionGreaterOrEqual[gteqVer]
-			if common.VersionGreaterThanOrEqual(id.VersionString(), gteqVer) {
-				if newPt, ok := geOverrides[archName]; ok {
-					pt = newPt
-				}
-			}
-		}
-
-		if distroNameOverrides, ok := cond.DistroName[id.Name]; ok {
-			if newPt, ok := distroNameOverrides[archName]; ok {
-				pt = newPt
+		for _, cond := range imgType.PartitionTablesOverrides.Conditions {
+			if cond.When.Eval(id, archName) {
+				pt = cond.Override[archName]
 			}
 		}
 	}
@@ -612,40 +580,20 @@ func ImageConfig(distroNameVer, archName, typeName string) (*distro.ImageConfig,
 		return nil, fmt.Errorf("%w: %q", ErrImageTypeNotFound, typeName)
 	}
 	imgConfig := imgType.ImageConfig.ImageConfig
-	cond := imgType.ImageConfig.Condition
-	if cond != nil {
+	if imgType.ImageConfig.Conditions != nil {
 		id, err := distro.ParseID(distroNameVer)
 		if err != nil {
 			return nil, err
 		}
 
-		if distroNameCnf, ok := cond.DistroName[id.Name]; ok {
-			imgConfig = distroNameCnf.InheritFrom(imgConfig)
-		}
-		if archCnf, ok := cond.Architecture[archName]; ok {
-			imgConfig = archCnf.InheritFrom(imgConfig)
-		}
-		for _, ltVer := range versionLessThanSortedKeys(cond.VersionLessThan) {
-			ltOverrides := cond.VersionLessThan[ltVer]
-			if common.VersionLessThan(id.VersionString(), ltVer) {
-				imgConfig = ltOverrides.InheritFrom(imgConfig)
+		for _, cond := range imgType.ImageConfig.Conditions {
+			if cond.When.Eval(id, archName) {
+				imgConfig = cond.Merge.InheritFrom(imgConfig)
 			}
 		}
 	}
 
 	return imgConfig, nil
-}
-
-// nNonEmpty returns the number of non-empty maps in the given
-// input
-func nNonEmpty[K comparable, V any](maps ...map[K]V) int {
-	var nonEmpty int
-	for _, m := range maps {
-		if len(m) > 0 {
-			nonEmpty++
-		}
-	}
-	return nonEmpty
 }
 
 // InstallerConfig returns the InstallerConfig for the given imgType
@@ -661,27 +609,14 @@ func InstallerConfig(distroNameVer, archName, typeName string) (*distro.Installe
 		return nil, fmt.Errorf("%w: %q", ErrImageTypeNotFound, typeName)
 	}
 	installerConfig := imgType.InstallerConfig.InstallerConfig
-	cond := imgType.InstallerConfig.Condition
-	if cond != nil {
-		if nNonEmpty(cond.DistroName, cond.Architecture, cond.VersionLessThan) > 1 {
-			return nil, fmt.Errorf("only a single conditional allowed in installer config for %v", typeName)
-		}
-
-		id, err := distro.ParseID(distroNameVer)
-		if err != nil {
-			return nil, err
-		}
-
-		if distroNameCnf, ok := cond.DistroName[id.Name]; ok {
-			installerConfig = distroNameCnf
-		}
-		if archCnf, ok := cond.Architecture[archName]; ok {
-			installerConfig = archCnf
-		}
-		for _, ltVer := range versionLessThanSortedKeys(cond.VersionLessThan) {
-			ltOverrides := cond.VersionLessThan[ltVer]
-			if common.VersionLessThan(id.VersionString(), ltVer) {
-				installerConfig = ltOverrides
+	if imgType.InstallerConfig.Conditions != nil {
+		for _, cond := range imgType.InstallerConfig.Conditions {
+			id, err := distro.ParseID(distroNameVer)
+			if err != nil {
+				return nil, err
+			}
+			if cond.When.Eval(id, archName) {
+				installerConfig = cond.Override
 			}
 		}
 	}

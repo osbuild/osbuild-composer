@@ -7,7 +7,7 @@ distros:
     module_platform_id: platform:f43
     product: "Fedora"
     ostree_ref_tmpl: "fedora/43/%s/iot"
-    iso_label_tmpl: "{{.Product}}-{{.OsVersion}}-{{.ImgTypeLabel}}-{{.Arch}}"
+    iso_label_tmpl: "{{.Product}}-{{.OsVersion}}-{{.ISOLabel}}-{{.Arch}}"
     default_fs_type: "ext4"
     defs_path: fedora
     runner: &fedora_runner

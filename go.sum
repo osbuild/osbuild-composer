@@ -579,8 +579,8 @@ github.com/oracle/oci-go-sdk/v54 v54.0.0 h1:CDLjeSejv2aDpElAJrhKpi6zvT/zhZCZuXch
 github.com/oracle/oci-go-sdk/v54 v54.0.0/go.mod h1:+t+yvcFGVp+3ZnztnyxqXfQDsMlq8U25faBLa+mqCMc=
 github.com/osbuild/blueprint v1.6.0 h1:HUV1w/dMxpgqOgVtHhfTZE3zRmWQkuW/qTfx9smKImI=
 github.com/osbuild/blueprint v1.6.0/go.mod h1:0d3dlY8aSJ6jM6NHwBmJFF1VIySsp/GsDpcJQ0yrOqM=
-github.com/osbuild/images v0.151.0 h1:r+8xbz0FGyUskl996eObrgymEqgLWwhtVa23Pj0Zp8U=
-github.com/osbuild/images v0.151.0/go.mod h1:ZiEO1WWKuRvPSaiXsmqn+7krAIZ+qXiiOfBQed0H7lY=
+github.com/osbuild/images v0.154.0 h1:iwQ1rW+xwVYciyWQ/v0XBFx/liG8hTUtie3ZHeGr5gs=
+github.com/osbuild/images v0.154.0/go.mod h1:74L03u6qLwsYA10qGj6n55lBXCCj5wZLXlFl8Pj3ilI=
 github.com/osbuild/osbuild-composer/pkg/splunk_logger v0.0.0-20240814102216-0239db53236d h1:r9BFPDv0uuA9k1947Jybcxs36c/pTywWS1gjeizvtcQ=
 github.com/osbuild/osbuild-composer/pkg/splunk_logger v0.0.0-20240814102216-0239db53236d/go.mod h1:zR1iu/hOuf+OQNJlk70tju9IqzzM4ycq0ectkFBm94U=
 github.com/osbuild/pulp-client v0.1.0 h1:L0C4ezBJGTamN3BKdv+rKLuq/WxXJbsFwz/Hj7aEmJ8=

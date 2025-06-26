@@ -17,15 +17,29 @@
       - "tar"
       - "xfsprogs"
       - "xz"
-    condition:
-      architecture:
-        x86_64:
+    conditions:
+      "x86_64 specific packages for build pkgsset":
+        when:
+          arch: "x86_64"
+        append:
           include:
             - "grub2-pc"
-        ppc64el:
+      "ppc64le specific packages for build pkgsset":
+        when:
+          arch: "ppc64le"
+        append:
           include:
             - "grub2-ppc64le"
             - "grub2-ppc64le-modules"
+
+  common_conditions:
+    conditions: &conditions_pkgsets_insights_client_on_rhel
+      "add insights client on rhel":
+        when:
+          distro_name: "rhel"
+        append:
+          include:
+            - "insights-client"
 
   ec2_base_pkgset: &ec2_base_pkgset
     include:
@@ -78,13 +92,12 @@
       - "dracut-config-rescue"
       # RHBZ#2075815
       - "qemu-guest-agent"
-    condition:
-      distro_name:
-        rhel:
-          include:
-            - "insights-client"
-      version_greater_or_equal:
-        "9.6":
+    conditions:
+      <<: *conditions_pkgsets_insights_client_on_rhel
+      "rhel-9.6+ gets system-reinstall-bootc":
+        when:
+          version_greater_or_equal: "9.6"
+        append:
           include:
             - "system-reinstall-bootc"
 
@@ -178,16 +191,20 @@
       # pipeline.
       - "mdadm"
       - "nss-softokn"
-    condition:
-      architecture:
-        x86_64:
+    conditions:
+      "x86_64 specific installer packages":
+        when:
+          arch: "x86_64"
+        append:
           include:
             - "biosdevname"
 
   anaconda_boot_pkgset: &anaconda_boot_pkgset
-    condition:
-      architecture:
-        x86_64:
+    conditions:
+      "x86 specific packages for the anaconda boot pkgset":
+        when:
+          arch: "x86_64"
+        append:
           include:
             # eficommon
             - "efibootmgr"
@@ -204,7 +221,10 @@
             - "shim-x64"
             - "syslinux"
             - "syslinux-nonlinux"
-        aarch64:
+      "aarch64 specific packages for the anaconda boot pkgset":
+        when:
+          arch: "aarch64"
+        append:
           include:
             # eficommon
             - "efibootmgr"
@@ -354,15 +374,20 @@
       - "xorg-x11-server-Xorg"
       - "xorg-x11-xauth"
       - "xz"
-    condition:
-      architecture:
-        x86_64:
+    conditions:
+      "x86 specific packages for the anaconda pkgset":
+        when:
+          arch: "x86_64"
+        append:
           include:
             - "biosdevname"
             - "dmidecode"
             - "grub2-tools-efi"
             - "memtest86+"
-        aarch64:
+      "aarch64 specific packages for the anaconda pkgset":
+        when:
+          arch: "aarch64"
+        append:
           include:
             - "dmidecode"
 
@@ -488,9 +513,11 @@
             bootable: true
 
     ec2_partition_tables_override: &ec2_partition_tables_override
-      condition:
-        version_less_than:
-          "9.3":
+      conditions:
+        "rhel-9.2 and below have no efi partition":
+          when:
+            version_less_than: "9.3"
+          override:
             x86_64:
               <<: *default_partition_table_x86_64
               partitions:
@@ -498,19 +525,8 @@
                 # note no boot efi
                 - *default_partition_table_part_boot
                 - *default_partition_table_part_root
-        distro_name:
-          # we need this override to ensure that centos always gets
-          # the latest partition-tables, othersie "centos-9" is
-          # less then "9 <= 9.3"
-          "centos":
-            x86_64:
-              <<: *default_partition_table_x86_64
             aarch64:
               <<: *default_partition_table_aarch64
-            ppc64le:
-              <<: *default_partition_table_ppc64le
-            s390x:
-              <<: *default_partition_table_s390x
 
 image_config:
   default:
@@ -523,9 +539,11 @@ image_config:
       no_zero_conf: true
     timezone: "America/New_York"
     update_default_kernel: true
-  condition:
-    distro_name:
-      centos:
+  conditions:
+    "oscap needs a differnt path on centos":
+      when:
+        distro_name: "centos"
+      merge:
         default_oscap_datastream: "/usr/share/xml/scap/ssg/content/ssg-cs9-ds.xml"
 
 image_types:
@@ -575,9 +593,11 @@ image_types:
             - "tuned"
           exclude:
             - "dracut-config-rescue"
-          condition:
-            distro_name:
-              rhel:
+          conditions: &conditions_subscription_manager_cockpit
+            "add subscription-manager-cockpit on rhel":
+              when:
+                distro_name: "rhel"
+              append:
                 include:
                   - "subscription-manager-cockpit"
 
@@ -644,9 +664,11 @@ image_types:
             - "plymouth"
             - "rng-tools"
             - "udisks2"
-          condition:
-            distro_name:
-              rhel:
+          conditions: &conditions_pkgsets_insigths_pkgs
+            "add insights pkgs on rhel":
+              when:
+                distro_name: "rhel"
+              append:
                 include:
                   - "insights-client"
                   - "subscription-manager-cockpit"
@@ -729,13 +751,12 @@ image_types:
             - "rhnlib"
             - "rhnsd"
             - "usb_modeswitch"
-          condition:
-            distro_name:
-              rhel:
-                include:
-                  - "insights-client"
-            version_greater_or_equal:
-              "9.6":
+          conditions:
+            <<: *conditions_pkgsets_insights_client_on_rhel
+            "rhel-9.6+ gets system-reinstall-bootc and drops microcode_ctl":
+              when:
+                version_greater_or_equal: "9.6"
+              append:
                 include:
                   - "system-reinstall-bootc"
                 exclude:
@@ -955,11 +976,8 @@ image_types:
             - "zd1211-firmware"
             # RHBZ#2075815
             - "qemu-guest-agent"
-          condition:
-            distro_name:
-              rhel:
-                include:
-                  - "insights-client"
+          conditions:
+            <<: *conditions_pkgsets_insights_client_on_rhel
 
   "minimal-raw":
     package_sets:
@@ -1072,9 +1090,11 @@ image_types:
           exclude:
             - "rng-tools"
             - "bootupd"
-          condition:
-            architecture:
-              x86_64: &edge_commit_x86_64_pkgset
+          conditions: &conditions_pkgsets_edge_commit
+            "x86_64 specific packages for edge-commit":
+              when:
+                arch: "x86_64"
+              append: &edge_commit_x86_64_pkgset
                 include:
                   - "grub2"
                   - "grub2-efi-x64"
@@ -1092,27 +1112,27 @@ image_types:
                   - "iwl5150-firmware"
                   - "iwl6050-firmware"
                   - "iwl7260-firmware"
-              aarch64: &edge_commit_aarch64_pkgset
+            "aarch64 specific packages for edge-commit":
+              when:
+                arch: "aarch64"
+              append: &edge_commit_aarch64_pkgset
                 include:
                   - "grub2-efi-aa64"
                   - "efibootmgr"
                   - "shim-aa64"
                   - "iwl7260-firmware"
-            distro_name:
-              centos:
-                include:
-                  # XXX: duplicated to >= rhel-9.2
-                  - "ignition"
-                  - "ignition-edge"
-                  - "ssh-key-dir"
-            version_greater_or_equal:
-              "9.2":
+            "rhel-9.2+ gets ignition":
+              when:
+                version_greater_or_equal: "9.2"
+              append:
                 include:
                   - "ignition"
                   - "ignition-edge"
                   - "ssh-key-dir"
-            version_less_than:
-              "9.6":
+            "rhel-9.5 and below includes dnsmasq":
+              when:
+                version_less_than: "9.6"
+              append:
                 include:
                   # dnsmasq removed in 9.6+ but kept in older versions
                   - "dnsmasq"
@@ -1176,12 +1196,19 @@ image_types:
             - "sudo"
             - "traceroute"
             - "util-linux"
-          condition:
-            architecture:
-              x86_64:
-                *edge_commit_x86_64_pkgset
-              aarch64:
-                *edge_commit_aarch64_pkgset
+          conditions:
+            # XXX: should we instead "<<: *conditions_edge_commit" here?
+            # it will give different results
+            "x86_64 specific pkgset for edge-simplified-installer":
+              when:
+                arch: "x86_64"
+              append:
+                <<: *edge_commit_x86_64_pkgset
+            "aarch64 specific pkgset for edge-simplified-installer":
+              when:
+                arch: "aarch64"
+              append:
+                <<: *edge_commit_aarch64_pkgset
 
   "azure-cvm":
     package_sets:

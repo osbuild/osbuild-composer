@@ -1,14 +1,12 @@
 package rhel8
 
 import (
-	"github.com/osbuild/images/internal/common"
-	"github.com/osbuild/images/pkg/customizations/subscription"
+	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/datasizes"
-	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distro/rhel"
 )
 
-func mkQcow2ImgType(rd *rhel.Distribution) *rhel.ImageType {
+func mkQcow2ImgType(rd *rhel.Distribution, a arch.Arch) *rhel.ImageType {
 	it := rhel.NewImageType(
 		"qcow2",
 		"disk.qcow2",
@@ -20,7 +18,7 @@ func mkQcow2ImgType(rd *rhel.Distribution) *rhel.ImageType {
 		[]string{"qcow2"},
 	)
 
-	it.DefaultImageConfig = qcowImageConfig(rd)
+	it.DefaultImageConfig = imageConfig(rd, a.String(), "qcow2")
 	it.Bootable = true
 	it.DefaultSize = 10 * datasizes.GibiByte
 	it.BasePartitionTables = partitionTables
@@ -28,7 +26,7 @@ func mkQcow2ImgType(rd *rhel.Distribution) *rhel.ImageType {
 	return it
 }
 
-func mkOCIImgType(rd *rhel.Distribution) *rhel.ImageType {
+func mkOCIImgType(rd *rhel.Distribution, a arch.Arch) *rhel.ImageType {
 	it := rhel.NewImageType(
 		"oci",
 		"disk.qcow2",
@@ -40,7 +38,7 @@ func mkOCIImgType(rd *rhel.Distribution) *rhel.ImageType {
 		[]string{"qcow2"},
 	)
 
-	it.DefaultImageConfig = qcowImageConfig(rd)
+	it.DefaultImageConfig = imageConfig(rd, a.String(), "oci")
 	it.Bootable = true
 	it.DefaultSize = 10 * datasizes.GibiByte
 	it.BasePartitionTables = partitionTables
@@ -48,7 +46,7 @@ func mkOCIImgType(rd *rhel.Distribution) *rhel.ImageType {
 	return it
 }
 
-func mkOpenstackImgType() *rhel.ImageType {
+func mkOpenstackImgType(rd *rhel.Distribution, a arch.Arch) *rhel.ImageType {
 	it := rhel.NewImageType(
 		"openstack",
 		"disk.qcow2",
@@ -59,34 +57,10 @@ func mkOpenstackImgType() *rhel.ImageType {
 		[]string{"os", "image", "qcow2"},
 		[]string{"qcow2"},
 	)
-	it.DefaultImageConfig = &distro.ImageConfig{
-		KernelOptions: []string{"ro", "net.ifnames=0"},
-	}
+	it.DefaultImageConfig = imageConfig(rd, a.String(), "openstack")
 	it.DefaultSize = 4 * datasizes.GibiByte
 	it.Bootable = true
 	it.BasePartitionTables = partitionTables
 
 	return it
-}
-
-func qcowImageConfig(d *rhel.Distribution) *distro.ImageConfig {
-	ic := &distro.ImageConfig{
-		DefaultTarget: common.ToPtr("multi-user.target"),
-		KernelOptions: []string{"console=tty0", "console=ttyS0,115200n8", "no_timer_check", "net.ifnames=0", "crashkernel=auto"},
-	}
-	if d.IsRHEL() {
-		ic.RHSMConfig = map[subscription.RHSMStatus]*subscription.RHSMConfig{
-			subscription.RHSMConfigNoSubscription: {
-				DnfPlugins: subscription.SubManDNFPluginsConfig{
-					ProductID: subscription.DNFPluginConfig{
-						Enabled: common.ToPtr(false),
-					},
-					SubscriptionManager: subscription.DNFPluginConfig{
-						Enabled: common.ToPtr(false),
-					},
-				},
-			},
-		}
-	}
-	return ic
 }

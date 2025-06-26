@@ -80,8 +80,8 @@ func newDistro(name string, minor int) *rhel.Distribution {
 				QCOW2Compat: "0.10",
 			},
 		},
-		mkQcow2ImgType(rd),
-		mkOCIImgType(rd),
+		mkQcow2ImgType(rd, arch.ARCH_X86_64),
+		mkOCIImgType(rd, arch.ARCH_X86_64),
 	)
 
 	x86_64.AddImageTypes(
@@ -92,7 +92,7 @@ func newDistro(name string, minor int) *rhel.Distribution {
 				ImageFormat: platform.FORMAT_QCOW2,
 			},
 		},
-		mkOpenstackImgType(),
+		mkOpenstackImgType(rd, arch.ARCH_X86_64),
 	)
 
 	ec2X86Platform := &platform.X86{
@@ -113,7 +113,7 @@ func newDistro(name string, minor int) *rhel.Distribution {
 
 	x86_64.AddImageTypes(
 		ec2X86Platform,
-		mkAmiImgTypeX86_64(),
+		mkAmiImgTypeX86_64(rd),
 	)
 
 	bareMetalX86Platform := &platform.X86{
@@ -138,9 +138,9 @@ func newDistro(name string, minor int) *rhel.Distribution {
 
 	x86_64.AddImageTypes(
 		bareMetalX86Platform,
-		mkEdgeOCIImgType(rd),
-		mkEdgeCommitImgType(rd),
-		mkEdgeInstallerImgType(rd),
+		mkEdgeOCIImgType(rd, arch.ARCH_X86_64),
+		mkEdgeCommitImgType(rd, arch.ARCH_X86_64),
+		mkEdgeInstallerImgType(rd, arch.ARCH_X86_64),
 		mkImageInstaller(),
 	)
 
@@ -153,7 +153,7 @@ func newDistro(name string, minor int) *rhel.Distribution {
 
 	x86_64.AddImageTypes(
 		gceX86Platform,
-		mkGceImgType(rd),
+		mkGceImgType(rd, arch.ARCH_X86_64),
 	)
 
 	x86_64.AddImageTypes(
@@ -164,7 +164,7 @@ func newDistro(name string, minor int) *rhel.Distribution {
 				ImageFormat: platform.FORMAT_VMDK,
 			},
 		},
-		mkVmdkImgType(),
+		mkVmdkImgType(rd, arch.ARCH_X86_64),
 	)
 
 	x86_64.AddImageTypes(
@@ -175,13 +175,13 @@ func newDistro(name string, minor int) *rhel.Distribution {
 				ImageFormat: platform.FORMAT_OVA,
 			},
 		},
-		mkOvaImgType(),
+		mkOvaImgType(rd, arch.ARCH_X86_64),
 	)
 
 	x86_64.AddImageTypes(
 		&platform.X86{},
 		mkTarImgType(),
-		mkWslImgType(),
+		mkWslImgType(rd, arch.ARCH_X86_64),
 	)
 
 	aarch64.AddImageTypes(
@@ -192,7 +192,7 @@ func newDistro(name string, minor int) *rhel.Distribution {
 				QCOW2Compat: "0.10",
 			},
 		},
-		mkQcow2ImgType(rd),
+		mkQcow2ImgType(rd, arch.ARCH_AARCH64),
 	)
 
 	aarch64.AddImageTypes(
@@ -202,13 +202,13 @@ func newDistro(name string, minor int) *rhel.Distribution {
 				ImageFormat: platform.FORMAT_QCOW2,
 			},
 		},
-		mkOpenstackImgType(),
+		mkOpenstackImgType(rd, arch.ARCH_X86_64),
 	)
 
 	aarch64.AddImageTypes(
 		&platform.Aarch64{},
 		mkTarImgType(),
-		mkWslImgType(),
+		mkWslImgType(rd, arch.ARCH_AARCH64),
 	)
 
 	bareMetalAarch64Platform := &platform.Aarch64{
@@ -218,9 +218,9 @@ func newDistro(name string, minor int) *rhel.Distribution {
 
 	aarch64.AddImageTypes(
 		bareMetalAarch64Platform,
-		mkEdgeOCIImgType(rd),
-		mkEdgeCommitImgType(rd),
-		mkEdgeInstallerImgType(rd),
+		mkEdgeOCIImgType(rd, arch.ARCH_X86_64),
+		mkEdgeCommitImgType(rd, arch.ARCH_X86_64),
+		mkEdgeInstallerImgType(rd, arch.ARCH_X86_64),
 		mkImageInstaller(),
 	)
 
@@ -233,8 +233,8 @@ func newDistro(name string, minor int) *rhel.Distribution {
 
 	aarch64.AddImageTypes(
 		rawAarch64Platform,
-		mkAmiImgTypeAarch64(),
-		mkMinimalRawImgType(),
+		mkAmiImgTypeAarch64(rd),
+		mkMinimalRawImgType(rd, arch.ARCH_X86_64),
 	)
 
 	ppc64le.AddImageTypes(
@@ -245,7 +245,7 @@ func newDistro(name string, minor int) *rhel.Distribution {
 				QCOW2Compat: "0.10",
 			},
 		},
-		mkQcow2ImgType(rd),
+		mkQcow2ImgType(rd, arch.ARCH_PPC64LE),
 	)
 
 	ppc64le.AddImageTypes(
@@ -261,7 +261,7 @@ func newDistro(name string, minor int) *rhel.Distribution {
 				QCOW2Compat: "0.10",
 			},
 		},
-		mkQcow2ImgType(rd),
+		mkQcow2ImgType(rd, arch.ARCH_S390X),
 	)
 
 	s390x.AddImageTypes(
@@ -294,48 +294,50 @@ func newDistro(name string, minor int) *rhel.Distribution {
 
 	x86_64.AddImageTypes(
 		rawUEFIx86Platform,
-		mkMinimalRawImgType(),
+		mkMinimalRawImgType(rd, arch.ARCH_X86_64),
 	)
 
+	// XXX: note that this is reduandant and the else part can be dropped,
+	// we have only rhel8 based images, no centos or others
 	if rd.IsRHEL() {
 		if common.VersionGreaterThanOrEqual(rd.OsVersion(), "8.6") {
 			// image types only available on 8.6 and later on RHEL
 			// These edge image types require FDO which aren't available on older versions
 			x86_64.AddImageTypes(
 				bareMetalX86Platform,
-				mkEdgeRawImgType(),
+				mkEdgeRawImgType(rd, arch.ARCH_X86_64),
 			)
 
 			x86_64.AddImageTypes(
 				rawUEFIx86Platform,
-				mkEdgeSimplifiedInstallerImgType(rd),
+				mkEdgeSimplifiedInstallerImgType(rd, arch.ARCH_X86_64),
 			)
 
 			x86_64.AddImageTypes(
 				azureX64Platform,
-				mkAzureEap7RhuiImgType(),
+				mkAzureEap7RhuiImgType(rd, arch.ARCH_X86_64),
 			)
 
 			aarch64.AddImageTypes(
 				rawAarch64Platform,
-				mkEdgeRawImgType(),
-				mkEdgeSimplifiedInstallerImgType(rd),
+				mkEdgeRawImgType(rd, arch.ARCH_AARCH64),
+				mkEdgeSimplifiedInstallerImgType(rd, arch.ARCH_AARCH64),
 			)
 
 			// The Azure image types require hyperv-daemons which isn't available on older versions
 			aarch64.AddImageTypes(
 				azureAarch64Platform,
-				mkAzureRhuiImgType(),
-				mkAzureByosImgType(),
+				mkAzureRhuiImgType(rd, arch.ARCH_AARCH64),
+				mkAzureByosImgType(rd, arch.ARCH_AARCH64),
 			)
 		}
 
 		// add azure to RHEL distro only
 		x86_64.AddImageTypes(
 			azureX64Platform,
-			mkAzureRhuiImgType(),
-			mkAzureByosImgType(),
-			mkAzureSapRhuiImgType(rd),
+			mkAzureRhuiImgType(rd, arch.ARCH_X86_64),
+			mkAzureByosImgType(rd, arch.ARCH_X86_64),
+			mkAzureSapRhuiImgType(rd, arch.ARCH_X86_64),
 		)
 
 		// add ec2 image types to RHEL distro only
@@ -362,7 +364,7 @@ func newDistro(name string, minor int) *rhel.Distribution {
 		// add GCE RHUI image to RHEL only
 		x86_64.AddImageTypes(
 			gceX86Platform,
-			mkGceRhuiImgType(rd),
+			mkGceRhuiImgType(rd, arch.ARCH_X86_64),
 		)
 
 		// add s390x to RHEL distro only
@@ -370,28 +372,28 @@ func newDistro(name string, minor int) *rhel.Distribution {
 	} else {
 		x86_64.AddImageTypes(
 			bareMetalX86Platform,
-			mkEdgeRawImgType(),
+			mkEdgeRawImgType(rd, arch.ARCH_X86_64),
 		)
 
 		x86_64.AddImageTypes(
 			rawUEFIx86Platform,
-			mkEdgeSimplifiedInstallerImgType(rd),
+			mkEdgeSimplifiedInstallerImgType(rd, arch.ARCH_X86_64),
 		)
 
 		x86_64.AddImageTypes(
 			azureX64Platform,
-			mkAzureImgType(),
+			mkAzureImgType(rd, arch.ARCH_X86_64),
 		)
 
 		aarch64.AddImageTypes(
 			rawAarch64Platform,
-			mkEdgeRawImgType(),
-			mkEdgeSimplifiedInstallerImgType(rd),
+			mkEdgeRawImgType(rd, arch.ARCH_AARCH64),
+			mkEdgeSimplifiedInstallerImgType(rd, arch.ARCH_AARCH64),
 		)
 
 		aarch64.AddImageTypes(
 			azureAarch64Platform,
-			mkAzureImgType(),
+			mkAzureImgType(rd, arch.ARCH_AARCH64),
 		)
 	}
 	rd.AddArches(x86_64, aarch64, ppc64le)

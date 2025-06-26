@@ -342,7 +342,7 @@ func defaultAzureKernelOptions(rd *rhel.Distribution, a arch.Arch) []string {
 	case arch.ARCH_X86_64:
 		kargs = append(kargs, "console=tty1", "console=ttyS0", "earlyprintk=ttyS0", "rootdelay=300")
 	}
-	if rd.IsRHEL() && common.VersionGreaterThanOrEqual(rd.OsVersion(), "9.6") {
+	if rd.Name() == "centos-9" || common.VersionGreaterThanOrEqual(rd.OsVersion(), "9.6") {
 		kargs = append(kargs, "nvme_core.io_timeout=240")
 	}
 	return kargs
@@ -549,7 +549,7 @@ func defaultAzureImageConfig(rd *rhel.Distribution) *distro.ImageConfig {
 		},
 	}
 
-	if rd.IsRHEL() && common.VersionGreaterThanOrEqual(rd.OsVersion(), "9.6") {
+	if rd.Name() == "centos-9" || common.VersionGreaterThanOrEqual(rd.OsVersion(), "9.6") {
 		ic.TimeSynchronization = &osbuild.ChronyStageOptions{
 			Refclocks: []osbuild.ChronyConfigRefclock{
 				{
