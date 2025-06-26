@@ -19,7 +19,7 @@ import hawkey
 
 class Solver():
 
-    # pylint: disable=too-many-arguments
+    # pylint: disable=too-many-arguments,too-many-positional-arguments
     def __init__(self, repos, module_platform_id, persistdir, cachedir, arch):
         self.base = dnf.Base()
 
@@ -275,6 +275,7 @@ def solve(request, cache_dir):
     arguments = request["arguments"]
 
     transactions = arguments.get("transactions")
+    result = None
     with tempfile.TemporaryDirectory() as persistdir:
         try:
             solver = Solver(
