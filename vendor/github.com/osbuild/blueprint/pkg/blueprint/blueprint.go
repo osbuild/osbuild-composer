@@ -14,8 +14,8 @@ import (
 
 // A Blueprint is a high-level description of an image.
 type Blueprint struct {
-	Name        string    `json:"name" toml:"name"`
-	Description string    `json:"description" toml:"description"`
+	Name        string    `json:"name,omitempty" toml:"name,omitempty"`
+	Description string    `json:"description,omitempty" toml:"description,omitempty"`
 	Version     string    `json:"version,omitempty" toml:"version,omitempty"`
 	Packages    []Package `json:"packages" toml:"packages"`
 	Modules     []Package `json:"modules" toml:"modules"`
@@ -26,8 +26,8 @@ type Blueprint struct {
 
 	Groups         []Group         `json:"groups" toml:"groups"`
 	Containers     []Container     `json:"containers,omitempty" toml:"containers,omitempty"`
-	Customizations *Customizations `json:"customizations,omitempty" toml:"customizations"`
-	Distro         string          `json:"distro" toml:"distro"`
+	Customizations *Customizations `json:"customizations,omitempty" toml:"customizations,omitempty"`
+	Distro         string          `json:"distro,omitempty" toml:"distro,omitempty"`
 	Arch           string          `json:"architecture,omitempty" toml:"architecture,omitempty"`
 
 	// EXPERIMENTAL
@@ -361,6 +361,9 @@ func Convert(bp Blueprint) iblueprint.Blueprint {
 				ipart := iblueprint.PartitionCustomization{
 					Type:                     part.Type,
 					MinSize:                  part.MinSize,
+					PartType:                 part.PartType,
+					PartLabel:                part.PartLabel,
+					PartUUID:                 part.PartUUID,
 					BtrfsVolumeCustomization: iblueprint.BtrfsVolumeCustomization{},
 					VGCustomization: iblueprint.VGCustomization{
 						Name: part.VGCustomization.Name,
