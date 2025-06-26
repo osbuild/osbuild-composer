@@ -17,12 +17,17 @@
       - "tar"
       - "xfsprogs"
       - "xz"
-    condition:
-      architecture:
-        x86_64:
+    conditions:
+      "x86_64 specific packages for build pkgsset":
+        when:
+          arch: "x86_64"
+        append:
           include:
             - "grub2-pc"
-        ppc64el:
+      "ppc64le specific packages for build pkgsset":
+        when:
+          arch: "ppc64le"
+        append:
           include:
             - "grub2-ppc64le"
             - "grub2-ppc64le-modules"
@@ -181,9 +186,11 @@
       - "nss-softokn"
 
   anaconda_boot_pkgset: &anaconda_boot_pkgset
-    condition:
-      architecture:
-        x86_64:
+    conditions:
+      "x86 specific packages for the anaconda boot pkgset":
+        when:
+          arch: "x86_64"
+        append:
           include:
             # eficommon
             - "efibootmgr"
@@ -200,7 +207,10 @@
             - "shim-x64"
             - "syslinux"
             - "syslinux-nonlinux"
-        aarch64:
+      "aarch64 specific packages for the anaconda boot pkgset":
+        when:
+          arch: "aarch64"
+        append:
           include:
             # eficommon
             - "efibootmgr"
@@ -460,13 +470,17 @@
           "unmanaged-devices":
             - "driver:mlx4_core"
             - "driver:mlx5_core"
-    condition:
-      distro_name:
-        rhel:
+    conditions:
+      "rhel needs the rhel release rpm gpg key":
+        when:
+          distro_name: "rhel"
+        merge:
           gpgkey_files:
             - "/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release"
-      architecture:
-        x86_64:
+      "x86_64 specific kernel commandline":
+        when:
+          arch: "x86_64"
+        merge:
           kernel_options:
             # common
             - "ro"
@@ -477,7 +491,10 @@
             - "console=ttyS0"
             - "earlyprintk=ttyS0"
             - "rootdelay=300"
-        aarch64:
+      "aarch64 specific kernel commandline":
+        when:
+          arch: "aarch64"
+        merge:
           kernel_options:
             # common
             - "ro"
@@ -497,9 +514,11 @@ image_config:
       no_zero_conf: true
     timezone: "UTC"
     update_default_kernel: true
-  condition:
-    distro_name:
-      centos:
+  conditions:
+    "centos oscap datastream path":
+      when:
+        distro_name: "centos"
+      merge:
         default_oscap_datastream: "/usr/share/xml/scap/ssg/content/ssg-cs10-ds.xml"
 
 image_types:
@@ -547,19 +566,23 @@ image_types:
             - "tuned"
           exclude:
             - "dracut-config-rescue"
-          condition:
-            distro_name:
-              rhel:
+          conditions:
+            "add subscription-manager-cockpit on rhel":
+              when:
+                distro_name: "rhel"
+              append:
                 include:
                   - "subscription-manager-cockpit"
 
   qcow2: &qcow2
-    image_config:
+    image_config: &qcow2_image_config
       default_target: "multi-user.target"
       kernel_options: ["console=tty0", "console=ttyS0,115200n8", "no_timer_check"]
-      condition:
-        distro_name:
-          rhel:
+      conditions:
+        "tweak the rhsm config on rhel":
+          when:
+            distro_name: "rhel"
+          merge:
             rhsm_config:
               "no-subscription":
                 dnf_plugin:
@@ -571,7 +594,8 @@ image_types:
       <<: *default_partition_tables
     package_sets:
       os:
-        - include:
+        - &qcow2_pkgset
+          include:
             - "@core"
             - "chrony"
             - "cloud-init"
@@ -627,12 +651,33 @@ image_types:
             - "plymouth"
             - "rng-tools"
             - "udisks2"
-          condition:
-            distro_name:
-              rhel:
+          conditions:
+            "add insights pkgs on rhel":
+              when:
+                distro_name: "rhel"
+              append:
                 include:
                   - "insights-client"
                   - "subscription-manager-cockpit"
+
+  "vagrant-libvirt":
+    <<: *qcow2
+    image_config:
+      <<: *qcow2_image_config
+      users:
+        - name: "vagrant"
+          # yamllint disable rule:line-length
+          key: |
+            ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA6NF8iallvQVp22WDkTkyrtvp9eWW6A8YVr+kz4TjGYe7gHzIw+niNltGEFHzD8+v1I2YJ6oXevct1YeS0o9HZyN1Q9qgCgzUFtdOKLv6IedplqoPkcmF0aYet2PkEDo3MlTBckFXPITAMzF8dJSIFo9D8HfdOV0IAdx4O7PtixWKn5y2hMNG0zQPyUecp4pzC6kivAIhyfHilFR61RGL+GPXQ2MWZWFYbAGjyiYJnAmCP3NOTd0jMZEnDkbUvxhMmBYSdETk1rRgm+R4LOzFUGaHqHDLKLX+FIPKcF96hrucXzcWyLbIbEgE98OHlnVYCzRdK8jlqm8tehUc9c9WhQ== vagrant insecure public key
+            ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIN1YdxBpNlzxDqfJyw/QKow1F+wvG9hXGoqiysfJOn5Y vagrant insecure public key
+          # yamllint enable rule:line-length
+      files:
+        - path: "/etc/sudoers.d/vagrant"
+          user: "root"
+          group: "root"
+          mode: 440
+          data: |
+            vagrant ALL=(ALL) NOPASSWD: ALL
 
   oci: *qcow2
 
@@ -739,9 +784,11 @@ image_types:
             - "rhnlib"
             - "rhnsd"
             - "usb_modeswitch"
-          condition:
-            distro_name:
-              rhel:
+          conditions: &conditions_pkgsets_insights_client_on_rhel
+            "add insights client on rhel":
+              when:
+                distro_name: "rhel"
+              append:
                 include:
                   - "insights-client"
 
@@ -949,22 +996,31 @@ image_types:
       sshd_config:
         config:
           PasswordAuthentication: false
-      condition:
-        architecture:
-          x86_64: &ami_image_config_cond_x86_64
+      conditions: &ami_image_config_cond
+        "we need dracut conf with nvme/xen on x86":
+          when:
+            arch: "x86_64"
+          merge:
             dracut_conf:
               - filename: "ec2.conf"
                 config:
                   add_drivers:
                     - "nvme"
                     - "xen-blkfront"
+        "x86_64 specific kopts":
+          when:
+            arch: "x86_64"
+          merge:
             # TODO: move these to the EC2 environment
             kernel_options:
               # common
               - "console=tty0"
               - "console=ttyS0,115200n8"
               - "nvme_core.io_timeout=4294967295"
-          aarch64:
+        "aarch64 specific kopts":
+          when:
+            arch: "aarch64"
+          merge:
             # TODO: move these to the EC2 environment
             kernel_options:
               # XXX: duplicated with above x86_64 kernel defaults
@@ -1027,11 +1083,8 @@ image_types:
             - "dracut-config-rescue"
             # RHBZ#2075815
             - "qemu-guest-agent"
-          condition:
-            distro_name:
-              rhel:
-                include:
-                  - "insights-client"
+          conditions:
+            <<: *conditions_pkgsets_insights_client_on_rhel
 
   ec2: *ami
 
@@ -1053,11 +1106,15 @@ image_types:
         - *sap_pkgset
     image_config:
       <<: [*ami_image_config, *sap_image_config]
-      condition:
-        architecture:
-          x86_64:
-            # XXX: this shows that merging at the yaml level is tricky
-            <<: *ami_image_config_cond_x86_64
+      conditions:
+        <<: *ami_image_config_cond
+        # this needs to override the original ami key because
+        # we want everything from the ami config *except* the
+        # kernel comandline
+        "x86_64 specific kopts":
+          when:
+            arch: "x86_64"
+          merge:
             kernel_options:
               # XXX: duplicated with ami.image_config.kernel_options :(
               - "console=tty0"
@@ -1078,8 +1135,55 @@ image_types:
             network:
               config: "disabled"
       no_selinux: true
-      wsl_config:
-        boot_systemd: true
+      wsl: &wsl_config
+        config:
+          boot_systemd: true
+        distribution_config: &wsl_distribution_config
+          shortcut:
+            enabled: true
+            icon: /usr/share/pixmaps/fedora-logo.ico
+          oobe: &wsl_distribution_oobe_config
+            default_uid: 1000
+      conditions:
+        "wsl config for rhel":
+          when:
+            distro_name: "rhel"
+          merge:
+            wsl:
+              <<: *wsl_config
+              distribution_config:
+                <<: *wsl_distribution_config
+                oobe:
+                  <<: *wsl_distribution_oobe_config
+                  default_name: RedHatEnterpriseLinux-%s
+        "wsl config for centos":
+          when:
+            distro_name: "centos"
+          merge:
+            wsl:
+              <<: *wsl_config
+              distribution_config:
+                <<: *wsl_distribution_config
+                oobe:
+                  <<: *wsl_distribution_oobe_config
+                  default_name: CentOS-%s
+        "wsl config for almalinux":
+          when:
+            distro_name: "almalinux"
+          merge:
+            wsl: &wsl_distribution_config_almalinux
+              <<: *wsl_config
+              distribution_config:
+                <<: *wsl_distribution_config
+                oobe:
+                  <<: *wsl_distribution_oobe_config
+                  default_name: AlmaLinux-%s
+        "wsl config for almalinuxkitten":
+          when:
+            distro_name: "almalinux_kitten"
+          merge:
+            wsl:
+              <<: *wsl_distribution_config_almalinux
     package_sets:
       os:
         - include:
@@ -1113,6 +1217,7 @@ image_types:
             - "procps-ng"
             - "python3"
             - "python3-inotify"
+            - "redhat-logos"
             - "redhat-release"
             - "rootfiles"
             - "rpm"
@@ -1252,15 +1357,20 @@ image_types:
             - "xfsdump"
             - "xfsprogs"
             - "xz"
-          condition:
-            architecture:
-              x86_64:
+          conditions:
+            "x86_64 specific pkgs for image installer":
+              when:
+                arch: "x86_64"
+              append:
                 include:
                   - "biosdevname"
                   - "dmidecode"
                   - "grub2-tools-efi"
                   - "memtest86+"
-              aarch64:
+            "aarch64 specific pkgs for image installer":
+              when:
+                arch: "aarch64"
+              append:
                 include:
                   - "dmidecode"
 
@@ -1416,11 +1526,8 @@ image_types:
             - "zd1211-firmware"
             # RHBZ#2075815
             - "qemu-guest-agent"
-          condition:
-            distro_name:
-              rhel:
-                include:
-                  - "insights-client"
+          conditions:
+            <<: *conditions_pkgsets_insights_client_on_rhel
 
   "azure-cvm":
     image_config:

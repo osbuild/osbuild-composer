@@ -38,9 +38,11 @@
       - "mariadb-libs"
       - "NetworkManager-config-server"
       - "postfix"
-    condition:
-      distro_name:
-        "rhel":
+    conditions: &conditions_for_insights_client
+      "add insights client on rhel":
+        when:
+          distro_name: "rhel"
+        append:
           include:
             - "insights-client"
 
@@ -247,8 +249,5 @@ image_types:
             - "libertas-sd8686-firmware"
             - "libertas-sd8787-firmware"
             - "libertas-usb8388-firmware"
-          condition:
-            distro_name:
-              "rhel":
-                include:
-                  - "insights-client"
+          conditions:
+            <<: *conditions_for_insights_client

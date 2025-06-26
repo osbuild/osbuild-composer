@@ -1,16 +1,14 @@
 package rhel8
 
 import (
-	"github.com/osbuild/images/internal/common"
-	"github.com/osbuild/images/pkg/customizations/fsnode"
+	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/datasizes"
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distro/rhel"
-	"github.com/osbuild/images/pkg/osbuild"
 )
 
-func mkEdgeCommitImgType(rd *rhel.Distribution) *rhel.ImageType {
+func mkEdgeCommitImgType(rd *rhel.Distribution, a arch.Arch) *rhel.ImageType {
 	it := rhel.NewImageType(
 		"edge-commit",
 		"commit.tar",
@@ -23,16 +21,13 @@ func mkEdgeCommitImgType(rd *rhel.Distribution) *rhel.ImageType {
 	)
 
 	it.NameAliases = []string{"rhel-edge-commit"}
-	it.DefaultImageConfig = &distro.ImageConfig{
-		EnabledServices: edgeServices(rd),
-		DracutConf:      []*osbuild.DracutConfStageOptions{osbuild.FIPSDracutConfStageOptions},
-	}
+	it.DefaultImageConfig = imageConfig(rd, a.String(), "edge-commit")
 	it.RPMOSTree = true
 
 	return it
 }
 
-func mkEdgeOCIImgType(rd *rhel.Distribution) *rhel.ImageType {
+func mkEdgeOCIImgType(rd *rhel.Distribution, a arch.Arch) *rhel.ImageType {
 	it := rhel.NewImageType(
 		"edge-container",
 		"container.tar",
@@ -45,16 +40,13 @@ func mkEdgeOCIImgType(rd *rhel.Distribution) *rhel.ImageType {
 	)
 
 	it.NameAliases = []string{"rhel-edge-container"}
-	it.DefaultImageConfig = &distro.ImageConfig{
-		EnabledServices: edgeServices(rd),
-		DracutConf:      []*osbuild.DracutConfStageOptions{osbuild.FIPSDracutConfStageOptions},
-	}
+	it.DefaultImageConfig = imageConfig(rd, a.String(), "edge-container")
 	it.RPMOSTree = true
 
 	return it
 }
 
-func mkEdgeRawImgType() *rhel.ImageType {
+func mkEdgeRawImgType(rd *rhel.Distribution, a arch.Arch) *rhel.ImageType {
 	it := rhel.NewImageType(
 		"edge-raw-image",
 		"image.raw.xz",
@@ -68,14 +60,7 @@ func mkEdgeRawImgType() *rhel.ImageType {
 
 	it.NameAliases = []string{"rhel-edge-raw-image"}
 	it.Compression = "xz"
-	it.DefaultImageConfig = &distro.ImageConfig{
-		Keyboard: &osbuild.KeymapStageOptions{
-			Keymap: "us",
-		},
-		Locale:        common.ToPtr("C.UTF-8"),
-		LockRootUser:  common.ToPtr(true),
-		KernelOptions: []string{"modprobe.blacklist=vc4"},
-	}
+	it.DefaultImageConfig = imageConfig(rd, a.String(), "edge-raw-image")
 	it.DefaultSize = 10 * datasizes.GibiByte
 	it.RPMOSTree = true
 	it.Bootable = true
@@ -88,7 +73,7 @@ func mkEdgeRawImgType() *rhel.ImageType {
 	return it
 }
 
-func mkEdgeInstallerImgType(rd *rhel.Distribution) *rhel.ImageType {
+func mkEdgeInstallerImgType(rd *rhel.Distribution, a arch.Arch) *rhel.ImageType {
 	it := rhel.NewImageType(
 		"edge-installer",
 		"installer.iso",
@@ -101,9 +86,7 @@ func mkEdgeInstallerImgType(rd *rhel.Distribution) *rhel.ImageType {
 	)
 
 	it.NameAliases = []string{"rhel-edge-installer"}
-	it.DefaultImageConfig = &distro.ImageConfig{
-		EnabledServices: edgeServices(rd),
-	}
+	it.DefaultImageConfig = imageConfig(rd, a.String(), "edge-installer")
 	it.DefaultInstallerConfig = &distro.InstallerConfig{
 		AdditionalDracutModules: []string{
 			"ifcfg",
@@ -116,7 +99,7 @@ func mkEdgeInstallerImgType(rd *rhel.Distribution) *rhel.ImageType {
 	return it
 }
 
-func mkEdgeSimplifiedInstallerImgType(rd *rhel.Distribution) *rhel.ImageType {
+func mkEdgeSimplifiedInstallerImgType(rd *rhel.Distribution, a arch.Arch) *rhel.ImageType {
 	it := rhel.NewImageType(
 		"edge-simplified-installer",
 		"simplified-installer.iso",
@@ -129,15 +112,7 @@ func mkEdgeSimplifiedInstallerImgType(rd *rhel.Distribution) *rhel.ImageType {
 	)
 
 	it.NameAliases = []string{"rhel-edge-simplified-installer"}
-	it.DefaultImageConfig = &distro.ImageConfig{
-		EnabledServices: edgeServices(rd),
-		Keyboard: &osbuild.KeymapStageOptions{
-			Keymap: "us",
-		},
-		Locale:        common.ToPtr("C.UTF-8"),
-		LockRootUser:  common.ToPtr(true),
-		KernelOptions: []string{"modprobe.blacklist=vc4"},
-	}
+	it.DefaultImageConfig = imageConfig(rd, a.String(), "edge-simplified-installer")
 	it.DefaultInstallerConfig = &distro.InstallerConfig{
 		AdditionalDracutModules: []string{
 			"prefixdevname",
@@ -158,7 +133,7 @@ func mkEdgeSimplifiedInstallerImgType(rd *rhel.Distribution) *rhel.ImageType {
 	return it
 }
 
-func mkMinimalRawImgType() *rhel.ImageType {
+func mkMinimalRawImgType(rd *rhel.Distribution, a arch.Arch) *rhel.ImageType {
 	it := rhel.NewImageType(
 		"minimal-raw",
 		"disk.raw.xz",
@@ -171,61 +146,10 @@ func mkMinimalRawImgType() *rhel.ImageType {
 	)
 
 	it.Compression = "xz"
-	it.DefaultImageConfig = &distro.ImageConfig{
-		EnabledServices: minimalrawServices,
-		// NOTE: temporary workaround for a bug in initial-setup that
-		// requires a kickstart file in the root directory.
-		Files:         []*fsnode.File{initialSetupKickstart()},
-		KernelOptions: []string{"ro"},
-	}
+	it.DefaultImageConfig = imageConfig(rd, a.String(), "minimal-raw")
 	it.Bootable = true
 	it.DefaultSize = 2 * datasizes.GibiByte
 	it.BasePartitionTables = partitionTables
 
 	return it
-}
-
-func edgeServices(rd *rhel.Distribution) []string {
-	// Common Services
-	var edgeServices = []string{"NetworkManager.service", "firewalld.service", "sshd.service"}
-
-	if rd.OsVersion() == "8.4" {
-		// greenboot services aren't enabled by default in 8.4
-		edgeServices = append(edgeServices,
-			"greenboot-grub2-set-counter",
-			"greenboot-grub2-set-success",
-			"greenboot-healthcheck",
-			"greenboot-rpm-ostree-grub2-check-fallback",
-			"greenboot-status",
-			"greenboot-task-runner",
-			"redboot-auto-reboot",
-			"redboot-task-runner")
-
-	}
-
-	if !(rd.IsRHEL() && common.VersionLessThan(rd.OsVersion(), "8.6")) {
-		// enable fdo-client only on RHEL 8.6+ and CS8
-
-		// TODO(runcom): move fdo-client-linuxapp.service to presets?
-		edgeServices = append(edgeServices, "fdo-client-linuxapp.service")
-	}
-
-	return edgeServices
-}
-
-var minimalrawServices = []string{
-	"NetworkManager.service",
-	"firewalld.service",
-	"sshd.service",
-	"initial-setup.service",
-}
-
-// initialSetupKickstart returns the File configuration for a kickstart file
-// that's required to enable initial-setup to run on first boot.
-func initialSetupKickstart() *fsnode.File {
-	file, err := fsnode.NewFile("/root/anaconda-ks.cfg", nil, "root", "root", []byte("# Run initial-setup on first boot\n# Created by osbuild\nfirstboot --reconfig\nlang en_US.UTF-8\n"))
-	if err != nil {
-		panic(err)
-	}
-	return file
 }
