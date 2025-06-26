@@ -50,6 +50,9 @@ type DescribeReservedInstancesInput struct {
 	//   - availability-zone - The Availability Zone where the Reserved Instance can be
 	//   used.
 	//
+	//   - availability-zone-id - The ID of the Availability Zone where the Reserved
+	//   Instance can be used.
+	//
 	//   - duration - The duration of the Reserved Instance (one year or three years),
 	//   in seconds ( 31536000 | 94608000 ).
 	//
@@ -161,6 +164,9 @@ func (c *Client) addOperationDescribeReservedInstancesMiddlewares(stack *middlew
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -179,6 +185,9 @@ func (c *Client) addOperationDescribeReservedInstancesMiddlewares(stack *middlew
 	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
+	if err = addCredentialSource(stack, options); err != nil {
+		return err
+	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeReservedInstances(options.Region), middleware.Before); err != nil {
 		return err
 	}
@@ -195,6 +204,18 @@ func (c *Client) addOperationDescribeReservedInstancesMiddlewares(stack *middlew
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

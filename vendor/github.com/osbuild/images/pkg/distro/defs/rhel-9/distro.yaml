@@ -498,19 +498,6 @@
                 # note no boot efi
                 - *default_partition_table_part_boot
                 - *default_partition_table_part_root
-        distro_name:
-          # we need this override to ensure that centos always gets
-          # the latest partition-tables, othersie "centos-9" is
-          # less then "9 <= 9.3"
-          "centos":
-            x86_64:
-              <<: *default_partition_table_x86_64
-            aarch64:
-              <<: *default_partition_table_aarch64
-            ppc64le:
-              <<: *default_partition_table_ppc64le
-            s390x:
-              <<: *default_partition_table_s390x
 
 image_config:
   default:
@@ -1098,13 +1085,6 @@ image_types:
                   - "efibootmgr"
                   - "shim-aa64"
                   - "iwl7260-firmware"
-            distro_name:
-              centos:
-                include:
-                  # XXX: duplicated to >= rhel-9.2
-                  - "ignition"
-                  - "ignition-edge"
-                  - "ssh-key-dir"
             version_greater_or_equal:
               "9.2":
                 include:

@@ -554,7 +554,7 @@ image_types:
                   - "subscription-manager-cockpit"
 
   qcow2: &qcow2
-    image_config:
+    image_config: &qcow2_image_config
       default_target: "multi-user.target"
       kernel_options: ["console=tty0", "console=ttyS0,115200n8", "no_timer_check"]
       condition:
@@ -571,7 +571,8 @@ image_types:
       <<: *default_partition_tables
     package_sets:
       os:
-        - include:
+        - &qcow2_pkgset
+          include:
             - "@core"
             - "chrony"
             - "cloud-init"
@@ -633,6 +634,25 @@ image_types:
                 include:
                   - "insights-client"
                   - "subscription-manager-cockpit"
+
+  "vagrant-libvirt":
+    <<: *qcow2
+    image_config:
+      <<: *qcow2_image_config
+      users:
+        - name: "vagrant"
+          # yamllint disable rule:line-length
+          key: |
+            ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA6NF8iallvQVp22WDkTkyrtvp9eWW6A8YVr+kz4TjGYe7gHzIw+niNltGEFHzD8+v1I2YJ6oXevct1YeS0o9HZyN1Q9qgCgzUFtdOKLv6IedplqoPkcmF0aYet2PkEDo3MlTBckFXPITAMzF8dJSIFo9D8HfdOV0IAdx4O7PtixWKn5y2hMNG0zQPyUecp4pzC6kivAIhyfHilFR61RGL+GPXQ2MWZWFYbAGjyiYJnAmCP3NOTd0jMZEnDkbUvxhMmBYSdETk1rRgm+R4LOzFUGaHqHDLKLX+FIPKcF96hrucXzcWyLbIbEgE98OHlnVYCzRdK8jlqm8tehUc9c9WhQ== vagrant insecure public key
+            ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIN1YdxBpNlzxDqfJyw/QKow1F+wvG9hXGoqiysfJOn5Y vagrant insecure public key
+          # yamllint enable rule:line-length
+      files:
+        - path: "/etc/sudoers.d/vagrant"
+          user: "root"
+          group: "root"
+          mode: 440
+          data: |
+            vagrant ALL=(ALL) NOPASSWD: ALL
 
   oci: *qcow2
 
@@ -1078,8 +1098,42 @@ image_types:
             network:
               config: "disabled"
       no_selinux: true
-      wsl_config:
-        boot_systemd: true
+      wsl: &wsl_config
+        config:
+          boot_systemd: true
+        distribution_config: &wsl_distribution_config
+          shortcut:
+            enabled: true
+            icon: /usr/share/pixmaps/fedora-logo.ico
+          oobe: &wsl_distribution_oobe_config
+            default_uid: 1000
+      condition:
+        distro_name:
+          rhel:
+            wsl:
+              <<: *wsl_config
+              distribution_config:
+                <<: *wsl_distribution_config
+                oobe:
+                  <<: *wsl_distribution_oobe_config
+                  default_name: RedHatEnterpriseLinux-%s
+          centos:
+            wsl:
+              <<: *wsl_config
+              distribution_config:
+                <<: *wsl_distribution_config
+                oobe:
+                  <<: *wsl_distribution_oobe_config
+                  default_name: CentOS-%s
+          almalinux: &wsl_distribution_config_almalinux
+            wsl:
+              <<: *wsl_config
+              distribution_config:
+                <<: *wsl_distribution_config
+                oobe:
+                  <<: *wsl_distribution_oobe_config
+                  default_name: AlmaLinux-%s
+          almalinux_kitten: *wsl_distribution_config_almalinux
     package_sets:
       os:
         - include:
@@ -1113,6 +1167,7 @@ image_types:
             - "procps-ng"
             - "python3"
             - "python3-inotify"
+            - "redhat-logos"
             - "redhat-release"
             - "rootfiles"
             - "rpm"
