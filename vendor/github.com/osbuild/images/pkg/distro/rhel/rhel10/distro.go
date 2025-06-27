@@ -110,6 +110,17 @@ func newDistro(name string, major, minor int) *rhel.Distribution {
 	)
 
 	x86_64.AddImageTypes(
+		&platform.X86{
+			BIOS:       true,
+			UEFIVendor: rd.Vendor(),
+			BasePlatform: platform.BasePlatform{
+				ImageFormat: platform.FORMAT_VAGRANT_LIBVIRT,
+			},
+		},
+		mkVagrantLibvirtImgType(rd, arch.ARCH_X86_64),
+	)
+
+	x86_64.AddImageTypes(
 		&platform.X86{},
 		mkTarImgType(),
 		mkWSLImgType(rd),
@@ -130,6 +141,16 @@ func newDistro(name string, major, minor int) *rhel.Distribution {
 			},
 		},
 		mkQcow2ImgType(rd, arch.ARCH_AARCH64),
+	)
+
+	aarch64.AddImageTypes(
+		&platform.Aarch64{
+			UEFIVendor: rd.Vendor(),
+			BasePlatform: platform.BasePlatform{
+				ImageFormat: platform.FORMAT_VAGRANT_LIBVIRT,
+			},
+		},
+		mkVagrantLibvirtImgType(rd, arch.ARCH_AARCH64),
 	)
 
 	ppc64le.AddImageTypes(

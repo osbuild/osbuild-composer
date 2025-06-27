@@ -50,9 +50,11 @@
       - "plymouth"
       # RHBZ#2075815
       - "qemu-guest-agent"
-    condition:
-      distro_name:
-        rhel:
+    conditions: &conditions_for_insights_client
+      "add insights client on rhel":
+        when:
+          distro_name: "rhel"
+        append:
           include:
             - "insights-client"
 
@@ -128,15 +130,238 @@
       - "rhnlib"
       - "rhnsd"
       - "usb_modeswitch"
-    condition:
-      distro_name:
-        "rhel":
-          include:
-            - "insights-client"
-            # XXX: this is defined in azure.go:commonPackageSets but
-            # there is a bug in the original code so this never gets
-            # actually added so we don't add it here either
-            # - "rhc"
+    conditions:
+      <<: *conditions_for_insights_client
+      # XXX: the below "rhc" is defined in
+      # azure.go:commonPackageSets but there is a bug in the
+      # original code so this never gets actually added so we
+      # don't add it here either
+      # - "rhc"
+
+  # Default AMI (custom image built by users) images config.
+  # The configuration does not touch the RHSM configuration at all.
+  # https://issues.redhat.com/browse/COMPOSER-2157
+  ami_image_config: &ami_image_config
+    timezone: "UTC"
+    time_synchronization:
+      servers:
+        - hostname: "169.254.169.123"
+          prefer: true
+          iburst: true
+          minpoll: 4
+          maxpoll: 4
+      # empty string will remove any occurrences of the option
+      # from the configuration
+      leapsectz: ""
+    keyboard:
+      keymap: "us"
+      "x11-keymap":
+        layouts: ["us"]
+    enabled_services:
+      - "sshd"
+      - "NetworkManager"
+      - "nm-cloud-setup.service"
+      - "nm-cloud-setup.timer"
+      - "cloud-init"
+      - "cloud-init-local"
+      - "cloud-config"
+      - "cloud-final"
+      - "reboot.target"
+    default_target: "multi-user.target"
+    update_default_kernel: true
+    default_kernel: "kernel"
+    sysconfig:
+      networking: true
+      no_zero_conf: true
+      create_default_network_scripts: true
+    dracut_conf:
+      - &sgdisk_dracut_conf
+        filename: "sgdisk.conf"
+        config:
+          install: ["sgdisk"]
+    systemd_logind:
+      - filename: "00-getty-fixes.conf"
+        config:
+          login:
+            nautovts: 0
+    cloud_init:
+      - filename: "00-rhel-default-user.cfg"
+        config:
+          system_info:
+            default_user:
+              name: "ec2-user"
+    modprobe:
+      - filename: "blacklist-nouveau.conf"
+        commands:
+          - command: blacklist
+            modulename: "nouveau"
+      - filename: "blacklist-amdgpu.conf"
+        commands:
+          - command: blacklist
+            modulename: "amdgpu"
+    systemd_dropin:
+      # RHBZ#1822863
+      - unit: "nm-cloud-setup.service"
+        dropin: "10-rh-enable-for-ec2.conf"
+        config:
+          service:
+            environment:
+              - key: "NM_CLOUD_SETUP_EC2"
+                value: "yes"
+    authselect:
+      profile: "sssd"
+    sshd_config:
+      config:
+        PasswordAuthentication: false
+    conditions: &conditions_ami_image_config
+      "x86_64 specific dracut conf":
+        when:
+          arch: "x86_64"
+        merge: &ami_image_config_cond_x86_64
+          dracut_conf:
+            - *sgdisk_dracut_conf
+            - filename: "ec2.conf"
+              config:
+                add_drivers:
+                  - "nvme"
+                  - "xen-blkfront"
+      "x86_64 specific kopts":
+        when:
+          arch: "x86_64"
+        merge:
+          # TODO: move these to the EC2 environment?
+          kernel_options:
+            - "console=tty0"
+            - "console=ttyS0,115200n8"
+            - "net.ifnames=0"
+            - "rd.blacklist=nouveau"
+            - "nvme_core.io_timeout=4294967295"
+            - "crashkernel=auto"
+      "aarch64 specific kopts":
+        when:
+          arch: "aarch64"
+        merge:
+          # TODO: move these to the EC2 environment?
+          kernel_options:
+            # XXX: duplicated with above x86_64 kernel defaults
+            - "console=tty0"
+            - "console=ttyS0,115200n8"
+            - "net.ifnames=0"
+            - "rd.blacklist=nouveau"
+            - "nvme_core.io_timeout=4294967295"
+            # this is the only difference
+            - "iommu.strict=0"
+            # same again
+            - "crashkernel=auto"
+
+  ec2_image_config: &ec2_image_config
+    <<: *ami_image_config
+    conditions: &conditions_ec2_image_config
+      <<: *conditions_ami_image_config
+      "no rhsm for rhel-8.7+":
+        # The RHSM configuration should not be applied since 8.7, but it is instead done by installing the
+        # redhat-cloud-client-configuration package. See COMPOSER-1804 for more information.
+        when:
+          version_less_than: "8.7"
+        merge:
+          rhsm_config:
+            "no-subscription":
+              # RHBZ#1932802
+              subman:
+                rhsmcertd:
+                  # RHBZ#1932802
+                  auto_registration: true
+                  # Don't disable RHSM redhat.repo management on the AMI
+                  # image, which is BYOS and does not use RHUI for content.
+                  # Otherwise subscribing the system manually after booting
+                  # it would result in empty redhat.repo. Without RHUI, such
+                  # system would have no way to get Red Hat content, but
+                  # enable the repo management manually, which would be very
+                  # confusing.
+                  #
+                  # XXX: the above is the orginal comment from the go code,
+                  # however at a different place it will do the setting below
+                  # which seem to contradict the previous comment.
+                rhsm:
+                  # Disable RHSM redhat.repo management
+                  manage_repos: false
+            "with-subscription":
+              # RHBZ#1932802
+              subman:
+                rhsmcertd:
+                  auto_registration: true
+                  # do not disable the redhat.repo management if the user
+                  # explicitly request the system to be subscribed
+
+  sap_image_config: &sap_image_config
+    selinux_config:
+      state: "permissive"
+    tuned:
+      profiles: ["sap-hana"]
+    # RHBZ#1959979
+    tmpfilesd:
+      - filename: "sap.conf"
+        config:
+          - type: "x"
+            path: "/tmp/.sap*"
+          - type: "x"
+            path: "/tmp/.hdb*lock"
+          - type: "x"
+            path: "/tmp/.trex*lock"
+    # RHBZ#1959963
+    pam_limits_conf:
+      - filename: "99-sap.conf"
+        config:
+          - domain: "@sapsys"
+            type: "hard"
+            item: "nofile"
+            value: 1048576
+          - domain: "@sapsys"
+            type: "soft"
+            item: "nofile"
+            value: 1048576
+          - domain: "@dba"
+            type: "hard"
+            item: "nofile"
+            value: 1048576
+          - domain: "@dba"
+            type: "soft"
+            item: "nofile"
+            value: 1048576
+          - domain: "@sapsys"
+            type: "hard"
+            item: "nproc"
+            value: "unlimited"
+          - domain: "@sapsys"
+            type: "soft"
+            item: "nproc"
+            value: "unlimited"
+          - domain: "@dba"
+            type: "hard"
+            item: "nproc"
+            value: "unlimited"
+          - domain: "@dba"
+            type: "soft"
+            item: "nproc"
+            value: "unlimited"
+    # RHBZ#1959962
+    sysctld:
+      - filename: "sap.conf"
+        config:
+          - key: "kernel.pid_max"
+            value: "4194304"
+          - key: "vm.max_map_count"
+            value: "2147483647"
+    dnf_config:
+      set_release_ver_var: false
+    conditions: &conditions_sap_image_config
+      "rhel-8.9 and below needs to set the release ver in dnf config":
+        when:
+          version_less_than: "8.10"
+        merge:
+          dnf_config:
+            # E4S/EUS
+            set_release_ver_var: true
 
   sap_pkgset: &sap_pkgset
     include:
@@ -176,13 +401,17 @@
       - "tuned-profiles-sap-hana"
       # RHBZ#1961168
       - "libnsl"
-    condition:
-      version_less_than:
-        "8.6":
+    conditions:
+      "name of the ansible pkg rhel-8.6 and below":
+        when:
+          version_less_than: "8.6"
+        append:
           include:
             - "ansible"
-      version_greater_or_equal:
-        "8.6":
+      "name of the ansible pkg rhel-8.6+":
+        when:
+          version_greater_or_equal: "8.6"
+        append:
           include:
             - "ansible-core"
 
@@ -219,16 +448,20 @@
       - "tar"
       - "xfsprogs"
       - "xz"
-    condition:
-      architecture:
-        x86_64:
+    conditions:
+      "x86-64 needs biosdevname":
+        when:
+          arch: "x86_64"
+        append:
           include:
             - "biosdevname"
 
   anaconda_boot_pkgset: &anaconda_boot_pkgset
-    condition:
-      architecture:
-        x86_64:
+    conditions:
+      "x86_64 architecture dependant anaconda packages":
+        when:
+          arch: "x86_64"
+        append:
           include:
             # eficommon
             - "efibootmgr"
@@ -247,7 +480,10 @@
             - "shim-x64"
             - "syslinux"
             - "syslinux-nonlinux"
-        aarch64:
+      "aarch64 architecture dependant anaconda packages":
+        when:
+          arch: "aarch64"
+        append:
           include:
             # eficommon
             - "efibootmgr"
@@ -370,23 +606,23 @@
       - "xorg-x11-server-utils"
       - "xorg-x11-server-Xorg"
       - "xorg-x11-xauth"
-    condition:
-      architecture:
-        x86_64:
+      # XXX: this was originally centos or rhel
+      - "libreport-rhel-anaconda-bugzilla"
+    conditions:
+      "x86_64 architecture dependant packages for anaconda":
+        when:
+          arch: "x86_64"
+        append:
           include:
             - "biosdevname"
             - "dmidecode"
             - "memtest86+"
-        aarch64:
+      "aarch64 architecture dependant packages for anaconda":
+        when:
+          arch: "aarch64"
+        append:
           include:
             - "dmidecode"
-      distro_name:
-        rhel:
-          include:
-            - "libreport-rhel-anaconda-bugzilla"
-        centos:
-          include:
-            - "libreport-rhel-anaconda-bugzilla"
 
   gce_common_pkgset: &gce_common_pkgset
     include:
@@ -449,11 +685,8 @@
       - "zd1211-firmware"
       # RHBZ#2075815
       - "qemu-guest-agent"
-    condition:
-      distro_name:
-        rhel:
-          include:
-            - "insights-client"
+    conditions:
+      <<: *conditions_for_insights_client
 
   qcow2_common_pkgset: &qcow2_common_pkgset
     include:
@@ -523,9 +756,11 @@
       - "plymouth"
       - "rng-tools"
       - "udisks2"
-    condition:
-      distro_name:
-        rhel:
+    conditions: &condition_rhel_insights_clinet_subman
+      "add insights/subscription manager for copilot":
+        when:
+          distro_name: "rhel"
+        append:
           include:
             - "insights-client"
             - "subscription-manager-cockpit"
@@ -540,6 +775,7 @@
       - &efi_system_partition_guid "C12A7328-F81F-11D2-BA4B-00A0C93EC93B"
       - &filesystem_data_guid "0FC63DAF-8483-4772-8E79-3D69D8477DE4"
       - &xboot_ldr_partition_guid "BC13C2FF-59E6-4262-A352-B275FD6F7172"
+      - &lvm_partition_guid "E6D6D379-F507-44C2-A23C-238F2A3DF928"
     # static UUIDs for partitions and filesystems
     # NOTE(akoutsou): These are unnecessary and have stuck around since the
     # beginning where (I believe) the goal was to have predictable,
@@ -740,30 +976,121 @@
           - *ec2_partition_table_part_root
 
   ec2_partition_tables_override: &ec2_partition_tables_override
-    condition:
-      version_less_than:
-        "8.10":
-          aarch64:
+    conditions:
+      "rhel8.9  uses efi boot but small boot":
+        when:
+          version_equal: "8.9"
+        override:
+          x86_64:
+            <<: *ec2_partition_table_x86_64
+          aarch64: &ec2_partition_table_aarch64_8_9
             <<: *ec2_partition_table_aarch64
             partitions:
               - *ec2_partition_table_part_efi
               - *ec2_partition_table_part_boot512
               - *ec2_partition_table_part_root
-        "8.9":
+      "rhel-8.9 and below has no efi on x86 but is the same on aarch64":
+        when:
+          version_less_than: "8.9"
+        override:
           x86_64:
             <<: *ec2_partition_table_x86_64
             partitions:
               - *default_partition_table_part_bios
               - *ec2_partition_table_part_root
-      distro_name:
-        # we need this override to ensure that centos always gets
-        # the latest partition-tables, otherwise "centos-8" is
-        # less than "8 <= 8.9"
-        "centos":
-          x86_64:
-            <<: *ec2_partition_table_x86_64
           aarch64:
-            <<: *ec2_partition_table_aarch64
+            <<: *ec2_partition_table_aarch64_8_9
+
+  azure_rhui_partition_tables: &azure_rhui_partition_tables
+    x86_64:
+      uuid: "D209C89E-EA5E-4FBD-B161-B461CCE297E0"
+      type: "gpt"
+      size: "64 GiB"
+      partitions:
+        - &azure_rhui_part_boot_efi
+          size: 524_288_000   # 500 * datasizes.MebiByte
+          type: *efi_system_partition_guid
+          UUID: *efi_system_partition_uuid
+          payload_type: "filesystem"
+          payload:
+            type: "vfat"
+            uuid: *efi_filesystem_uuid
+            mountpoint: "/boot/efi"
+            fstab_options: "defaults,uid=0,gid=0,umask=077,shortname=winnt"
+            fstab_freq: 0
+            fstab_passno: 2
+        - &azure_rhui_part_boot
+          size: 524_288_000   # 500 * datasizes.MebiByte
+          type: *filesystem_data_guid
+          uuid: *data_partition_uuid
+          payload_type: "filesystem"
+          payload:
+            type: "xfs"
+            mountpoint: "/boot"
+            fstab_options: "defaults"
+            fstab_freq: 0
+            fstab_passno: 0
+        - size: 2_097_152  # 2 * datasizes.MebiByte
+          bootable: true
+          type: *bios_boot_partition_guid
+          uuid: *bios_boot_partition_uuid
+        - &azure_rhui_part_lvm
+          type: *lvm_partition_guid
+          uuid: *root_partition_uuid
+          payload_type: "lvm"
+          payload:
+            name: "rootvg"
+            description: "built with lvm2 and osbuild"
+            logical_volumes:
+              - size: 1_073_741_824  # 1 * datasizes.GibiByte
+                name: "homelv"
+                payload_type: "filesystem"
+                payload:
+                  type: "xfs"
+                  label: "home"
+                  mountpoint: "/home"
+                  fstab_options: "defaults"
+              - size: 2_147_483_648  # 2 * datasizes.GibiByte
+                name: "rootlv"
+                payload_type: "filesystem"
+                payload:
+                  type: "xfs"
+                  label: "root"
+                  mountpoint: "/"
+                  fstab_options: "defaults"
+              - size: 2_147_483_648  # 2 * datasizes.GibiByte
+                name: "tmplv"
+                payload_type: "filesystem"
+                payload:
+                  type: "xfs"
+                  label: "tmp"
+                  mountpoint: "/tmp"
+                  fstab_options: "defaults"
+              - size: 10_737_418_240  # 10 * datasizes.GibiByte
+                name: "usrlv"
+                payload_type: "filesystem"
+                payload:
+                  type: "xfs"
+                  label: "usr"
+                  mountpoint: "/usr"
+                  fstab_options: "defaults"
+              - size: 10_737_418_240  # 10 * datasizes.GibiByte
+                name: "varlv"
+                payload_type: "filesystem"
+                payload:
+                  type: "xfs"
+                  label: "var"
+                  mountpoint: "/var"
+                  fstab_options: "defaults"
+    aarch64:
+      uuid: "D209C89E-EA5E-4FBD-B161-B461CCE297E0"
+      type: "gpt"
+      size: 68_719_476_736  # 64 * datasizes.GibiByte
+      partitions:
+        - *azure_rhui_part_boot_efi
+        # NB: we currently don't support /boot on LVM
+        - *azure_rhui_part_boot
+        - *azure_rhui_part_lvm
 
 image_config:
   default:
@@ -777,9 +1104,11 @@ image_config:
       no_zero_conf: true
     timezone: "America/New_York"
     update_default_kernel: true
-  condition:
-    distro_name:
-      centos:
+  conditions:
+    "centos has a different oscap path":
+      when:
+        distro_name: "centos"
+      merge:
         default_oscap_datastream: "/usr/share/xml/scap/ssg/content/ssg-centos8-ds.xml"
 
 image_types:
@@ -832,18 +1161,23 @@ image_types:
             - "tar"
             - "tcpdump"
             - "yum"
-          condition:
-            distro_name:
-              rhel:
-                include:
-                  - "insights-client"
-                  - "subscription-manager-cockpit"
+          conditions:
+            <<: *condition_rhel_insights_clinet_subman
 
-  ec2: &ec2
+  ami: &ami
+    package_sets:
+      os:
+        - *ec2_common_pkgset
     partition_table:
       <<: *ec2_partition_tables
     partition_tables_override:
       <<: *ec2_partition_tables_override
+    image_config: *ami_image_config
+
+  ec2: &ec2
+    <<: *ami
+    image_config:
+      <<: *ec2_image_config
     package_sets:
       os:
         - *ec2_common_pkgset
@@ -851,9 +1185,11 @@ image_types:
             - "rh-amazon-rhui-client"
           exclude:
             - "alsa-lib"
-          condition:
-            version_greater_or_equal:
-              "8.7":
+          conditions: &conditions_rh_cloud_client
+            "add redhat-cloud-client-configuration on rh8.7+":
+              when:
+                version_greater_or_equal: "8.7"
+              append:
                 include:
                   - "redhat-cloud-client-configuration"
 
@@ -869,74 +1205,213 @@ image_types:
             - "rh-amazon-rhui-client-ha"
           exclude:
             - "alsa-lib"
-          condition:
-            version_greater_or_equal:
-              "8.7":
-                include:
-                  - "redhat-cloud-client-configuration"
-
-  ami:
-    <<: *ec2
-    package_sets:
-      os:
-        - *ec2_common_pkgset
+          conditions:
+            <<: *conditions_rh_cloud_client
 
   "ec2-sap":
     <<: *ec2
+    image_config:
+      <<: [*ec2_image_config, *sap_image_config]
+      conditions:
+        <<: [*conditions_ec2_image_config, *conditions_sap_image_config]
+        # override ec2 kopts
+        "x86_64 specific kopts":
+          when:
+            arch: "x86_64"
+          merge:
+            kernel_options:
+              # amiSapKernelOptions()
+              # common AMI kernel options
+              - "console=tty0"
+              - "console=ttyS0,115200n8"
+              - "net.ifnames=0"
+              - "rd.blacklist=nouveau"
+              - "nvme_core.io_timeout=4294967295"
+              - "crashkernel=auto"
+              # SAP specific for ami
+              - "processor.max_cstate=1"
+              - "intel_idle.max_cstate=1"
     package_sets:
       os:
         - *ec2_common_pkgset
         - *sap_pkgset
-        - condition:
-            version_less_than:
-              "8.10":
+        - conditions:
+            <<: *conditions_rh_cloud_client
+            "rh-8.9 or below gets the e4s bundle":
+              when:
+                version_less_than: "8.10"
+              append:
                 include:
                   - "rh-amazon-rhui-client-sap-bundle-e4s"
-            version_greater_or_equal:
-              "8.10":
+            "rh-8.10+ get the rhui bundle":
+              when:
+                version_greater_or_equal: "8.10"
+              append:
                 include:
                   - "rh-amazon-rhui-client-sap-bundle"
-              "8.7":
-                include:
-                  - "redhat-cloud-client-configuration"
 
-  "azure-rhui":
-    package_sets:
+  qcow2: &qcow2
+    image_config:
+      default_target: "multi-user.target"
+      kernel_options:
+        - "console=tty0"
+        - "console=ttyS0,115200n8"
+        - "no_timer_check"
+        - "net.ifnames=0"
+        - "crashkernel=auto"
+      conditions:
+        "tweak the rhsm config on rhel":
+          when:
+            distro_name: "rhel"
+          merge:
+            rhsm_config:
+              "no-subscription":
+                dnf_plugin:
+                  product_id:
+                    enabled: false
+                  subscription_manager:
+                    enabled: false
+    partition_table:
+      <<: *default_partition_tables
+    package_sets: &qcow2_pkgset
       os:
-        - *azure_common_pkgset
-        - include:
-            - "firewalld"
-            - "rhui-azure-rhel8"
-          exclude:
-            - "alsa-lib"
-
-  "azure-sap-rhui":
-    package_sets:
-      os:
-        - *azure_common_pkgset
-        - *sap_pkgset
-        - include:
-            - "firewalld"
-          condition:
-            version_greater_or_equal:
-              "8.10":
-                include:
-                  - "rhui-azure-rhel8-base-sap-ha"
-            version_less_than:
-              "8.10":
-                include:
-                  - "rhui-azure-rhel8-sap-ha"
-
-  "azure-eap7-rhui":
-    package_sets:
-      os:
-        - *azure_common_pkgset
-        - include:
-            - "rhui-azure-rhel8"
-          exclude:
-            - "firewalld"
+        - *qcow2_common_pkgset
 
   vhd:
+    # yamllint disable rule:line-length
+    # based on https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/8/html/deploying_rhel_8_on_microsoft_azure/assembly_deploying-a-rhel-image-as-a-virtual-machine-on-microsoft-azure_cloud-content-azure#making-configuration-changes_configure-the-image-azure
+    # yamllint enable rule:line-length
+    image_config: &vhd_image_config
+      timezone: "Etc/UTC"
+      locale: "en_US.UTF-8"
+      keyboard:
+        keymap: "us"
+        "x11-keymap":
+          layouts: ["us"]
+      update_default_kernel: true
+      default_kernel: "kernel-core"
+      sysconfig:
+        networking: true
+        no_zero_conf: true
+      enabled_services:
+        - "nm-cloud-setup.service"
+        - "nm-cloud-setup.timer"
+        - "sshd"
+        - "waagent"
+        - "firewalld"
+      sshd_config:
+        config:
+          ClientAliveInterval: 180
+      modprobe:
+        - filename: "blacklist-amdgpu.conf"
+          commands:
+            - command: blacklist
+              modulename: "amdgpu"
+        - filename: "blacklist-intel-cstate.conf"
+          commands:
+            - command: blacklist
+              modulename: "intel_cstate"
+        - filename: "blacklist-floppy.conf"
+          commands:
+            - command: blacklist
+              modulename: "floppy"
+        - filename: "blacklist-nouveau.conf"
+          commands:
+            - command: blacklist
+              modulename: "nouveau"
+            - command: blacklist
+              modulename: "lbm-nouveau"
+        - filename: "blacklist-skylake-edac.conf"
+          commands:
+            - command: blacklist
+              modulename: "skx_edac"
+      cloud_init:
+        - filename: "10-azure-kvp.cfg"
+          config:
+            reporting:
+              logging:
+                type: "log"
+              telemetry:
+                type: "hyperv"
+        - filename: "91-azure_datasource.cfg"
+          config:
+            datasource:
+              azure:
+                apply_network_config: false
+            datasource_list:
+              - "Azure"
+      pwquality:
+        config:
+          minlen: 6
+          minclass: 3
+          dcredit: 0
+          ucredit: 0
+          lcredit: 0
+          ocredit: 0
+      waagent_config:
+        config:
+          "ResourceDisk.Format": false
+          "ResourceDisk.EnableSwap": false
+      grub2_config:
+        disable_recovery: true
+        disable_submenu: true
+        distributor: "$(sed 's, release .*$,,g' /etc/system-release)"
+        terminal: ["serial", "console"]
+        serial: "serial --speed=115200 --unit=0 --word=8 --parity=no --stop=1"
+        timeout: 10
+        timeout_style: "countdown"
+      udev_rules:
+        filename: "/etc/udev/rules.d/68-azure-sriov-nm-unmanaged.rules"
+        rules:
+          - comment:
+              - "Accelerated Networking on Azure exposes a new SRIOV interface to the VM."
+              - "This interface is transparently bonded to the synthetic interface,"
+              - "so NetworkManager should just ignore any SRIOV interfaces."
+          - rule:
+              - K: "SUBSYSTEM"
+                O: "=="
+                V: "net"
+              - K: "DRIVERS"
+                O: "=="
+                V: "hv_pci"
+              - K: "ACTION"
+                O: "=="
+                V: "add"
+              - K: "ENV"
+                A: "NM_UNMANAGED"
+                O: "="
+                V: "1"
+      systemd_dropin:
+        # RHBZ#1822863
+        - unit: "nm-cloud-setup.service"
+          dropin: "10-rh-enable-for-azure.conf"
+          config:
+            service:
+              environment:
+                - key: "NM_CLOUD_SETUP_AZURE"
+                  value: "yes"
+      default_target: "multi-user.target"
+      kernel_options: &vhd_image_config_kernel_options
+        - "ro"
+        # use loglevel=3 as described in the RHEL documentation and used in existing RHEL images built by MSFT
+        - "loglevel=3"
+        - "crashkernel=auto"
+        - "console=tty1"
+        - "console=ttyS0"
+        - "earlyprintk=ttyS0"
+        - "rootdelay=300"
+      conditions:
+        "x86_64 specific kernel options":
+          when:
+            arch: "x86_64"
+          merge:
+            kernel_options: *vhd_image_config_kernel_options
+        "rhel needs the rhel release rpm gpg key":
+          when:
+            distro_name: "rhel"
+          merge:
+            gpgkey_files:
+              - "/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release"
     partition_table:
       <<: *default_partition_tables
     package_sets:
@@ -948,6 +1423,95 @@ image_types:
           exclude:
             - "alsa-lib"
 
+  "azure-rhui": &azure_rhui
+    image_config: &azure_rhui_image_config
+      <<: *vhd_image_config
+      rhsm_config:
+        "no-subscription":
+          dnf_plugin:
+            subscription_manager:
+              enabled: false
+          subman:
+            rhsmcertd:
+              auto_registration: true
+            rhsm:
+              manage_repos: false
+        "with-subscription":
+          subman:
+            rhsmcertd:
+              auto_registration: true
+              # do not disable the redhat.repo management if the user
+              # explicitly request the system to be subscribed
+      conditions: &conditions_azure_rhui_image_config
+        "rhel needs rh and ms gpg keys":
+          when:
+            distro_name: "rhel"
+          merge:
+            gpgkey_files:
+              - "/etc/pki/rpm-gpg/RPM-GPG-KEY-microsoft-azure-release"
+              - "/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release"
+    package_sets:
+      os:
+        - *azure_common_pkgset
+        - include:
+            - "firewalld"
+            - "rhui-azure-rhel8"
+          exclude:
+            - "alsa-lib"
+    partition_table:
+      <<: *azure_rhui_partition_tables
+
+  "azure-sap-rhui":
+    <<: *azure_rhui
+    image_config:
+      <<: [*azure_rhui_image_config, *sap_image_config]
+      conditions:
+        <<: [*conditions_azure_rhui_image_config, *conditions_sap_image_config]
+    package_sets:
+      os:
+        - *azure_common_pkgset
+        - *sap_pkgset
+        - include:
+            - "firewalld"
+          conditions:
+            "rh-8.10+ gets the the base sap ha pkgs":
+              when:
+                version_greater_or_equal: "8.10"
+              append:
+                include:
+                  - "rhui-azure-rhel8-base-sap-ha"
+            "rh-8.9 or below gets sap-ha":
+              when:
+                version_less_than: "8.10"
+              append:
+                include:
+                  - "rhui-azure-rhel8-sap-ha"
+
+  "azure-eap7-rhui":
+    <<: *azure_rhui
+    image_config:
+      <<: *azure_rhui_image_config
+      enabled_services:
+        # XXX: same as RHUI but no firewalld
+        - "nm-cloud-setup.service"
+        - "nm-cloud-setup.timer"
+        - "sshd"
+        - "waagent"
+      shell_init:
+        - filename: "eap_env.sh"
+          variables:
+            - key: "EAP_HOME"
+              value: "/opt/rh/eap7/root/usr/share/wildfly"
+            - key: "JBOSS_HOME"
+              value: "/opt/rh/eap7/root/usr/share/wildfly"
+    package_sets:
+      os:
+        - *azure_common_pkgset
+        - include:
+            - "rhui-azure-rhel8"
+          exclude:
+            - "firewalld"
+
   "image-installer":
     package_sets:
       <<: *bare_metal_pkgset
@@ -957,6 +1521,17 @@ image_types:
         - *anaconda_boot_pkgset
 
   tar:
+    filename: "root.tar.xz"
+    mime_type: "application/x-tar"
+    image_func: "tar"
+    build_pipelines: ["build"]
+    payload_pipelines: ["os", "archive"]
+    exports: ["archive"]
+    platforms:
+      - arch: "x86_64"
+      - arch: "aarch64"
+      - arch: "ppc64le"
+      - arch: "s390x"
     package_sets:
       os:
         - include:
@@ -965,7 +1540,45 @@ image_types:
           exclude:
             - "rng-tools"
 
-  "edge-commit":
+  "edge-commit": &edge_commit
+    image_config: &edge_commit_image_config
+      enabled_services: &enabled_services_edge
+        - "NetworkManager.service"
+        - "firewalld.service"
+        - "sshd.service"
+        # only on rhel-8.6+ and centos
+        - "fdo-client-linuxapp.service"
+      dracut_conf:
+        - filename: "40-fips.conf"
+          config:
+            add_dracutmodules: ["fips"]
+      conditions:
+        "rhel-8.5 has no fdo":
+          when:
+            version_equal: "8.5"
+          merge:
+            enabled_services:
+              - "NetworkManager.service"
+              - "firewalld.service"
+              - "sshd.service"
+        "rhel-8.4 and below use greenboot":
+          when:
+            version_less_than: "8.5"
+          merge:
+            enabled_services:
+              # same as 8.6
+              - "NetworkManager.service"
+              - "firewalld.service"
+              - "sshd.service"
+              # greenboot services aren't enabled by default in 8.4
+              - "greenboot-grub2-set-counter"
+              - "greenboot-grub2-set-success"
+              - "greenboot-healthcheck"
+              - "greenboot-rpm-ostree-grub2-check-fallback"
+              - "greenboot-status"
+              - "greenboot-task-runner"
+              - "redboot-auto-reboot"
+              - "redboot-task-runner"
     package_sets:
       os:
         - &edge_commit_pkgset
@@ -1043,9 +1656,11 @@ image_types:
             - "xz"
           exclude:
             - "rng-tools"
-          condition:
-            architecture:
-              x86_64: &edge_commit_x86_64_pkgset
+          conditions: &conditions_pkgsets_edge_commit
+            "x86_64 specific packages for edge-commit":
+              when:
+                arch: "x86_64"
+              append: &edge_commit_x86_64_pkgset
                 include:
                   - "efibootmgr"
                   - "grub2"
@@ -1064,31 +1679,37 @@ image_types:
                   - "iwl7260-firmware"
                   - "microcode_ctl"
                   - "shim-x64"
-              aarch64: &edge_commit_aarch64_pkgset
+            "aarch64 specific packages for edge-commit":
+              when:
+                arch: "aarch64"
+              append: &edge_commit_aarch64_pkgset
                 include:
                   - "grub2-efi-aa64"
                   - "efibootmgr"
                   - "shim-aa64"
                   - "iwl7260-firmware"
-            version_less_than:
-              "8.6":
+            "rhel-8.5 or below uses greenboot":
+              when:
+                version_less_than: "8.6"
+              append:
                 include:
                   - "greenboot-grub2"
                   - "greenboot-reboot"
                   - "greenboot-rpm-ostree-grub2"
                   - "greenboot-status"
-            version_greater_or_equal:
-              "8.6": &edge_commit_new_rhel
+            "rhel-8.6+ uses fdo":
+              when:
+                version_greater_or_equal: "8.6"
+              append:
                 include:
                   - "fdo-client"
                   - "fdo-owner-cli"
                   - "greenboot-default-health-checks"
                   - "sos"
-            distro_name:
-              centos:
-                *edge_commit_new_rhel
 
   "edge-installer":
+    image_config:
+      iso_rootfs_type: "squashfs-ext4"
     package_sets:
       installer:
         # TODO: non-arch-specific package set handling for installers
@@ -1102,13 +1723,27 @@ image_types:
         - *anaconda_pkgset
         - *anaconda_boot_pkgset
 
+  # XXX: only available for rhel-8.6+, this is not possible to limit right now
   "edge-raw-image":
+    image_config:
+      keyboard:
+        keymap: "us"
+      locale: "C.UTF-8"
+      lock_root_user: true
+      kernel_options: ["modprobe.blacklist=vc4"]
     partition_table:
       <<: *edge_base_partition_tables
 
   "edge-simplified-installer":
     partition_table:
       <<: *edge_base_partition_tables
+    image_config:
+      enabled_services: *enabled_services_edge
+      keyboard:
+        keymap: "us"
+      locale: "C.UTF-8"
+      lock_root_user: true
+      kernel_options: ["modprobe.blacklist=vc4"]
     package_sets:
       # TODO: non-arch-specific package set handling for installers
       # This image type requires build packages for installers and
@@ -1156,26 +1791,32 @@ image_types:
             - "sudo"
             - "traceroute"
             - "util-linux"
-          condition:
-            architecture:
-              x86_64:
-                *edge_commit_x86_64_pkgset
-              aarch64:
-                *edge_commit_aarch64_pkgset
+          conditions:
+            # XXX: should we instead "<<: *conditions_edge_commit" here?
+            # it will give different results
+            "x86_64 specific pkgset for edge-simplified-installer":
+              when:
+                arch: "x86_64"
+              append:
+                <<: *edge_commit_x86_64_pkgset
+            "aarch64 specific pkgset for edge-simplified-installer":
+              when:
+                arch: "aarch64"
+              append:
+                <<: *edge_commit_aarch64_pkgset
 
   "edge-container":
+    image_config:
+      <<: *edge_commit_image_config
     package_sets:
       os:
         - *edge_commit_pkgset
 
-  # XXX: not a real pkgset but the "containerPkgsKey"
-  "edge-container-pipeline-pkgset":
-    package_sets:
-      os:
-        - include:
-            - "nginx"
-
   vmdk: &vmdk
+    image_config:
+      kernel_options:
+        - "ro"
+        - "net.ifnames=0"
     partition_table:
       <<: *default_partition_tables
     package_sets: &vmdk_pkgsets
@@ -1192,9 +1833,94 @@ image_types:
             - "dracut-config-rescue"
             - "rng-tools"
 
-  ova: *vmdk
+  ova:
+    <<: *vmdk
 
   gce: &gce
+    # The configuration for non-RHUI images does not touch the RHSM configuration at all.
+    # https://issues.redhat.com/browse/COMPOSER-2157
+    image_config: &gce_image_config
+      timezone: "UTC"
+      time_synchronization:
+        servers:
+          - hostname: "metadata.google.internal"
+      firewall:
+        default_zone: "trusted"
+      enabled_services:
+        - "sshd"
+        - "rngd"
+        - "dnf-automatic.timer"
+      disabled_services:
+        - "sshd-keygen@"
+        - "reboot.target"
+      default_target: "multi-user.target"
+      keyboard:
+        keymap: "us"
+      dnf_config:
+        options:
+          - config:
+              main:
+                ipresolve: "4"
+      dnf_automatic_config:
+        config:
+          commands:
+            apply_updates: true
+            upgrade_type: "security"
+      yum_repos:
+        - filename: "google-cloud.repo"
+          repos:
+            - id: "google-compute-engine"
+              name: "Google Compute Engine"
+              # TODO: use el10 repo once it's available
+              baseurl:
+                - "https://packages.cloud.google.com/yum/repos/google-compute-engine-el8-x86_64-stable"
+              enabled: true
+              gpgcheck: true
+              repo_gpgcheck: false
+              gpgkey:
+                - "https://packages.cloud.google.com/yum/doc/yum-key.gpg"
+                - "https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg"
+      sshd_config:
+        config:
+          PasswordAuthentication: false
+          ClientAliveInterval: 420
+          PermitRootLogin: false
+      update_default_kernel: true
+      default_kernel: "kernel-core"
+      # XXX: ensure the "old" behavior is preserved (that is
+      # likely a bug) where for GCE the sysconfig network
+      # options are not set because the merge of imageConfig
+      # is shallow and the previous setup was changing the
+      # kernel without also changing the network options.
+      sysconfig: {}
+      modprobe:
+        - filename: "blacklist-floppy.conf"
+          commands:
+            - command: blacklist
+              modulename: "floppy"
+      gcp_guest_agent_config:
+        config_scope: "distro"
+        config:
+          "InstanceSetup":
+            set_boto_config: false
+      kernel_options: ["net.ifnames=0", "biosdevname=0", "scsi_mod.use_blk_mq=Y", "crashkernel=auto", "console=ttyS0,38400n8d"]
+      conditions:
+        "rhel-8.4 needs special handling":
+          # NOTE(akoutsou): these are enabled in the package preset, but for
+          # some reason do not get enabled on 8.4.
+          # the reason is unknown and deeply mysterious
+          when:
+            version_equal: "8.4"
+          merge:
+            enabled_services:
+              - "sshd"
+              - "rngd"
+              - "dnf-automatic.timer"
+              - "google-oslogin-cache.timer"
+              - "google-guest-agent.service"
+              - "google-shutdown-scripts.service"
+              - "google-startup-scripts.service"
+              - "google-osconfig-agent.service"
     partition_table:
       <<: *default_partition_tables
     package_sets:
@@ -1203,24 +1929,37 @@ image_types:
 
   "gce-rhui":
     <<: *gce
+    image_config:
+      <<: *gce_image_config
+      rhsm_config:
+        "no-subscription":
+          subman:
+            rhsmcertd:
+              auto_registration: true
+            rhsm:
+              manage_repos: false
+        "with-subscription":
+          subman:
+            rhsmcertd:
+              auto_registration: true
+              # do not disable the redhat.repo management if the user
+              # explicitly request the system to be subscribed
     package_sets:
       os:
         - *gce_common_pkgset
         - include:
             - "google-rhui-client-rhel8"
 
-  qcow2: &qcow2
-    partition_table:
-      <<: *default_partition_tables
-    package_sets: &qcow2_pkgset
-      os:
-        - *qcow2_common_pkgset
-
-  oci: *qcow2
+  oci:
+    <<: *qcow2
 
   openstack:
-    partition_table:
-      <<: *default_partition_tables
+    <<: *qcow2
+    image_config:
+      kernel_options:
+        - "ro"
+        - "net.ifnames=0"
+    platforms:
     package_sets:
       os:
         - include:
@@ -1236,6 +1975,11 @@ image_types:
             - "rng-tools"
 
   wsl:
+    image_config:
+      no_selinux: true
+      wsl:
+        config:
+          boot_systemd: true
     package_sets:
       os:
         - include:
@@ -1344,6 +2088,24 @@ image_types:
             - "xz"
 
   "minimal-raw":
+    image_config:
+      enabled_services:
+        - "NetworkManager.service"
+        - "firewalld.service"
+        - "sshd.service"
+        - "initial-setup.service"
+      files:
+        # NOTE: temporary workaround for a bug in initial-setup that
+        # requires a kickstart file in the root directory.
+        - path: "/root/anaconda-ks.cfg"
+          user: "root"
+          group: "root"
+          data: |
+            # Run initial-setup on first boot
+            # Created by osbuild
+            firstboot --reconfig
+            lang en_US.UTF-8
+      kernel_options: ["ro"]
     partition_table:
       <<: *default_partition_tables
     package_sets:

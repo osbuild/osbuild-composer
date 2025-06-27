@@ -9,6 +9,7 @@ import (
 	"github.com/osbuild/images/pkg/customizations/shell"
 	"github.com/osbuild/images/pkg/customizations/subscription"
 	"github.com/osbuild/images/pkg/customizations/users"
+	"github.com/osbuild/images/pkg/customizations/wsl"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/osbuild"
 )
@@ -49,12 +50,12 @@ type ImageConfig struct {
 
 	// Do not use. Forces auto-relabelling on first boot.
 	// See https://github.com/osbuild/osbuild/commit/52cb27631b587c1df177cd17625c5b473e1e85d2
-	SELinuxForceRelabel *bool
+	SELinuxForceRelabel *bool `yaml:"selinux_force_relabel"`
 
 	// Disable documentation
 	ExcludeDocs *bool `yaml:"exclude_docs,omitempty"`
 
-	ShellInit []shell.InitFile
+	ShellInit []shell.InitFile `yaml:"shell_init,omitempty"`
 
 	// for RHSM configuration, we need to potentially distinguish the case
 	// when the user want the image to be subscribed on first boot and when not
@@ -79,14 +80,14 @@ type ImageConfig struct {
 	WAAgentConfig       *osbuild.WAAgentConfStageOptions        `yaml:"waagent_config,omitempty"`
 	Grub2Config         *osbuild.GRUB2Config                    `yaml:"grub2_config,omitempty"`
 	DNFAutomaticConfig  *osbuild.DNFAutomaticConfigStageOptions `yaml:"dnf_automatic_config"`
-	YumConfig           *osbuild.YumConfigStageOptions
-	YUMRepos            []*osbuild.YumReposStageOptions `yaml:"yum_repos,omitempty"`
+	YumConfig           *osbuild.YumConfigStageOptions          `yaml:"yum_config,omitempty"`
+	YUMRepos            []*osbuild.YumReposStageOptions         `yaml:"yum_repos,omitempty"`
 	Firewall            *osbuild.FirewallStageOptions
 	UdevRules           *osbuild.UdevRulesStageOptions      `yaml:"udev_rules,omitempty"`
 	GCPGuestAgentConfig *osbuild.GcpGuestAgentConfigOptions `yaml:"gcp_guest_agent_config,omitempty"`
 	NetworkManager      *osbuild.NMConfStageOptions         `yaml:"network_manager,omitempty"`
 
-	WSLConfig *WSLConfig `yaml:"wsl_config,omitempty"`
+	WSL *wsl.WSL `yaml:"wsl,omitempty"`
 
 	Users []users.User
 
@@ -143,10 +144,6 @@ type DNFConfig struct {
 	SetReleaseVerVar *bool `yaml:"set_release_ver_var"`
 }
 
-type WSLConfig struct {
-	BootSystemd bool `yaml:"boot_systemd,omitempty"`
-}
-
 // InheritFrom inherits unset values from the provided parent configuration and
 // returns a new structure instance, which is a result of the inheritance.
 func (c *ImageConfig) InheritFrom(parentConfig *ImageConfig) *ImageConfig {
@@ -201,17 +198,6 @@ func (c *ImageConfig) DNFConfigOptions(osVersion string) []*osbuild.DNFConfigSta
 			},
 			nil,
 		),
-	}
-}
-
-func (c *ImageConfig) WSLConfStageOptions() *osbuild.WSLConfStageOptions {
-	if c.WSLConfig == nil {
-		return nil
-	}
-	return &osbuild.WSLConfStageOptions{
-		Boot: osbuild.WSLConfBootOptions{
-			Systemd: c.WSLConfig.BootSystemd,
-		},
 	}
 }
 

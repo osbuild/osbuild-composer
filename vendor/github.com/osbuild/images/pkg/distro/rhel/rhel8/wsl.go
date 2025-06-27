@@ -1,13 +1,14 @@
-package rhel10
+package rhel8
 
 import (
+	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/distro/rhel"
 )
 
-func mkWSLImgType(rd *rhel.Distribution) *rhel.ImageType {
+func mkWslImgType(rd *rhel.Distribution, a arch.Arch) *rhel.ImageType {
 	it := rhel.NewImageType(
 		"wsl",
-		"disk.tar.gz",
+		"image.wsl",
 		"application/x-tar",
 		packageSetLoader,
 		rhel.TarImage,
@@ -15,7 +16,8 @@ func mkWSLImgType(rd *rhel.Distribution) *rhel.ImageType {
 		[]string{"os", "archive"},
 		[]string{"archive"},
 	)
+	it.DefaultImageConfig = imageConfig(rd, a.String(), "wsl")
+	it.Compression = "xz"
 
-	it.DefaultImageConfig = imageConfig(rd, "", "wsl")
 	return it
 }
