@@ -398,6 +398,7 @@ sudo virt-install  --name="${IMAGE_KEY}"\
 
 # Start VM.
 greenprint "💻 Start VM"
+sleep 6h
 sudo virsh start "${IMAGE_KEY}"
 
 # Waiting for SSH
