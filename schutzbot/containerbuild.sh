@@ -10,6 +10,9 @@ echo "Build container"
 IMAGE_NAME="quay.io/osbuild/osbuild-composer-ubi-pr"
 IMAGE_TAG="${CI_COMMIT_SHA:-$(git rev-parse HEAD)}"
 
+# See https://access.redhat.com/solutions/7047477
+cat /etc/containers/policy.json | jq -r 'del(.transports.docker."registry.access.redhat.com")' | sudo tee /etc/containers/policy.json
+
 podman \
 	build \
 	--file="distribution/Dockerfile-ubi" \
