@@ -1144,6 +1144,10 @@ func (request *ComposeRequest) GetSubscription() (sub *subscription.ImageOptions
 		if request.Customizations.Subscription.TemplateUuid != nil {
 			templateUUID = *request.Customizations.Subscription.TemplateUuid
 		}
+		var patchURL string
+		if request.Customizations.Subscription.PatchUrl != nil {
+			patchURL = *request.Customizations.Subscription.PatchUrl
+		}
 
 		sub = &subscription.ImageOptions{
 			Organization:  request.Customizations.Subscription.Organization,
@@ -1155,6 +1159,7 @@ func (request *ComposeRequest) GetSubscription() (sub *subscription.ImageOptions
 			Proxy:         insightsClientProxy,
 			TemplateName:  templateName,
 			TemplateUUID:  templateUUID,
+			PatchURL:      patchURL,
 		}
 	}
 
