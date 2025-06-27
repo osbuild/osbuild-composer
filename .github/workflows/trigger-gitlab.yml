@@ -10,7 +10,7 @@ on:
 jobs:
   trigger-gitlab:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     env:
       IMAGEBUILDER_BOT_GITLAB_SSH_KEY: ${{ secrets.IMAGEBUILDER_BOT_GITLAB_SSH_KEY }}
       GITLAB_TOKEN: ${{ secrets.IMAGEBUILDER_BOT_GITLAB_PIPELINE_TRIGGER_TOKEN }}
@@ -38,6 +38,8 @@ jobs:
 
       - name: Checkout branch
         id: pr_data
+        env:
+          BRANCH: ${{ github.event.workflow_run.head_branch }}
         run: |
           PR_DATA=$(mktemp)
           # use uuid as a file terminator to avoid conflicts with data content
@@ -50,7 +52,7 @@ jobs:
             echo "pr_branch=PR-$PR" >> "$GITHUB_OUTPUT"
             git checkout -b PR-$PR
           else
-            git checkout ${{ github.event.workflow_run.head_branch }}
+            git checkout "${BRANCH}"
           fi
 
       - name: Download artifacts
@@ -89,19 +91,5 @@ jobs:
           if [[ "${SKIP_CI}" == true ]];then
             git push -f -o ci.variable="SKIP_CI=true" ci
           else
-            git push -f ci 
+            git push -f ci
           fi
-
-      - name: Trigger GitLab nightly pipeline against this PR
-        if: env.GITLAB_TOKEN && steps.pr_data.outputs.pr_branch
-        run: |
-            # osbuild-composer
-            PROJECT_ID=34771166
-
-            # Simulate a nightly CI pipeline against this PR
-            curl --request POST --fail --form "token=$GITLAB_TOKEN" \
-                --form ref=${{ steps.pr_data.outputs.pr_branch }} \
-                --form "variables[CI_PIPELINE_SOURCE]=schedule" \
-                --form "variables[NIGHTLY]=true" \
-                --form "variables[RHEL_MAJOR]=9" \
-                "https://gitlab.com/api/v4/projects/$PROJECT_ID/trigger/pipeline"
