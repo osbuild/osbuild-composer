@@ -16,6 +16,7 @@ import (
 // Note that it is the role of an assembler to install any necessary
 // bootloaders that are stored in the image outside of any filesystem.
 type GRUB2StageOptions struct {
+	CompatVersion      int          `json:"compat_version,omitempty"`
 	RootFilesystemUUID uuid.UUID    `json:"root_fs_uuid"`
 	BootFilesystemUUID *uuid.UUID   `json:"boot_fs_uuid,omitempty"`
 	KernelOptions      string       `json:"kernel_opts,omitempty"`
@@ -85,6 +86,7 @@ func NewGrub2StageOptions(pt *disk.PartitionTable,
 	// to override the kernel options in /etc/kernel/cmdline if the file has
 	// older timestamp than /etc/default/grub.
 	stageOptions := GRUB2StageOptions{
+		CompatVersion:      2, // always set to the highest version available
 		RootFilesystemUUID: uuid.MustParse(rootFs.GetFSSpec().UUID),
 		Legacy:             legacy,
 		KernelOptions:      kernelOptions,

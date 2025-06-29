@@ -1,7 +1,8 @@
 package osbuild
 
 type SquashfsStageOptions struct {
-	Filename string `json:"filename"`
+	Filename     string   `json:"filename"`
+	ExcludePaths []string `json:"exclude_paths,omitempty"`
 
 	Compression FSCompression `json:"compression"`
 }
