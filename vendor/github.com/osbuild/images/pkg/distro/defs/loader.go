@@ -85,7 +85,7 @@ type DistroYAML struct {
 	OSTreeRefTmpl    string            `yaml:"ostree_ref_tmpl"`
 	Runner           runner.RunnerConf `yaml:"runner"`
 
-	// ISOLabelTmpl can contain {{.Product}},{{.OsVersion}},{{.Arch}},{{.ImgTypeLabel}}
+	// ISOLabelTmpl can contain {{.Product}},{{.OsVersion}},{{.Arch}},{{.ISOLabel}}
 	ISOLabelTmpl string `yaml:"iso_label_tmpl"`
 
 	DefaultFSType disk.FSType `yaml:"default_fs_type"`
@@ -333,6 +333,23 @@ func versionLessThanSortedKeys[T any](m map[string]T) []string {
 	return versions
 }
 
+// versionStringForVerCmp is a special version string for our version
+// compare that will assume that any version with no minor is
+// automatically higher than any compare with a minor version.
+//
+// The rational is that "centos-9" is always higher than any "rhel-9.X"
+// version for our version compare (centos is always "rolling").
+//
+// TODO: this should become an explicit chose in "distro.yaml" but until
+// we have everything converted to generic.Distro accessing the properites
+// from an image type is very hard so we start here.
+func versionStringForVerCmp(u distro.ID) string {
+	if u.MinorVersion == -1 {
+		u.MinorVersion = 999
+	}
+	return u.VersionString()
+}
+
 // DistroImageConfig returns the distro wide ImageConfig.
 //
 // Each ImageType gets this as their default ImageConfig.
@@ -413,7 +430,7 @@ func PackageSets(it distro.ImageType) (map[string]rpmmd.PackageSet, error) {
 				// packageSets are strictly additive the order
 				// is irrelevant
 				for ltVer, ltSet := range pkgSet.Condition.VersionLessThan {
-					if common.VersionLessThan(id.VersionString(), ltVer) {
+					if common.VersionLessThan(versionStringForVerCmp(*id), ltVer) {
 						rpmmdPkgSet = rpmmdPkgSet.Append(rpmmd.PackageSet{
 							Include: ltSet.Include,
 							Exclude: ltSet.Exclude,
@@ -422,7 +439,7 @@ func PackageSets(it distro.ImageType) (map[string]rpmmd.PackageSet, error) {
 				}
 
 				for gteqVer, gteqSet := range pkgSet.Condition.VersionGreaterOrEqual {
-					if common.VersionGreaterThanOrEqual(id.VersionString(), gteqVer) {
+					if common.VersionGreaterThanOrEqual(versionStringForVerCmp(*id), gteqVer) {
 						rpmmdPkgSet = rpmmdPkgSet.Append(rpmmd.PackageSet{
 							Include: gteqSet.Include,
 							Exclude: gteqSet.Exclude,
@@ -473,7 +490,7 @@ func PartitionTable(it distro.ImageType) (*disk.PartitionTable, error) {
 
 		for _, ltVer := range versionLessThanSortedKeys(cond.VersionLessThan) {
 			ltOverrides := cond.VersionLessThan[ltVer]
-			if common.VersionLessThan(id.VersionString(), ltVer) {
+			if common.VersionLessThan(versionStringForVerCmp(*id), ltVer) {
 				if newPt, ok := ltOverrides[archName]; ok {
 					pt = newPt
 				}
@@ -482,7 +499,7 @@ func PartitionTable(it distro.ImageType) (*disk.PartitionTable, error) {
 
 		for _, gteqVer := range backward(versionLessThanSortedKeys(cond.VersionGreaterOrEqual)) {
 			geOverrides := cond.VersionGreaterOrEqual[gteqVer]
-			if common.VersionGreaterThanOrEqual(id.VersionString(), gteqVer) {
+			if common.VersionGreaterThanOrEqual(versionStringForVerCmp(*id), gteqVer) {
 				if newPt, ok := geOverrides[archName]; ok {
 					pt = newPt
 				}
@@ -627,7 +644,7 @@ func ImageConfig(distroNameVer, archName, typeName string) (*distro.ImageConfig,
 		}
 		for _, ltVer := range versionLessThanSortedKeys(cond.VersionLessThan) {
 			ltOverrides := cond.VersionLessThan[ltVer]
-			if common.VersionLessThan(id.VersionString(), ltVer) {
+			if common.VersionLessThan(versionStringForVerCmp(*id), ltVer) {
 				imgConfig = ltOverrides.InheritFrom(imgConfig)
 			}
 		}
@@ -680,7 +697,7 @@ func InstallerConfig(distroNameVer, archName, typeName string) (*distro.Installe
 		}
 		for _, ltVer := range versionLessThanSortedKeys(cond.VersionLessThan) {
 			ltOverrides := cond.VersionLessThan[ltVer]
-			if common.VersionLessThan(id.VersionString(), ltVer) {
+			if common.VersionLessThan(versionStringForVerCmp(*id), ltVer) {
 				installerConfig = ltOverrides
 			}
 		}

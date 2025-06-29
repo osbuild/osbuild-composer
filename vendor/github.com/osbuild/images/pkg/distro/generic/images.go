@@ -226,8 +226,12 @@ func osCustomizations(t *imageType, osPackageSet rpmmd.PackageSet, containers []
 	osc.SshdConfig = imageConfig.SshdConfig
 	osc.AuthConfig = imageConfig.Authconfig
 	osc.PwQuality = imageConfig.PwQuality
-	osc.WSLConfig = imageConfig.WSLConfStageOptions()
 	osc.NetworkManager = imageConfig.NetworkManager
+
+	if imageConfig.WSL != nil {
+		osc.WSLConfig = osbuild.NewWSLConfStageOptions(imageConfig.WSL.Config)
+		osc.WSLDistributionConfig = osbuild.NewWSLDistributionConfStageOptions(imageConfig.WSL.DistributionConfig)
+	}
 
 	osc.Files = append(osc.Files, imageConfig.Files...)
 	osc.Directories = append(osc.Directories, imageConfig.Directories...)
@@ -379,8 +383,12 @@ func tarImage(workload workload.Workload,
 		return nil, err
 	}
 
+	d := t.arch.distro
+
 	img.Environment = &t.ImageTypeYAML.Environment
 	img.Workload = workload
+	img.Compression = t.ImageTypeYAML.Compression
+	img.OSVersion = d.OsVersion()
 
 	img.Filename = t.Filename()
 
@@ -431,7 +439,7 @@ func liveInstallerImage(workload workload.Workload,
 	img.Product = d.Product()
 	img.Variant = "Workstation"
 	img.OSVersion = d.OsVersion()
-	img.Release = fmt.Sprintf("%s %s", d.DistroYAML.Product, d.OsVersion())
+	img.Release = fmt.Sprintf("%s %s", d.Product(), d.OsVersion())
 	img.Preview = d.DistroYAML.Preview
 
 	var err error
@@ -537,10 +545,10 @@ func imageInstallerImage(workload workload.Workload,
 
 	d := t.arch.distro
 
-	img.Product = d.DistroYAML.Product
+	img.Product = d.Product()
 
 	img.OSVersion = d.OsVersion()
-	img.Release = fmt.Sprintf("%s %s", d.DistroYAML.Product, d.OsVersion())
+	img.Release = fmt.Sprintf("%s %s", d.Product(), d.OsVersion())
 	img.Variant = t.Variant
 	img.Preview = d.DistroYAML.Preview
 
@@ -765,10 +773,10 @@ func iotInstallerImage(workload workload.Workload,
 	// On Fedora anaconda needs dbus-broker, but isn't added when dracut runs.
 	img.AdditionalDracutModules = append(img.AdditionalDracutModules, "dbus-broker")
 
-	img.Product = d.DistroYAML.Product
+	img.Product = d.Product()
 	img.Variant = "IoT"
 	img.OSVersion = d.OsVersion()
-	img.Release = fmt.Sprintf("%s %s", d.DistroYAML.Product, d.OsVersion())
+	img.Release = fmt.Sprintf("%s %s", d.Product(), d.OsVersion())
 	img.Preview = d.DistroYAML.Preview
 
 	img.ISOLabel, err = t.ISOLabel()
@@ -907,7 +915,7 @@ func iotSimplifiedInstallerImage(workload workload.Workload,
 	img.AdditionalDracutModules = append(img.AdditionalDracutModules, "dbus-broker")
 
 	d := t.arch.distro
-	img.Product = d.DistroYAML.Product
+	img.Product = d.Product()
 	img.Variant = "IoT"
 	img.OSName = t.OSTree.Name
 	img.OSVersion = d.OsVersion()
