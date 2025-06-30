@@ -683,7 +683,7 @@ github.com/getsentry/sentry-go/internal/otel/baggage/internal/baggage
 github.com/getsentry/sentry-go/internal/ratelimit
 github.com/getsentry/sentry-go/internal/traceparser
 github.com/getsentry/sentry-go/logrus
-# github.com/go-jose/go-jose/v4 v4.0.4
+# github.com/go-jose/go-jose/v4 v4.0.5
 ## explicit; go 1.21
 github.com/go-jose/go-jose/v4
 github.com/go-jose/go-jose/v4/cipher
@@ -1049,7 +1049,7 @@ github.com/oracle/oci-go-sdk/v54/workrequests
 ## explicit; go 1.22.8
 github.com/osbuild/blueprint/internal/common
 github.com/osbuild/blueprint/pkg/blueprint
-# github.com/osbuild/images v0.151.0
+# github.com/osbuild/images v0.153.0
 ## explicit; go 1.22.8
 github.com/osbuild/images/data/dependencies
 github.com/osbuild/images/data/repositories
@@ -1072,6 +1072,7 @@ github.com/osbuild/images/pkg/customizations/oscap
 github.com/osbuild/images/pkg/customizations/shell
 github.com/osbuild/images/pkg/customizations/subscription
 github.com/osbuild/images/pkg/customizations/users
+github.com/osbuild/images/pkg/customizations/wsl
 github.com/osbuild/images/pkg/datasizes
 github.com/osbuild/images/pkg/disk
 github.com/osbuild/images/pkg/distro

@@ -2,6 +2,7 @@ package rhel8
 
 import (
 	"github.com/osbuild/images/internal/common"
+	"github.com/osbuild/images/pkg/customizations/wsl"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distro/rhel"
 )
@@ -9,7 +10,7 @@ import (
 func mkWslImgType() *rhel.ImageType {
 	it := rhel.NewImageType(
 		"wsl",
-		"disk.tar.gz",
+		"image.wsl",
 		"application/x-tar",
 		packageSetLoader,
 		rhel.TarImage,
@@ -18,11 +19,14 @@ func mkWslImgType() *rhel.ImageType {
 		[]string{"archive"},
 	)
 
+	it.Compression = "xz"
 	it.DefaultImageConfig = &distro.ImageConfig{
 		Locale:    common.ToPtr("en_US.UTF-8"),
 		NoSElinux: common.ToPtr(true),
-		WSLConfig: &distro.WSLConfig{
-			BootSystemd: true,
+		WSL: &wsl.WSL{
+			Config: &wsl.WSLConfig{
+				BootSystemd: true,
+			},
 		},
 	}
 

@@ -7,7 +7,7 @@ import (
 func mkWSLImgType(rd *rhel.Distribution) *rhel.ImageType {
 	it := rhel.NewImageType(
 		"wsl",
-		"disk.tar.gz",
+		"image.wsl",
 		"application/x-tar",
 		packageSetLoader,
 		rhel.TarImage,
@@ -16,6 +16,8 @@ func mkWSLImgType(rd *rhel.Distribution) *rhel.ImageType {
 		[]string{"archive"},
 	)
 
+	it.Compression = "xz"
 	it.DefaultImageConfig = imageConfig(rd, "", "wsl")
+
 	return it
 }
