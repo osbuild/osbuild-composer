@@ -64,7 +64,7 @@ type FDOCustomization struct {
 
 type KernelCustomization struct {
 	Name   string `json:"name,omitempty" toml:"name,omitempty"`
-	Append string `json:"append" toml:"append"`
+	Append string `json:"append,omitempty" toml:"append,omitempty"`
 }
 
 type SSHKeyCustomization struct {

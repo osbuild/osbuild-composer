@@ -9,6 +9,7 @@ import (
 	"github.com/osbuild/images/pkg/customizations/shell"
 	"github.com/osbuild/images/pkg/customizations/subscription"
 	"github.com/osbuild/images/pkg/customizations/users"
+	"github.com/osbuild/images/pkg/customizations/wsl"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/osbuild"
 )
@@ -86,7 +87,7 @@ type ImageConfig struct {
 	GCPGuestAgentConfig *osbuild.GcpGuestAgentConfigOptions `yaml:"gcp_guest_agent_config,omitempty"`
 	NetworkManager      *osbuild.NMConfStageOptions         `yaml:"network_manager,omitempty"`
 
-	WSLConfig *WSLConfig `yaml:"wsl_config,omitempty"`
+	WSL *wsl.WSL `yaml:"wsl,omitempty"`
 
 	Users []users.User
 
@@ -143,10 +144,6 @@ type DNFConfig struct {
 	SetReleaseVerVar *bool `yaml:"set_release_ver_var"`
 }
 
-type WSLConfig struct {
-	BootSystemd bool `yaml:"boot_systemd,omitempty"`
-}
-
 // InheritFrom inherits unset values from the provided parent configuration and
 // returns a new structure instance, which is a result of the inheritance.
 func (c *ImageConfig) InheritFrom(parentConfig *ImageConfig) *ImageConfig {
@@ -201,17 +198,6 @@ func (c *ImageConfig) DNFConfigOptions(osVersion string) []*osbuild.DNFConfigSta
 			},
 			nil,
 		),
-	}
-}
-
-func (c *ImageConfig) WSLConfStageOptions() *osbuild.WSLConfStageOptions {
-	if c.WSLConfig == nil {
-		return nil
-	}
-	return &osbuild.WSLConfStageOptions{
-		Boot: osbuild.WSLConfBootOptions{
-			Systemd: c.WSLConfig.BootSystemd,
-		},
 	}
 }
 

@@ -200,6 +200,20 @@ func (p *AnacondaInstallerISOTree) getBuildPackages(_ Distro) []string {
 	return packages
 }
 
+// Exclude most of the /boot files inside the rootfs to save space
+// These are not needed on the running system
+// The kernel and kernel .hmac are left for use with FIPS systems
+// Used by NewSquashfsStage and NewErofsStage
+var installerBootExcludePaths = []string{
+	"boot/efi/.*",
+	"boot/grub2/.*",
+	"boot/config-.*",
+	"boot/initramfs-.*",
+	"boot/loader/.*",
+	"boot/symvers-.*",
+	"boot/System.map-.*",
+}
+
 // NewSquashfsStage returns an osbuild stage configured to build
 // the squashfs root filesystem for the ISO.
 func (p *AnacondaInstallerISOTree) NewSquashfsStage() *osbuild.Stage {
@@ -227,6 +241,9 @@ func (p *AnacondaInstallerISOTree) NewSquashfsStage() *osbuild.Stage {
 			BCJ: osbuild.BCJOption(p.anacondaPipeline.platform.GetArch().String()),
 		}
 	}
+
+	// Clean up the root filesystem's /boot to save space
+	squashfsOptions.ExcludePaths = installerBootExcludePaths
 
 	// The iso's rootfs can either be an ext4 filesystem compressed with squashfs, or
 	// a squashfs of the plain directory tree
@@ -262,6 +279,9 @@ func (p *AnacondaInstallerISOTree) NewErofsStage() *osbuild.Stage {
 	erofsOptions.Compression = &compression
 	erofsOptions.ExtendedOptions = []string{"all-fragments", "dedupe"}
 	erofsOptions.ClusterSize = common.ToPtr(131072)
+
+	// Clean up the root filesystem's /boot to save space
+	erofsOptions.ExcludePaths = installerBootExcludePaths
 
 	return osbuild.NewErofsStage(&erofsOptions, p.anacondaPipeline.Name())
 }
