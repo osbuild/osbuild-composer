@@ -282,8 +282,12 @@ func osCustomizations(
 	osc.WAAgentConfig = imageConfig.WAAgentConfig
 	osc.UdevRules = imageConfig.UdevRules
 	osc.GCPGuestAgentConfig = imageConfig.GCPGuestAgentConfig
-	osc.WSLConfig = imageConfig.WSLConfStageOptions()
 	osc.NetworkManager = imageConfig.NetworkManager
+
+	if imageConfig.WSL != nil {
+		osc.WSLConfig = osbuild.NewWSLConfStageOptions(imageConfig.WSL.Config)
+		osc.WSLDistributionConfig = osbuild.NewWSLDistributionConfStageOptions(imageConfig.WSL.DistributionConfig)
+	}
 
 	osc.Files = append(osc.Files, imageConfig.Files...)
 	osc.Directories = append(osc.Directories, imageConfig.Directories...)
@@ -818,6 +822,8 @@ func TarImage(workload workload.Workload,
 
 	img.Environment = t.Environment
 	img.Workload = workload
+	img.Compression = t.Compression
+	img.OSVersion = t.Arch().Distro().OsVersion()
 
 	img.Filename = t.Filename()
 

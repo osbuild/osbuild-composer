@@ -1,16 +1,12 @@
 package rhel8
 
 import (
+	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/datasizes"
-	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distro/rhel"
 )
 
-func vmdkKernelOptions() []string {
-	return []string{"ro", "net.ifnames=0"}
-}
-
-func mkVmdkImgType() *rhel.ImageType {
+func mkVmdkImgType(rd *rhel.Distribution, a arch.Arch) *rhel.ImageType {
 	it := rhel.NewImageType(
 		"vmdk",
 		"disk.vmdk",
@@ -21,9 +17,7 @@ func mkVmdkImgType() *rhel.ImageType {
 		[]string{"os", "image", "vmdk"},
 		[]string{"vmdk"},
 	)
-	it.DefaultImageConfig = &distro.ImageConfig{
-		KernelOptions: vmdkKernelOptions(),
-	}
+	it.DefaultImageConfig = imageConfig(rd, a.String(), "vmdk")
 	it.Bootable = true
 	it.DefaultSize = 4 * datasizes.GibiByte
 	it.BasePartitionTables = partitionTables
@@ -31,7 +25,7 @@ func mkVmdkImgType() *rhel.ImageType {
 	return it
 }
 
-func mkOvaImgType() *rhel.ImageType {
+func mkOvaImgType(rd *rhel.Distribution, a arch.Arch) *rhel.ImageType {
 	it := rhel.NewImageType(
 		"ova",
 		"image.ova",
@@ -42,9 +36,7 @@ func mkOvaImgType() *rhel.ImageType {
 		[]string{"os", "image", "vmdk", "ovf", "archive"},
 		[]string{"archive"},
 	)
-	it.DefaultImageConfig = &distro.ImageConfig{
-		KernelOptions: vmdkKernelOptions(),
-	}
+	it.DefaultImageConfig = imageConfig(rd, a.String(), "ova")
 	it.Bootable = true
 	it.DefaultSize = 4 * datasizes.GibiByte
 	it.BasePartitionTables = partitionTables

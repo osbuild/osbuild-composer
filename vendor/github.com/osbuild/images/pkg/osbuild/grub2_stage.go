@@ -16,6 +16,7 @@ import (
 // Note that it is the role of an assembler to install any necessary
 // bootloaders that are stored in the image outside of any filesystem.
 type GRUB2StageOptions struct {
+	CompatVersion      int          `json:"compat_version,omitempty"`
 	RootFilesystemUUID uuid.UUID    `json:"root_fs_uuid"`
 	BootFilesystemUUID *uuid.UUID   `json:"boot_fs_uuid,omitempty"`
 	KernelOptions      string       `json:"kernel_opts,omitempty"`
@@ -48,8 +49,8 @@ type GRUB2Config struct {
 	DisableSubmenu  *bool                   `json:"disable_submenu,omitempty" yaml:"disable_submenu,omitempty"`
 	Distributor     string                  `json:"distributor,omitempty"`
 	Terminal        []string                `json:"terminal,omitempty"`
-	TerminalInput   []string                `json:"terminal_input,omitempty"`
-	TerminalOutput  []string                `json:"terminal_output,omitempty"`
+	TerminalInput   []string                `json:"terminal_input,omitempty" yaml:"terminal_input,omitempty"`
+	TerminalOutput  []string                `json:"terminal_output,omitempty" yaml:"terminal_output,omitempty"`
 	Timeout         int                     `json:"timeout,omitempty"`
 	TimeoutStyle    GRUB2ConfigTimeoutStyle `json:"timeout_style,omitempty" yaml:"timeout_style,omitempty"`
 	Serial          string                  `json:"serial,omitempty"`
@@ -85,6 +86,7 @@ func NewGrub2StageOptions(pt *disk.PartitionTable,
 	// to override the kernel options in /etc/kernel/cmdline if the file has
 	// older timestamp than /etc/default/grub.
 	stageOptions := GRUB2StageOptions{
+		CompatVersion:      2, // always set to the highest version available
 		RootFilesystemUUID: uuid.MustParse(rootFs.GetFSSpec().UUID),
 		Legacy:             legacy,
 		KernelOptions:      kernelOptions,
