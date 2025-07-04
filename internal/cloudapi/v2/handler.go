@@ -353,7 +353,7 @@ func (h *apiHandlers) deleteComposeImpl(ctx echo.Context, jobId uuid.UUID) error
 	}
 
 	return ctx.JSON(http.StatusOK, ComposeDeleteStatus{
-		Href: fmt.Sprintf("/api/image-builder-composer/v2/composes/delete/%v", jobId),
+		Href: fmt.Sprintf("/api/image-builder-composer/v2/composes/%v", jobId),
 		Id:   jobId.String(),
 		Kind: "ComposeDeleteStatus",
 	})
