@@ -37,8 +37,8 @@ func (impl *KojiFinalizeJobImpl) kojiImport(
 		return fmt.Errorf("Koji server has not been configured: %s", serverURL.Hostname())
 	}
 
-	transport := koji.CreateKojiTransport(kojiServer.relaxTimeoutFactor)
-	k, err := koji.NewFromGSSAPI(server, &kojiServer.creds, transport)
+	transport := koji.CreateKojiTransport(kojiServer.relaxTimeoutFactor, NewRHLeveledLogger(nil))
+	k, err := koji.NewFromGSSAPI(server, &kojiServer.creds, transport, NewRHLeveledLogger(nil))
 	if err != nil {
 		return err
 	}
@@ -69,8 +69,8 @@ func (impl *KojiFinalizeJobImpl) kojiFail(server string, buildID int, token stri
 		return fmt.Errorf("Koji server has not been configured: %s", serverURL.Hostname())
 	}
 
-	transport := koji.CreateKojiTransport(kojiServer.relaxTimeoutFactor)
-	k, err := koji.NewFromGSSAPI(server, &kojiServer.creds, transport)
+	transport := koji.CreateKojiTransport(kojiServer.relaxTimeoutFactor, NewRHLeveledLogger(nil))
+	k, err := koji.NewFromGSSAPI(server, &kojiServer.creds, transport, NewRHLeveledLogger(nil))
 	if err != nil {
 		return err
 	}

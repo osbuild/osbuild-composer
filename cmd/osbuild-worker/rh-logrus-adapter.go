@@ -1,13 +1,21 @@
-package koji
+package main
 
 import (
 	"strings"
 
+	rh "github.com/hashicorp/go-retryablehttp"
 	"github.com/sirupsen/logrus"
 )
 
 type LeveledLogrus struct {
 	*logrus.Logger
+}
+
+func NewRHLeveledLogger(logger *logrus.Logger) rh.LeveledLogger {
+	if logger == nil {
+		logger = logrus.StandardLogger()
+	}
+	return rh.LeveledLogger(&LeveledLogrus{logger})
 }
 
 const monitoringKeyword = "retrying"
