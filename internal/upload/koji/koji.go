@@ -75,29 +75,6 @@ func newKoji(server string, transport http.RoundTripper, reply loginReply, logge
 	}, nil
 }
 
-// NewFromPlain creates a new Koji sessions  =authenticated using the plain
-// username/password method. If you want to speak to a public koji instance,
-// you probably cannot use this method.
-func NewFromPlain(server, user, password string, transport http.RoundTripper, logger rh.LeveledLogger) (*Koji, error) {
-	// Create a temporary xmlrpc client.
-	// The API doesn't require sessionID, sessionKey and callnum yet,
-	// so there's no need to use the custom Koji RoundTripper,
-	// let's just use the one that the called passed in.
-	loginClient, err := xmlrpc.NewClient(server, transport)
-	if err != nil {
-		return nil, err
-	}
-
-	args := []interface{}{user, password}
-	var reply loginReply
-	err = loginClient.Call("login", args, &reply)
-	if err != nil {
-		return nil, err
-	}
-
-	return newKoji(server, transport, reply, logger)
-}
-
 // NewFromGSSAPI creates a new Koji session authenticated using GSSAPI.
 // Principal and keytab used for the session is passed using credentials
 // parameter.

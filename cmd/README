@@ -8,8 +8,6 @@ osbuild-worker: The worker binary that handles jobs from the job queue locally.
 
 osbuild-worker-executor: The binary that runs osbuild to build an image on an isolated VM.
 
-osbuild-koji: Submits builds to Koji.
-
 Service binaries
 ================
 
