@@ -160,6 +160,14 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 		}
 
 		kojiTargetResult := kojiTargetResults[0]
+		var kojiTargetOSBuildArtifact *koji.OsbuildArtifact
+		if kojiTargetResult.OsbuildArtifact != nil {
+			kojiTargetOSBuildArtifact = &koji.OsbuildArtifact{
+				ExportFilename: kojiTargetResult.OsbuildArtifact.ExportFilename,
+				ExportName:     kojiTargetResult.OsbuildArtifact.ExportName,
+			}
+		}
+
 		kojiTargetOptions := kojiTargetResult.Options.(*target.KojiTargetResultOptions)
 
 		buildRoots = append(buildRoots, koji.BuildRoot{
@@ -193,7 +201,7 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 		imgOutputExtraInfo := koji.ImageExtraInfo{
 			Arch:            buildResult.Arch,
 			BootMode:        buildResult.ImageBootMode,
-			OSBuildArtifact: kojiTargetResult.OsbuildArtifact,
+			OSBuildArtifact: kojiTargetOSBuildArtifact,
 			OSBuildVersion:  buildResult.OSBuildVersion,
 		}
 

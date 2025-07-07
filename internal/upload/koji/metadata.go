@@ -1,9 +1,5 @@
 package koji
 
-import (
-	"github.com/osbuild/osbuild-composer/internal/target"
-)
-
 // BUILD METADATA
 
 // TypeInfoBuild is a map whose entries are the names of the build types
@@ -84,6 +80,14 @@ type ImageOutputTypeExtraInfo interface {
 	isImageOutputTypeMD()
 }
 
+// OsbuildArtifact represents a configuration to produce the image using osbuild.
+type OsbuildArtifact struct {
+	// Filename of the image as produced by osbuild
+	ExportFilename string `json:"export_filename"`
+	// Name of the osbuild pipeline, which was exported to produce this image
+	ExportName string `json:"export_name"`
+}
+
 // ImageExtraInfo holds extra metadata about the image.
 // This structure is shared for the Extra metadata of the output and the build.
 type ImageExtraInfo struct {
@@ -93,8 +97,8 @@ type ImageExtraInfo struct {
 	Arch string `json:"arch"`
 	// Boot mode of the image
 	BootMode string `json:"boot_mode,omitempty"`
-	// Configuration used to prouce this image using osbuild
-	OSBuildArtifact *target.OsbuildArtifact `json:"osbuild_artifact,omitempty"`
+	// Configuration used to produce this image using osbuild
+	OSBuildArtifact *OsbuildArtifact `json:"osbuild_artifact,omitempty"`
 	// Version of the osbuild binary used by the worker to build the image
 	OSBuildVersion string `json:"osbuild_version,omitempty"`
 	// Results from any upload targets associated with the image
