@@ -272,8 +272,7 @@ func NewFromPlain(server, user, password string, transport http.RoundTripper) (*
 	// The API doesn't require sessionID, sessionKey and callnum yet,
 	// so there's no need to use the custom Koji RoundTripper,
 	// let's just use the one that the called passed in.
-	rhTransport := CreateRetryableTransport()
-	loginClient, err := xmlrpc.NewClient(server, rhTransport)
+	loginClient, err := xmlrpc.NewClient(server, transport)
 	if err != nil {
 		return nil, err
 	}
