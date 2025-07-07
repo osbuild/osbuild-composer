@@ -98,8 +98,9 @@ type ImageExtraInfo struct {
 	// Version of the osbuild binary used by the worker to build the image
 	OSBuildVersion string `json:"osbuild_version,omitempty"`
 	// Results from any upload targets associated with the image
-	// except for the Koji target.
-	UploadTargetResults []*target.TargetResult `json:"upload_target_results,omitempty"`
+	// The structure of the data does not need to be known by the consumer,
+	// it is just a list of JSON objects.
+	UploadTargetResults []interface{} `json:"upload_target_results,omitempty"`
 }
 
 func (ImageExtraInfo) isImageOutputTypeMD() {}
