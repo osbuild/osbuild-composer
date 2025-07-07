@@ -10,14 +10,12 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"hash/adler32"
 	"io"
 	"net"
 	"net/http"
 	"net/url"
-	"os"
 	"strings"
 	"time"
 
@@ -564,20 +562,6 @@ func (rt *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	rt.callnum++
 
 	return rt.transport.RoundTrip(rClone)
-}
-
-func GSSAPICredentialsFromEnv() (*GSSAPICredentials, error) {
-	principal, principalExists := os.LookupEnv("OSBUILD_COMPOSER_KOJI_PRINCIPAL")
-	keyTab, keyTabExists := os.LookupEnv("OSBUILD_COMPOSER_KOJI_KEYTAB")
-
-	if !principalExists || !keyTabExists {
-		return nil, errors.New("Both OSBUILD_COMPOSER_KOJI_PRINCIPAL and OSBUILD_COMPOSER_KOJI_KEYTAB must be set")
-	}
-
-	return &GSSAPICredentials{
-		Principal: principal,
-		KeyTab:    keyTab,
-	}, nil
 }
 
 func CreateKojiTransport(relaxTimeout time.Duration, logger rh.LeveledLogger) http.RoundTripper {
