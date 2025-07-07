@@ -8,8 +8,6 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/osbuild/images/pkg/osbuild"
-	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/upload/koji"
 	"github.com/osbuild/osbuild-composer/internal/worker"
@@ -143,16 +141,16 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 	}
 
 	for i, buildResult := range osbuildResults {
-		buildRPMs := make([]rpmmd.RPM, 0)
+		buildRPMs := make([]koji.RPM, 0)
 		// collect packages from stages in build pipelines
 		for _, plName := range buildResult.PipelineNames.Build {
 			buildPipelineMd := buildResult.OSBuildOutput.Metadata[plName]
-			buildRPMs = append(buildRPMs, osbuild.OSBuildMetadataToRPMs(buildPipelineMd)...)
+			buildRPMs = append(buildRPMs, koji.OSBuildMetadataToRPMs(buildPipelineMd)...)
 		}
 		// this dedupe is usually not necessary since we generally only have
 		// one rpm stage in one build pipeline, but it's not invalid to have
 		// multiple
-		buildRPMs = rpmmd.DeduplicateRPMs(buildRPMs)
+		buildRPMs = koji.DeduplicateRPMs(buildRPMs)
 
 		kojiTargetResults := buildResult.TargetResultsByName(target.TargetNameKoji)
 		// Only a single Koji target is allowed per osbuild job
@@ -183,14 +181,14 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 		})
 
 		// collect packages from stages in payload pipelines
-		imageRPMs := make([]rpmmd.RPM, 0)
+		imageRPMs := make([]koji.RPM, 0)
 		for _, plName := range buildResult.PipelineNames.Payload {
 			payloadPipelineMd := buildResult.OSBuildOutput.Metadata[plName]
-			imageRPMs = append(imageRPMs, osbuild.OSBuildMetadataToRPMs(payloadPipelineMd)...)
+			imageRPMs = append(imageRPMs, koji.OSBuildMetadataToRPMs(payloadPipelineMd)...)
 		}
 
 		// deduplicate
-		imageRPMs = rpmmd.DeduplicateRPMs(imageRPMs)
+		imageRPMs = koji.DeduplicateRPMs(imageRPMs)
 
 		imgOutputExtraInfo := koji.ImageExtraInfo{
 			Arch:            buildResult.Arch,

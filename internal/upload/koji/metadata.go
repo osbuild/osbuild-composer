@@ -1,7 +1,6 @@
 package koji
 
 import (
-	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/target"
 )
 
@@ -76,7 +75,7 @@ type BuildRoot struct {
 	ContentGenerator ContentGenerator `json:"content_generator"`
 	Container        Container        `json:"container"`
 	Tools            []Tool           `json:"tools"`
-	RPMs             []rpmmd.RPM      `json:"components"`
+	RPMs             []RPM            `json:"components"`
 }
 
 // OUTPUT METADATA
@@ -174,7 +173,7 @@ type BuildOutput struct {
 	ChecksumType ChecksumType      `json:"checksum_type"`
 	Checksum     string            `json:"checksum"`
 	Type         BuildOutputType   `json:"type"`
-	RPMs         []rpmmd.RPM       `json:"components,omitempty"`
+	RPMs         []RPM             `json:"components,omitempty"`
 	Extra        *BuildOutputExtra `json:"extra,omitempty"`
 }
 
