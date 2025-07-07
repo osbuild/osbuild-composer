@@ -1012,9 +1012,9 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				break
 			}
 
-			kojiTransport := koji.CreateKojiTransport(kojiServer.relaxTimeoutFactor)
+			kojiTransport := koji.CreateKojiTransport(kojiServer.relaxTimeoutFactor, NewRHLeveledLogger(nil))
 
-			kojiAPI, err := koji.NewFromGSSAPI(targetOptions.Server, &kojiServer.creds, kojiTransport)
+			kojiAPI, err := koji.NewFromGSSAPI(targetOptions.Server, &kojiServer.creds, kojiTransport, NewRHLeveledLogger(nil))
 			if err != nil {
 				logWithId.Warnf("[Koji] 🔑 login failed: %v", err) // DON'T EDIT: Used for Splunk dashboard
 				targetResult.TargetError = clienterrors.New(clienterrors.ErrorInvalidTargetConfig, fmt.Sprintf("failed to authenticate with Koji server %q: %v", kojiServerURL.Hostname(), err), nil)

@@ -42,8 +42,8 @@ func main() {
 	}
 	defer file.Close()
 
-	transport := koji.CreateRetryableTransport()
-	k, err := koji.NewFromPlain(server, "osbuild", "osbuildpass", transport)
+	transport := koji.CreateRetryableTransport(nil)
+	k, err := koji.NewFromPlain(server, "osbuild", "osbuildpass", transport, nil)
 	if err != nil {
 		println(err.Error())
 		return

@@ -53,7 +53,7 @@ func TestKojiRefund(t *testing.T) {
 		Principal: "osbuild-krb@LOCAL",
 		KeyTab:    shareDir + "/client.keytab",
 	}
-	k, err := koji.NewFromGSSAPI(server, credentials, transport)
+	k, err := koji.NewFromGSSAPI(server, credentials, transport, nil)
 	require.NoError(t, err)
 
 	defer func() {
@@ -114,7 +114,7 @@ func TestKojiImport(t *testing.T) {
 		Principal: "osbuild-krb@LOCAL",
 		KeyTab:    shareDir + "/client.keytab",
 	}
-	k, err := koji.NewFromGSSAPI(server, credentials, transport)
+	k, err := koji.NewFromGSSAPI(server, credentials, transport, nil)
 	require.NoError(t, err)
 
 	defer func() {

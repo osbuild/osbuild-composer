@@ -23,7 +23,6 @@ import (
 
 	rh "github.com/hashicorp/go-retryablehttp"
 	"github.com/kolo/xmlrpc"
-	"github.com/sirupsen/logrus"
 	"github.com/ubccr/kerby/khttp"
 
 	"github.com/osbuild/images/pkg/rpmmd"
@@ -34,6 +33,7 @@ type Koji struct {
 	xmlrpc    *xmlrpc.Client
 	server    string
 	transport http.RoundTripper
+	logger    rh.LeveledLogger
 }
 
 // BUILD METADATA
@@ -242,7 +242,7 @@ type loginReply struct {
 	SessionKey string `xmlrpc:"session-key"`
 }
 
-func newKoji(server string, transport http.RoundTripper, reply loginReply) (*Koji, error) {
+func newKoji(server string, transport http.RoundTripper, reply loginReply, logger rh.LeveledLogger) (*Koji, error) {
 	// Create the final xmlrpc client with our custom RoundTripper handling
 	// sessionID, sessionKey and callnum
 	kojiTransport := &Transport{
@@ -261,13 +261,14 @@ func newKoji(server string, transport http.RoundTripper, reply loginReply) (*Koj
 		xmlrpc:    client,
 		server:    server,
 		transport: kojiTransport,
+		logger:    logger,
 	}, nil
 }
 
 // NewFromPlain creates a new Koji sessions  =authenticated using the plain
 // username/password method. If you want to speak to a public koji instance,
 // you probably cannot use this method.
-func NewFromPlain(server, user, password string, transport http.RoundTripper) (*Koji, error) {
+func NewFromPlain(server, user, password string, transport http.RoundTripper, logger rh.LeveledLogger) (*Koji, error) {
 	// Create a temporary xmlrpc client.
 	// The API doesn't require sessionID, sessionKey and callnum yet,
 	// so there's no need to use the custom Koji RoundTripper,
@@ -284,13 +285,17 @@ func NewFromPlain(server, user, password string, transport http.RoundTripper) (*
 		return nil, err
 	}
 
-	return newKoji(server, transport, reply)
+	return newKoji(server, transport, reply, logger)
 }
 
 // NewFromGSSAPI creates a new Koji session authenticated using GSSAPI.
 // Principal and keytab used for the session is passed using credentials
 // parameter.
-func NewFromGSSAPI(server string, credentials *GSSAPICredentials, transport http.RoundTripper) (*Koji, error) {
+func NewFromGSSAPI(
+	server string,
+	credentials *GSSAPICredentials,
+	transport http.RoundTripper,
+	logger rh.LeveledLogger) (*Koji, error) {
 	// Create a temporary xmlrpc client with kerberos transport.
 	// The API doesn't require sessionID, sessionKey and callnum yet,
 	// so there's no need to use the custom Koji RoundTripper,
@@ -310,7 +315,7 @@ func NewFromGSSAPI(server string, credentials *GSSAPICredentials, transport http
 		return nil, err
 	}
 
-	return newKoji(server, transport, reply)
+	return newKoji(server, transport, reply, logger)
 }
 
 // GetAPIVersion gets the version of the API of the remote Koji instance
@@ -418,7 +423,9 @@ func (k *Koji) CGImport(build Build, buildRoots []BuildRoot, outputs []BuildOutp
 			return nil, err
 		}
 
-		logrus.Infof("CGImport succeeded after %d attempts", attempt+1)
+		if k.logger != nil {
+			k.logger.Info(fmt.Sprintf("CGImport succeeded after %d attempts", attempt+1))
+		}
 
 		return &result, nil
 	}
@@ -444,7 +451,7 @@ func (k *Koji) uploadChunk(chunk []byte, filepath, filename string, offset uint6
 	q.Add("overwrite", "true")
 	u.RawQuery = q.Encode()
 
-	client := createCustomRetryableClient()
+	client := createCustomRetryableClient(k.logger)
 
 	client.HTTPClient = &http.Client{
 		Transport: k.transport,
@@ -573,10 +580,10 @@ func GSSAPICredentialsFromEnv() (*GSSAPICredentials, error) {
 	}, nil
 }
 
-func CreateKojiTransport(relaxTimeout time.Duration) http.RoundTripper {
+func CreateKojiTransport(relaxTimeout time.Duration, logger rh.LeveledLogger) http.RoundTripper {
 	// Koji for some reason needs TLS renegotiation enabled.
 	// Clone the default http rt and enable renegotiation.
-	rt := CreateRetryableTransport()
+	rt := CreateRetryableTransport(logger)
 
 	transport := rt.Client.HTTPClient.Transport.(*http.Transport)
 
@@ -597,36 +604,35 @@ func CreateKojiTransport(relaxTimeout time.Duration) http.RoundTripper {
 	return rt
 }
 
-func customCheckRetry(ctx context.Context, resp *http.Response, err error) (bool, error) {
-	shouldRetry, retErr := rh.DefaultRetryPolicy(ctx, resp, err)
+func createCustomRetryableClient(logger rh.LeveledLogger) *rh.Client {
+	client := rh.NewClient()
+	client.Logger = logger
 
-	// DefaultRetryPolicy denies retrying for any certificate related error.
-	// Override it in case the error is a timeout.
-	if !shouldRetry && err != nil {
-		if v, ok := err.(*url.Error); ok {
-			if _, ok := v.Err.(x509.UnknownAuthorityError); ok {
-				// retry if it's a timeout
-				return strings.Contains(strings.ToLower(v.Error()), "timeout"), v
+	client.CheckRetry = func(ctx context.Context, resp *http.Response, err error) (bool, error) {
+		shouldRetry, retErr := rh.DefaultRetryPolicy(ctx, resp, err)
+
+		// DefaultRetryPolicy denies retrying for any certificate related error.
+		// Override it in case the error is a timeout.
+		if !shouldRetry && err != nil {
+			if v, ok := err.(*url.Error); ok {
+				if _, ok := v.Err.(x509.UnknownAuthorityError); ok {
+					// retry if it's a timeout
+					return strings.Contains(strings.ToLower(v.Error()), "timeout"), v
+				}
 			}
 		}
+
+		if logger != nil && (!shouldRetry && !(resp.StatusCode >= 200 && resp.StatusCode < 300)) {
+			logger.Info(fmt.Sprintf("Not retrying: %v", resp.Status))
+		}
+
+		return shouldRetry, retErr
 	}
-
-	if !shouldRetry && !(resp.StatusCode >= 200 && resp.StatusCode < 300) {
-		logrus.Info("Not retrying: ", resp.Status)
-	}
-
-	return shouldRetry, retErr
-}
-
-func createCustomRetryableClient() *rh.Client {
-	client := rh.NewClient()
-	client.Logger = rh.LeveledLogger(&LeveledLogrus{logrus.StandardLogger()})
-	client.CheckRetry = customCheckRetry
 	return client
 }
 
-func CreateRetryableTransport() *rh.RoundTripper {
+func CreateRetryableTransport(logger rh.LeveledLogger) *rh.RoundTripper {
 	rt := rh.RoundTripper{}
-	rt.Client = createCustomRetryableClient()
+	rt.Client = createCustomRetryableClient(logger)
 	return &rt
 }
