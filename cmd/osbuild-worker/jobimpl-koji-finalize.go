@@ -208,8 +208,8 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 		// If there are any non-Koji target results in the build,
 		// add them to the image output extra metadata.
 		nonKojiTargetResults := buildResult.TargetResultsFilterByName([]target.TargetName{target.TargetNameKoji})
-		if len(nonKojiTargetResults) > 0 {
-			imgOutputExtraInfo.UploadTargetResults = nonKojiTargetResults
+		for _, result := range nonKojiTargetResults {
+			imgOutputExtraInfo.UploadTargetResults = append(imgOutputExtraInfo.UploadTargetResults, result)
 		}
 
 		imgOutputsExtraInfo[imageFilename] = imgOutputExtraInfo
