@@ -138,8 +138,10 @@ const maxHeartbeatRetries = 2
 // With default durations it goes through all running jobs every 30 seconds and fails any unresponsive
 // ones. Unresponsive jobs haven't checked whether or not they're cancelled in the past 2 minutes.
 func (s *Server) WatchHeartbeats() {
-	//nolint:staticcheck // avoid SA1015, this is an endless function
-	for range time.Tick(s.config.JobWatchFreq) {
+	ticker := time.NewTicker(s.config.JobWatchFreq)
+	defer ticker.Stop()
+
+	for range ticker.C {
 		for _, token := range s.jobs.Heartbeats(s.config.JobTimeout) {
 			id, _ := s.jobs.IdFromToken(token)
 			logrus.Infof("Removing unresponsive job: %s\n", id)
