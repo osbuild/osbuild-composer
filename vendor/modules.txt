@@ -676,15 +676,19 @@ github.com/getkin/kin-openapi/openapi3filter
 github.com/getkin/kin-openapi/routers
 github.com/getkin/kin-openapi/routers/legacy
 github.com/getkin/kin-openapi/routers/legacy/pathpattern
-# github.com/getsentry/sentry-go v0.28.1
-## explicit; go 1.18
+# github.com/getsentry/sentry-go v0.34.1
+## explicit; go 1.21
 github.com/getsentry/sentry-go
-github.com/getsentry/sentry-go/echo
+github.com/getsentry/sentry-go/attribute
 github.com/getsentry/sentry-go/internal/debug
 github.com/getsentry/sentry-go/internal/otel/baggage
 github.com/getsentry/sentry-go/internal/otel/baggage/internal/baggage
 github.com/getsentry/sentry-go/internal/ratelimit
-github.com/getsentry/sentry-go/internal/traceparser
+# github.com/getsentry/sentry-go/echo v0.34.1
+## explicit; go 1.21
+github.com/getsentry/sentry-go/echo
+# github.com/getsentry/sentry-go/logrus v0.34.1
+## explicit; go 1.21
 github.com/getsentry/sentry-go/logrus
 # github.com/go-jose/go-jose/v4 v4.0.5
 ## explicit; go 1.21
