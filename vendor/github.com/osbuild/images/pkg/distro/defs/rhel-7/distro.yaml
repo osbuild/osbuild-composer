@@ -56,6 +56,7 @@
       - &efi_system_partition_guid "C12A7328-F81F-11D2-BA4B-00A0C93EC93B"
       - &filesystem_data_guid "0FC63DAF-8483-4772-8E79-3D69D8477DE4"
       - &xboot_ldr_partition_guid "BC13C2FF-59E6-4262-A352-B275FD6F7172"
+      - &lvm_partition_guid "E6D6D379-F507-44C2-A23C-238F2A3DF928"
     # static UUIDs for partitions and filesystems
     # NOTE(akoutsou): These are unnecessary and have stuck around since the
     # beginning where (I believe) the goal was to have predictable,
@@ -74,7 +75,8 @@
         uuid: "D209C89E-EA5E-4FBD-B161-B461CCE297E0"
         type: "gpt"
         partitions:
-          - size: "1 MiB"
+          - &bios_boot_partition
+            size: "1 MiB"
             bootable: true
             type: *bios_boot_partition_guid
             uuid: *bios_boot_partition_uuid
@@ -115,7 +117,127 @@
               fstab_options: "defaults"
               fstab_freq: 0
               fstab_passno: 0
+    ec2_partition_tables: &ec2_partition_tables
+      x86_64:
+        uuid: "D209C89E-EA5E-4FBD-B161-B461CCE297E0"
+        type: "gpt"
+        size: "10 GiB"
+        partitions:
+          - *bios_boot_partition
+          - size: 6_442_450_944  # 6144 * datasizes.MebiByte
+            type: *filesystem_data_guid
+            uuid: *root_partition_uuid
+            payload_type: "filesystem"
+            payload:
+              <<: *default_partition_table_part_root_payload
+    azure_rhui_partition_tables: &azure_rhui_partition_tables
+      x86_64:
+        uuid: "D209C89E-EA5E-4FBD-B161-B461CCE297E0"
+        type: "gpt"
+        size: "64 GiB"
+        partitions:
+          - &azure_rhui_part_boot_efi
+            size: 524_288_000   # 500 * datasizes.MebiByte
+            type: *efi_system_partition_guid
+            UUID: *efi_system_partition_uuid
+            payload_type: "filesystem"
+            payload:
+              type: "vfat"
+              uuid: *efi_filesystem_uuid
+              mountpoint: "/boot/efi"
+              fstab_options: "defaults,uid=0,gid=0,umask=077,shortname=winnt"
+              fstab_freq: 0
+              fstab_passno: 2
+          - &azure_rhui_part_boot
+            size: "500 MiB"
+            type: *filesystem_data_guid
+            uuid: *data_partition_uuid
+            payload_type: "filesystem"
+            payload:
+              type: "xfs"
+              mountpoint: "/boot"
+              fstab_options: "defaults"
+              fstab_freq: 0
+              fstab_passno: 0
+          - size: "2 MiB"
+            bootable: true
+            type: *bios_boot_partition_guid
+            uuid: *bios_boot_partition_uuid
+          - &azure_rhui_part_lvm
+            type: *lvm_partition_guid
+            uuid: *root_partition_uuid
+            payload_type: "lvm"
+            payload:
+              name: "rootvg"
+              description: "built with lvm2 and osbuild"
+              logical_volumes:
+                - size: "1 GiB"
+                  name: "homelv"
+                  payload_type: "filesystem"
+                  payload:
+                    type: "xfs"
+                    label: "home"
+                    mountpoint: "/home"
+                    fstab_options: "defaults"
+                - size: "2 GiB"
+                  name: "rootlv"
+                  payload_type: "filesystem"
+                  payload:
+                    type: "xfs"
+                    label: "root"
+                    mountpoint: "/"
+                    fstab_options: "defaults"
+                - size: "2 GiB"
+                  name: "tmplv"
+                  payload_type: "filesystem"
+                  payload:
+                    type: "xfs"
+                    label: "tmp"
+                    mountpoint: "/tmp"
+                    fstab_options: "defaults"
+                - size: "10 GiB"
+                  name: "usrlv"
+                  payload_type: "filesystem"
+                  payload:
+                    type: "xfs"
+                    label: "usr"
+                    mountpoint: "/usr"
+                    fstab_options: "defaults"
+                - size: "10 GiB"
+                  name: "varlv"
+                  payload_type: "filesystem"
+                  payload:
+                    type: "xfs"
+                    label: "var"
+                    mountpoint: "/var"
+                    fstab_options: "defaults"
 
+  disk_sizes:
+    default_required_partition_sizes: &default_required_dir_sizes
+      "/": 1_073_741_824     # 1 * datasizes.GiB
+      "/usr": 2_147_483_648  # 2 * datasizes.GiB
+
+  platforms:
+    x86_64_bios_platform: &x86_64_bios_platform
+      arch: "x86_64"
+      bootloader: "grub2"
+      bios_platform: "i386-pc"
+      packages: &x86_64_bios_platform_packages
+        bios:
+          - "dracut-config-generic"
+          - "grub2-pc"
+      build_packages:
+        bios:
+          - "grub2-pc"
+    x86_64_uefi_vendor_platform: &x86_64_uefi_vendor_platform
+      <<: *x86_64_bios_platform
+      uefi_vendor: "{{.DistroVendor}}"
+      packages:
+        <<: *x86_64_bios_platform_packages
+        uefi_vendor:
+          - "efibootmgr"
+          - "grub2-efi-x64"
+          - "shim-x64"
 
 image_config:
   default:
@@ -136,15 +258,265 @@ image_config:
 
 image_types:
   "azure-rhui":
+    filename: "disk.vhd.xz"
+    mime_type: "application/xz"
+    image_func: "disk"
+    default_size: 68_719_476_736  # 64 * datasizes.GibiByte
+    build_pipelines: ["build"]
+    payload_pipelines: ["os", "image", "vpc", "xz"]
+    exports: ["xz"]
+    compression: "xz"
+    bootable: true
+    # RHEL 7 qemu vpc subformat does not support force_size
+    disk_image_vpc_force_size: false
+    platforms:
+      - <<: *x86_64_uefi_vendor_platform
+        image_format: "vhd"
+    image_config:
+      timezone: "Etc/UTC"
+      locale: "en_US.UTF-8"
+      gpgkey_files:
+        - "/etc/pki/rpm-gpg/RPM-GPG-KEY-microsoft-azure-release"
+        - "/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release"
+      selinux_force_relabel: true
+      authconfig: {}
+      update_default_kernel: true
+      default_kernel: "kernel-core"
+      sysconfig:
+        networking: true
+        no_zero_conf: true
+      enabled_services:
+        - "cloud-config"
+        - "cloud-final"
+        - "cloud-init-local"
+        - "cloud-init"
+        - "firewalld"
+        - "NetworkManager"
+        - "sshd"
+        - "waagent"
+      sshd_config:
+        config:
+          ClientAliveInterval: 180
+      modprobe:
+        - filename: "blacklist-amdgpu.conf"
+          commands:
+            - command: blacklist
+              modulename: "amdgpu"
+        - filename: "blacklist-intel-cstate.conf"
+          commands:
+            - command: blacklist
+              modulename: "intel_cstate"
+        - filename: "blacklist-floppy.conf"
+          commands:
+            - command: blacklist
+              modulename: "floppy"
+        - filename: "blacklist-nouveau.conf"
+          commands:
+            - command: blacklist
+              modulename: "nouveau"
+            - command: blacklist
+              modulename: "lbm-nouveau"
+        - filename: "blacklist-skylake-edac.conf"
+          commands:
+            - command: blacklist
+              modulename: "skx_edac"
+      cloud_init:
+        - filename: "06_logging_override.cfg"
+          config:
+            output:
+              all: "| tee -a /var/log/cloud-init-output.log"
+        - filename: "10-azure-kvp.cfg"
+          config:
+            reporting:
+              logging:
+                type: "log"
+              telemetry:
+                type: "hyperv"
+        - filename: "91-azure_datasource.cfg"
+          config:
+            datasource:
+              azure:
+                apply_network_config: false
+            datasource_list:
+              - "Azure"
+      pwquality:
+        config:
+          minlen: 6
+          minclass: 3
+          dcredit: 0
+          ucredit: 0
+          lcredit: 0
+          ocredit: 0
+      waagent_config:
+        config:
+          "ResourceDisk.Format": false
+          "ResourceDisk.EnableSwap": false
+      rhsm_config:
+        "no-subscription":
+          yum_plugin:
+            subscription_manager:
+              enabled: false
+          subman:
+            rhsmcertd:
+              auto_registration: true
+            rhsm:
+              manage_repos: false
+        "with-subscription":
+          subman:
+            rhsmcertd:
+              auto_registration: true
+              # do not disable the redhat.repo management if the user
+              # explicitly request the system to be subscribed
+      grub2_config:
+        terminal_input: ["serial", "console"]
+        terminal_output: ["serial", "console"]
+        serial: "serial --speed=115200 --unit=0 --word=8 --parity=no --stop=1"
+        timeout: 10
+      udev_rules:
+        filename: "/etc/udev/rules.d/68-azure-sriov-nm-unmanaged.rules"
+        rules:
+          - comment:
+              - "Accelerated Networking on Azure exposes a new SRIOV interface to the VM."
+              - "This interface is transparently bonded to the synthetic interface,"
+              - "so NetworkManager should just ignore any SRIOV interfaces."
+          - rule:
+              - K: "SUBSYSTEM"
+                O: "=="
+                V: "net"
+              - K: "DRIVERS"
+                O: "=="
+                V: "hv_pci"
+              - K: "ACTION"
+                O: "=="
+                V: "add"
+              - K: "ENV"
+                A: "NM_UNMANAGED"
+                O: "="
+                V: "1"
+      yum_config:
+        config:
+          http_caching: "packages"
+        plugins:
+          langpacks:
+            locales: ["en_US.UTF-8"]
+      default_target: "multi-user.target"
+      kernel_options:
+        - "ro"
+        - "crashkernel=auto"
+        - "console=tty1"
+        - "console=ttyS0"
+        - "earlyprintk=ttyS0"
+        - "rootdelay=300"
+        - "scsi_mod.use_blk_mq=y"
+    disk_image_part_tool: sgdisk
     partition_table:
-      <<: *default_partition_tables
+      <<: *azure_rhui_partition_tables
     package_sets:
       os:
         - *azure_rhui_common_pkgset
 
   ec2:
+    filename: "image.raw.xz"
+    mime_type: "application/xz"
+    image_func: "disk"
+    build_pipelines: ["build"]
+    payload_pipelines: ["os", "image", "xz"]
+    exports: ["xz"]
+    compression: "xz"
+    bootable: true
+    default_size: 10_737_418_240  # 10 * datasizes.GibiByte
+    required_partition_sizes: *default_required_dir_sizes
+    platforms:
+      - <<: *x86_64_bios_platform
+        image_format: "raw"
+    image_config:
+      files:
+        # systemd-firstboot on el7 does not support --keymap option
+        - path: "/etc/vconsole.conf"
+          data: |
+            FONT=latarcyrheb-sun16
+            KEYMAP=us
+        # This is needed to disable predictable network interface names.
+        # The org.osbuild.udev.rules stage can't create empty files.
+        - path: "/etc/udev/rules.d/80-net-name-slot.rules"
+          data: ""
+        # While cloud-init does this automatically on first boot for the specified user
+        # this was in the original KS.
+        - path: "/etc/sudoers.d/ec2-user"
+          mode: 0440
+          data: "ec2-user\tALL=(ALL)\tNOPASSWD: ALL\n"
+        # The image built from the original KS has this file with this content.
+        - path: "/etc/hostname"
+          data: "localhost.localdomain\n"
+      timezone: "UTC"
+      time_synchronization:
+        servers:
+          - hostname: "0.rhel.pool.ntp.org"
+            iburst: true
+          - hostname: "1.rhel.pool.ntp.org"
+            iburst: true
+          - hostname: "2.rhel.pool.ntp.org"
+            iburst: true
+          - hostname: "3.rhel.pool.ntp.org"
+            iburst: true
+          - hostname: "169.254.169.123"
+            prefer: true
+            iburst: true
+            minpoll: 4
+            maxpoll: 4
+        # empty string will remove any occurrences of the option from the configuration
+        leapsectz: ""
+      enabled_services:
+        - "sshd"
+        - "rsyslog"
+      default_target: "multi-user.target"
+      update_default_kernel: true
+      default_kernel: "kernel"
+      sysconfig:
+        networking: true
+        no_zero_conf: true
+        create_default_network_scripts: true
+      systemd_logind:
+        - filename: "logind.conf"
+          config:
+            login:
+              nautovts: 0
+      cloud_init:
+        - filename: "00-rhel-default-user.cfg"
+          config:
+            system_info:
+              default_user:
+                name: "ec2-user"
+        - filename: "99-datasource.cfg"
+          config:
+            datasource_list:
+              - "Ec2"
+              - "None"
+      modprobe:
+        - filename: "blacklist-nouveau.conf"
+          commands:
+            - command: blacklist
+              modulename: "nouveau"
+      dracut_conf:
+        - filename: "sgdisk.conf"
+          config:
+            install: ["sgdisk"]
+      sshd_config:
+        config:
+          PasswordAuthentication: false
+      selinux_force_relabel: true
+      kernel_options:
+        - "ro"
+        - "console=tty0"
+        - "console=ttyS0,115200n8"
+        - "net.ifnames=0"
+        - "rd.blacklist=nouveau"
+        - "nvme_core.io_timeout=4294967295"
+        - "crashkernel=auto"
+        - "LANG=en_US.UTF-8"
+    disk_image_part_tool: "sgdisk"
     partition_table:
-      <<: *default_partition_tables
+      <<: *ec2_partition_tables
     package_sets:
       os:
         - include:
@@ -199,6 +571,42 @@ image_types:
             - "firewalld"
 
   qcow2:
+    filename: "disk.qcow2"
+    mime_type: "application/x-qemu-disk"
+    bootable: true
+    default_size: 10_737_418_240  # 10 * datasizes.GibiByte
+    image_func: "disk"
+    build_pipelines: ["build"]
+    payload_pipelines: ["os", "image", "qcow2"]
+    exports: ["qcow2"]
+    required_partition_sizes: *default_required_dir_sizes
+    disk_image_part_tool: sgdisk
+    platforms:
+      - <<: *x86_64_uefi_vendor_platform
+        image_format: "qcow2"
+        qcow2_compat: "0.10"
+    image_config:
+      default_target: "multi-user.target"
+      selinux_force_relabel: true
+      update_default_kernel: true
+      default_kernel: "kernel"
+      kernel_options:
+        - "console=tty0"
+        - "console=ttyS0,115200n8"
+        - "no_timer_check"
+        - "net.ifnames=0"
+        - "crashkernel=auto"
+      sysconfig:
+        networking: true
+        no_zero_conf: true
+        create_default_network_scripts: true
+      rhsm_config:
+        "no-subscription":
+          yum_plugin:
+            product_id:
+              enabled: false
+            subscription_manager:
+              enabled: false
     partition_table:
       <<: *default_partition_tables
     package_sets:

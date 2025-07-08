@@ -1,13 +1,14 @@
 distros:
   - &fedora_rawhide
     name: fedora-43
+    distro_like: fedora
     preview: true
     os_version: 43
     release_version: 43
     module_platform_id: platform:f43
     product: "Fedora"
     ostree_ref_tmpl: "fedora/43/%s/iot"
-    iso_label_tmpl: "{{.Product}}-{{.OsVersion}}-{{.ISOLabel}}-{{.Arch}}"
+    iso_label_tmpl: "{{.Product}}-{{.Distro.MajorVersion}}-{{.ISOLabel}}-{{.Arch}}"
     default_fs_type: "ext4"
     defs_path: fedora
     runner: &fedora_runner
@@ -50,7 +51,7 @@ distros:
     ostree_ref_tmpl: "fedora/{{.MajorVersion}}/%s/iot"
     runner:
       <<: *fedora_runner
-      name: org.osbuild.fedora{{.MajorVersion}}
+      name: "org.osbuild.fedora{{.MajorVersion}}"
     bootstrap_containers:
       x86_64: "registry.fedoraproject.org/fedora-toolbox:{{.MajorVersion}}"
       aarch64: "registry.fedoraproject.org/fedora-toolbox:{{.MajorVersion}}"
@@ -59,3 +60,114 @@ distros:
       # XXX: remove once fedora containers are part of the upstream
       # fedora registry (and can be validated via tls)
       riscv64: "ghcr.io/mvo5/fedora-buildroot:{{.MajorVersion}}"
+
+  - &rhel10
+    name: "rhel-{{.MajorVersion}}.{{.MinorVersion}}"
+    match: "rhel-10.[0-9]{,[0-9]}"
+    distro_like: rhel-10
+    product: "Red Hat Enterprise Linux"
+    os_version: "10.{{.MinorVersion}}"
+    release_version: 10
+    module_platform_id: "platform:el10"
+    vendor: "redhat"
+    ostree_ref_tmpl: "rhel/10/%s/edge"
+    default_fs_type: "xfs"
+    defs_path: rhel-10
+    iso_label_tmpl: "RHEL-{{.Distro.MajorVersion}}-{{.Distro.MinorVersion}}-0-BaseOS-{{.Arch}}"
+    runner:
+      name: "org.osbuild.rhel{{.MajorVersion}}{{.MinorVersion}}"
+      build_packages: &rhel_runner_build_packages
+        - "glibc"  # ldconfig
+        - "platform-python"  # osbuild
+        - "systemd"  # systemd-tmpfiles and systemd-sysusers
+        - "python3"  # osbuild stages
+    # rhel9 & cs9 share the same list
+    # of allowed profiles so a single
+    # allow list can be used
+    oscap_profiles_allowlist: &oscap_profile_allowlist_rhel10
+      - "xccdf_org.ssgproject.content_profile_anssi_bp28_enhanced"
+      - "xccdf_org.ssgproject.content_profile_anssi_bp28_high"
+      - "xccdf_org.ssgproject.content_profile_anssi_bp28_intermediary"
+      - "xccdf_org.ssgproject.content_profile_anssi_bp28_minimal"
+      - "xccdf_org.ssgproject.content_profile_cis"
+      - "xccdf_org.ssgproject.content_profile_cis_server_l1"
+      - "xccdf_org.ssgproject.content_profile_cis_workstation_l1"
+      - "xccdf_org.ssgproject.content_profile_cis_workstation_l2"
+      - "xccdf_org.ssgproject.content_profile_cui"
+      - "xccdf_org.ssgproject.content_profile_e8"
+      - "xccdf_org.ssgproject.content_profile_hipaa"
+      - "xccdf_org.ssgproject.content_profile_ism_o"
+      - "xccdf_org.ssgproject.content_profile_ospp"
+      - "xccdf_org.ssgproject.content_profile_pci-dss"
+      - "xccdf_org.ssgproject.content_profile_stig"
+      - "xccdf_org.ssgproject.content_profile_stig_gui"
+
+  - <<: *rhel10
+    name: "almalinux-{{.MajorVersion}}.{{.MinorVersion}}"
+    match: "almalinux-10.[0-9]{,[0-9]}"
+    product: "AlmaLinux"
+    vendor: "almalinux"
+    ostree_ref_tmpl: "almalinux/10/%%s/edge"
+    iso_label_tmpl: "AlmaLinux-{{.Distro.MajorVersion}}-{{.Distro.MinorVersion}}-{{.Arch}}-dvd"
+
+  - &centos10
+    name: centos-10
+    distro_like: rhel-10
+    product: "CentOS Stream"
+    os_version: "10-stream"
+    release_version: 10
+    module_platform_id: "platform:el10"
+    vendor: "centos"
+    ostree_ref_tmpl: "rhel/10/%s/edge"
+    default_fs_type: "xfs"
+    defs_path: rhel-10
+    iso_label_tmpl: "CentOS-Stream-{{.Distro.MajorVersion}}-BaseOS-{{.Arch}}"
+    ignore_image_types:
+      - azure-cvm
+      - azure-rhui
+      - azure-sap-rhui
+      - azure-sapapps-rhui
+      - ec2
+      - ec2-sap
+      - ec2-ha
+    runner:
+      name: org.osbuild.centos10
+      build_packages:
+        - "glibc"  # ldconfig
+        - "platform-python"  # osbuild
+        - "systemd"  # systemd-tmpfiles and systemd-sysusers
+        - "python3"  # osbuild stages
+    oscap_profiles_allowlist: *oscap_profile_allowlist_rhel10
+
+  - <<: *centos10
+    name: "almalinux_kitten-10"
+    product: "AlmaLinux Kitten"
+    os_version: "10-kitten"
+    release_version: 10
+    module_platform_id: "platform:el10"
+    vendor: "almalinux"
+    ostree_ref_tmpl: "almalinux/10/%s/edge"
+
+  - &rhel7
+    name: "rhel-{{.MajorVersion}}.{{.MinorVersion}}"
+    match: "rhel-7.[0-9]{,[0-9]}"
+    distro_like: rhel-7
+    product: "Red Hat Enterprise Linux"
+    codename: "Maipo"
+    os_version: "7.{{.MinorVersion}}"
+    release_version: 7
+    module_platform_id: "platform:el7"
+    vendor: "redhat"
+    ostree_ref_tmpl: "rhel/7/%s/edge"
+    default_fs_type: "xfs"
+    defs_path: rhel-7
+    runner:
+      name: "org.osbuild.rhel{{.MajorVersion}}{{.MinorVersion}}"
+      build_packages: &rhel_runner_build_packages
+        - "glibc"  # ldconfig
+        # The RHEL 8 runner in osbuild runs with platform-python but
+        # explicitly symlinks python 3.6 to /etc/alternatives (which in turn
+        # is the target for /usr/bin/python3) for the stages.
+        # https://github.com/osbuild/osbuild/blob/ea8261cad6c5c606c00c0f2824c3f483c01a0cc9/runners/org.osbuild.rhel82#L61
+        # Install python36 explicitly for RHEL 8.
+        - "python36"
