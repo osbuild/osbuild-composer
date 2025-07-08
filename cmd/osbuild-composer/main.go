@@ -108,7 +108,7 @@ func main() {
 			panic(err)
 		}
 
-		sentryhook := sentrylogrus.NewFromClient([]logrus.Level{logrus.PanicLevel,
+		sentryhook := sentrylogrus.NewEventHookFromClient([]logrus.Level{logrus.PanicLevel,
 			logrus.FatalLevel, logrus.ErrorLevel},
 			sentry.CurrentHub().Client())
 		logrus.AddHook(sentryhook)
