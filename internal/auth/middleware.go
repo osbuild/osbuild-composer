@@ -14,7 +14,7 @@ func TenantChannelMiddleware(tenantProviderFields []string, onFail error) func(n
 		return func(ctx echo.Context) error {
 			tenant, err := GetFromClaims(ctx.Request().Context(), tenantProviderFields)
 			// Allowlisted paths won't have a token
-			if err != nil && !errors.Is(err, NoJWTError) {
+			if err != nil && !errors.Is(err, ErrNoJWT) {
 				return onFail
 			}
 
