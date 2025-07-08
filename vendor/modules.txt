@@ -1049,11 +1049,11 @@ github.com/oracle/oci-go-sdk/v54/identity
 github.com/oracle/oci-go-sdk/v54/objectstorage
 github.com/oracle/oci-go-sdk/v54/objectstorage/transfer
 github.com/oracle/oci-go-sdk/v54/workrequests
-# github.com/osbuild/blueprint v1.6.0
-## explicit; go 1.22.8
+# github.com/osbuild/blueprint v1.10.0
+## explicit; go 1.23.9
 github.com/osbuild/blueprint/internal/common
 github.com/osbuild/blueprint/pkg/blueprint
-# github.com/osbuild/images v0.156.0
+# github.com/osbuild/images v0.158.0
 ## explicit; go 1.23.9
 github.com/osbuild/images/data/dependencies
 github.com/osbuild/images/data/repositories
@@ -1083,8 +1083,6 @@ github.com/osbuild/images/pkg/distro
 github.com/osbuild/images/pkg/distro/defs
 github.com/osbuild/images/pkg/distro/generic
 github.com/osbuild/images/pkg/distro/rhel
-github.com/osbuild/images/pkg/distro/rhel/rhel10
-github.com/osbuild/images/pkg/distro/rhel/rhel7
 github.com/osbuild/images/pkg/distro/rhel/rhel8
 github.com/osbuild/images/pkg/distro/rhel/rhel9
 github.com/osbuild/images/pkg/distro/test_distro
@@ -1092,6 +1090,7 @@ github.com/osbuild/images/pkg/distrofactory
 github.com/osbuild/images/pkg/distroidparser
 github.com/osbuild/images/pkg/dnfjson
 github.com/osbuild/images/pkg/experimentalflags
+github.com/osbuild/images/pkg/hashutil
 github.com/osbuild/images/pkg/image
 github.com/osbuild/images/pkg/manifest
 github.com/osbuild/images/pkg/olog
@@ -1499,7 +1498,7 @@ golang.org/x/tools/internal/gopathwalk
 golang.org/x/tools/internal/imports
 golang.org/x/tools/internal/modindex
 golang.org/x/tools/internal/stdlib
-# google.golang.org/api v0.239.0
+# google.golang.org/api v0.240.0
 ## explicit; go 1.23.0
 google.golang.org/api/googleapi
 google.golang.org/api/googleapi/transport

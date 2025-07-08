@@ -173,16 +173,13 @@
       "f41 dracut requires ifcfg, rootfs is squashfs":
         when:
           version_equal: "41"
-        override:
-          additional_anaconda_modules: *install_config_additional_anaconda_modules
+        shallow_merge:
           additional_dracut_modules:
             - "ifcfg"
-          squashfs_rootfs: true
       "f40 and lower uses ifcfg in dracut and squashfs+ext4 rootfs":
         when:
           version_less_than: "41"
-        override:
-          additional_anaconda_modules: *install_config_additional_anaconda_modules
+        shallow_merge:
           additional_dracut_modules:
             - "ifcfg"
           squashfs_rootfs: false
@@ -1600,11 +1597,19 @@ image_types:
         - "net-lib"
         - "dbus-broker"
       squashfs_rootfs: true
+      # NOTE: this is not supported right now because the
+      # image-installer on Fedora isn't working when unattended.
+      # These options are probably necessary but could change.
+      # Unattended/non-interactive installations are better set to text,
+      # since they might be running headless and a UI is unnecessary.
+      kickstart_unattended_extra_kernel_opts:
+        - "inst.text"
+        - "inst.noninteractive"
       conditions:
         "on f40 we use ifcfg instead of net-lib":
           when:
             version_equal: "40"
-          override:
+          shallow_merge:
             additional_dracut_modules: &additional_dracut_f40
               - "ifcfg"
               - "dbus-broker"
@@ -1612,9 +1617,8 @@ image_types:
         "on f41 use squashfs_rootfs":
           when:
             version_equal: "41"
-          override:
+          shallow_merge:
             additional_dracut_modules: *additional_dracut_f40
-            squashfs_rootfs: true
     image_config:
       locale: "en_US.UTF-8"
       iso_rootfs_type: "squashfs"

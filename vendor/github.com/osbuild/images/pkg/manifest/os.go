@@ -2,6 +2,7 @@ package manifest
 
 import (
 	"fmt"
+	"net/url"
 	"path/filepath"
 	"strings"
 
@@ -691,7 +692,7 @@ func (p *OS) serialize() osbuild.Pipeline {
 		}
 		pipeline.AddStage(subStage)
 		pipeline.AddStages(osbuild.GenDirectoryNodesStages(subDirs)...)
-		p.addInlineDataAndStages(&pipeline, subFiles)
+		p.addStagesForAllFilesAndInlineData(&pipeline, subFiles)
 		p.OSCustomizations.EnabledServices = append(p.OSCustomizations.EnabledServices, subServices...)
 	}
 
@@ -746,7 +747,7 @@ func (p *OS) serialize() osbuild.Pipeline {
 			if err != nil {
 				panic(err)
 			}
-			p.addInlineDataAndStages(&pipeline, []*fsnode.File{csvfile})
+			p.addStagesForAllFilesAndInlineData(&pipeline, []*fsnode.File{csvfile})
 
 			stages, err := maybeAddHMACandDirStage(p.packageSpecs, espMountpoint, p.kernelVer)
 			if err != nil {
@@ -810,7 +811,7 @@ func (p *OS) serialize() osbuild.Pipeline {
 		}
 
 		pipeline.AddStages(osbuild.GenDirectoryNodesStages([]*fsnode.Directory{failsafeDir})...)
-		p.addInlineDataAndStages(&pipeline, failsafeFiles)
+		p.addStagesForAllFilesAndInlineData(&pipeline, failsafeFiles)
 	}
 
 	// First create custom directories, because some of the custom files may depend on them
@@ -822,7 +823,7 @@ func (p *OS) serialize() osbuild.Pipeline {
 	// units, so let's make sure they get created before the systemd stage that
 	// will probably want to enable them
 	if len(p.OSCustomizations.Files) > 0 {
-		p.addInlineDataAndStages(&pipeline, p.OSCustomizations.Files)
+		p.addStagesForAllFilesAndInlineData(&pipeline, p.OSCustomizations.Files)
 	}
 
 	enabledServices := []string{}
@@ -870,7 +871,7 @@ func (p *OS) serialize() osbuild.Pipeline {
 
 	if p.OSCustomizations.FIPS {
 		pipeline.AddStages(osbuild.GenFIPSStages()...)
-		p.addInlineDataAndStages(&pipeline, osbuild.GenFIPSFiles())
+		p.addStagesForAllFilesAndInlineData(&pipeline, osbuild.GenFIPSFiles())
 	}
 
 	// NOTE: We need to run the OpenSCAP stages as the last stage before SELinux
@@ -899,7 +900,7 @@ func (p *OS) serialize() osbuild.Pipeline {
 			}
 
 			if len(files) > 0 {
-				p.addInlineDataAndStages(&pipeline, files)
+				p.addStagesForAllFilesAndInlineData(&pipeline, files)
 			}
 		}
 		pipeline.AddStage(osbuild.NewUpdateCATrustStage())
@@ -1154,13 +1155,45 @@ func (p *OS) getInline() []string {
 	return p.inlineData
 }
 
-// addInlineDataAndStages generates stages for creating files and adds them to
+// addStagesForAllFilesAndInlineData generates stages for creating files and adds them to
 // the pipeline. It also adds their data to the inlineData for the pipeline so
 // that the appropriate sources are created.
-func (p *OS) addInlineDataAndStages(pipeline *osbuild.Pipeline, files []*fsnode.File) {
+//
+// Note that this also creates stages for non-inline files that come via "fileRefs()"
+func (p *OS) addStagesForAllFilesAndInlineData(pipeline *osbuild.Pipeline, files []*fsnode.File) {
 	pipeline.AddStages(osbuild.GenFileNodesStages(files)...)
 
 	for _, file := range files {
-		p.inlineData = append(p.inlineData, string(file.Data()))
+		// files that come via an URI are not inline data and
+		// are added via the "fileRefs()" below
+		if file.URI() == "" {
+			p.inlineData = append(p.inlineData, string(file.Data()))
+		}
 	}
+}
+
+// fileRefs ensures that any files from customizations that require fetching data
+// (e.g. via the "uri" key in customizations) are added to the manifests "sources"
+//
+// Note that the actual copy/chmod/... stages are generated via addStagesForAllFilesAndInlineData
+func (p *OS) fileRefs() []string {
+	var fileRefs []string
+
+	for _, file := range p.OSCustomizations.Files {
+		if uriStr := file.URI(); uriStr != "" {
+			uri, err := url.Parse(uriStr)
+			if err != nil {
+				panic(fmt.Errorf("internal error: file customizations is not a valid URL: %w", err))
+			}
+
+			switch uri.Scheme {
+			case "", "file":
+				fileRefs = append(fileRefs, uri.Path)
+			default:
+				panic(fmt.Errorf("internal error: unsupported schema for OSCustomizations.Files: %v", uriStr))
+			}
+		}
+	}
+
+	return fileRefs
 }

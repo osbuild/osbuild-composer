@@ -57,7 +57,7 @@ func OSBuildMetadataToRPMs(stagesMetadata map[string]osbuild.StageMetadata) []RP
 					Release:   pkg.Release,
 					Arch:      pkg.Arch,
 					Sigmd5:    pkg.SigMD5,
-					Signature: osbuild.RPMPackageMetadataToSignature(pkg),
+					Signature: pkg.Signature(),
 				})
 			}
 		default:

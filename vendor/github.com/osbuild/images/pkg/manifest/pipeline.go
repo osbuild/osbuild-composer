@@ -69,6 +69,9 @@ type Pipeline interface {
 	// getInline returns the list of inlined data content that will be used to
 	// embed files in the pipeline tree.
 	getInline() []string
+
+	// files generated from url references
+	fileRefs() []string
 }
 
 // A Base represents the core functionality shared between each of the pipeline
@@ -146,6 +149,10 @@ func (p Base) getContainerSpecs() []container.Spec {
 
 func (p Base) getInline() []string {
 	return []string{}
+}
+
+func (p Base) fileRefs() []string {
+	return nil
 }
 
 // NewBase returns a generic Pipeline object. The name is mandatory, immutable and must

@@ -192,6 +192,17 @@ type FileCustomization struct {
 	Mode string `json:"mode,omitempty" toml:"mode,omitempty"`
 	// Data is the file content in plain text
 	Data string `json:"data,omitempty" toml:"data,omitempty"`
+
+	// URI references the given URI, this makes the manifest alone
+	// no-longer portable (but future offline manifest bundles
+	// will fix that). It will still be reproducible as the
+	// manifest will include all the hashes of the content so any
+	// change will make the build fail.
+	//
+	// Initially only single files are supported, but this can be
+	// expanded to dirs (which will just be added recursively) and
+	// http{,s}.
+	URI string `json:"uri,omitempty" toml:"uri,omitempty"`
 }
 
 // Custom TOML unmarshalling for FileCustomization with validation
@@ -247,6 +258,15 @@ func (f *FileCustomization) UnmarshalTOML(data interface{}) error {
 		return fmt.Errorf("UnmarshalTOML: data must be a string")
 	}
 
+	switch uri := dataMap["uri"].(type) {
+	case string:
+		file.URI = uri
+	case nil:
+		break
+	default:
+		return fmt.Errorf("UnmarshalTOML: uri must be a string")
+	}
+
 	// try converting to fsnode.File to validate all values
 	_, err := file.ToFsNodeFile()
 	if err != nil {
@@ -293,6 +313,10 @@ func (f *FileCustomization) UnmarshalJSON(data []byte) error {
 
 // ToFsNodeFile converts the FileCustomization to an fsnode.File
 func (f FileCustomization) ToFsNodeFile() (*fsnode.File, error) {
+	if f.Data != "" && f.URI != "" {
+		return nil, fmt.Errorf("cannot specify both data %q and URI %q", f.Data, f.URI)
+	}
+
 	var data []byte
 	if f.Data != "" {
 		data = []byte(f.Data)
@@ -308,11 +332,12 @@ func (f FileCustomization) ToFsNodeFile() (*fsnode.File, error) {
 		if err != nil {
 			return nil, fmt.Errorf("invalid mode %s: %v", f.Mode, err)
 		}
-		// modeNum is parsed as an unsigned 32 bit int
-		/* #nosec G115 */
 		mode = common.ToPtr(os.FileMode(modeNum))
 	}
 
+	if f.URI != "" {
+		return fsnode.NewFileForURI(f.Path, mode, f.User, f.Group, f.URI)
+	}
 	return fsnode.NewFile(f.Path, mode, f.User, f.Group, data)
 }
 

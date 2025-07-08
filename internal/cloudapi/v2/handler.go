@@ -724,7 +724,7 @@ func stagesToPackageMetadata(stages []osbuild.RPMStageMetadata) []PackageMetadat
 					Release:   rpm.Release,
 					Epoch:     rpm.Epoch,
 					Arch:      rpm.Arch,
-					Signature: osbuild.RPMPackageMetadataToSignature(rpm),
+					Signature: rpm.Signature(),
 					Sigmd5:    rpm.SigMD5,
 				},
 			)
