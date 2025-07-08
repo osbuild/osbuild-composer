@@ -8,8 +8,8 @@ import (
 	"github.com/openshift-online/ocm-sdk-go/authentication"
 )
 
-var NoJWTError = errors.New("request doesn't contain JWT")
-var NoKeyError = errors.New("cannot find key in jwt claims")
+var ErrNoJWT = errors.New("request doesn't contain JWT")
+var ErrNoKey = errors.New("cannot find key in jwt claims")
 
 // GetFromClaims returns a value of JWT claim with the specified key
 //
@@ -22,7 +22,7 @@ func GetFromClaims(ctx context.Context, keys []string) (string, error) {
 	if err != nil {
 		return "", err
 	} else if token == nil {
-		return "", NoJWTError
+		return "", ErrNoJWT
 	}
 
 	claims := token.Claims.(jwt.MapClaims)
@@ -35,5 +35,5 @@ func GetFromClaims(ctx context.Context, keys []string) (string, error) {
 
 	}
 
-	return "", NoKeyError
+	return "", ErrNoKey
 }
