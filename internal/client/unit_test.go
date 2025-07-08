@@ -6,7 +6,6 @@
 package client
 
 import (
-	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
@@ -45,7 +44,7 @@ func setupDNFJSON() string {
 
 func executeTests(m *testing.M) int {
 	// Setup the mocked server running on a temporary domain socket
-	tmpdir, err := ioutil.TempDir("", "client_test-")
+	tmpdir, err := os.MkdirTemp("", "client_test-")
 	if err != nil {
 		panic(err)
 	}
@@ -79,6 +78,11 @@ func executeTests(m *testing.M) int {
 	})
 
 	dspath, err := os.MkdirTemp(tmpdir, "")
+	if err != nil {
+		log.Fatalf("ERROR: Could not create temporary directory for dnfjson: %s\n", err)
+	}
+	defer os.RemoveAll(dspath)
+
 	dnfjsonFixture := dnfjson_mock.Base(dspath)
 	solver := dnfjson.NewBaseSolver(path.Join(tmpdir, "dnfjson-cache"))
 	solver.SetDNFJSONPath(dnfjsonPath, dnfjsonFixture)
