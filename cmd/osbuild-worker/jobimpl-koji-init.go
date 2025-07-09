@@ -6,7 +6,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/osbuild/osbuild-composer/internal/upload/koji"
+	"github.com/osbuild/images/pkg/upload/koji"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
 )

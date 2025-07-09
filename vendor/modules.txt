@@ -1106,6 +1106,7 @@ github.com/osbuild/images/pkg/rhsm/facts
 github.com/osbuild/images/pkg/rpmmd
 github.com/osbuild/images/pkg/runner
 github.com/osbuild/images/pkg/sbom
+github.com/osbuild/images/pkg/upload/koji
 # github.com/osbuild/osbuild-composer/pkg/splunk_logger v0.0.0-20240814102216-0239db53236d
 ## explicit; go 1.21
 github.com/osbuild/osbuild-composer/pkg/splunk_logger

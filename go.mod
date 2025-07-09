@@ -38,7 +38,6 @@ require (
 	github.com/jackc/pgtype v1.14.3
 	github.com/jackc/pgx/v4 v4.18.3
 	github.com/julienschmidt/httprouter v1.3.0
-	github.com/kolo/xmlrpc v0.0.0-20220921171641-a4b6fa1dd06b
 	github.com/labstack/echo/v4 v4.13.3
 	github.com/labstack/gommon v0.4.2
 	github.com/oapi-codegen/oapi-codegen/v2 v2.4.1
@@ -54,7 +53,6 @@ require (
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.9.1
 	github.com/stretchr/testify v1.10.0
-	github.com/ubccr/kerby v0.0.0-20230802201021-412be7bfaee5
 	github.com/vmware/govmomi v0.51.0
 	golang.org/x/exp v0.0.0-20250103183323-7d7fa50e5329
 	golang.org/x/oauth2 v0.30.0
@@ -176,6 +174,7 @@ require (
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/compress v1.18.0 // indirect
 	github.com/klauspost/pgzip v1.2.6 // indirect
+	github.com/kolo/xmlrpc v0.0.0-20220921171641-a4b6fa1dd06b // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/letsencrypt/boulder v0.0.0-20240620165639-de9c06129bec // indirect
@@ -230,6 +229,7 @@ require (
 	github.com/sylabs/sif/v2 v2.21.1 // indirect
 	github.com/tchap/go-patricia/v2 v2.3.2 // indirect
 	github.com/titanous/rocacheck v0.0.0-20171023193734-afe73141d399 // indirect
+	github.com/ubccr/kerby v0.0.0-20230802201021-412be7bfaee5 // indirect
 	github.com/ulikunitz/xz v0.5.12 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
