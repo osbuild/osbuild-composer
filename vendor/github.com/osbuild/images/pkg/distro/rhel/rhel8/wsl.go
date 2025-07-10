@@ -13,8 +13,8 @@ func mkWslImgType(rd *rhel.Distribution, a arch.Arch) *rhel.ImageType {
 		packageSetLoader,
 		rhel.TarImage,
 		[]string{"build"},
-		[]string{"os", "archive"},
-		[]string{"archive"},
+		[]string{"os", "archive", "xz"},
+		[]string{"xz"},
 	)
 	it.DefaultImageConfig = imageConfig(rd, a.String(), "wsl")
 	it.Compression = "xz"

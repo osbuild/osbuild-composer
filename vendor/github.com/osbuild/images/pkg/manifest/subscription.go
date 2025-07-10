@@ -123,7 +123,7 @@ func subscriptionService(subscriptionOptions subscription.ImageOptions, serviceO
 		if subscriptionOptions.TemplateUUID != "" {
 			curlToAssociateSystem = getCurlToAssociateSystem(subscriptionOptions)
 		} else if subscriptionOptions.TemplateName != "" {
-			rhcConnect += fmt.Sprintf(" --content-template %s", subscriptionOptions.TemplateName)
+			rhcConnect += fmt.Sprintf(" --content-template=\"%s\"", subscriptionOptions.TemplateName)
 		}
 		commands = append(commands, rhcConnect)
 		// execute the rhc post install script as the selinuxenabled check doesn't work in the buildroot container

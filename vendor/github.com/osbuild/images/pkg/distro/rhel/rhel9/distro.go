@@ -83,8 +83,8 @@ func newDistro(name string, major, minor int) *rhel.Distribution {
 				QCOW2Compat: "1.1",
 			},
 		},
-		mkQcow2ImgType(rd),
-		mkOCIImgType(rd),
+		mkQcow2ImgType(rd, arch.ARCH_X86_64),
+		mkOCIImgType(rd, arch.ARCH_X86_64),
 	)
 
 	x86_64.AddImageTypes(
@@ -95,7 +95,7 @@ func newDistro(name string, major, minor int) *rhel.Distribution {
 				ImageFormat: platform.FORMAT_QCOW2,
 			},
 		},
-		mkOpenstackImgType(),
+		mkOpenstackImgType(rd, arch.ARCH_X86_64),
 	)
 
 	x86_64.AddImageTypes(
@@ -106,7 +106,7 @@ func newDistro(name string, major, minor int) *rhel.Distribution {
 				ImageFormat: platform.FORMAT_VMDK,
 			},
 		},
-		mkVMDKImgType(),
+		mkVMDKImgType(rd, arch.ARCH_X86_64),
 	)
 
 	x86_64.AddImageTypes(
@@ -117,13 +117,13 @@ func newDistro(name string, major, minor int) *rhel.Distribution {
 				ImageFormat: platform.FORMAT_OVA,
 			},
 		},
-		mkOVAImgType(),
+		mkOVAImgType(rd, arch.ARCH_X86_64),
 	)
 
 	x86_64.AddImageTypes(
 		&platform.X86{},
 		mkTarImgType(),
-		mkWSLImgType(),
+		mkWSLImgType(rd, arch.ARCH_X86_64),
 	)
 
 	aarch64.AddImageTypes(
@@ -133,13 +133,13 @@ func newDistro(name string, major, minor int) *rhel.Distribution {
 				ImageFormat: platform.FORMAT_QCOW2,
 			},
 		},
-		mkOpenstackImgType(),
+		mkOpenstackImgType(rd, arch.ARCH_AARCH64),
 	)
 
 	aarch64.AddImageTypes(
 		&platform.Aarch64{},
 		mkTarImgType(),
-		mkWSLImgType(),
+		mkWSLImgType(rd, arch.ARCH_AARCH64),
 	)
 
 	aarch64.AddImageTypes(
@@ -150,7 +150,7 @@ func newDistro(name string, major, minor int) *rhel.Distribution {
 				QCOW2Compat: "1.1",
 			},
 		},
-		mkQcow2ImgType(rd),
+		mkQcow2ImgType(rd, arch.ARCH_AARCH64),
 	)
 
 	ppc64le.AddImageTypes(
@@ -161,7 +161,7 @@ func newDistro(name string, major, minor int) *rhel.Distribution {
 				QCOW2Compat: "1.1",
 			},
 		},
-		mkQcow2ImgType(rd),
+		mkQcow2ImgType(rd, arch.ARCH_PPC64LE),
 	)
 	ppc64le.AddImageTypes(
 		&platform.PPC64LE{},
@@ -176,7 +176,7 @@ func newDistro(name string, major, minor int) *rhel.Distribution {
 				QCOW2Compat: "1.1",
 			},
 		},
-		mkQcow2ImgType(rd),
+		mkQcow2ImgType(rd, arch.ARCH_S390X),
 	)
 	s390x.AddImageTypes(
 		&platform.S390X{},
@@ -201,7 +201,7 @@ func newDistro(name string, major, minor int) *rhel.Distribution {
 
 	x86_64.AddImageTypes(
 		ec2X86Platform,
-		mkAMIImgTypeX86_64(),
+		mkAMIImgTypeX86_64(rd, arch.ARCH_X86_64),
 	)
 
 	aarch64.AddImageTypes(
@@ -211,7 +211,7 @@ func newDistro(name string, major, minor int) *rhel.Distribution {
 				ImageFormat: platform.FORMAT_RAW,
 			},
 		},
-		mkAMIImgTypeAarch64(),
+		mkAMIImgTypeAarch64(rd, arch.ARCH_AARCH64),
 	)
 
 	azureX64Platform := &platform.X86{
@@ -240,7 +240,7 @@ func newDistro(name string, major, minor int) *rhel.Distribution {
 	}
 	x86_64.AddImageTypes(
 		gceX86Platform,
-		mkGCEImageType(),
+		mkGCEImageType(rd, arch.ARCH_X86_64),
 	)
 
 	x86_64.AddImageTypes(
@@ -263,12 +263,12 @@ func newDistro(name string, major, minor int) *rhel.Distribution {
 			BIOS:       true,
 			UEFIVendor: rd.Vendor(),
 		},
-		mkEdgeOCIImgType(rd),
-		mkEdgeCommitImgType(rd),
-		mkEdgeInstallerImgType(),
-		mkEdgeRawImgType(rd),
-		mkImageInstallerImgType(),
-		mkEdgeAMIImgType(rd),
+		mkEdgeOCIImgType(rd, arch.ARCH_X86_64),
+		mkEdgeCommitImgType(rd, arch.ARCH_X86_64),
+		mkEdgeInstallerImgType(rd, arch.ARCH_X86_64),
+		mkEdgeRawImgType(rd, arch.ARCH_X86_64),
+		mkImageInstallerImgType(rd, arch.ARCH_X86_64),
+		mkEdgeAMIImgType(rd, arch.ARCH_X86_64),
 	)
 
 	x86_64.AddImageTypes(
@@ -279,7 +279,7 @@ func newDistro(name string, major, minor int) *rhel.Distribution {
 			BIOS:       true,
 			UEFIVendor: rd.Vendor(),
 		},
-		mkEdgeVsphereImgType(rd),
+		mkEdgeVsphereImgType(rd, arch.ARCH_X86_64),
 	)
 
 	x86_64.AddImageTypes(
@@ -290,8 +290,8 @@ func newDistro(name string, major, minor int) *rhel.Distribution {
 			BIOS:       false,
 			UEFIVendor: rd.Vendor(),
 		},
-		mkEdgeSimplifiedInstallerImgType(rd),
-		mkMinimalrawImgType(),
+		mkEdgeSimplifiedInstallerImgType(rd, arch.ARCH_X86_64),
+		mkMinimalrawImgType(rd, arch.ARCH_X86_64),
 	)
 
 	aarch64.AddImageTypes(
@@ -299,12 +299,12 @@ func newDistro(name string, major, minor int) *rhel.Distribution {
 			BasePlatform: platform.BasePlatform{},
 			UEFIVendor:   rd.Vendor(),
 		},
-		mkEdgeOCIImgType(rd),
-		mkEdgeCommitImgType(rd),
-		mkEdgeInstallerImgType(),
-		mkEdgeSimplifiedInstallerImgType(rd),
-		mkImageInstallerImgType(),
-		mkEdgeAMIImgType(rd),
+		mkEdgeOCIImgType(rd, arch.ARCH_AARCH64),
+		mkEdgeCommitImgType(rd, arch.ARCH_AARCH64),
+		mkEdgeInstallerImgType(rd, arch.ARCH_AARCH64),
+		mkEdgeSimplifiedInstallerImgType(rd, arch.ARCH_AARCH64),
+		mkImageInstallerImgType(rd, arch.ARCH_AARCH64),
+		mkEdgeAMIImgType(rd, arch.ARCH_AARCH64),
 	)
 
 	aarch64.AddImageTypes(
@@ -314,7 +314,7 @@ func newDistro(name string, major, minor int) *rhel.Distribution {
 			},
 			UEFIVendor: rd.Vendor(),
 		},
-		mkEdgeVsphereImgType(rd),
+		mkEdgeVsphereImgType(rd, arch.ARCH_X86_64),
 	)
 
 	aarch64.AddImageTypes(
@@ -324,18 +324,22 @@ func newDistro(name string, major, minor int) *rhel.Distribution {
 			},
 			UEFIVendor: rd.Vendor(),
 		},
-		mkEdgeRawImgType(rd),
-		mkMinimalrawImgType(),
+		mkEdgeRawImgType(rd, arch.ARCH_AARCH64),
+		mkMinimalrawImgType(rd, arch.ARCH_AARCH64),
 	)
 
 	if rd.IsRHEL() { // RHEL-only (non-CentOS) image types
 		x86_64.AddImageTypes(azureX64Platform, mkAzureInternalImgType(rd, azureX64Platform.GetArch()))
 		aarch64.AddImageTypes(azureAarch64Platform, mkAzureInternalImgType(rd, azureAarch64Platform.GetArch()))
 
-		x86_64.AddImageTypes(azureX64Platform, mkAzureSapInternalImgType(rd, azureX64Platform.GetArch()))
+		x86_64.AddImageTypes(azureX64Platform, mkAzureSapInternalImgType(rd, azureX64Platform.GetArch()), mkAzureSapAppsImgType(rd, azureX64Platform.GetArch()))
 
 		// add ec2 image types to RHEL distro only
-		x86_64.AddImageTypes(ec2X86Platform, mkEc2ImgTypeX86_64(), mkEc2HaImgTypeX86_64(), mkEC2SapImgTypeX86_64(rd.OsVersion()))
+		x86_64.AddImageTypes(ec2X86Platform,
+			mkEc2ImgTypeX86_64(rd, arch.ARCH_X86_64),
+			mkEc2HaImgTypeX86_64(rd, arch.ARCH_X86_64),
+			mkEC2SapImgTypeX86_64(rd, arch.ARCH_X86_64),
+		)
 
 		aarch64.AddImageTypes(
 			&platform.Aarch64{
@@ -344,7 +348,7 @@ func newDistro(name string, major, minor int) *rhel.Distribution {
 					ImageFormat: platform.FORMAT_RAW,
 				},
 			},
-			mkEC2ImgTypeAarch64(),
+			mkEC2ImgTypeAarch64(rd, arch.ARCH_AARCH64),
 		)
 
 		// CVM is only available starting from 9.6
@@ -358,7 +362,7 @@ func newDistro(name string, major, minor int) *rhel.Distribution {
 			}
 			x86_64.AddImageTypes(
 				azureX64CVMPlatform,
-				mkAzureCVMImgType(rd),
+				mkAzureCVMImgType(rd, arch.ARCH_X86_64),
 			)
 
 		}

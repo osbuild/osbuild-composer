@@ -217,7 +217,7 @@
       "x86_64 specific dracut conf":
         when:
           arch: "x86_64"
-        merge: &ami_image_config_cond_x86_64
+        shallow_merge: &ami_image_config_cond_x86_64
           dracut_conf:
             - *sgdisk_dracut_conf
             - filename: "ec2.conf"
@@ -228,7 +228,7 @@
       "x86_64 specific kopts":
         when:
           arch: "x86_64"
-        merge:
+        shallow_merge:
           # TODO: move these to the EC2 environment?
           kernel_options:
             - "console=tty0"
@@ -240,7 +240,7 @@
       "aarch64 specific kopts":
         when:
           arch: "aarch64"
-        merge:
+        shallow_merge:
           # TODO: move these to the EC2 environment?
           kernel_options:
             # XXX: duplicated with above x86_64 kernel defaults
@@ -263,7 +263,7 @@
         # redhat-cloud-client-configuration package. See COMPOSER-1804 for more information.
         when:
           version_less_than: "8.7"
-        merge:
+        shallow_merge:
           rhsm_config:
             "no-subscription":
               # RHBZ#1932802
@@ -358,7 +358,7 @@
       "rhel-8.9 and below needs to set the release ver in dnf config":
         when:
           version_less_than: "8.10"
-        merge:
+        shallow_merge:
           dnf_config:
             # E4S/EUS
             set_release_ver_var: true
@@ -1108,7 +1108,7 @@ image_config:
     "centos has a different oscap path":
       when:
         distro_name: "centos"
-      merge:
+      shallow_merge:
         default_oscap_datastream: "/usr/share/xml/scap/ssg/content/ssg-centos8-ds.xml"
 
 image_types:
@@ -1218,7 +1218,7 @@ image_types:
         "x86_64 specific kopts":
           when:
             arch: "x86_64"
-          merge:
+          shallow_merge:
             kernel_options:
               # amiSapKernelOptions()
               # common AMI kernel options
@@ -1263,7 +1263,7 @@ image_types:
         "tweak the rhsm config on rhel":
           when:
             distro_name: "rhel"
-          merge:
+          shallow_merge:
             rhsm_config:
               "no-subscription":
                 dnf_plugin:
@@ -1404,12 +1404,12 @@ image_types:
         "x86_64 specific kernel options":
           when:
             arch: "x86_64"
-          merge:
+          shallow_merge:
             kernel_options: *vhd_image_config_kernel_options
         "rhel needs the rhel release rpm gpg key":
           when:
             distro_name: "rhel"
-          merge:
+          shallow_merge:
             gpgkey_files:
               - "/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release"
     partition_table:
@@ -1446,7 +1446,7 @@ image_types:
         "rhel needs rh and ms gpg keys":
           when:
             distro_name: "rhel"
-          merge:
+          shallow_merge:
             gpgkey_files:
               - "/etc/pki/rpm-gpg/RPM-GPG-KEY-microsoft-azure-release"
               - "/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release"
@@ -1556,7 +1556,7 @@ image_types:
         "rhel-8.5 has no fdo":
           when:
             version_equal: "8.5"
-          merge:
+          shallow_merge:
             enabled_services:
               - "NetworkManager.service"
               - "firewalld.service"
@@ -1564,7 +1564,7 @@ image_types:
         "rhel-8.4 and below use greenboot":
           when:
             version_less_than: "8.5"
-          merge:
+          shallow_merge:
             enabled_services:
               # same as 8.6
               - "NetworkManager.service"
@@ -1911,7 +1911,7 @@ image_types:
           # the reason is unknown and deeply mysterious
           when:
             version_equal: "8.4"
-          merge:
+          shallow_merge:
             enabled_services:
               - "sshd"
               - "rngd"

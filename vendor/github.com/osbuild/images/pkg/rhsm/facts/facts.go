@@ -16,6 +16,8 @@ func (at APIType) String() string {
 		return "cloudapi-v2"
 	case WELDR_APITYPE:
 		return "weldr"
+	case IBCLI_APITYPE:
+		return "image-builder-cli"
 	}
 	panic(fmt.Sprintf("invalid APIType value %d", at))
 }
@@ -24,6 +26,7 @@ const (
 	TEST_APITYPE APIType = iota
 	CLOUDV2_APITYPE
 	WELDR_APITYPE
+	IBCLI_APITYPE
 )
 
 // The ImageOptions specify things to be stored into the Insights facts

@@ -154,6 +154,7 @@ func (p *AnacondaInstaller) getBuildPackages(Distro) []string {
 	packages := p.anacondaBootPackageSet()
 	packages = append(packages,
 		"rpm",
+		"shadow-utils", // The pipeline always creates a root and installer user
 	)
 
 	if p.UseRHELLoraxTemplates {

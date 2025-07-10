@@ -1,18 +1,15 @@
 package rhel9
 
 import (
-	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/internal/environment"
 	"github.com/osbuild/images/pkg/arch"
-	"github.com/osbuild/images/pkg/customizations/fsnode"
 	"github.com/osbuild/images/pkg/datasizes"
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distro/rhel"
-	"github.com/osbuild/images/pkg/osbuild"
 )
 
-func mkEdgeCommitImgType(d *rhel.Distribution) *rhel.ImageType {
+func mkEdgeCommitImgType(d *rhel.Distribution, a arch.Arch) *rhel.ImageType {
 	it := rhel.NewImageType(
 		"edge-commit",
 		"commit.tar",
@@ -26,23 +23,12 @@ func mkEdgeCommitImgType(d *rhel.Distribution) *rhel.ImageType {
 
 	it.NameAliases = []string{"rhel-edge-commit"}
 	it.RPMOSTree = true
-
-	it.DefaultImageConfig = &distro.ImageConfig{
-		EnabledServices: edgeServices,
-		SystemdDropin:   systemdUnits,
-	}
-	if common.VersionGreaterThanOrEqual(d.OsVersion(), "9.2") || !d.IsRHEL() {
-		it.DefaultImageConfig.EnabledServices = append(
-			it.DefaultImageConfig.EnabledServices,
-			"ignition-firstboot-complete.service",
-			"coreos-ignition-write-issues.service",
-		)
-	}
+	it.DefaultImageConfig = imageConfig(d, a.String(), "edge-commit")
 
 	return it
 }
 
-func mkEdgeOCIImgType(d *rhel.Distribution) *rhel.ImageType {
+func mkEdgeOCIImgType(d *rhel.Distribution, a arch.Arch) *rhel.ImageType {
 	it := rhel.NewImageType(
 		"edge-container",
 		"container.tar",
@@ -56,23 +42,12 @@ func mkEdgeOCIImgType(d *rhel.Distribution) *rhel.ImageType {
 
 	it.NameAliases = []string{"rhel-edge-container"}
 	it.RPMOSTree = true
-
-	it.DefaultImageConfig = &distro.ImageConfig{
-		EnabledServices: edgeServices,
-		SystemdDropin:   systemdUnits,
-	}
-	if common.VersionGreaterThanOrEqual(d.OsVersion(), "9.2") || !d.IsRHEL() {
-		it.DefaultImageConfig.EnabledServices = append(
-			it.DefaultImageConfig.EnabledServices,
-			"ignition-firstboot-complete.service",
-			"coreos-ignition-write-issues.service",
-		)
-	}
+	it.DefaultImageConfig = imageConfig(d, a.String(), "edge-container")
 
 	return it
 }
 
-func mkEdgeRawImgType(d *rhel.Distribution) *rhel.ImageType {
+func mkEdgeRawImgType(d *rhel.Distribution, a arch.Arch) *rhel.ImageType {
 	it := rhel.NewImageType(
 		"edge-raw-image",
 		"image.raw.xz",
@@ -86,33 +61,18 @@ func mkEdgeRawImgType(d *rhel.Distribution) *rhel.ImageType {
 
 	it.NameAliases = []string{"rhel-edge-raw-image"}
 	it.Compression = "xz"
-	it.DefaultImageConfig = &distro.ImageConfig{
-		Keyboard: &osbuild.KeymapStageOptions{
-			Keymap: "us",
-		},
-		Locale:        common.ToPtr("C.UTF-8"),
-		LockRootUser:  common.ToPtr(true),
-		KernelOptions: []string{"modprobe.blacklist=vc4"},
-	}
-	if common.VersionGreaterThanOrEqual(d.OsVersion(), "9.2") || !d.IsRHEL() {
-		it.DefaultImageConfig.OSTreeConfSysrootReadOnly = common.ToPtr(true)
-		it.DefaultImageConfig.IgnitionPlatform = common.ToPtr("metal")
-	}
-
-	if common.VersionGreaterThanOrEqual(d.OsVersion(), "9.2") || !d.IsRHEL() {
-		it.DefaultImageConfig.KernelOptions = append(it.DefaultImageConfig.KernelOptions, "rw", "coreos.no_persist_ip")
-	}
+	it.DefaultImageConfig = imageConfig(d, a.String(), "edge-raw-image")
 
 	it.DefaultSize = 10 * datasizes.GibiByte
 	it.RPMOSTree = true
 	it.Bootable = true
-	it.BasePartitionTables = edgeBasePartitionTables
+	it.BasePartitionTables = defaultBasePartitionTables
 	it.UnsupportedPartitioningModes = []disk.PartitioningMode{disk.RawPartitioningMode}
 
 	return it
 }
 
-func mkEdgeInstallerImgType() *rhel.ImageType {
+func mkEdgeInstallerImgType(d *rhel.Distribution, a arch.Arch) *rhel.ImageType {
 	it := rhel.NewImageType(
 		"edge-installer",
 		"installer.iso",
@@ -125,10 +85,7 @@ func mkEdgeInstallerImgType() *rhel.ImageType {
 	)
 
 	it.NameAliases = []string{"rhel-edge-installer"}
-	it.DefaultImageConfig = &distro.ImageConfig{
-		Locale:          common.ToPtr("en_US.UTF-8"),
-		EnabledServices: edgeServices,
-	}
+	it.DefaultImageConfig = imageConfig(d, a.String(), "edge-installer")
 	it.DefaultInstallerConfig = &distro.InstallerConfig{
 		AdditionalDracutModules: []string{
 			"nvdimm", // non-volatile DIMM firmware (provides nfit, cuse, and nd_e820)
@@ -147,7 +104,7 @@ func mkEdgeInstallerImgType() *rhel.ImageType {
 	return it
 }
 
-func mkEdgeSimplifiedInstallerImgType(d *rhel.Distribution) *rhel.ImageType {
+func mkEdgeSimplifiedInstallerImgType(d *rhel.Distribution, a arch.Arch) *rhel.ImageType {
 	it := rhel.NewImageType(
 		"edge-simplified-installer",
 		"simplified-installer.iso",
@@ -167,19 +124,7 @@ func mkEdgeSimplifiedInstallerImgType(d *rhel.Distribution) *rhel.ImageType {
 	)
 
 	it.NameAliases = []string{"rhel-edge-simplified-installer"}
-	it.DefaultImageConfig = &distro.ImageConfig{
-		EnabledServices: edgeServices,
-		Keyboard: &osbuild.KeymapStageOptions{
-			Keymap: "us",
-		},
-		Locale:        common.ToPtr("C.UTF-8"),
-		LockRootUser:  common.ToPtr(true),
-		KernelOptions: []string{"modprobe.blacklist=vc4"},
-	}
-	if common.VersionGreaterThanOrEqual(d.OsVersion(), "9.2") || !d.IsRHEL() {
-		it.DefaultImageConfig.OSTreeConfSysrootReadOnly = common.ToPtr(true)
-		it.DefaultImageConfig.IgnitionPlatform = common.ToPtr("metal")
-	}
+	it.DefaultImageConfig = imageConfig(d, a.String(), "edge-simplified-installer")
 
 	it.DefaultInstallerConfig = &distro.InstallerConfig{
 		AdditionalDracutModules: []string{
@@ -193,17 +138,13 @@ func mkEdgeSimplifiedInstallerImgType(d *rhel.Distribution) *rhel.ImageType {
 	it.BootISO = true
 	it.Bootable = true
 	it.ISOLabelFn = distroISOLabelFunc
-	it.BasePartitionTables = edgeBasePartitionTables
+	it.BasePartitionTables = defaultBasePartitionTables
 	it.UnsupportedPartitioningModes = []disk.PartitioningMode{disk.RawPartitioningMode}
-
-	if common.VersionGreaterThanOrEqual(d.OsVersion(), "9.2") || !d.IsRHEL() {
-		it.DefaultImageConfig.KernelOptions = append(it.DefaultImageConfig.KernelOptions, "rw", "coreos.no_persist_ip")
-	}
 
 	return it
 }
 
-func mkEdgeAMIImgType(d *rhel.Distribution) *rhel.ImageType {
+func mkEdgeAMIImgType(d *rhel.Distribution, a arch.Arch) *rhel.ImageType {
 	it := rhel.NewImageType(
 		"edge-ami",
 		"image.raw",
@@ -215,34 +156,19 @@ func mkEdgeAMIImgType(d *rhel.Distribution) *rhel.ImageType {
 		[]string{"image"},
 	)
 
-	it.DefaultImageConfig = &distro.ImageConfig{
-		Keyboard: &osbuild.KeymapStageOptions{
-			Keymap: "us",
-		},
-		Locale:       common.ToPtr("C.UTF-8"),
-		LockRootUser: common.ToPtr(true),
-	}
-	if common.VersionGreaterThanOrEqual(d.OsVersion(), "9.2") || !d.IsRHEL() {
-		it.DefaultImageConfig.OSTreeConfSysrootReadOnly = common.ToPtr(true)
-		it.DefaultImageConfig.IgnitionPlatform = common.ToPtr("metal")
-	}
-
-	it.DefaultImageConfig.KernelOptions = append(amiKernelOptions(), "modprobe.blacklist=vc4")
-	if common.VersionGreaterThanOrEqual(d.OsVersion(), "9.2") || !d.IsRHEL() {
-		it.DefaultImageConfig.KernelOptions = append(it.DefaultImageConfig.KernelOptions, "rw", "coreos.no_persist_ip")
-	}
+	it.DefaultImageConfig = imageConfig(d, a.String(), "edge-ami")
 
 	it.DefaultSize = 10 * datasizes.GibiByte
 	it.RPMOSTree = true
 	it.Bootable = true
-	it.BasePartitionTables = edgeBasePartitionTables
+	it.BasePartitionTables = defaultBasePartitionTables
 	it.UnsupportedPartitioningModes = []disk.PartitioningMode{disk.RawPartitioningMode}
 	it.Environment = &environment.EC2{}
 
 	return it
 }
 
-func mkEdgeVsphereImgType(d *rhel.Distribution) *rhel.ImageType {
+func mkEdgeVsphereImgType(d *rhel.Distribution, a arch.Arch) *rhel.ImageType {
 	it := rhel.NewImageType(
 		"edge-vsphere",
 		"image.vmdk",
@@ -254,33 +180,17 @@ func mkEdgeVsphereImgType(d *rhel.Distribution) *rhel.ImageType {
 		[]string{"vmdk"},
 	)
 
-	it.DefaultImageConfig = &distro.ImageConfig{
-		Keyboard: &osbuild.KeymapStageOptions{
-			Keymap: "us",
-		},
-		Locale:       common.ToPtr("C.UTF-8"),
-		LockRootUser: common.ToPtr(true),
-	}
-	if common.VersionGreaterThanOrEqual(d.OsVersion(), "9.2") || !d.IsRHEL() {
-		it.DefaultImageConfig.OSTreeConfSysrootReadOnly = common.ToPtr(true)
-		it.DefaultImageConfig.IgnitionPlatform = common.ToPtr("metal")
-	}
-
-	it.DefaultImageConfig.KernelOptions = []string{"modprobe.blacklist=vc4"}
-	if common.VersionGreaterThanOrEqual(d.OsVersion(), "9.2") || !d.IsRHEL() {
-		it.DefaultImageConfig.KernelOptions = append(it.DefaultImageConfig.KernelOptions, "rw", "coreos.no_persist_ip")
-	}
-
+	it.DefaultImageConfig = imageConfig(d, a.String(), "edge-vsphere")
 	it.DefaultSize = 10 * datasizes.GibiByte
 	it.RPMOSTree = true
 	it.Bootable = true
-	it.BasePartitionTables = edgeBasePartitionTables
+	it.BasePartitionTables = defaultBasePartitionTables
 	it.UnsupportedPartitioningModes = []disk.PartitioningMode{disk.RawPartitioningMode}
 
 	return it
 }
 
-func mkMinimalrawImgType() *rhel.ImageType {
+func mkMinimalrawImgType(d *rhel.Distribution, a arch.Arch) *rhel.ImageType {
 	it := rhel.NewImageType(
 		"minimal-raw",
 		"disk.raw.xz",
@@ -293,317 +203,10 @@ func mkMinimalrawImgType() *rhel.ImageType {
 	)
 
 	it.Compression = "xz"
-	it.DefaultImageConfig = &distro.ImageConfig{
-		EnabledServices: minimalrawServices,
-		SystemdDropin:   systemdUnits,
-		// NOTE: temporary workaround for a bug in initial-setup that
-		// requires a kickstart file in the root directory.
-		Files: []*fsnode.File{initialSetupKickstart()},
-	}
-	it.DefaultImageConfig.KernelOptions = []string{"ro"}
+	it.DefaultImageConfig = imageConfig(d, a.String(), "minimal-raw")
 	it.DefaultSize = 2 * datasizes.GibiByte
 	it.Bootable = true
-	it.BasePartitionTables = minimalrawPartitionTables
+	it.BasePartitionTables = defaultBasePartitionTables
 
 	return it
-}
-
-var (
-	// Shared Services
-	edgeServices = []string{
-		// TODO(runcom): move fdo-client-linuxapp.service to presets?
-		"NetworkManager.service", "firewalld.service", "sshd.service", "fdo-client-linuxapp.service",
-	}
-	minimalrawServices = []string{
-		"NetworkManager.service", "firewalld.service", "sshd.service", "initial-setup.service",
-	}
-	//dropin to disable grub-boot-success.timer if greenboot present
-	systemdUnits = []*osbuild.SystemdUnitStageOptions{
-		{
-			Unit:     "grub-boot-success.timer",
-			Dropin:   "10-disable-if-greenboot.conf",
-			UnitType: osbuild.GlobalUnitType,
-			Config: osbuild.SystemdServiceUnitDropin{
-				Unit: &osbuild.SystemdUnitSection{
-					FileExists: "!/usr/libexec/greenboot/greenboot",
-				},
-			},
-		},
-	}
-)
-
-// initialSetupKickstart returns the File configuration for a kickstart file
-// that's required to enable initial-setup to run on first boot.
-func initialSetupKickstart() *fsnode.File {
-	file, err := fsnode.NewFile("/root/anaconda-ks.cfg", nil, "root", "root", []byte("# Run initial-setup on first boot\n# Created by osbuild\nfirstboot --reconfig\nlang en_US.UTF-8\n"))
-	if err != nil {
-		panic(err)
-	}
-	return file
-}
-
-// Partition tables
-func minimalrawPartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
-	// RHEL >= 9.3 needs to have a bigger /boot, see RHEL-7999
-	bootSize := uint64(600) * datasizes.MebiByte
-	if common.VersionLessThan(t.Arch().Distro().OsVersion(), "9.3") && t.IsRHEL() {
-		bootSize = 500 * datasizes.MebiByte
-	}
-
-	switch t.Arch().Name() {
-	case arch.ARCH_X86_64.String():
-		return disk.PartitionTable{
-			UUID:        "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
-			Type:        disk.PT_GPT,
-			StartOffset: 8 * datasizes.MebiByte,
-			Partitions: []disk.Partition{
-				{
-					Size: 200 * datasizes.MebiByte,
-					Type: disk.EFISystemPartitionGUID,
-					UUID: disk.EFISystemPartitionUUID,
-					Payload: &disk.Filesystem{
-						Type:         "vfat",
-						UUID:         disk.EFIFilesystemUUID,
-						Mountpoint:   "/boot/efi",
-						Label:        "ESP",
-						FSTabOptions: "defaults,uid=0,gid=0,umask=077,shortname=winnt",
-						FSTabFreq:    0,
-						FSTabPassNo:  2,
-					},
-				},
-				{
-					Size: bootSize,
-					Type: disk.XBootLDRPartitionGUID,
-					UUID: disk.DataPartitionUUID,
-					Payload: &disk.Filesystem{
-						Type:         "xfs",
-						Mountpoint:   "/boot",
-						Label:        "boot",
-						FSTabOptions: "defaults",
-						FSTabFreq:    0,
-						FSTabPassNo:  0,
-					},
-				},
-				{
-					Size: 2 * datasizes.GibiByte,
-					Type: disk.FilesystemDataGUID,
-					UUID: disk.RootPartitionUUID,
-					Payload: &disk.Filesystem{
-						Type:         "xfs",
-						Label:        "root",
-						Mountpoint:   "/",
-						FSTabOptions: "defaults",
-						FSTabFreq:    0,
-						FSTabPassNo:  0,
-					},
-				},
-			},
-		}, true
-	case arch.ARCH_AARCH64.String():
-		return disk.PartitionTable{
-			UUID:        "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
-			Type:        disk.PT_GPT,
-			StartOffset: 8 * datasizes.MebiByte,
-			Partitions: []disk.Partition{
-				{
-					Size: 200 * datasizes.MebiByte,
-					Type: disk.EFISystemPartitionGUID,
-					UUID: disk.EFISystemPartitionUUID,
-					Payload: &disk.Filesystem{
-						Type:         "vfat",
-						UUID:         disk.EFIFilesystemUUID,
-						Mountpoint:   "/boot/efi",
-						Label:        "ESP",
-						FSTabOptions: "defaults,uid=0,gid=0,umask=077,shortname=winnt",
-						FSTabFreq:    0,
-						FSTabPassNo:  2,
-					},
-				},
-				{
-					Size: bootSize,
-					Type: disk.XBootLDRPartitionGUID,
-					UUID: disk.DataPartitionUUID,
-					Payload: &disk.Filesystem{
-						Type:         "xfs",
-						Mountpoint:   "/boot",
-						Label:        "boot",
-						FSTabOptions: "defaults",
-						FSTabFreq:    0,
-						FSTabPassNo:  0,
-					},
-				},
-				{
-					Size: 2 * datasizes.GibiByte,
-					Type: disk.FilesystemDataGUID,
-					UUID: disk.RootPartitionUUID,
-					Payload: &disk.Filesystem{
-						Type:         "xfs",
-						Label:        "root",
-						Mountpoint:   "/",
-						FSTabOptions: "defaults",
-						FSTabFreq:    0,
-						FSTabPassNo:  0,
-					},
-				},
-			},
-		}, true
-	default:
-		return disk.PartitionTable{}, false
-	}
-}
-
-func edgeBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
-	switch t.Arch().Name() {
-	case arch.ARCH_X86_64.String():
-		return disk.PartitionTable{
-			UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
-			Type: disk.PT_GPT,
-			Partitions: []disk.Partition{
-				{
-					Size:     1 * datasizes.MebiByte,
-					Bootable: true,
-					Type:     disk.BIOSBootPartitionGUID,
-					UUID:     disk.BIOSBootPartitionUUID,
-				},
-				{
-					Size: 127 * datasizes.MebiByte,
-					Type: disk.EFISystemPartitionGUID,
-					UUID: disk.EFISystemPartitionUUID,
-					Payload: &disk.Filesystem{
-						Type:         "vfat",
-						UUID:         disk.EFIFilesystemUUID,
-						Mountpoint:   "/boot/efi",
-						Label:        "ESP",
-						FSTabOptions: "defaults,uid=0,gid=0,umask=077,shortname=winnt",
-						FSTabFreq:    0,
-						FSTabPassNo:  2,
-					},
-				},
-				{
-					Size: 384 * datasizes.MebiByte,
-					Type: disk.XBootLDRPartitionGUID,
-					UUID: disk.DataPartitionUUID,
-					Payload: &disk.Filesystem{
-						Type:         "xfs",
-						Mountpoint:   "/boot",
-						Label:        "boot",
-						FSTabOptions: "defaults",
-						FSTabFreq:    1,
-						FSTabPassNo:  1,
-					},
-				},
-				{
-					Type: disk.FilesystemDataGUID,
-					UUID: disk.RootPartitionUUID,
-					Payload: &disk.LUKSContainer{
-						Label:      "crypt_root",
-						Cipher:     "cipher_null",
-						Passphrase: "osbuild",
-						PBKDF: disk.Argon2id{
-							Memory:      32,
-							Iterations:  4,
-							Parallelism: 1,
-						},
-						Clevis: &disk.ClevisBind{
-							Pin:              "null",
-							Policy:           "{}",
-							RemovePassphrase: true,
-						},
-						Payload: &disk.LVMVolumeGroup{
-							Name:        "rootvg",
-							Description: "built with lvm2 and osbuild",
-							LogicalVolumes: []disk.LVMLogicalVolume{
-								{
-									Size: 9 * datasizes.GiB, // 9 GiB
-									Name: "rootlv",
-									Payload: &disk.Filesystem{
-										Type:         "xfs",
-										Label:        "root",
-										Mountpoint:   "/",
-										FSTabOptions: "defaults",
-										FSTabFreq:    0,
-										FSTabPassNo:  0,
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		}, true
-	case arch.ARCH_AARCH64.String():
-		return disk.PartitionTable{
-			UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
-			Type: disk.PT_GPT,
-			Partitions: []disk.Partition{
-				{
-					Size: 127 * datasizes.MebiByte,
-					Type: disk.EFISystemPartitionGUID,
-					UUID: disk.EFISystemPartitionUUID,
-					Payload: &disk.Filesystem{
-						Type:         "vfat",
-						UUID:         disk.EFIFilesystemUUID,
-						Mountpoint:   "/boot/efi",
-						Label:        "ESP",
-						FSTabOptions: "defaults,uid=0,gid=0,umask=077,shortname=winnt",
-						FSTabFreq:    0,
-						FSTabPassNo:  2,
-					},
-				},
-				{
-					Size: 384 * datasizes.MebiByte,
-					Type: disk.XBootLDRPartitionGUID,
-					UUID: disk.DataPartitionUUID,
-					Payload: &disk.Filesystem{
-						Type:         "xfs",
-						Mountpoint:   "/boot",
-						Label:        "boot",
-						FSTabOptions: "defaults",
-						FSTabFreq:    1,
-						FSTabPassNo:  1,
-					},
-				},
-				{
-					Type: disk.FilesystemDataGUID,
-					UUID: disk.RootPartitionUUID,
-					Payload: &disk.LUKSContainer{
-						Label:      "crypt_root",
-						Cipher:     "cipher_null",
-						Passphrase: "osbuild",
-						PBKDF: disk.Argon2id{
-							Memory:      32,
-							Iterations:  4,
-							Parallelism: 1,
-						},
-						Clevis: &disk.ClevisBind{
-							Pin:              "null",
-							Policy:           "{}",
-							RemovePassphrase: true,
-						},
-						Payload: &disk.LVMVolumeGroup{
-							Name:        "rootvg",
-							Description: "built with lvm2 and osbuild",
-							LogicalVolumes: []disk.LVMLogicalVolume{
-								{
-									Size: 9 * datasizes.GiB, // 9 GiB
-									Name: "rootlv",
-									Payload: &disk.Filesystem{
-										Type:         "xfs",
-										Label:        "root",
-										Mountpoint:   "/",
-										FSTabOptions: "defaults",
-										FSTabFreq:    0,
-										FSTabPassNo:  0,
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		}, true
-
-	default:
-		return disk.PartitionTable{}, false
-	}
 }

@@ -272,7 +272,7 @@ func (p *OS) getPackageSetChain(Distro) []rpmmd.PackageSet {
 		}
 	}
 
-	if len(p.OSCustomizations.Users) > 0 {
+	if len(p.OSCustomizations.Users)+len(p.OSCustomizations.Groups) > 0 {
 		// org.osbuild.users runs useradd, usermod, passwd, and
 		// mkhomedir_helper in the os tree using chroot. Most image types
 		// should already have the required packages, but some minimal image
@@ -406,6 +406,10 @@ func (p *OS) getBuildPackages(distro Distro) []string {
 		// version of uki-direct. Add it conditioned just on the bootloader
 		// type for now, until we find a better way to decide.
 		packages = append(packages, "libkcapi-hmaccalc")
+	}
+
+	if len(p.OSCustomizations.Users)+len(p.OSCustomizations.Groups) > 0 {
+		packages = append(packages, "shadow-utils")
 	}
 
 	return packages
