@@ -30,8 +30,6 @@ DESIRED_WORKER_RPM="osbuild-composer-worker-$((CURRENT_WORKER_VERSION - 3))"
 # we subtract 3 from the current version.
 DESIRED_TAG_SHA=$(curl -s "https://api.github.com/repos/osbuild/osbuild-composer/git/ref/tags/v$((CURRENT_WORKER_VERSION-3))" | jq -r '.object.sha')
 DESIRED_COMMIT_SHA=$(curl -s "https://api.github.com/repos/osbuild/osbuild-composer/git/tags/$DESIRED_TAG_SHA" | jq -r '.object.sha')
-DESIRED_OSBUILD_COMMIT_SHA=$(curl -s "https://raw.githubusercontent.com/osbuild/osbuild-composer/$DESIRED_COMMIT_SHA/Schutzfile" | jq -r '.["'"${ID}-${VERSION_ID}"'"].dependencies.osbuild.commit')
-
 
 # Get commit hash of latest composer version, only used for verification.
 CURRENT_COMPOSER_VERSION=$(rpm -q --qf '%{version}\n' osbuild-composer)
@@ -77,7 +75,6 @@ EOF
 
 greenprint "Installing osbuild-composer-worker from commit ${DESIRED_COMMIT_SHA}"
 setup_repo osbuild-composer "$DESIRED_COMMIT_SHA" 20
-setup_repo osbuild "$DESIRED_OSBUILD_COMMIT_SHA" 20
 sudo dnf install -y osbuild-composer-worker podman composer-cli
 
 # verify the right worker is installed just to be sure

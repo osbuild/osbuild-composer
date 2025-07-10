@@ -133,7 +133,7 @@ get_compose_metadata "$COMPOSE_ID"
 greenprint "📀 Getting disk image"
 get_compose_image "$COMPOSE_ID"
 
-DISK="$COMPOSE_ID-disk.tar.gz"
+DISK="$COMPOSE_ID-image.wsl"
 if [ ! -f "$DISK" ]; then
     redprint "Disk image missing from results"
     exit 1
