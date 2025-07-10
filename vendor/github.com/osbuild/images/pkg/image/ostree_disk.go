@@ -119,16 +119,9 @@ func (img *OSTreeDiskImage) InstantiateManifest(m *manifest.Manifest,
 		qcow2Pipeline.SetFilename(img.Filename)
 		return qcow2Pipeline.Export(), nil
 	default:
-		switch img.Compression {
-		case "xz":
-			compressedImage := manifest.NewXZ(buildPipeline, baseImage)
-			compressedImage.SetFilename(img.Filename)
-			return compressedImage.Export(), nil
-		case "":
-			baseImage.SetFilename(img.Filename)
-			return baseImage.Export(), nil
-		default:
-			panic(fmt.Sprintf("unsupported compression type %q on %q", img.Compression, img.name))
-		}
+		compressionPipeline := GetCompressionPipeline(img.Compression, buildPipeline, baseImage)
+		compressionPipeline.SetFilename(img.Filename)
+
+		return compressionPipeline.Export(), nil
 	}
 }

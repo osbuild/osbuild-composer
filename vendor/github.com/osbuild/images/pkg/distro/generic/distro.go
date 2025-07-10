@@ -73,7 +73,7 @@ func (d *distribution) getISOLabelFunc(isoLabel string) isoLabelFunc {
 }
 
 func newDistro(nameVer string) (distro.Distro, error) {
-	distroYAML, err := defs.Distro(nameVer)
+	distroYAML, err := defs.NewDistroYAML(nameVer)
 	if err != nil {
 		return nil, err
 	}
@@ -84,15 +84,11 @@ func newDistro(nameVer string) (distro.Distro, error) {
 	rd := &distribution{
 		DistroYAML: *distroYAML,
 
-		defaultImageConfig: common.Must(defs.DistroImageConfig(nameVer)),
+		defaultImageConfig: distroYAML.ImageConfig(),
 		arches:             make(map[string]*architecture),
 	}
 
-	its, err := defs.ImageTypes(rd.Name())
-	if err != nil {
-		return nil, err
-	}
-	for _, imgTypeYAML := range its {
+	for _, imgTypeYAML := range distroYAML.ImageTypes() {
 		// use as marker for images that are not converted to
 		// YAML yet
 		if imgTypeYAML.Filename == "" {

@@ -14,8 +14,8 @@ const (
 )
 
 type Preset struct {
-	Name  string      `json:"name,omitempty"`
-	State PresetState `json:"state,omitempty"`
+	Name  string      `json:"name,omitempty" yaml:"name,omitempty"`
+	State PresetState `json:"state,omitempty" yaml:"state,omitempty"`
 }
 
 func (SystemdPresetStageOptions) isStageOptions() {}

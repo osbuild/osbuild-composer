@@ -12,8 +12,8 @@ func mkWSLImgType(rd *rhel.Distribution) *rhel.ImageType {
 		packageSetLoader,
 		rhel.TarImage,
 		[]string{"build"},
-		[]string{"os", "archive"},
-		[]string{"archive"},
+		[]string{"os", "archive", "xz"},
+		[]string{"xz"},
 	)
 
 	it.Compression = "xz"

@@ -132,7 +132,7 @@ func (p *OSTreeDeployment) getBuildPackages(Distro) []string {
 		"rpm-ostree",
 	}
 
-	if len(p.Users) > 0 {
+	if len(p.Users) > 0 || p.LockRoot {
 		packages = append(packages, "shadow-utils")
 	}
 

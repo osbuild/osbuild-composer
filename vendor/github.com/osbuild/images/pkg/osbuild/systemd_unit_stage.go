@@ -13,10 +13,10 @@ const (
 )
 
 type SystemdUnitStageOptions struct {
-	Unit     string                   `json:"unit"`
-	Dropin   string                   `json:"dropin"`
-	Config   SystemdServiceUnitDropin `json:"config"`
-	UnitType unitType                 `json:"unit-type,omitempty"`
+	Unit     string                   `json:"unit" yaml:"unit"`
+	Dropin   string                   `json:"dropin" yaml:"dropin"`
+	Config   SystemdServiceUnitDropin `json:"config" yaml:"config"`
+	UnitType unitType                 `json:"unit-type,omitempty" yaml:"unit-type,omitempty"`
 }
 
 func (SystemdUnitStageOptions) isStageOptions() {}
@@ -46,7 +46,7 @@ func NewSystemdUnitStage(options *SystemdUnitStageOptions) *Stage {
 // Drop-in configuration for a '.service' unit
 type SystemdServiceUnitDropin struct {
 	Service *SystemdUnitServiceSection `json:"Service,omitempty"`
-	Unit    *SystemdUnitSection        `json:"Unit,omitempty"`
+	Unit    *SystemdUnitSection        `json:"Unit,omitempty" yaml:"Unit,omitempty"`
 }
 
 // 'Service' configuration section of a unit file
@@ -59,5 +59,5 @@ type SystemdUnitServiceSection struct {
 // 'Unit' configuration section of a unit file
 type SystemdUnitSection struct {
 	// Sets condition to to check if file exits
-	FileExists string `json:"ConditionPathExists,omitempty"`
+	FileExists string `json:"ConditionPathExists,omitempty" yaml:"ConditionPathExists,omitempty"`
 }

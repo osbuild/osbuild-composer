@@ -593,21 +593,9 @@ func iotCommitImage(workload workload.Workload,
 	if err != nil {
 		return nil, err
 	}
-
-	// see https://github.com/ostreedev/ostree/issues/2840
-	img.OSCustomizations.Presets = []osbuild.Preset{
-		{
-			Name:  "ignition-firstboot-complete.service",
-			State: osbuild.StateEnable,
-		},
-		{
-			Name:  "coreos-ignition-write-issues.service",
-			State: osbuild.StateEnable,
-		},
-		{
-			Name:  "fdo-client-linuxapp.service",
-			State: osbuild.StateEnable,
-		},
+	imgConfig := t.getDefaultImageConfig()
+	if imgConfig != nil {
+		img.OSCustomizations.Presets = imgConfig.Presets
 	}
 
 	img.Environment = &t.ImageTypeYAML.Environment
@@ -679,20 +667,9 @@ func iotContainerImage(workload workload.Workload,
 		return nil, err
 	}
 
-	// see https://github.com/ostreedev/ostree/issues/2840
-	img.OSCustomizations.Presets = []osbuild.Preset{
-		{
-			Name:  "ignition-firstboot-complete.service",
-			State: osbuild.StateEnable,
-		},
-		{
-			Name:  "coreos-ignition-write-issues.service",
-			State: osbuild.StateEnable,
-		},
-		{
-			Name:  "fdo-client-linuxapp.service",
-			State: osbuild.StateEnable,
-		},
+	imgConfig := t.getDefaultImageConfig()
+	if imgConfig != nil {
+		img.OSCustomizations.Presets = imgConfig.Presets
 	}
 
 	img.ContainerLanguage = img.OSCustomizations.Language
@@ -751,12 +728,6 @@ func iotInstallerImage(workload workload.Workload,
 		img.DisabledAnacondaModules = append(img.DisabledAnacondaModules, instCust.Modules.Disable...)
 	}
 
-	img.AdditionalAnacondaModules = append(img.AdditionalAnacondaModules, []string{
-		anaconda.ModuleTimezone,
-		anaconda.ModuleLocalization,
-		anaconda.ModuleUsers,
-	}...)
-
 	installerConfig, err := t.getDefaultInstallerConfig()
 	if err != nil {
 		return nil, err
@@ -765,6 +736,7 @@ func iotInstallerImage(workload workload.Workload,
 	if installerConfig != nil {
 		img.AdditionalDracutModules = append(img.AdditionalDracutModules, installerConfig.AdditionalDracutModules...)
 		img.AdditionalDrivers = append(img.AdditionalDrivers, installerConfig.AdditionalDrivers...)
+		img.AdditionalAnacondaModules = append(img.AdditionalAnacondaModules, installerConfig.AdditionalAnacondaModules...)
 		if installerConfig.SquashfsRootfs != nil && *installerConfig.SquashfsRootfs {
 			img.RootfsType = manifest.SquashfsRootfs
 		}

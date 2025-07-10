@@ -12,6 +12,18 @@
       - "geolite2-country"
       - "plymouth"
 
+  cloud_init_services: &cloud_init_services
+    - "cloud-init.service"
+    - "cloud-config.service"
+    - "cloud-final.service"
+    - "cloud-init-local.service"
+
+  cloud_init_services_f43plus: &cloud_init_services_f43plus
+    - "cloud-init-network.service"
+    - "cloud-config.service"
+    - "cloud-final.service"
+    - "cloud-init-local.service"
+
   kernel_options:
     default_kernel_optons:
       - "ro"
@@ -31,28 +43,14 @@
       packages:
         - "cloud-init"
         - "qemu-guest-agent"
-      services:
-        - "cloud-init.service"
-        - "cloud-config.service"
-        - "cloud-final.service"
-        - "cloud-init-local.service"
     ec2_env: &ec2_env
       packages:
         - "cloud-init"
-      services:
-        - "cloud-init.service"
-        - "cloud-config.service"
-        - "cloud-final.service"
-        - "cloud-init-local.service"
     azure_env: &azure_env
       packages:
         - "cloud-init"
         - "WALinuxAgent"
       services:
-        - "cloud-init.service"
-        - "cloud-config.service"
-        - "cloud-final.service"
-        - "cloud-init-local.service"
         - "waagent"
 
   platforms:
@@ -164,21 +162,27 @@
 
 
   installer_config: &default_installer_config
+    additional_anaconda_modules: &install_config_additional_anaconda_modules
+      - "org.fedoraproject.Anaconda.Modules.Timezone"
+      - "org.fedoraproject.Anaconda.Modules.Localization"
+      - "org.fedoraproject.Anaconda.Modules.Users"
     additional_dracut_modules:
       - "net-lib"
     squashfs_rootfs: true
     conditions:
-      "f41 uses ifcfg in dract but already a squashfs rootfs":
+      "f41 dracut requires ifcfg, rootfs is squashfs":
         when:
           version_equal: "41"
         override:
+          additional_anaconda_modules: *install_config_additional_anaconda_modules
           additional_dracut_modules:
             - "ifcfg"
           squashfs_rootfs: true
-      "f40 and lower uses ifcfg in dracut and no squashfs rootfs":
+      "f40 and lower uses ifcfg in dracut and squashfs+ext4 rootfs":
         when:
           version_less_than: "41"
         override:
+          additional_anaconda_modules: *install_config_additional_anaconda_modules
           additional_dracut_modules:
             - "ifcfg"
           squashfs_rootfs: false
@@ -202,7 +206,7 @@
         "f41 and below used zezere and parsec":
           when:
             version_less_than: "42"
-          merge:
+          shallow_merge:
             enabled_services:
               - "NetworkManager.service"
               - "firewalld.service"
@@ -534,6 +538,19 @@ image_types:
     exports: ["archive"]
     required_partition_sizes: *default_required_dir_sizes
     image_config: &image_config_vagrant
+      conditions:
+        "f42 and below cloud init service names":
+          when:
+            version_less_than: "43"
+          shallow_merge:
+            enabled_services:
+              *cloud_init_services
+        "f43 and above new cloud init service names":
+          when:
+            version_greater_or_equal: "43"
+          shallow_merge:
+            enabled_services:
+              *cloud_init_services_f43plus
       default_target: "multi-user.target"
       kernel_options: *cloud_kernel_options
       users:
@@ -578,6 +595,19 @@ image_types:
     image_config: &image_config_qcow2
       default_target: "multi-user.target"
       kernel_options: *cloud_kernel_options
+      conditions:
+        "f42 and below cloud init service names":
+          when:
+            version_less_than: "43"
+          shallow_merge:
+            enabled_services:
+              *cloud_init_services
+        "f43 and above new cloud init service names":
+          when:
+            version_greater_or_equal: "43"
+          shallow_merge:
+            enabled_services:
+              *cloud_init_services_f43plus
     partition_table:
       <<: *default_partition_tables
     package_sets:
@@ -670,11 +700,19 @@ image_types:
         image_format: "vmdk"
     image_config:
       locale: "en_US.UTF-8"
-      enabled_services:
-        - "cloud-init.service"
-        - "cloud-config.service"
-        - "cloud-final.service"
-        - "cloud-init-local.service"
+      conditions:
+        "f42 and below cloud init service names":
+          when:
+            version_less_than: "43"
+          shallow_merge:
+            enabled_services:
+              *cloud_init_services
+        "f43 and above new cloud init service names":
+          when:
+            version_greater_or_equal: "43"
+          shallow_merge:
+            enabled_services:
+              *cloud_init_services_f43plus
       kernel_options: *cloud_kernel_options
     partition_table:
       <<: *default_partition_tables
@@ -728,6 +766,14 @@ image_types:
           config:
             add_dracutmodules:
               - "fips"
+      # see https://github.com/ostreedev/ostree/issues/2840
+      presets:
+        - name: "ignition-firstboot-complete.service"
+          state: "enable"
+        - name: "coreos-ignition-write-issues.service"
+          state: "enable"
+        - name: "fdo-client-linuxapp.service"
+          state: "enable"
       machine_id_uninitialized: false
     platforms:
       - *x86_64_installer_platform
@@ -850,7 +896,7 @@ image_types:
               append:
                 include:
                   - "basesystem"
-            "f41+ needs bootupd":
+            "f41 and above need bootupd":
               when:
                 version_greater_or_equal: "41"
               append:
@@ -1188,7 +1234,7 @@ image_types:
         "f42 and below was quite different":
           when:
             version_less_than: "43"
-          merge:
+          shallow_merge:
             install_weak_deps: true
             mount_units: false
             enabled_services:
@@ -1452,7 +1498,7 @@ image_types:
         "f40 and below uses ext4 based iso rootfs":
           when:
             version_less_than: "41"
-          merge:
+          shallow_merge:
             iso_rootfs_type: "squashfs-ext4"
     package_sets:
       installer:
@@ -1487,7 +1533,7 @@ image_types:
         "f40 and below uses ext4 based iso rootfs":
           when:
             version_less_than: "41"
-          merge:
+          shallow_merge:
             iso_rootfs_type: "squashfs-ext4"
     package_sets:
       installer:
@@ -1576,7 +1622,7 @@ image_types:
         "on f40 and below we used ext4 on squashfs":
           when:
             version_less_than: "41"
-          merge:
+          shallow_merge:
             iso_rootfs_type: "squashfs-ext4"
     platforms:
       - *x86_64_installer_platform
@@ -1661,8 +1707,8 @@ image_types:
     mime_type: "application/x-tar"
     image_func: "tar"
     build_pipelines: ["build"]
-    payload_pipelines: ["os", "archive"]
-    exports: ["archive"]
+    payload_pipelines: ["os", "archive", "xz"]
+    exports: ["xz"]
     required_partition_sizes: *default_required_dir_sizes
     platforms:
       - arch: "x86_64"
@@ -1672,7 +1718,7 @@ image_types:
         "on f42 and below we use cloud-init instead of wsl-setup":
           when:
             version_less_than: "42"
-          merge:
+          shallow_merge:
             wsl:
               config:
                 boot_systemd: true
@@ -1684,6 +1730,15 @@ image_types:
                     - "None"
                   network:
                     config: "disabled"
+        # https://github.com/microsoft/WSL/issues/13207
+        "work around WSL not reading /etc/locale.conf":
+          when:
+            version_greater_or_equal: "43"
+          shallow_merge:
+            files:
+              - path: "/etc/default/locale"
+                data: |
+                  LANG=C.UTF-8
     package_sets:
       os:
         - include:
@@ -1695,7 +1750,9 @@ image_types:
             - "glibc-minimal-langpack"
             - "rootfiles"
             - "rpm"
+            - "shadow-utils"  # the oobe needs to be able to call adduser
             - "sudo"
+            - "systemd"  # the oobe needs to be able to check services
             - "tar"
             - "util-linux-core"
             - "vim-minimal"

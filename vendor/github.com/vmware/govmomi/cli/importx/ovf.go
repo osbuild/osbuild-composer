@@ -1,18 +1,6 @@
-/*
-Copyright (c) 2014-2024 VMware, Inc. All Rights Reserved.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// © Broadcom. All Rights Reserved.
+// The term “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
+// SPDX-License-Identifier: Apache-2.0
 
 package importx
 
@@ -20,11 +8,17 @@ import (
 	"context"
 	"errors"
 	"flag"
+	"fmt"
 
 	"github.com/vmware/govmomi/cli"
 	"github.com/vmware/govmomi/cli/flags"
+	"github.com/vmware/govmomi/fault"
+	"github.com/vmware/govmomi/find"
 	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/ovf/importer"
+	"github.com/vmware/govmomi/property"
+	"github.com/vmware/govmomi/vim25/mo"
+	"github.com/vmware/govmomi/vim25/types"
 )
 
 type ovfx struct {
@@ -37,6 +31,9 @@ type ovfx struct {
 	*OptionsFlag
 
 	Importer importer.Importer
+
+	lease bool
+	net   string // No need for *flags.NetworkFlag here
 }
 
 func init() {
@@ -61,6 +58,8 @@ func (cmd *ovfx) Register(ctx context.Context, f *flag.FlagSet) {
 	f.StringVar(&cmd.Importer.Name, "name", "", "Name to use for new entity")
 	f.BoolVar(&cmd.Importer.VerifyManifest, "m", false, "Verify checksum of uploaded files against manifest (.mf)")
 	f.BoolVar(&cmd.Importer.Hidden, "hidden", false, "Enable hidden properties")
+	f.BoolVar(&cmd.lease, "lease", false, "Output NFC Lease only")
+	f.StringVar(&cmd.net, "net", "", "Network")
 }
 
 func (cmd *ovfx) Process(ctx context.Context) error {
@@ -100,7 +99,47 @@ func (cmd *ovfx) Run(ctx context.Context, f *flag.FlagSet) error {
 
 	cmd.Importer.Archive = archive
 
-	moref, err := cmd.Importer.Import(context.TODO(), fpath, cmd.Options)
+	if err = cmd.Import(ctx, fpath); err != nil {
+		if fault.Is(err, &types.OvfNoHostNic{}) {
+			hint := "specify Network with '-net' or '-options'"
+			return fmt.Errorf("%s (%s)", err.Error(), hint)
+		}
+		return err
+	}
+	return nil
+}
+
+func (cmd *ovfx) Import(ctx context.Context, fpath string) error {
+	if cmd.net != "" {
+		if len(cmd.Options.NetworkMapping) == 0 {
+			env, err := importer.Spec(fpath, cmd.Importer.Archive, false, false)
+			if err != nil {
+				return err
+			}
+
+			cmd.Options.NetworkMapping = env.NetworkMapping
+		}
+
+		for i := range cmd.Options.NetworkMapping {
+			cmd.Options.NetworkMapping[i].Network = cmd.net
+		}
+	}
+
+	if cmd.lease {
+		_, lease, err := cmd.Importer.ImportVApp(ctx, fpath, cmd.Options)
+		if err != nil {
+			return err
+		}
+
+		o, err := lease.Properties(ctx)
+		if err != nil {
+			return err
+		}
+
+		return cmd.WriteResult(o)
+	}
+
+	moref, err := cmd.Importer.Import(ctx, fpath, cmd.Options)
 	if err != nil {
 		return err
 	}
@@ -128,7 +167,7 @@ func (cmd *ovfx) Prepare(f *flag.FlagSet) (string, error) {
 		return "", err
 	}
 
-	cmd.Importer.Datastore, err = cmd.DatastoreFlag.Datastore()
+	cmd.Importer.Datastore, err = cmd.datastore()
 	if err != nil {
 		return "", err
 	}
@@ -183,4 +222,60 @@ func (cmd *ovfx) Prepare(f *flag.FlagSet) (string, error) {
 	}
 
 	return f.Arg(0), nil
+}
+
+func (f *ovfx) datastore() (*object.Datastore, error) {
+	ctx := context.Background()
+
+	ds, err := f.Datastore()
+	if err == nil {
+		return ds, nil
+	}
+	if _, ok := err.(*find.NotFoundError); !ok {
+		return nil, err
+	}
+
+	finder, err := f.DatastoreFlag.Finder()
+	if err != nil {
+		return nil, err
+	}
+
+	pod, err := finder.DatastoreCluster(ctx, f.Name)
+	if err != nil {
+		return nil, err
+	}
+
+	var folder mo.Folder
+
+	err = pod.Properties(ctx, pod.Reference(), []string{"childEntity"}, &folder)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(folder.ChildEntity) == 0 {
+		return nil, fmt.Errorf("datastore cluster %q has no datastores", f.Name)
+	}
+
+	pc := property.DefaultCollector(pod.Client())
+
+	var stores []mo.Datastore
+
+	err = pc.Retrieve(ctx, folder.ChildEntity, []string{"info.freeSpace"}, &stores)
+	if err != nil {
+		return nil, err
+	}
+
+	// choose Datastore from DatastoreCluster (StoragePod) with the most free space
+	var ref types.ManagedObjectReference
+	var max int64
+
+	for _, ds := range stores {
+		space := ds.Info.GetDatastoreInfo().FreeSpace
+		if space > max {
+			max = space
+			ref = ds.Reference()
+		}
+	}
+
+	return object.NewDatastore(pod.Client(), ref), nil
 }

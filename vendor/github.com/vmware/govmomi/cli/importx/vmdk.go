@@ -1,18 +1,6 @@
-/*
-Copyright (c) 2014-2017 VMware, Inc. All Rights Reserved.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// © Broadcom. All Rights Reserved.
+// The term “Broadcom” refers to Broadcom Inc. and/or its subsidiaries.
+// SPDX-License-Identifier: Apache-2.0
 
 package importx
 
@@ -35,6 +23,7 @@ type disk struct {
 	*flags.OutputFlag
 
 	force bool
+	info  bool
 }
 
 func init() {
@@ -52,6 +41,7 @@ func (cmd *disk) Register(ctx context.Context, f *flag.FlagSet) {
 	cmd.OutputFlag.Register(ctx, f)
 
 	f.BoolVar(&cmd.force, "force", false, "Overwrite existing disk")
+	f.BoolVar(&cmd.info, "i", false, "Output vmdk info only")
 }
 
 func (cmd *disk) Process(ctx context.Context) error {
@@ -74,6 +64,17 @@ func (cmd *disk) Usage() string {
 	return "PATH_TO_VMDK [REMOTE_DIRECTORY]"
 }
 
+func (cmd *disk) Description() string {
+	return `Import vmdk to datastore.
+
+The local vmdk must be in streamOptimized format.
+
+Examples:
+  govc import.vmdk my.vmdk
+  govc import.vmdk -i my.vmdk # output vmdk info only
+  govc import.vmdk -json -i my.vmdk | jq .capacity | xargs numfmt --to=iec --suffix=B --format="%.1f"`
+}
+
 func (cmd *disk) Run(ctx context.Context, f *flag.FlagSet) error {
 	args := f.Args()
 	if len(args) < 1 {
@@ -81,6 +82,17 @@ func (cmd *disk) Run(ctx context.Context, f *flag.FlagSet) error {
 	}
 
 	src := f.Arg(0)
+
+	if cmd.info {
+		info, err := vmdk.Stat(src)
+		if err != nil {
+			if err == vmdk.ErrInvalidFormat {
+				return formatError(src, err)
+			}
+			return err
+		}
+		return cmd.WriteResult(info)
+	}
 
 	c, err := cmd.DatastoreFlag.Client()
 	if err != nil {
@@ -122,11 +134,15 @@ func (cmd *disk) Run(ctx context.Context, f *flag.FlagSet) error {
 
 	err = vmdk.Import(ctx, c, src, ds, p)
 	if err != nil && err == vmdk.ErrInvalidFormat {
-		return fmt.Errorf(`%s
-The vmdk can be converted using one of:
-  vmware-vdiskmanager -t 5 -r '%s' new.vmdk
-  qemu-img convert -O vmdk -o subformat=streamOptimized '%s' new.vmdk`, err, src, src)
+		return formatError(src, err)
 	}
 
 	return err
+}
+
+func formatError(src string, err error) error {
+	return fmt.Errorf(`%s
+The vmdk can be converted using one of:
+  vmware-vdiskmanager -t 5 -r '%s' new.vmdk
+  qemu-img convert -O vmdk -o subformat=streamOptimized '%s' new.vmdk`, err, src, src)
 }

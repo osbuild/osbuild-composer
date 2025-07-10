@@ -66,8 +66,8 @@ type ImageConfig struct {
 	DracutConf    []*osbuild.DracutConfStageOptions        `yaml:"dracut_conf"`
 	SystemdDropin []*osbuild.SystemdUnitStageOptions       `yaml:"systemd_dropin,omitempty"`
 	SystemdUnit   []*osbuild.SystemdUnitCreateStageOptions `yaml:"systemd_unit,omitempty"`
-	Authselect    *osbuild.AuthselectStageOptions
-	SELinuxConfig *osbuild.SELinuxConfigStageOptions `yaml:"selinux_config,omitempty"`
+	Authselect    *osbuild.AuthselectStageOptions          `yaml:"authselect"`
+	SELinuxConfig *osbuild.SELinuxConfigStageOptions       `yaml:"selinux_config,omitempty"`
 	Tuned         *osbuild.TunedStageOptions
 	Tmpfilesd     []*osbuild.TmpfilesdStageOptions
 	PamLimitsConf []*osbuild.PamLimitsConfStageOptions `yaml:"pam_limits_conf,omitempty"`
@@ -86,6 +86,7 @@ type ImageConfig struct {
 	UdevRules           *osbuild.UdevRulesStageOptions      `yaml:"udev_rules,omitempty"`
 	GCPGuestAgentConfig *osbuild.GcpGuestAgentConfigOptions `yaml:"gcp_guest_agent_config,omitempty"`
 	NetworkManager      *osbuild.NMConfStageOptions         `yaml:"network_manager,omitempty"`
+	Presets             []osbuild.Preset                    `yaml:"presets,omitempty"`
 
 	WSL *wsl.WSL `yaml:"wsl,omitempty"`
 

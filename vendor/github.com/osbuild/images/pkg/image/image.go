@@ -1,6 +1,7 @@
 package image
 
 import (
+	"fmt"
 	"math/rand"
 
 	"github.com/osbuild/images/pkg/artifact"
@@ -25,5 +26,21 @@ func (img Base) Name() string {
 func NewBase(name string) Base {
 	return Base{
 		name: name,
+	}
+}
+
+func GetCompressionPipeline(compression string, buildPipeline manifest.Build, inputPipeline manifest.FilePipeline) manifest.FilePipeline {
+	switch compression {
+	case "xz":
+		return manifest.NewXZ(buildPipeline, inputPipeline)
+	case "zstd":
+		return manifest.NewZstd(buildPipeline, inputPipeline)
+	case "gzip":
+		return manifest.NewGzip(buildPipeline, inputPipeline)
+	case "":
+		return inputPipeline
+	default:
+		// panic on unknown strings
+		panic(fmt.Sprintf("unsupported compression type %q", compression))
 	}
 }

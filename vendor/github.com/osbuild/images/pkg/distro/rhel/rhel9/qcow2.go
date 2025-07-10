@@ -1,14 +1,12 @@
 package rhel9
 
 import (
-	"github.com/osbuild/images/internal/common"
-	"github.com/osbuild/images/pkg/customizations/subscription"
+	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/datasizes"
-	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distro/rhel"
 )
 
-func mkQcow2ImgType(d *rhel.Distribution) *rhel.ImageType {
+func mkQcow2ImgType(d *rhel.Distribution, a arch.Arch) *rhel.ImageType {
 	it := rhel.NewImageType(
 		"qcow2",
 		"disk.qcow2",
@@ -20,8 +18,7 @@ func mkQcow2ImgType(d *rhel.Distribution) *rhel.ImageType {
 		[]string{"qcow2"},
 	)
 
-	it.DefaultImageConfig = qcowImageConfig(d)
-	it.DefaultImageConfig.KernelOptions = []string{"console=tty0", "console=ttyS0,115200n8", "no_timer_check", "net.ifnames=0"}
+	it.DefaultImageConfig = imageConfig(d, a.String(), "qcow2")
 	it.DefaultSize = 10 * datasizes.GibiByte
 	it.Bootable = true
 	it.BasePartitionTables = defaultBasePartitionTables
@@ -29,7 +26,7 @@ func mkQcow2ImgType(d *rhel.Distribution) *rhel.ImageType {
 	return it
 }
 
-func mkOCIImgType(d *rhel.Distribution) *rhel.ImageType {
+func mkOCIImgType(d *rhel.Distribution, a arch.Arch) *rhel.ImageType {
 	it := rhel.NewImageType(
 		"oci",
 		"disk.qcow2",
@@ -41,8 +38,7 @@ func mkOCIImgType(d *rhel.Distribution) *rhel.ImageType {
 		[]string{"qcow2"},
 	)
 
-	it.DefaultImageConfig = qcowImageConfig(d)
-	it.DefaultImageConfig.KernelOptions = []string{"console=tty0", "console=ttyS0,115200n8", "no_timer_check", "net.ifnames=0"}
+	it.DefaultImageConfig = imageConfig(d, a.String(), "oci")
 	it.DefaultSize = 10 * datasizes.GibiByte
 	it.Bootable = true
 	it.BasePartitionTables = defaultBasePartitionTables
@@ -50,7 +46,7 @@ func mkOCIImgType(d *rhel.Distribution) *rhel.ImageType {
 	return it
 }
 
-func mkOpenstackImgType() *rhel.ImageType {
+func mkOpenstackImgType(d *rhel.Distribution, a arch.Arch) *rhel.ImageType {
 	it := rhel.NewImageType(
 		"openstack",
 		"disk.qcow2",
@@ -62,34 +58,10 @@ func mkOpenstackImgType() *rhel.ImageType {
 		[]string{"qcow2"},
 	)
 
-	it.DefaultImageConfig = &distro.ImageConfig{
-		Locale: common.ToPtr("en_US.UTF-8"),
-	}
-	it.DefaultImageConfig.KernelOptions = []string{"ro", "net.ifnames=0"}
+	it.DefaultImageConfig = imageConfig(d, a.String(), "openstack")
 	it.DefaultSize = 4 * datasizes.GibiByte
 	it.Bootable = true
 	it.BasePartitionTables = defaultBasePartitionTables
 
 	return it
-}
-
-func qcowImageConfig(d *rhel.Distribution) *distro.ImageConfig {
-	ic := &distro.ImageConfig{
-		DefaultTarget: common.ToPtr("multi-user.target"),
-	}
-	if d.IsRHEL() {
-		ic.RHSMConfig = map[subscription.RHSMStatus]*subscription.RHSMConfig{
-			subscription.RHSMConfigNoSubscription: {
-				DnfPlugins: subscription.SubManDNFPluginsConfig{
-					ProductID: subscription.DNFPluginConfig{
-						Enabled: common.ToPtr(false),
-					},
-					SubscriptionManager: subscription.DNFPluginConfig{
-						Enabled: common.ToPtr(false),
-					},
-				},
-			},
-		}
-	}
-	return ic
 }
