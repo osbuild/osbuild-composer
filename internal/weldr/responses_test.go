@@ -13,7 +13,6 @@ const freezeTestResponse = `
       "blueprint": {
         "name": "test",
         "description": "Test",
-        "distro": "",
         "version": "0.0.1",
         "packages": [
           {
@@ -39,7 +38,6 @@ const freezeTestResponse = `
       "blueprint": {
         "name": "test2",
         "description": "Test",
-        "distro": "",
         "version": "0.0.0",
         "packages": [
           {
@@ -73,7 +71,6 @@ const depsolveTestResponse = `
       "blueprint": {
         "name": "test",
         "description": "Test",
-        "distro": "",
         "version": "0.0.1",
         "packages": [
           {
@@ -135,7 +132,6 @@ const depsolvePackageNotExistError = `
       "blueprint": {
         "name": "test",
         "description": "Test",
-        "distro": "",
         "version": "0.0.1",
         "packages": [
           {
@@ -171,7 +167,6 @@ const depsolveBadError = `
       "blueprint": {
         "name": "test",
         "description": "Test",
-        "distro": "",
         "version": "0.0.1",
         "packages": [
           {
