@@ -341,8 +341,8 @@ case $ID in
             10)
                 # There are no new RHEL-8 releases, so just use the distro alias
                 test_cross_build_distro "rhel-8"
-                # Test building RHEL 9.5, which is the latest RHEL-9 minor version that is GA at this time
-                test_cross_build_distro "rhel-9.5"
+                # Test building RHEL 9.6, which is the latest RHEL-9 minor version that is GA at this time
+                test_cross_build_distro "rhel-9.6"
                 ;;
             *)
                 greenprint "INFO not testing actual cross-distro image build on $ID-$VERSION_ID"
