@@ -40,8 +40,7 @@ type imageType struct {
 	platform platform.Platform
 
 	// XXX: make definable via YAML
-	workload workload.Workload
-	// XXX: make member function ImageTypeYAML
+	workload               workload.Workload
 	defaultImageConfig     *distro.ImageConfig
 	defaultInstallerConfig *distro.InstallerConfig
 
@@ -127,7 +126,7 @@ func (t *imageType) BootMode() platform.BootMode {
 }
 
 func (t *imageType) BasePartitionTable() (*disk.PartitionTable, error) {
-	return defs.PartitionTable(t)
+	return t.ImageTypeYAML.PartitionTable(t.arch.distro.Name(), t.arch.name)
 }
 
 func (t *imageType) getPartitionTable(customizations *blueprint.Customizations, options distro.ImageOptions, rng *rand.Rand) (*disk.PartitionTable, error) {
@@ -222,7 +221,7 @@ func (t *imageType) Manifest(bp *blueprint.Blueprint,
 
 	// don't add any static packages if Minimal was selected
 	if !bp.Minimal {
-		pkgSets, err := defs.PackageSets(t)
+		pkgSets, err := t.ImageTypeYAML.PackageSets(t.arch.distro.Name(), t.arch.name)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -304,7 +303,13 @@ func (t *imageType) Manifest(bp *blueprint.Blueprint,
 		return nil, nil, err
 	}
 	mf := manifest.New()
-	mf.Distro = manifest.DISTRO_FEDORA
+	// TODO: remove the need for this entirely, the manifest has a
+	// bunch of code that checks the distro currently, ideally all
+	// would just be encoded in the YAML
+	mf.Distro = t.arch.distro.DistroYAML.DistroLike
+	if mf.Distro == manifest.DISTRO_NULL {
+		return nil, nil, fmt.Errorf("no distro_like set in yaml for %q", t.arch.distro.Name())
+	}
 	if options.UseBootstrapContainer {
 		mf.DistroBootstrapRef = bootstrapContainerFor(t)
 	}
@@ -490,7 +495,7 @@ func (t *imageType) checkOptions(bp *blueprint.Blueprint, options distro.ImageOp
 	}
 	if instCust != nil {
 		// only supported by the Anaconda installer
-		if slices.Index([]string{"iot-installer"}, t.Name()) == -1 {
+		if !slices.Contains([]string{"image-installer", "edge-installer", "live-installer", "iot-installer"}, t.Name()) {
 			return warnings, fmt.Errorf("installer customizations are not supported for %q", t.Name())
 		}
 

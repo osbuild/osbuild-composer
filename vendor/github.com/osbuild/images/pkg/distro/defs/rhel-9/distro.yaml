@@ -101,14 +101,75 @@
           include:
             - "system-reinstall-bootc"
 
-  sap_pkgset: &sap_pkgset
+  sapapps_image_config: &sapapps_image_config
+    selinux_config:
+      state: "permissive"
+    # RHBZ#1959979
+    tmpfilesd:
+      - filename: "sap.conf"
+        config:
+          - type: "x"
+            path: "/tmp/.sap*"
+          - type: "x"
+            path: "/tmp/.hdb*lock"
+          - type: "x"
+            path: "/tmp/.trex*lock"
+    # RHBZ#1959963
+    pam_limits_conf:
+      - filename: "99-sap.conf"
+        config:
+          - domain: "@sapsys"
+            type: "hard"
+            item: "nofile"
+            value: 1048576
+          - domain: "@sapsys"
+            type: "soft"
+            item: "nofile"
+            value: 1048576
+          - domain: "@dba"
+            type: "hard"
+            item: "nofile"
+            value: 1048576
+          - domain: "@dba"
+            type: "soft"
+            item: "nofile"
+            value: 1048576
+          - domain: "@sapsys"
+            type: "hard"
+            item: "nproc"
+            value: "unlimited"
+          - domain: "@sapsys"
+            type: "soft"
+            item: "nproc"
+            value: "unlimited"
+          - domain: "@dba"
+            type: "hard"
+            item: "nproc"
+            value: "unlimited"
+          - domain: "@dba"
+            type: "soft"
+            item: "nproc"
+            value: "unlimited"
+    # RHBZ#1959962
+    sysctld:
+      - filename: "sap.conf"
+        config:
+          - key: "kernel.pid_max"
+            value: "4194304"
+          - key: "vm.max_map_count"
+            value: "2147483647"
+    dnf_config:
+      set_release_ver_var: true
+
+  sap_image_config: &sap_image_config
+    <<: *sapapps_image_config
+    tuned:
+      profiles: ["sap-hana"]
+
+  sap_base_pkgset: &sap_base_pkgset
     include:
       # RHBZ#2076763
       - "@Server"
-      # SAP System Roles
-      # https:#access.redhat.com/sites/default/files/attachments/rhel_system_roles_for_sap_1.pdf
-      - "ansible-core"
-      - "rhel-system-roles-sap"
       # RHBZ#1959813
       - "bind-utils"
       - "nfs-utils"
@@ -131,8 +192,6 @@
       - "numactl"
       - "PackageKit-gtk3-module"
       - "xorg-x11-xauth"
-      # RHBZ#1960617
-      - "tuned-profiles-sap-hana"
       # RHBZ#1961168
       - "libnsl"
     exclude:
@@ -149,6 +208,15 @@
       - "iwl6000g2b-firmware"
       - "iwl6050-firmware"
       - "iwl7260-firmware"
+
+  sap_extras_pkgset: &sap_extras_pkgset
+    include:
+      # SAP System Roles
+      # https://access.redhat.com/sites/default/files/attachments/rhel_system_roles_for_sap_1.pdf
+      - "ansible-core"
+      - "rhel-system-roles-sap"
+      # RHBZ#1960617
+      - "tuned-profiles-sap-hana"
 
   installer_pkgset: &installer_pkgset
     include:
@@ -401,6 +469,8 @@
       - &efi_system_partition_guid "C12A7328-F81F-11D2-BA4B-00A0C93EC93B"
       - &filesystem_data_guid "0FC63DAF-8483-4772-8E79-3D69D8477DE4"
       - &xboot_ldr_partition_guid "BC13C2FF-59E6-4262-A352-B275FD6F7172"
+      - &lvm_partition_guid "E6D6D379-F507-44C2-A23C-238F2A3DF928"
+      - &root_partition_x86_64_guid "4F68BCE3-E8CD-4DB1-96E7-FBCAF984B709"
     # static UUIDs for partitions and filesystems
     # NOTE(akoutsou): These are unnecessary and have stuck around since the
     # beginning where (I believe) the goal was to have predictable,
@@ -528,6 +598,347 @@
             aarch64:
               <<: *default_partition_table_aarch64
 
+    edge_base_partition_tables: &edge_base_partition_tables
+      x86_64:
+        uuid: "D209C89E-EA5E-4FBD-B161-B461CCE297E0"
+        type: "gpt"
+        partitions:
+          - *default_partition_table_part_bios
+          - &edge_base_partition_table_part_efi
+            size: "127 MiB"
+            type: *efi_system_partition_guid
+            uuid: *efi_system_partition_uuid
+            payload_type: "filesystem"
+            payload:
+              type: vfat
+              uuid: *efi_filesystem_uuid
+              mountpoint: "/boot/efi"
+              label: "ESP"
+              fstab_options: "defaults,uid=0,gid=0,umask=077,shortname=winnt"
+              fstab_freq: 0
+              fstab_passno: 2
+          - &edge_base_partition_table_part_boot
+            size: "384 MiB"
+            type: *xboot_ldr_partition_guid
+            uuid: *data_partition_uuid
+            payload_type: "filesystem"
+            payload:
+              type: "xfs"
+              mountpoint: "/boot"
+              label: "boot"
+              fstab_options: "defaults"
+              fstab_freq: 1
+              fstab_passno: 1
+          - &edge_base_partition_table_part_root
+            size: "2 GiB"
+            type: *filesystem_data_guid
+            uuid: *root_partition_uuid
+            payload_type: "luks"
+            payload:
+              label: "crypt_root"
+              cipher: "cipher_null"
+              passphrase: "osbuild"
+              pbkdf:
+                memory: 32
+                iterations: 4
+                parallelism: 1
+              clevis:
+                pin: "null"
+                policy: "{}"
+                remove_passphrase: true
+              payload_type: "lvm"
+              payload:
+                type: "lvm"
+                name: "rootvg"
+                description: "built with lvm2 and osbuild"
+                logical_volumes:
+                  - size: "9 GiB"
+                    name: "rootlv"
+                    payload_type: "filesystem"
+                    payload:
+                      type: "xfs"
+                      label: "root"
+                      mountpoint: "/"
+                      fstab_options: "defaults"
+                      fstab_freq: 0
+                      fstab_passno: 0
+      aarch64: &edge_base_partition_table_aarch64
+        uuid: "D209C89E-EA5E-4FBD-B161-B461CCE297E0"
+        type: "gpt"
+        partitions:
+          - *edge_base_partition_table_part_efi
+          - *edge_base_partition_table_part_boot
+          - *edge_base_partition_table_part_root
+
+  azure_common_grub2_config: &azure_common_grub2_config
+    disable_recovery: true
+    disable_submenu: true
+    distributor: "$(sed 's, release .*$,,g' /etc/system-release)"
+    serial: "serial --speed=115200 --unit=0 --word=8 --parity=no --stop=1"
+    timeout: 10
+    timeout_style: "countdown"
+
+  azure_image_config_base: &azure_image_config_base
+    timezone: "Etc/UTC"
+    locale: "en_US.UTF-8"
+    keyboard:
+      keymap: "us"
+      "x11-keymap":
+        layouts: ["us"]
+    update_default_kernel: true
+    default_kernel: "kernel-core"
+    sysconfig:
+      networking: true
+      no_zero_conf: true
+    enabled_services:
+      - "firewalld"
+      - "nm-cloud-setup.service"
+      - "nm-cloud-setup.timer"
+      - "sshd"
+      - "waagent"
+    sshd_config:
+      config:
+        ClientAliveInterval: 180
+    modprobe:
+      - filename: "blacklist-amdgpu.conf"
+        commands:
+          - command: blacklist
+            modulename: "amdgpu"
+      - filename: "blacklist-intel-cstate.conf"
+        commands:
+          - command: blacklist
+            modulename: "intel_cstate"
+      - filename: "blacklist-floppy.conf"
+        commands:
+          - command: blacklist
+            modulename: "floppy"
+      - filename: "blacklist-nouveau.conf"
+        commands:
+          - command: blacklist
+            modulename: "nouveau"
+          - command: blacklist
+            modulename: "lbm-nouveau"
+      - filename: "blacklist-skylake-edac.conf"
+        commands:
+          - command: blacklist
+            modulename: "skx_edac"
+    pwquality:
+      config:
+        minlen: 6
+        minclass: 3
+        dcredit: 0
+        ucredit: 0
+        lcredit: 0
+        ocredit: 0
+    waagent_config:
+      config:
+        "ResourceDisk.EnableSwap": false
+        "ResourceDisk.Format": false
+    udev_rules:
+      filename: "/etc/udev/rules.d/68-azure-sriov-nm-unmanaged.rules"
+      rules:
+        - comment:
+            - "Accelerated Networking on Azure exposes a new SRIOV interface to the VM."
+            - "This interface is transparently bonded to the synthetic interface,"
+            - "so NetworkManager should just ignore any SRIOV interfaces."
+        - rule:
+            - K: "SUBSYSTEM"
+              O: "=="
+              V: "net"
+            - K: "DRIVERS"
+              O: "=="
+              V: "hv_pci"
+            - K: "ACTION"
+              O: "=="
+              V: "add"
+            - K: "ENV"
+              A: "NM_UNMANAGED"
+              O: "="
+              V: "1"
+    systemd_dropin:
+      - unit: "nm-cloud-setup.service"
+        dropin: "10-rh-enable-for-azure.conf"
+        config:
+          service:
+            environment:
+              - key: "NM_CLOUD_SETUP_AZURE"
+                value: "yes"
+    default_target: "multi-user.target"
+    conditions: &conditions_azure_image_config_base
+      "rhel needs the rhel release rpm gpg key":
+        when:
+          distro_name: "rhel"
+        shallow_merge:
+          gpgkey_files:
+            - "/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release"
+      "x86_64 specific kernel commandline for rhel-9.6+":
+        when:
+          arch: "x86_64"
+          version_greater_or_equal: "9.6"
+        shallow_merge:
+          kernel_options:
+            - "ro"
+            - "loglevel=3"
+            - "console=tty1"
+            - "console=ttyS0"
+            - "earlyprintk=ttyS0"
+            - "rootdelay=300"
+            - "nvme_core.io_timeout=240"
+      "aarch64 specific kernel options for rhel 9.6+":
+        when:
+          arch: "aarch64"
+          version_greater_or_equal: "9.6"
+        shallow_merge:
+          kernel_options:
+            - "ro"
+            - "loglevel=3"
+            - "console=ttyAMA0"
+            - "nvme_core.io_timeout=240"
+      "x86_64 specific kernel options rhel-9.5 or below":
+        when:
+          arch: "x86_64"
+          version_less_than: "9.6"
+        shallow_merge:
+          kernel_options:
+            - "ro"
+            - "loglevel=3"
+            - "console=tty1"
+            - "console=ttyS0"
+            - "earlyprintk=ttyS0"
+            - "rootdelay=300"
+      "aarch64 specific kernel options rhel-9.5 or below":
+        when:
+          arch: "aarch64"
+          version_less_than: "9.6"
+        shallow_merge:
+          kernel_options:
+            - "ro"
+            - "loglevel=3"
+            - "console=ttyAMA0"
+      "rhel-9.6+ adds the dataloss warning":
+        when:
+          distro_name: "rhel"
+          version_greater_or_equal: "9.6"
+        shallow_merge:
+          # from CreateAzureDatalossWarningScriptAndUnit
+          files:
+            - path: &dataloss_script "/usr/local/sbin/temp-disk-dataloss-warning"
+              mode: 0755
+              data: |
+                #!/bin/sh
+                # /usr/local/sbin/temp-disk-dataloss-warning
+                # Write dataloss warning file on mounted Azure resource disk
+
+                AZURE_RESOURCE_DISK_PART1="/dev/disk/cloud/azure_resource-part1"
+
+                MOUNTPATH=$(grep "$AZURE_RESOURCE_DISK_PART1" /etc/fstab | tr '\t' ' ' | cut -d' ' -f2)
+                if [ -z "$MOUNTPATH" ]; then
+                    echo "There is no mountpoint of $AZURE_RESOURCE_DISK_PART1 in /etc/fstab"
+                    exit 0
+                fi
+
+                if [ "$MOUNTPATH" = "none" ]; then
+                    echo "Mountpoint of $AZURE_RESOURCE_DISK_PART1 is not a path"
+                    exit 1
+                fi
+
+                if ! mountpoint -q "$MOUNTPATH"; then
+                    echo "$AZURE_RESOURCE_DISK_PART1 is not mounted at $MOUNTPATH"
+                    exit 1
+                fi
+
+                echo "Creating a dataloss warning file at ${MOUNTPATH}/DATALOSS_WARNING_README.txt"
+
+                cat <<'EOF' > "${MOUNTPATH}/DATALOSS_WARNING_README.txt"
+                WARNING: THIS IS A TEMPORARY DISK.
+
+                Any data stored on this drive is SUBJECT TO LOSS and THERE IS NO WAY TO RECOVER IT.
+
+                Please do not use this disk for storing any personal or application data.
+
+                EOF
+          systemd_unit:
+            - filename: &dataloss_systemd_unit_filename "temp-disk-dataloss-warning.service"
+              "unit-type": "system"
+              "unit-path": "etc"
+              config:
+                "Unit":
+                  Description: "Azure temporary resource disk dataloss warning file creation"
+                  After: ["multi-user.target", "cloud-final.service"]
+                "Service":
+                  Type: "oneshot"
+                  ExecStart: [*dataloss_script]
+                  StandardOutput: "journal+console"
+                "Install":
+                  WantedBy: ["default.target"]
+          # XXX: de-duplicate with the above
+          enabled_services:
+            - "firewalld"
+            - "nm-cloud-setup.service"
+            - "nm-cloud-setup.timer"
+            - "sshd"
+            - "waagent"
+            - *dataloss_systemd_unit_filename
+          modprobe:
+            - filename: "blacklist-amdgpu.conf"
+              commands:
+                - command: blacklist
+                  modulename: "amdgpu"
+            - filename: "blacklist-intel-cstate.conf"
+              commands:
+                - command: blacklist
+                  modulename: "intel_cstate"
+            - filename: "blacklist-floppy.conf"
+              commands:
+                - command: blacklist
+                  modulename: "floppy"
+            - filename: "blacklist-nouveau.conf"
+              commands:
+                - command: blacklist
+                  modulename: "nouveau"
+                - command: blacklist
+                  modulename: "lbm-nouveau"
+            - filename: "blacklist-skylake-edac.conf"
+              commands:
+                - command: blacklist
+                  modulename: "skx_edac"
+            - filename: "blacklist-intel_uncore.conf"
+              commands:
+                - command: blacklist
+                  modulename: "intel_uncore"
+            - filename: "blacklist-acpi_cpufreq.conf"
+              commands:
+                - command: blacklist
+                  modulename: "acpi_cpufreq"
+          network_manager:
+            path: "/etc/NetworkManager/conf.d/99-azure-unmanaged-devices.conf"
+            settings:
+              keyfile:
+                "unmanaged-devices":
+                  - "driver:mlx4_core"
+                  - "driver:mlx5_core"
+          waagent_config:
+            config:
+              "ResourceDisk.Format": false
+              "ResourceDisk.EnableSwap": false
+              "Provisioning.UseCloudInit": true
+              "Provisioning.Enabled": false
+      "x86_64 grub2 config terminal=serial":
+        when:
+          arch: "x86_64"
+        shallow_merge:
+          grub2_config:
+            <<: *azure_common_grub2_config
+            terminal: ["serial"]
+      "aarch64 grub2 config terminal=console":
+        when:
+          arch: "aarch64"
+        shallow_merge:
+          grub2_config:
+            <<: *azure_common_grub2_config
+            terminal: ["console"]
+
+
 image_config:
   default:
     default_kernel: "kernel"
@@ -543,7 +954,7 @@ image_config:
     "oscap needs a differnt path on centos":
       when:
         distro_name: "centos"
-      merge:
+      shallow_merge:
         default_oscap_datastream: "/usr/share/xml/scap/ssg/content/ssg-cs9-ds.xml"
 
 image_types:
@@ -602,6 +1013,25 @@ image_types:
                   - "subscription-manager-cockpit"
 
   qcow2: &qcow2
+    image_config:
+      default_target: "multi-user.target"
+      kernel_options:
+        - "console=tty0"
+        - "console=ttyS0,115200n8"
+        - "no_timer_check"
+        - "net.ifnames=0"
+      conditions:
+        "tweak the rhsm config on rhel":
+          when:
+            distro_name: "rhel"
+          shallow_merge:
+            rhsm_config:
+              "no-subscription":
+                dnf_plugin:
+                  product_id:
+                    enabled: false
+                  subscription_manager:
+                    enabled: false
     partition_table:
       <<: *default_partition_tables
     package_sets:
@@ -673,9 +1103,42 @@ image_types:
                   - "insights-client"
                   - "subscription-manager-cockpit"
 
-  oci: *qcow2
+  oci:
+    <<: *qcow2
 
   vhd: &vhd
+    # based on https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/9/html/deploying_rhel_9_on_microsoft_azure/assembly_deploying-a-rhel-image-as-a-virtual-machine-on-microsoft-azure_cloud-content-azure#making-configuration-changes_configure-the-image-azure
+    image_config: &image_config_vhd
+      <<: *azure_image_config_base
+      cloud_init:
+        - filename: "10-azure-kvp.cfg"
+          config:
+            reporting:
+              logging:
+                type: "log"
+              telemetry:
+                type: "hyperv"
+        - filename: "91-azure_datasource.cfg"
+          config:
+            datasource:
+              azure:
+                apply_network_config: false
+            datasource_list:
+              - "Azure"
+      conditions:
+        <<: *conditions_azure_image_config_base
+        "chrony is added in rhel-9.6+":
+          when:
+            version_greater_or_equal: "9.6"
+          shallow_merge:
+            time_synchronization:
+              refclocks:
+                - driver:
+                    name: "PHC"
+                    path: "/dev/ptp_hyperv"
+                  poll: 3
+                  dpoll: -2
+                  offset: 0.0
     partition_table:
       <<: *default_partition_tables
     package_sets:
@@ -762,13 +1225,175 @@ image_types:
                 exclude:
                   - "microcode_ctl"
 
-  "azure-rhui": *vhd
+  "azure-rhui": &azure_rhui
+    <<: *vhd
+    partition_table: &partition_table_azure_internal
+      x86_64: &azure_rhui_partition_table_x86_64
+        uuid: "D209C89E-EA5E-4FBD-B161-B461CCE297E0"
+        type: "gpt"
+        size: "64 GiB"
+        partitions:
+          - &azure_rhui_part_boot_efi
+            size: "500 MiB"
+            type: *efi_system_partition_guid
+            UUID: *efi_system_partition_uuid
+            payload_type: "filesystem"
+            payload:
+              type: "vfat"
+              uuid: *efi_filesystem_uuid
+              mountpoint: "/boot/efi"
+              fstab_options: "defaults,uid=0,gid=0,umask=077,shortname=winnt"
+              fstab_freq: 0
+              fstab_passno: 2
+          # NB: we currently don't support /boot on LVM
+          - &azure_rhui_part_boot
+            size: "1 GiB"
+            type: *filesystem_data_guid
+            uuid: *data_partition_uuid
+            payload_type: "filesystem"
+            payload:
+              type: "xfs"
+              mountpoint: "/boot"
+              fstab_options: "defaults"
+              fstab_freq: 0
+              fstab_passno: 0
+          - &azure_rhui_part_bios
+            size: "2 MiB"
+            bootable: true
+            type: *bios_boot_partition_guid
+            uuid: *bios_boot_partition_uuid
+          - &azure_rhui_part_lvm
+            type: *lvm_partition_guid
+            uuid: *root_partition_uuid
+            payload_type: "lvm"
+            payload:
+              name: "rootvg"
+              description: "built with lvm2 and osbuild"
+              logical_volumes:
+                - size: "1 GiB"
+                  name: "homelv"
+                  payload_type: "filesystem"
+                  payload:
+                    type: "xfs"
+                    label: "home"
+                    mountpoint: "/home"
+                    fstab_options: "defaults"
+                - size: "2 GiB"
+                  name: "rootlv"
+                  payload_type: "filesystem"
+                  payload:
+                    type: "xfs"
+                    label: "root"
+                    mountpoint: "/"
+                    fstab_options: "defaults"
+                - size: "2 GiB"
+                  name: "tmplv"
+                  payload_type: "filesystem"
+                  payload:
+                    type: "xfs"
+                    label: "tmp"
+                    mountpoint: "/tmp"
+                    fstab_options: "defaults"
+                - size: "10 GiB"
+                  name: "usrlv"
+                  payload_type: "filesystem"
+                  payload:
+                    type: "xfs"
+                    label: "usr"
+                    mountpoint: "/usr"
+                    fstab_options: "defaults"
+                - size: "10 GiB"
+                  name: "varlv"
+                  payload_type: "filesystem"
+                  payload:
+                    type: "xfs"
+                    label: "var"
+                    mountpoint: "/var"
+                    fstab_options: "defaults"
+      aarch64: &azure_rhui_partition_table_aarch64
+        uuid: "D209C89E-EA5E-4FBD-B161-B461CCE297E0"
+        type: "gpt"
+        size: "64 GiB"
+        partitions:
+          - *azure_rhui_part_boot_efi
+          # NB: we currently don't support /boot on LVM
+          - *azure_rhui_part_boot
+          - *azure_rhui_part_lvm
+    partition_tables_override: &partition_tables_override_azure_internal
+      conditions:
+        "RHEL <= 9.2 had only 500 MiB /boot":
+          when:
+            version_less_than: "9.3"
+          override:
+            x86_64:
+              <<: *azure_rhui_partition_table_x86_64
+              partitions:
+                - *azure_rhui_part_boot_efi
+                - &azure_rhui_part_boot_500
+                  size: "500 MiB"
+                  type: *filesystem_data_guid
+                  uuid: *data_partition_uuid
+                  payload_type: "filesystem"
+                  payload:
+                    type: "xfs"
+                    mountpoint: "/boot"
+                    fstab_options: "defaults"
+                    fstab_freq: 0
+                    fstab_passno: 0
+                - *azure_rhui_part_bios
+                - *azure_rhui_part_lvm
+            aarch64:
+              <<: *azure_rhui_partition_table_aarch64
+              partitions:
+                - *azure_rhui_part_boot_efi
+                - *azure_rhui_part_boot_500
+                - *azure_rhui_part_lvm
+        "RHEL 9.3 had 600 MiB /boot, see RHEL-7999":
+          when:
+            version_equal: "9.3"
+          override:
+            x86_64:
+              <<: *azure_rhui_partition_table_x86_64
+              partitions:
+                - *azure_rhui_part_boot_efi
+                - &azure_rhui_part_boot_600
+                  size: "600 MiB"
+                  type: *filesystem_data_guid
+                  uuid: *data_partition_uuid
+                  payload_type: "filesystem"
+                  payload:
+                    type: "xfs"
+                    mountpoint: "/boot"
+                    fstab_options: "defaults"
+                    fstab_freq: 0
+                    fstab_passno: 0
+                - *azure_rhui_part_bios
+                - *azure_rhui_part_lvm
+            aarch64:
+              <<: *azure_rhui_partition_table_aarch64
+              partitions:
+                - *azure_rhui_part_boot_efi
+                - *azure_rhui_part_boot_600
+                - *azure_rhui_part_lvm
 
   "azure-sap-rhui":
+    <<: *azure_rhui
+    image_config:
+      <<: [*image_config_vhd, *sap_image_config]
     package_sets:
       os:
         - *vhd_pkgset
-        - *sap_pkgset
+        - *sap_base_pkgset
+        - *sap_extras_pkgset
+
+  azure-sapapps-rhui:
+    <<: *azure_rhui
+    image_config:
+      <<: [*image_config_vhd, *sapapps_image_config]
+    package_sets:
+      os:
+        - *vhd_pkgset
+        - *sap_base_pkgset
 
   tar:
     package_sets:
@@ -780,6 +1405,9 @@ image_types:
             - "rng-tools"
 
   vmdk: &vmdk
+    image_config:
+      locale: "en_US.UTF-8"
+      kernel_options: ["ro", "net.ifnames=0"]
     partition_table:
       <<: *default_partition_tables
     package_sets:
@@ -799,6 +1427,117 @@ image_types:
   ova: *vmdk
 
   ec2: &ec2
+    image_config: &ec2_image_config
+      locale: "en_US.UTF-8"
+      timezone: "UTC"
+      time_synchronization:
+        servers:
+          - hostname: "169.254.169.123"
+            prefer: true
+            iburst: true
+            minpoll: 4
+            maxpoll: 4
+        # empty string will remove any occurrences of the option
+        # from the configuration
+        leapsectz: ""
+      keyboard:
+        keymap: "us"
+        "x11-keymap":
+          layouts: ["us"]
+      enabled_services:
+        - "sshd"
+        - "NetworkManager"
+        - "nm-cloud-setup.service"
+        - "nm-cloud-setup.timer"
+        - "cloud-init"
+        - "cloud-init-local"
+        - "cloud-config"
+        - "cloud-final"
+        - "reboot.target"
+        - "tuned"
+      default_target: "multi-user.target"
+      update_default_kernel: true
+      default_kernel: "kernel"
+      sysconfig:
+        networking: true
+        no_zero_conf: true
+        create_default_network_scripts: true
+      systemd_logind:
+        - filename: "00-getty-fixes.conf"
+          config:
+            login:
+              nautovts: 0
+      cloud_init:
+        - filename: "00-rhel-default-user.cfg"
+          config:
+            system_info:
+              default_user:
+                name: "ec2-user"
+      modprobe:
+        - filename: "blacklist-nouveau.conf"
+          commands:
+            - command: blacklist
+              modulename: "nouveau"
+        - filename: "blacklist-amdgpu.conf"
+          commands:
+            - command: blacklist
+              modulename: "amdgpu"
+      # COMPOSER-1807
+      dracut_conf:
+        - &sgdisk_dracut_conf
+          filename: "sgdisk.conf"
+          config:
+            install: ["sgdisk"]
+      systemd_dropin:
+        # RHBZ#1822863
+        - unit: "nm-cloud-setup.service"
+          dropin: "10-rh-enable-for-ec2.conf"
+          config:
+            service:
+              environment:
+                - key: "NM_CLOUD_SETUP_EC2"
+                  value: "yes"
+      authselect:
+        profile: "sssd"
+      sshd_config:
+        config:
+          PasswordAuthentication: false
+      conditions: &ec2_image_config_cond
+        "we need dracut conf with nvme/xen on x86":
+          when:
+            arch: "x86_64"
+          shallow_merge:
+            dracut_conf:
+              - *sgdisk_dracut_conf
+              - filename: "ec2.conf"
+                config:
+                  add_drivers:
+                    - "nvme"
+                    - "xen-blkfront"
+        "x86_64 specific kopts":
+          when:
+            arch: "x86_64"
+          shallow_merge:
+            # TODO: move these to the EC2 environment
+            kernel_options:
+              # common
+              - "console=tty0"
+              - "console=ttyS0,115200n8"
+              - "net.ifnames=0"
+              - "nvme_core.io_timeout=4294967295"
+        "aarch64 specific kopts":
+          when:
+            arch: "aarch64"
+          shallow_merge:
+            # TODO: move these to the EC2 environment
+            kernel_options:
+              # XXX: duplicated with above x86_64 kernel defaults
+              - "console=ttyS0,115200n8"
+              - "console=tty0"
+              - "net.ifnames=0"
+              - "nvme_core.io_timeout=4294967295"
+              # aarch64 specific
+              - "iommu.strict=0"
     partition_table:
       <<: *default_partition_tables
     partition_tables_override:
@@ -809,7 +1548,8 @@ image_types:
         - exclude:
             - "alsa-lib"
 
-  ami: *ec2
+  ami:
+    <<: *ec2
 
   "ec2-ha":
     <<: *ec2
@@ -825,10 +1565,31 @@ image_types:
 
   "ec2-sap":
     <<: *ec2
+    image_config:
+      <<: [*ec2_image_config, *sap_image_config]
+      conditions:
+        <<: *ec2_image_config_cond
+        # this needs to override the original ami key because
+        # we want everything from the ami config *except* the
+        # kernel comandline
+        "x86_64 specific kopts":
+          when:
+            arch: "x86_64"
+          shallow_merge:
+            kernel_options:
+              # XXX: duplicated with ami.image_config.kernel_options :(
+              - "console=ttyS0,115200n8"
+              - "console=tty0"
+              - "net.ifnames=0"
+              - "nvme_core.io_timeout=4294967295"
+              # amiSapKernelOptions()
+              - "processor.max_cstate=1"
+              - "intel_idle.max_cstate=1"
     package_sets:
       os:
         - *ec2_base_pkgset
-        - *sap_pkgset
+        - *sap_base_pkgset
+        - *sap_extras_pkgset
         - include:
             - "libcanberra-gtk2"
           exclude:
@@ -836,6 +1597,20 @@ image_types:
             - "firewalld"
 
   wsl: &wsl
+    image_config:
+      cloud_init:
+        - filename: "99_wsl.cfg"
+          config:
+            datasource_list:
+              - "WSL"
+              - "None"
+            network:
+              config: "disabled"
+      locale: "en_US.UTF-8"
+      no_selinux: true
+      wsl:
+        config:
+          boot_systemd: true
     package_sets:
       os:
         - include:
@@ -894,6 +1669,8 @@ image_types:
             - "rpm-plugin-systemd-inhibit"
 
   "image-installer":
+    image_config:
+      locale: "C.UTF-8"
     package_sets:
       <<: *bare_metal_pkgset
       installer:
@@ -901,6 +1678,72 @@ image_types:
         - *anaconda_pkgset
 
   gce:
+    image_config:
+      timezone: "UTC"
+      time_synchronization:
+        servers:
+          - hostname: "metadata.google.internal"
+      firewall:
+        default_zone: "trusted"
+      enabled_services:
+        - "sshd"
+        - "rngd"
+        - "dnf-automatic.timer"
+      disabled_services:
+        - "sshd-keygen@"
+        - "reboot.target"
+      default_target: "multi-user.target"
+      locale: "en_US.UTF-8"
+      keyboard:
+        keymap: "us"
+      dnf_config:
+        options:
+          - config:
+              main:
+                ipresolve: "4"
+      dnf_automatic_config:
+        config:
+          commands:
+            apply_updates: true
+            upgrade_type: "security"
+      yum_repos:
+        - filename: "google-cloud.repo"
+          repos:
+            - id: "google-compute-engine"
+              name: "Google Compute Engine"
+              # TODO: use el10 repo once it's available
+              baseurl:
+                - "https://packages.cloud.google.com/yum/repos/google-compute-engine-el9-x86_64-stable"
+              enabled: true
+              gpgcheck: true
+              repo_gpgcheck: true
+              gpgkey:
+                - "https://packages.cloud.google.com/yum/doc/yum-key.gpg"
+                - "https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg"
+      sshd_config:
+        config:
+          PasswordAuthentication: false
+          ClientAliveInterval: 420
+          PermitRootLogin: false
+      update_default_kernel: true
+      default_kernel: "kernel-core"
+      # XXX: ensure the "old" behavior is preserved (that is
+      # likely a bug) where for GCE the sysconfig network
+      # options are not set because the merge of imageConfig
+      # is shallow and the previous setup was changing the
+      # kernel without also changing the network options.
+      sysconfig: {}
+      modprobe:
+        - filename: "blacklist-floppy.conf"
+          commands:
+            - command: blacklist
+              modulename: "floppy"
+      gcp_guest_agent_config:
+        config_scope: "distro"
+        config:
+          "InstanceSetup":
+            set_boto_config: false
+      kernel_options: ["net.ifnames=0", "biosdevname=0", "scsi_mod.use_blk_mq=Y", "console=ttyS0,38400n8d"]
     partition_table:
       <<: *default_partition_tables
     package_sets:
@@ -980,6 +1823,96 @@ image_types:
             <<: *conditions_pkgsets_insights_client_on_rhel
 
   "minimal-raw":
+    partition_table:
+      x86_64: &partition_table_minimal_raw_x86_64
+        uuid: "D209C89E-EA5E-4FBD-B161-B461CCE297E0"
+        type: "gpt"
+        start_offset: 8_388_608  # 8 * datasizes.MebiByte,
+        partitions:
+          - &minimal_raw_partition_table_part_efi
+            size: "200 MiB"
+            type: *efi_system_partition_guid
+            uuid: *efi_system_partition_uuid
+            payload_type: "filesystem"
+            payload:
+              type: vfat
+              uuid: *efi_filesystem_uuid
+              mountpoint: "/boot/efi"
+              label: "ESP"
+              fstab_options: "defaults,uid=0,gid=0,umask=077,shortname=winnt"
+              fstab_freq: 0
+              fstab_passno: 2
+          - &minimal_raw_partition_table_part_boot
+            size: "600 MiB"
+            type: *xboot_ldr_partition_guid
+            uuid: *data_partition_uuid
+            payload_type: "filesystem"
+            payload: &default_partition_table_part_boot_payload
+              type: "xfs"
+              mountpoint: "/boot"
+              label: "boot"
+              fstab_options: "defaults"
+              fstab_freq: 0
+              fstab_passno: 0
+          - &minimal_raw_partition_table_part_root
+            size: "2 GiB"
+            type: *filesystem_data_guid
+            uuid: *root_partition_uuid
+            payload_type: "filesystem"
+            payload: &default_partition_table_part_root_payload
+              type: "xfs"
+              label: "root"
+              mountpoint: "/"
+              fstab_options: "defaults"
+              fstab_freq: 0
+              fstab_passno: 0
+      aarch64: &partition_table_minimal_raw_aarch64
+        <<: *partition_table_minimal_raw_x86_64
+    partition_tables_override:
+      conditions:
+        "RHEL >= 9.3 needs to have a bigger /boot, see RHEL-7999":
+          when:
+            version_less_than: "9.3"
+          override:
+            x86_64:
+              <<: *partition_table_minimal_raw_x86_64
+              partitions:
+                - *minimal_raw_partition_table_part_efi
+                - &minimal_raw_partition_table_part_boot_500
+                  <<: *minimal_raw_partition_table_part_boot
+                  size: "500 MiB"
+                - *minimal_raw_partition_table_part_root
+            aarch64:
+              <<: *partition_table_minimal_raw_aarch64
+              partitions:
+                - *minimal_raw_partition_table_part_efi
+                - *minimal_raw_partition_table_part_boot_500
+                - *minimal_raw_partition_table_part_root
+    image_config:
+      enabled_services:
+        - "NetworkManager.service"
+        - "firewalld.service"
+        - "sshd.service"
+        - "initial-setup.service"
+      systemd_dropin:
+        - unit: "grub-boot-success.timer"
+          dropin: "10-disable-if-greenboot.conf"
+          unit-type: "global"
+          config:
+            Unit:
+              ConditionPathExists: "!/usr/libexec/greenboot/greenboot"
+      files:
+        # NOTE: temporary workaround for a bug in initial-setup that
+        # requires a kickstart file in the root directory.
+        - path: "/root/anaconda-ks.cfg"
+          user: "root"
+          group: "root"
+          data: |
+            # Run initial-setup on first boot
+            # Created by osbuild
+            firstboot --reconfig
+            lang en_US.UTF-8
+      kernel_options: ["ro"]
     package_sets:
       os:
         - include:
@@ -991,6 +1924,9 @@ image_types:
             - "iwl3160-firmware"
 
   openstack:
+    image_config:
+      locale: "en_US.UTF-8"
+      kernel_options: ["ro", "net.ifnames=0"]
     partition_table:
       <<: *default_partition_tables
     package_sets:
@@ -1007,7 +1943,39 @@ image_types:
             - "dracut-config-rescue"
             - "rng-tools"
 
-  "edge-commit":
+  "edge-commit": &edge_commit
+    partition_table:
+      *edge_base_partition_tables
+    image_config: &edge_commit_image_config
+      # dropin to disable grub-boot-success.timer if greenboot present
+      systemd_dropin:
+        - unit: "grub-boot-success.timer"
+          dropin: "10-disable-if-greenboot.conf"
+          unit-type: "global"
+          config:
+            # XXX: sadly the osbuild options are upper case for "Unit" vs lower above :(
+            Unit:
+              ConditionPathExists: "!/usr/libexec/greenboot/greenboot"
+      enabled_services: &enabled_services_edge
+        # XXX: shared with 9.2
+        - "NetworkManager.service"
+        - "firewalld.service"
+        - "sshd.service"
+        - "fdo-client-linuxapp.service"
+        # only on rhel-9.2+ and centos
+        - "ignition-firstboot-complete.service"
+        - "coreos-ignition-write-issues.service"
+      conditions: &conditions_edge_commit_image_config
+        "rhel-9.1 and below do not have ignition":
+          when:
+            version_less_than: "9.2"
+          shallow_merge:
+            enabled_services:
+              # XXX: share with the above
+              - "NetworkManager.service"
+              - "firewalld.service"
+              - "sshd.service"
+              - "fdo-client-linuxapp.service"
     package_sets:
       os:
         - &edge_commit_pkgset
@@ -1138,9 +2106,32 @@ image_types:
                   - "dnsmasq"
 
   "edge-container":
-    package_sets:
-      os:
-        - *edge_commit_pkgset
+    <<: *edge_commit
+
+  "edge-raw-image":
+    partition_table:
+      *edge_base_partition_tables
+    image_config:
+      <<: *edge_commit_image_config
+      keyboard:
+        keymap: "us"
+      locale: "C.UTF-8"
+      lock_root_user: true
+      kernel_options: &kernel_options_raw_image
+        - "modprobe.blacklist=vc4"
+        - "rw"
+        - "coreos.no_persist_ip"
+      ostree_conf_sysroot_readonly: true
+      ignition_platform: "metal"
+      conditions:
+        <<: *conditions_edge_commit_image_config
+        "rhel-9.1 and below is not using ignition":
+          when:
+            version_less_than: "9.2"
+          shallow_merge:
+            ostree_conf_sysroot_readonly: false
+            ignition_platform: ""
+            kernel_options: ["modprobe.blacklist=vc4"]
 
   # XXX: not a real pkgset but the "containerPkgsKey"
   "edge-container-pipeline-pkgset":
@@ -1150,12 +2141,39 @@ image_types:
             - "nginx"
 
   "edge-installer":
+    image_config:
+      enabled_services: *enabled_services_edge
+      locale: "en_US.UTF-8"
     package_sets:
       installer:
         - *installer_pkgset
         - *anaconda_pkgset
 
   "edge-simplified-installer":
+    partition_table:
+      *edge_base_partition_tables
+    image_config:
+      enabled_services: *enabled_services_edge
+      keyboard:
+        keymap: "us"
+      locale: "C.UTF-8"
+      lock_root_user: true
+      conditions:
+        "rhel-9.2+ uses ignition":
+          when:
+            version_greater_or_equal: "9.2"
+          shallow_merge:
+            ostree_conf_sysroot_readonly: true
+            ignition_platform: "metal"
+            kernel_options:
+              - "modprobe.blacklist=vc4"
+              - "rw"
+              - "coreos.no_persist_ip"
+        "rhel < 9.2 has less kernel options":
+          when:
+            version_less_than: "9.2"
+          shallow_merge:
+            kernel_options: ["modprobe.blacklist=vc4"]
     package_sets:
       installer:
         - *installer_pkgset
@@ -1210,7 +2228,102 @@ image_types:
               append:
                 <<: *edge_commit_aarch64_pkgset
 
+  "edge-ami": &edge_ami
+    partition_table:
+      *edge_base_partition_tables
+    image_config: &image_config_edge_ami
+      keyboard:
+        keymap: "us"
+      locale: "C.UTF-8"
+      lock_root_user: true
+      kernel_options:
+        # ami-kernel-options
+        - "console=tty0"
+        - "console=ttyS0,115200n8"
+        - "net.ifnames=0"
+        - "nvme_core.io_timeout=4294967295"
+        # edge-ami
+        - "modprobe.blacklist=vc4"
+        - "rw"
+        - "coreos.no_persist_ip"
+      conditions: &image_config_conditions_edge_ami
+        "rhel-9.2+ uses ignitions":
+          when:
+            version_greater_or_equal: "9.2"
+          shallow_merge:
+            ostree_conf_sysroot_readonly: true
+            ignition_platform: "metal"
+        "rhel < 9.2 uses less kernel options":
+          when:
+            version_less_than: "9.2"
+          shallow_merge:
+            kernel_options:
+              # ami-kernel-options
+              - "console=tty0"
+              - "console=ttyS0,115200n8"
+              - "net.ifnames=0"
+              - "nvme_core.io_timeout=4294967295"
+              # edge-ami
+              - "modprobe.blacklist=vc4"
+
+  "edge-vsphere":
+    <<: *edge_ami
+    image_config:
+      <<: *image_config_edge_ami
+      kernel_options:
+        - "modprobe.blacklist=vc4"
+        - "rw"
+        - "coreos.no_persist_ip"
+      conditions:
+        <<: *image_config_conditions_edge_ami
+        # override the rhel < 9.2 from above with different options
+        "rhel < 9.2 uses less kernel options":
+          when:
+            version_less_than: "9.2"
+          shallow_merge:
+            kernel_options:
+              - "modprobe.blacklist=vc4"
+
   "azure-cvm":
+    partition_table:
+      x86_64:
+        uuid: "D209C89E-EA5E-4FBD-B161-B461CCE297E0"
+        type: "gpt"
+        partitions:
+          - size: 264_241_152  # 52 MiB
+            type: *efi_system_partition_guid
+            uuid: *efi_system_partition_uuid
+            payload_type: "filesystem"
+            payload:
+              type: vfat
+              uuid: *efi_filesystem_uuid
+              mountpoint: "/boot/efi"
+              label: "EFI-SYSTEM"
+              fstab_options: "defaults,uid=0,gid=0,umask=077,shortname=winnt"
+              fstab_freq: 0
+              fstab_passno: 2
+          - size: 5_368_709_120  # 5 * datasizes.GibiByte,
+            type: *root_partition_x86_64_guid
+            payload_type: "filesystem"
+            payload:
+              type: "ext4"
+              label: "root"
+              mountpoint: "/"
+              fstab_options: "defaults"
+              fstab_freq: 0
+              fstab_passno: 0
+    image_config:
+      <<: *azure_image_config_base
+      default_kernel_name: "kernel-uki-virt"
+      no_bls: true
+      cloud_init:
+        - filename: "91-azure_datasource.cfg"
+          config:
+            datasource:
+              azure:
+                apply_network_config: false
+            datasource_list:
+              - "Azure"
     package_sets:
       os:
         - include:

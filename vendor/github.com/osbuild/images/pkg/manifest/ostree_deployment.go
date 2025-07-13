@@ -132,7 +132,7 @@ func (p *OSTreeDeployment) getBuildPackages(Distro) []string {
 		"rpm-ostree",
 	}
 
-	if len(p.Users) > 0 {
+	if len(p.Users) > 0 || p.LockRoot {
 		packages = append(packages, "shadow-utils")
 	}
 
@@ -447,7 +447,7 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 	}
 
 	if p.FIPS {
-		p.addInlineDataAndStages(&pipeline, osbuild.GenFIPSFiles(), ref)
+		p.addStagesForAllFilesAndInlineData(&pipeline, osbuild.GenFIPSFiles(), ref)
 		for _, stage := range osbuild.GenFIPSStages() {
 			stage.MountOSTree(p.osName, ref, 0)
 			pipeline.AddStage(stage)
@@ -483,7 +483,7 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 	}
 
 	if len(p.Files) > 0 {
-		p.addInlineDataAndStages(&pipeline, p.Files, ref)
+		p.addStagesForAllFilesAndInlineData(&pipeline, p.Files, ref)
 	}
 
 	if len(p.EnabledServices) != 0 || len(p.DisabledServices) != 0 {
@@ -511,10 +511,10 @@ func (p *OSTreeDeployment) getInline() []string {
 	return p.inlineData
 }
 
-// addInlineDataAndStages generates stages for creating files and adds them to
+// addStagesForAllFilesAndInlineData generates stages for creating files and adds them to
 // the pipeline. It also adds their data to the inlineData for the pipeline so
 // that the appropriate sources are created.
-func (p *OSTreeDeployment) addInlineDataAndStages(pipeline *osbuild.Pipeline, files []*fsnode.File, ref string) {
+func (p *OSTreeDeployment) addStagesForAllFilesAndInlineData(pipeline *osbuild.Pipeline, files []*fsnode.File, ref string) {
 	for _, stage := range osbuild.GenFileNodesStages(files) {
 		stage.MountOSTree(p.osName, ref, 0)
 		pipeline.AddStage(stage)

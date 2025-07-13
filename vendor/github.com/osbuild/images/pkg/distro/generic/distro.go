@@ -49,20 +49,22 @@ type distribution struct {
 }
 
 func (d *distribution) getISOLabelFunc(isoLabel string) isoLabelFunc {
+	id := common.Must(distro.ParseID(d.Name()))
+
 	return func(t *imageType) string {
 		type inputs struct {
-			Product   string
-			OsVersion string
-			Arch      string
-			ISOLabel  string
+			Distro   *distro.ID
+			Product  string
+			Arch     string
+			ISOLabel string
 		}
 		templ := common.Must(template.New("iso-label").Parse(d.DistroYAML.ISOLabelTmpl))
 		var buf bytes.Buffer
 		err := templ.Execute(&buf, inputs{
-			Product:   t.Arch().Distro().Product(),
-			OsVersion: t.Arch().Distro().OsVersion(),
-			Arch:      t.Arch().Name(),
-			ISOLabel:  isoLabel,
+			Distro:   id,
+			Product:  d.Product(),
+			Arch:     t.Arch().Name(),
+			ISOLabel: isoLabel,
 		})
 		if err != nil {
 			// XXX: cleanup isoLabelFunc to allow error
@@ -73,7 +75,7 @@ func (d *distribution) getISOLabelFunc(isoLabel string) isoLabelFunc {
 }
 
 func newDistro(nameVer string) (distro.Distro, error) {
-	distroYAML, err := defs.Distro(nameVer)
+	distroYAML, err := defs.NewDistroYAML(nameVer)
 	if err != nil {
 		return nil, err
 	}
@@ -84,15 +86,11 @@ func newDistro(nameVer string) (distro.Distro, error) {
 	rd := &distribution{
 		DistroYAML: *distroYAML,
 
-		defaultImageConfig: common.Must(defs.DistroImageConfig(nameVer)),
+		defaultImageConfig: distroYAML.ImageConfig(),
 		arches:             make(map[string]*architecture),
 	}
 
-	its, err := defs.ImageTypes(rd.Name())
-	if err != nil {
-		return nil, err
-	}
-	for _, imgTypeYAML := range its {
+	for _, imgTypeYAML := range distroYAML.ImageTypes() {
 		// use as marker for images that are not converted to
 		// YAML yet
 		if imgTypeYAML.Filename == "" {

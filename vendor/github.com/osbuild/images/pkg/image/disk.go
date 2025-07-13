@@ -35,10 +35,6 @@ type DiskImage struct {
 	OSProduct string
 	OSVersion string
 	OSNick    string
-
-	// InstallWeakDeps enables installation of weak dependencies for packages
-	// that are statically defined for the payload pipeline of the image.
-	InstallWeakDeps *bool
 }
 
 func NewDiskImage() *DiskImage {
@@ -65,10 +61,6 @@ func (img *DiskImage) InstantiateManifest(m *manifest.Manifest,
 	osPipeline.OSVersion = img.OSVersion
 	osPipeline.OSNick = img.OSNick
 
-	if img.InstallWeakDeps != nil {
-		osPipeline.OSCustomizations.InstallWeakDeps = *img.InstallWeakDeps
-	}
-
 	rawImagePipeline := manifest.NewRawImage(buildPipeline, osPipeline)
 	rawImagePipeline.PartTool = img.PartTool
 
@@ -88,7 +80,6 @@ func (img *DiskImage) InstantiateManifest(m *manifest.Manifest,
 
 		tarPipeline := manifest.NewTar(buildPipeline, vagrantPipeline, "archive")
 		tarPipeline.Format = osbuild.TarArchiveFormatUstar
-		tarPipeline.SetFilename(img.Filename)
 
 		imagePipeline = tarPipeline
 	case platform.FORMAT_VHD:
@@ -116,27 +107,13 @@ func (img *DiskImage) InstantiateManifest(m *manifest.Manifest,
 		// TODO: define internal raw filename on image type
 		rawImagePipeline.SetFilename("disk.raw")
 		tarPipeline := newGCETarPipelineForImg(buildPipeline, rawImagePipeline, "archive")
-		tarPipeline.SetFilename(img.Filename) // filename extension will determine compression
 		imagePipeline = tarPipeline
 	default:
 		panic("invalid image format for image kind")
 	}
 
-	switch img.Compression {
-	case "xz":
-		xzPipeline := manifest.NewXZ(buildPipeline, imagePipeline)
-		xzPipeline.SetFilename(img.Filename)
-		return xzPipeline.Export(), nil
-	case "zstd":
-		zstdPipeline := manifest.NewZstd(buildPipeline, imagePipeline)
-		zstdPipeline.SetFilename(img.Filename)
-		return zstdPipeline.Export(), nil
-	case "":
-		// don't compress, but make sure the pipeline's filename is set
-		imagePipeline.SetFilename(img.Filename)
-		return imagePipeline.Export(), nil
-	default:
-		// panic on unknown strings
-		panic(fmt.Sprintf("unsupported compression type %q", img.Compression))
-	}
+	compressionPipeline := GetCompressionPipeline(img.Compression, buildPipeline, imagePipeline)
+	compressionPipeline.SetFilename(img.Filename)
+
+	return compressionPipeline.Export(), nil
 }

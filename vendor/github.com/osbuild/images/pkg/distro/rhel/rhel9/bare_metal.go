@@ -1,7 +1,7 @@
 package rhel9
 
 import (
-	"github.com/osbuild/images/internal/common"
+	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distro/rhel"
 )
@@ -19,7 +19,7 @@ func mkTarImgType() *rhel.ImageType {
 	)
 }
 
-func mkImageInstallerImgType() *rhel.ImageType {
+func mkImageInstallerImgType(d *rhel.Distribution, a arch.Arch) *rhel.ImageType {
 	it := rhel.NewImageType(
 		"image-installer",
 		"installer.iso",
@@ -46,10 +46,7 @@ func mkImageInstallerImgType() *rhel.ImageType {
 			"ipmi_msghandler",
 		},
 	}
-
-	it.DefaultImageConfig = &distro.ImageConfig{
-		Locale: common.ToPtr("C.UTF-8"),
-	}
+	it.DefaultImageConfig = imageConfig(d, a.String(), "image-installer")
 
 	return it
 }

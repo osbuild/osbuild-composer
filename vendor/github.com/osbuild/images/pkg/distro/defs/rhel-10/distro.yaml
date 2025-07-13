@@ -32,11 +32,100 @@
             - "grub2-ppc64le"
             - "grub2-ppc64le-modules"
 
-  sap_image_config: &sap_image_config
+  disk_sizes:
+    default_required_partition_sizes: &default_required_dir_sizes
+      "/": 1_073_741_824     # 1 * datasizes.GiB
+      "/usr": 2_147_483_648  # 2 * datasizes.GiB
+
+  platforms:
+    x86_64_uefi_platform: &x86_64_uefi_platform
+      arch: "x86_64"
+      bootloader: "grub2"
+      uefi_vendor: "{{.DistroVendor}}"
+      qcow2_compat: "1.1"
+      packages: &x86_64_uefi_platform_packages
+        uefi:
+          - "dracut-config-generic"
+          - "efibootmgr"
+          - "grub2-efi-x64"
+          - "shim-x64"
+    x86_64_bios_platform: &x86_64_bios_platform
+      <<: *x86_64_uefi_platform
+      bios_platform: "i386-pc"
+      uefi_vendor: "{{.DistroVendor}}"
+      packages: &x86_64_bios_platform_packages
+        <<: *x86_64_uefi_platform_packages
+        bios:
+          - "dracut-config-generic"
+          - "grub2-pc"
+      build_packages:
+        bios:
+          - "grub2-pc"
+    x86_64_installer_platform: &x86_64_installer_platform
+      <<: *x86_64_bios_platform
+      image_format: "raw"
+      packages:
+        <<: *x86_64_bios_platform_packages
+        firmware:
+          - "microcode_ctl"  # ??
+          - "iwl1000-firmware"
+          - "iwl100-firmware"
+          - "iwl105-firmware"
+          - "iwl135-firmware"
+          - "iwl2000-firmware"
+          - "iwl2030-firmware"
+          - "iwl3160-firmware"
+          - "iwl5000-firmware"
+          - "iwl5150-firmware"
+          - "iwl6050-firmware"
+    aarch64_platform: &aarch64_platform
+      arch: "aarch64"
+      bootloader: "grub2"
+      uefi_vendor: "{{.DistroVendor}}"
+      image_format: "qcow2"
+      qcow2_compat: "1.1"
+      packages: &aarch64_uefi_platform_packages
+        uefi:
+          - "dracut-config-generic"
+          - "efibootmgr"
+          - "grub2-efi-aa64"
+          - "grub2-tools"
+          - "shim-aa64"
+    ppc64le_bios_platform: &ppc64le_bios_platform
+      arch: "ppc64le"
+      bootloader: "grub2"
+      bios_platform: "powerpc-ieee1275"
+      image_format: "qcow2"
+      qcow2_compat: "1.1"
+      packages:
+        bios:
+          - "dracut-config-generic"
+          - "powerpc-utils"
+          - "grub2-ppc64le"
+          - "grub2-ppc64le-modules"
+      build_packages:
+        bios:
+          - "grub2-ppc64le"
+          - "grub2-ppc64le-modules"
+    s390x_zipl_platform: &s390x_zipl_platform
+      arch: "s390x"
+      # XXX: merge zipl_support/bootloader
+      bootloader: "zipl"
+      zipl_support: true
+      image_format: "qcow2"
+      qcow2_compat: "1.1"
+      packages:
+        zipl:
+          - "dracut-config-generic"
+          - "s390utils-base"
+          - "s390utils-core"
+      build_packages:
+        zipl:
+          - "s390utils-base"
+
+  sapapps_image_config: &sapapps_image_config
     selinux_config:
       state: "permissive"
-    tuned:
-      profiles: ["sap-hana"]
     # RHBZ#1959979
     tmpfilesd:
       - filename: "sap.conf"
@@ -94,14 +183,15 @@
     dnf_config:
       set_release_ver_var: true
 
-  sap_pkgset: &sap_pkgset
+  sap_image_config: &sap_image_config
+    <<: *sapapps_image_config
+    tuned:
+      profiles: ["sap-hana"]
+
+  sap_base_pkgset: &sap_base_pkgset
     include:
       # RHBZ#2076763
       - "@Server"
-      # SAP System Roles
-      # https:#access.redhat.com/sites/default/files/attachments/rhel_system_roles_for_sap_1.pdf
-      - "ansible-core"
-      - "rhel-system-roles-sap"
       # RHBZ#1959813
       - "bind-utils"
       - "nfs-utils"
@@ -124,8 +214,6 @@
       - "numactl"
       - "PackageKit-gtk3-module"
       - "xorg-x11-xauth"
-      # RHBZ#1960617
-      - "tuned-profiles-sap-hana"
       # RHBZ#1961168
       - "libnsl"
     exclude:
@@ -142,6 +230,15 @@
       - "iwl6000g2b-firmware"
       - "iwl6050-firmware"
       - "iwl7260-firmware"
+
+  sap_extras_pkgset: &sap_extras_pkgset
+    include:
+      # SAP System Roles
+      # https://access.redhat.com/sites/default/files/attachments/rhel_system_roles_for_sap_1.pdf
+      - "ansible-core"
+      - "rhel-system-roles-sap"
+      # RHBZ#1960617
+      - "tuned-profiles-sap-hana"
 
   installer_pkgset: &installer_pkgset
     include:
@@ -309,6 +406,14 @@
           - <<: *default_partition_table_part_root_ppc64le
             bootable: true
 
+  azure_common_grub2_config: &azure_common_grub2_config
+    disable_recovery: true
+    disable_submenu: true
+    distributor: "$(sed 's, release .*$,,g' /etc/system-release)"
+    serial: "serial --speed=115200 --unit=0 --word=8 --parity=no --stop=1"
+    timeout: 10
+    timeout_style: "countdown"
+
   azure_image_config: &azure_image_config
     # from CreateAzureDatalossWarningScriptAndUnit
     files:
@@ -474,13 +579,13 @@
       "rhel needs the rhel release rpm gpg key":
         when:
           distro_name: "rhel"
-        merge:
+        shallow_merge:
           gpgkey_files:
             - "/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release"
       "x86_64 specific kernel commandline":
         when:
           arch: "x86_64"
-        merge:
+        shallow_merge:
           kernel_options:
             # common
             - "ro"
@@ -494,7 +599,7 @@
       "aarch64 specific kernel commandline":
         when:
           arch: "aarch64"
-        merge:
+        shallow_merge:
           kernel_options:
             # common
             - "ro"
@@ -502,6 +607,20 @@
             - "nvme_core.io_timeout=240"
             # aarch64
             - "console=ttyAMA0"
+      "x86_64 grub2 config terminal=serial":
+        when:
+          arch: "x86_64"
+        shallow_merge:
+          grub2_config:
+            <<: *azure_common_grub2_config
+            terminal: ["serial"]
+      "aarch64 grub2 config terminal=console":
+        when:
+          arch: "aarch64"
+        shallow_merge:
+          grub2_config:
+            <<: *azure_common_grub2_config
+            terminal: ["console"]
 
 image_config:
   default:
@@ -518,7 +637,7 @@ image_config:
     "centos oscap datastream path":
       when:
         distro_name: "centos"
-      merge:
+      shallow_merge:
         default_oscap_datastream: "/usr/share/xml/scap/ssg/content/ssg-cs10-ds.xml"
 
 image_types:
@@ -575,6 +694,26 @@ image_types:
                   - "subscription-manager-cockpit"
 
   qcow2: &qcow2
+    filename: "disk.qcow2"
+    mime_type: "application/x-qemu-disk"
+    # note that unlike fedora rhel does not use the environment.KVM
+    # for unknown reasons
+    bootable: true
+    default_size: 10_737_418_240  # 10 * datasizes.GibiByte
+    image_func: "disk"
+    build_pipelines: ["build"]
+    payload_pipelines: ["os", "image", "qcow2"]
+    exports: ["qcow2"]
+    required_partition_sizes: *default_required_dir_sizes
+    platforms:
+      - <<: *x86_64_bios_platform
+        image_format: "qcow2"
+      - <<: *aarch64_platform
+        image_format: "qcow2"
+      - <<: *ppc64le_bios_platform
+        image_format: "qcow2"
+      - <<: *s390x_zipl_platform
+        image_format: "qcow2"
     image_config: &qcow2_image_config
       default_target: "multi-user.target"
       kernel_options: ["console=tty0", "console=ttyS0,115200n8", "no_timer_check"]
@@ -582,7 +721,7 @@ image_types:
         "tweak the rhsm config on rhel":
           when:
             distro_name: "rhel"
-          merge:
+          shallow_merge:
             rhsm_config:
               "no-subscription":
                 dnf_plugin:
@@ -662,6 +801,22 @@ image_types:
 
   "vagrant-libvirt":
     <<: *qcow2
+    filename: "vagrant-libvirt.box"
+    mime_type: "application/x-tar"
+    bootable: true
+    default_size: 10_737_418_240  # 10 * datasizes.GibiByte
+    image_func: "disk"
+    build_pipelines: ["build"]
+    payload_pipelines: ["os", "image", "vagrant", "archive"]
+    exports: ["archive"]
+    required_partition_sizes: *default_required_dir_sizes
+    platforms:
+      - <<: *x86_64_bios_platform
+        image_format: "vagrant_libvirt"
+        qcow2_compat: ""
+      - <<: *aarch64_platform
+        image_format: "vagrant_libvirt"
+        qcow2_compat: ""
     image_config:
       <<: *qcow2_image_config
       users:
@@ -679,9 +834,26 @@ image_types:
           data: |
             vagrant ALL=(ALL) NOPASSWD: ALL
 
-  oci: *qcow2
+  oci:
+    <<: *qcow2
+    platforms:
+      - <<: *x86_64_bios_platform
+        image_format: "qcow2"
 
   vhd: &vhd
+    <<: *qcow2
+    filename: "disk.vhd"
+    mime_type: "application/x-vhd"
+    default_size: 4_294_967_296  # 4 * datasizes.GibiByte
+    payload_pipelines: ["os", "image", "vpc"]
+    exports: ["vpc"]
+    # note that unlike fedora no "environment.Azure" is used here for
+    # unknown reasons
+    platforms:
+      - <<: *x86_64_bios_platform
+        image_format: "vhd"
+      - <<: *aarch64_platform
+        image_format: "vhd"
     # based on https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/9/html/deploying_rhel_9_on_microsoft_azure/assembly_deploying-a-rhel-image-as-a-virtual-machine-on-microsoft-azure_cloud-content-azure#making-configuration-changes_configure-the-image-azure
     image_config: &image_config_vhd
       <<: *azure_image_config
@@ -794,6 +966,10 @@ image_types:
 
   "azure-rhui": &azure_rhui
     <<: *vhd
+    payload_pipelines: ["os", "image", "vpc", "xz"]
+    exports: ["xz"]
+    compression: "xz"
+    filename: "disk.vhd.xz"
     partition_table:
       x86_64:
         uuid: "D209C89E-EA5E-4FBD-B161-B461CCE297E0"
@@ -888,14 +1064,36 @@ image_types:
 
   "azure-sap-rhui":
     <<: *azure_rhui
+    platforms:
+      - <<: *x86_64_bios_platform
+        image_format: "vhd"
     image_config:
       <<: [*image_config_vhd, *sap_image_config]
     package_sets:
       os:
         - *vhd_pkgset
-        - *sap_pkgset
+        - *sap_base_pkgset
+        - *sap_extras_pkgset
+
+  azure-sapapps-rhui:
+    <<: *azure_rhui
+    platforms:
+      - <<: *x86_64_bios_platform
+        image_format: "vhd"
+    image_config:
+      <<: [*image_config_vhd, *sapapps_image_config]
+    package_sets:
+      os:
+        - *vhd_pkgset
+        - *sap_base_pkgset
 
   tar:
+    filename: "root.tar.xz"
+    mime_type: "application/x-tar"
+    image_func: "tar"
+    build_pipelines: ["build"]
+    payload_pipelines: ["os", "archive"]
+    exports: ["archive"]
     package_sets:
       os:
         - include:
@@ -903,8 +1101,25 @@ image_types:
             - "selinux-policy-targeted"
           exclude:
             - "rng-tools"
+    platforms:
+      - arch: "x86_64"
+      - arch: "aarch64"
+      - arch: "ppc64le"
+      - arch: "s390x"
 
   vmdk: &vmdk
+    filename: "disk.vmdk"
+    mime_type: "application/x-vmdk"
+    bootable: true
+    default_size: 4_294_967_296  # 4 * datasizes.GibiByte
+    image_func: "disk"
+    build_pipelines: ["build"]
+    payload_pipelines: ["os", "image", "vmdk"]
+    exports: ["vmdk"]
+    required_partition_sizes: *default_required_dir_sizes
+    platforms:
+      - <<: *x86_64_bios_platform
+        image_format: "vmdk"
     image_config:
       kernel_options:
         - "ro"
@@ -924,9 +1139,31 @@ image_types:
             - "dracut-config-rescue"
             - "rng-tools"
 
-  ova: *vmdk
+  ova:
+    <<: *vmdk
+    filename: "image.ova"
+    mime_type: "application/ovf"
+    payload_pipelines: ["os", "image", "vmdk", "ovf", "archive"]
+    exports: ["archive"]
+    platforms:
+      - <<: *x86_64_bios_platform
+        image_format: "ova"
 
   ami: &ami
+    filename: "image.raw"
+    mime_type: "application/octet-stream"
+    image_func: "disk"
+    build_pipelines: ["build"]
+    payload_pipelines: ["os", "image"]
+    exports: ["image"]
+    bootable: true
+    default_size: 10_737_418_240  # 10 * datasizes.GibiByte
+    required_partition_sizes: *default_required_dir_sizes
+    platforms:
+      - <<: *x86_64_bios_platform
+        image_format: "raw"
+      - <<: *aarch64_platform
+        image_format: "raw"
     image_config: &ami_image_config
       time_synchronization:
         servers:
@@ -1000,7 +1237,7 @@ image_types:
         "we need dracut conf with nvme/xen on x86":
           when:
             arch: "x86_64"
-          merge:
+          shallow_merge:
             dracut_conf:
               - filename: "ec2.conf"
                 config:
@@ -1010,7 +1247,7 @@ image_types:
         "x86_64 specific kopts":
           when:
             arch: "x86_64"
-          merge:
+          shallow_merge:
             # TODO: move these to the EC2 environment
             kernel_options:
               # common
@@ -1020,7 +1257,7 @@ image_types:
         "aarch64 specific kopts":
           when:
             arch: "aarch64"
-          merge:
+          shallow_merge:
             # TODO: move these to the EC2 environment
             kernel_options:
               # XXX: duplicated with above x86_64 kernel defaults
@@ -1086,10 +1323,21 @@ image_types:
           conditions:
             <<: *conditions_pkgsets_insights_client_on_rhel
 
-  ec2: *ami
+  # RHEL internal-only x86_64 EC2 image type
+  ec2: &ec2
+    <<: *ami
+    payload_pipelines: ["os", "image", "xz"]
+    exports: ["xz"]
+    filename: "image.raw.xz"
+    compression: "xz"
 
   "ec2-ha":
-    <<: *ami
+    <<: *ec2
+    filename: "image.raw.xz"
+    compression: "xz"
+    platforms:
+      - <<: *x86_64_bios_platform
+        image_format: "raw"
     package_sets:
       os:
         - *ami_pkgset
@@ -1099,11 +1347,17 @@ image_types:
             - "pcs"
 
   "ec2-sap":
-    <<: *ami
+    <<: *ec2
+    filename: "image.raw.xz"
+    compression: "xz"
+    platforms:
+      - <<: *x86_64_bios_platform
+        image_format: "raw"
     package_sets:
       os:
         - *ami_pkgset
-        - *sap_pkgset
+        - *sap_base_pkgset
+        - *sap_extras_pkgset
     image_config:
       <<: [*ami_image_config, *sap_image_config]
       conditions:
@@ -1114,7 +1368,7 @@ image_types:
         "x86_64 specific kopts":
           when:
             arch: "x86_64"
-          merge:
+          shallow_merge:
             kernel_options:
               # XXX: duplicated with ami.image_config.kernel_options :(
               - "console=tty0"
@@ -1125,6 +1379,16 @@ image_types:
               - "intel_idle.max_cstate=1"
 
   wsl:
+    filename: "image.wsl"
+    mime_type: "application/x-tar"
+    image_func: "tar"
+    build_pipelines: ["build"]
+    payload_pipelines: ["os", "archive", "xz"]
+    exports: ["xz"]
+    compression: "xz"
+    platforms:
+      - arch: "x86_64"
+      - arch: "aarch64"
     image_config:
       cloud_init:
         - filename: "99_wsl.cfg"
@@ -1148,7 +1412,7 @@ image_types:
         "wsl config for rhel":
           when:
             distro_name: "rhel"
-          merge:
+          shallow_merge:
             wsl:
               <<: *wsl_config
               distribution_config:
@@ -1159,7 +1423,7 @@ image_types:
         "wsl config for centos":
           when:
             distro_name: "centos"
-          merge:
+          shallow_merge:
             wsl:
               <<: *wsl_config
               distribution_config:
@@ -1170,7 +1434,7 @@ image_types:
         "wsl config for almalinux":
           when:
             distro_name: "almalinux"
-          merge:
+          shallow_merge:
             wsl: &wsl_distribution_config_almalinux
               <<: *wsl_config
               distribution_config:
@@ -1181,7 +1445,7 @@ image_types:
         "wsl config for almalinuxkitten":
           when:
             distro_name: "almalinux_kitten"
-          merge:
+          shallow_merge:
             wsl:
               <<: *wsl_distribution_config_almalinux
     package_sets:
@@ -1243,6 +1507,36 @@ image_types:
             - "rpm-plugin-systemd-inhibit"
 
   "image-installer":
+    filename: "installer.iso"
+    mime_type: "application/x-iso9660-image"
+    bootable: true
+    boot_iso: true
+    image_func: "image_installer"
+    # We don't know the variant of the OS pipeline being installed
+    iso_label: "Unknown"
+    build_pipelines: ["build"]
+    payload_pipelines:
+      - "anaconda-tree"
+      - "efiboot-tree"
+      - "os"
+      - "bootiso-tree"
+      - "bootiso"
+    exports: ["bootiso"]
+    required_partition_sizes: *default_required_dir_sizes
+    image_config:
+      iso_rootfs_type: "squashfs"
+    installer_config:
+      additional_dracut_modules:
+        - "nvdimm"  # non-volatile DIMM firmware (provides nfit, cuse, and nd_e820)
+        - "net-lib"
+      additional_drivers:
+        - "ipmi_devintf"
+        - "ipmi_msghandler"
+      # see commit c6bfb22f54, controls the kickstart location
+      iso_root_kickstart: true
+    platforms:
+      - *x86_64_installer_platform
+      - *aarch64_platform
     package_sets:
       <<: *bare_metal_pkgset
       installer:
@@ -1375,6 +1669,18 @@ image_types:
                   - "dmidecode"
 
   gce:
+    filename: "image.tar.gz"
+    mime_type: "application/gzip"
+    image_func: "disk"
+    build_pipelines: ["build"]
+    payload_pipelines: ["os", "image", "archive"]
+    exports: ["archive"]
+    bootable: true
+    default_size: 21_474_836_480  # 20 * datasizes.GibiByte
+    required_partition_sizes: *default_required_dir_sizes
+    platforms:
+      - <<: *x86_64_uefi_platform
+        image_format: "gce"
     image_config:
       kernel_options: ["biosdevname=0", "scsi_mod.use_blk_mq=Y", "console=ttyS0,38400n8d"]
       time_synchronization:
@@ -1447,6 +1753,8 @@ image_types:
           "InstanceSetup":
             set_boto_config: false
     partition_table:
+      # TODO: the base partition table still contains the BIOS boot
+      # partition, but the image is UEFI-only
       <<: *default_partition_tables
     package_sets:
       os:
@@ -1530,6 +1838,24 @@ image_types:
             <<: *conditions_pkgsets_insights_client_on_rhel
 
   "azure-cvm":
+    <<: *vhd
+    filename: "disk.vhd.xz"
+    mime_type: "application/xz"
+    payload_pipelines: ["os", "image", "vpc", "xz"]
+    exports: ["xz"]
+    compression: "xz"
+    default_size: 34_359_738_368  # 32 * datasizes.GibiByte
+    platforms:
+      - arch: "x86_64"
+        bootloader: "uki"
+        image_format: "vhd"
+        uefi_vendor: "{{.DistroVendor}}"
+        packages:
+          uki:
+            - "efibootmgr"
+            - "kernel-uki-virt-addons"  # provides useful cmdline utilities for the UKI
+            - "shim-x64"
+            - "uki-direct"
     image_config:
       <<: *azure_image_config
       default_kernel: "kernel-uki-virt"
