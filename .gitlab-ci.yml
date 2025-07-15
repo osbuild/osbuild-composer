@@ -592,10 +592,10 @@ API:
         RUNNER:
           - aws/rhel-8.10-ga-x86_64
           - aws/rhel-9.6-ga-x86_64
-          - aws/rhel-10.0-ga-x86_64
           - aws/rhel-9.7-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
-      # el10 for now supports only a subset of image types
+      # el10 supports only a subset of image types
+      # Edge is not supported anymore for RHEL 10 (no edge-commit, edge-commit generic.s3, edge-container)
       - IMAGE_TYPE:
           - aws
           - azure
@@ -603,6 +603,8 @@ API:
           - oci
           - vsphere
         RUNNER:
+          # Add all RHEL 10 runners here to exclude Edge for them
+          - aws/rhel-10.0-ga-x86_64
           - aws/rhel-10.1-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
       - IMAGE_TYPE: ["iot-commit"]
