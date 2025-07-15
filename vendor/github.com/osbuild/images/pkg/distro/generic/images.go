@@ -155,9 +155,9 @@ func osCustomizations(t *imageType, osPackageSet rpmmd.PackageSet, options distr
 		osc.ChronyConfig = imageConfig.TimeSynchronization
 	}
 
-	// Relabel the tree, unless the `NoSElinux` flag is explicitly set to `true`
-	if imageConfig.NoSElinux == nil || imageConfig.NoSElinux != nil && !*imageConfig.NoSElinux {
-		osc.SElinux = "targeted"
+	// Relabel the tree, unless the `NoSELinux` flag is explicitly set to `true`
+	if imageConfig.NoSELinux == nil || imageConfig.NoSELinux != nil && !*imageConfig.NoSELinux {
+		osc.SELinux = "targeted"
 		osc.SELinuxForceRelabel = imageConfig.SELinuxForceRelabel
 	}
 
@@ -316,6 +316,8 @@ func osCustomizations(t *imageType, osPackageSet rpmmd.PackageSet, options distr
 	if imageConfig.MountUnits != nil {
 		osc.MountUnits = *imageConfig.MountUnits
 	}
+
+	osc.VersionlockPackages = imageConfig.VersionlockPackages
 
 	return osc, nil
 }

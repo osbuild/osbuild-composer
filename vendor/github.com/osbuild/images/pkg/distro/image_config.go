@@ -46,7 +46,7 @@ type ImageConfig struct {
 	GPGKeyFiles []string `yaml:"gpgkey_files,omitempty"`
 
 	// Disable SELinux labelling
-	NoSElinux *bool `yaml:"no_selinux,omitempty"`
+	NoSELinux *bool `yaml:"no_selinux,omitempty"`
 
 	// Do not use. Forces auto-relabelling on first boot.
 	// See https://github.com/osbuild/osbuild/commit/52cb27631b587c1df177cd17625c5b473e1e85d2
@@ -138,6 +138,12 @@ type ImageConfig struct {
 	// IsoRootfsType defines what rootfs (squashfs, erofs,ext4)
 	// is used
 	IsoRootfsType *manifest.RootfsType `yaml:"iso_rootfs_type,omitempty"`
+
+	// VersionlockPackges uses dnf versionlock to lock a package to the version
+	// that is installed during image build, preventing it from being updated.
+	// This is only supported for distributions that use dnf4, because osbuild
+	// only has a stage for dnf4 version locking.
+	VersionlockPackages []string `yaml:"versionlock_packages,omitempty"`
 }
 
 // shallowMerge creates a new struct by merging a child and a parent.
