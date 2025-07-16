@@ -44,9 +44,9 @@ func (img *BootcLegacyDiskImage) InstantiateManifestFromContainers(m *manifest.M
 	}
 	ostreeImg.Platform = img.bootcImg.Platform
 	ostreeImg.PartitionTable = img.bootcImg.PartitionTable
-	ostreeImg.OSTreeDeploymentCustomizations.KernelOptionsAppend = img.bootcImg.KernelOptionsAppend
-	ostreeImg.OSTreeDeploymentCustomizations.Users = img.bootcImg.Users
-	ostreeImg.OSTreeDeploymentCustomizations.Groups = img.bootcImg.Groups
+	ostreeImg.OSTreeDeploymentCustomizations.KernelOptionsAppend = img.bootcImg.OSCustomizations.KernelOptionsAppend
+	ostreeImg.OSTreeDeploymentCustomizations.Users = img.bootcImg.OSCustomizations.Users
+	ostreeImg.OSTreeDeploymentCustomizations.Groups = img.bootcImg.OSCustomizations.Groups
 
 	buildPipeline := manifest.NewBuildFromContainer(m, runner, containers, &manifest.BuildOptions{ContainerBuildable: true})
 	buildPipeline.Checkpoint()
