@@ -8,7 +8,17 @@ import (
 const vmdkRegex = "^[a-zA-Z0-9+_.-]*$"
 
 type OVFStageOptions struct {
-	Vmdk string `json:"vmdk"`
+	Vmdk       string                     `json:"vmdk"`
+	VMWare     *OVFVMWareStageOptions     `json:"vmware,omitempty"`
+	VirtualBox *OVFVirtualBoxStageOptions `json:"virtualbox,omitempty"`
+}
+
+type OVFVMWareStageOptions struct {
+	OSType string `json:"os_type,omitempty"`
+}
+
+type OVFVirtualBoxStageOptions struct {
+	MacAddress string `json:"mac_address"`
 }
 
 func (OVFStageOptions) isStageOptions() {}

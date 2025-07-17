@@ -6,7 +6,6 @@ import (
 
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/customizations/fsnode"
-	"github.com/osbuild/images/pkg/customizations/users"
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/osbuild"
@@ -26,21 +25,7 @@ type BootcDiskImage struct {
 	BuildContainerSource *container.SourceSpec
 
 	// Customizations
-	KernelOptionsAppend []string
-
-	// The users to put into the image, note that /etc/paswd (and friends)
-	// will become unmanaged state by bootc when used
-	Users  []users.User
-	Groups []users.Group
-
-	// Custom directories and files to create in the image
-	Directories []*fsnode.Directory
-	Files       []*fsnode.File
-
-	// SELinux policy, when set it enables the labeling of the tree with the
-	// selected profile
-	SELinux      string
-	BuildSELinux string
+	OSCustomizations manifest.OSCustomizations
 }
 
 func NewBootcDiskImage(container container.SourceSpec, buildContainer container.SourceSpec) *BootcDiskImage {
@@ -56,9 +41,9 @@ func (img *BootcDiskImage) InstantiateManifestFromContainers(m *manifest.Manifes
 	runner runner.Runner,
 	rng *rand.Rand) error {
 
-	policy := img.SELinux
-	if img.BuildSELinux != "" {
-		policy = img.BuildSELinux
+	policy := img.OSCustomizations.SELinux
+	if img.OSCustomizations.BuildSELinux != "" {
+		policy = img.OSCustomizations.BuildSELinux
 	}
 
 	var copyFilesFrom map[string][]string
@@ -116,12 +101,12 @@ func (img *BootcDiskImage) InstantiateManifestFromContainers(m *manifest.Manifes
 
 	rawImage := manifest.NewRawBootcImage(buildPipeline, containers, img.Platform)
 	rawImage.PartitionTable = img.PartitionTable
-	rawImage.Users = img.Users
-	rawImage.Groups = img.Groups
-	rawImage.Files = img.Files
-	rawImage.Directories = img.Directories
-	rawImage.KernelOptionsAppend = img.KernelOptionsAppend
-	rawImage.SELinux = img.SELinux
+	rawImage.Users = img.OSCustomizations.Users
+	rawImage.Groups = img.OSCustomizations.Groups
+	rawImage.Files = img.OSCustomizations.Files
+	rawImage.Directories = img.OSCustomizations.Directories
+	rawImage.KernelOptionsAppend = img.OSCustomizations.KernelOptionsAppend
+	rawImage.SELinux = img.OSCustomizations.SELinux
 	rawImage.MountUnits = true // always use mount units for bootc disk images
 
 	// In BIB, we export multiple images from the same pipeline so we use the

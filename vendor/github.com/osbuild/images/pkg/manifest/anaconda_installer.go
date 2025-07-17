@@ -86,7 +86,7 @@ type AnacondaInstaller struct {
 	// SELinux policy, when set it enables the labeling of the installer
 	// tree with the selected profile and selects the required package
 	// for depsolving
-	SElinux string
+	SELinux string
 
 	// Locale for the installer. This should be set to the same locale as the
 	// ISO OS payload, if known.
@@ -167,8 +167,8 @@ func (p *AnacondaInstaller) getBuildPackages(Distro) []string {
 		)
 	}
 
-	if p.SElinux != "" {
-		packages = append(packages, "policycoreutils", fmt.Sprintf("selinux-policy-%s", p.SElinux))
+	if p.SELinux != "" {
+		packages = append(packages, "policycoreutils", fmt.Sprintf("selinux-policy-%s", p.SELinux))
 	}
 
 	return packages
@@ -183,8 +183,8 @@ func (p *AnacondaInstaller) getPackageSetChain(Distro) []rpmmd.PackageSet {
 		packages = append(packages, "biosdevname")
 	}
 
-	if p.SElinux != "" {
-		packages = append(packages, fmt.Sprintf("selinux-policy-%s", p.SElinux))
+	if p.SELinux != "" {
+		packages = append(packages, fmt.Sprintf("selinux-policy-%s", p.SELinux))
 	}
 
 	return []rpmmd.PackageSet{
@@ -192,7 +192,7 @@ func (p *AnacondaInstaller) getPackageSetChain(Distro) []rpmmd.PackageSet {
 			Include:         append(packages, p.ExtraPackages...),
 			Exclude:         p.ExcludePackages,
 			Repositories:    append(p.repos, p.ExtraRepos...),
-			InstallWeakDeps: p.Type == AnacondaInstallerTypeLive,
+			InstallWeakDeps: true,
 		},
 	}
 }
@@ -328,10 +328,10 @@ func (p *AnacondaInstaller) payloadStages() []*osbuild.Stage {
 
 	stages = append(stages, osbuild.NewSELinuxConfigStage(&osbuild.SELinuxConfigStageOptions{State: osbuild.SELinuxStatePermissive}))
 
-	// SElinux is not supported on the non-live-installers (see the previous
+	// SELinux is not supported on the non-live-installers (see the previous
 	// stage setting SELinux to permissive. It's an error to set it to anything
 	// that isn't an empty string
-	if p.SElinux != "" {
+	if p.SELinux != "" {
 		panic("payload installers do not support SELinux policies")
 	}
 
@@ -400,9 +400,9 @@ func (p *AnacondaInstaller) liveStages() []*osbuild.Stage {
 	dracutOptions := p.dracutStageOptions()
 	stages = append(stages, osbuild.NewDracutStage(dracutOptions))
 
-	if p.SElinux != "" {
+	if p.SELinux != "" {
 		stages = append(stages, osbuild.NewSELinuxStage(&osbuild.SELinuxStageOptions{
-			FileContexts: fmt.Sprintf("etc/selinux/%s/contexts/files/file_contexts", p.SElinux),
+			FileContexts: fmt.Sprintf("etc/selinux/%s/contexts/files/file_contexts", p.SELinux),
 		}))
 	}
 

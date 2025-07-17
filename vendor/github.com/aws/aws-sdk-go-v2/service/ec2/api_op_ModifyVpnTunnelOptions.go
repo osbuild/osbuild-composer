@@ -55,6 +55,11 @@ type ModifyVpnTunnelOptionsInput struct {
 	// UnauthorizedOperation .
 	DryRun *bool
 
+	// Specifies the storage mode for the pre-shared key (PSK). Valid values are
+	// Standard (stored in Site-to-Site VPN service) or SecretsManager (stored in
+	// Amazon Web Services Secrets Manager).
+	PreSharedKeyStorage *string
+
 	// Choose whether or not to trigger immediate tunnel replacement. This is only
 	// applicable when turning on or off EnableTunnelLifecycleControl .
 	//
@@ -118,6 +123,9 @@ func (c *Client) addOperationModifyVpnTunnelOptionsMiddlewares(stack *middleware
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -134,6 +142,9 @@ func (c *Client) addOperationModifyVpnTunnelOptionsMiddlewares(stack *middleware
 		return err
 	}
 	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpModifyVpnTunnelOptionsValidationMiddleware(stack); err != nil {
@@ -155,6 +166,18 @@ func (c *Client) addOperationModifyVpnTunnelOptionsMiddlewares(stack *middleware
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

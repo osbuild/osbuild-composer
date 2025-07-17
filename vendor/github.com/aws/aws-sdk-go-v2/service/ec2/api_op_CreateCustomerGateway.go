@@ -82,10 +82,10 @@ type CreateCustomerGatewayInput struct {
 	// UnauthorizedOperation .
 	DryRun *bool
 
-	// IPv4 address for the customer gateway device's outside interface. The address
+	// The IP address for the customer gateway device's outside interface. The address
 	// must be static. If OutsideIpAddressType in your VPN connection options is set
 	// to PrivateIpv4 , you can use an RFC6598 or RFC1918 private IPv4 address. If
-	// OutsideIpAddressType is set to PublicIpv4 , you can use a public IPv4 address.
+	// OutsideIpAddressType is set to Ipv6 , you can use an IPv6 address.
 	IpAddress *string
 
 	//  This member has been deprecated. The Internet-routable IP address for the
@@ -153,6 +153,9 @@ func (c *Client) addOperationCreateCustomerGatewayMiddlewares(stack *middleware.
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -169,6 +172,9 @@ func (c *Client) addOperationCreateCustomerGatewayMiddlewares(stack *middleware.
 		return err
 	}
 	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpCreateCustomerGatewayValidationMiddleware(stack); err != nil {
@@ -190,6 +196,18 @@ func (c *Client) addOperationCreateCustomerGatewayMiddlewares(stack *middleware.
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil
