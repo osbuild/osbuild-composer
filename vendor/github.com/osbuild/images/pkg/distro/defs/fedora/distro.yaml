@@ -577,6 +577,13 @@ image_types:
       - <<: *aarch64_platform
         image_format: "vagrant_libvirt"
 
+  "server-vagrant-virtualbox": &server_vagrant_virtualbox
+    <<: *server_vagrant_libvirt
+    filename: "vagrant-virtualbox.box"
+    platforms:
+      - <<: *x86_64_bios_platform
+        image_format: "vagrant_virtualbox"
+
   "server-qcow2": &server_qcow2
     name_aliases: ["qcow2"]
     filename: "disk.qcow2"

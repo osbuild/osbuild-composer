@@ -7,11 +7,28 @@ import (
 type VagrantProvider string
 
 const (
-	VagrantProviderLibvirt VagrantProvider = "libvirt"
+	VagrantProviderLibvirt    VagrantProvider = "libvirt"
+	VagrantProviderVirtualBox VagrantProvider = "virtualbox"
 )
 
+type VagrantSyncedFolderType string
+
+const (
+	VagrantSyncedFolderTypeRsync = "rsync"
+)
+
+type VagrantVirtualBoxStageOptions struct {
+	MacAddress string `json:"mac_address"`
+}
+
+type VagrantSyncedFolderStageOptions struct {
+	Type VagrantSyncedFolderType `json:"type"`
+}
+
 type VagrantStageOptions struct {
-	Provider VagrantProvider `json:"provider"`
+	Provider      VagrantProvider                             `json:"provider"`
+	VirtualBox    *VagrantVirtualBoxStageOptions              `json:"virtualbox,omitempty"`
+	SyncedFolders map[string]*VagrantSyncedFolderStageOptions `json:"synced_folders,omitempty"`
 }
 
 func (VagrantStageOptions) isStageOptions() {}
@@ -41,8 +58,12 @@ func NewVagrantStageOptions(provider VagrantProvider) *VagrantStageOptions {
 }
 
 func (o *VagrantStageOptions) validate() error {
-	if o.Provider != VagrantProviderLibvirt {
+	if o.Provider != VagrantProviderLibvirt && o.Provider != VagrantProviderVirtualBox {
 		return fmt.Errorf("unknown provider in vagrant stage options %s", o.Provider)
+	}
+
+	if o.Provider != VagrantProviderVirtualBox && len(o.SyncedFolders) > 0 {
+		return fmt.Errorf("syncedfolders are only available for the virtualbox provider not for %q", o.Provider)
 	}
 
 	return nil

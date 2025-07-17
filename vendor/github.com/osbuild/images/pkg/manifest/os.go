@@ -85,9 +85,12 @@ type OSCustomizations struct {
 	MaskedServices   []string
 	DefaultTarget    string
 
-	// SELinux policy, when set it enables the labeling of the tree with the
-	// selected profile
-	SElinux string
+	// SELinux policy, when set it enables the labeling of the
+	// tree with the selected profile
+	SELinux string
+	// BuildSELinux policy, when set it enables the labeling of
+	// the *build tree* with the selected profile
+	BuildSELinux string
 
 	SELinuxForceRelabel *bool
 
@@ -169,6 +172,12 @@ type OSCustomizations struct {
 	// MountUnits creates systemd .mount units to describe the filesystem
 	// instead of writing to /etc/fstab
 	MountUnits bool
+
+	// VersionlockPackges uses dnf versionlock to lock a package to the version
+	// that is installed during image build, preventing it from being updated.
+	// This is only supported for distributions that use dnf4, because osbuild
+	// only has a stage for dnf4 version locking.
+	VersionlockPackages []string
 }
 
 // OS represents the filesystem tree of the target image. This roughly
@@ -253,8 +262,8 @@ func (p *OS) getPackageSetChain(Distro) []rpmmd.PackageSet {
 		customizationPackages = append(customizationPackages, "chrony")
 	}
 
-	if p.OSCustomizations.SElinux != "" {
-		customizationPackages = append(customizationPackages, fmt.Sprintf("selinux-policy-%s", p.OSCustomizations.SElinux))
+	if p.OSCustomizations.SELinux != "" {
+		customizationPackages = append(customizationPackages, fmt.Sprintf("selinux-policy-%s", p.OSCustomizations.SELinux))
 	}
 
 	if p.OSCustomizations.OpenSCAPRemediationConfig != nil {
@@ -288,6 +297,11 @@ func (p *OS) getPackageSetChain(Distro) []rpmmd.PackageSet {
 		// org.osbuild.firewall runs 'firewall-offline-cmd' in the os tree
 		// using chroot, so we don't need a build package for this.
 		customizationPackages = append(customizationPackages, "firewalld")
+	}
+
+	if len(p.OSCustomizations.VersionlockPackages) > 0 {
+		// versionlocking packages requires dnf and the dnf plugin
+		customizationPackages = append(customizationPackages, "dnf", "python3-dnf-plugin-versionlock")
 	}
 
 	osRepos := append(p.repos, p.OSCustomizations.ExtraBaseRepos...)
@@ -372,8 +386,8 @@ func (p *OS) getBuildPackages(distro Distro) []string {
 	if p.OSTreeRef != "" {
 		packages = append(packages, "rpm-ostree")
 	}
-	if p.OSCustomizations.SElinux != "" {
-		packages = append(packages, "policycoreutils", fmt.Sprintf("selinux-policy-%s", p.OSCustomizations.SElinux))
+	if p.OSCustomizations.SELinux != "" {
+		packages = append(packages, "policycoreutils", fmt.Sprintf("selinux-policy-%s", p.OSCustomizations.SELinux))
 	}
 	if len(p.OSCustomizations.CloudInit) > 0 {
 		switch distro {
@@ -906,15 +920,23 @@ func (p *OS) serialize() osbuild.Pipeline {
 		pipeline.AddStage(osbuild.NewUpdateCATrustStage())
 	}
 
+	if len(p.OSCustomizations.VersionlockPackages) > 0 {
+		versionlockStageOptions, err := osbuild.GenDNF4VersionlockStageOptions(p.OSCustomizations.VersionlockPackages, p.packageSpecs)
+		if err != nil {
+			panic(err)
+		}
+		pipeline.AddStage(osbuild.NewDNF4VersionlockStage(versionlockStageOptions))
+	}
+
 	if p.OSCustomizations.MachineIdUninitialized {
 		pipeline.AddStage(osbuild.NewMachineIdStage(&osbuild.MachineIdStageOptions{
 			FirstBoot: osbuild.MachineIdFirstBootYes,
 		}))
 	}
 
-	if p.OSCustomizations.SElinux != "" {
+	if p.OSCustomizations.SELinux != "" {
 		pipeline.AddStage(osbuild.NewSELinuxStage(&osbuild.SELinuxStageOptions{
-			FileContexts:     fmt.Sprintf("etc/selinux/%s/contexts/files/file_contexts", p.OSCustomizations.SElinux),
+			FileContexts:     fmt.Sprintf("etc/selinux/%s/contexts/files/file_contexts", p.OSCustomizations.SELinux),
 			ForceAutorelabel: p.OSCustomizations.SELinuxForceRelabel,
 		}))
 	}
@@ -1111,21 +1133,13 @@ func findESPMountpoint(pt *disk.PartitionTable) (string, error) {
 //
 // [1] https://gitlab.com/kraxel/virt-firmware/-/commit/ca385db4f74a4d542455b9d40c91c8448c7be90c
 func maybeAddHMACandDirStage(packages []rpmmd.PackageSpec, espMountpoint, kernelVer string) ([]*osbuild.Stage, error) {
-	ukiDirectVer, err := rpmmd.GetVerStrFromPackageSpecList(packages, "uki-direct")
+	ukiDirect, err := rpmmd.GetPackage(packages, "uki-direct")
 	if err != nil {
 		// the uki-direct package isn't in the list: no override necessary
 		return nil, nil
 	}
 
-	// The GetVerStrFromPackageSpecList function returns
-	// <version>-<release>.<arch>. For the real package version, this doesn't
-	// appear to cause any issues with the version parser used by
-	// VersionLessThan. If a mock depsolver is used this can cause issues
-	// (Malformed version: 0-8.fk1.x86_64). Make sure we only use the <version>
-	// component to avoid issues.
-	ukiDirectVer = strings.SplitN(ukiDirectVer, "-", 2)[0]
-
-	if common.VersionLessThan(ukiDirectVer, "25.3") {
+	if common.VersionLessThan(ukiDirect.Version, "25.3") {
 		// generate hmac file using stage
 		kernelFilename := fmt.Sprintf("ffffffffffffffffffffffffffffffff-%s.efi", kernelVer)
 		kernelPath := filepath.Join(espMountpoint, "EFI", "Linux", kernelFilename)
