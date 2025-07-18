@@ -25,6 +25,7 @@ import (
 type MakeJobQueue func() (q jobqueue.JobQueue, stop func(), err error)
 
 type testResult struct {
+	Logs json.RawMessage `json:"logs,omitempty"`
 }
 
 func TestDbURL() string {
@@ -50,6 +51,7 @@ func TestJobQueue(t *testing.T, makeJobQueue MakeJobQueue) {
 	t.Run("cancel", wrap(testCancel))
 	t.Run("requeue", wrap(testRequeue))
 	t.Run("requeue-limit", wrap(testRequeueLimit))
+	t.Run("escaped-null-bytes", wrap(testEscapedNullBytes))
 	t.Run("job-types", wrap(testJobTypes))
 	t.Run("dependencies", wrap(testDependencies))
 	t.Run("multiple-workers", wrap(testMultipleWorkers))
@@ -110,7 +112,8 @@ func testErrors(t *testing.T, q jobqueue.JobQueue) {
 	require.NoError(t, err)
 	require.Equal(t, id, idFromT)
 
-	requeued, err := q.RequeueOrFinishJob(id, 0, nil)
+	require.NoError(t, err)
+	requeued, err := q.RequeueOrFinishJob(id, 0, &testResult{})
 	require.NoError(t, err)
 	require.False(t, requeued)
 
@@ -502,6 +505,18 @@ func testRequeueLimit(t *testing.T, q jobqueue.JobQueue) {
 	require.NoError(t, err)
 	require.False(t, finished.IsZero())
 	require.NotNil(t, result)
+}
+
+func testEscapedNullBytes(t *testing.T, q jobqueue.JobQueue) {
+	pushTestJob(t, q, "octopus", nil, nil, "")
+	id, tok, _, _, _, err := q.Dequeue(context.Background(), uuid.Nil, []string{"octopus"}, []string{""})
+	require.NoError(t, err)
+	require.NotEmpty(t, tok)
+
+	// Ensure postgres accepts escaped null bytes
+	requeued, err := q.RequeueOrFinishJob(id, 0, &testResult{Logs: []byte("{\"blegh\\u0000\": \"\\u0000\"}")})
+	require.NoError(t, err)
+	require.False(t, requeued)
 }
 
 func testHeartbeats(t *testing.T, q jobqueue.JobQueue) {
