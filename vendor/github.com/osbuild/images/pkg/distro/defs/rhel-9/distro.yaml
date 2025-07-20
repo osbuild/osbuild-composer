@@ -1671,6 +1671,12 @@ image_types:
   "image-installer":
     image_config:
       locale: "C.UTF-8"
+      conditions:
+        "x86_64 uses syslinux":
+          when:
+            arch: "x86_64"
+          shallow_merge:
+            iso_boot_type: "syslinux"
     package_sets:
       <<: *bare_metal_pkgset
       installer:
@@ -2144,6 +2150,12 @@ image_types:
     image_config:
       enabled_services: *enabled_services_edge
       locale: "en_US.UTF-8"
+      conditions:
+        "x86_64 uses syslinux":
+          when:
+            arch: "x86_64"
+          shallow_merge:
+            iso_boot_type: "syslinux"
     package_sets:
       installer:
         - *installer_pkgset
@@ -2324,6 +2336,19 @@ image_types:
                 apply_network_config: false
             datasource_list:
               - "Azure"
+      conditions:
+        <<: *conditions_azure_image_config_base
+        "x86_64 shim package version lock":
+          # Lock the shim package to its installed version. This is necessary
+          # for UKI-based images that can become unbootable if the shim is
+          # upgraded to one signed by a newer certificate that does not exist
+          # in the system's database.
+          # See https://issues.redhat.com/browse/RHEL-93650
+          when:
+            arch: "x86_64"
+          shallow_merge:
+            versionlock_packages:
+              - "shim-x64"
     package_sets:
       os:
         - include:

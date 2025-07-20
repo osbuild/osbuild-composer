@@ -58,6 +58,29 @@ const ( // ISOBoot type enum
 	Grub2ISOBoot                            // Boot with grub2 UEFI and grub2 BIOS
 )
 
+func (r *ISOBootType) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return err
+	}
+	switch s {
+	case "grub2-uefi", "":
+		*r = Grub2UEFIOnlyISOBoot
+	case "syslinux":
+		*r = SyslinuxISOBoot
+	case "grub2":
+		*r = Grub2ISOBoot
+	default:
+		return fmt.Errorf("unknown ISOBootType: %q", s)
+	}
+
+	return nil
+}
+
+func (r *ISOBootType) UnmarshalYAML(unmarshal func(any) error) error {
+	return common.UnmarshalYAMLviaJSON(r, unmarshal)
+}
+
 // An AnacondaInstallerISOTree represents a tree containing the anaconda installer,
 // configuration in terms of a kickstart file, as well as an embedded
 // payload to be installed, this payload can either be an ostree
