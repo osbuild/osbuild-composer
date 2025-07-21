@@ -101,7 +101,7 @@ type DistroYAML struct {
 	imageConfig *distro.ImageConfig `yaml:"default"`
 
 	// ignore the given image types
-	IgnoreImageTypes []string `yaml:"ignore_image_types"`
+	Conditions map[string]distroConditions `yaml:"conditions"`
 
 	// XXX: remove this in favor of a better abstraction, this
 	// is currently needed because the manifest pkg has conditionals
@@ -119,6 +119,18 @@ func (d *DistroYAML) ImageTypes() map[string]ImageTypeYAML {
 // Each ImageType gets this as their default ImageConfig.
 func (d *DistroYAML) ImageConfig() *distro.ImageConfig {
 	return d.imageConfig
+}
+
+func (d *DistroYAML) SkipImageType(imgTypeName, archName string) bool {
+	id := common.Must(distro.ParseID(d.Name))
+
+	for _, cond := range d.Conditions {
+		if cond.When.Eval(id, archName) && slices.Contains(cond.IgnoreImageTypes, imgTypeName) {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (d *DistroYAML) runTemplates(nameVer string) error {
@@ -216,9 +228,6 @@ func NewDistroYAML(nameVer string) (*DistroYAML, error) {
 	if len(toplevel.ImageTypes) > 0 {
 		foundDistro.imageTypes = make(map[string]ImageTypeYAML, len(toplevel.ImageTypes))
 		for name := range toplevel.ImageTypes {
-			if slices.Contains(foundDistro.IgnoreImageTypes, name) {
-				continue
-			}
 			v := toplevel.ImageTypes[name]
 			v.name = name
 			if err := v.runTemplates(foundDistro); err != nil {
@@ -252,6 +261,7 @@ type distroImageConfig struct {
 // multiple whenConditions are considred AND
 type whenCondition struct {
 	DistroName            string `yaml:"distro_name,omitempty"`
+	NotDistroName         string `yaml:"not_distro_name,omitempty"`
 	Architecture          string `yaml:"arch,omitempty"`
 	VersionLessThan       string `yaml:"version_less_than,omitempty"`
 	VersionGreaterOrEqual string `yaml:"version_greater_or_equal,omitempty"`
@@ -263,6 +273,9 @@ func (wc *whenCondition) Eval(id *distro.ID, archStr string) bool {
 
 	if wc.DistroName != "" {
 		match = match && (wc.DistroName == id.Name)
+	}
+	if wc.NotDistroName != "" {
+		match = match && (wc.NotDistroName != id.Name)
 	}
 	if wc.Architecture != "" {
 		match = match && (wc.Architecture == archStr)
@@ -304,6 +317,11 @@ func (di *distroImageConfig) For(nameVer string) (*distro.ImageConfig, error) {
 type distroImageConfigConditions struct {
 	When         whenCondition       `yaml:"when,omitempty"`
 	ShallowMerge *distro.ImageConfig `yaml:"shallow_merge,omitempty"`
+}
+
+type distroConditions struct {
+	When             *whenCondition `yaml:"when"`
+	IgnoreImageTypes []string       `yaml:"ignore_image_types"`
 }
 
 type ImageTypeYAML struct {
@@ -360,6 +378,8 @@ type ImageTypeYAML struct {
 	// TODO: determine a better place for these options, but for now they are here
 	DiskImagePartTool     *osbuild.PartTool `yaml:"disk_image_part_tool"`
 	DiskImageVPCForceSize *bool             `yaml:"disk_image_vpc_force_size"`
+
+	SupportedPartitioningModes []disk.PartitioningMode `yaml:"supported_partitioning_modes"`
 
 	// name is set by the loader
 	name string

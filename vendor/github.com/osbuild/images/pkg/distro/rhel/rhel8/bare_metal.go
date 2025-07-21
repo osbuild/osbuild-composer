@@ -1,11 +1,12 @@
 package rhel8
 
 import (
+	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distro/rhel"
 )
 
-func mkImageInstaller() *rhel.ImageType {
+func mkImageInstaller(rd *rhel.Distribution, a arch.Arch) *rhel.ImageType {
 	it := rhel.NewImageType(
 		"image-installer",
 		"installer.iso",
@@ -21,6 +22,7 @@ func mkImageInstaller() *rhel.ImageType {
 	it.Bootable = true
 	it.ISOLabelFn = distroISOLabelFunc
 
+	it.DefaultImageConfig = imageConfig(rd, a.String(), "image-installer")
 	it.DefaultInstallerConfig = &distro.InstallerConfig{
 		AdditionalDracutModules: []string{
 			"ifcfg",
