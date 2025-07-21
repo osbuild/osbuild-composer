@@ -236,13 +236,23 @@ func (ps *PackageSpec) GetNEVRA() string {
 	return fmt.Sprintf("%s-%s", ps.Name, ps.GetEVRA())
 }
 
-func GetVerStrFromPackageSpecList(pkgs []PackageSpec, packageName string) (string, error) {
+func GetPackage(pkgs []PackageSpec, packageName string) (PackageSpec, error) {
 	for _, pkg := range pkgs {
 		if pkg.Name == packageName {
-			return fmt.Sprintf("%s-%s.%s", pkg.Version, pkg.Release, pkg.Arch), nil
+			return pkg, nil
 		}
 	}
-	return "", fmt.Errorf("package %q not found in the PackageSpec list", packageName)
+
+	return PackageSpec{}, fmt.Errorf("package %q not found in the PackageSpec list", packageName)
+}
+
+func GetVerStrFromPackageSpecList(pkgs []PackageSpec, packageName string) (string, error) {
+	pkg, err := GetPackage(pkgs, packageName)
+	if err != nil {
+		return "", err
+	}
+
+	return pkg.GetEVRA(), nil
 }
 
 func GetVerStrFromPackageSpecListPanic(pkgs []PackageSpec, packageName string) string {

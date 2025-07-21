@@ -159,19 +159,8 @@ func (t *imageType) getPartitionTable(customizations *blueprint.Customizations, 
 		return disk.NewCustomPartitionTable(partitioning, partOptions, rng)
 	}
 
-	partitioningMode := options.PartitioningMode
-	if t.ImageTypeYAML.RPMOSTree {
-		// IoT supports only LVM, force it.
-		// Raw is not supported, return an error if it is requested
-		// TODO Need a central location for logic like this
-		if partitioningMode == disk.RawPartitioningMode {
-			return nil, fmt.Errorf("partitioning mode raw not supported for %s on %s", t.Name(), t.arch.Name())
-		}
-		partitioningMode = disk.AutoLVMPartitioningMode
-	}
-
 	mountpoints := customizations.GetFilesystems()
-	return disk.NewPartitionTable(basePartitionTable, mountpoints, imageSize, partitioningMode, t.platform.GetArch(), t.ImageTypeYAML.RequiredPartitionSizes, rng)
+	return disk.NewPartitionTable(basePartitionTable, mountpoints, imageSize, options.PartitioningMode, t.platform.GetArch(), t.ImageTypeYAML.RequiredPartitionSizes, rng)
 }
 
 func (t *imageType) getDefaultImageConfig() *distro.ImageConfig {
@@ -330,6 +319,10 @@ func (t *imageType) checkOptions(bp *blueprint.Blueprint, options distro.ImageOp
 
 	if !t.ImageTypeYAML.RPMOSTree && options.OSTree != nil {
 		return warnings, fmt.Errorf("OSTree is not supported for %q", t.Name())
+	}
+
+	if len(t.ImageTypeYAML.SupportedPartitioningModes) > 0 && !slices.Contains(t.ImageTypeYAML.SupportedPartitioningModes, options.PartitioningMode) {
+		return warnings, fmt.Errorf("partitioning mode %s not supported for %q on %q", options.PartitioningMode, t.Name(), t.arch.distro.Name())
 	}
 
 	// we do not support embedding containers on ostree-derived images, only on commits themselves
