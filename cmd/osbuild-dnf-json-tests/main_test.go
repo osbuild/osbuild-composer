@@ -13,7 +13,7 @@ import (
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/blueprint"
 	"github.com/osbuild/images/pkg/distro"
-	"github.com/osbuild/images/pkg/distro/rhel/rhel9"
+	"github.com/osbuild/images/pkg/distrofactory"
 	"github.com/osbuild/images/pkg/dnfjson"
 	"github.com/osbuild/images/pkg/ostree"
 	"github.com/osbuild/images/pkg/reporegistry"
@@ -29,7 +29,7 @@ func TestCrossArchDepsolve(t *testing.T) {
 	repoDir := "/usr/share/tests/osbuild-composer/repositories"
 
 	// NOTE: we can add RHEL, but don't make it hard requirement because it will fail outside of VPN
-	cs9 := rhel9.DistroFactory("centos-9")
+	cs9 := distrofactory.NewDefault().GetDistro("centos-9")
 	require.NotNil(t, cs9)
 
 	// Set up temporary directory for rpm/dnf cache
@@ -86,7 +86,7 @@ func TestDepsolvePackageSets(t *testing.T) {
 	repoDir := "/usr/share/tests/osbuild-composer/repositories"
 
 	// NOTE: we can add RHEL, but don't make it hard requirement because it will fail outside of VPN
-	cs9 := rhel9.DistroFactory("centos-9")
+	cs9 := distrofactory.NewDefault().GetDistro("centos-9")
 	require.NotNil(t, cs9)
 
 	// Set up temporary directory for rpm/dnf cache
