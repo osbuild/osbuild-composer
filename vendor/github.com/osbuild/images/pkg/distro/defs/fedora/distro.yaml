@@ -38,6 +38,13 @@
       - "rw"
       - "coreos.no_persist_ip"
 
+  rpm_ostree_imgtype_common: &rpm_ostree_imgtype_common
+    rpm_ostree: true
+    supported_partitioning_modes:
+      - ""  # empty string means default partitioning mode
+      - "auto-lvm"
+      - "lvm"
+
   environments:
     kvm: &kvm_env
       packages:
@@ -577,6 +584,13 @@ image_types:
       - <<: *aarch64_platform
         image_format: "vagrant_libvirt"
 
+  "server-vagrant-virtualbox": &server_vagrant_virtualbox
+    <<: *server_vagrant_libvirt
+    filename: "vagrant-virtualbox.box"
+    platforms:
+      - <<: *x86_64_bios_platform
+        image_format: "vagrant_virtualbox"
+
   "server-qcow2": &server_qcow2
     name_aliases: ["qcow2"]
     filename: "disk.qcow2"
@@ -747,10 +761,10 @@ image_types:
   # NOTE: keep in sync with official fedora-iot definitions:
   # https://pagure.io/fedora-iot/ostree/blob/main/f/fedora-iot-base.yaml
   "iot-commit": &iot_commit
+    <<: *rpm_ostree_imgtype_common
     name_aliases: ["fedora-iot-commit"]
     filename: "commit.tar"
     mime_type: "application/x-tar"
-    rpm_ostree: true
     image_func: "iot_commit"
     build_pipelines: ["build"]
     payload_pipelines: ["os", "ostree-commit", "commit-archive"]
@@ -911,7 +925,6 @@ image_types:
     name_aliases: ["fedora-iot-container"]
     filename: "container.tar"
     mime_type: "application/x-tar"
-    rpm_ostree: true
     image_func: "iot_container"
     build_pipelines: ["build"]
     payload_pipelines: ["os", "ostree-commit", "container-tree", "container"]
@@ -922,12 +935,12 @@ image_types:
       - *aarch64_installer_platform
 
   "iot-raw-xz":
+    <<: *rpm_ostree_imgtype_common
     name_aliases: ["iot-raw-image", "fedora-iot-raw-image"]
     filename: "image.raw.xz"
     compression: "xz"
     mime_type: "application/xz"
     default_size: 4_294_967_296  # 4 * datasizes.GibiByte
-    rpm_ostree: true
     bootable: true
     image_func: "iot"
     ostree:
@@ -1002,11 +1015,11 @@ image_types:
                 - *iot_base_partition_table_part_root_fstab_ro_aarch64
 
   "iot-qcow2":
+    <<: *rpm_ostree_imgtype_common
     name_aliases: ["iot-qcow2-image"]
     filename: "image.qcow2"
     mime_type: "application/x-qemu-disk"
     default_size: 10_737_418_240  # 10 * datasizes.GibiByte
-    rpm_ostree: true
     bootable: true
     image_func: "iot"
     ostree:
@@ -1031,9 +1044,9 @@ image_types:
         qcow2_compat: "1.1"
 
   "iot-bootable-container":
+    <<: *rpm_ostree_imgtype_common
     filename: "iot-bootable-container.tar"
     mime_type: "application/x-tar"
-    rpm_ostree: true
     image_func: "bootable_container"
     build_pipelines: ["build"]
     payload_pipelines: ["os", "ostree-commit", "ostree-encapsulate"]
@@ -1468,10 +1481,10 @@ image_types:
                   - "dmidecode"
 
   "iot-installer":
+    <<: *rpm_ostree_imgtype_common
     name_aliases: ["fedora-iot-installer"]
     filename: "installer.iso"
     mime_type: "application/x-iso9660-image"
-    rpm_ostree: true
     boot_iso: true
     image_func: "iot_installer"
     iso_label: "IoT"
@@ -1497,6 +1510,11 @@ image_types:
             version_less_than: "41"
           shallow_merge:
             iso_rootfs_type: "squashfs-ext4"
+        "x86_64 uses grub2":
+          when:
+            arch: "x86_64"
+          shallow_merge:
+            iso_boot_type: "grub2"
     package_sets:
       installer:
         - *anaconda_pkgset
@@ -1532,6 +1550,11 @@ image_types:
             version_less_than: "41"
           shallow_merge:
             iso_rootfs_type: "squashfs-ext4"
+        "x86_64 uses grub2":
+          when:
+            arch: "x86_64"
+          shallow_merge:
+            iso_boot_type: "grub2"
     package_sets:
       installer:
         - include:
@@ -1628,6 +1651,11 @@ image_types:
             version_less_than: "41"
           shallow_merge:
             iso_rootfs_type: "squashfs-ext4"
+        "x86_64 uses grub2":
+          when:
+            arch: "x86_64"
+          shallow_merge:
+            iso_boot_type: "grub2"
     platforms:
       - *x86_64_installer_platform
       - *aarch64_installer_platform
@@ -1807,9 +1835,9 @@ image_types:
                   - "fuse-libs"
 
   "iot-simplified-installer":
+    <<: *rpm_ostree_imgtype_common
     filename: "simplified-installer.iso"
     mime_type: "application/x-iso9660-image"
-    rpm_ostree: true
     bootable: true
     boot_iso: true
     default_size: 10_737_418_240  # 10 * datasizes.GibiByte

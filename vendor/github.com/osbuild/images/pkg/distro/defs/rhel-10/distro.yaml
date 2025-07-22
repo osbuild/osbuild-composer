@@ -799,7 +799,7 @@ image_types:
                   - "insights-client"
                   - "subscription-manager-cockpit"
 
-  "vagrant-libvirt":
+  "vagrant-libvirt": &vagrant_libvirt
     <<: *qcow2
     filename: "vagrant-libvirt.box"
     mime_type: "application/x-tar"
@@ -813,10 +813,8 @@ image_types:
     platforms:
       - <<: *x86_64_bios_platform
         image_format: "vagrant_libvirt"
-        qcow2_compat: ""
       - <<: *aarch64_platform
         image_format: "vagrant_libvirt"
-        qcow2_compat: ""
     image_config:
       <<: *qcow2_image_config
       users:
@@ -833,6 +831,13 @@ image_types:
           mode: 440
           data: |
             vagrant ALL=(ALL) NOPASSWD: ALL
+
+  "vagrant-virtualbox":
+    <<: *vagrant_libvirt
+    filename: "vagrant-virtualbox.box"
+    platforms:
+      - <<: *x86_64_bios_platform
+        image_format: "vagrant_virtualbox"
 
   oci:
     <<: *qcow2
@@ -1525,6 +1530,12 @@ image_types:
     required_partition_sizes: *default_required_dir_sizes
     image_config:
       iso_rootfs_type: "squashfs"
+      conditions:
+        "x86_64 uses grub2":
+          when:
+            arch: "x86_64"
+          shallow_merge:
+            iso_boot_type: "grub2"
     installer_config:
       additional_dracut_modules:
         - "nvdimm"  # non-volatile DIMM firmware (provides nfit, cuse, and nd_e820)

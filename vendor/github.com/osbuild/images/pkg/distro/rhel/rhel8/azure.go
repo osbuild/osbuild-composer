@@ -106,7 +106,6 @@ func mkAzureEap7RhuiImgType(rd *rhel.Distribution, a arch.Arch) *rhel.ImageType 
 	it.Bootable = true
 	it.DefaultSize = 64 * datasizes.GibiByte
 	it.BasePartitionTables = partitionTables
-	it.Workload = eapWorkload()
 
 	return it
 }

@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/osbuild/images/internal/workload"
-	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/blueprint"
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/customizations/anaconda"
@@ -155,9 +154,9 @@ func osCustomizations(t *imageType, osPackageSet rpmmd.PackageSet, options distr
 		osc.ChronyConfig = imageConfig.TimeSynchronization
 	}
 
-	// Relabel the tree, unless the `NoSElinux` flag is explicitly set to `true`
-	if imageConfig.NoSElinux == nil || imageConfig.NoSElinux != nil && !*imageConfig.NoSElinux {
-		osc.SElinux = "targeted"
+	// Relabel the tree, unless the `NoSELinux` flag is explicitly set to `true`
+	if imageConfig.NoSELinux == nil || imageConfig.NoSELinux != nil && !*imageConfig.NoSELinux {
+		osc.SELinux = "targeted"
 		osc.SELinuxForceRelabel = imageConfig.SELinuxForceRelabel
 	}
 
@@ -316,6 +315,8 @@ func osCustomizations(t *imageType, osPackageSet rpmmd.PackageSet, options distr
 	if imageConfig.MountUnits != nil {
 		osc.MountUnits = *imageConfig.MountUnits
 	}
+
+	osc.VersionlockPackages = imageConfig.VersionlockPackages
 
 	return osc, nil
 }
@@ -527,13 +528,14 @@ func liveInstallerImage(workload workload.Workload,
 
 	img.Filename = t.Filename()
 
-	// Enable grub2 BIOS iso on x86_64 only
-	if img.Platform.GetArch() == arch.ARCH_X86_64 {
-		img.ISOBoot = manifest.Grub2ISOBoot
-	}
-
 	if locale := t.getDefaultImageConfig().Locale; locale != nil {
 		img.Locale = *locale
+	}
+	if isoroot := t.getDefaultImageConfig().ISORootfsType; isoroot != nil {
+		img.RootfsType = *isoroot
+	}
+	if isoboot := t.getDefaultImageConfig().ISOBootType; isoboot != nil {
+		img.ISOBoot = *isoboot
 	}
 
 	installerConfig, err := t.getDefaultInstallerConfig()
@@ -546,11 +548,6 @@ func liveInstallerImage(workload workload.Workload,
 		if installerConfig.SquashfsRootfs != nil && *installerConfig.SquashfsRootfs {
 			img.RootfsType = manifest.SquashfsRootfs
 		}
-	}
-
-	imgConfig := t.getDefaultImageConfig()
-	if imgConfig != nil && imgConfig.IsoRootfsType != nil {
-		img.RootfsType = *imgConfig.IsoRootfsType
 	}
 
 	return img, nil
@@ -639,14 +636,11 @@ func imageInstallerImage(workload workload.Workload,
 	img.Filename = t.Filename()
 
 	img.RootfsCompression = "xz" // This also triggers using the bcj filter
-	imgConfig := t.getDefaultImageConfig()
-	if imgConfig != nil && imgConfig.IsoRootfsType != nil {
-		img.RootfsType = *imgConfig.IsoRootfsType
+	if isoroot := t.getDefaultImageConfig().ISORootfsType; isoroot != nil {
+		img.RootfsType = *isoroot
 	}
-
-	// Enable grub2 BIOS iso on x86_64 only
-	if img.Platform.GetArch() == arch.ARCH_X86_64 {
-		img.ISOBoot = manifest.Grub2ISOBoot
+	if isoboot := t.getDefaultImageConfig().ISOBootType; isoboot != nil {
+		img.ISOBoot = *isoboot
 	}
 
 	return img, nil
@@ -838,18 +832,14 @@ func iotInstallerImage(workload workload.Workload,
 	img.Filename = t.Filename()
 
 	img.RootfsCompression = "xz" // This also triggers using the bcj filter
-	imgConfig := t.getDefaultImageConfig()
-	if imgConfig != nil && imgConfig.IsoRootfsType != nil {
-		img.RootfsType = *imgConfig.IsoRootfsType
-	}
-
-	// Enable grub2 BIOS iso on x86_64 only
-	if img.Platform.GetArch() == arch.ARCH_X86_64 {
-		img.ISOBoot = manifest.Grub2ISOBoot
-	}
-
 	if locale := t.getDefaultImageConfig().Locale; locale != nil {
 		img.Locale = *locale
+	}
+	if isoroot := t.getDefaultImageConfig().ISORootfsType; isoroot != nil {
+		img.RootfsType = *isoroot
+	}
+	if isoboot := t.getDefaultImageConfig().ISOBootType; isoboot != nil {
+		img.ISOBoot = *isoboot
 	}
 
 	return img, nil

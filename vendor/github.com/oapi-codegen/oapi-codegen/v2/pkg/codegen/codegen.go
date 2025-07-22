@@ -47,6 +47,9 @@ var globalState struct {
 	options       Configuration
 	spec          *openapi3.T
 	importMapping importMap
+	// initialismsMap stores initialisms as "lower(initialism) -> initialism" map.
+	// List of initialisms was taken from https://staticcheck.io/docs/configuration/options/#initialisms.
+	initialismsMap map[string]string
 }
 
 // goImport represents a go package to be imported in the generated code
@@ -139,6 +142,12 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 			opts.OutputOptions.NameNormalizer, NameNormalizers.Options())
 	}
 
+	if nameNormalizerFunction != NameNormalizerFunctionToCamelCaseWithInitialisms && len(opts.OutputOptions.AdditionalInitialisms) > 0 {
+		return "", fmt.Errorf("you have specified `additional-initialisms`, but the `name-normalizer` is not set to `ToCamelCaseWithInitialisms`. Please specify `name-normalizer: ToCamelCaseWithInitialisms` or remove the `additional-initialisms` configuration")
+	}
+
+	globalState.initialismsMap = makeInitialismsMap(opts.OutputOptions.AdditionalInitialisms)
+
 	// This creates the golang templates text package
 	TemplateFunctions["opts"] = func() Configuration { return globalState.options }
 	t := template.New("oapi-codegen").Funcs(TemplateFunctions)
@@ -191,6 +200,14 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 			return "", fmt.Errorf("error getting type definition imports: %w", err)
 		}
 		MergeImports(xGoTypeImports, imprts)
+	}
+
+	var serverURLsDefinitions string
+	if opts.Generate.ServerURLs {
+		serverURLsDefinitions, err = GenerateServerURLs(t, spec)
+		if err != nil {
+			return "", fmt.Errorf("error generating Server URLs: %w", err)
+		}
 	}
 
 	var irisServerOut string
@@ -315,6 +332,11 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	_, err = w.WriteString(constantDefinitions)
 	if err != nil {
 		return "", fmt.Errorf("error writing constants: %w", err)
+	}
+
+	_, err = w.WriteString(serverURLsDefinitions)
+	if err != nil {
+		return "", fmt.Errorf("error writing Server URLs: %w", err)
 	}
 
 	_, err = w.WriteString(typeDefinitions)
@@ -955,7 +977,9 @@ func GetUserTemplateText(inputData string) (template string, err error) {
 		return "", fmt.Errorf("failed to execute GET request data from %s: %w", inputData, err)
 	}
 	if resp != nil {
-		defer resp.Body.Close()
+		defer func() {
+			_ = resp.Body.Close()
+		}()
 	}
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return "", fmt.Errorf("got non %d status code on GET %s", resp.StatusCode, inputData)
