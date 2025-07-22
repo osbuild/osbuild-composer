@@ -77,8 +77,8 @@ func (img *AnacondaLiveInstaller) InstantiateManifest(m *manifest.Manifest,
 	livePipeline.Biosdevname = (img.Platform.GetArch() == arch.ARCH_X86_64)
 	livePipeline.Locale = img.Locale
 
-	// The live installer has SElinux enabled and targeted
-	livePipeline.SElinux = "targeted"
+	// The live installer has SELinux enabled and targeted
+	livePipeline.SELinux = "targeted"
 
 	livePipeline.Checkpoint()
 

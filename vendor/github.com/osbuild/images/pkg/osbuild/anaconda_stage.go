@@ -44,7 +44,7 @@ func defaultModuleStates() map[string]bool {
 		anaconda.ModuleLocalization: false,
 		anaconda.ModuleNetwork:      true,
 		anaconda.ModulePayloads:     true,
-		anaconda.ModuleRuntime:      false,
+		anaconda.ModuleRuntime:      true,
 		anaconda.ModuleSecurity:     false,
 		anaconda.ModuleServices:     false,
 		anaconda.ModuleStorage:      true,

@@ -81,6 +81,18 @@ distros:
         - "platform-python"  # osbuild
         - "systemd"  # systemd-tmpfiles and systemd-sysusers
         - "python3"  # osbuild stages
+    conditions:
+      "some image types are rhel-only":
+        when:
+          not_distro_name: "rhel"
+        ignore_image_types:
+          - azure-cvm
+          - azure-rhui
+          - azure-sap-rhui
+          - azure-sapapps-rhui
+          - ec2
+          - ec2-sap
+          - ec2-ha
     # rhel9 & cs9 share the same list
     # of allowed profiles so a single
     # allow list can be used
@@ -111,6 +123,7 @@ distros:
     iso_label_tmpl: "AlmaLinux-{{.Distro.MajorVersion}}-{{.Distro.MinorVersion}}-{{.Arch}}-dvd"
 
   - &centos10
+    <<: *rhel10
     name: centos-10
     distro_like: rhel-10
     product: "CentOS Stream"
@@ -122,14 +135,6 @@ distros:
     default_fs_type: "xfs"
     defs_path: rhel-10
     iso_label_tmpl: "CentOS-Stream-{{.Distro.MajorVersion}}-BaseOS-{{.Arch}}"
-    ignore_image_types:
-      - azure-cvm
-      - azure-rhui
-      - azure-sap-rhui
-      - azure-sapapps-rhui
-      - ec2
-      - ec2-sap
-      - ec2-ha
     runner:
       name: org.osbuild.centos10
       build_packages:
