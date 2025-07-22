@@ -134,6 +134,14 @@ greenprint "📀 Getting disk image"
 get_compose_image "$COMPOSE_ID"
 
 DISK="$COMPOSE_ID-image.wsl"
+
+# backward compatibility for RHEL nightly tests
+if ! nvrGreaterOrEqual "osbuild-composer" "146"; then
+    DISK="$COMPOSE_ID-disk.tar.gz"
+fi
+
+greenprint "Looking for disk image: $DISK"
+
 if [ ! -f "$DISK" ]; then
     redprint "Disk image missing from results"
     exit 1
