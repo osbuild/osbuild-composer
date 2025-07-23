@@ -80,7 +80,6 @@ jobs:
         PGPORT: 5432
       run: |
         ./tools/dbtest-prepare-env.sh
-        ./tools/dbtest-run-migrations.sh
     - run: ./tools/dbtest-entrypoint.sh
 
   python-lint:
