@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/osbuild/images/pkg/arch"
-	"github.com/osbuild/images/pkg/distro/rhel/rhel9"
 	"github.com/osbuild/images/pkg/distro/test_distro"
+	"github.com/osbuild/images/pkg/distrofactory"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/target"
 
@@ -58,7 +58,7 @@ func TestGetOstreeOptions(t *testing.T) {
 func TestGetTargets(t *testing.T) {
 	at := assert.New(t)
 
-	r9 := rhel9.DistroFactory("rhel-9.3")
+	r9 := distrofactory.NewDefault().GetDistro("rhel-9.3")
 	require.NotNil(t, r9)
 	arch, err := r9.GetArch(arch.ARCH_X86_64.String())
 	at.NoError(err)
