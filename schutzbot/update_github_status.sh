@@ -29,7 +29,11 @@ fi
 
 CONTEXT="Schutzbot on GitLab"
 if [[ "$CI_PIPELINE_SOURCE" == "schedule" ]]; then
-    CONTEXT="$CONTEXT, RHEL-${RHEL_MAJOR:-}-nightly"
+    if [[ "$NIGHTLY" == "true" ]]; then
+        CONTEXT="$CONTEXT, scheduled RHEL-${RHEL_MAJOR:-}-nightly"
+    else
+        CONTEXT="$CONTEXT, scheduled RHEL GA"
+    fi
 fi
 
 curl \
