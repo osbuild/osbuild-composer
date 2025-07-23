@@ -1,6 +1,7 @@
 [Unit]
 Description=Worker Initialization Service
 ConditionPathExists=!/etc/worker-first-boot
+ConditionPathExists=!/tmp/worker-run-executor-service
 Wants=cloud-final.service
 After=cloud-final.service
 
