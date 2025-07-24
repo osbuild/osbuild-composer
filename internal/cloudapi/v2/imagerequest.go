@@ -291,6 +291,8 @@ func getDefaultTarget(imageType ImageTypes) (UploadTypes, error) {
 	case ImageTypesAzureRhui:
 		fallthrough
 	case ImageTypesAzureSapRhui:
+		fallthrough
+	case ImageTypesAzureSapappsRhui:
 		return UploadTypesAzure, nil
 
 	case ImageTypesOci:
@@ -334,11 +336,12 @@ func targetSupportMap() map[UploadTypes]map[ImageTypes]bool {
 			ImageTypesGcpRhui: true,
 		},
 		UploadTypesAzure: {
-			ImageTypesAzure:         true,
-			ImageTypesAzureCvm:      true,
-			ImageTypesAzureRhui:     true,
-			ImageTypesAzureEap7Rhui: true,
-			ImageTypesAzureSapRhui:  true,
+			ImageTypesAzure:            true,
+			ImageTypesAzureCvm:         true,
+			ImageTypesAzureRhui:        true,
+			ImageTypesAzureEap7Rhui:    true,
+			ImageTypesAzureSapRhui:     true,
+			ImageTypesAzureSapappsRhui: true,
 		},
 		UploadTypesOciObjectstorage: {
 			ImageTypesOci: true,
@@ -357,6 +360,7 @@ func targetSupportMap() map[UploadTypes]map[ImageTypes]bool {
 			ImageTypesAzureRhui:            true,
 			ImageTypesAzureEap7Rhui:        true,
 			ImageTypesAzureSapRhui:         true,
+			ImageTypesAzureSapappsRhui:     true,
 			ImageTypesEdgeCommit:           true,
 			ImageTypesEdgeContainer:        true,
 			ImageTypesEdgeInstaller:        true,

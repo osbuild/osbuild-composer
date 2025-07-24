@@ -907,6 +907,12 @@ func TestGetImageRequests_ImageTypeConversion(t *testing.T) {
 			expectedTargetName: target.TargetNameAzureImage,
 		},
 		{
+			requestedImageType: ImageTypesAzureSapappsRhui,
+			requestedDistros:   []string{rhel9},
+			expectedImageType:  "azure-sapapps-rhui",
+			expectedTargetName: target.TargetNameAzureImage,
+		},
+		{
 			requestedImageType: ImageTypesEdgeCommit,
 			requestedDistros:   []string{rhel8, centos8, rhel9, centos9},
 			expectedImageType:  "edge-commit",
