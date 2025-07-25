@@ -189,6 +189,8 @@ func imageTypeFromApiImageType(it ImageTypes, arch distro.Arch) string {
 		return "azure-eap7-rhui"
 	case ImageTypesAzureSapRhui:
 		return "azure-sap-rhui"
+	case ImageTypesAzureSapappsRhui:
+		return "azure-sapapps-rhui"
 	case ImageTypesGuestImage:
 		return "qcow2"
 	case ImageTypesVsphere:
