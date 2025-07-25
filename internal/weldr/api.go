@@ -8,7 +8,6 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"errors"
-	errors_package "errors"
 	"fmt"
 	"io"
 	"log"
@@ -498,7 +497,7 @@ func (api *API) parseDistro(query url.Values, arch string) (string, error) {
 		if common.IsStringInSortedSlice(api.validDistros(arch), distro) {
 			return distro, nil
 		}
-		return "", errors_package.New("Invalid distro: " + distro)
+		return "", errors.New("Invalid distro: " + distro)
 	}
 	return api.hostDistroName, nil
 }
@@ -841,7 +840,7 @@ func DecodeSourceConfigV0(body io.Reader, contentType string) (source SourceConf
 			source = srcMap[keys[0]]
 		}
 	} else {
-		err = errors_package.New("blueprint must be in json or toml format")
+		err = errors.New("blueprint must be in json or toml format")
 	}
 	return source, err
 }
@@ -879,11 +878,11 @@ func DecodeSourceConfigV1(body io.Reader, contentType string) (source SourceConf
 			}
 		}
 	} else {
-		err = errors_package.New("blueprint must be in json or toml format")
+		err = errors.New("blueprint must be in json or toml format")
 	}
 
 	if err == nil && len(source.GetKey()) == 0 {
-		err = errors_package.New("'id' field is missing from request")
+		err = errors.New("'id' field is missing from request")
 	}
 
 	return source, err
@@ -924,11 +923,11 @@ func (api *API) sourceNewHandler(writer http.ResponseWriter, request *http.Reque
 	// Basic check of the source, should at least have a name and type
 	if err == nil {
 		if len(source.GetName()) == 0 {
-			err = errors_package.New("'name' field is missing from request")
+			err = errors.New("'name' field is missing from request")
 		} else if len(source.GetType()) == 0 {
-			err = errors_package.New("'type' field is missing from request")
+			err = errors.New("'type' field is missing from request")
 		} else if len(source.SourceConfig().URL) == 0 {
-			err = errors_package.New("'url' field is missing from request")
+			err = errors.New("'url' field is missing from request")
 		}
 	}
 	if err != nil {
@@ -2040,7 +2039,7 @@ func (api *API) blueprintsNewHandler(writer http.ResponseWriter, request *http.R
 	} else if contentType[0] == "text/x-toml" {
 		_, err = toml.NewDecoder(request.Body).Decode(&blueprint)
 	} else {
-		err = errors_package.New("blueprint must be in json or toml format")
+		err = errors.New("blueprint must be in json or toml format")
 	}
 
 	if err != nil {
@@ -2135,7 +2134,7 @@ func (api *API) blueprintsWorkspaceHandler(writer http.ResponseWriter, request *
 	} else if contentType[0] == "text/x-toml" {
 		_, err = toml.NewDecoder(request.Body).Decode(&blueprint)
 	} else {
-		err = errors_package.New("blueprint must be in json or toml format")
+		err = errors.New("blueprint must be in json or toml format")
 	}
 
 	if err != nil {

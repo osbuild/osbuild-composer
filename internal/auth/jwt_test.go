@@ -32,7 +32,7 @@ func TestChannelFromContext(t *testing.T) {
 			token:          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.AmoXfoVMgoq4H-XsD7lTGgY6QJCW1914aYlmGnj7wtY",
 			value:          "",
 			expectedFields: []string{"rh-org-id"},
-			err:            auth.NoKeyError,
+			err:            auth.ErrNoKey,
 		},
 		{
 			name:           "no rh-org-id but account_id=123",
@@ -60,7 +60,7 @@ func TestChannelFromContext(t *testing.T) {
 
 	t.Run("no jwt token in context", func(t *testing.T) {
 		channel, err := auth.GetFromClaims(context.Background(), []string{"osbuild!"})
-		require.ErrorIs(t, err, auth.NoJWTError)
+		require.ErrorIs(t, err, auth.ErrNoJWT)
 		require.Equal(t, "", channel)
 	})
 }
