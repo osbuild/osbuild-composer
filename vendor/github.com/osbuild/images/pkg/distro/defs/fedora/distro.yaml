@@ -175,6 +175,7 @@
       - "org.fedoraproject.Anaconda.Modules.Users"
     additional_dracut_modules:
       - "net-lib"
+      - "dbus-broker"
     squashfs_rootfs: true
     conditions:
       "f41 dracut requires ifcfg, rootfs is squashfs":
@@ -183,12 +184,14 @@
         shallow_merge:
           additional_dracut_modules:
             - "ifcfg"
+            - "dbus-broker"
       "f40 and lower uses ifcfg in dracut and squashfs+ext4 rootfs":
         when:
           version_less_than: "41"
         shallow_merge:
           additional_dracut_modules:
             - "ifcfg"
+            - "dbus-broker"
           squashfs_rootfs: false
 
   image_config:
@@ -228,6 +231,15 @@
               - "zezere_ignition_banner.service"
               - "parsec"
               - "dbus-parsec"
+        "f43 uses new greenboot":
+          when:
+            version_greater_or_equal: "43"
+          shallow_merge:
+            enabled_services:
+              - "NetworkManager.service"
+              - "firewalld.service"
+              - "sshd.service"
+              - "greenboot-healthcheck"
     iot: &image_config_iot
       <<: *image_config_iot_enabled_services
       keyboard:
@@ -770,8 +782,9 @@ image_types:
     payload_pipelines: ["os", "ostree-commit", "commit-archive"]
     exports: ["commit-archive"]
     required_partition_sizes: *default_required_dir_sizes
-    image_config:
+    image_config: &image_config_iot_commit
       <<: *image_config_iot_enabled_services
+      install_weak_deps: false
       dracut_conf:
         - filename: "40-fips.conf"
           config:
@@ -930,6 +943,9 @@ image_types:
     payload_pipelines: ["os", "ostree-commit", "container-tree", "container"]
     exports: ["container"]
     required_partition_sizes: *default_required_dir_sizes
+    image_config:
+      <<: *image_config_iot_commit
+      install_weak_deps: true
     platforms:
       - *x86_64_installer_platform
       - *aarch64_installer_platform
@@ -944,8 +960,8 @@ image_types:
     bootable: true
     image_func: "iot"
     ostree:
-      name: "fedora"
-      remote: "fedora-iot"
+      name: "fedora-iot"
+      remote_name: "fedora-iot"
     build_pipelines: ["build"]
     payload_pipelines: ["ostree-deployment", "image", "xz"]
     exports: ["xz"]
@@ -1023,8 +1039,8 @@ image_types:
     bootable: true
     image_func: "iot"
     ostree:
-      name: "fedora"
-      remote: "fedora-iot"
+      name: "fedora-iot"
+      remote_name: "fedora-iot"
     build_pipelines: ["build"]
     payload_pipelines: ["ostree-deployment", "image", "qcow2"]
     exports: ["qcow2"]
@@ -1488,9 +1504,10 @@ image_types:
     boot_iso: true
     image_func: "iot_installer"
     iso_label: "IoT"
+    variant: "IoT"
     ostree:
       name: "fedora-iot"
-      remote: "fedora-iot"
+      remote_name: "fedora-iot"
     build_pipelines: ["build"]
     payload_pipelines:
       - "anaconda-tree"
@@ -1843,9 +1860,10 @@ image_types:
     default_size: 10_737_418_240  # 10 * datasizes.GibiByte
     image_func: "iot_simplified_installer"
     iso_label: "IoT"
+    variant: "IoT"
     ostree:
       name: "fedora"
-      remote: "fedora-iot"
+      remote_name: "fedora-iot"
     build_pipelines: ["build"]
     payload_pipelines:
       - "ostree-deployment"

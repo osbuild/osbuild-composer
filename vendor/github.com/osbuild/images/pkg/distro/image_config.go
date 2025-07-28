@@ -186,6 +186,9 @@ type DNFConfig struct {
 // InheritFrom inherits unset values from the provided parent configuration and
 // returns a new structure instance, which is a result of the inheritance.
 func (c *ImageConfig) InheritFrom(parentConfig *ImageConfig) *ImageConfig {
+	if c == nil {
+		c = &ImageConfig{}
+	}
 	return shallowMerge(c, parentConfig)
 }
 

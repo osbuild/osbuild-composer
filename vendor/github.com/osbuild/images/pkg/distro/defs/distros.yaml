@@ -43,7 +43,7 @@ distros:
   - &fedora_stable
     <<: *fedora_rawhide
     name: "fedora-{{.MajorVersion}}"
-    match: "fedora-[0-9][0-9]{,[0-9]}"
+    match: 'fedora-[1-9][0-9]+'
     preview: false
     os_version: "{{.MajorVersion}}"
     release_version: "{{.MajorVersion}}"
@@ -63,7 +63,7 @@ distros:
 
   - &rhel10
     name: "rhel-{{.MajorVersion}}.{{.MinorVersion}}"
-    match: "rhel-10.[0-9]{,[0-9]}"
+    match: 'rhel-10\.[0-9]{1,2}'
     distro_like: rhel-10
     product: "Red Hat Enterprise Linux"
     os_version: "10.{{.MinorVersion}}"
@@ -76,7 +76,7 @@ distros:
     iso_label_tmpl: "RHEL-{{.Distro.MajorVersion}}-{{.Distro.MinorVersion}}-0-BaseOS-{{.Arch}}"
     runner:
       name: "org.osbuild.rhel{{.MajorVersion}}{{.MinorVersion}}"
-      build_packages: &rhel_runner_build_packages
+      build_packages: &rhel10_runner_build_packages
         - "glibc"  # ldconfig
         - "platform-python"  # osbuild
         - "systemd"  # systemd-tmpfiles and systemd-sysusers
@@ -93,10 +93,9 @@ distros:
           - ec2
           - ec2-sap
           - ec2-ha
-    # rhel9 & cs9 share the same list
-    # of allowed profiles so a single
-    # allow list can be used
-    oscap_profiles_allowlist: &oscap_profile_allowlist_rhel10
+    # rhel & centos share the same list of allowed profiles so a
+    # single allow list can be used
+    oscap_profiles_allowlist: &oscap_profile_allowlist_rhel
       - "xccdf_org.ssgproject.content_profile_anssi_bp28_enhanced"
       - "xccdf_org.ssgproject.content_profile_anssi_bp28_high"
       - "xccdf_org.ssgproject.content_profile_anssi_bp28_intermediary"
@@ -113,10 +112,15 @@ distros:
       - "xccdf_org.ssgproject.content_profile_pci-dss"
       - "xccdf_org.ssgproject.content_profile_stig"
       - "xccdf_org.ssgproject.content_profile_stig_gui"
+    bootstrap_containers:
+      x86_64: "registry.access.redhat.com/ubi{{.MajorVersion}}/ubi:latest"
+      aarch64: "registry.access.redhat.com/ubi{{.MajorVersion}}/ubi:latest"
+      ppc64le: "registry.access.redhat.com/ubi{{.MajorVersion}}/ubi:latest"
+      s390x: "registry.access.redhat.com/ubi{{.MajorVersion}}/ubi:latest"
 
   - <<: *rhel10
     name: "almalinux-{{.MajorVersion}}.{{.MinorVersion}}"
-    match: "almalinux-10.[0-9]{,[0-9]}"
+    match: 'almalinux-10\.[0-9]{1,2}'
     product: "AlmaLinux"
     vendor: "almalinux"
     ostree_ref_tmpl: "almalinux/10/%%s/edge"
@@ -137,12 +141,13 @@ distros:
     iso_label_tmpl: "CentOS-Stream-{{.Distro.MajorVersion}}-BaseOS-{{.Arch}}"
     runner:
       name: org.osbuild.centos10
-      build_packages:
-        - "glibc"  # ldconfig
-        - "platform-python"  # osbuild
-        - "systemd"  # systemd-tmpfiles and systemd-sysusers
-        - "python3"  # osbuild stages
-    oscap_profiles_allowlist: *oscap_profile_allowlist_rhel10
+      build_packages: *rhel10_runner_build_packages
+    oscap_profiles_allowlist: *oscap_profile_allowlist_rhel
+    bootstrap_containers:
+      # we need the toolbox container because stock centos has e.g. no
+      # mount util
+      x86_64: "quay.io/toolbx-images/centos-toolbox:stream{{.MajorVersion}}"
+      aarch64: "quay.io/toolbx-images/centos-toolbox:stream{{.MajorVersion}}"
 
   - <<: *centos10
     name: "almalinux_kitten-10"
@@ -153,9 +158,146 @@ distros:
     vendor: "almalinux"
     ostree_ref_tmpl: "almalinux/10/%s/edge"
 
+  - &rhel9
+    name: "rhel-{{.MajorVersion}}.{{.MinorVersion}}"
+    # rhel9 support being named "rhel-91" for "rhel-9.1" or "rhel-910" for "rhel-9.10" etc
+    match: '(?P<name>rhel)-(?P<major>9)\.?(?P<minor>[0-9]{1,2})'
+    distro_like: rhel-9
+    product: "Red Hat Enterprise Linux"
+    os_version: "9.{{.MinorVersion}}"
+    release_version: 9
+    module_platform_id: "platform:el9"
+    vendor: "redhat"
+    ostree_ref_tmpl: "rhel/9/%s/edge"
+    default_fs_type: "xfs"
+    defs_path: rhel-9
+    iso_label_tmpl: "RHEL-{{.Distro.MajorVersion}}-{{.Distro.MinorVersion}}-0-BaseOS-{{.Arch}}"
+    conditions:
+      "some image types are rhel-only":
+        when:
+          not_distro_name: "rhel"
+        ignore_image_types:
+          - azure-cvm
+          - azure-rhui
+          - azure-sap-rhui
+          - azure-sapapps-rhui
+          - ec2
+          - ec2-sap
+          - ec2-ha
+      "CVM is only available starting from 9.6":
+        when:
+          version_less_than: "9.6"
+        ignore_image_types:
+          - "azure-cvm"
+    runner:
+      name: "org.osbuild.rhel{{.MajorVersion}}{{.MinorVersion}}"
+      build_packages: &rhel9_runner_build_packages
+        - "glibc"  # ldconfig
+        - "systemd"  # systemd-tmpfiles and systemd-sysusers
+        - "platform-python"  # osbuild
+        - "python3"
+    # rhel9 allow all
+    oscap_profiles_allowlist: *oscap_profile_allowlist_rhel
+    bootstrap_containers:
+      x86_64: "registry.access.redhat.com/ubi{{.MajorVersion}}/ubi:latest"
+      aarch64: "registry.access.redhat.com/ubi{{.MajorVersion}}/ubi:latest"
+      ppc64le: "registry.access.redhat.com/ubi{{.MajorVersion}}/ubi:latest"
+      s390x: "registry.access.redhat.com/ubi{{.MajorVersion}}/ubi:latest"
+
+  - &centos9
+    <<: *rhel9
+    name: centos-9
+    distro_like: rhel-9
+    product: "CentOS Stream"
+    os_version: "9-stream"
+    vendor: "centos"
+    ostree_ref_tmpl: "centos/9/%s/edge"
+    default_fs_type: "xfs"
+    defs_path: rhel-9
+    iso_label_tmpl: "CentOS-Stream-{{.Distro.MajorVersion}}-BaseOS-{{.Arch}}"
+    runner:
+      name: org.osbuild.centos9
+      build_packages: *rhel9_runner_build_packages
+    bootstrap_containers:
+      # we need the toolbox container because stock centos has e.g. no
+      # mount util
+      x86_64: "quay.io/toolbx-images/centos-toolbox:stream{{.MajorVersion}}"
+      aarch64: "quay.io/toolbx-images/centos-toolbox:stream{{.MajorVersion}}"
+
+  - &rhel8
+    name: "rhel-{{.MajorVersion}}.{{.MinorVersion}}"
+    # rhel8 support being named "rhel-81" for "rhel-8.1" or "rhel-810" for "rhel-8.10" etc
+    match: '(?P<name>rhel)-(?P<major>8)\.?(?P<minor>[0-9]{1,2})'
+    distro_like: rhel-8
+    product: "Red Hat Enterprise Linux"
+    os_version: "8.{{.MinorVersion}}"
+    release_version: 8
+    module_platform_id: "platform:el8"
+    vendor: "redhat"
+    ostree_ref_tmpl: "rhel/8/%s/edge"
+    default_fs_type: "xfs"
+    defs_path: rhel-8
+    iso_label_tmpl: "RHEL-{{.Distro.MajorVersion}}-{{.Distro.MinorVersion}}-0-BaseOS-{{.Arch}}"
+    conditions:
+      "edge image types require FDO which aren't available on older versions":
+        when:
+          version_less_than: "8.6"
+        ignore_image_types:
+          - "edge-simplified-installer"
+          - "edge-raw-image"
+      "azure eap7 is only available for rhel8.6+":
+        when:
+          version_less_than: "8.6"
+        ignore_image_types:
+          - "azure-eap7-rhui"
+      "Azure image types require hyperv-daemons which isn't available on older versions":
+        when:
+          version_less_than: "8.6"
+          arch: "aarch64"
+        ignore_image_types:
+          - "azure-rhui"
+          - "vhd"
+    runner:
+      name: "org.osbuild.rhel{{.MajorVersion}}{{.MinorVersion}}"
+      build_packages: &rhel8_runner_build_packages
+        - "glibc"  # ldconfig
+        - "systemd"  # systemd-tmpfiles and systemd-sysusers
+        - "platform-python"  # osbuild
+        # The RHEL 8 runner in osbuild runs with platform-python but
+        # explicitly symlinks python 3.6 to /etc/alternatives (which in turn
+        # is the target for /usr/bin/python3) for the stages.
+        # https://github.com/osbuild/osbuild/blob/ea8261cad6c5c606c00c0f2824c3f483c01a0cc9/runners/org.osbuild.rhel82#L61
+        # Install python36 explicitly for RHEL 8.
+        - "python36"
+    oscap_profiles_allowlist: *oscap_profile_allowlist_rhel
+    bootstrap_containers:
+      x86_64: "registry.access.redhat.com/ubi{{.MajorVersion}}/ubi:latest"
+      aarch64: "registry.access.redhat.com/ubi{{.MajorVersion}}/ubi:latest"
+      ppc64le: "registry.access.redhat.com/ubi{{.MajorVersion}}/ubi:latest"
+      s390x: "registry.access.redhat.com/ubi{{.MajorVersion}}/ubi:latest"
+
+  - &centos8
+    <<: *rhel8
+    name: centos-8
+    distro_like: rhel-8
+    product: "CentOS Stream"
+    os_version: "8-stream"
+    vendor: "centos"
+    default_fs_type: "xfs"
+    iso_label_tmpl: "CentOS-Stream-{{.Distro.MajorVersion}}-BaseOS-{{.Arch}}"
+    runner:
+      name: org.osbuild.centos8
+      build_packages: *rhel8_runner_build_packages
+    oscap_profiles_allowlist: *oscap_profile_allowlist_rhel
+    bootstrap_containers:
+      # we need the toolbox container because stock centos has e.g. no
+      # mount util
+      x86_64: "quay.io/toolbx-images/centos-toolbox:stream{{.MajorVersion}}"
+      aarch64: "quay.io/toolbx-images/centos-toolbox:stream{{.MajorVersion}}"
+
   - &rhel7
     name: "rhel-{{.MajorVersion}}.{{.MinorVersion}}"
-    match: "rhel-7.[0-9]{,[0-9]}"
+    match: 'rhel-7\.[0-9]'
     distro_like: rhel-7
     product: "Red Hat Enterprise Linux"
     codename: "Maipo"
@@ -176,3 +318,7 @@ distros:
         # https://github.com/osbuild/osbuild/blob/ea8261cad6c5c606c00c0f2824c3f483c01a0cc9/runners/org.osbuild.rhel82#L61
         # Install python36 explicitly for RHEL 8.
         - "python36"
+    bootstrap_containers:
+      x86_64: "registry.access.redhat.com/ubi{{.MajorVersion}}/ub i:latest"
+      ppc64le: "registry.access.redhat.com/ubi{{.MajorVersion}}/ubi:latest"
+      s390x: "registry.access.redhat.com/ubi{{.MajorVersion}}/ubi:latest"

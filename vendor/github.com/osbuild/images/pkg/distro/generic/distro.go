@@ -40,12 +40,6 @@ type distribution struct {
 	defs.DistroYAML
 
 	arches map[string]*architecture
-	// XXX: move into defs.DistroYAML? the downside of doing this
-	// is that we would have to duplicate the default image config
-	// accross the centos/alma/rhel distros.yaml, otherwise we
-	// just load it from the imagetypes file/dir and it is natually
-	// "in-sync"
-	defaultImageConfig *distro.ImageConfig
 }
 
 func (d *distribution) getISOLabelFunc(isoLabel string) isoLabelFunc {
@@ -85,9 +79,7 @@ func newDistro(nameVer string) (distro.Distro, error) {
 
 	rd := &distribution{
 		DistroYAML: *distroYAML,
-
-		defaultImageConfig: distroYAML.ImageConfig(),
-		arches:             make(map[string]*architecture),
+		arches:     make(map[string]*architecture),
 	}
 
 	for _, imgTypeYAML := range distroYAML.ImageTypes() {
@@ -96,7 +88,11 @@ func newDistro(nameVer string) (distro.Distro, error) {
 		if imgTypeYAML.Filename == "" {
 			continue
 		}
-		for _, pl := range imgTypeYAML.Platforms {
+		platforms, err := imgTypeYAML.PlatformsFor(nameVer)
+		if err != nil {
+			return nil, err
+		}
+		for _, pl := range platforms {
 			ar, ok := rd.arches[pl.Arch.String()]
 			if !ok {
 				ar = newArchitecture(rd, pl.Arch.String())

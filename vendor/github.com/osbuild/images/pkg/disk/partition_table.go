@@ -1127,7 +1127,26 @@ func hasESP(disk *blueprint.DiskCustomization) bool {
 // The function will append the new partitions to the end of the existing
 // partition table therefore it is best to call this function early to put them
 // near the front (as is conventional).
-func addPartitionsForBootMode(pt *PartitionTable, disk *blueprint.DiskCustomization, bootMode platform.BootMode) error {
+func addPartitionsForBootMode(pt *PartitionTable, disk *blueprint.DiskCustomization, bootMode platform.BootMode, architecture arch.Arch) error {
+	if bootMode == platform.BOOT_NONE {
+		return nil
+	}
+
+	// UEFI is not supported for PPC CPUs so we don't need to
+	// add an ESP partition there
+	switch architecture {
+	case arch.ARCH_PPC64LE:
+		part, err := mkPPCPrepBoot(pt.Type)
+		if err != nil {
+			return err
+		}
+		pt.Partitions = append(pt.Partitions, part)
+		return nil
+	case arch.ARCH_S390X:
+		// s390x does not need any special boot partition
+		return nil
+	}
+
 	switch bootMode {
 	case platform.BOOT_LEGACY:
 		// add BIOS boot partition
@@ -1162,11 +1181,21 @@ func addPartitionsForBootMode(pt *PartitionTable, disk *blueprint.DiskCustomizat
 			pt.Partitions = append(pt.Partitions, esp)
 		}
 		return nil
-	case platform.BOOT_NONE:
-		return nil
 	default:
 		return fmt.Errorf("unknown or unsupported boot mode type with enum value %d", bootMode)
 	}
+}
+
+func mkPPCPrepBoot(ptType PartitionTableType) (Partition, error) {
+	partType, err := getPartitionTypeIDfor(ptType, "ppc_prep", arch.ARCH_UNSET)
+	if err != nil {
+		return Partition{}, fmt.Errorf("error creating ppc PReP boot partition: %w", err)
+	}
+	return Partition{
+		Size:     4 * datasizes.MiB,
+		Bootable: true,
+		Type:     partType,
+	}, nil
 }
 
 func mkBIOSBoot(ptType PartitionTableType) (Partition, error) {
@@ -1314,7 +1343,7 @@ func NewCustomPartitionTable(customizations *blueprint.DiskCustomization, option
 	// add any partition(s) that are needed for booting (like /boot/efi)
 	// if needed
 	//
-	if err := addPartitionsForBootMode(pt, customizations, options.BootMode); err != nil {
+	if err := addPartitionsForBootMode(pt, customizations, options.BootMode, options.Architecture); err != nil {
 		return nil, fmt.Errorf("%s %w", errPrefix, err)
 	}
 	// add the /boot partition (if it is needed)

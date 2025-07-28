@@ -32,6 +32,108 @@
             - "grub2-ppc64le"
             - "grub2-ppc64le-modules"
 
+  disk_sizes:
+    default_required_partition_sizes: &default_required_dir_sizes
+      "/": 1_073_741_824     # 1 * datasizes.GiB
+      "/usr": 2_147_483_648  # 2 * datasizes.GiB
+
+  platforms:
+    x86_64_uefi_platform: &x86_64_uefi_platform
+      arch: "x86_64"
+      bootloader: "grub2"
+      uefi_vendor: "{{.DistroVendor}}"
+      qcow2_compat: "1.1"
+      packages: &x86_64_uefi_platform_packages
+        uefi:
+          - "dracut-config-generic"
+          - "efibootmgr"
+          - "grub2-efi-x64"
+          - "shim-x64"
+    x86_64_bios_platform: &x86_64_bios_platform
+      <<: *x86_64_uefi_platform
+      bios_platform: "i386-pc"
+      uefi_vendor: "{{.DistroVendor}}"
+      packages: &x86_64_bios_platform_packages
+        <<: *x86_64_uefi_platform_packages
+        bios:
+          - "dracut-config-generic"
+          - "grub2-pc"
+      build_packages:
+        bios:
+          - "grub2-pc"
+    x86_64_bios_only_platform: &x86_64_bios_only_platform
+      arch: "x86_64"
+      bios_platform: "i386-pc"
+      bootloader: "grub2"
+      image_format: "raw"
+      packages:
+        bios:
+          - "grub2-pc"
+      build_packages:
+        bios:
+          - "grub2-pc"
+    x86_64_installer_platform: &x86_64_installer_platform
+      <<: *x86_64_bios_platform
+      image_format: "raw"
+      packages:
+        <<: *x86_64_bios_platform_packages
+        firmware:
+          - "microcode_ctl"  # ??
+          - "iwl1000-firmware"
+          - "iwl100-firmware"
+          - "iwl105-firmware"
+          - "iwl135-firmware"
+          - "iwl2000-firmware"
+          - "iwl2030-firmware"
+          - "iwl3160-firmware"
+          - "iwl5000-firmware"
+          - "iwl5150-firmware"
+          - "iwl6050-firmware"
+    aarch64_platform: &aarch64_platform
+      arch: "aarch64"
+      bootloader: "grub2"
+      uefi_vendor: "{{.DistroVendor}}"
+      image_format: "qcow2"
+      qcow2_compat: "1.1"
+      packages: &aarch64_uefi_platform_packages
+        uefi:
+          - "dracut-config-generic"
+          - "efibootmgr"
+          - "grub2-efi-aa64"
+          - "grub2-tools"
+          - "shim-aa64"
+    ppc64le_bios_platform: &ppc64le_bios_platform
+      arch: "ppc64le"
+      bootloader: "grub2"
+      bios_platform: "powerpc-ieee1275"
+      image_format: "qcow2"
+      qcow2_compat: "1.1"
+      packages:
+        bios:
+          - "dracut-config-generic"
+          - "powerpc-utils"
+          - "grub2-ppc64le"
+          - "grub2-ppc64le-modules"
+      build_packages:
+        bios:
+          - "grub2-ppc64le"
+          - "grub2-ppc64le-modules"
+    s390x_zipl_platform: &s390x_zipl_platform
+      arch: "s390x"
+      # XXX: merge zipl_support/bootloader
+      bootloader: "zipl"
+      zipl_support: true
+      image_format: "qcow2"
+      qcow2_compat: "1.1"
+      packages:
+        zipl:
+          - "dracut-config-generic"
+          - "s390utils-base"
+          - "s390utils-core"
+      build_packages:
+        zipl:
+          - "s390utils-base"
+
   common_conditions:
     conditions: &conditions_pkgsets_insights_client_on_rhel
       "add insights client on rhel":
@@ -938,6 +1040,16 @@
             <<: *azure_common_grub2_config
             terminal: ["console"]
 
+  default_installer_config: &default_installer_config
+    # see commit c6bfb22f54, controls the kickstart location
+    iso_root_kickstart: true
+    additional_dracut_modules:
+      - "nvdimm"  # non-volatile DIMM firmware (provides nfit, cuse, and nd_e820)
+      - "ifcfg"
+    additional_drivers:
+      - "cuse"
+      - "ipmi_devintf"
+      - "ipmi_msghandler"
 
 image_config:
   default:
@@ -1013,6 +1125,26 @@ image_types:
                   - "subscription-manager-cockpit"
 
   qcow2: &qcow2
+    filename: "disk.qcow2"
+    mime_type: "application/x-qemu-disk"
+    # note that unlike fedora rhel does not use the environment.KVM
+    # for unknown reasons
+    bootable: true
+    default_size: 10_737_418_240  # 10 * datasizes.GibiByte
+    image_func: "disk"
+    build_pipelines: ["build"]
+    payload_pipelines: ["os", "image", "qcow2"]
+    exports: ["qcow2"]
+    required_partition_sizes: *default_required_dir_sizes
+    platforms:
+      - <<: *x86_64_bios_platform
+        image_format: "qcow2"
+      - <<: *aarch64_platform
+        image_format: "qcow2"
+      - <<: *ppc64le_bios_platform
+        image_format: "qcow2"
+      - <<: *s390x_zipl_platform
+        image_format: "qcow2"
     image_config:
       default_target: "multi-user.target"
       kernel_options:
@@ -1105,8 +1237,22 @@ image_types:
 
   oci:
     <<: *qcow2
+    platforms:
+      - <<: *x86_64_bios_platform
+        image_format: "qcow2"
 
   vhd: &vhd
+    <<: *qcow2
+    filename: "disk.vhd"
+    mime_type: "application/x-vhd"
+    default_size: 4_294_967_296  # 4 * datasizes.GibiByte
+    payload_pipelines: ["os", "image", "vpc"]
+    exports: ["vpc"]
+    platforms:
+      - <<: *x86_64_bios_platform
+        image_format: "vhd"
+      - <<: *aarch64_platform
+        image_format: "vhd"
     # based on https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/9/html/deploying_rhel_9_on_microsoft_azure/assembly_deploying-a-rhel-image-as-a-virtual-machine-on-microsoft-azure_cloud-content-azure#making-configuration-changes_configure-the-image-azure
     image_config: &image_config_vhd
       <<: *azure_image_config_base
@@ -1227,6 +1373,11 @@ image_types:
 
   "azure-rhui": &azure_rhui
     <<: *vhd
+    mime_type: "application/xz"
+    payload_pipelines: ["os", "image", "vpc", "xz"]
+    exports: ["xz"]
+    compression: "xz"
+    filename: "disk.vhd.xz"
     partition_table: &partition_table_azure_internal
       x86_64: &azure_rhui_partition_table_x86_64
         uuid: "D209C89E-EA5E-4FBD-B161-B461CCE297E0"
@@ -1378,6 +1529,9 @@ image_types:
 
   "azure-sap-rhui":
     <<: *azure_rhui
+    platforms:
+      - <<: *x86_64_bios_platform
+        image_format: "vhd"
     image_config:
       <<: [*image_config_vhd, *sap_image_config]
     package_sets:
@@ -1388,6 +1542,9 @@ image_types:
 
   azure-sapapps-rhui:
     <<: *azure_rhui
+    platforms:
+      - <<: *x86_64_bios_platform
+        image_format: "vhd"
     image_config:
       <<: [*image_config_vhd, *sapapps_image_config]
     package_sets:
@@ -1396,6 +1553,17 @@ image_types:
         - *sap_base_pkgset
 
   tar:
+    filename: "root.tar.xz"
+    mime_type: "application/x-tar"
+    image_func: "tar"
+    build_pipelines: ["build"]
+    payload_pipelines: ["os", "archive"]
+    exports: ["archive"]
+    platforms:
+      - arch: "x86_64"
+      - arch: "aarch64"
+      - arch: "ppc64le"
+      - arch: "s390x"
     package_sets:
       os:
         - include:
@@ -1405,6 +1573,18 @@ image_types:
             - "rng-tools"
 
   vmdk: &vmdk
+    filename: "disk.vmdk"
+    mime_type: "application/x-vmdk"
+    bootable: true
+    default_size: 4_294_967_296  # 4 * datasizes.GibiByte
+    image_func: "disk"
+    build_pipelines: ["build"]
+    payload_pipelines: ["os", "image", "vmdk"]
+    exports: ["vmdk"]
+    required_partition_sizes: *default_required_dir_sizes
+    platforms:
+      - <<: *x86_64_bios_platform
+        image_format: "vmdk"
     image_config:
       locale: "en_US.UTF-8"
       kernel_options: ["ro", "net.ifnames=0"]
@@ -1424,9 +1604,42 @@ image_types:
             - "dracut-config-rescue"
             - "rng-tools"
 
-  ova: *vmdk
+  ova:
+    <<: *vmdk
+    filename: "image.ova"
+    mime_type: "application/ovf"
+    payload_pipelines: ["os", "image", "vmdk", "ovf", "archive"]
+    exports: ["archive"]
+    platforms:
+      - <<: *x86_64_bios_platform
+        image_format: "ova"
 
   ec2: &ec2
+    filename: "image.raw.xz"
+    mime_type: "application/xz"
+    build_pipelines: ["build"]
+    payload_pipelines: ["os", "image", "xz"]
+    exports: ["xz"]
+    compression: "xz"
+    image_func: "disk"
+    bootable: true
+    default_size: 10_737_418_240  # 10 * datasizes.GibiByte
+    required_partition_sizes: *default_required_dir_sizes
+    platforms:
+      - <<: *x86_64_bios_platform
+        image_format: "raw"
+      - <<: *aarch64_platform
+        image_format: "raw"
+    platforms_override:
+      conditions: &platform_override_conditions_ami
+        "Keep the RHEL EC2 x86_64 images before 9.3 BIOS-only":
+          when:
+            distro_name: "rhel"
+            version_less_than: "9.3"
+          override:
+            - *x86_64_bios_only_platform
+            - <<: *aarch64_platform
+              image_format: "raw"
     image_config: &ec2_image_config
       locale: "en_US.UTF-8"
       timezone: "UTC"
@@ -1550,9 +1763,27 @@ image_types:
 
   ami:
     <<: *ec2
+    mime_type: "application/octet-stream"
+    filename: "image.raw"
+    payload_pipelines: ["os", "image"]
+    exports: ["image"]
+    compression: ""
 
   "ec2-ha":
     <<: *ec2
+    platforms:
+      - <<: *x86_64_bios_platform
+        image_format: "raw"
+    platforms_override:
+      conditions: &platform_override_conditions_ami
+        # XXX: duplicated with "ec2" but drops "aarch64", I cannot
+        # find a better way to express this complex condition in YAML
+        "Keep the RHEL EC2 x86_64 images before 9.3 BIOS-only":
+          when:
+            distro_name: "rhel"
+            version_less_than: "9.3"
+          override:
+            - *x86_64_bios_only_platform
     package_sets:
       os:
         - *ec2_base_pkgset
@@ -1565,6 +1796,19 @@ image_types:
 
   "ec2-sap":
     <<: *ec2
+    platforms:
+      - <<: *x86_64_bios_platform
+        image_format: "raw"
+    platforms_override:
+      conditions: &platform_override_conditions_ami
+        # XXX: duplicated with "ec2" but drops "aarch64", I cannot
+        # find a better way to express this complex condition in YAML
+        "Keep the RHEL EC2 x86_64 images before 9.3 BIOS-only":
+          when:
+            distro_name: "rhel"
+            version_less_than: "9.3"
+          override:
+            - *x86_64_bios_only_platform
     image_config:
       <<: [*ec2_image_config, *sap_image_config]
       conditions:
@@ -1597,6 +1841,16 @@ image_types:
             - "firewalld"
 
   wsl: &wsl
+    filename: "image.wsl"
+    mime_type: "application/x-tar"
+    image_func: "tar"
+    build_pipelines: ["build"]
+    payload_pipelines: ["os", "archive"]
+    exports: ["xz"]
+    compression: "xz"
+    platforms:
+      - arch: "x86_64"
+      - arch: "aarch64"
     image_config:
       cloud_init:
         - filename: "99_wsl.cfg"
@@ -1608,9 +1862,49 @@ image_types:
               config: "disabled"
       locale: "en_US.UTF-8"
       no_selinux: true
-      wsl:
+      wsl: &wsl_config
         config:
           boot_systemd: true
+        distribution_config: &wsl_distribution_config
+          shortcut:
+            enabled: true
+            icon: /usr/share/pixmaps/fedora-logo.ico
+          oobe: &wsl_distribution_oobe_config
+            default_uid: 1000
+      conditions:
+        "wsl config for rhel":
+          when:
+            distro_name: "rhel"
+          shallow_merge:
+            wsl:
+              <<: *wsl_config
+              distribution_config:
+                <<: *wsl_distribution_config
+                oobe:
+                  <<: *wsl_distribution_oobe_config
+                  default_name: RedHatEnterpriseLinux-%s
+        "wsl config for centos":
+          when:
+            distro_name: "centos"
+          shallow_merge:
+            wsl:
+              <<: *wsl_config
+              distribution_config:
+                <<: *wsl_distribution_config
+                oobe:
+                  <<: *wsl_distribution_oobe_config
+                  default_name: CentOS-%s
+        "wsl config for almalinux":
+          when:
+            distro_name: "almalinux"
+          shallow_merge:
+            wsl: &wsl_distribution_config_almalinux
+              <<: *wsl_config
+              distribution_config:
+                <<: *wsl_distribution_config
+                oobe:
+                  <<: *wsl_distribution_oobe_config
+                  default_name: AlmaLinux-%s
     package_sets:
       os:
         - include:
@@ -1669,6 +1963,28 @@ image_types:
             - "rpm-plugin-systemd-inhibit"
 
   "image-installer":
+    filename: "installer.iso"
+    mime_type: "application/x-iso9660-image"
+    bootable: true
+    boot_iso: true
+    # XXX: merge with boot_iso above
+    use_syslinux: true
+    image_func: "image_installer"
+    # We don't know the variant of the OS pipeline being installed
+    iso_label: "Unknown"
+    build_pipelines: ["build"]
+    payload_pipelines:
+      - "anaconda-tree"
+      - "efiboot-tree"
+      - "os"
+      - "bootiso-tree"
+      - "bootiso"
+    exports: ["bootiso"]
+    required_partition_sizes: *default_required_dir_sizes
+    platforms:
+      - *x86_64_installer_platform
+      - *aarch64_platform
+    installer_config: *default_installer_config
     image_config:
       locale: "C.UTF-8"
       conditions:
@@ -1684,6 +2000,19 @@ image_types:
         - *anaconda_pkgset
 
   gce:
+    name_aliases: ["gce-rhui"]
+    filename: "image.tar.gz"
+    mime_type: "application/gzip"
+    image_func: "disk"
+    build_pipelines: ["build"]
+    payload_pipelines: ["os", "image", "archive"]
+    exports: ["archive"]
+    bootable: true
+    default_size: 21_474_836_480  # 20 * datasizes.GibiByte
+    required_partition_sizes: *default_required_dir_sizes
+    platforms:
+      - <<: *x86_64_uefi_platform
+        image_format: "gce"
     image_config:
       timezone: "UTC"
       time_synchronization:
@@ -1829,6 +2158,21 @@ image_types:
             <<: *conditions_pkgsets_insights_client_on_rhel
 
   "minimal-raw":
+    filename: "disk.raw.xz"
+    mime_type: "application/xz"
+    compression: "xz"
+    bootable: true
+    default_size: 2_147_483_648  # 2 * datasizes.GibiByte
+    image_func: "disk"
+    build_pipelines: ["build"]
+    payload_pipelines: ["os", "image", "xz"]
+    exports: ["xz"]
+    required_partition_sizes: *default_required_dir_sizes
+    platforms:
+      - <<: *x86_64_uefi_platform
+        image_format: "raw"
+      - <<: *aarch64_platform
+        image_format: "raw"
     partition_table:
       x86_64: &partition_table_minimal_raw_x86_64
         uuid: "D209C89E-EA5E-4FBD-B161-B461CCE297E0"
@@ -1930,6 +2274,15 @@ image_types:
             - "iwl3160-firmware"
 
   openstack:
+    <<: *qcow2
+    default_size: 4_294_967_296  # 4 * datasizes.GibiByte
+    platforms:
+      - <<: *x86_64_bios_platform
+        image_format: "qcow2"
+        qcow2_compat: ""
+      - <<: *aarch64_platform
+        image_format: "qcow2"
+        qcow2_compat: ""
     image_config:
       locale: "en_US.UTF-8"
       kernel_options: ["ro", "net.ifnames=0"]
@@ -1950,6 +2303,17 @@ image_types:
             - "rng-tools"
 
   "edge-commit": &edge_commit
+    name_aliases: ["rhel-edge-commit"]
+    filename: "commit.tar"
+    mime_type: "application/x-tar"
+    rpm_ostree: true
+    image_func: "iot_commit"
+    build_pipelines: ["build"]
+    payload_pipelines: ["os", "ostree-commit", "commit-archive"]
+    exports: ["commit-archive"]
+    platforms:
+      - *x86_64_bios_platform
+      - *aarch64_platform
     partition_table:
       *edge_base_partition_tables
     image_config: &edge_commit_image_config
@@ -2112,9 +2476,37 @@ image_types:
                   - "dnsmasq"
 
   "edge-container":
+    name_aliases: ["rhel-edge-container"]
+    filename: "container.tar"
+    mime_type: "application/x-tar"
+    rpm_ostree: true
+    image_func: "iot_container"
+    build_pipelines: ["build"]
+    payload_pipelines: ["os", "ostree-commit", "container-tree", "container"]
+    exports: ["container"]
     <<: *edge_commit
 
   "edge-raw-image":
+    name_aliases: ["rhel-edge-raw-image"]
+    filename: "image.raw.xz"
+    compression: "xz"
+    mime_type: "application/xz"
+    build_pipelines: ["build"]
+    payload_pipelines: ["ostree-deployment", "image", "xz"]
+    exports: ["xz"]
+    default_size: 10_737_418_240  # 10 * datasizes.GibiByte
+    rpm_ostree: true
+    bootable: true
+    image_func: "iot"
+    ostree:
+      name: "rhel-edge"
+      remote_name: "rhel-edge"
+    use_ostree_remotes: true
+    platforms:
+      - <<: *x86_64_installer_platform
+        image_format: "raw"
+      - <<: *aarch64_platform
+        image_format: "raw"
     partition_table:
       *edge_base_partition_tables
     image_config:
@@ -2147,6 +2539,30 @@ image_types:
             - "nginx"
 
   "edge-installer":
+    name_aliases: ["rhel-edge-installer"]
+    filename: "installer.iso"
+    mime_type: "application/x-iso9660-image"
+    rpm_ostree: true
+    boot_iso: true
+    # XXX: merge with boot_iso above
+    use_syslinux: true
+    image_func: "iot_installer"
+    iso_label: "edge"
+    variant: "edge"
+    ostree:
+      name: "rhel-edge"
+    build_pipelines: ["build"]
+    payload_pipelines:
+      - "anaconda-tree"
+      - "efiboot-tree"
+      - "bootiso-tree"
+      - "bootiso"
+    exports: ["bootiso"]
+    required_partition_sizes: *default_required_dir_sizes
+    platforms:
+      - *x86_64_uefi_platform
+      - *aarch64_platform
+    installer_config: *default_installer_config
     image_config:
       enabled_services: *enabled_services_edge
       locale: "en_US.UTF-8"
@@ -2162,6 +2578,43 @@ image_types:
         - *anaconda_pkgset
 
   "edge-simplified-installer":
+    name_aliases: ["rhel-edge-simplified-installer"]
+    filename: "simplified-installer.iso"
+    mime_type: "application/x-iso9660-image"
+    rpm_ostree: true
+    bootable: true
+    boot_iso: true
+    # XXX: merge with boot_iso above
+    use_syslinux: true
+    # NOTE: RHEL 8 only supports the older Anaconda configs
+    use_legacy_anaconda_config: true
+    default_size: 10_737_418_240  # 10 * datasizes.GibiByte
+    image_func: "iot_simplified_installer"
+    iso_label: "edge"
+    variant: "edge"
+    ostree:
+      name: "rhel-edge"
+      remote_name: "rhel-edge"
+    # XXX: find better name
+    use_ostree_remotes: true
+    build_pipelines: ["build"]
+    payload_pipelines:
+      - "ostree-deployment"
+      - "image"
+      - "xz"
+      - "coi-tree"
+      - "efiboot-tree"
+      - "bootiso-tree"
+      - "bootiso"
+    exports: ["bootiso"]
+    required_partition_sizes: *default_required_dir_sizes
+    installer_config:
+      additional_dracut_modules:
+        - "prefixdevname"
+        - "prefixdevname-tools"
+    platforms:
+      - <<: *x86_64_uefi_platform
+      - <<: *aarch64_platform
     partition_table:
       *edge_base_partition_tables
     image_config:
@@ -2241,6 +2694,24 @@ image_types:
                 <<: *edge_commit_aarch64_pkgset
 
   "edge-ami": &edge_ami
+    filename: "image.raw"
+    mime_type: "application/octet-stream"
+    default_size: 10_737_418_240  # 10 * datasizes.GibiByte
+    build_pipelines: ["build"]
+    payload_pipelines: ["ostree-deployment", "image"]
+    exports: ["image"]
+    rpm_ostree: true
+    bootable: true
+    image_func: "iot"
+    ostree:
+      name: "rhel-edge"
+      remote_name: "rhel-edge"
+    use_ostree_remotes: true
+    platforms:
+      - <<: *x86_64_installer_platform
+        image_format: "raw"
+      - <<: *aarch64_platform
+        image_format: "raw"
     partition_table:
       *edge_base_partition_tables
     image_config: &image_config_edge_ami
@@ -2280,6 +2751,15 @@ image_types:
 
   "edge-vsphere":
     <<: *edge_ami
+    filename: "image.vmdk"
+    mime_type: "application/x-vmdk"
+    payload_pipelines: ["ostree-deployment", "image", "vmdk"]
+    exports: ["vmdk"]
+    platforms:
+      - <<: *x86_64_bios_platform
+        image_format: "vmdk"
+      - <<: *aarch64_platform
+        image_format: "vmdk"
     image_config:
       <<: *image_config_edge_ami
       kernel_options:
@@ -2297,6 +2777,24 @@ image_types:
               - "modprobe.blacklist=vc4"
 
   "azure-cvm":
+    <<: *vhd
+    filename: "disk.vhd.xz"
+    mime_type: "application/xz"
+    payload_pipelines: ["os", "image", "vpc", "xz"]
+    exports: ["xz"]
+    compression: "xz"
+    default_size: 34_359_738_368  # 32 * datasizes.GibiByte
+    platforms:
+      - arch: "x86_64"
+        bootloader: "uki"
+        image_format: "vhd"
+        uefi_vendor: "{{.DistroVendor}}"
+        packages:
+          uki:
+            - "efibootmgr"
+            - "kernel-uki-virt-addons"  # provides useful cmdline utilities for the UKI
+            - "shim-x64"
+            - "uki-direct"
     partition_table:
       x86_64:
         uuid: "D209C89E-EA5E-4FBD-B161-B461CCE297E0"
