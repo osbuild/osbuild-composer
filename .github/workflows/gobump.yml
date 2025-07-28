@@ -18,5 +18,5 @@ jobs:
         uses: lzap/gobump@main
         with:
           go_version: "1.23.9"
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.SCHUTZBOT_GITHUB_ACCESS_TOKEN }}
           exec_pr: ./tools/prepare-source.sh
