@@ -21,7 +21,7 @@ import (
 	"github.com/Azure/go-autorest/autorest/azure/auth"
 
 	"github.com/osbuild/osbuild-composer/internal/common"
-	"github.com/osbuild/osbuild-composer/internal/upload/azure"
+	"github.com/osbuild/images/pkg/upload/azure"
 )
 
 // wrapErrorf returns error constructed using fmt.Errorf from format and any

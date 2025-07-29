@@ -23,7 +23,8 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/pageblob"
 	"github.com/google/uuid"
 
-	"github.com/osbuild/osbuild-composer/internal/common"
+	"github.com/osbuild/images/internal/common"
+	"github.com/osbuild/images/pkg/datasizes"
 )
 
 // StorageClient is a client for the Azure Storage API,
@@ -39,7 +40,7 @@ type StorageClient struct {
 func NewStorageClient(storageAccount, storageAccessKey string) (*StorageClient, error) {
 	credential, err := azblob.NewSharedKeyCredential(storageAccount, storageAccessKey)
 	if err != nil {
-		return nil, fmt.Errorf("cannot create shared key credential: %v", err)
+		return nil, fmt.Errorf("cannot create shared key credential: %w", err)
 	}
 
 	return &StorageClient{
@@ -60,7 +61,7 @@ const DefaultUploadThreads = 16
 
 // PageBlobMaxUploadPagesBytes defines how much bytes can we upload in a single UploadPages call.
 // See https://learn.microsoft.com/en-us/rest/api/storageservices/put-page
-const PageBlobMaxUploadPagesBytes = 4 * 1024 * 1024
+const PageBlobMaxUploadPagesBytes = 4 * datasizes.MiB
 
 // allZerosSlice returns true if all values in the slice are equal to 0
 func allZerosSlice(slice []byte) bool {
@@ -93,14 +94,14 @@ func (c StorageClient) UploadPageBlob(metadata BlobMetadata, fileName string, th
 	// Open the image file for reading
 	imageFile, err := os.Open(fileName)
 	if err != nil {
-		return fmt.Errorf("cannot open the image: %v", err)
+		return fmt.Errorf("cannot open the image: %w", err)
 	}
 	defer imageFile.Close()
 
 	// Stat image to get the file size
 	stat, err := imageFile.Stat()
 	if err != nil {
-		return fmt.Errorf("cannot stat the image: %v", err)
+		return fmt.Errorf("cannot stat the image: %w", err)
 	}
 
 	if stat.Size()%512 != 0 {
@@ -112,11 +113,11 @@ func (c StorageClient) UploadPageBlob(metadata BlobMetadata, fileName string, th
 	/* #nosec G401 */
 	imageFileHash := md5.New()
 	if _, err := io.Copy(imageFileHash, imageFile); err != nil {
-		return fmt.Errorf("cannot create md5 of the image: %v", err)
+		return fmt.Errorf("cannot create md5 of the image: %w", err)
 	}
 	// Move the cursor back to the start of the imageFile
 	if _, err := imageFile.Seek(0, 0); err != nil {
-		return fmt.Errorf("cannot seek the image: %v", err)
+		return fmt.Errorf("cannot seek the image: %w", err)
 	}
 
 	// Create page blob. Page blob is required for VM images
@@ -148,7 +149,7 @@ func (c StorageClient) UploadPageBlob(metadata BlobMetadata, fileName string, th
 			if err == io.EOF {
 				run = false
 			} else {
-				return fmt.Errorf("reading the image failed: %v", err)
+				return fmt.Errorf("reading the image failed: %w", err)
 			}
 		}
 		if n == 0 {
@@ -173,7 +174,7 @@ func (c StorageClient) UploadPageBlob(metadata BlobMetadata, fileName string, th
 			}
 			_, err := client.UploadPages(ctx, common.NopSeekCloser(bytes.NewReader(buffer[:n])), uploadRange, nil)
 			if err != nil {
-				err = fmt.Errorf("uploading a page failed: %v", err)
+				err = fmt.Errorf("uploading a page failed: %w", err)
 				// Send the error to the error channel in a non-blocking way. If there is already an error, just discard this one
 				select {
 				case errorInGoroutine <- err:
@@ -242,7 +243,7 @@ func (c StorageClient) TagBlob(ctx context.Context, metadata BlobMetadata, tags 
 
 	_, err = client.SetTags(ctx, tags, nil)
 	if err != nil {
-		return fmt.Errorf("cannot tag the blob: %v", err)
+		return fmt.Errorf("cannot tag the blob: %w", err)
 	}
 
 	return nil
