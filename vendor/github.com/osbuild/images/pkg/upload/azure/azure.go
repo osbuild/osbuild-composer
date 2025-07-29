@@ -10,14 +10,21 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
 
-	"github.com/osbuild/osbuild-composer/internal/common"
-	"github.com/osbuild/osbuild-composer/internal/target"
+	"github.com/osbuild/images/internal/common"
+)
+
+type HyperVGenerationType string
+
+const (
+	HyperVGenV1 HyperVGenerationType = "V1"
+	HyperVGenV2 HyperVGenerationType = "V2"
 )
 
 type Client struct {
 	creds    *azidentity.ClientSecretCredential
 	resFact  *armresources.ClientFactory
 	storFact *armstorage.ClientFactory
+	compFact *armcompute.ClientFactory
 }
 
 // NewClient creates a client for accessing the Azure API.
@@ -26,23 +33,29 @@ type Client struct {
 func NewClient(credentials Credentials, tenantID, subscriptionID string) (*Client, error) {
 	creds, err := azidentity.NewClientSecretCredential(tenantID, credentials.clientID, credentials.clientSecret, nil)
 	if err != nil {
-		return nil, fmt.Errorf("creating azure ClientSecretCredential failed: %v", err)
+		return nil, fmt.Errorf("creating azure ClientSecretCredential failed: %w", err)
 	}
 
 	resFact, err := armresources.NewClientFactory(subscriptionID, creds, nil)
 	if err != nil {
-		return nil, fmt.Errorf("creating resources client factory failed: %v", err)
+		return nil, fmt.Errorf("creating resources client factory failed: %w", err)
 	}
 
 	storFact, err := armstorage.NewClientFactory(subscriptionID, creds, nil)
 	if err != nil {
-		return nil, fmt.Errorf("creating storage client factory failed: %v", err)
+		return nil, fmt.Errorf("creating storage client factory failed: %w", err)
+	}
+
+	compFact, err := armcompute.NewClientFactory(subscriptionID, creds, nil)
+	if err != nil {
+		return nil, fmt.Errorf("creating compute client factory failed: %w", err)
 	}
 
 	return &Client{
 		creds,
 		resFact,
 		storFact,
+		compFact,
 	}, nil
 }
 
@@ -65,7 +78,7 @@ func (ac Client) GetResourceNameByTag(ctx context.Context, resourceGroup string,
 
 	result, err := pager.NextPage(ctx)
 	if err != nil {
-		return "", fmt.Errorf("listing resources failed: %v", err)
+		return "", fmt.Errorf("listing resources failed: %w", err)
 	}
 
 	if len(result.Value) < 1 {
@@ -80,7 +93,7 @@ func (ac Client) GetResourceGroupLocation(ctx context.Context, resourceGroup str
 
 	group, err := c.Get(ctx, resourceGroup, nil)
 	if err != nil {
-		return "", fmt.Errorf("retrieving resource group failed: %v", err)
+		return "", fmt.Errorf("retrieving resource group failed: %w", err)
 	}
 
 	return *group.Location, nil
@@ -98,7 +111,7 @@ func (ac Client) CreateStorageAccount(ctx context.Context, resourceGroup, name, 
 	if location == "" {
 		location, err = ac.GetResourceGroupLocation(ctx, resourceGroup)
 		if err != nil {
-			return fmt.Errorf("retrieving resource group location failed: %v", err)
+			return fmt.Errorf("retrieving resource group location failed: %w", err)
 		}
 	}
 
@@ -117,12 +130,12 @@ func (ac Client) CreateStorageAccount(ctx context.Context, resourceGroup, name, 
 		},
 	}, nil)
 	if err != nil {
-		return fmt.Errorf("sending the create storage account request failed: %v", err)
+		return fmt.Errorf("sending the create storage account request failed: %w", err)
 	}
 
 	_, err = poller.PollUntilDone(ctx, nil)
 	if err != nil {
-		return fmt.Errorf("create storage account request failed: %v", err)
+		return fmt.Errorf("create storage account request failed: %w", err)
 	}
 
 	return nil
@@ -135,7 +148,7 @@ func (ac Client) GetStorageAccountKey(ctx context.Context, resourceGroup string,
 	c := ac.storFact.NewAccountsClient()
 	keys, err := c.ListKeys(ctx, resourceGroup, storageAccount, nil)
 	if err != nil {
-		return "", fmt.Errorf("retrieving keys for a storage account failed: %v", err)
+		return "", fmt.Errorf("retrieving keys for a storage account failed: %w", err)
 	}
 
 	if len(keys.Keys) == 0 {
@@ -148,26 +161,23 @@ func (ac Client) GetStorageAccountKey(ctx context.Context, resourceGroup string,
 // RegisterImage creates a generalized V1 Linux image from a given blob.
 // The location is optional and if not provided, it is determined
 // from the resource group.
-func (ac Client) RegisterImage(ctx context.Context, subscriptionID, resourceGroup, storageAccount, storageContainer, blobName, imageName, location string, hyperVGen target.HyperVGenerationType) error {
-	c, err := armcompute.NewImagesClient(subscriptionID, ac.creds, nil)
-	if err != nil {
-		return fmt.Errorf("unable to create compute client: %v", err)
-	}
-
+func (ac Client) RegisterImage(ctx context.Context, resourceGroup, storageAccount, storageContainer, blobName, imageName, location string, hyperVGen HyperVGenerationType) error {
+	c := ac.compFact.NewImagesClient()
 	blobURI := fmt.Sprintf("https://%s.blob.core.windows.net/%s/%s", storageAccount, storageContainer, blobName)
 
+	var err error
 	if location == "" {
 		location, err = ac.GetResourceGroupLocation(ctx, resourceGroup)
 		if err != nil {
-			return fmt.Errorf("retrieving resource group location failed: %v", err)
+			return fmt.Errorf("retrieving resource group location failed: %w", err)
 		}
 	}
 
 	var hypvgen armcompute.HyperVGenerationTypes
 	switch hyperVGen {
-	case target.HyperVGenV1:
+	case HyperVGenV1:
 		hypvgen = armcompute.HyperVGenerationTypes(armcompute.HyperVGenerationTypesV1)
-	case target.HyperVGenV2:
+	case HyperVGenV2:
 		hypvgen = armcompute.HyperVGenerationTypes(armcompute.HyperVGenerationTypesV2)
 	default:
 		return fmt.Errorf("Unknown hyper v generation type %v", hyperVGen)
@@ -188,12 +198,12 @@ func (ac Client) RegisterImage(ctx context.Context, subscriptionID, resourceGrou
 		Location: &location,
 	}, nil)
 	if err != nil {
-		return fmt.Errorf("sending the create image request failed: %v", err)
+		return fmt.Errorf("sending the create image request failed: %w", err)
 	}
 
 	_, err = imageFuture.PollUntilDone(ctx, nil)
 	if err != nil {
-		return fmt.Errorf("create image request failed: %v", err)
+		return fmt.Errorf("create image request failed: %w", err)
 	}
 
 	return nil

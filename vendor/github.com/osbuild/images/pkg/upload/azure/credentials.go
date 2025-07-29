@@ -25,7 +25,7 @@ func ParseAzureCredentialsFile(filename string) (*Credentials, error) {
 	}
 	_, err := toml.DecodeFile(filename, &creds)
 	if err != nil {
-		return nil, fmt.Errorf("cannot parse azure credentials: %v", err)
+		return nil, fmt.Errorf("cannot parse azure credentials: %w", err)
 	}
 
 	return &Credentials{
