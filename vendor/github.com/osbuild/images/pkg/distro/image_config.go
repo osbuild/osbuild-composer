@@ -142,6 +142,9 @@ type ImageConfig struct {
 	// ISOBootType defines what type of bootloader is used for the iso
 	ISOBootType *manifest.ISOBootType `yaml:"iso_boot_type,omitempty"`
 
+	// Indicates if rhc should be set to permissive when creating the registration script
+	PermissiveRHC *bool `yaml:"permissive_rhc,omitempty"`
+
 	// VersionlockPackges uses dnf versionlock to lock a package to the version
 	// that is installed during image build, preventing it from being updated.
 	// This is only supported for distributions that use dnf4, because osbuild
@@ -186,6 +189,9 @@ type DNFConfig struct {
 // InheritFrom inherits unset values from the provided parent configuration and
 // returns a new structure instance, which is a result of the inheritance.
 func (c *ImageConfig) InheritFrom(parentConfig *ImageConfig) *ImageConfig {
+	if c == nil {
+		c = &ImageConfig{}
+	}
 	return shallowMerge(c, parentConfig)
 }
 

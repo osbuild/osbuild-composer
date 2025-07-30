@@ -13,7 +13,6 @@ import (
 	"sort"
 	"text/template"
 
-	"github.com/gobwas/glob"
 	"gopkg.in/yaml.v3"
 
 	"github.com/osbuild/images/internal/common"
@@ -32,7 +31,6 @@ import (
 )
 
 var (
-	ErrImageTypeNotFound          = errors.New("image type not found")
 	ErrNoPartitionTableForImgType = errors.New("no partition table for image type")
 	ErrNoPartitionTableForArch    = errors.New("no partition table for arch")
 )
@@ -59,13 +57,11 @@ type distrosYAML struct {
 }
 
 type DistroYAML struct {
-	// Match can be used to match multiple versions via a
-	// fnmatch/glob style expression. We could also use a
-	// regex and do something like:
-	//   rhel-(?P<major>[0-9]+)\.(?P<minor>[0-9]+)
-	// if we need to be more precise in the future, but for
-	// now every match will be split into "$distroname-$major.$minor"
-	// (with minor being optional)
+	// Match can be used to match/transform a given name
+	// into the canonical <distro>-<major>{,.<minor>} form.
+	// E.g.
+	//   (?P<distro>rhel)-(?P<major>8)\.?(?P<minor>[0-9]+)
+	// will support a format like e.g. rhel-810 and rhel-8.10
 	Match string `yaml:"match"`
 
 	// The distro metadata, can contain go text template strings
@@ -166,14 +162,7 @@ func (d *DistroYAML) runTemplates(nameVer string) error {
 	return errors.Join(errs...)
 }
 
-// NewDistroYAML return the given distro or nil if the distro is not
-// found. This mimics the "distrofactory.GetDistro() interface.
-//
-// Note that eventually we want something like "Distros()" instead
-// that returns all known distros but for now we keep compatibility
-// with the way distrofactory/reporegistry work which is by defining
-// distros via repository files.
-func NewDistroYAML(nameVer string) (*DistroYAML, error) {
+func loadDistros() (*distrosYAML, error) {
 	f, err := dataFS().Open("distros.yaml")
 	if err != nil {
 		return nil, err
@@ -188,6 +177,27 @@ func NewDistroYAML(nameVer string) (*DistroYAML, error) {
 		return nil, err
 	}
 
+	return &distros, nil
+}
+
+// NewDistroYAML return the given distro or nil if the distro is not
+// found. This mimics the "distrofactory.GetDistro() interface.
+//
+// Note that eventually we want something like "Distros()" instead
+// that returns all known distros but for now we keep compatibility
+// with the way distrofactory/reporegistry work which is by defining
+// distros via repository files.
+func NewDistroYAML(nameVer string) (*DistroYAML, error) {
+	distros, err := loadDistros()
+	if err != nil {
+		return nil, err
+	}
+
+	// ParseID will also canonicalize the name
+	if id, err := ParseID(nameVer); err == nil && id != nil {
+		nameVer = id.String()
+	}
+
 	var foundDistro *DistroYAML
 	for _, distro := range distros.Distros {
 		if distro.Name == nameVer {
@@ -195,32 +205,33 @@ func NewDistroYAML(nameVer string) (*DistroYAML, error) {
 			break
 		}
 
-		pat, err := glob.Compile(distro.Match)
+		found, err := matchAndNormalize(distro.Match, nameVer)
 		if err != nil {
 			return nil, err
 		}
-		if pat.Match(nameVer) {
-			if err := distro.runTemplates(nameVer); err != nil {
-				return nil, err
-			}
-
+		if found != "" {
 			foundDistro = &distro
+			// nameVer must be replaced with normalized name
+			nameVer = found
 			break
 		}
 	}
 	if foundDistro == nil {
 		return nil, nil
 	}
+	if err := foundDistro.runTemplates(nameVer); err != nil {
+		return nil, err
+	}
 
 	// load imageTypes
-	f, err = dataFS().Open(filepath.Join(foundDistro.DefsPath, "distro.yaml"))
+	f, err := dataFS().Open(filepath.Join(foundDistro.DefsPath, "distro.yaml"))
 	if err != nil {
 		return nil, err
 	}
 	defer f.Close()
 
 	var toplevel imageTypesYAML
-	decoder = yaml.NewDecoder(f)
+	decoder := yaml.NewDecoder(f)
 	decoder.KnownFields(true)
 	if err := decoder.Decode(&toplevel); err != nil {
 		return nil, err
@@ -350,7 +361,11 @@ type ImageTypeYAML struct {
 	Environment environment.EnvironmentConf `yaml:"environment"`
 	Bootable    bool                        `yaml:"bootable"`
 
-	BootISO  bool   `yaml:"boot_iso"`
+	BootISO bool `yaml:"boot_iso"`
+	// XXX merge with BootISO above, controls if grub2 or syslinux are used for ISO boots
+	UseSyslinux             bool `yaml:"use_syslinux"`
+	UseLegacyAnacondaConfig bool `yaml:"use_legacy_anaconda_config"`
+
 	ISOLabel string `yaml:"iso_label"`
 	// XXX: or iso_variant?
 	Variant string `yaml:"variant"`
@@ -358,9 +373,11 @@ type ImageTypeYAML struct {
 	RPMOSTree bool `yaml:"rpm_ostree"`
 
 	OSTree struct {
-		Name   string `yaml:"name"`
-		Remote string `yaml:"remote"`
+		Name       string `yaml:"name"`
+		RemoteName string `yaml:"remote_name"`
 	} `yaml:"ostree"`
+	// XXX: rhel-8 uses this
+	UseOstreeRemotes bool `yaml:"use_ostree_remotes"`
 
 	DefaultSize uint64 `yaml:"default_size"`
 	// the image func name: disk,container,live-installer,...
@@ -370,9 +387,12 @@ type ImageTypeYAML struct {
 	Exports                []string          `yaml:"exports"`
 	RequiredPartitionSizes map[string]uint64 `yaml:"required_partition_sizes"`
 
-	Platforms []platform.PlatformConf `yaml:"platforms"`
+	InternalPlatforms []platform.PlatformConf `yaml:"platforms"`
+	PlatformsOverride *platformsOverride      `yaml:"platforms_override"`
 
 	NameAliases []string `yaml:"name_aliases"`
+
+	InstallWeakDeps *bool `yaml:"install_weak_deps"`
 
 	// for RHEL7 compat
 	// TODO: determine a better place for these options, but for now they are here
@@ -389,6 +409,29 @@ func (it *ImageTypeYAML) Name() string {
 	return it.name
 }
 
+func (it *ImageTypeYAML) PlatformsFor(distroNameVer string) ([]platform.PlatformConf, error) {
+	pl := it.InternalPlatforms
+	if it.PlatformsOverride != nil {
+		id, err := distro.ParseID(distroNameVer)
+		if err != nil {
+			return nil, err
+		}
+		var nMatches int
+		for _, cond := range it.PlatformsOverride.Conditions {
+			// arch does not make sense for platform overrides
+			arch := ""
+			if cond.When.Eval(id, arch) {
+				pl = cond.Override
+				nMatches++
+			}
+		}
+		if nMatches > 1 {
+			return nil, fmt.Errorf("platform conditionals for image type %q should match only once but matched %v times", it.Name(), nMatches)
+		}
+	}
+	return pl, nil
+}
+
 func (it *ImageTypeYAML) runTemplates(distro *DistroYAML) error {
 	var data any
 	// set the DistroVendor in the struct only if its actually
@@ -401,20 +444,46 @@ func (it *ImageTypeYAML) runTemplates(distro *DistroYAML) error {
 			DistroVendor: distro.Vendor,
 		}
 	}
-	for idx := range it.Platforms {
-		// fill the UEFI vendor string
-		templ, err := template.New("uefi-vendor").Parse(it.Platforms[idx].UEFIVendor)
+	subs := func(inp string) (string, error) {
+		templ, err := template.New("uefi-vendor").Parse(inp)
 		templ.Option("missingkey=error")
 		if err != nil {
-			return fmt.Errorf(`cannot parse template for "vendor" field: %w`, err)
+			return "", fmt.Errorf(`cannot parse template for "vendor" field: %w`, err)
 		}
 		var buf bytes.Buffer
 		if err := templ.Execute(&buf, data); err != nil {
-			return fmt.Errorf(`cannot execute template for "vendor" field (is it set?): %w`, err)
+			return "", fmt.Errorf(`cannot execute template for "vendor" field (is it set?): %w`, err)
 		}
-		it.Platforms[idx].UEFIVendor = buf.String()
+		return buf.String(), nil
+	}
+	for idx := range it.InternalPlatforms {
+		newVendor, err := subs(it.InternalPlatforms[idx].UEFIVendor)
+		if err != nil {
+			return err
+		}
+		it.InternalPlatforms[idx].UEFIVendor = newVendor
+	}
+	if it.PlatformsOverride != nil {
+		for _, cond := range it.PlatformsOverride.Conditions {
+			for idx := range cond.Override {
+				newVendor, err := subs(cond.Override[idx].UEFIVendor)
+				if err != nil {
+					return err
+				}
+				cond.Override[idx].UEFIVendor = newVendor
+			}
+		}
 	}
 	return nil
+}
+
+type platformsOverride struct {
+	Conditions map[string]*conditionsPlatforms `yaml:"conditions,omitempty"`
+}
+
+type conditionsPlatforms struct {
+	When     whenCondition           `yaml:"when,omitempty"`
+	Override []platform.PlatformConf `yaml:"override"`
 }
 
 type imageConfig struct {

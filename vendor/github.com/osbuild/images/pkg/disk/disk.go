@@ -118,6 +118,8 @@ func getPartitionTypeIDfor(ptType PartitionTableType, partTypeName string, archi
 			return EFISystemPartitionDOSID, nil
 		case "lvm":
 			return LVMPartitionDOSID, nil
+		case "ppc_prep":
+			return PRepPartitionDOSID, nil
 		case "swap":
 			return SwapPartitionDOSID, nil
 		default:
@@ -135,6 +137,8 @@ func getPartitionTypeIDfor(ptType PartitionTableType, partTypeName string, archi
 			return EFISystemPartitionGUID, nil
 		case "lvm":
 			return LVMPartitionGUID, nil
+		case "ppc_prep":
+			return PRePartitionGUID, nil
 		case "swap":
 			return SwapPartitionGUID, nil
 		case "root":
