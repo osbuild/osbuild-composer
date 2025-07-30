@@ -168,11 +168,12 @@ func TestKojiImport(t *testing.T) {
 			RPMs:  []koji.RPM{},
 		},
 	}
+
 	output := []koji.BuildOutput{
 		{
 			BuildRootID:  1,
 			Filename:     filename,
-			FileSize:     uint64(filesize),
+			FileSize:     uint64(filesize), // nolint: gosec
 			Arch:         "noarch",
 			ChecksumType: koji.ChecksumTypeMD5,
 			Checksum:     hash,
@@ -190,7 +191,7 @@ func TestKojiImport(t *testing.T) {
 	initResult, err := k.CGInitBuild(build.Name, build.Version, build.Release)
 	require.NoError(t, err)
 
-	build.BuildID = uint64(initResult.BuildID)
+	build.BuildID = uint64(initResult.BuildID) // nolint: gosec
 
 	importResult, err := k.CGImport(build, buildRoots, output, uploadDirectory, initResult.Token)
 	require.NoError(t, err)

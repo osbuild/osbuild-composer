@@ -141,6 +141,10 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 	}
 
 	for i, buildResult := range osbuildResults {
+		// i is a range index which never get modified, so it's safe to
+		// ignore the sec warning
+		buildRootID := uint64(i) // nolint: gosec
+
 		buildRPMs := make([]koji.RPM, 0)
 		// collect packages from stages in build pipelines
 		for _, plName := range buildResult.PipelineNames.Build {
@@ -171,7 +175,7 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 		kojiTargetOptions := kojiTargetResult.Options.(*target.KojiTargetResultOptions)
 
 		buildRoots = append(buildRoots, koji.BuildRoot{
-			ID: uint64(i),
+			ID: buildRootID,
 			Host: koji.Host{
 				Os:   buildResult.HostOS,
 				Arch: buildResult.Arch,
@@ -224,7 +228,7 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 
 		// Image output
 		outputs = append(outputs, koji.BuildOutput{
-			BuildRootID:  uint64(i),
+			BuildRootID:  buildRootID,
 			Filename:     imageFilename,
 			FileSize:     kojiTargetOptions.Image.Size,
 			Arch:         buildResult.Arch,
@@ -268,7 +272,7 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 			manifestOutputsExtraInfo[kojiTargetOptions.OSBuildManifest.Filename] = &manifestExtraInfo
 
 			outputs = append(outputs, koji.BuildOutput{
-				BuildRootID:  uint64(i),
+				BuildRootID:  buildRootID,
 				Filename:     kojiTargetOptions.OSBuildManifest.Filename,
 				FileSize:     kojiTargetOptions.OSBuildManifest.Size,
 				Arch:         buildResult.Arch,
@@ -286,7 +290,7 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 		// TODO: Remove the condition it in the future.
 		if kojiTargetOptions.Log != nil {
 			outputs = append(outputs, koji.BuildOutput{
-				BuildRootID:  uint64(i),
+				BuildRootID:  buildRootID,
 				Filename:     kojiTargetOptions.Log.Filename,
 				FileSize:     kojiTargetOptions.Log.Size,
 				Arch:         "noarch", // log file is not architecture dependent
@@ -300,7 +304,7 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 		if len(kojiTargetOptions.SbomDocs) > 0 {
 			for _, sbomDoc := range kojiTargetOptions.SbomDocs {
 				outputs = append(outputs, koji.BuildOutput{
-					BuildRootID:  uint64(i),
+					BuildRootID:  buildRootID,
 					Filename:     sbomDoc.Filename,
 					FileSize:     sbomDoc.Size,
 					Arch:         buildResult.Arch,

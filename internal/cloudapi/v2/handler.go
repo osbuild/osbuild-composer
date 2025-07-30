@@ -140,7 +140,10 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 
 	var id uuid.UUID
 	if request.Koji != nil {
-		id, err = h.server.enqueueKojiCompose(uint64(request.Koji.TaskId), request.Koji.Server, request.Koji.Name, request.Koji.Version, request.Koji.Release, irs, channel)
+		if request.Koji.TaskId < 0 {
+			return fmt.Errorf("invalid Koji task ID: %d", request.Koji.TaskId)
+		}
+		id, err = h.server.enqueueKojiCompose(uint64(request.Koji.TaskId), request.Koji.Server, request.Koji.Name, request.Koji.Version, request.Koji.Release, irs, channel) // nolint: gosec
 		if err != nil {
 			return err
 		}

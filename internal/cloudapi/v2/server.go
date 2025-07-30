@@ -440,7 +440,7 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 		KojiFilenames: kojiFilenames,
 		KojiDirectory: kojiDirectory,
 		TaskID:        taskID,
-		StartTime:     uint64(time.Now().Unix()),
+		StartTime:     uint64(time.Now().Unix()), // nolint: gosec
 	}, initID, buildIDs, channel)
 	if err != nil {
 		return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
