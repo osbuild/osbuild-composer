@@ -611,7 +611,7 @@ func TestKojiJobTypeValidation(t *testing.T) {
 		KojiFilenames: filenames,
 		KojiDirectory: "koji-server-test-dir",
 		TaskID:        0,
-		StartTime:     uint64(time.Now().Unix()),
+		StartTime:     uint64(time.Now().Unix()), // nolint: gosec
 	}
 	finalizeID, err := workers.EnqueueKojiFinalize(&finalizeJob, initID, buildJobIDs, "")
 	require.NoError(t, err)

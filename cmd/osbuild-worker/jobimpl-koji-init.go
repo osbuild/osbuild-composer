@@ -44,7 +44,10 @@ func (impl *KojiInitJobImpl) kojiInit(server, name, version, release string) (st
 		return "", 0, err
 	}
 
-	return buildInfo.Token, uint64(buildInfo.BuildID), nil
+	if buildInfo.BuildID < 0 {
+		return "", 0, fmt.Errorf("invalid koji init job build ID: %d", buildInfo.BuildID)
+	}
+	return buildInfo.Token, uint64(buildInfo.BuildID), nil // nolint: gosec
 }
 
 func (impl *KojiInitJobImpl) Run(job worker.Job) error {
