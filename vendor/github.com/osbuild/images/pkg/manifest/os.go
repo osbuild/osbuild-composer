@@ -140,6 +140,9 @@ type OSCustomizations struct {
 	OpenSCAPRemediationConfig *oscap.RemediationConfig
 
 	Subscription *subscription.ImageOptions
+	// Indicates if rhc should be set to permissive when creating the registration script
+	PermissiveRHC *bool
+
 	// The final RHSM config to be applied to the image
 	RHSMConfig *subscription.RHSMConfig
 	RHSMFacts  *facts.ImageOptions
@@ -700,7 +703,13 @@ func (p *OS) serialize() osbuild.Pipeline {
 	}
 
 	if p.OSCustomizations.Subscription != nil {
-		subStage, subDirs, subFiles, subServices, err := subscriptionService(*p.OSCustomizations.Subscription, &subscriptionServiceOptions{InsightsOnBoot: p.OSTreeRef != ""})
+		subStage, subDirs, subFiles, subServices, err := subscriptionService(
+			*p.OSCustomizations.Subscription,
+			&subscriptionServiceOptions{
+				InsightsOnBoot: p.OSTreeRef != "",
+				PermissiveRHC:  common.ValueOrEmpty(p.OSCustomizations.PermissiveRHC),
+			},
+		)
 		if err != nil {
 			panic(err)
 		}

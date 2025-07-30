@@ -77,6 +77,9 @@ type subscriptionServiceOptions struct {
 	// UnitPath controls the path where the systemd unit will be created,
 	// /usr/lib/systemd or /etc/systemd.
 	UnitPath osbuild.SystemdUnitPath
+
+	// Indicates if rhc should be set to permissive when creating the registration script
+	PermissiveRHC bool
 }
 
 // subscriptionService creates the necessary stage and modifications to the
@@ -86,18 +89,22 @@ type subscriptionServiceOptions struct {
 // - Register the system with rhc and enable Insights
 // - Register with subscription-manager, no Insights or rhc
 // - Register with subscription-manager and enable Insights, no rhc
-func subscriptionService(subscriptionOptions subscription.ImageOptions, serviceOptions *subscriptionServiceOptions) (*osbuild.Stage, []*fsnode.Directory, []*fsnode.File, []string, error) {
+func subscriptionService(
+	subscriptionOptions subscription.ImageOptions,
+	serviceOptions *subscriptionServiceOptions) (*osbuild.Stage, []*fsnode.Directory, []*fsnode.File, []string, error) {
 	dirs := make([]*fsnode.Directory, 0)
 	files := make([]*fsnode.File, 0)
 	services := make([]string, 0)
 
 	insightsOnBoot := false
 	unitPath := osbuild.UsrUnitPath
+	permissiveRHC := false
 	if serviceOptions != nil {
 		insightsOnBoot = serviceOptions.InsightsOnBoot
 		if serviceOptions.UnitPath != "" {
 			unitPath = serviceOptions.UnitPath
 		}
+		permissiveRHC = serviceOptions.PermissiveRHC
 	}
 
 	// Write a key file that will contain the org ID and activation key to be sourced in the systemd service.
@@ -126,8 +133,10 @@ func subscriptionService(subscriptionOptions subscription.ImageOptions, serviceO
 			rhcConnect += fmt.Sprintf(" --content-template=\"%s\"", subscriptionOptions.TemplateName)
 		}
 		commands = append(commands, rhcConnect)
-		// execute the rhc post install script as the selinuxenabled check doesn't work in the buildroot container
-		commands = append(commands, "/usr/sbin/semanage permissive --add rhcd_t")
+		if permissiveRHC {
+			// execute the rhc post install script as the selinuxenabled check doesn't work in the buildroot container
+			commands = append(commands, "/usr/sbin/semanage permissive --add rhcd_t")
+		}
 		// register to template if template uuid is specified
 		if curlToAssociateSystem != "" {
 			commands = append(commands, curlToAssociateSystem)

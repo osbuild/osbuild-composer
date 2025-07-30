@@ -282,6 +282,16 @@
       - "mdadm"
       - "nss-softokn"
 
+  wsl_config: &wsl_config
+    config:
+      boot_systemd: true
+    distribution_config: &wsl_distribution_config
+      shortcut:
+        enabled: true
+        icon: /usr/share/pixmaps/fedora-logo.ico
+      oobe: &wsl_distribution_oobe_config
+        default_uid: 1000
+
   anaconda_boot_pkgset: &anaconda_boot_pkgset
     conditions:
       "x86 specific packages for the anaconda boot pkgset":
@@ -414,7 +424,7 @@
     timeout: 10
     timeout_style: "countdown"
 
-  azure_image_config: &azure_image_config
+  azure_image_config_base: &azure_image_config_base
     # from CreateAzureDatalossWarningScriptAndUnit
     files:
       - path: &dataloss_script "/usr/local/sbin/temp-disk-dataloss-warning"
@@ -528,8 +538,6 @@
       config:
         "ResourceDisk.Format": false
         "ResourceDisk.EnableSwap": false
-        "Provisioning.UseCloudInit": true
-        "Provisioning.Enabled": false
     grub2_config:
       disable_recovery: true
       disable_submenu: true
@@ -582,9 +590,24 @@
         shallow_merge:
           gpgkey_files:
             - "/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release"
-      "x86_64 specific kernel commandline":
+      "x86_64 specific kernel commandline for rhel-10.1+":
         when:
           arch: "x86_64"
+          version_greater_or_equal: "10.1"
+        shallow_merge:
+          kernel_options:
+            # common
+            - "ro"
+            - "nvme_core.io_timeout=240"
+            # x86
+            - "console=tty1"
+            - "console=ttyS0"
+            - "earlyprintk=ttyS0"
+            - "rootdelay=300"
+      "x86_64 specific kernel commandline for rhel-10.0":
+        when:
+          arch: "x86_64"
+          version_equal: "10.0"
         shallow_merge:
           kernel_options:
             # common
@@ -596,9 +619,21 @@
             - "console=ttyS0"
             - "earlyprintk=ttyS0"
             - "rootdelay=300"
-      "aarch64 specific kernel commandline":
+      "aarch64 specific kernel commandline for rhel-10.1+":
         when:
           arch: "aarch64"
+          version_greater_or_equal: "10.1"
+        shallow_merge:
+          kernel_options:
+            # common
+            - "ro"
+            - "nvme_core.io_timeout=240"
+            # aarch64
+            - "console=ttyAMA0"
+      "aarch64 specific kernel commandline for rhel-10.0":
+        when:
+          arch: "aarch64"
+          version_equal: "10.0"
         shallow_merge:
           kernel_options:
             # common
@@ -628,6 +663,7 @@ image_config:
     default_oscap_datastream: "/usr/share/xml/scap/ssg/content/ssg-rhel10-ds.xml"
     install_weak_deps: true
     locale: "C.UTF-8"
+    permissive_rhc: true
     sysconfig:
       networking: true
       no_zero_conf: true
@@ -861,7 +897,7 @@ image_types:
         image_format: "vhd"
     # based on https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/9/html/deploying_rhel_9_on_microsoft_azure/assembly_deploying-a-rhel-image-as-a-virtual-machine-on-microsoft-azure_cloud-content-azure#making-configuration-changes_configure-the-image-azure
     image_config: &image_config_vhd
-      <<: *azure_image_config
+      <<: *azure_image_config_base
       time_synchronization:
         refclocks:
           - driver:
@@ -909,7 +945,6 @@ image_types:
             - "patch"
             - "rng-tools"
             - "selinux-policy-targeted"
-            - "system-reinstall-bootc"
             - "uuid"
             - "WALinuxAgent"
             - "yum-utils"
@@ -961,15 +996,21 @@ image_types:
             - "rhnlib"
             - "rhnsd"
             - "usb_modeswitch"
-          conditions: &conditions_pkgsets_insights_client_on_rhel
+          conditions:
             "add insights client on rhel":
               when:
                 distro_name: "rhel"
               append:
                 include:
                   - "insights-client"
+            "add system-reinstall-bootc on rhel":
+              when:
+                distro_name: "rhel"
+              append:
+                include:
+                  - "system-reinstall-bootc"
 
-  "azure-rhui": &azure_rhui
+  "azure": &azure
     <<: *vhd
     payload_pipelines: ["os", "image", "vpc", "xz"]
     exports: ["xz"]
@@ -1066,6 +1107,9 @@ image_types:
           # NB: we currently don't support /boot on LVM
           - *azure_rhui_part_boot
           - *azure_rhui_part_lvm
+
+  "azure-rhui": &azure_rhui
+    <<: *azure
 
   "azure-sap-rhui":
     <<: *azure_rhui
@@ -1290,7 +1334,6 @@ image_types:
             - "redhat-release"
             - "redhat-release-eula"
             - "rsync"
-            - "system-reinstall-bootc"
             - "tuned"
             - "tar"
           exclude:
@@ -1326,7 +1369,18 @@ image_types:
             # RHBZ#2075815
             - "qemu-guest-agent"
           conditions:
-            <<: *conditions_pkgsets_insights_client_on_rhel
+            "add insights client on rhel":
+              when:
+                distro_name: "rhel"
+              append:
+                include:
+                  - "insights-client"
+            "add system-reinstall-bootc on rhel":
+              when:
+                distro_name: "rhel"
+              append:
+                include:
+                  - "system-reinstall-bootc"
 
   # RHEL internal-only x86_64 EC2 image type
   ec2: &ec2
@@ -1395,24 +1449,7 @@ image_types:
       - arch: "x86_64"
       - arch: "aarch64"
     image_config:
-      cloud_init:
-        - filename: "99_wsl.cfg"
-          config:
-            datasource_list:
-              - "WSL"
-              - "None"
-            network:
-              config: "disabled"
       no_selinux: true
-      wsl: &wsl_config
-        config:
-          boot_systemd: true
-        distribution_config: &wsl_distribution_config
-          shortcut:
-            enabled: true
-            icon: /usr/share/pixmaps/fedora-logo.ico
-          oobe: &wsl_distribution_oobe_config
-            default_uid: 1000
       conditions:
         "wsl config for rhel":
           when:
@@ -1425,17 +1462,6 @@ image_types:
                 oobe:
                   <<: *wsl_distribution_oobe_config
                   default_name: RedHatEnterpriseLinux-%s
-        "wsl config for centos":
-          when:
-            distro_name: "centos"
-          shallow_merge:
-            wsl:
-              <<: *wsl_config
-              distribution_config:
-                <<: *wsl_distribution_config
-                oobe:
-                  <<: *wsl_distribution_oobe_config
-                  default_name: CentOS-%s
         "wsl config for almalinux":
           when:
             distro_name: "almalinux"
@@ -1453,6 +1479,19 @@ image_types:
           shallow_merge:
             wsl:
               <<: *wsl_distribution_config_almalinux
+        "cloud-init config for non-centos":
+          when:
+            not_distro_name: "centos"
+          shallow_merge:
+            cloud_init:
+              - filename: "99_wsl.cfg"
+                config:
+                  datasource_list:
+                    - "WSL"
+                    - "None"
+                  network:
+                    config: "disabled"
+
     package_sets:
       os:
         - include:
@@ -1461,7 +1500,6 @@ image_types:
             - "basesystem"
             - "bash"
             - "ca-certificates"
-            - "cloud-init"
             - "coreutils-single"
             - "crypto-policies-scripts"
             - "curl-minimal"
@@ -1486,14 +1524,11 @@ image_types:
             - "procps-ng"
             - "python3"
             - "python3-inotify"
-            - "redhat-logos"
-            - "redhat-release"
             - "rootfiles"
             - "rpm"
             - "sed"
             - "setup"
             - "shadow-utils"
-            - "subscription-manager"
             - "sudo"
             - "systemd"
             - "tar"
@@ -1510,6 +1545,25 @@ image_types:
             - "python-unversioned-command"
             - "redhat-release-eula"
             - "rpm-plugin-systemd-inhibit"
+          conditions:
+            "subscription-manager, cloud-init, and redhat-* on rhel-likes except centos":
+              when:
+                not_distro_name: "centos"
+              append:
+                include:
+                  - "subscription-manager"
+                  - "cloud-init"
+                  - "redhat-logos"
+                  - "redhat-release"
+            "wsl-setup, and centos-* on centos":
+              when:
+                distro_name: "centos"
+              append:
+                include:
+                  - "wsl-setup"
+                  - "centos-logos"
+                  - "centos-release"
+
 
   "image-installer":
     filename: "installer.iso"
@@ -1846,7 +1900,12 @@ image_types:
             # RHBZ#2075815
             - "qemu-guest-agent"
           conditions:
-            <<: *conditions_pkgsets_insights_client_on_rhel
+            "add insights client on rhel":
+              when:
+                distro_name: "rhel"
+              append:
+                include:
+                  - "insights-client"
 
   "azure-cvm":
     <<: *vhd
@@ -1867,43 +1926,6 @@ image_types:
             - "kernel-uki-virt-addons"  # provides useful cmdline utilities for the UKI
             - "shim-x64"
             - "uki-direct"
-    image_config:
-      <<: *azure_image_config
-      default_kernel: "kernel-uki-virt"
-      default_kernel_name: "kernel-uki-virt"
-      no_bls: true
-      cloud_init:
-        - filename: "91-azure_datasource.cfg"
-          config:
-            datasource:
-              azure:
-                apply_network_config: false
-            datasource_list:
-              - "Azure"
-    package_sets:
-      os:
-        - include:
-            - "@minimal-environment"
-            - "chrony"
-            - "cloud-init"
-            - "cloud-utils-growpart"
-            - "cryptsetup"
-            - "NetworkManager-cloud-setup"
-            - "openssh-server"
-            - "redhat-cloud-client-configuration"
-            - "redhat-release"
-            - "tpm2-tools"
-            - "WALinuxAgent"
-        - exclude:
-            - "dracut-config-rescue"
-            - "grubby"
-            - "iwl*"
-            # In EL9 we exclude linux-firmware* (note the asterisk).
-            # In EL10, packages in the minimal-environment group require
-            # linux-firmware-whence, so we only exclude the linux-firmware
-            # package here.
-            - "linux-firmware"
-            - "os-prober"
     partition_table:
       x86_64:
         uuid: "D209C89E-EA5E-4FBD-B161-B461CCE297E0"
@@ -1931,3 +1953,52 @@ image_types:
               fstab_options: "defaults"
               fstab_freq: 0
               fstab_passno: 0
+    image_config:
+      <<: *azure_image_config_base
+      default_kernel: "kernel-uki-virt"
+      default_kernel_name: "kernel-uki-virt"
+      no_bls: true
+      cloud_init:
+        - filename: "91-azure_datasource.cfg"
+          config:
+            datasource:
+              azure:
+                apply_network_config: false
+            datasource_list:
+              - "Azure"
+      conditions:
+        "x86_64 shim package version lock":
+          # Lock the shim package to its installed version. This is necessary
+          # for UKI-based images that can become unbootable if the shim is
+          # upgraded to one signed by a newer certificate that does not exist
+          # in the system's database.
+          # See https://issues.redhat.com/browse/RHEL-93650
+          when:
+            arch: "x86_64"
+          shallow_merge:
+            versionlock_packages:
+              - "shim-x64"
+    package_sets:
+      os:
+        - include:
+            - "@minimal-environment"
+            - "chrony"
+            - "cloud-init"
+            - "cloud-utils-growpart"
+            - "cryptsetup"
+            - "NetworkManager-cloud-setup"
+            - "openssh-server"
+            - "redhat-cloud-client-configuration"
+            - "redhat-release"
+            - "tpm2-tools"
+            - "WALinuxAgent"
+        - exclude:
+            - "dracut-config-rescue"
+            - "grubby"
+            - "iwl*"
+            # In EL9 we exclude linux-firmware* (note the asterisk).
+            # In EL10, packages in the minimal-environment group require
+            # linux-firmware-whence, so we only exclude the linux-firmware
+            # package here.
+            - "linux-firmware"
+            - "os-prober"
