@@ -19,8 +19,7 @@ import (
 
 // Describes the specified key pairs or all of your key pairs.
 //
-// For more information about key pairs, see [Amazon EC2 key pairs] in the Amazon Elastic Compute Cloud
-// User Guide.
+// For more information about key pairs, see [Amazon EC2 key pairs] in the Amazon EC2 User Guide.
 //
 // [Amazon EC2 key pairs]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html
 func (c *Client) DescribeKeyPairs(ctx context.Context, params *DescribeKeyPairsInput, optFns ...func(*Options)) (*DescribeKeyPairsOutput, error) {
@@ -133,6 +132,9 @@ func (c *Client) addOperationDescribeKeyPairsMiddlewares(stack *middleware.Stack
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -151,6 +153,9 @@ func (c *Client) addOperationDescribeKeyPairsMiddlewares(stack *middleware.Stack
 	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
+	if err = addCredentialSource(stack, options); err != nil {
+		return err
+	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeKeyPairs(options.Region), middleware.Before); err != nil {
 		return err
 	}
@@ -167,6 +172,48 @@ func (c *Client) addOperationDescribeKeyPairsMiddlewares(stack *middleware.Stack
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAttempt(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptExecution(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeSerialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterSerialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeSigning(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterSigning(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptTransmit(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeDeserialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterDeserialization(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil
@@ -365,6 +412,9 @@ func keyPairExistsStateRetryable(ctx context.Context, input *DescribeKeyPairsInp
 		}
 	}
 
+	if err != nil {
+		return false, err
+	}
 	return true, nil
 }
 
