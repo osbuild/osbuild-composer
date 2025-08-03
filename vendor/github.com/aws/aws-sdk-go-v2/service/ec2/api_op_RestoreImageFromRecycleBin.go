@@ -10,10 +10,10 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Restores an AMI from the Recycle Bin. For more information, see [Recycle Bin] in the Amazon
+// Restores an AMI from the Recycle Bin. For more information, see [Recover deleted Amazon EBS snapshots and EBS-back AMIs with Recycle Bin] in the Amazon
 // EC2 User Guide.
 //
-// [Recycle Bin]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/recycle-bin.html
+// [Recover deleted Amazon EBS snapshots and EBS-back AMIs with Recycle Bin]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/recycle-bin.html
 func (c *Client) RestoreImageFromRecycleBin(ctx context.Context, params *RestoreImageFromRecycleBinInput, optFns ...func(*Options)) (*RestoreImageFromRecycleBinOutput, error) {
 	if params == nil {
 		params = &RestoreImageFromRecycleBinInput{}
@@ -99,6 +99,9 @@ func (c *Client) addOperationRestoreImageFromRecycleBinMiddlewares(stack *middle
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -115,6 +118,9 @@ func (c *Client) addOperationRestoreImageFromRecycleBinMiddlewares(stack *middle
 		return err
 	}
 	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpRestoreImageFromRecycleBinValidationMiddleware(stack); err != nil {
@@ -136,6 +142,48 @@ func (c *Client) addOperationRestoreImageFromRecycleBinMiddlewares(stack *middle
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAttempt(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptExecution(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeSerialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterSerialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeSigning(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterSigning(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptTransmit(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeDeserialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterDeserialization(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil
