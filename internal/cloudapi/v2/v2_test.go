@@ -92,17 +92,6 @@ func mockDepsolve(t *testing.T, workerServer *worker.Server, wg *sync.WaitGroup,
 			}
 			dJR := &worker.DepsolveJobResult{
 				PackageSpecs: map[string][]rpmmd.PackageSpec{
-					// Used when depsolving a list of packages outside the manifest
-					// Including it in other responses currently doesn't cause a problem
-					"depsolve": {
-						{
-							Name:     "dep-package1",
-							Version:  "1.33",
-							Release:  "2.fc30",
-							Arch:     "x86_64",
-							Checksum: "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893",
-						},
-					},
 					// Used when depsolving a manifest
 					"build": {
 						{
@@ -113,6 +102,9 @@ func mockDepsolve(t *testing.T, workerServer *worker.Server, wg *sync.WaitGroup,
 					"os": {
 						{
 							Name:     "pkg1",
+							Version:  "1.33",
+							Release:  "2.fc30",
+							Arch:     "x86_64",
 							Checksum: "sha256:e50ddb78a37f5851d1a5c37a4c77d59123153c156e628e064b9daa378f45a2fe",
 						},
 					},
@@ -1694,7 +1686,7 @@ func TestDepsolveBlueprint(t *testing.T) {
 				"distro": "%[1]s",
 				"enabled_modules": [{ "name": "deps", "stream": "1" }],
 				"packages": [
-					{ "name": "dep-package", "version": "*" }
+					{ "name": "pkg1", "version": "*" }
 			]},
 			"distribution": "%[1]s",
 			"architecture": "%[2]s"
@@ -1703,15 +1695,78 @@ func TestDepsolveBlueprint(t *testing.T) {
 		`{
 			"packages": [
                 {
-                    "name": "dep-package1",
-                    "type": "rpm",
+                    "name": "pkg1",
+					"type": "rpm",
                     "version": "1.33",
                     "release": "2.fc30",
                     "arch": "x86_64",
-                    "checksum": "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893"
+					"checksum": "sha256:e50ddb78a37f5851d1a5c37a4c77d59123153c156e628e064b9daa378f45a2fe"
 				}
 			]
 		}`)
+}
+
+func TestDepsolveImageType(t *testing.T) {
+	srv, _, _, cancel := newV2Server(t, t.TempDir(), false, false)
+	defer cancel()
+
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST",
+		"/api/image-builder-composer/v2/depsolve/blueprint", fmt.Sprintf(`
+		{
+			"blueprint": {
+				"name": "deptest1",
+				"version": "0.0.1",
+				"distro": "%[1]s",
+				"enabled_modules": [{ "name": "deps", "stream": "1" }],
+				"packages": [
+					{ "name": "pkg1", "version": "*" }
+			]},
+			"distribution": "%[1]s",
+			"architecture": "%[2]s",
+			"image_type": "%[3]s"
+		}`, test_distro.TestDistro1Name, test_distro.TestArch3Name, test_distro.TestImageTypeImageInstaller),
+		http.StatusOK,
+		`{
+			"packages": [
+                {
+                    "name": "pkg1",
+					"type": "rpm",
+                    "version": "1.33",
+                    "release": "2.fc30",
+                    "arch": "x86_64",
+					"checksum": "sha256:e50ddb78a37f5851d1a5c37a4c77d59123153c156e628e064b9daa378f45a2fe"
+				}
+			]
+		}`)
+}
+
+func TestDepsolveImageTypeError(t *testing.T) {
+	srv, _, _, cancel := newV2Server(t, t.TempDir(), false, false)
+	defer cancel()
+
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST",
+		"/api/image-builder-composer/v2/depsolve/blueprint", fmt.Sprintf(`
+		{
+			"blueprint": {
+				"name": "deptest1",
+				"version": "0.0.1",
+				"distro": "%[1]s",
+				"enabled_modules": [{ "name": "deps", "stream": "1" }],
+				"packages": [
+					{ "name": "pkg1", "version": "*" }
+			]},
+			"distribution": "%[1]s",
+			"architecture": "%[2]s",
+			"image_type": "bad-image-type"
+		}`, test_distro.TestDistro1Name, test_distro.TestArchName),
+		http.StatusBadRequest, `
+		{
+			"href": "/api/image-builder-composer/v2/errors/30",
+			"id": "30",
+			"kind": "Error",
+			"code": "IMAGE-BUILDER-COMPOSER-30",
+			"reason":"Request could not be validated"
+		}`, "operation_id", "details")
 }
 
 func TestDepsolveDistroErrors(t *testing.T) {

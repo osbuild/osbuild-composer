@@ -4,9 +4,13 @@ package v2
 
 import (
 	"context"
+	"crypto/rand"
 	"fmt"
+	"math"
+	"math/big"
 	"time"
 
+	"github.com/osbuild/blueprint/pkg/blueprint"
 	"github.com/osbuild/images/pkg/distrofactory"
 	"github.com/osbuild/images/pkg/reporegistry"
 	"github.com/osbuild/images/pkg/rpmmd"
@@ -56,14 +60,44 @@ func (request *DepsolveRequest) Depsolve(df *distrofactory.Factory, rr *reporegi
 		}
 	}
 
-	// Send the depsolve request to the worker
 	packageSet := make(map[string][]rpmmd.PackageSet, 1)
-	packageSet["depsolve"] = []rpmmd.PackageSet{
-		{
-			Include:        bp.GetPackages(),
-			EnabledModules: bp.GetEnabledModules(),
-			Repositories:   repos,
-		},
+
+	// If there is an optional image_type we use manifest to setup the package/repo list
+	if request.ImageType != nil {
+		imageType, err := distroArch.GetImageType(imageTypeFromApiImageType(*request.ImageType, distroArch))
+		if err != nil {
+			return nil, HTTPError(ErrorUnsupportedImageType)
+		}
+
+		// use the same seed for all images so we get the same IDs
+		bigSeed, err := rand.Int(rand.Reader, big.NewInt(math.MaxInt64))
+		if err != nil {
+			return nil, HTTPError(ErrorFailedToGenerateManifestSeed)
+		}
+		manifestSeed := bigSeed.Int64()
+
+		ir := imageRequest{
+			imageType:    imageType,
+			repositories: repos,
+			manifestSeed: manifestSeed,
+		}
+
+		ibp := blueprint.Convert(bp)
+		manifestSource, _, err := ir.imageType.Manifest(&ibp, ir.imageOptions, ir.repositories, &ir.manifestSeed)
+		if err != nil {
+			return nil, HTTPErrorWithInternal(ErrorFailedToDepsolve, err)
+		}
+
+		packageSet = manifestSource.GetPackageSetChains()
+	} else {
+		// Send the depsolve request to the worker
+		packageSet["os"] = []rpmmd.PackageSet{
+			{
+				Include:        bp.GetPackages(),
+				EnabledModules: bp.GetEnabledModules(),
+				Repositories:   repos,
+			},
+		}
 	}
 
 	depsolveJobID, err := workers.EnqueueDepsolve(&worker.DepsolveJob{
@@ -109,5 +143,5 @@ func (request *DepsolveRequest) Depsolve(df *distrofactory.Factory, rr *reporegi
 		}
 	}
 
-	return result.PackageSpecs["depsolve"], nil
+	return result.PackageSpecs["os"], nil
 }
