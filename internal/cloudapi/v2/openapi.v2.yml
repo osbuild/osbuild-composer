@@ -2586,6 +2586,8 @@ components:
           example: 'x86_64'
         blueprint:
           $ref: '#/components/schemas/Blueprint'
+        image_type:
+          $ref: '#/components/schemas/ImageTypes'
 
     DepsolveResponse:
       type: object
