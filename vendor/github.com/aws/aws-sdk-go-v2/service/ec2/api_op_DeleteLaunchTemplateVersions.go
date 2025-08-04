@@ -24,7 +24,7 @@ import (
 //
 // For more information, see [Delete a launch template version] in the Amazon EC2 User Guide.
 //
-// [Delete a launch template version]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/manage-launch-template-versions.html#delete-launch-template-version
+// [Delete a launch template version]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/delete-launch-template.html#delete-launch-template-version
 func (c *Client) DeleteLaunchTemplateVersions(ctx context.Context, params *DeleteLaunchTemplateVersionsInput, optFns ...func(*Options)) (*DeleteLaunchTemplateVersionsOutput, error) {
 	if params == nil {
 		params = &DeleteLaunchTemplateVersionsInput{}
@@ -126,6 +126,9 @@ func (c *Client) addOperationDeleteLaunchTemplateVersionsMiddlewares(stack *midd
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -142,6 +145,9 @@ func (c *Client) addOperationDeleteLaunchTemplateVersionsMiddlewares(stack *midd
 		return err
 	}
 	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDeleteLaunchTemplateVersionsValidationMiddleware(stack); err != nil {
@@ -163,6 +169,48 @@ func (c *Client) addOperationDeleteLaunchTemplateVersionsMiddlewares(stack *midd
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAttempt(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptExecution(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeSerialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterSerialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeSigning(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterSigning(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptTransmit(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeDeserialization(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAfterDeserialization(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil
