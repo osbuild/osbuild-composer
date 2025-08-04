@@ -114,7 +114,7 @@ func TestHTTPErrorHandler(t *testing.T) {
 		require.NotNil(t, apiErr)
 		require.Equal(t, "opid", apiErr.OperationId)
 		require.Equal(t, find(ErrorEnqueueingJob).reason, apiErr.Reason)
-		require.Empty(t, *apiErr.Details)
+		require.Empty(t, apiErr.Details)
 	}
 
 	// HTTPErrorWithInternal
@@ -131,7 +131,7 @@ func TestHTTPErrorHandler(t *testing.T) {
 		require.NotNil(t, apiErr)
 		require.Equal(t, "opid", apiErr.OperationId)
 		require.Equal(t, find(ErrorEnqueueingJob).reason, apiErr.Reason)
-		require.Equal(t, err.Error(), *apiErr.Details)
+		require.Equal(t, err.Error(), apiErr.Details)
 	}
 
 	// HTTPErrorWithDetails
@@ -149,7 +149,7 @@ func TestHTTPErrorHandler(t *testing.T) {
 		require.NotNil(t, apiErr)
 		require.Equal(t, "opid", apiErr.OperationId)
 		require.Equal(t, find(ErrorEnqueueingJob).reason, apiErr.Reason)
-		require.Equal(t, "even more extra details", *apiErr.Details)
+		require.Equal(t, "even more extra details", apiErr.Details)
 	}
 
 	// echo.HTTPError
@@ -166,7 +166,7 @@ func TestHTTPErrorHandler(t *testing.T) {
 		require.NotNil(t, apiErr)
 		require.Equal(t, "opid", apiErr.OperationId)
 		require.Equal(t, find(ErrorUnspecified).reason, apiErr.Reason)
-		require.Equal(t, "code=500, message=some unexpected internal http error", *apiErr.Details)
+		require.Equal(t, "code=500, message=some unexpected internal http error", apiErr.Details)
 	}
 
 	// echo.HTTPError and internalErr is nil
@@ -182,7 +182,7 @@ func TestHTTPErrorHandler(t *testing.T) {
 		require.NotNil(t, apiErr)
 		require.Equal(t, "opid", apiErr.OperationId)
 		require.Equal(t, find(ErrorUnspecified).reason, apiErr.Reason)
-		require.Equal(t, "code=500, message=<nil>", *apiErr.Details)
+		require.Equal(t, "code=500, message=<nil>", apiErr.Details)
 	}
 
 	// plain error
@@ -199,6 +199,6 @@ func TestHTTPErrorHandler(t *testing.T) {
 		require.NotNil(t, apiErr)
 		require.Equal(t, "opid", apiErr.OperationId)
 		require.Equal(t, find(ErrorNotHTTPError).reason, apiErr.Reason)
-		require.Equal(t, "some unexpected internal error", *apiErr.Details)
+		require.Equal(t, "some unexpected internal error", apiErr.Details)
 	}
 }
