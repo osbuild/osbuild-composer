@@ -354,6 +354,7 @@ func Convert(bp Blueprint) iblueprint.Blueprint {
 		}
 		if disk := c.Disk; disk != nil {
 			idisk := &iblueprint.DiskCustomization{
+				Type:       disk.Type,
 				MinSize:    disk.MinSize,
 				Partitions: make([]iblueprint.PartitionCustomization, len(disk.Partitions)),
 			}
