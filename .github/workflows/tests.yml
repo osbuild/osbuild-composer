@@ -210,6 +210,7 @@ jobs:
       uses: ludeeus/action-shellcheck@00cae500b08a931fb5698e11e79bfbd38e612a38
       with:
         ignore: vendor # We don't want to fix the code in vendored dependencies
+        version: "v0.10.0"
       env:
         # don't check /etc/os-release sourcing, allow useless cats to live inside our codebase, and
         # allow seemingly unreachable commands
