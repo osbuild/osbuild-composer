@@ -218,30 +218,6 @@ func NewForEndpointFromFile(filename, endpoint, region, caBundle string, skipSSL
 	return newAwsFromCredsWithEndpoint(config.WithSharedCredentialsFiles([]string{filename, "default"}), region, endpoint, caBundle, skipSSLVerification, imagesAWS)
 }
 
-func (a *AWS) Upload(filename, bucket, key string) (*manager.UploadOutput, error) {
-	file, err := os.Open(filename)
-	if err != nil {
-		return nil, err
-	}
-
-	defer func() {
-		err := file.Close()
-		if err != nil {
-			logrus.Warnf("[AWS] ‼ Failed to close the file uploaded to S3️: %v", err)
-		}
-	}()
-
-	logrus.Infof("[AWS] 🚀 Uploading image to S3: %s/%s", bucket, key)
-	return a.s3uploader.Upload(
-		context.Background(),
-		&s3.PutObjectInput{
-			Bucket: aws.String(bucket),
-			Key:    aws.String(key),
-			Body:   file,
-		},
-	)
-}
-
 // Register is a function that imports a snapshot, waits for the snapshot to
 // fully import, tags the snapshot, cleans up the image in S3, and registers
 // an AMI in AWS.
