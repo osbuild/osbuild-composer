@@ -127,7 +127,7 @@ func (impl *AWSEC2ShareJobImpl) Run(job worker.Job) error {
 		return err
 	}
 
-	err = aws.ShareImage(args.Ami, args.ShareWithAccounts)
+	err = aws.ShareImage(args.Ami, nil, args.ShareWithAccounts)
 	if err != nil {
 		logWithId.Errorf("Error sharing image: %v", err)
 		result.JobError = clienterrors.New(clienterrors.ErrorSharingTarget, fmt.Sprintf("Error sharing image with target %v", args.ShareWithAccounts), nil)

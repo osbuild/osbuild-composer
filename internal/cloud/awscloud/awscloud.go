@@ -18,7 +18,6 @@ import (
 	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	images_awscloud "github.com/osbuild/images/pkg/cloud/awscloud"
-	"github.com/sirupsen/logrus"
 )
 
 type AWS struct {
@@ -297,84 +296,6 @@ func (a *AWS) CopyImage(name, ami, sourceRegion string) (string, error) {
 	}
 
 	return *result.ImageId, nil
-}
-
-func (a *AWS) ShareImage(ami string, userIds []string) error {
-	imgs, err := a.ec2.DescribeImages(
-		context.Background(),
-		&ec2.DescribeImagesInput{
-			ImageIds: []string{ami},
-		},
-	)
-	if err != nil {
-		return err
-	}
-	if len(imgs.Images) == 0 {
-		return fmt.Errorf("Unable to find image with id: %v", ami)
-	}
-
-	for _, bdm := range imgs.Images[0].BlockDeviceMappings {
-		err = a.shareSnapshot(*bdm.Ebs.SnapshotId, userIds)
-		if err != nil {
-			return err
-		}
-	}
-
-	err = a.shareImage(aws.String(ami), userIds)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (a *AWS) shareImage(ami *string, userIds []string) error {
-	logrus.Info("[AWS] 🎥 Sharing ec2 snapshot")
-	var uIds []*string
-	for i := range userIds {
-		uIds = append(uIds, &userIds[i])
-	}
-
-	logrus.Info("[AWS] 💿 Sharing ec2 AMI")
-	var launchPerms []ec2types.LaunchPermission
-	for _, id := range uIds {
-		launchPerms = append(launchPerms, ec2types.LaunchPermission{
-			UserId: id,
-		})
-	}
-	_, err := a.ec2.ModifyImageAttribute(
-		context.Background(),
-		&ec2.ModifyImageAttributeInput{
-			ImageId: ami,
-			LaunchPermission: &ec2types.LaunchPermissionModifications{
-				Add: launchPerms,
-			},
-		},
-	)
-	if err != nil {
-		logrus.Warnf("[AWS] 📨 Error sharing AMI: %v", err)
-		return err
-	}
-	logrus.Info("[AWS] 💿 Shared AMI")
-	return nil
-}
-
-func (a *AWS) shareSnapshot(snapshotId string, userIds []string) error {
-	logrus.Info("[AWS] 🎥 Sharing ec2 snapshot")
-	_, err := a.ec2.ModifySnapshotAttribute(
-		context.Background(),
-		&ec2.ModifySnapshotAttributeInput{
-			Attribute:     ec2types.SnapshotAttributeNameCreateVolumePermission,
-			OperationType: ec2types.OperationTypeAdd,
-			SnapshotId:    aws.String(snapshotId),
-			UserIds:       userIds,
-		},
-	)
-	if err != nil {
-		logrus.Warnf("[AWS] 📨 Error sharing ec2 snapshot: %v", err)
-		return err
-	}
-	logrus.Info("[AWS] 📨 Shared ec2 snapshot")
-	return nil
 }
 
 func (a *AWS) Regions() ([]string, error) {
