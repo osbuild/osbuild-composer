@@ -57,8 +57,7 @@ This information comes only from unit tests and for the time being
 we're not concerned with collecting coverage information from integration
 tests, see `.github/workflows/tests.yml`.
 
-
-## Image tests
+## Testing new image definitions
 
 The distributions and images are defined in a separate repository at
 https://github.com/osbuild/images. When making changes in that repository, you
@@ -94,26 +93,7 @@ The changes to the `go.mod`, `go.sum`, and `vendor/` directory should be added
 in a separate commit from any other changes. The PR should not be merged with
 the `replace` command in place.
 
-In the `test/data/manifests` directory, sample image manifests are collected
-for the various distros, architectures, configuration we support.
-
-Each file contains a sample manifest for an image configuration and some
-metadata describing the request that created the manifest and all the content
-(packages, containers, ostree commits).
-
-To (re)generate these test cases use the tool `cmd/gen-manifests`.
-
-```
-go run ./cmd/gen-manifests
-```
-will generate all manifests using the default options.
-
-Manifest generation can be restricted to only some distributions,
-architectures, or image types using command line flags.
-
-The command uses the configurations in
-`tools/test-case-generators/format-request-map.json` and repositories defined
-in `tools/test-case-generators/repos.json`.
+## Setting up tests
 
 ### Setting up Azure upload tests
 
