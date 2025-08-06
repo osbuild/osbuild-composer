@@ -18,13 +18,3 @@ func TestEC2CopyImage(t *testing.T) {
 	// 1 snapshot, 1 image
 	require.Equal(t, 2, m.calledFn["CreateTags"])
 }
-
-func TestEC2Regions(t *testing.T) {
-	m := newEc2Mock(t)
-	aws := awscloud.NewForTest(m, nil, &s3mock{t, "bucket", "object-key"}, nil, nil)
-	require.NotNil(t, aws)
-	regions, err := aws.Regions()
-	require.NoError(t, err)
-	require.NotEmpty(t, regions)
-	require.Equal(t, 1, m.calledFn["DescribeRegions"])
-}

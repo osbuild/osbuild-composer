@@ -298,19 +298,6 @@ func (a *AWS) CopyImage(name, ami, sourceRegion string) (string, error) {
 	return *result.ImageId, nil
 }
 
-func (a *AWS) Regions() ([]string, error) {
-	out, err := a.ec2.DescribeRegions(context.Background(), &ec2.DescribeRegionsInput{})
-	if err != nil {
-		return nil, err
-	}
-
-	result := []string{}
-	for _, r := range out.Regions {
-		result = append(result, *r.RegionName)
-	}
-	return result, nil
-}
-
 func (a *AWS) DescribeImagesByName(name string) (*ec2.DescribeImagesOutput, error) {
 	return a.ec2.DescribeImages(
 		context.Background(),
