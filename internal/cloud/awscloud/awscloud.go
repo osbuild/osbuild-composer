@@ -218,11 +218,6 @@ func NewForEndpointFromFile(filename, endpoint, region, caBundle string, skipSSL
 	return newAwsFromCredsWithEndpoint(config.WithSharedCredentialsFiles([]string{filename, "default"}), region, endpoint, caBundle, skipSSLVerification, imagesAWS)
 }
 
-// This is used by the internal/boot test, which access the ec2 apis directly
-func (a *AWS) EC2ForTestsOnly() EC2 {
-	return a.ec2
-}
-
 func (a *AWS) Upload(filename, bucket, key string) (*manager.UploadOutput, error) {
 	file, err := os.Open(filename)
 	if err != nil {
