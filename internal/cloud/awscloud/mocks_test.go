@@ -115,20 +115,6 @@ func newEc2Mock(t *testing.T) *ec2mock {
 	}
 }
 
-func (m *ec2mock) DescribeRegions(ctx context.Context, input *ec2.DescribeRegionsInput, optfns ...func(*ec2.Options)) (*ec2.DescribeRegionsOutput, error) {
-	m.calledFn["DescribeRegions"] += 1
-	return &ec2.DescribeRegionsOutput{
-		Regions: []ec2types.Region{
-			{
-				RegionName: aws.String("region1"),
-			},
-			{
-				RegionName: aws.String("region2"),
-			},
-		},
-	}, nil
-}
-
 func (m *ec2mock) AuthorizeSecurityGroupIngress(ctx context.Context, input *ec2.AuthorizeSecurityGroupIngressInput, optfns ...func(*ec2.Options)) (*ec2.AuthorizeSecurityGroupIngressOutput, error) {
 	m.calledFn["AuthorizeSecurityGroupIngress"] += 1
 	return &ec2.AuthorizeSecurityGroupIngressOutput{
