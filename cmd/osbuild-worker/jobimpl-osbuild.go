@@ -23,13 +23,16 @@ import (
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/sbom"
 
+	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/upload/oci"
 	"github.com/osbuild/osbuild-composer/internal/upload/pulp"
 
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 
+	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/osbuild/images/pkg/cloud/azure"
+	"github.com/osbuild/images/pkg/platform"
 	"github.com/osbuild/images/pkg/upload/koji"
 	"github.com/osbuild/osbuild-composer/internal/cloud/awscloud"
 	"github.com/osbuild/osbuild-composer/internal/cloud/gcp"
@@ -725,18 +728,30 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				break
 			}
 
-			ami, err := a.Register(jobTarget.ImageName, bucket, targetOptions.Key, targetOptions.ShareWithAccounts, arch.Current().String(), targetOptions.BootMode)
+			// XXX: We should adjust the target options type for the boot mode to replace the following workaround
+			// but that will require a backwards compatibility layer for old worker / new composer.
+			var bootMode *platform.BootMode
+			if targetOptions.BootMode != nil {
+				switch *targetOptions.BootMode {
+				case string(ec2types.BootModeValuesLegacyBios):
+					bootMode = common.ToPtr(platform.BOOT_LEGACY)
+				case string(ec2types.BootModeValuesUefi):
+					bootMode = common.ToPtr(platform.BOOT_UEFI)
+				case string(ec2types.BootModeValuesUefiPreferred):
+					bootMode = common.ToPtr(platform.BOOT_HYBRID)
+				default:
+					logrus.Warnf("Unknown boot mode %q, using default", *targetOptions.BootMode)
+				}
+			}
+
+			ami, _, err := a.Register(jobTarget.ImageName, bucket, targetOptions.Key, targetOptions.ShareWithAccounts, arch.Current(), bootMode, nil)
 			if err != nil {
 				targetResult.TargetError = clienterrors.New(clienterrors.ErrorImportingImage, err.Error(), nil)
 				break
 			}
 
-			if ami == nil {
-				targetResult.TargetError = clienterrors.New(clienterrors.ErrorImportingImage, "No ami returned", nil)
-				break
-			}
 			targetResult.Options = &target.AWSTargetResultOptions{
-				Ami:    *ami,
+				Ami:    ami,
 				Region: targetOptions.Region,
 			}
 
