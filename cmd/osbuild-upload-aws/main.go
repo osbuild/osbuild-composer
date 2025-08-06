@@ -4,7 +4,11 @@ import (
 	"flag"
 	"fmt"
 
+	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
+	"github.com/osbuild/images/pkg/arch"
+	"github.com/osbuild/images/pkg/platform"
 	"github.com/osbuild/osbuild-composer/internal/cloud/awscloud"
+	"github.com/osbuild/osbuild-composer/internal/common"
 )
 
 func main() {
@@ -17,8 +21,8 @@ func main() {
 	var filename string
 	var imageName string
 	var shareWith string
-	var arch string
-	var bootMode string
+	var archOpt string
+	var bootModeOpt string
 	flag.StringVar(&accessKeyID, "access-key-id", "", "access key ID")
 	flag.StringVar(&secretAccessKey, "secret-access-key", "", "secret access key")
 	flag.StringVar(&sessionToken, "session-token", "", "session token")
@@ -28,8 +32,8 @@ func main() {
 	flag.StringVar(&filename, "image", "", "image file to upload")
 	flag.StringVar(&imageName, "name", "", "AMI name")
 	flag.StringVar(&shareWith, "account-id", "", "account id to share image with")
-	flag.StringVar(&arch, "arch", "", "arch (x86_64 or aarch64)")
-	flag.StringVar(&bootMode, "boot-mode", "", "boot mode (legacy-bios, uefi, uefi-preferred)")
+	flag.StringVar(&archOpt, "arch", "", "arch (x86_64 or aarch64)")
+	flag.StringVar(&bootModeOpt, "boot-mode", "", "boot mode (legacy-bios, uefi, uefi-preferred)")
 	flag.Parse()
 
 	a, err := awscloud.New(region, accessKeyID, secretAccessKey, sessionToken)
@@ -51,16 +55,32 @@ func main() {
 		share = append(share, shareWith)
 	}
 
-	var bootModePtr *string
-	if bootMode != "" {
-		bootModePtr = &bootMode
-	}
-
-	ami, err := a.Register(imageName, bucketName, keyName, share, arch, bootModePtr)
+	imgArch, err := arch.FromString(archOpt)
 	if err != nil {
 		println(err.Error())
 		return
 	}
 
-	fmt.Printf("AMI registered: %s\n", *ami)
+	var bootMode *platform.BootMode
+	switch bootModeOpt {
+	case string(ec2types.BootModeValuesLegacyBios):
+		bootMode = common.ToPtr(platform.BOOT_LEGACY)
+	case string(ec2types.BootModeValuesUefi):
+		bootMode = common.ToPtr(platform.BOOT_UEFI)
+	case string(ec2types.BootModeValuesUefiPreferred):
+		bootMode = common.ToPtr(platform.BOOT_HYBRID)
+	case "":
+		// do nothing
+	default:
+		println("Unknown boot mode %q, must be one of: legacy-bios, uefi, uefi-preferred", bootModeOpt)
+		return
+	}
+
+	ami, _, err := a.Register(imageName, bucketName, keyName, share, imgArch, bootMode, nil)
+	if err != nil {
+		println(err.Error())
+		return
+	}
+
+	fmt.Printf("AMI registered: %s\n", ami)
 }

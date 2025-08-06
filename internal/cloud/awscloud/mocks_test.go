@@ -331,13 +331,6 @@ func (m *ec2mock) CopyImage(ctx context.Context, input *ec2.CopyImageInput, optf
 	}, nil
 }
 
-func (m *ec2mock) RegisterImage(ctx context.Context, input *ec2.RegisterImageInput, optfns ...func(*ec2.Options)) (*ec2.RegisterImageOutput, error) {
-	m.calledFn["RegisterImage"] += 1
-	return &ec2.RegisterImageOutput{
-		ImageId: &m.imageId,
-	}, nil
-}
-
 func (m *ec2mock) DeregisterImage(ctx context.Context, input *ec2.DeregisterImageInput, optfns ...func(*ec2.Options)) (*ec2.DeregisterImageOutput, error) {
 	m.calledFn["DeregisterImage"] += 1
 	return nil, nil
@@ -384,13 +377,6 @@ func (m *ec2mock) DescribeImportSnapshotTasks(ctx context.Context, input *ec2.De
 				},
 			},
 		},
-	}, nil
-}
-
-func (m *ec2mock) ImportSnapshot(ctx context.Context, input *ec2.ImportSnapshotInput, optfns ...func(*ec2.Options)) (*ec2.ImportSnapshotOutput, error) {
-	m.calledFn["ImportSnapshot"] += 1
-	return &ec2.ImportSnapshotOutput{
-		ImportTaskId: aws.String("import-task-id"),
 	}, nil
 }
 
