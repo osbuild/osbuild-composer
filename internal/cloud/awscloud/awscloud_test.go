@@ -9,12 +9,6 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/common"
 )
 
-func TestS3MarkObjectAsPublic(t *testing.T) {
-	aws := awscloud.NewForTest(nil, nil, &s3mock{t, "bucket", "object-key"}, nil, nil)
-	require.NotNil(t, aws)
-	require.NoError(t, aws.MarkS3ObjectAsPublic("bucket", "object-key"))
-}
-
 func TestS3ObjectPresignedURL(t *testing.T) {
 	aws := awscloud.NewForTest(nil, nil, nil, nil, &s3signmock{t, "bucket", "object-key"})
 	require.NotNil(t, aws)
