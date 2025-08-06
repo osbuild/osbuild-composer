@@ -8,7 +8,7 @@ import (
 	"path"
 	"strings"
 
-	"github.com/osbuild/images/pkg/upload/azure"
+	"github.com/osbuild/images/pkg/cloud/azure"
 )
 
 func checkStringNotEmpty(variable string, errorMessage string) {

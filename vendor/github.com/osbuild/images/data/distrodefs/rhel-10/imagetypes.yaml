@@ -788,6 +788,7 @@ image_types:
             - "redhat-release"
             - "redhat-release-eula"
             - "rsync"
+            - "system-reinstall-bootc"
             - "tar"
             - "tuned"
             - "tcpdump"
@@ -945,6 +946,7 @@ image_types:
             - "patch"
             - "rng-tools"
             - "selinux-policy-targeted"
+            - "system-reinstall-bootc"
             - "uuid"
             - "WALinuxAgent"
             - "yum-utils"
@@ -1003,12 +1005,6 @@ image_types:
               append:
                 include:
                   - "insights-client"
-            "add system-reinstall-bootc on rhel":
-              when:
-                distro_name: "rhel"
-              append:
-                include:
-                  - "system-reinstall-bootc"
 
   "azure": &azure
     <<: *vhd
@@ -1334,6 +1330,7 @@ image_types:
             - "redhat-release"
             - "redhat-release-eula"
             - "rsync"
+            - "system-reinstall-bootc"
             - "tuned"
             - "tar"
           exclude:
@@ -1375,12 +1372,6 @@ image_types:
               append:
                 include:
                   - "insights-client"
-            "add system-reinstall-bootc on rhel":
-              when:
-                distro_name: "rhel"
-              append:
-                include:
-                  - "system-reinstall-bootc"
 
   # RHEL internal-only x86_64 EC2 image type
   ec2: &ec2

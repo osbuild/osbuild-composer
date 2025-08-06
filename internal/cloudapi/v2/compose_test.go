@@ -9,7 +9,7 @@ import (
 	repos "github.com/osbuild/images/data/repositories"
 	"github.com/osbuild/images/pkg/customizations/subscription"
 	"github.com/osbuild/images/pkg/datasizes"
-	"github.com/osbuild/images/pkg/disk"
+	"github.com/osbuild/images/pkg/disk/partition"
 	"github.com/osbuild/images/pkg/distrofactory"
 	"github.com/osbuild/images/pkg/reporegistry"
 	"github.com/osbuild/osbuild-composer/internal/common"
@@ -821,7 +821,7 @@ func TestGetPartitioningMode(t *testing.T) {
 	}}
 	pm, err := cr.GetPartitioningMode()
 	assert.NoError(t, err)
-	assert.Equal(t, disk.AutoLVMPartitioningMode, pm)
+	assert.Equal(t, partition.AutoLVMPartitioningMode, pm)
 }
 
 func TestGetImageRequests_ImageTypeConversion(t *testing.T) {

@@ -13,7 +13,7 @@ import (
 	"github.com/osbuild/blueprint/pkg/blueprint"
 	"github.com/osbuild/images/pkg/customizations/subscription"
 	"github.com/osbuild/images/pkg/datasizes"
-	"github.com/osbuild/images/pkg/disk"
+	"github.com/osbuild/images/pkg/disk/partition"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distrofactory"
 	"github.com/osbuild/images/pkg/reporegistry"
@@ -1168,21 +1168,21 @@ func (request *ComposeRequest) GetSubscription() (sub *subscription.ImageOptions
 
 // GetPartitioningMode returns the partitioning mode included in the request
 // or defaults to AutoLVMPartitioningMode if not included
-func (request *ComposeRequest) GetPartitioningMode() (disk.PartitioningMode, error) {
+func (request *ComposeRequest) GetPartitioningMode() (partition.PartitioningMode, error) {
 	if request.Customizations == nil || request.Customizations.PartitioningMode == nil {
-		return disk.AutoLVMPartitioningMode, nil
+		return partition.AutoLVMPartitioningMode, nil
 	}
 
 	switch *request.Customizations.PartitioningMode {
 	case CustomizationsPartitioningModeRaw:
-		return disk.RawPartitioningMode, nil
+		return partition.RawPartitioningMode, nil
 	case CustomizationsPartitioningModeLvm:
-		return disk.LVMPartitioningMode, nil
+		return partition.LVMPartitioningMode, nil
 	case CustomizationsPartitioningModeAutoLvm:
-		return disk.AutoLVMPartitioningMode, nil
+		return partition.AutoLVMPartitioningMode, nil
 	}
 
-	return disk.AutoLVMPartitioningMode, HTTPError(ErrorInvalidPartitioningMode)
+	return partition.AutoLVMPartitioningMode, HTTPError(ErrorInvalidPartitioningMode)
 }
 
 // GetImageRequests converts a composeRequest structure from the API to an intermediate imageRequest structure
