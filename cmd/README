@@ -23,7 +23,6 @@ osbuild-auth-tests
 osbuild-composer-cli-tests
 osbuild-composer-dbjobqueue-tests
 osbuild-dnf-json-tests
-osbuild-image-tests
 osbuild-koji-tests
 osbuild-mock-openid-provider
 osbuild-upload-*
