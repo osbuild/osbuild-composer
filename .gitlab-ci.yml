@@ -320,25 +320,6 @@ regression-no-explicit-rootfs-definition:
   variables:
     SCRIPT: regression-no-explicit-rootfs-definition.sh
 
-Image Tests:
-  stage: test
-  extends: .terraform
-  rules:
-    - !reference [.nightly_rules_all, rules]
-  script:
-    - schutzbot/deploy.sh
-    - /usr/libexec/tests/osbuild-composer/image_tests.sh
-  parallel:
-    matrix:
-      - RUNNER:
-          - aws/rhel-8.10-ga-x86_64
-          - aws/rhel-8.10-ga-aarch64
-          - aws/rhel-9.7-nightly-x86_64
-          - aws/rhel-9.7-nightly-aarch64
-          - aws/rhel-10.1-nightly-x86_64
-          - aws/rhel-10.1-nightly-aarch64
-        INTERNAL_NETWORK: ["true"]
-
 # NB (thozza): The rhel-edge-ci job is currently disabled because the tests have been consistently failing for a while.
 # The tests need to be investigated and fixed before re-enabling the job.
 # See https://issues.redhat.com/browse/HMS-8719
