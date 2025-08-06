@@ -128,6 +128,8 @@ func TestBlueprintCommands(t *testing.T) {
 	runComposer(t, "blueprints", "tag", "empty")
 
 	// undo the latest commit we can find
+	// NOTE: This will only have a weldrapi response
+	// blueprints changes is not supported by cloudapi
 	var changesWeldr []weldr.BlueprintsChangesV0Weldr
 	rawReply := runComposerJSON(t, "blueprints", "changes", "empty")
 	if isWeldrClientInstalled() {
@@ -208,6 +210,8 @@ func startCompose(t *testing.T, name, outputType string) uuid.UUID {
 		BuildID uuid.UUID `json:"build_id"`
 		Status  bool      `json:"status"`
 	}
+	// NOTE: This will only have a weldrapi response
+	// the compose start being used here uses the weldrapi
 	type replyWithBody struct {
 		Body reply `json:"body"`
 	}
@@ -240,7 +244,8 @@ func deleteCompose(t *testing.T, id uuid.UUID) {
 		Errors []interface{} `json:"errors"`
 	}
 	type replyWithBody struct {
-		Body reply `json:"body"`
+		Path string `json:"path"`
+		Body reply  `json:"body"`
 	}
 	var replyWeldr []replyWithBody
 	var err error
@@ -255,9 +260,15 @@ func deleteCompose(t *testing.T, id uuid.UUID) {
 		err = json.Unmarshal(rawReply, &replyWeldr[0].Body)
 	}
 	require.Nilf(t, err, "Unexpected reply: %v", err)
-	require.Zerof(t, len(replyWeldr[0].Body.Errors), "Unexpected errors")
-	require.Equalf(t, 1, len(replyWeldr[0].Body.IDs), "Unexpected number of UUIDs returned: %d", len(replyWeldr[0].Body.IDs))
-	require.Truef(t, replyWeldr[0].Body.IDs[0].Status, "Unexpected status %v", replyWeldr[0].Body.IDs[0].Status)
+	// NOTE: The response may contain a cloudapi error in the first response
+	body := replyWeldr[0].Body
+	if len(replyWeldr) > 1 &&
+		strings.HasPrefix(replyWeldr[0].Path, "api/image-builder-composer/v2") {
+		body = replyWeldr[1].Body
+	}
+	require.Zerof(t, len(body.Errors), "Unexpected errors")
+	require.Equalf(t, 1, len(body.IDs), "Unexpected number of UUIDs returned: %d", len(body.IDs))
+	require.Truef(t, body.IDs[0].Status, "Unexpected status %v", body.IDs[0].Status)
 }
 
 func waitForCompose(t *testing.T, uuid uuid.UUID) string {
@@ -277,7 +288,8 @@ func getComposeStatus(t *testing.T, uuid uuid.UUID) string {
 		QueueStatus string `json:"queue_status"`
 	}
 	type replyWithBody struct {
-		Body reply `json:"body"`
+		Path string `json:"path"`
+		Body reply  `json:"body"`
 	}
 	var replyWeldr []replyWithBody
 	var err error
@@ -292,7 +304,13 @@ func getComposeStatus(t *testing.T, uuid uuid.UUID) string {
 		err = json.Unmarshal(rawReply, &replyWeldr[0].Body)
 	}
 	require.Nilf(t, err, "Unexpected reply: %v", err)
-	return replyWeldr[0].Body.QueueStatus
+	// NOTE: The response may contain a cloudapi error in the first response
+	body := replyWeldr[0].Body
+	if len(replyWeldr) > 1 &&
+		strings.HasPrefix(replyWeldr[0].Path, "api/image-builder-composer/v2") {
+		body = replyWeldr[1].Body
+	}
+	return body.QueueStatus
 }
 
 func getLogs(t *testing.T, uuid uuid.UUID) string {
@@ -331,6 +349,8 @@ func pushBlueprint(t *testing.T, bp *blueprint.Blueprint) {
 	type reply struct {
 		Status bool `json:"status"`
 	}
+	// NOTE: This will only have a weldrapi reply
+	// blueprints push it not available with cloudapi
 	type replyWithBody struct {
 		Body reply `json:"body"`
 	}
@@ -356,6 +376,8 @@ func deleteBlueprint(t *testing.T, bp *blueprint.Blueprint) {
 	type reply struct {
 		Status bool `json:"status"`
 	}
+	// NOTE: This will only have a weldrapi reply
+	// blueprints delete is not available with cloudapi
 	type replyWithBody struct {
 		Body reply `json:"body"`
 	}
@@ -444,8 +466,9 @@ type TemporaryWorkDir struct {
 // working directory to it.
 //
 // Example:
-//   d := NewTemporaryWorkDir(t, "foo-*")
-//   defer d.Close(t)
+//
+//	d := NewTemporaryWorkDir(t, "foo-*")
+//	defer d.Close(t)
 func NewTemporaryWorkDir(t *testing.T, pattern string) TemporaryWorkDir {
 	var d TemporaryWorkDir
 	var err error
