@@ -537,27 +537,6 @@ func (a *AWS) shareSnapshot(snapshotId string, userIds []string) error {
 	return nil
 }
 
-func (a *AWS) S3ObjectPresignedURL(bucket, objectKey string) (string, error) {
-	logrus.Infof("[AWS] 📋 Generating Presigned URL for S3 object %s/%s", bucket, objectKey)
-
-	req, err := a.s3presign.PresignGetObject(
-		context.Background(),
-		&s3.GetObjectInput{
-			Bucket: aws.String(bucket),
-			Key:    aws.String(objectKey),
-		},
-		func(opts *s3.PresignOptions) {
-			opts.Expires = time.Duration(7 * 24 * time.Hour)
-		},
-	)
-	if err != nil {
-		return "", err
-	}
-
-	logrus.Info("[AWS] 🎉 S3 Presigned URL ready")
-	return req.URL, nil
-}
-
 func (a *AWS) Regions() ([]string, error) {
 	out, err := a.ec2.DescribeRegions(context.Background(), &ec2.DescribeRegionsInput{})
 	if err != nil {
