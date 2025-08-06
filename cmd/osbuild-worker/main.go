@@ -7,6 +7,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"log"
 	"net/url"
 	"os"
 	"path"
@@ -22,6 +23,7 @@ import (
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/cloud/azure"
 	"github.com/osbuild/images/pkg/dnfjson"
+	"github.com/osbuild/images/pkg/olog"
 	"github.com/osbuild/images/pkg/upload/koji"
 	"github.com/osbuild/osbuild-composer/internal/cloud/awscloud"
 	"github.com/osbuild/osbuild-composer/internal/upload/oci"
@@ -548,6 +550,8 @@ func main() {
 			logrus.Fatalf("worker crashed: %s\n%s", r, debug.Stack())
 		}
 	}()
+
+	olog.SetDefault(log.New(logrus.New().Writer(), "osbuild/images log: ", 0))
 
 	run()
 }
