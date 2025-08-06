@@ -18,10 +18,15 @@ import (
 	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	s3types "github.com/aws/aws-sdk-go-v2/service/s3/types"
+	images_awscloud "github.com/osbuild/images/pkg/cloud/awscloud"
 	"github.com/sirupsen/logrus"
 )
 
 type AWS struct {
+	// awscloud.AWS from the osbuild/images package implements all of the methods
+	// related to image upload and sharing.
+	*images_awscloud.AWS
+
 	ec2        EC2
 	ec2imds    EC2Imds
 	s3         S3
@@ -43,9 +48,10 @@ func newForTest(ec2cli EC2, ec2imds EC2Imds, s3cli S3, upldr S3Manager, sign S3P
 
 // Create a new session from the credentials and the region and returns an *AWS object initialized with it.
 // /creds credentials.StaticCredentialsProvider, region string
-func newAwsFromConfig(cfg aws.Config) *AWS {
+func newAwsFromConfig(cfg aws.Config, imagesAWS *images_awscloud.AWS) *AWS {
 	s3cli := s3.NewFromConfig(cfg)
 	return &AWS{
+		AWS:        imagesAWS,
 		ec2:        ec2.NewFromConfig(cfg),
 		ec2imds:    imds.NewFromConfig(cfg),
 		s3:         s3cli,
@@ -65,7 +71,13 @@ func New(region string, accessKeyID string, accessKey string, sessionToken strin
 	if err != nil {
 		return nil, err
 	}
-	aws := newAwsFromConfig(cfg)
+
+	imagesAWS, err := images_awscloud.New(region, accessKeyID, accessKey, sessionToken)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create images AWS client: %w", err)
+	}
+
+	aws := newAwsFromConfig(cfg, imagesAWS)
 	return aws, nil
 }
 
@@ -90,7 +102,13 @@ func NewFromFile(filename string, region string) (*AWS, error) {
 	if err != nil {
 		return nil, err
 	}
-	aws := newAwsFromConfig(cfg)
+
+	imagesAWS, err := images_awscloud.NewFromFile(filename, region)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create images AWS client: %w", err)
+	}
+
+	aws := newAwsFromConfig(cfg, imagesAWS)
 	return aws, nil
 }
 
@@ -104,7 +122,13 @@ func NewDefault(region string) (*AWS, error) {
 	if err != nil {
 		return nil, err
 	}
-	aws := newAwsFromConfig(cfg)
+
+	imagesAWS, err := images_awscloud.NewDefault(region)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create images AWS client: %w", err)
+	}
+
+	aws := newAwsFromConfig(cfg, imagesAWS)
 	return aws, nil
 }
 
@@ -120,7 +144,7 @@ func RegionFromInstanceMetadata() (string, error) {
 }
 
 // Create a new session from the credentials and the region and returns an *AWS object initialized with it.
-func newAwsFromCredsWithEndpoint(creds config.LoadOptionsFunc, region, endpoint, caBundle string, skipSSLVerification bool) (*AWS, error) {
+func newAwsFromCredsWithEndpoint(creds config.LoadOptionsFunc, region, endpoint, caBundle string, skipSSLVerification bool, imagesAWS *images_awscloud.AWS) (*AWS, error) {
 	// Create a Session with a custom region
 	v2OptionFuncs := []func(*config.LoadOptions) error{
 		config.WithRegion(region),
@@ -158,6 +182,7 @@ func newAwsFromCredsWithEndpoint(creds config.LoadOptionsFunc, region, endpoint,
 	})
 
 	return &AWS{
+		AWS:        imagesAWS,
 		ec2:        ec2.NewFromConfig(cfg),
 		ec2imds:    imds.NewFromConfig(cfg),
 		s3:         s3cli,
@@ -169,7 +194,11 @@ func newAwsFromCredsWithEndpoint(creds config.LoadOptionsFunc, region, endpoint,
 
 // Initialize a new AWS object targeting a specific endpoint from individual bits. SessionToken is optional
 func NewForEndpoint(endpoint, region, accessKeyID, accessKey, sessionToken, caBundle string, skipSSLVerification bool) (*AWS, error) {
-	return newAwsFromCredsWithEndpoint(config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(accessKeyID, accessKey, sessionToken)), region, endpoint, caBundle, skipSSLVerification)
+	imagesAWS, err := images_awscloud.NewForEndpoint(endpoint, region, accessKeyID, accessKey, sessionToken, caBundle, skipSSLVerification)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create images AWS client: %w", err)
+	}
+	return newAwsFromCredsWithEndpoint(config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(accessKeyID, accessKey, sessionToken)), region, endpoint, caBundle, skipSSLVerification, imagesAWS)
 }
 
 // Initializes a new AWS object targeting a specific endpoint with the credentials info found at filename's location.
@@ -182,7 +211,11 @@ func NewForEndpoint(endpoint, region, accessKeyID, accessKey, sessionToken, caBu
 // "AWS_SHARED_CREDENTIALS_FILE" env variable or will default to
 // $HOME/.aws/credentials.
 func NewForEndpointFromFile(filename, endpoint, region, caBundle string, skipSSLVerification bool) (*AWS, error) {
-	return newAwsFromCredsWithEndpoint(config.WithSharedCredentialsFiles([]string{filename, "default"}), region, endpoint, caBundle, skipSSLVerification)
+	imagesAWS, err := images_awscloud.NewForEndpointFromFile(filename, endpoint, region, caBundle, skipSSLVerification)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create images AWS client: %w", err)
+	}
+	return newAwsFromCredsWithEndpoint(config.WithSharedCredentialsFiles([]string{filename, "default"}), region, endpoint, caBundle, skipSSLVerification, imagesAWS)
 }
 
 // This is used by the internal/boot test, which access the ec2 apis directly
