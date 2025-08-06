@@ -17,7 +17,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	s3types "github.com/aws/aws-sdk-go-v2/service/s3/types"
 	images_awscloud "github.com/osbuild/images/pkg/cloud/awscloud"
 	"github.com/sirupsen/logrus"
 )
@@ -557,23 +556,6 @@ func (a *AWS) S3ObjectPresignedURL(bucket, objectKey string) (string, error) {
 
 	logrus.Info("[AWS] 🎉 S3 Presigned URL ready")
 	return req.URL, nil
-}
-
-func (a *AWS) MarkS3ObjectAsPublic(bucket, objectKey string) error {
-	logrus.Infof("[AWS] 👐 Making S3 object public %s/%s", bucket, objectKey)
-	_, err := a.s3.PutObjectAcl(
-		context.Background(),
-		&s3.PutObjectAclInput{
-			Bucket: aws.String(bucket),
-			Key:    aws.String(objectKey),
-			ACL:    s3types.ObjectCannedACL(s3types.ObjectCannedACLPublicRead),
-		},
-	)
-	if err != nil {
-		return err
-	}
-	logrus.Info("[AWS] ✔️ Making S3 object public successful")
-	return nil
 }
 
 func (a *AWS) Regions() ([]string, error) {
