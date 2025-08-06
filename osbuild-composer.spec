@@ -240,9 +240,6 @@ install -m 0644 -vp test/data/ansible/*                            %{buildroot}%
 install -m 0755 -vd                                                %{buildroot}%{_datadir}/tests/osbuild-composer/azure
 install -m 0644 -vp test/data/azure/*                              %{buildroot}%{_datadir}/tests/osbuild-composer/azure/
 
-install -m 0755 -vd                                                %{buildroot}%{_datadir}/tests/osbuild-composer/manifests
-install -m 0644 -vp test/data/manifests/*                          %{buildroot}%{_datadir}/tests/osbuild-composer/manifests/
-
 install -m 0755 -vd                                                %{buildroot}%{_datadir}/tests/osbuild-composer/cloud-init
 install -m 0644 -vp test/data/cloud-init/*                         %{buildroot}%{_datadir}/tests/osbuild-composer/cloud-init/
 
