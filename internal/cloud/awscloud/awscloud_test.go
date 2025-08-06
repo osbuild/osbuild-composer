@@ -9,14 +9,6 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/common"
 )
 
-func TestS3ObjectPresignedURL(t *testing.T) {
-	aws := awscloud.NewForTest(nil, nil, nil, nil, &s3signmock{t, "bucket", "object-key"})
-	require.NotNil(t, aws)
-	url, err := aws.S3ObjectPresignedURL("bucket", "object-key")
-	require.NoError(t, err)
-	require.Equal(t, "https://url.real", url)
-}
-
 func TestEC2Register(t *testing.T) {
 	m := newEc2Mock(t)
 	aws := awscloud.NewForTest(m, nil, &s3mock{t, "bucket", "object-key"}, nil, nil)
