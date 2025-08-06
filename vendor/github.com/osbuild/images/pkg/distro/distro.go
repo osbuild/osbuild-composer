@@ -6,6 +6,7 @@ import (
 	"github.com/osbuild/images/pkg/blueprint"
 	"github.com/osbuild/images/pkg/customizations/subscription"
 	"github.com/osbuild/images/pkg/disk"
+	"github.com/osbuild/images/pkg/disk/partition"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/ostree"
 	"github.com/osbuild/images/pkg/platform"
@@ -137,7 +138,7 @@ type ImageOptions struct {
 	OSTree           *ostree.ImageOptions       `json:"ostree,omitempty"`
 	Subscription     *subscription.ImageOptions `json:"subscription,omitempty"`
 	Facts            *facts.ImageOptions        `json:"facts,omitempty"`
-	PartitioningMode disk.PartitioningMode      `json:"partitioning-mode,omitempty"`
+	PartitioningMode partition.PartitioningMode `json:"partitioning-mode,omitempty"`
 
 	UseBootstrapContainer bool `json:"use_bootstrap_container,omitempty"`
 }

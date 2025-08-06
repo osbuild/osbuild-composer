@@ -8,6 +8,7 @@ import (
 	"text/template"
 
 	"github.com/osbuild/images/internal/common"
+	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distro/defs"
 	"github.com/osbuild/images/pkg/platform"
@@ -88,14 +89,14 @@ func newDistro(nameVer string) (distro.Distro, error) {
 		if imgTypeYAML.Filename == "" {
 			continue
 		}
-		platforms, err := imgTypeYAML.PlatformsFor(nameVer)
+		platforms, err := imgTypeYAML.PlatformsFor(distroYAML.ID)
 		if err != nil {
 			return nil, err
 		}
 		for _, pl := range platforms {
 			ar, ok := rd.arches[pl.Arch.String()]
 			if !ok {
-				ar = newArchitecture(rd, pl.Arch.String())
+				ar = newArchitecture(rd, pl.Arch)
 				rd.arches[pl.Arch.String()] = ar
 			}
 			if distroYAML.SkipImageType(imgTypeYAML.Name(), pl.Arch.String()) {
@@ -161,22 +162,22 @@ var _ = distro.Arch(&architecture{})
 
 type architecture struct {
 	distro           *distribution
-	name             string
+	arch             arch.Arch
 	imageTypes       map[string]distro.ImageType
 	imageTypeAliases map[string]string
 }
 
-func newArchitecture(rd *distribution, name string) *architecture {
+func newArchitecture(rd *distribution, arch arch.Arch) *architecture {
 	return &architecture{
 		distro:           rd,
-		name:             name,
+		arch:             arch,
 		imageTypes:       make(map[string]distro.ImageType),
 		imageTypeAliases: make(map[string]string),
 	}
 }
 
 func (a *architecture) Name() string {
-	return a.name
+	return a.arch.String()
 }
 
 func (a *architecture) ListImageTypes() []string {

@@ -370,7 +370,7 @@ func (v *PartitionCustomization) UnmarshalTOML(data any) error {
 //   - Plain filesystem types are valid for the partition type
 //   - All non-empty properties are valid for the partition type (e.g.
 //     LogicalVolumes is empty when the type is "plain" or "btrfs")
-//   - Filesystems with FSType set to "swap" do not specify a mountpoint.
+//   - Filesystems with FSType set to "none" or "swap" do not specify a mountpoint.
 //
 // Note that in *addition* consumers should also call
 // ValidateLayoutConstraints() to validate that the policy for disk
@@ -593,6 +593,14 @@ func (p *PartitionCustomization) ValidatePartitionLabel(ptType string) error {
 }
 
 func (p *PartitionCustomization) validatePlain(mountpoints map[string]bool) error {
+	if p.FSType == "none" {
+		// make sure the mountpoint is empty and return
+		if p.Mountpoint != "" {
+			return fmt.Errorf("mountpoint for none partition must be empty (got %q)", p.Mountpoint)
+		}
+		return nil
+	}
+
 	if p.FSType == "swap" {
 		// make sure the mountpoint is empty and return
 		if p.Mountpoint != "" {

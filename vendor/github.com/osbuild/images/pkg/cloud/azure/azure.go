@@ -21,10 +21,21 @@ const (
 )
 
 type Client struct {
-	creds    *azidentity.ClientSecretCredential
-	resFact  *armresources.ClientFactory
-	storFact *armstorage.ClientFactory
-	compFact *armcompute.ClientFactory
+	creds          *azidentity.ClientSecretCredential
+	resources      ResourcesClient
+	resourceGroups ResourceGroupsClient
+	accounts       AccountsClient
+	images         ImagesClient
+}
+
+func newTestClient(rc ResourcesClient, rgc ResourceGroupsClient, ac AccountsClient, ic ImagesClient) *Client {
+	return &Client{
+		creds:          nil,
+		resources:      rc,
+		resourceGroups: rgc,
+		accounts:       ac,
+		images:         ic,
+	}
 }
 
 // NewClient creates a client for accessing the Azure API.
@@ -53,9 +64,10 @@ func NewClient(credentials Credentials, tenantID, subscriptionID string) (*Clien
 
 	return &Client{
 		creds,
-		resFact,
-		storFact,
-		compFact,
+		resFact.NewClient(),
+		resFact.NewResourceGroupsClient(),
+		storFact.NewAccountsClient(),
+		compFact.NewImagesClient(),
 	}, nil
 }
 
@@ -70,9 +82,7 @@ type Tag struct {
 // in the specified resource group, only one name is returned. It's undefined
 // which one it is.
 func (ac Client) GetResourceNameByTag(ctx context.Context, resourceGroup string, tag Tag) (string, error) {
-	c := ac.resFact.NewClient()
-
-	pager := c.NewListByResourceGroupPager(resourceGroup, &armresources.ClientListByResourceGroupOptions{
+	pager := ac.resources.NewListByResourceGroupPager(resourceGroup, &armresources.ClientListByResourceGroupOptions{
 		Filter: common.ToPtr(fmt.Sprintf("tagName eq '%s' and tagValue eq '%s'", tag.Name, tag.Value)),
 	})
 
@@ -89,9 +99,7 @@ func (ac Client) GetResourceNameByTag(ctx context.Context, resourceGroup string,
 
 // GetResourceGroupLocation returns the location of the given resource group.
 func (ac Client) GetResourceGroupLocation(ctx context.Context, resourceGroup string) (string, error) {
-	c := ac.resFact.NewResourceGroupsClient()
-
-	group, err := c.Get(ctx, resourceGroup, nil)
+	group, err := ac.resourceGroups.Get(ctx, resourceGroup, nil)
 	if err != nil {
 		return "", fmt.Errorf("retrieving resource group failed: %w", err)
 	}
@@ -105,8 +113,6 @@ func (ac Client) GetResourceGroupLocation(ctx context.Context, resourceGroup str
 // The location is optional and if not provided, it is determined
 // from the resource group.
 func (ac Client) CreateStorageAccount(ctx context.Context, resourceGroup, name, location string, tag Tag) error {
-	c := ac.storFact.NewAccountsClient()
-
 	var err error
 	if location == "" {
 		location, err = ac.GetResourceGroupLocation(ctx, resourceGroup)
@@ -115,7 +121,7 @@ func (ac Client) CreateStorageAccount(ctx context.Context, resourceGroup, name, 
 		}
 	}
 
-	poller, err := c.BeginCreate(ctx, resourceGroup, name, armstorage.AccountCreateParameters{
+	poller, err := ac.accounts.BeginCreate(ctx, resourceGroup, name, armstorage.AccountCreateParameters{
 		SKU: &armstorage.SKU{
 			Name: common.ToPtr(armstorage.SKUNameStandardLRS),
 			Tier: common.ToPtr(armstorage.SKUTierStandard),
@@ -145,8 +151,7 @@ func (ac Client) CreateStorageAccount(ctx context.Context, resourceGroup, name, 
 // access the given storage account. This method always returns only the first
 // key.
 func (ac Client) GetStorageAccountKey(ctx context.Context, resourceGroup string, storageAccount string) (string, error) {
-	c := ac.storFact.NewAccountsClient()
-	keys, err := c.ListKeys(ctx, resourceGroup, storageAccount, nil)
+	keys, err := ac.accounts.ListKeys(ctx, resourceGroup, storageAccount, nil)
 	if err != nil {
 		return "", fmt.Errorf("retrieving keys for a storage account failed: %w", err)
 	}
@@ -162,7 +167,6 @@ func (ac Client) GetStorageAccountKey(ctx context.Context, resourceGroup string,
 // The location is optional and if not provided, it is determined
 // from the resource group.
 func (ac Client) RegisterImage(ctx context.Context, resourceGroup, storageAccount, storageContainer, blobName, imageName, location string, hyperVGen HyperVGenerationType) error {
-	c := ac.compFact.NewImagesClient()
 	blobURI := fmt.Sprintf("https://%s.blob.core.windows.net/%s/%s", storageAccount, storageContainer, blobName)
 
 	var err error
@@ -183,7 +187,7 @@ func (ac Client) RegisterImage(ctx context.Context, resourceGroup, storageAccoun
 		return fmt.Errorf("Unknown hyper v generation type %v", hyperVGen)
 	}
 
-	imageFuture, err := c.BeginCreateOrUpdate(ctx, resourceGroup, imageName, armcompute.Image{
+	imageFuture, err := ac.images.BeginCreateOrUpdate(ctx, resourceGroup, imageName, armcompute.Image{
 		Properties: &armcompute.ImageProperties{
 			HyperVGeneration:     common.ToPtr(hypvgen),
 			SourceVirtualMachine: nil,

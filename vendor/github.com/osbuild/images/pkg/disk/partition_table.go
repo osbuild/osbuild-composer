@@ -11,6 +11,7 @@ import (
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/blueprint"
 	"github.com/osbuild/images/pkg/datasizes"
+	"github.com/osbuild/images/pkg/disk/partition"
 	"github.com/osbuild/images/pkg/platform"
 )
 
@@ -31,6 +32,9 @@ type PartitionTable struct {
 	StartOffset uint64 `json:"start_offset,omitempty" yaml:"start_offset,omitempty"`
 }
 
+// TODO: PartitioningMode is a copy of
+// pkg/disk/partition.PartitioningMode - drop once
+// https://github.com/osbuild/blueprint/pull/26 is merged
 type PartitioningMode string
 
 const (
@@ -110,10 +114,10 @@ const DefaultBootPartitionSize = 1 * datasizes.GiB
 // containing the root filesystem is grown to fill any left over space on the
 // partition table. Logical Volumes are not grown to fill the space in the
 // Volume Group since they are trivial to grow on a live system.
-func NewPartitionTable(basePT *PartitionTable, mountpoints []blueprint.FilesystemCustomization, imageSize uint64, mode PartitioningMode, architecture arch.Arch, requiredSizes map[string]uint64, rng *rand.Rand) (*PartitionTable, error) {
+func NewPartitionTable(basePT *PartitionTable, mountpoints []blueprint.FilesystemCustomization, imageSize uint64, mode partition.PartitioningMode, architecture arch.Arch, requiredSizes map[string]uint64, rng *rand.Rand) (*PartitionTable, error) {
 	newPT := basePT.Clone().(*PartitionTable)
 
-	if basePT.features().LVM && (mode == RawPartitioningMode || mode == BtrfsPartitioningMode) {
+	if basePT.features().LVM && (mode == partition.RawPartitioningMode || mode == partition.BtrfsPartitioningMode) {
 		return nil, fmt.Errorf("%s partitioning mode set for a base partition table with LVM, this is unsupported", mode)
 	}
 
@@ -122,13 +126,13 @@ func NewPartitionTable(basePT *PartitionTable, mountpoints []blueprint.Filesyste
 
 	var ensureLVM, ensureBtrfs bool
 	switch mode {
-	case LVMPartitioningMode:
+	case partition.LVMPartitioningMode:
 		ensureLVM = true
-	case RawPartitioningMode:
+	case partition.RawPartitioningMode:
 		ensureLVM = false
-	case DefaultPartitioningMode, AutoLVMPartitioningMode:
+	case partition.DefaultPartitioningMode, partition.AutoLVMPartitioningMode:
 		ensureLVM = len(newMountpoints) > 0
-	case BtrfsPartitioningMode:
+	case partition.BtrfsPartitioningMode:
 		ensureBtrfs = true
 	default:
 		return nil, fmt.Errorf("unsupported partitioning mode %q", mode)
@@ -1427,6 +1431,8 @@ func addPlainPartition(pt *PartitionTable, partition blueprint.PartitionCustomiz
 			typeName = "usr"
 		case partition.Mountpoint == "/boot":
 			typeName = "boot"
+		case fstype == "none":
+			typeName = "data"
 		case fstype == "swap":
 			typeName = "swap"
 		default:
@@ -1441,6 +1447,8 @@ func addPlainPartition(pt *PartitionTable, partition blueprint.PartitionCustomiz
 
 	var payload PayloadEntity
 	switch fstype {
+	case "none":
+		payload = nil
 	case "swap":
 		payload = &Swap{
 			Label:        partition.Label,

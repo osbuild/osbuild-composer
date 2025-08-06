@@ -961,9 +961,10 @@ github.com/oracle/oci-go-sdk/v54/workrequests
 ## explicit; go 1.23.9
 github.com/osbuild/blueprint/internal/common
 github.com/osbuild/blueprint/pkg/blueprint
-# github.com/osbuild/images v0.168.0
+# github.com/osbuild/images v0.171.0
 ## explicit; go 1.23.9
 github.com/osbuild/images/data/dependencies
+github.com/osbuild/images/data/distrodefs
 github.com/osbuild/images/data/repositories
 github.com/osbuild/images/internal/common
 github.com/osbuild/images/internal/environment
@@ -972,6 +973,7 @@ github.com/osbuild/images/pkg/arch
 github.com/osbuild/images/pkg/artifact
 github.com/osbuild/images/pkg/blueprint
 github.com/osbuild/images/pkg/cert
+github.com/osbuild/images/pkg/cloud/azure
 github.com/osbuild/images/pkg/container
 github.com/osbuild/images/pkg/crypt
 github.com/osbuild/images/pkg/customizations/anaconda
@@ -987,6 +989,7 @@ github.com/osbuild/images/pkg/customizations/users
 github.com/osbuild/images/pkg/customizations/wsl
 github.com/osbuild/images/pkg/datasizes
 github.com/osbuild/images/pkg/disk
+github.com/osbuild/images/pkg/disk/partition
 github.com/osbuild/images/pkg/distro
 github.com/osbuild/images/pkg/distro/defs
 github.com/osbuild/images/pkg/distro/generic
@@ -1011,7 +1014,6 @@ github.com/osbuild/images/pkg/rhsm/facts
 github.com/osbuild/images/pkg/rpmmd
 github.com/osbuild/images/pkg/runner
 github.com/osbuild/images/pkg/sbom
-github.com/osbuild/images/pkg/upload/azure
 github.com/osbuild/images/pkg/upload/koji
 # github.com/osbuild/osbuild-composer/pkg/splunk_logger v0.0.0-20240814102216-0239db53236d
 ## explicit; go 1.21

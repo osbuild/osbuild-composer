@@ -29,7 +29,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 
-	"github.com/osbuild/images/pkg/upload/azure"
+	"github.com/osbuild/images/pkg/cloud/azure"
 	"github.com/osbuild/images/pkg/upload/koji"
 	"github.com/osbuild/osbuild-composer/internal/cloud/awscloud"
 	"github.com/osbuild/osbuild-composer/internal/cloud/gcp"

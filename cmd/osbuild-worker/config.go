@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/BurntSushi/toml"
-	"github.com/osbuild/images/pkg/upload/azure"
+	"github.com/osbuild/images/pkg/cloud/azure"
 	"github.com/sirupsen/logrus"
 )
 

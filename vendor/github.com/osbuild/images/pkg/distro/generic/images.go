@@ -26,10 +26,9 @@ import (
 )
 
 func osCustomizations(t *imageType, osPackageSet rpmmd.PackageSet, options distro.ImageOptions, containers []container.SourceSpec, c *blueprint.Customizations) (manifest.OSCustomizations, error) {
-	imageConfig := t.getDefaultImageConfig()
-
 	osc := manifest.OSCustomizations{}
 
+	imageConfig := t.getDefaultImageConfig()
 	if t.ImageTypeYAML.Bootable || t.ImageTypeYAML.RPMOSTree {
 		// TODO: for now the only image types that define a default kernel are
 		// ones that use UKIs and don't allow overriding, so this works.
@@ -326,10 +325,9 @@ func ostreeDeploymentCustomizations(
 	if !t.ImageTypeYAML.RPMOSTree || !t.ImageTypeYAML.Bootable {
 		return manifest.OSTreeDeploymentCustomizations{}, fmt.Errorf("ostree deployment customizations are only supported for bootable rpm-ostree images")
 	}
-
-	imageConfig := t.getDefaultImageConfig()
 	deploymentConf := manifest.OSTreeDeploymentCustomizations{}
 
+	imageConfig := t.getDefaultImageConfig()
 	kernelOptions := imageConfig.KernelOptions
 	if bpKernel := c.GetKernel(); bpKernel != nil && bpKernel.Append != "" {
 		kernelOptions = append(kernelOptions, bpKernel.Append)
@@ -523,13 +521,14 @@ func liveInstallerImage(workload workload.Workload,
 
 	img.Filename = t.Filename()
 
-	if locale := t.getDefaultImageConfig().Locale; locale != nil {
+	imgConfig := t.getDefaultImageConfig()
+	if locale := imgConfig.Locale; locale != nil {
 		img.Locale = *locale
 	}
-	if isoroot := t.getDefaultImageConfig().ISORootfsType; isoroot != nil {
+	if isoroot := imgConfig.ISORootfsType; isoroot != nil {
 		img.RootfsType = *isoroot
 	}
-	if isoboot := t.getDefaultImageConfig().ISOBootType; isoboot != nil {
+	if isoboot := imgConfig.ISOBootType; isoboot != nil {
 		img.ISOBoot = *isoboot
 	}
 
@@ -633,10 +632,11 @@ func imageInstallerImage(workload workload.Workload,
 	img.Filename = t.Filename()
 
 	img.RootfsCompression = "xz" // This also triggers using the bcj filter
-	if isoroot := t.getDefaultImageConfig().ISORootfsType; isoroot != nil {
+	imgConfig := t.getDefaultImageConfig()
+	if isoroot := imgConfig.ISORootfsType; isoroot != nil {
 		img.RootfsType = *isoroot
 	}
-	if isoboot := t.getDefaultImageConfig().ISOBootType; isoboot != nil {
+	if isoboot := imgConfig.ISOBootType; isoboot != nil {
 		img.ISOBoot = *isoboot
 	}
 
@@ -665,11 +665,9 @@ func iotCommitImage(workload workload.Workload,
 	}
 
 	imgConfig := t.getDefaultImageConfig()
-	if imgConfig != nil {
-		img.OSCustomizations.Presets = imgConfig.Presets
-		if imgConfig.InstallWeakDeps != nil {
-			img.InstallWeakDeps = *imgConfig.InstallWeakDeps
-		}
+	img.OSCustomizations.Presets = imgConfig.Presets
+	if imgConfig.InstallWeakDeps != nil {
+		img.InstallWeakDeps = *imgConfig.InstallWeakDeps
 	}
 
 	img.Environment = &t.ImageTypeYAML.Environment
@@ -741,11 +739,9 @@ func iotContainerImage(workload workload.Workload,
 	}
 
 	imgConfig := t.getDefaultImageConfig()
-	if imgConfig != nil {
-		img.OSCustomizations.Presets = imgConfig.Presets
-		if imgConfig.InstallWeakDeps != nil {
-			img.OSCustomizations.InstallWeakDeps = *imgConfig.InstallWeakDeps
-		}
+	img.OSCustomizations.Presets = imgConfig.Presets
+	if imgConfig.InstallWeakDeps != nil {
+		img.OSCustomizations.InstallWeakDeps = *imgConfig.InstallWeakDeps
 	}
 
 	img.ContainerLanguage = img.OSCustomizations.Language
@@ -837,13 +833,14 @@ func iotInstallerImage(workload workload.Workload,
 	img.Filename = t.Filename()
 
 	img.RootfsCompression = "xz" // This also triggers using the bcj filter
-	if locale := t.getDefaultImageConfig().Locale; locale != nil {
+	imgConfig := t.getDefaultImageConfig()
+	if locale := imgConfig.Locale; locale != nil {
 		img.Locale = *locale
 	}
-	if isoroot := t.getDefaultImageConfig().ISORootfsType; isoroot != nil {
+	if isoroot := imgConfig.ISORootfsType; isoroot != nil {
 		img.RootfsType = *isoroot
 	}
-	if isoboot := t.getDefaultImageConfig().ISOBootType; isoboot != nil {
+	if isoboot := imgConfig.ISOBootType; isoboot != nil {
 		img.ISOBoot = *isoboot
 	}
 
