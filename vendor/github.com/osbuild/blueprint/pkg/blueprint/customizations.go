@@ -8,7 +8,7 @@ import (
 
 	"github.com/osbuild/images/pkg/cert"
 	"github.com/osbuild/images/pkg/customizations/anaconda"
-	"github.com/osbuild/images/pkg/disk"
+	"github.com/osbuild/images/pkg/disk/partition"
 )
 
 type Customizations struct {
@@ -346,22 +346,22 @@ func (c *Customizations) GetPartitioning() (*DiskCustomization, error) {
 }
 
 // GetPartitioningMode converts the string to a disk.PartitioningMode type
-func (c *Customizations) GetPartitioningMode() (disk.PartitioningMode, error) {
+func (c *Customizations) GetPartitioningMode() (partition.PartitioningMode, error) {
 	if c == nil {
-		return disk.DefaultPartitioningMode, nil
+		return partition.DefaultPartitioningMode, nil
 	}
 
 	switch c.PartitioningMode {
 	case "raw":
-		return disk.RawPartitioningMode, nil
+		return partition.RawPartitioningMode, nil
 	case "lvm":
-		return disk.LVMPartitioningMode, nil
+		return partition.LVMPartitioningMode, nil
 	case "auto-lvm":
-		return disk.AutoLVMPartitioningMode, nil
+		return partition.AutoLVMPartitioningMode, nil
 	case "":
-		return disk.DefaultPartitioningMode, nil
+		return partition.DefaultPartitioningMode, nil
 	default:
-		return disk.DefaultPartitioningMode, fmt.Errorf("invalid partitioning mode '%s'", c.PartitioningMode)
+		return partition.DefaultPartitioningMode, fmt.Errorf("invalid partitioning mode '%s'", c.PartitioningMode)
 	}
 }
 

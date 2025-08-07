@@ -3,7 +3,7 @@ package kickstart
 import (
 	"fmt"
 
-	"github.com/osbuild/images/pkg/blueprint"
+	"github.com/osbuild/blueprint/pkg/blueprint"
 	"github.com/osbuild/images/pkg/customizations/users"
 )
 

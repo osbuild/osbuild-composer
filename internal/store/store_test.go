@@ -57,8 +57,7 @@ func (suite *storeTest) SetupSuite() {
 	suite.NoError(err)
 	suite.myImageType, err = suite.myArch.GetImageType(test_distro.TestImageTypeName)
 	suite.NoError(err)
-	ibp := blueprint.Convert(suite.myBP)
-	manifest, _, _ := suite.myImageType.Manifest(&ibp, suite.myImageOptions, suite.myRepoConfig, nil)
+	manifest, _, _ := suite.myImageType.Manifest(&suite.myBP, suite.myImageOptions, suite.myRepoConfig, nil)
 	suite.myManifest, _ = manifest.Serialize(nil, nil, nil, nil)
 	suite.mySourceConfig = SourceConfig{
 		Name: "testSourceConfig",
