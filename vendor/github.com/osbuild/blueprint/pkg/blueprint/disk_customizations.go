@@ -607,6 +607,14 @@ func (p *PartitionCustomization) ValidatePartitionLabel(ptType string) error {
 }
 
 func (p *PartitionCustomization) validatePlain(mountpoints map[string]bool) error {
+	if p.FSType == "none" {
+		// make sure the mountpoint is empty and return
+		if p.Mountpoint != "" {
+			return fmt.Errorf("mountpoint for none partition must be empty (got %q)", p.Mountpoint)
+		}
+		return nil
+	}
+
 	if p.FSType == "swap" {
 		// make sure the mountpoint is empty and return
 		if p.Mountpoint != "" {

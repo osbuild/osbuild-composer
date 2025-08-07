@@ -10,7 +10,6 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/osbuild/blueprint/pkg/blueprint"
 	"github.com/osbuild/images/pkg/distrofactory"
 	"github.com/osbuild/images/pkg/reporegistry"
 	"github.com/osbuild/images/pkg/rpmmd"
@@ -82,8 +81,7 @@ func (request *DepsolveRequest) Depsolve(df *distrofactory.Factory, rr *reporegi
 			manifestSeed: manifestSeed,
 		}
 
-		ibp := blueprint.Convert(bp)
-		manifestSource, _, err := ir.imageType.Manifest(&ibp, ir.imageOptions, ir.repositories, &ir.manifestSeed)
+		manifestSource, _, err := ir.imageType.Manifest(&bp, ir.imageOptions, ir.repositories, &ir.manifestSeed)
 		if err != nil {
 			return nil, HTTPErrorWithInternal(ErrorFailedToDepsolve, err)
 		}

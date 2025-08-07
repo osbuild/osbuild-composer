@@ -1,6 +1,6 @@
 package users
 
-import "github.com/osbuild/images/pkg/blueprint"
+import "github.com/osbuild/blueprint/pkg/blueprint"
 
 type User struct {
 	Name               string

@@ -22,7 +22,6 @@ import (
 
 	"github.com/osbuild/osbuild-composer/pkg/jobqueue"
 
-	"github.com/osbuild/blueprint/pkg/blueprint"
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/distrofactory"
 	"github.com/osbuild/images/pkg/dnfjson"
@@ -160,12 +159,11 @@ func (s *Server) enqueueCompose(irs []imageRequest, channel string) (uuid.UUID, 
 	}
 	ir := irs[0]
 
-	ibp := blueprint.Convert(ir.blueprint)
 	// shortcuts
 	arch := ir.imageType.Arch()
 	distribution := arch.Distro()
 
-	manifestSource, _, err := ir.imageType.Manifest(&ibp, ir.imageOptions, ir.repositories, &ir.manifestSeed)
+	manifestSource, _, err := ir.imageType.Manifest(&ir.blueprint, ir.imageOptions, ir.repositories, &ir.manifestSeed)
 	if err != nil {
 		logrus.Warningf("ErrorEnqueueingJob, failed generating manifest: %v", err)
 		return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
@@ -292,13 +290,12 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 	var kojiFilenames []string
 	var buildIDs []uuid.UUID
 	for idx, ir := range irs {
-		ibp := blueprint.Convert(ir.blueprint)
 
 		// shortcuts
 		arch := ir.imageType.Arch()
 		distribution := arch.Distro()
 
-		manifestSource, _, err := ir.imageType.Manifest(&ibp, ir.imageOptions, ir.repositories, &irs[idx].manifestSeed)
+		manifestSource, _, err := ir.imageType.Manifest(&ir.blueprint, ir.imageOptions, ir.repositories, &irs[idx].manifestSeed)
 		if err != nil {
 			logrus.Errorf("ErrorEnqueueingJob, failed generating manifest: %v", err)
 			return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
