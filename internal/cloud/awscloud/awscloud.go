@@ -15,7 +15,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/autoscaling"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
-	"github.com/aws/aws-sdk-go-v2/service/s3"
 	images_awscloud "github.com/osbuild/images/pkg/cloud/awscloud"
 )
 
@@ -26,15 +25,13 @@ type AWS struct {
 
 	ec2     EC2
 	ec2imds EC2Imds
-	s3      S3
 	asg     ASG
 }
 
-func newForTest(ec2cli EC2, ec2imds EC2Imds, s3cli S3) *AWS {
+func newForTest(ec2cli EC2, ec2imds EC2Imds) *AWS {
 	return &AWS{
 		ec2:     ec2cli,
 		ec2imds: ec2imds,
-		s3:      s3cli,
 		asg:     nil,
 	}
 }
@@ -42,12 +39,10 @@ func newForTest(ec2cli EC2, ec2imds EC2Imds, s3cli S3) *AWS {
 // Create a new session from the credentials and the region and returns an *AWS object initialized with it.
 // /creds credentials.StaticCredentialsProvider, region string
 func newAwsFromConfig(cfg aws.Config, imagesAWS *images_awscloud.AWS) *AWS {
-	s3cli := s3.NewFromConfig(cfg)
 	return &AWS{
 		AWS:     imagesAWS,
 		ec2:     ec2.NewFromConfig(cfg),
 		ec2imds: imds.NewFromConfig(cfg),
-		s3:      s3cli,
 		asg:     autoscaling.NewFromConfig(cfg),
 	}
 }
@@ -167,16 +162,10 @@ func newAwsFromCredsWithEndpoint(creds config.LoadOptionsFunc, region, endpoint,
 		return nil, err
 	}
 
-	s3cli := s3.NewFromConfig(cfg, func(options *s3.Options) {
-		options.BaseEndpoint = aws.String(endpoint)
-		options.UsePathStyle = true
-	})
-
 	return &AWS{
 		AWS:     imagesAWS,
 		ec2:     ec2.NewFromConfig(cfg),
 		ec2imds: imds.NewFromConfig(cfg),
-		s3:      s3cli,
 		asg:     autoscaling.NewFromConfig(cfg),
 	}, nil
 }
