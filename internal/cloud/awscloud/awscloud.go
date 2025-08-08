@@ -29,17 +29,15 @@ type AWS struct {
 	ec2imds    EC2Imds
 	s3         S3
 	s3uploader S3Manager
-	s3presign  S3Presign
 	asg        ASG
 }
 
-func newForTest(ec2cli EC2, ec2imds EC2Imds, s3cli S3, upldr S3Manager, sign S3Presign) *AWS {
+func newForTest(ec2cli EC2, ec2imds EC2Imds, s3cli S3, upldr S3Manager) *AWS {
 	return &AWS{
 		ec2:        ec2cli,
 		ec2imds:    ec2imds,
 		s3:         s3cli,
 		s3uploader: upldr,
-		s3presign:  sign,
 		asg:        nil,
 	}
 }
@@ -54,7 +52,6 @@ func newAwsFromConfig(cfg aws.Config, imagesAWS *images_awscloud.AWS) *AWS {
 		ec2imds:    imds.NewFromConfig(cfg),
 		s3:         s3cli,
 		s3uploader: manager.NewUploader(s3cli),
-		s3presign:  s3.NewPresignClient(s3cli),
 		asg:        autoscaling.NewFromConfig(cfg),
 	}
 }
@@ -185,7 +182,6 @@ func newAwsFromCredsWithEndpoint(creds config.LoadOptionsFunc, region, endpoint,
 		ec2imds:    imds.NewFromConfig(cfg),
 		s3:         s3cli,
 		s3uploader: manager.NewUploader(s3cli),
-		s3presign:  s3.NewPresignClient(s3cli),
 		asg:        autoscaling.NewFromConfig(cfg),
 	}, nil
 }

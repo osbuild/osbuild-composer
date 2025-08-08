@@ -75,7 +75,7 @@ write_files:
 
 func TestSIRunSecureInstance(t *testing.T) {
 	m := newEc2Mock(t)
-	aws := awscloud.NewForTest(m, &ec2imdsmock{t, "instance-id", "region1"}, nil, nil, nil)
+	aws := awscloud.NewForTest(m, &ec2imdsmock{t, "instance-id", "region1"}, nil, nil)
 	require.NotNil(t, aws)
 
 	si, err := aws.RunSecureInstance("iam-profile", "key-name", "cw-group", "hostname")
@@ -88,7 +88,7 @@ func TestSIRunSecureInstance(t *testing.T) {
 
 func TestSITerminateSecureInstance(t *testing.T) {
 	m := newEc2Mock(t)
-	aws := awscloud.NewForTest(m, &ec2imdsmock{t, "instance-id", "region1"}, nil, nil, nil)
+	aws := awscloud.NewForTest(m, &ec2imdsmock{t, "instance-id", "region1"}, nil, nil)
 	require.NotNil(t, aws)
 
 	// Small hack, describeinstances returns terminate/running
@@ -110,7 +110,7 @@ func TestSITerminateSecureInstance(t *testing.T) {
 
 func TestSICreateSGFailures(t *testing.T) {
 	m := newEc2Mock(t)
-	aws := awscloud.NewForTest(m, &ec2imdsmock{t, "instance-id", "region1"}, nil, nil, nil)
+	aws := awscloud.NewForTest(m, &ec2imdsmock{t, "instance-id", "region1"}, nil, nil)
 	require.NotNil(t, aws)
 
 	m.failFn["CreateSecurityGroup"] = fmt.Errorf("some-error")
@@ -126,7 +126,7 @@ func TestSICreateSGFailures(t *testing.T) {
 
 func TestSICreateLTFailures(t *testing.T) {
 	m := newEc2Mock(t)
-	aws := awscloud.NewForTest(m, &ec2imdsmock{t, "instance-id", "region1"}, nil, nil, nil)
+	aws := awscloud.NewForTest(m, &ec2imdsmock{t, "instance-id", "region1"}, nil, nil)
 	require.NotNil(t, aws)
 
 	m.failFn["CreateLaunchTemplate"] = fmt.Errorf("some-error")
@@ -142,7 +142,7 @@ func TestSICreateLTFailures(t *testing.T) {
 
 func TestSICreateFleetFailures(t *testing.T) {
 	m := newEc2Mock(t)
-	aws := awscloud.NewForTest(m, &ec2imdsmock{t, "instance-id", "region1"}, nil, nil, nil)
+	aws := awscloud.NewForTest(m, &ec2imdsmock{t, "instance-id", "region1"}, nil, nil)
 	require.NotNil(t, aws)
 
 	// create fleet error should call create fleet thrice
