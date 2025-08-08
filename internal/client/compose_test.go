@@ -572,6 +572,8 @@ func TestComposeUnsupportedMountPointV0(t *testing.T) {
 	require.NoError(t, err, "failed with a client error")
 	require.NotNil(t, resp)
 	require.Equal(t, "ManifestCreationFailed", resp.Errors[0].ID)
-	require.Contains(t, resp.Errors[0].Msg, "The following custom mountpoints are not supported [\"/etc\"]")
+	// NB: 'path "/etc" is not allowed' is the error message from osbuild/images < v0.172.0 and it is kept for compatibility
+	// in the nightly and GA CI pipelines. It can be removed once all tested osbuild-composer versions are built with osbuild/images >= v0.172.0.
+	require.Regexp(t, `(path "/etc" is not allowed)|(The following custom mountpoints are not supported \["/etc"\])`, resp.Errors[0].Msg)
 	require.Equal(t, 0, len(body))
 }
