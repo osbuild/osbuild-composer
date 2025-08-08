@@ -11,7 +11,7 @@ import (
 
 func TestEC2RemoveSnapshotAndDeregisterImage(t *testing.T) {
 	m := newEc2Mock(t)
-	aws := awscloud.NewForTest(m, nil, &s3mock{t, "bucket", "object-key"}, nil)
+	aws := awscloud.NewForTest(m, nil, &s3mock{t, "bucket", "object-key"})
 	require.NotNil(t, aws)
 
 	err := aws.RemoveSnapshotAndDeregisterImage(&ec2types.Image{
