@@ -2,12 +2,10 @@ package awscloud_test
 
 import (
 	"context"
-	"io"
 	"testing"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/ec2/imds"
-	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -32,23 +30,6 @@ func (m *s3mock) PutObjectAcl(ctx context.Context, input *s3.PutObjectAclInput, 
 	require.Equal(m.t, m.bucket, *input.Bucket)
 	require.Equal(m.t, m.key, *input.Key)
 	require.Equal(m.t, s3types.ObjectCannedACL(s3types.ObjectCannedACLPublicRead), input.ACL)
-	return nil, nil
-}
-
-type s3upldrmock struct {
-	t *testing.T
-
-	contents string
-	bucket   string
-	key      string
-}
-
-func (m *s3upldrmock) Upload(ctx context.Context, input *s3.PutObjectInput, optfns ...func(*manager.Uploader)) (*manager.UploadOutput, error) {
-	body, err := io.ReadAll(input.Body)
-	require.NoError(m.t, err)
-	require.Equal(m.t, m.contents, string(body))
-	require.Equal(m.t, m.bucket, *input.Bucket)
-	require.Equal(m.t, m.key, *input.Key)
 	return nil, nil
 }
 

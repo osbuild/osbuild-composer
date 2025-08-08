@@ -12,7 +12,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/feature/ec2/imds"
-	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/autoscaling"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
@@ -25,20 +24,18 @@ type AWS struct {
 	// related to image upload and sharing.
 	*images_awscloud.AWS
 
-	ec2        EC2
-	ec2imds    EC2Imds
-	s3         S3
-	s3uploader S3Manager
-	asg        ASG
+	ec2     EC2
+	ec2imds EC2Imds
+	s3      S3
+	asg     ASG
 }
 
-func newForTest(ec2cli EC2, ec2imds EC2Imds, s3cli S3, upldr S3Manager) *AWS {
+func newForTest(ec2cli EC2, ec2imds EC2Imds, s3cli S3) *AWS {
 	return &AWS{
-		ec2:        ec2cli,
-		ec2imds:    ec2imds,
-		s3:         s3cli,
-		s3uploader: upldr,
-		asg:        nil,
+		ec2:     ec2cli,
+		ec2imds: ec2imds,
+		s3:      s3cli,
+		asg:     nil,
 	}
 }
 
@@ -47,12 +44,11 @@ func newForTest(ec2cli EC2, ec2imds EC2Imds, s3cli S3, upldr S3Manager) *AWS {
 func newAwsFromConfig(cfg aws.Config, imagesAWS *images_awscloud.AWS) *AWS {
 	s3cli := s3.NewFromConfig(cfg)
 	return &AWS{
-		AWS:        imagesAWS,
-		ec2:        ec2.NewFromConfig(cfg),
-		ec2imds:    imds.NewFromConfig(cfg),
-		s3:         s3cli,
-		s3uploader: manager.NewUploader(s3cli),
-		asg:        autoscaling.NewFromConfig(cfg),
+		AWS:     imagesAWS,
+		ec2:     ec2.NewFromConfig(cfg),
+		ec2imds: imds.NewFromConfig(cfg),
+		s3:      s3cli,
+		asg:     autoscaling.NewFromConfig(cfg),
 	}
 }
 
@@ -177,12 +173,11 @@ func newAwsFromCredsWithEndpoint(creds config.LoadOptionsFunc, region, endpoint,
 	})
 
 	return &AWS{
-		AWS:        imagesAWS,
-		ec2:        ec2.NewFromConfig(cfg),
-		ec2imds:    imds.NewFromConfig(cfg),
-		s3:         s3cli,
-		s3uploader: manager.NewUploader(s3cli),
-		asg:        autoscaling.NewFromConfig(cfg),
+		AWS:     imagesAWS,
+		ec2:     ec2.NewFromConfig(cfg),
+		ec2imds: imds.NewFromConfig(cfg),
+		s3:      s3cli,
+		asg:     autoscaling.NewFromConfig(cfg),
 	}, nil
 }
 
