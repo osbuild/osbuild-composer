@@ -10,7 +10,7 @@ import (
 
 func TestEC2CopyImage(t *testing.T) {
 	m := newEc2Mock(t)
-	aws := awscloud.NewForTest(m, nil, &s3mock{t, "bucket", "object-key"}, nil, nil)
+	aws := awscloud.NewForTest(m, nil, &s3mock{t, "bucket", "object-key"}, nil)
 	imageId, err := aws.CopyImage("image-name", "image-id", "region")
 	require.NoError(t, err)
 	require.Equal(t, "image-id", imageId)
