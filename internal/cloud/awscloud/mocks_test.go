@@ -8,30 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/ec2/imds"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
-	"github.com/aws/aws-sdk-go-v2/service/s3"
-	s3types "github.com/aws/aws-sdk-go-v2/service/s3/types"
-	"github.com/stretchr/testify/require"
 )
-
-type s3mock struct {
-	t *testing.T
-
-	bucket string
-	key    string
-}
-
-func (m *s3mock) DeleteObject(ctx context.Context, input *s3.DeleteObjectInput, optfns ...func(*s3.Options)) (*s3.DeleteObjectOutput, error) {
-	require.Equal(m.t, m.bucket, *input.Bucket)
-	require.Equal(m.t, m.key, *input.Key)
-	return nil, nil
-}
-
-func (m *s3mock) PutObjectAcl(ctx context.Context, input *s3.PutObjectAclInput, optfns ...func(*s3.Options)) (*s3.PutObjectAclOutput, error) {
-	require.Equal(m.t, m.bucket, *input.Bucket)
-	require.Equal(m.t, m.key, *input.Key)
-	require.Equal(m.t, s3types.ObjectCannedACL(s3types.ObjectCannedACLPublicRead), input.ACL)
-	return nil, nil
-}
 
 type ec2imdsmock struct {
 	t *testing.T
