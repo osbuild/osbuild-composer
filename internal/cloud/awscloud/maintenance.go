@@ -110,16 +110,6 @@ func (a *AWS) DescribeInstancesByInstanceID(instanceID string) ([]ec2types.Reser
 	return res.Reservations, nil
 }
 
-func (a *AWS) TerminateInstances(instanceIDs []string) error {
-	_, err := a.ec2.TerminateInstances(
-		context.Background(),
-		&ec2.TerminateInstancesInput{
-			InstanceIds: instanceIDs,
-		},
-	)
-	return err
-}
-
 func (a *AWS) DescribeSecurityGroupsByPrefix(ctx context.Context, prefix string) ([]ec2types.SecurityGroup, error) {
 	var securityGroups []ec2types.SecurityGroup
 

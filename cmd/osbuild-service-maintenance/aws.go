@@ -154,7 +154,7 @@ func terminateOrphanedSecureInstances(a *awscloud.AWS, dryRun bool) error {
 	log.Printf("Cleaning up executor instances: %v", instanceIDs)
 	if !dryRun {
 		if len(instanceIDs) > 0 {
-			err = a.TerminateInstances(instanceIDs)
+			_, err = a.TerminateInstancesEC2(instanceIDs, 0)
 			if err != nil {
 				return fmt.Errorf("Unable to terminate secure instances: %w", err)
 			}

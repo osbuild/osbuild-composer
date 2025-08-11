@@ -271,12 +271,7 @@ func (a *AWS) terminatePreviousSI(hostInstanceID string) (string, error) {
 	}
 
 	instanceID := *descrInstancesOutput.Reservations[0].Instances[0].InstanceId
-	_, err = a.ec2.TerminateInstances(
-		context.Background(),
-		&ec2.TerminateInstancesInput{
-			InstanceIds: []string{instanceID},
-		},
-	)
+	_, err = a.TerminateInstancesEC2([]string{instanceID}, 0)
 	if err != nil {
 		return instanceID, err
 	}
