@@ -246,11 +246,6 @@ func (m *ec2mock) CopyImage(ctx context.Context, input *ec2.CopyImageInput, optf
 	}, nil
 }
 
-func (m *ec2mock) DeregisterImage(ctx context.Context, input *ec2.DeregisterImageInput, optfns ...func(*ec2.Options)) (*ec2.DeregisterImageOutput, error) {
-	m.calledFn["DeregisterImage"] += 1
-	return nil, nil
-}
-
 func (m *ec2mock) DescribeImages(ctx context.Context, input *ec2.DescribeImagesInput, optfns ...func(*ec2.Options)) (*ec2.DescribeImagesOutput, error) {
 	m.calledFn["DescribeImages"] += 1
 	return &ec2.DescribeImagesOutput{
@@ -272,11 +267,6 @@ func (m *ec2mock) DescribeImages(ctx context.Context, input *ec2.DescribeImagesI
 
 func (m *ec2mock) ModifyImageAttribute(ctx context.Context, input *ec2.ModifyImageAttributeInput, optfns ...func(*ec2.Options)) (*ec2.ModifyImageAttributeOutput, error) {
 	m.calledFn["ModifyImageAttribute"] += 1
-	return nil, nil
-}
-
-func (m *ec2mock) DeleteSnapshot(ctx context.Context, input *ec2.DeleteSnapshotInput, optfns ...func(*ec2.Options)) (*ec2.DeleteSnapshotOutput, error) {
-	m.calledFn["DeleteSnapshot"] += 1
 	return nil, nil
 }
 
