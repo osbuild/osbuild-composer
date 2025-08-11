@@ -193,11 +193,6 @@ func (m *ec2mock) DescribeInstanceStatus(ctx context.Context, input *ec2.Describ
 	}, nil
 }
 
-func (m *ec2mock) RunInstances(ctx context.Context, input *ec2.RunInstancesInput, optfns ...func(*ec2.Options)) (*ec2.RunInstancesOutput, error) {
-	m.calledFn["RunInstances"] += 1
-	return nil, nil
-}
-
 func (m *ec2mock) TerminateInstances(ctx context.Context, input *ec2.TerminateInstancesInput, optfns ...func(*ec2.Options)) (*ec2.TerminateInstancesOutput, error) {
 	m.calledFn["TerminateInstances"] += 1
 	return nil, nil
