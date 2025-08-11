@@ -20,9 +20,6 @@ type Pipeline interface {
 	// Checkpoint this pipeline when osbuild is called.
 	Checkpoint()
 
-	// Export this tree of this pipeline as an artifact when osbuild is called.
-	Export() *artifact.Artifact
-
 	// BuildPipeline returns a reference to the pipeline that creates the build
 	// root for this pipeline. For build pipelines, it should return nil.
 	BuildPipeline() Build
@@ -74,6 +71,14 @@ type Pipeline interface {
 	fileRefs() []string
 }
 
+// ExportingPipeline is a pipeline that can export an artifact
+type ExportingPipeline interface {
+	Pipeline
+
+	// Export this tree of this pipeline as an artifact when osbuild is called.
+	Export() *artifact.Artifact
+}
+
 // A Base represents the core functionality shared between each of the pipeline
 // implementations, and the Base struct must be embedded in each of them.
 type Base struct {
@@ -97,10 +102,6 @@ func (p *Base) Checkpoint() {
 
 func (p Base) getCheckpoint() bool {
 	return p.checkpoint
-}
-
-func (p *Base) Export() *artifact.Artifact {
-	panic("can't export pipeline directly from pipeline.Base")
 }
 
 func (p Base) getExport() bool {
@@ -204,7 +205,7 @@ type TreePipeline interface {
 
 // FilePipeline is any pipeline that produces a single file (typically an image file).
 type FilePipeline interface {
-	Pipeline
+	ExportingPipeline
 	Filename() string
 	SetFilename(fname string)
 }

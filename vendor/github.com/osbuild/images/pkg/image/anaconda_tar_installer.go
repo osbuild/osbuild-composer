@@ -69,9 +69,9 @@ type AnacondaTarInstaller struct {
 
 	Filename string
 
-	AdditionalKernelOpts      []string
-	AdditionalAnacondaModules []string
-	DisabledAnacondaModules   []string
+	AdditionalKernelOpts    []string
+	EnabledAnacondaModules  []string
+	DisabledAnacondaModules []string
 
 	AdditionalDracutModules []string
 	AdditionalDrivers       []string
@@ -136,10 +136,10 @@ func (img *AnacondaTarInstaller) InstantiateManifest(m *manifest.Manifest,
 	anacondaPipeline.Biosdevname = (img.Platform.GetArch() == arch.ARCH_X86_64)
 
 	anacondaPipeline.UseLegacyAnacondaConfig = img.UseLegacyAnacondaConfig
-	anacondaPipeline.AdditionalAnacondaModules = img.AdditionalAnacondaModules
+	anacondaPipeline.EnabledAnacondaModules = img.EnabledAnacondaModules
 	if img.OSCustomizations.FIPS {
-		anacondaPipeline.AdditionalAnacondaModules = append(
-			anacondaPipeline.AdditionalAnacondaModules,
+		anacondaPipeline.EnabledAnacondaModules = append(
+			anacondaPipeline.EnabledAnacondaModules,
 			anaconda.ModuleSecurity,
 		)
 	}

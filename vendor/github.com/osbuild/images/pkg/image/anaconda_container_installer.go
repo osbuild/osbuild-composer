@@ -40,8 +40,8 @@ type AnacondaContainerInstaller struct {
 
 	Filename string
 
-	AdditionalAnacondaModules []string
-	DisabledAnacondaModules   []string
+	EnabledAnacondaModules  []string
+	DisabledAnacondaModules []string
 
 	AdditionalDracutModules []string
 	AdditionalDrivers       []string
@@ -99,11 +99,11 @@ func (img *AnacondaContainerInstaller) InstantiateManifest(m *manifest.Manifest,
 	anacondaPipeline.Variant = img.Variant
 	anacondaPipeline.Biosdevname = (img.Platform.GetArch() == arch.ARCH_X86_64)
 	anacondaPipeline.Checkpoint()
-	anacondaPipeline.AdditionalAnacondaModules = img.AdditionalAnacondaModules
+	anacondaPipeline.EnabledAnacondaModules = img.EnabledAnacondaModules
 	anacondaPipeline.DisabledAnacondaModules = img.DisabledAnacondaModules
 	if img.FIPS {
-		anacondaPipeline.AdditionalAnacondaModules = append(
-			anacondaPipeline.AdditionalAnacondaModules,
+		anacondaPipeline.EnabledAnacondaModules = append(
+			anacondaPipeline.EnabledAnacondaModules,
 			anaconda.ModuleSecurity,
 		)
 	}

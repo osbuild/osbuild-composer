@@ -43,8 +43,8 @@ type AnacondaOSTreeInstaller struct {
 
 	Filename string
 
-	AdditionalAnacondaModules []string
-	DisabledAnacondaModules   []string
+	EnabledAnacondaModules  []string
+	DisabledAnacondaModules []string
 
 	AdditionalDracutModules []string
 	AdditionalDrivers       []string
@@ -99,10 +99,10 @@ func (img *AnacondaOSTreeInstaller) InstantiateManifest(m *manifest.Manifest,
 
 	anacondaPipeline.UseLegacyAnacondaConfig = img.UseLegacyAnacondaConfig
 	anacondaPipeline.AdditionalDracutModules = img.AdditionalDracutModules
-	anacondaPipeline.AdditionalAnacondaModules = img.AdditionalAnacondaModules
+	anacondaPipeline.EnabledAnacondaModules = img.EnabledAnacondaModules
 	if img.FIPS {
-		anacondaPipeline.AdditionalAnacondaModules = append(
-			anacondaPipeline.AdditionalAnacondaModules,
+		anacondaPipeline.EnabledAnacondaModules = append(
+			anacondaPipeline.EnabledAnacondaModules,
 			anaconda.ModuleSecurity,
 		)
 	}

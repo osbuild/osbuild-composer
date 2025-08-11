@@ -3,10 +3,11 @@ package distro
 // InstallerConfig represents a configuration for the installer
 // part of an Installer image type.
 type InstallerConfig struct {
+	EnabledAnacondaModules []string `yaml:"enabled_anaconda_modules"`
+
 	// Additional dracut modules and drivers to enable
-	AdditionalDracutModules   []string `yaml:"additional_dracut_modules"`
-	AdditionalDrivers         []string `yaml:"additional_drivers"`
-	AdditionalAnacondaModules []string `yaml:"additional_anaconda_modules"`
+	AdditionalDracutModules []string `yaml:"additional_dracut_modules"`
+	AdditionalDrivers       []string `yaml:"additional_drivers"`
 
 	// XXX: this is really here only for compatibility/because of drift in the "imageInstallerImage"
 	// between fedora/rhel

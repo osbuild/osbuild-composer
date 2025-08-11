@@ -14,6 +14,8 @@ type GrubISOStageOptions struct {
 	Architectures []string `json:"architectures,omitempty"`
 
 	Vendor string `json:"vendor,omitempty"`
+
+	FIPS bool `json:"fips,omitempty"`
 }
 
 func (GrubISOStageOptions) isStageOptions() {}
