@@ -435,6 +435,7 @@ func (p *AnacondaInstallerISOTree) serialize() osbuild.Pipeline {
 				Dir:  "/images/pxeboot",
 				Opts: kernelOpts,
 			},
+			FIPS: p.anacondaPipeline.platform.GetFIPSMenu(),
 		}
 
 		stage := osbuild.NewISOLinuxStage(options, p.anacondaPipeline.Name())
@@ -450,6 +451,7 @@ func (p *AnacondaInstallerISOTree) serialize() osbuild.Pipeline {
 				Opts: kernelOpts,
 			},
 			ISOLabel: p.isoLabel,
+			FIPS:     p.anacondaPipeline.platform.GetFIPSMenu(),
 		}
 
 		stage := osbuild.NewGrub2ISOLegacyStage(options)

@@ -580,10 +580,10 @@ func imageInstallerImage(workload workload.Workload,
 		return nil, err
 	}
 	if instCust != nil && instCust.Modules != nil {
-		img.AdditionalAnacondaModules = append(img.AdditionalAnacondaModules, instCust.Modules.Enable...)
+		img.EnabledAnacondaModules = append(img.EnabledAnacondaModules, instCust.Modules.Enable...)
 		img.DisabledAnacondaModules = append(img.DisabledAnacondaModules, instCust.Modules.Disable...)
 	}
-	img.AdditionalAnacondaModules = append(img.AdditionalAnacondaModules, anaconda.ModuleUsers)
+	img.EnabledAnacondaModules = append(img.EnabledAnacondaModules, anaconda.ModuleUsers)
 
 	img.Platform = t.platform
 	img.Workload = workload
@@ -596,6 +596,7 @@ func imageInstallerImage(workload workload.Workload,
 	}
 
 	if installerConfig != nil {
+		img.EnabledAnacondaModules = append(img.EnabledAnacondaModules, installerConfig.EnabledAnacondaModules...)
 		img.AdditionalDracutModules = append(img.AdditionalDracutModules, installerConfig.AdditionalDracutModules...)
 		img.AdditionalDrivers = append(img.AdditionalDrivers, installerConfig.AdditionalDrivers...)
 		if installerConfig.SquashfsRootfs != nil && *installerConfig.SquashfsRootfs {
@@ -797,7 +798,7 @@ func iotInstallerImage(workload workload.Workload,
 		return nil, err
 	}
 	if instCust != nil && instCust.Modules != nil {
-		img.AdditionalAnacondaModules = append(img.AdditionalAnacondaModules, instCust.Modules.Enable...)
+		img.EnabledAnacondaModules = append(img.EnabledAnacondaModules, instCust.Modules.Enable...)
 		img.DisabledAnacondaModules = append(img.DisabledAnacondaModules, instCust.Modules.Disable...)
 	}
 
@@ -809,14 +810,14 @@ func iotInstallerImage(workload workload.Workload,
 	if installerConfig != nil {
 		img.AdditionalDracutModules = append(img.AdditionalDracutModules, installerConfig.AdditionalDracutModules...)
 		img.AdditionalDrivers = append(img.AdditionalDrivers, installerConfig.AdditionalDrivers...)
-		img.AdditionalAnacondaModules = append(img.AdditionalAnacondaModules, installerConfig.AdditionalAnacondaModules...)
+		img.EnabledAnacondaModules = append(img.EnabledAnacondaModules, installerConfig.EnabledAnacondaModules...)
 		if installerConfig.SquashfsRootfs != nil && *installerConfig.SquashfsRootfs {
 			img.RootfsType = manifest.SquashfsRootfs
 		}
 	}
 	if len(img.Kickstart.Users)+len(img.Kickstart.Groups) > 0 {
 		// only enable the users module if needed
-		img.AdditionalAnacondaModules = append(img.AdditionalAnacondaModules, anaconda.ModuleUsers)
+		img.EnabledAnacondaModules = append(img.EnabledAnacondaModules, anaconda.ModuleUsers)
 	}
 
 	img.Product = d.Product()

@@ -22,6 +22,7 @@ type PlatformConf struct {
 	BootFiles     [][2]string         `yaml:"boot_files"`
 
 	Bootloader Bootloader `yaml:"bootloader"`
+	FIPSMenu   bool       `yaml:"fips_menu"` // Add FIPS entry to iso bootloader menu
 }
 
 // ensure PlatformConf implements the Platform interface
@@ -65,4 +66,9 @@ func (pc *PlatformConf) GetBootFiles() [][2]string {
 
 func (pc *PlatformConf) GetBootloader() Bootloader {
 	return pc.Bootloader
+}
+
+// GetFIPSMenu is used to add the FIPS entry to the iso bootloader menu
+func (pc *PlatformConf) GetFIPSMenu() bool {
+	return pc.FIPSMenu
 }
