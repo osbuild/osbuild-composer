@@ -8,7 +8,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
-	"github.com/sirupsen/logrus"
 )
 
 // For service maintenance images are discovered by the "Name:composer-api-*" tag filter. Currently
@@ -30,41 +29,6 @@ func (a *AWS) DescribeImagesByTag(tagKey, tagValue string) ([]ec2types.Image, er
 		return nil, err
 	}
 	return imgs.Images, nil
-}
-
-func (a *AWS) RemoveSnapshotAndDeregisterImage(image *ec2types.Image) error {
-	if image == nil {
-		return fmt.Errorf("image is nil")
-	}
-
-	var snapshots []*string
-	for _, bdm := range image.BlockDeviceMappings {
-		snapshots = append(snapshots, bdm.Ebs.SnapshotId)
-	}
-
-	_, err := a.ec2.DeregisterImage(
-		context.Background(),
-		&ec2.DeregisterImageInput{
-			ImageId: image.ImageId,
-		},
-	)
-	if err != nil {
-		return err
-	}
-
-	for _, s := range snapshots {
-		_, err = a.ec2.DeleteSnapshot(
-			context.Background(),
-			&ec2.DeleteSnapshotInput{
-				SnapshotId: s,
-			},
-		)
-		if err != nil {
-			// TODO return err?
-			logrus.Warn("Unable to remove snapshot", s)
-		}
-	}
-	return err
 }
 
 func (a *AWS) describeInstancesByKeyValue(key, value string) ([]ec2types.Reservation, error) {
