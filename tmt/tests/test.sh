@@ -18,8 +18,6 @@ function run_tests() {
 		/usr/libexec/tests/osbuild-composer/ostree-simplified-installer.sh
 	elif [ "$TEST_CASE" = "edge-ignition" ]; then
 		/usr/libexec/tests/osbuild-composer/ostree-ignition.sh
-	elif [ "$TEST_CASE" = "edge-pulp" ]; then
-		/usr/libexec/tests/osbuild-composer/ostree-pulp.sh
 	elif [ "$TEST_CASE" = "edge-minimal" ]; then
 		/usr/libexec/tests/osbuild-composer/minimal-raw.sh
 	elif [ "$TEST_CASE" = "edge-ami-image" ]; then
