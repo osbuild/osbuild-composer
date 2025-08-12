@@ -12,7 +12,6 @@ import (
 	"os"
 	"os/exec"
 	"path"
-	"path/filepath"
 	"runtime/debug"
 	"slices"
 	"strings"
@@ -25,7 +24,6 @@ import (
 
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/upload/oci"
-	"github.com/osbuild/osbuild-composer/internal/upload/pulp"
 
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -316,44 +314,6 @@ func (impl *OSBuildJobImpl) getContainerClient(destination string, targetOptions
 	}
 
 	return client, nil
-}
-
-// Read server configuration and credentials from the target options and fall
-// back to worker config if they are not set (targetOptions take precedent).
-// Mixing sources is allowed. For example, the server address can be configured
-// in the worker config while the targetOptions provide the credentials (or
-// vice versa).
-func (impl *OSBuildJobImpl) getPulpClient(targetOptions *target.PulpOSTreeTargetOptions) (*pulp.Client, error) {
-
-	var creds *pulp.Credentials
-	// Credentials are considered together. In other words, the username can't
-	// come from a different config source than the password.
-	if targetOptions.Username != "" && targetOptions.Password != "" {
-		creds = &pulp.Credentials{
-			Username: targetOptions.Username,
-			Password: targetOptions.Password,
-		}
-	}
-	address := targetOptions.ServerAddress
-	if address == "" {
-		// fall back to worker configuration for server address
-		address = impl.PulpConfig.ServerAddress
-	}
-	if address == "" {
-		return nil, fmt.Errorf("pulp server address not set")
-	}
-
-	if creds != nil {
-		return pulp.NewClient(address, creds), nil
-	}
-
-	// read from worker configuration
-	if impl.PulpConfig.CredsFilePath == "" {
-		return nil, fmt.Errorf("pulp credentials not set")
-	}
-
-	// use creds file loader helper
-	return pulp.NewClientFromFile(address, impl.PulpConfig.CredsFilePath)
 }
 
 func makeJobErrorFromOsbuildOutput(osbuildOutput *osbuild.Result) *clienterrors.Error {
@@ -1330,23 +1290,6 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			}
 			logWithId.Printf("[container] 🎉 Image uploaded (%s)!", digest.String())
 			targetResult.Options = &target.ContainerTargetResultOptions{URL: client.Target.String(), Digest: digest.String()}
-
-		case *target.PulpOSTreeTargetOptions:
-			targetResult = target.NewPulpOSTreeTargetResult(nil, &artifact)
-			archivePath := filepath.Join(outputDirectory, jobTarget.OsbuildArtifact.ExportName, jobTarget.OsbuildArtifact.ExportFilename)
-
-			client, err := impl.getPulpClient(targetOptions)
-			if err != nil {
-				targetResult.TargetError = clienterrors.New(clienterrors.ErrorInvalidConfig, err.Error(), nil)
-				break
-			}
-
-			url, err := client.UploadAndDistributeCommit(archivePath, targetOptions.Repository, targetOptions.BasePath)
-			if err != nil {
-				targetResult.TargetError = clienterrors.New(clienterrors.ErrorUploadingImage, err.Error(), nil)
-				break
-			}
-			targetResult.Options = &target.PulpOSTreeTargetResultOptions{RepoURL: url}
 
 		default:
 			// TODO: we may not want to return completely here with multiple targets, because then no TargetErrors will be added to the JobError details

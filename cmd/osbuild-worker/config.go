@@ -67,11 +67,6 @@ type containersConfig struct {
 	TLSVerify    bool   `toml:"tls_verify"`
 }
 
-type pulpConfig struct {
-	Credentials string `toml:"credentials"`
-	ServerURL   string `toml:"server_address"`
-}
-
 type executorConfig struct {
 	Type            string `toml:"type"`
 	IAMProfile      string `toml:"iam_profile"`
@@ -97,7 +92,6 @@ type workerConfig struct {
 	Authentication *authenticationConfig       `toml:"authentication"`
 	Containers     *containersConfig           `toml:"containers"`
 	OCI            *ociConfig                  `toml:"oci"`
-	Pulp           *pulpConfig                 `toml:"pulp"`
 	// default value: /api/worker/v1
 	BasePath string `toml:"base_path"`
 	DNFJson  string `toml:"dnf-json"`

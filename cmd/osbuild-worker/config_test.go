@@ -66,10 +66,6 @@ client_id = "toucan"
 client_secret = "/etc/osbuild-worker/client_secret"
 offline_token = "/etc/osbuild-worker/offline_token"
 
-[pulp]
-credentials = "/etc/osbuild-worker/pulp-creds"
-server_address = "https://example.com/pulp"
-
 [osbuild_executor]
 type = "aws.ec2"
 iam_profile = "osbuild-worker"
@@ -131,10 +127,6 @@ cloudwatch_group = "osbuild-worker"
 					OfflineTokenPath: "/etc/osbuild-worker/offline_token",
 					ClientId:         "toucan",
 					ClientSecretPath: "/etc/osbuild-worker/client_secret",
-				},
-				Pulp: &pulpConfig{
-					Credentials: "/etc/osbuild-worker/pulp-creds",
-					ServerURL:   "https://example.com/pulp",
 				},
 				DeploymentChannel: "local",
 			},

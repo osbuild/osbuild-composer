@@ -400,13 +400,6 @@ var run = func() {
 		}
 	}
 
-	var pulpCredsFilePath = ""
-	var pulpAddress = ""
-	if config.Pulp != nil {
-		pulpCredsFilePath = config.Pulp.Credentials
-		pulpAddress = config.Pulp.ServerURL
-	}
-
 	var repositoryMTLSConfig *RepositoryMTLSConfig
 	if config.RepositoryMTLSConfig != nil {
 		baseURL, err := url.Parse(config.RepositoryMTLSConfig.BaseURL)
@@ -502,10 +495,6 @@ var run = func() {
 				PathPrefix:   containersPathPrefix,
 				CertPath:     containersCertPath,
 				TLSVerify:    &containersTLSVerify,
-			},
-			PulpConfig: PulpConfiguration{
-				CredsFilePath: pulpCredsFilePath,
-				ServerAddress: pulpAddress,
 			},
 			RepositoryMTLSConfig: repositoryMTLSConfig,
 		},
