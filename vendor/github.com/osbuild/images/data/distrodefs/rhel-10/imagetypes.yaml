@@ -123,6 +123,21 @@
         zipl:
           - "s390utils-base"
 
+  installer_config: &default_installer_config
+    enabled_anaconda_modules: &install_config_enabled_anaconda_modules
+      - "org.fedoraproject.Anaconda.Modules.Network"
+      - "org.fedoraproject.Anaconda.Modules.Payloads"
+      - "org.fedoraproject.Anaconda.Modules.Runtime"
+      - "org.fedoraproject.Anaconda.Modules.Storage"
+    additional_dracut_modules:
+      - "nvdimm"  # non-volatile DIMM firmware (provides nfit, cuse, and nd_e820)
+      - "net-lib"
+    additional_drivers:
+      - "ipmi_devintf"
+      - "ipmi_msghandler"
+    # see commit c6bfb22f54, controls the kickstart location
+    iso_root_kickstart: true
+
   sapapps_image_config: &sapapps_image_config
     selinux_config:
       state: "permissive"
@@ -1581,15 +1596,7 @@ image_types:
             arch: "x86_64"
           shallow_merge:
             iso_boot_type: "grub2"
-    installer_config:
-      additional_dracut_modules:
-        - "nvdimm"  # non-volatile DIMM firmware (provides nfit, cuse, and nd_e820)
-        - "net-lib"
-      additional_drivers:
-        - "ipmi_devintf"
-        - "ipmi_msghandler"
-      # see commit c6bfb22f54, controls the kickstart location
-      iso_root_kickstart: true
+    installer_config: *default_installer_config
     platforms:
       - *x86_64_installer_platform
       - *aarch64_platform
@@ -1983,6 +1990,7 @@ image_types:
             - "redhat-release"
             - "tpm2-tools"
             - "WALinuxAgent"
+            - "yum-utils"
         - exclude:
             - "dracut-config-rescue"
             - "grubby"

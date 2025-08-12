@@ -863,6 +863,15 @@
         zipl:
           - "s390utils-base"
 
+  default_installer_config: &default_installer_config
+    enabled_anaconda_modules: &install_config_enabled_anaconda_modules
+      - "org.fedoraproject.Anaconda.Modules.Network"
+      - "org.fedoraproject.Anaconda.Modules.Payloads"
+      - "org.fedoraproject.Anaconda.Modules.Storage"
+    iso_root_kickstart: true
+    additional_dracut_modules:
+      - "ifcfg"
+
   partitioning:
     ids:
       - &prep_partition_dosid "41"
@@ -1800,11 +1809,7 @@ image_types:
             arch: "x86_64"
           shallow_merge:
             iso_boot_type: "syslinux"
-    installer_config:
-      # see commit c6bfb22f54, controls the kickstart location
-      iso_root_kickstart: true
-      additional_dracut_modules:
-        - "ifcfg"
+    installer_config: *default_installer_config
     platforms:
       - *x86_64_installer_platform
       - *aarch64_platform
@@ -2045,9 +2050,7 @@ image_types:
             arch: "x86_64"
           shallow_merge:
             iso_boot_type: "syslinux"
-    installer_config:
-      additional_dracut_modules:
-        - "ifcfg"
+    installer_config: *default_installer_config
     platforms:
       - *x86_64_uefi_platform
       - *aarch64_platform

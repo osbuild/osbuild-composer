@@ -2,8 +2,6 @@ package osbuild
 
 import (
 	"slices"
-
-	"github.com/osbuild/images/pkg/customizations/anaconda"
 )
 
 type AnacondaStageOptions struct {
@@ -39,28 +37,17 @@ func NewAnacondaStage(options *AnacondaStageOptions) *Stage {
 	}
 }
 
-func defaultModuleStates() map[string]bool {
-	return map[string]bool{
-		anaconda.ModuleLocalization: false,
-		anaconda.ModuleNetwork:      true,
-		anaconda.ModulePayloads:     true,
-		anaconda.ModuleRuntime:      true,
-		anaconda.ModuleSecurity:     false,
-		anaconda.ModuleServices:     false,
-		anaconda.ModuleStorage:      true,
-		anaconda.ModuleSubscription: false,
-		anaconda.ModuleTimezone:     false,
-		anaconda.ModuleUsers:        false,
-	}
-}
+func moduleStates(enable, disable []string) map[string]bool {
+	states := map[string]bool{}
 
-func setModuleStates(states map[string]bool, enable, disable []string) {
 	for _, modname := range enable {
 		states[modname] = true
 	}
 	for _, modname := range disable {
 		states[modname] = false
 	}
+
+	return states
 }
 
 func filterEnabledModules(moduleStates map[string]bool) []string {
@@ -76,8 +63,7 @@ func filterEnabledModules(moduleStates map[string]bool) []string {
 }
 
 func NewAnacondaStageOptionsLegacy(enableModules, disableModules []string) *AnacondaStageOptions {
-	states := defaultModuleStates()
-	setModuleStates(states, enableModules, disableModules)
+	states := moduleStates(enableModules, disableModules)
 
 	return &AnacondaStageOptions{
 		KickstartModules: filterEnabledModules(states),
@@ -85,8 +71,7 @@ func NewAnacondaStageOptionsLegacy(enableModules, disableModules []string) *Anac
 }
 
 func NewAnacondaStageOptions(enableModules, disableModules []string) *AnacondaStageOptions {
-	states := defaultModuleStates()
-	setModuleStates(states, enableModules, disableModules)
+	states := moduleStates(enableModules, disableModules)
 
 	return &AnacondaStageOptions{
 		ActivatableModules: filterEnabledModules(states),
