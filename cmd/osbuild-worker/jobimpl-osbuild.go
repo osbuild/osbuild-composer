@@ -31,11 +31,11 @@ import (
 
 	"github.com/osbuild/images/pkg/cloud/azure"
 	"github.com/osbuild/images/pkg/upload/koji"
+	"github.com/osbuild/images/pkg/upload/vmware"
 	"github.com/osbuild/osbuild-composer/internal/cloud/awscloud"
 	"github.com/osbuild/osbuild-composer/internal/cloud/gcp"
 	"github.com/osbuild/osbuild-composer/internal/osbuildexecutor"
 	"github.com/osbuild/osbuild-composer/internal/target"
-	"github.com/osbuild/osbuild-composer/internal/upload/vmware"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
 )
