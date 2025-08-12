@@ -606,36 +606,6 @@ func TestCompose(t *testing.T) {
 		"kind": "ComposeId"
 	}`, "id")
 
-	// ref only with secondary pulp upload target
-	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
-	{
-		"distribution": "%s",
-		"image_request":{
-			"architecture": "%s",
-			"image_type": "edge-commit",
-			"repositories": [{
-				"baseurl": "somerepo.org",
-				"rhsm": false
-			}],
-			"upload_targets": [{
-				"type": "pulp.ostree",
-				"upload_options": {
-					"basepath": "edge/rhel10"
-				}
-			}],
-			"upload_options": {
-				"region": "eu-central-1"
-			},
-			"ostree": {
-				"ref": "rhel/10/x86_64/edge"
-			}
-		}
-	}`, testDistro.Name(), test_distro.TestArch3Name), http.StatusCreated, `
-	{
-		"href": "/api/image-builder-composer/v2/compose",
-		"kind": "ComposeId"
-	}`, "id")
-
 	// url only (must use ostreeRepoDefault for default ref)
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
 	{

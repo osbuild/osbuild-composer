@@ -277,12 +277,6 @@ func (h *apiHandlers) targetResultToUploadStatus(jobId uuid.UUID, t *target.Targ
 		fromErr = uploadOptions.FromOCIUploadStatus(OCIUploadStatus{
 			Url: ociOptions.URL,
 		})
-	case target.TargetNamePulpOSTree:
-		uploadType = UploadTypesPulpOstree
-		pulpOSTreeOptions := t.Options.(*target.PulpOSTreeTargetResultOptions)
-		fromErr = uploadOptions.FromPulpOSTreeUploadStatus(PulpOSTreeUploadStatus{
-			RepoUrl: pulpOSTreeOptions.RepoURL,
-		})
 	case target.TargetNameWorkerServer:
 		uploadType = UploadTypesLocal
 		workerServerOptions := t.Options.(*target.WorkerServerTargetResultOptions)

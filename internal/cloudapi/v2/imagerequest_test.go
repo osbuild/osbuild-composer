@@ -139,17 +139,6 @@ func TestGetTargets(t *testing.T) {
 			targets:   []UploadTypes{UploadTypesAwsS3},
 			expected:  []target.TargetName{target.TargetNameAWSS3},
 		},
-		"edge:pulp": {
-			imageType: ImageTypesEdgeCommit,
-			targets:   []UploadTypes{UploadTypesPulpOstree},
-			expected:  []target.TargetName{target.TargetNamePulpOSTree},
-		},
-		"edge:pulp+default": {
-			imageType:      ImageTypesEdgeCommit,
-			targets:        []UploadTypes{UploadTypesPulpOstree},
-			includeDefault: true,
-			expected:       []target.TargetName{target.TargetNamePulpOSTree, target.TargetNameAWSS3},
-		},
 		"edge:gcp:fail": {
 			imageType: ImageTypesEdgeCommit,
 			targets:   []UploadTypes{UploadTypesGcp},
