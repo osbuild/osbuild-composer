@@ -25,8 +25,8 @@ import (
 	"github.com/osbuild/images/pkg/dnfjson"
 	"github.com/osbuild/images/pkg/olog"
 	"github.com/osbuild/images/pkg/upload/koji"
+	"github.com/osbuild/images/pkg/upload/oci"
 	"github.com/osbuild/osbuild-composer/internal/cloud/awscloud"
-	"github.com/osbuild/osbuild-composer/internal/upload/oci"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 )
 

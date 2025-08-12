@@ -3,7 +3,6 @@ package oci
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"time"
@@ -14,6 +13,7 @@ import (
 	"github.com/oracle/oci-go-sdk/v54/objectstorage"
 	"github.com/oracle/oci-go-sdk/v54/objectstorage/transfer"
 	"github.com/oracle/oci-go-sdk/v54/workrequests"
+	"github.com/osbuild/images/pkg/olog"
 )
 
 type Uploader interface {
@@ -43,7 +43,7 @@ func (c Client) CreateImage(objectName, bucketName, namespace, compartmentID, im
 	// clean up the object even if we fail
 	defer func() {
 		if err := c.deleteObjectFromBucket(objectName, bucketName, namespace); err != nil {
-			log.Printf("failed to clean up the object '%s' from bucket '%s'", objectName, bucketName)
+			olog.Printf("failed to clean up the object '%s' from bucket '%s'", objectName, bucketName)
 		}
 	}()
 
@@ -92,9 +92,9 @@ func (c Client) uploadToBucket(objectName string, bucketName string, namespace s
 			ObjectName:    common.String(objectName),
 			CallBack: func(multiPartUploadPart transfer.MultiPartUploadPart) {
 				if multiPartUploadPart.Err != nil {
-					log.Printf("upload failure: %s\n", multiPartUploadPart.Err)
+					olog.Printf("upload failure: %s\n", multiPartUploadPart.Err)
 				}
-				log.Printf("multipart upload stats: parts %d, total-parts %d\n",
+				olog.Printf("multipart upload stats: parts %d, total-parts %d\n",
 					multiPartUploadPart.PartNum,
 					multiPartUploadPart.TotalParts)
 			},
@@ -146,7 +146,7 @@ func (c Client) createImage(objectName, bucketName, namespace, compartmentID, im
 		return "", fmt.Errorf("failed to create an image from storage object: %w", err)
 	}
 
-	log.Printf("waiting for the work request to complete, this may take a while. Work request ID: %s\n", *createImageResponse.OpcWorkRequestId)
+	olog.Printf("waiting for the work request to complete, this may take a while. Work request ID: %s\n", *createImageResponse.OpcWorkRequestId)
 	for {
 		r, err := c.workRequestsClient.GetWorkRequest(context.Background(), workrequests.GetWorkRequestRequest{
 			WorkRequestId: createImageResponse.OpcWorkRequestId,
@@ -164,7 +164,7 @@ func (c Client) createImage(objectName, bucketName, namespace, compartmentID, im
 		time.Sleep(1 * time.Second)
 	}
 
-	log.Printf("work request complete, creating the compute image capability schema based on a global one")
+	olog.Printf("work request complete, creating the compute image capability schema based on a global one")
 	listGlobalCS := core.ListComputeGlobalImageCapabilitySchemasRequest{
 		Limit: common.Int(1),
 	}
@@ -238,11 +238,11 @@ func (c Client) createImage(objectName, bucketName, namespace, compartmentID, im
 }
 
 type ClientParams struct {
-	User        string `toml:"user"`
-	Region      string `toml:"region"`
-	Tenancy     string `toml:"tenancy"`
-	PrivateKey  string `toml:"private_key"`
-	Fingerprint string `toml:"fingerprint"`
+	User        string
+	Region      string
+	Tenancy     string
+	PrivateKey  string
+	Fingerprint string
 }
 
 type ociClient struct {
