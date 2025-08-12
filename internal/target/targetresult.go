@@ -76,8 +76,6 @@ func UnmarshalTargetResultOptions(trName TargetName, rawOptions json.RawMessage)
 		options = new(OCIObjectStorageTargetResultOptions)
 	case TargetNameContainer:
 		options = new(ContainerTargetResultOptions)
-	case TargetNamePulpOSTree:
-		options = new(PulpOSTreeTargetResultOptions)
 	case TargetNameWorkerServer:
 		options = new(WorkerServerTargetResultOptions)
 	default:
