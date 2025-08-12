@@ -79,6 +79,10 @@ func (t *imageType) Name() string {
 	return t.ImageTypeYAML.Name()
 }
 
+func (t *imageType) Aliases() []string {
+	return t.ImageTypeYAML.NameAliases
+}
+
 func (t *imageType) Arch() distro.Arch {
 	return t.arch
 }

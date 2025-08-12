@@ -45,6 +45,7 @@ type TestArch struct {
 type TestImageType struct {
 	architecture *TestArch
 	name         string
+	aliases      []string
 }
 
 const (
@@ -176,6 +177,10 @@ func (a *TestArch) addImageTypes(imageTypes ...TestImageType) {
 
 func (t *TestImageType) Name() string {
 	return t.name
+}
+
+func (t *TestImageType) Aliases() []string {
+	return t.aliases
 }
 
 func (t *TestImageType) Arch() distro.Arch {
@@ -341,10 +346,16 @@ func newTestDistro(releasever string) *TestDistro {
 
 	it3 := TestImageType{
 		name: TestImageTypeAmi,
+		aliases: []string{
+			"aws",
+		},
 	}
 
 	it4 := TestImageType{
 		name: TestImageTypeVhd,
+		aliases: []string{
+			"azure",
+		},
 	}
 
 	it5 := TestImageType{
@@ -361,14 +372,23 @@ func newTestDistro(releasever string) *TestDistro {
 
 	it8 := TestImageType{
 		name: TestImageTypeQcow2,
+		aliases: []string{
+			"guest-image",
+		},
 	}
 
 	it9 := TestImageType{
 		name: TestImageTypeVmdk,
+		aliases: []string{
+			"vsphere",
+		},
 	}
 
 	it10 := TestImageType{
 		name: TestImageTypeGce,
+		aliases: []string{
+			"gcp",
+		},
 	}
 
 	it11 := TestImageType{

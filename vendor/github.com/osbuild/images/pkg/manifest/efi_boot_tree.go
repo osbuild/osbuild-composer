@@ -55,6 +55,7 @@ func (p *EFIBootTree) serialize() osbuild.Pipeline {
 		ISOLabel:      p.ISOLabel,
 		Architectures: architectures,
 		Vendor:        p.UEFIVendor,
+		FIPS:          p.Platform.GetFIPSMenu(),
 	}
 	grub2Stage := osbuild.NewGrubISOStage(grubOptions)
 	pipeline.AddStage(grub2Stage)

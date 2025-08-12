@@ -3,6 +3,7 @@ package osbuild
 type ISOLinuxStageOptions struct {
 	Product ISOLinuxProduct `json:"product"`
 	Kernel  ISOLinuxKernel  `json:"kernel"`
+	FIPS    bool            `json:"fips,omitempty"`
 }
 
 func (ISOLinuxStageOptions) isStageOptions() {}

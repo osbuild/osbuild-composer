@@ -79,6 +79,9 @@ type ImageType interface {
 	// Returns the name of the image type.
 	Name() string
 
+	// Returns the aliases for the image type.
+	Aliases() []string
+
 	// Returns the parent architecture
 	Arch() Arch
 
