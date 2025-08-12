@@ -110,16 +110,6 @@ type containerUploadSettings struct {
 
 func (containerUploadSettings) isUploadSettings() {}
 
-type pulpOSTreeUploadSettings struct {
-	ServerAddress string `json:"server_address"`
-	Repository    string `json:"repository"`
-	BasePath      string `json:"basepath,omitempty"`
-	Username      string `json:"username"`
-	Password      string `json:"password"`
-}
-
-func (pulpOSTreeUploadSettings) isUploadSettings() {}
-
 type uploadRequest struct {
 	Provider  string         `json:"provider"`
 	ImageName string         `json:"image_name"`
@@ -159,8 +149,6 @@ func (u *uploadRequest) UnmarshalJSON(data []byte) error {
 		settings = new(awsS3UploadSettings)
 	case "container":
 		settings = new(containerUploadSettings)
-	case "pulp.ostree":
-		settings = new(pulpOSTreeUploadSettings)
 	default:
 		return errors.New("unexpected provider name")
 	}
@@ -247,15 +235,6 @@ func targetsToUploadResponses(targets []*target.Target, state ComposeState) []up
 				Bucket: options.Bucket,
 				Key:    options.Key,
 				// AccessKeyID and SecretAccessKey are intentionally not included.
-			}
-			uploads = append(uploads, upload)
-		case *target.PulpOSTreeTargetOptions:
-			upload.ProviderName = "pulp.ostree"
-			upload.Settings = &pulpOSTreeUploadSettings{
-				ServerAddress: options.ServerAddress,
-				Repository:    options.Repository,
-				BasePath:      options.BasePath,
-				// Username and Password are intentionally not included.
 			}
 			uploads = append(uploads, upload)
 		}
@@ -389,10 +368,6 @@ func uploadRequestToTarget(u uploadRequest, imageType distro.ImageType) *target.
 
 			TlsVerify: options.TlsVerify,
 		}
-	case *pulpOSTreeUploadSettings:
-		t.Name = target.TargetNamePulpOSTree
-		convertedOptions := target.PulpOSTreeTargetOptions(*options)
-		t.Options = &convertedOptions
 	}
 
 	return &t
