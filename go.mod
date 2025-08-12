@@ -38,7 +38,6 @@ require (
 	github.com/osbuild/blueprint v1.12.0
 	github.com/osbuild/images v0.172.0
 	github.com/osbuild/osbuild-composer/pkg/splunk_logger v0.0.0-20240814102216-0239db53236d
-	github.com/osbuild/pulp-client v0.1.0
 	github.com/prometheus/client_golang v1.23.0
 	github.com/segmentio/ksuid v1.0.4
 	github.com/sirupsen/logrus v1.9.3
