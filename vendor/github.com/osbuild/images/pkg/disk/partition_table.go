@@ -32,30 +32,6 @@ type PartitionTable struct {
 	StartOffset uint64 `json:"start_offset,omitempty" yaml:"start_offset,omitempty"`
 }
 
-// TODO: PartitioningMode is a copy of
-// pkg/disk/partition.PartitioningMode - drop once
-// https://github.com/osbuild/blueprint/pull/26 is merged
-type PartitioningMode string
-
-const (
-	// AutoLVMPartitioningMode creates a LVM layout if the filesystem
-	// contains a mountpoint that's not defined in the base partition table
-	// of the specified image type. In the other case, a raw layout is used.
-	AutoLVMPartitioningMode PartitioningMode = "auto-lvm"
-
-	// LVMPartitioningMode always creates an LVM layout.
-	LVMPartitioningMode PartitioningMode = "lvm"
-
-	// RawPartitioningMode always creates a raw layout.
-	RawPartitioningMode PartitioningMode = "raw"
-
-	// BtrfsPartitioningMode creates a btrfs layout.
-	BtrfsPartitioningMode PartitioningMode = "btrfs"
-
-	// DefaultPartitioningMode is AutoLVMPartitioningMode and is the empty state
-	DefaultPartitioningMode PartitioningMode = ""
-)
-
 // DefaultBootPartitionSize is the default size of the /boot partition if it
 // needs to be auto-created. This happens if the custom partitioning don't
 // specify one, but the image requires one to boot (/ is on btrfs, or an LV).

@@ -66,7 +66,7 @@ type AnacondaInstaller struct {
 	InteractiveDefaultsKickstart *kickstart.Options
 
 	// Additional anaconda modules to enable
-	AdditionalAnacondaModules []string
+	EnabledAnacondaModules []string
 	// Anaconda modules to explicitly disable
 	DisabledAnacondaModules []string
 
@@ -307,9 +307,9 @@ func (p *AnacondaInstaller) payloadStages() []*osbuild.Stage {
 
 	var anacondaStageOptions *osbuild.AnacondaStageOptions
 	if p.UseLegacyAnacondaConfig {
-		anacondaStageOptions = osbuild.NewAnacondaStageOptionsLegacy(p.AdditionalAnacondaModules, p.DisabledAnacondaModules)
+		anacondaStageOptions = osbuild.NewAnacondaStageOptionsLegacy(p.EnabledAnacondaModules, p.DisabledAnacondaModules)
 	} else {
-		anacondaStageOptions = osbuild.NewAnacondaStageOptions(p.AdditionalAnacondaModules, p.DisabledAnacondaModules)
+		anacondaStageOptions = osbuild.NewAnacondaStageOptions(p.EnabledAnacondaModules, p.DisabledAnacondaModules)
 	}
 	stages = append(stages, osbuild.NewAnacondaStage(anacondaStageOptions))
 

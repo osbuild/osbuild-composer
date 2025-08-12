@@ -169,9 +169,13 @@
 
 
   installer_config: &default_installer_config
-    additional_anaconda_modules: &install_config_additional_anaconda_modules
-      - "org.fedoraproject.Anaconda.Modules.Timezone"
+    enabled_anaconda_modules: &install_config_enabled_anaconda_modules
       - "org.fedoraproject.Anaconda.Modules.Localization"
+      - "org.fedoraproject.Anaconda.Modules.Network"
+      - "org.fedoraproject.Anaconda.Modules.Payloads"
+      - "org.fedoraproject.Anaconda.Modules.Runtime"
+      - "org.fedoraproject.Anaconda.Modules.Storage"
+      - "org.fedoraproject.Anaconda.Modules.Timezone"
       - "org.fedoraproject.Anaconda.Modules.Users"
     additional_dracut_modules:
       - "net-lib"
@@ -1633,10 +1637,7 @@ image_types:
     exports: ["bootiso"]
     required_partition_sizes: *default_required_dir_sizes
     installer_config:
-      additional_dracut_modules:
-        - "net-lib"
-        - "dbus-broker"
-      squashfs_rootfs: true
+      <<: *default_installer_config
       # NOTE: this is not supported right now because the
       # image-installer on Fedora isn't working when unattended.
       # These options are probably necessary but could change.
@@ -1645,20 +1646,14 @@ image_types:
       kickstart_unattended_extra_kernel_opts:
         - "inst.text"
         - "inst.noninteractive"
-      conditions:
-        "on f40 we use ifcfg instead of net-lib":
-          when:
-            version_equal: "40"
-          shallow_merge:
-            additional_dracut_modules: &additional_dracut_f40
-              - "ifcfg"
-              - "dbus-broker"
-            squashfs_rootfs: false
-        "on f41 use squashfs_rootfs":
-          when:
-            version_equal: "41"
-          shallow_merge:
-            additional_dracut_modules: *additional_dracut_f40
+      # NOTE the minimal installer uses a different set of enabled modules
+      # but the why is unclear
+      enabled_anaconda_modules:
+        - "org.fedoraproject.Anaconda.Modules.Network"
+        - "org.fedoraproject.Anaconda.Modules.Payloads"
+        - "org.fedoraproject.Anaconda.Modules.Runtime"
+        - "org.fedoraproject.Anaconda.Modules.Storage"
+        - "org.fedoraproject.Anaconda.Modules.Users"
     image_config:
       locale: "en_US.UTF-8"
       iso_rootfs_type: "squashfs"
@@ -1875,8 +1870,7 @@ image_types:
       - "bootiso"
     exports: ["bootiso"]
     required_partition_sizes: *default_required_dir_sizes
-    installer_config:
-      <<: *default_installer_config
+    installer_config: *default_installer_config
     image_config:
       <<: *image_config_iot
       ignition_platform: "metal"

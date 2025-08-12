@@ -10,7 +10,7 @@ type VMDK struct {
 	Base
 	filename string
 
-	imgPipeline Pipeline
+	imgPipeline FilePipeline
 }
 
 func (p VMDK) Filename() string {
