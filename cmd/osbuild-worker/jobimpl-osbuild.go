@@ -22,6 +22,7 @@ import (
 
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/cloud/azure"
+	"github.com/osbuild/images/pkg/cloud/gcp"
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/osbuild"
@@ -31,7 +32,6 @@ import (
 	"github.com/osbuild/images/pkg/upload/oci"
 	"github.com/osbuild/images/pkg/upload/vmware"
 	"github.com/osbuild/osbuild-composer/internal/cloud/awscloud"
-	"github.com/osbuild/osbuild-composer/internal/cloud/gcp"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/osbuildexecutor"
 	"github.com/osbuild/osbuild-composer/internal/target"

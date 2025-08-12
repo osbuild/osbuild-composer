@@ -8,7 +8,7 @@ import (
 	"os"
 
 	"cloud.google.com/go/compute/apiv1/computepb"
-	"github.com/osbuild/osbuild-composer/internal/cloud/gcp"
+	"github.com/osbuild/images/pkg/cloud/gcp"
 )
 
 type strArrayFlag []string

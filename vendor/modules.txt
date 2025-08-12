@@ -975,6 +975,7 @@ github.com/osbuild/images/pkg/cert
 github.com/osbuild/images/pkg/cloud
 github.com/osbuild/images/pkg/cloud/awscloud
 github.com/osbuild/images/pkg/cloud/azure
+github.com/osbuild/images/pkg/cloud/gcp
 github.com/osbuild/images/pkg/container
 github.com/osbuild/images/pkg/crypt
 github.com/osbuild/images/pkg/customizations/anaconda
