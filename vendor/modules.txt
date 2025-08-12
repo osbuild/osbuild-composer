@@ -1020,9 +1020,6 @@ github.com/osbuild/images/pkg/upload/vmware
 # github.com/osbuild/osbuild-composer/pkg/splunk_logger v0.0.0-20240814102216-0239db53236d
 ## explicit; go 1.21
 github.com/osbuild/osbuild-composer/pkg/splunk_logger
-# github.com/osbuild/pulp-client v0.1.0
-## explicit; go 1.19
-github.com/osbuild/pulp-client/pulpclient
 # github.com/perimeterx/marshmallow v1.1.5
 ## explicit; go 1.17
 github.com/perimeterx/marshmallow
