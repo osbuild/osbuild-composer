@@ -61,16 +61,6 @@ provision:
     - when: distro == fedora
       enabled: false
 
-/edge-x86-pulp:
-  summary: Test edge pulp feature
-  environment+:
-    TEST_CASE: edge-pulp
-  adjust+:
-    - when: distro == cs-9
-      enabled: false
-    - when: distro == fedora
-      enabled: false
-
 /edge-x86-ami-image:
   summary: Test edge ami image
   environment+:
