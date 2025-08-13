@@ -24,6 +24,5 @@ osbuild-composer-dbjobqueue-tests
 osbuild-dnf-json-tests
 osbuild-koji-tests
 osbuild-mock-openid-provider
-osbuild-upload-*
 
 osbuild-store-dump: the output from this is used in Test_upgrade in internal/store/json_test.go
