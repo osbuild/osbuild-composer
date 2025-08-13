@@ -136,12 +136,14 @@ type Platform interface {
 	GetBuildPackages() []string
 	GetBootFiles() [][2]string
 	GetBootloader() Bootloader
+	GetFIPSMenu() bool
 }
 
 type BasePlatform struct {
 	ImageFormat      ImageFormat
 	QCOW2Compat      string
 	FirmwarePackages []string
+	FIPSMenu         bool // Add FIPS entry to iso bootloader menu
 }
 
 func (p BasePlatform) GetImageFormat() ImageFormat {
@@ -178,4 +180,9 @@ func (p BasePlatform) GetBootFiles() [][2]string {
 
 func (p BasePlatform) GetBootloader() Bootloader {
 	return BOOTLOADER_NONE
+}
+
+// GetFIPSMenu is used to add the FIPS entry to the iso bootloader menu
+func (p BasePlatform) GetFIPSMenu() bool {
+	return p.FIPSMenu
 }

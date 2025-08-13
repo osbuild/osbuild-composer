@@ -1070,6 +1070,11 @@
             terminal: ["console"]
 
   default_installer_config: &default_installer_config
+    enabled_anaconda_modules: &install_config_enabled_anaconda_modules
+      - "org.fedoraproject.Anaconda.Modules.Network"
+      - "org.fedoraproject.Anaconda.Modules.Payloads"
+      - "org.fedoraproject.Anaconda.Modules.Runtime"
+      - "org.fedoraproject.Anaconda.Modules.Storage"
     # see commit c6bfb22f54, controls the kickstart location
     iso_root_kickstart: true
     additional_dracut_modules:
@@ -1155,6 +1160,7 @@ image_types:
                   - "subscription-manager-cockpit"
 
   qcow2: &qcow2
+    name_aliases: ["guest-image"]
     filename: "disk.qcow2"
     mime_type: "application/x-qemu-disk"
     # note that unlike fedora rhel does not use the environment.KVM
@@ -1267,6 +1273,9 @@ image_types:
 
   "vagrant-libvirt": &vagrant_libvirt
     <<: *qcow2
+    # we have to reset the aliases otherwise this type
+    # will inherit the name aliases causing a conflict
+    name_aliases: []
     filename: "vagrant-libvirt.box"
     mime_type: "application/x-tar"
     bootable: true
@@ -1307,12 +1316,18 @@ image_types:
 
   oci:
     <<: *qcow2
+    # we have to reset the aliases otherwise this type
+    # will inherit the name aliases causing a conflict
+    name_aliases: []
     platforms:
       - <<: *x86_64_bios_platform
         image_format: "qcow2"
 
   vhd: &vhd
     <<: *qcow2
+    # we have to reset the aliases otherwise this type
+    # will inherit the name aliases causing a conflict
+    name_aliases: []
     filename: "disk.vhd"
     mime_type: "application/x-vhd"
     default_size: 4_294_967_296  # 4 * datasizes.GibiByte
@@ -1646,6 +1661,7 @@ image_types:
             - "rng-tools"
 
   vmdk: &vmdk
+    name_aliases: ["vsphere"]
     filename: "disk.vmdk"
     mime_type: "application/x-vmdk"
     bootable: true
@@ -1679,6 +1695,7 @@ image_types:
 
   ova:
     <<: *vmdk
+    name_aliases: ["vsphere-ova"]
     filename: "image.ova"
     mime_type: "application/ovf"
     payload_pipelines: ["os", "image", "vmdk", "ovf", "archive"]
@@ -1836,6 +1853,7 @@ image_types:
 
   ami:
     <<: *ec2
+    name_aliases: ["aws"]
     mime_type: "application/octet-stream"
     filename: "image.raw"
     payload_pipelines: ["os", "image"]
@@ -2057,6 +2075,16 @@ image_types:
     platforms:
       - *x86_64_installer_platform
       - *aarch64_platform
+    platforms_override:
+      conditions:
+        "RHEL 9.7+ adds FIPS menu":
+          when:
+            version_greater_or_equal: "9.7"
+          override:
+            - <<: *x86_64_installer_platform
+              fips_menu: true
+            - <<: *aarch64_platform
+              fips_menu: true
     installer_config: *default_installer_config
     image_config:
       locale: "C.UTF-8"
@@ -2073,7 +2101,9 @@ image_types:
         - *anaconda_pkgset
 
   gce:
-    name_aliases: ["gce-rhui"]
+    # this image type is set to `gcp` in image-builder-crc
+    # & `osbuild-composer`, so set the alias here
+    name_aliases: ["gce-rhui", "gcp"]
     filename: "image.tar.gz"
     mime_type: "application/gzip"
     image_func: "disk"
@@ -2338,6 +2368,9 @@ image_types:
 
   openstack:
     <<: *qcow2
+    # we have to reset the aliases otherwise this type
+    # will inherit the name aliases causing a conflict
+    name_aliases: []
     default_size: 4_294_967_296  # 4 * datasizes.GibiByte
     platforms:
       - <<: *x86_64_bios_platform
@@ -2925,6 +2958,7 @@ image_types:
             - "redhat-release"
             - "tpm2-tools"
             - "WALinuxAgent"
+            - "yum-utils"
         - exclude:
             - "dracut-config-rescue"
             - "iwl*"

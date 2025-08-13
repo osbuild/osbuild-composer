@@ -169,9 +169,13 @@
 
 
   installer_config: &default_installer_config
-    additional_anaconda_modules: &install_config_additional_anaconda_modules
-      - "org.fedoraproject.Anaconda.Modules.Timezone"
+    enabled_anaconda_modules: &install_config_enabled_anaconda_modules
       - "org.fedoraproject.Anaconda.Modules.Localization"
+      - "org.fedoraproject.Anaconda.Modules.Network"
+      - "org.fedoraproject.Anaconda.Modules.Payloads"
+      - "org.fedoraproject.Anaconda.Modules.Runtime"
+      - "org.fedoraproject.Anaconda.Modules.Storage"
+      - "org.fedoraproject.Anaconda.Modules.Timezone"
       - "org.fedoraproject.Anaconda.Modules.Users"
     additional_dracut_modules:
       - "net-lib"
@@ -604,7 +608,7 @@ image_types:
         image_format: "vagrant_virtualbox"
 
   "server-qcow2": &server_qcow2
-    name_aliases: ["qcow2"]
+    name_aliases: ["qcow2", "guest-image"]
     filename: "disk.qcow2"
     mime_type: "application/x-qemu-disk"
     environment: *kvm_env
@@ -650,7 +654,7 @@ image_types:
 
   "server-ami":
     <<: *server_qcow2
-    name_aliases: ["ami"]
+    name_aliases: ["ami", "aws"]
     filename: "image.raw"
     mime_type: "application/octet-stream"
     payload_pipelines: ["os", "image"]
@@ -684,7 +688,7 @@ image_types:
 
   "server-vhd":
     <<: *server_qcow2
-    name_aliases: ["vhd"]
+    name_aliases: ["vhd", "azure"]
     filename: "disk.vhd"
     mime_type: "application/x-vhd"
     payload_pipelines: ["os", "image", "vpc"]
@@ -708,7 +712,7 @@ image_types:
             - "WALinuxAgent"
 
   "server-vmdk": &server_vmdk
-    name_aliases: ["vmdk"]
+    name_aliases: ["vmdk", "vsphere"]
     filename: "disk.vmdk"
     mime_type: "application/x-vmdk"
     bootable: true
@@ -761,7 +765,7 @@ image_types:
 
   "server-ova":
     <<: *server_vmdk
-    name_aliases: ["ova"]
+    name_aliases: ["ova", "vsphere-ova"]
     filename: "image.ova"
     mime_type: "application/ovf"
     payload_pipelines: ["os", "image", "vmdk", "ovf", "archive"]
@@ -1633,10 +1637,7 @@ image_types:
     exports: ["bootiso"]
     required_partition_sizes: *default_required_dir_sizes
     installer_config:
-      additional_dracut_modules:
-        - "net-lib"
-        - "dbus-broker"
-      squashfs_rootfs: true
+      <<: *default_installer_config
       # NOTE: this is not supported right now because the
       # image-installer on Fedora isn't working when unattended.
       # These options are probably necessary but could change.
@@ -1645,20 +1646,14 @@ image_types:
       kickstart_unattended_extra_kernel_opts:
         - "inst.text"
         - "inst.noninteractive"
-      conditions:
-        "on f40 we use ifcfg instead of net-lib":
-          when:
-            version_equal: "40"
-          shallow_merge:
-            additional_dracut_modules: &additional_dracut_f40
-              - "ifcfg"
-              - "dbus-broker"
-            squashfs_rootfs: false
-        "on f41 use squashfs_rootfs":
-          when:
-            version_equal: "41"
-          shallow_merge:
-            additional_dracut_modules: *additional_dracut_f40
+      # NOTE the minimal installer uses a different set of enabled modules
+      # but the why is unclear
+      enabled_anaconda_modules:
+        - "org.fedoraproject.Anaconda.Modules.Network"
+        - "org.fedoraproject.Anaconda.Modules.Payloads"
+        - "org.fedoraproject.Anaconda.Modules.Runtime"
+        - "org.fedoraproject.Anaconda.Modules.Storage"
+        - "org.fedoraproject.Anaconda.Modules.Users"
     image_config:
       locale: "en_US.UTF-8"
       iso_rootfs_type: "squashfs"
@@ -1875,8 +1870,7 @@ image_types:
       - "bootiso"
     exports: ["bootiso"]
     required_partition_sizes: *default_required_dir_sizes
-    installer_config:
-      <<: *default_installer_config
+    installer_config: *default_installer_config
     image_config:
       <<: *image_config_iot
       ignition_platform: "metal"
