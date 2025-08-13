@@ -104,6 +104,8 @@ const (
 	EFISystemPartitionUUID = "68B2905B-DF3E-4FB3-80FA-49D1E773AA33"
 
 	EFIFilesystemUUID = "7B77-95E7"
+
+	ESPFstabOptions = "defaults,uid=0,gid=0,umask=077,shortname=winnt"
 )
 
 func getPartitionTypeIDfor(ptType PartitionTableType, partTypeName string, architecture arch.Arch) (string, error) {

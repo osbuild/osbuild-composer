@@ -36,7 +36,7 @@ require (
 	github.com/openshift-online/ocm-sdk-go v0.1.473
 	github.com/oracle/oci-go-sdk/v54 v54.0.0
 	github.com/osbuild/blueprint v1.12.0
-	github.com/osbuild/images v0.174.0
+	github.com/osbuild/images v0.175.0
 	github.com/osbuild/osbuild-composer/pkg/splunk_logger v0.0.0-20240814102216-0239db53236d
 	github.com/prometheus/client_golang v1.23.0
 	github.com/segmentio/ksuid v1.0.4

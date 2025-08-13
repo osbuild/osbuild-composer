@@ -561,27 +561,6 @@
       serial: "serial --speed=115200 --unit=0 --word=8 --parity=no --stop=1"
       timeout: 10
       timeout_style: "countdown"
-    udev_rules:
-      filename: "/etc/udev/rules.d/68-azure-sriov-nm-unmanaged.rules"
-      rules:
-        - comment:
-            - "Accelerated Networking on Azure exposes a new SRIOV interface to the VM."
-            - "This interface is transparently bonded to the synthetic interface,"
-            - "so NetworkManager should just ignore any SRIOV interfaces."
-        - rule:
-            - K: "SUBSYSTEM"
-              O: "=="
-              V: "net"
-            - K: "DRIVERS"
-              O: "=="
-              V: "hv_pci"
-            - K: "ACTION"
-              O: "=="
-              V: "add"
-            - K: "ENV"
-              A: "NM_UNMANAGED"
-              O: "="
-              V: "1"
     systemd_dropin:
       - unit: "nm-cloud-setup.service"
         dropin: "10-rh-enable-for-azure.conf"
