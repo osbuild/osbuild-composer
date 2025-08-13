@@ -53217,6 +53217,11 @@ func awsEc2query_serializeDocumentLaunchTemplatePlacementRequest(v *types.Launch
 		objectKey.String(*v.AvailabilityZone)
 	}
 
+	if v.AvailabilityZoneId != nil {
+		objectKey := object.Key("AvailabilityZoneId")
+		objectKey.String(*v.AvailabilityZoneId)
+	}
+
 	if v.GroupId != nil {
 		objectKey := object.Key("GroupId")
 		objectKey.String(*v.GroupId)
@@ -54958,6 +54963,11 @@ func awsEc2query_serializeDocumentPlacement(v *types.Placement, value query.Valu
 	if v.AvailabilityZone != nil {
 		objectKey := object.Key("AvailabilityZone")
 		objectKey.String(*v.AvailabilityZone)
+	}
+
+	if v.AvailabilityZoneId != nil {
+		objectKey := object.Key("AvailabilityZoneId")
+		objectKey.String(*v.AvailabilityZoneId)
 	}
 
 	if v.GroupId != nil {
@@ -59759,6 +59769,11 @@ func awsEc2query_serializeOpDocumentAssociateRouteTableInput(v *AssociateRouteTa
 		objectKey.String(*v.GatewayId)
 	}
 
+	if v.PublicIpv4Pool != nil {
+		objectKey := object.Key("PublicIpv4Pool")
+		objectKey.String(*v.PublicIpv4Pool)
+	}
+
 	if v.RouteTableId != nil {
 		objectKey := object.Key("RouteTableId")
 		objectKey.String(*v.RouteTableId)
@@ -61232,6 +61247,11 @@ func awsEc2query_serializeOpDocumentCreateDefaultSubnetInput(v *CreateDefaultSub
 	if v.AvailabilityZone != nil {
 		objectKey := object.Key("AvailabilityZone")
 		objectKey.String(*v.AvailabilityZone)
+	}
+
+	if v.AvailabilityZoneId != nil {
+		objectKey := object.Key("AvailabilityZoneId")
+		objectKey.String(*v.AvailabilityZoneId)
 	}
 
 	if v.DryRun != nil {
@@ -64421,6 +64441,11 @@ func awsEc2query_serializeOpDocumentCreateVolumeInput(v *CreateVolumeInput, valu
 	if v.AvailabilityZone != nil {
 		objectKey := object.Key("AvailabilityZone")
 		objectKey.String(*v.AvailabilityZone)
+	}
+
+	if v.AvailabilityZoneId != nil {
+		objectKey := object.Key("AvailabilityZoneId")
+		objectKey.String(*v.AvailabilityZoneId)
 	}
 
 	if v.ClientToken != nil {
@@ -70936,6 +70961,11 @@ func awsEc2query_serializeOpDocumentDescribeSpotPriceHistoryInput(v *DescribeSpo
 		objectKey.String(*v.AvailabilityZone)
 	}
 
+	if v.AvailabilityZoneId != nil {
+		objectKey := object.Key("AvailabilityZoneId")
+		objectKey.String(*v.AvailabilityZoneId)
+	}
+
 	if v.DryRun != nil {
 		objectKey := object.Key("DryRun")
 		objectKey.Boolean(*v.DryRun)
@@ -75630,6 +75660,11 @@ func awsEc2query_serializeOpDocumentImportVolumeInput(v *ImportVolumeInput, valu
 	if v.AvailabilityZone != nil {
 		objectKey := object.Key("AvailabilityZone")
 		objectKey.String(*v.AvailabilityZone)
+	}
+
+	if v.AvailabilityZoneId != nil {
+		objectKey := object.Key("AvailabilityZoneId")
+		objectKey.String(*v.AvailabilityZoneId)
 	}
 
 	if v.Description != nil {
