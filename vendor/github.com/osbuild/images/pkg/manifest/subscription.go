@@ -8,6 +8,7 @@ import (
 	"github.com/osbuild/images/pkg/customizations/fsnode"
 	"github.com/osbuild/images/pkg/customizations/subscription"
 	"github.com/osbuild/images/pkg/osbuild"
+	"github.com/osbuild/images/pkg/shutil"
 )
 
 type Subscription struct {
@@ -126,11 +127,11 @@ func subscriptionService(
 	if subscriptionOptions.Rhc {
 		var curlToAssociateSystem string
 		// Use rhc for registration instead of subscription manager
-		rhcConnect := fmt.Sprintf("/usr/bin/rhc connect --organization=${ORG_ID} --activation-key=${ACTIVATION_KEY} --server %s", subscriptionOptions.ServerUrl)
+		rhcConnect := fmt.Sprintf(`/usr/bin/rhc connect --organization="${ORG_ID}" --activation-key="${ACTIVATION_KEY}" --server %s`, shutil.Quote(subscriptionOptions.ServerUrl))
 		if subscriptionOptions.TemplateUUID != "" {
 			curlToAssociateSystem = getCurlToAssociateSystem(subscriptionOptions)
 		} else if subscriptionOptions.TemplateName != "" {
-			rhcConnect += fmt.Sprintf(" --content-template=\"%s\"", subscriptionOptions.TemplateName)
+			rhcConnect += fmt.Sprintf(" --content-template=%s", shutil.Quote(subscriptionOptions.TemplateName))
 		}
 		commands = append(commands, rhcConnect)
 		if permissiveRHC {
@@ -151,7 +152,7 @@ func subscriptionService(
 			files = append(files, icFile)
 		}
 	} else {
-		commands = []string{fmt.Sprintf("/usr/sbin/subscription-manager register --org=${ORG_ID} --activationkey=${ACTIVATION_KEY} --serverurl %s --baseurl %s", subscriptionOptions.ServerUrl, subscriptionOptions.BaseUrl)}
+		commands = []string{fmt.Sprintf(`/usr/sbin/subscription-manager register --org="${ORG_ID}" --activationkey="${ACTIVATION_KEY}" --serverurl %s --baseurl %s`, shutil.Quote(subscriptionOptions.ServerUrl), shutil.Quote(subscriptionOptions.BaseUrl))}
 
 		// Insights is optional when using subscription-manager
 		if subscriptionOptions.Insights {
@@ -173,7 +174,7 @@ func subscriptionService(
 		}
 	}
 
-	commands = append(commands, fmt.Sprintf("/usr/bin/rm %s", subkeyFilepath))
+	commands = append(commands, fmt.Sprintf("/usr/bin/rm %s", shutil.Quote(subkeyFilepath)))
 
 	subscribeServiceFile := "osbuild-subscription-register.service"
 	regServiceStageOptions := &osbuild.SystemdUnitCreateStageOptions{
@@ -257,9 +258,9 @@ WantedBy=multi-user.target
 func getCurlToAssociateSystem(subscriptionOptions subscription.ImageOptions) string {
 	patchURL := strings.TrimSuffix(subscriptionOptions.PatchURL, "/")
 	addTemplateURL := fmt.Sprintf("%s/templates/%s/subscribed-systems", patchURL, subscriptionOptions.TemplateUUID)
-	curlToAssociateSystem := fmt.Sprintf("curl -v --retry 5 --cert /etc/pki/consumer/cert.pem --key /etc/pki/consumer/key.pem -X PATCH %s", addTemplateURL)
+	curlToAssociateSystem := fmt.Sprintf("curl -v --retry 5 --cert /etc/pki/consumer/cert.pem --key /etc/pki/consumer/key.pem -X PATCH %s", shutil.Quote(addTemplateURL))
 	if subscriptionOptions.Proxy != "" {
-		curlToAssociateSystem += fmt.Sprintf(" --proxy %s", subscriptionOptions.Proxy)
+		curlToAssociateSystem += fmt.Sprintf(" --proxy %s", shutil.Quote(subscriptionOptions.Proxy))
 	}
 	return curlToAssociateSystem
 }

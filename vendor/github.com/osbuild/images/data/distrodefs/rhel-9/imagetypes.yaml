@@ -846,27 +846,6 @@
       config:
         "ResourceDisk.EnableSwap": false
         "ResourceDisk.Format": false
-    udev_rules:
-      filename: "/etc/udev/rules.d/68-azure-sriov-nm-unmanaged.rules"
-      rules:
-        - comment:
-            - "Accelerated Networking on Azure exposes a new SRIOV interface to the VM."
-            - "This interface is transparently bonded to the synthetic interface,"
-            - "so NetworkManager should just ignore any SRIOV interfaces."
-        - rule:
-            - K: "SUBSYSTEM"
-              O: "=="
-              V: "net"
-            - K: "DRIVERS"
-              O: "=="
-              V: "hv_pci"
-            - K: "ACTION"
-              O: "=="
-              V: "add"
-            - K: "ENV"
-              A: "NM_UNMANAGED"
-              O: "="
-              V: "1"
     systemd_dropin:
       - unit: "nm-cloud-setup.service"
         dropin: "10-rh-enable-for-azure.conf"
@@ -1068,6 +1047,31 @@
           grub2_config:
             <<: *azure_common_grub2_config
             terminal: ["console"]
+      "sriov udev rules are provided by WALinuxAgent on 9.6+":
+        when:
+          version_less_than: "9.6"
+        shallow_merge:
+          udev_rules:
+            filename: "/etc/udev/rules.d/68-azure-sriov-nm-unmanaged.rules"
+            rules:
+              - comment:
+                  - "Accelerated Networking on Azure exposes a new SRIOV interface to the VM."
+                  - "This interface is transparently bonded to the synthetic interface,"
+                  - "so NetworkManager should just ignore any SRIOV interfaces."
+              - rule:
+                  - K: "SUBSYSTEM"
+                    O: "=="
+                    V: "net"
+                  - K: "DRIVERS"
+                    O: "=="
+                    V: "hv_pci"
+                  - K: "ACTION"
+                    O: "=="
+                    V: "add"
+                  - K: "ENV"
+                    A: "NM_UNMANAGED"
+                    O: "="
+                    V: "1"
 
   default_installer_config: &default_installer_config
     enabled_anaconda_modules: &install_config_enabled_anaconda_modules
