@@ -113,12 +113,6 @@ type ImageType interface {
 	// Returns the corresponding boot mode ("legacy", "uefi", "hybrid") or "none"
 	BootMode() platform.BootMode
 
-	// Returns the names of the pipelines that set up the build environment (buildroot).
-	BuildPipelines() []string
-
-	// Returns the names of the pipelines that create the image.
-	PayloadPipelines() []string
-
 	// Returns the package set names safe to install custom packages via custom repositories.
 	PayloadPackageSets() []string
 
@@ -154,13 +148,6 @@ type BasePartitionTableMap map[string]disk.PartitionTable
 // function from below.
 // Example: Exports() simply returns "assembler" for older image type
 // implementations that didn't produce v1 manifests that have named pipelines.
-func BuildPipelinesFallback() []string {
-	return []string{"build"}
-}
-
-func PayloadPipelinesFallback() []string {
-	return []string{"os", "assembler"}
-}
 
 func ExportsFallback() []string {
 	return []string{"assembler"}

@@ -12,6 +12,8 @@ type Grub2ISOLegacyStageOptions struct {
 	ISOLabel string `json:"isolabel"`
 
 	FIPS bool `json:"fips,omitempty"`
+
+	Config *Grub2Config `json:"config,omitempty"`
 }
 
 func (Grub2ISOLegacyStageOptions) isStageOptions() {}

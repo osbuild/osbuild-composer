@@ -18,6 +18,9 @@ type EFIBootTree struct {
 	ISOLabel   string
 
 	KernelOpts []string
+
+	// Default Grub2 menu on the ISO
+	DefaultMenu int
 }
 
 func NewEFIBootTree(buildPipeline Build, product, version string) *EFIBootTree {
@@ -43,6 +46,13 @@ func (p *EFIBootTree) serialize() osbuild.Pipeline {
 		panic("unsupported architecture")
 	}
 
+	var grub2config *osbuild.Grub2Config
+	if p.DefaultMenu > 0 {
+		grub2config = &osbuild.Grub2Config{
+			Default: p.DefaultMenu,
+		}
+	}
+
 	grubOptions := &osbuild.GrubISOStageOptions{
 		Product: osbuild.Product{
 			Name:    p.product,
@@ -56,6 +66,7 @@ func (p *EFIBootTree) serialize() osbuild.Pipeline {
 		Architectures: architectures,
 		Vendor:        p.UEFIVendor,
 		FIPS:          p.Platform.GetFIPSMenu(),
+		Config:        grub2config,
 	}
 	grub2Stage := osbuild.NewGrubISOStage(grubOptions)
 	pipeline.AddStage(grub2Stage)

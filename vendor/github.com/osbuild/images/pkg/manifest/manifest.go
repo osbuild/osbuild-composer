@@ -234,6 +234,28 @@ func (m Manifest) GetExports() []string {
 	return exports
 }
 
+func (m *Manifest) pipelineRoles() (build []string, payload []string) {
+	for _, pipeline := range m.pipelines {
+		switch pipeline.(type) {
+		case Build:
+			build = append(build, pipeline.Name())
+		default:
+			payload = append(payload, pipeline.Name())
+		}
+	}
+	return build, payload
+}
+
+func (m *Manifest) PayloadPipelines() []string {
+	_, payload := m.pipelineRoles()
+	return payload
+}
+
+func (m *Manifest) BuildPipelines() []string {
+	build, _ := m.pipelineRoles()
+	return build
+}
+
 // filterRepos returns a list of repositories that specify the given pipeline
 // name in their PackageSets list in addition to any global repositories
 // (global repositories are ones that do not specify any PackageSets).

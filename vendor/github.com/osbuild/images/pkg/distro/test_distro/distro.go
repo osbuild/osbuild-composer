@@ -225,14 +225,6 @@ func (t *TestImageType) BootMode() platform.BootMode {
 	return platform.BOOT_HYBRID
 }
 
-func (t *TestImageType) BuildPipelines() []string {
-	return distro.BuildPipelinesFallback()
-}
-
-func (t *TestImageType) PayloadPipelines() []string {
-	return distro.PayloadPipelinesFallback()
-}
-
 func (t *TestImageType) PayloadPackageSets() []string {
 	return []string{blueprintPkgsKey}
 }
