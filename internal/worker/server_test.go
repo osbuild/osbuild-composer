@@ -497,7 +497,7 @@ func TestMixedOSBuildJob(t *testing.T) {
 		BasePath:          "/",
 	}
 	server := newTestServer(t, t.TempDir(), config, false)
-	fbPipelines := &worker.PipelineNames{Build: distro.BuildPipelinesFallback(), Payload: distro.PayloadPipelinesFallback()}
+	fbPipelines := &worker.PipelineNames{Build: worker.BuildPipelinesFallback, Payload: worker.PayloadPipelinesFallback}
 
 	oldJob := worker.OSBuildJob{
 		Manifest: emptyManifestV2,
