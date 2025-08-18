@@ -256,8 +256,8 @@ func (s *Server) enqueueCompose(irs []imageRequest, channel string) (uuid.UUID, 
 	id, err = s.workers.EnqueueOSBuildAsDependency(arch.Name(), &worker.OSBuildJob{
 		Targets: ir.targets,
 		PipelineNames: &worker.PipelineNames{
-			Build:   ir.imageType.BuildPipelines(),
-			Payload: ir.imageType.PayloadPipelines(),
+			Build:   manifestSource.BuildPipelines(),
+			Payload: manifestSource.PayloadPipelines(),
 		},
 	}, []uuid.UUID{manifestJobID}, channel)
 	if err != nil {
@@ -408,8 +408,8 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 
 		buildID, err := s.workers.EnqueueOSBuildAsDependency(arch.Name(), &worker.OSBuildJob{
 			PipelineNames: &worker.PipelineNames{
-				Build:   ir.imageType.BuildPipelines(),
-				Payload: ir.imageType.PayloadPipelines(),
+				Build:   manifestSource.BuildPipelines(),
+				Payload: manifestSource.PayloadPipelines(),
 			},
 			Targets:            targets,
 			ManifestDynArgsIdx: common.ToPtr(1),

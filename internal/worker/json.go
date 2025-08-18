@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"runtime/debug"
 
-	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/rpmmd"
@@ -368,6 +367,12 @@ type updateJobRequest struct {
 	Result interface{} `json:"result"`
 }
 
+// compat with images https://github.com/osbuild/images/pull/1766
+var (
+	BuildPipelinesFallback   = []string{"build"}
+	PayloadPipelinesFallback = []string{"os", "assembler"}
+)
+
 func (j *OSBuildJob) UnmarshalJSON(data []byte) error {
 	// handles unmarshalling old jobs in the queue that don't contain newer fields
 	// adds default/fallback values to missing data
@@ -383,8 +388,8 @@ func (j *OSBuildJob) UnmarshalJSON(data []byte) error {
 	}
 	if compat.PipelineNames == nil {
 		compat.PipelineNames = &PipelineNames{
-			Build:   distro.BuildPipelinesFallback(),
-			Payload: distro.PayloadPipelinesFallback(),
+			Build:   BuildPipelinesFallback,
+			Payload: PayloadPipelinesFallback,
 		}
 	}
 
@@ -439,8 +444,8 @@ func (j *OSBuildJobResult) UnmarshalJSON(data []byte) error {
 	}
 	if alias.PipelineNames == nil {
 		alias.PipelineNames = &PipelineNames{
-			Build:   distro.BuildPipelinesFallback(),
-			Payload: distro.PayloadPipelinesFallback(),
+			Build:   BuildPipelinesFallback,
+			Payload: PayloadPipelinesFallback,
 		}
 	}
 	*j = OSBuildJobResult(alias)

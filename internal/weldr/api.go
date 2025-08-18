@@ -2655,8 +2655,8 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 			Manifest: mf,
 			Targets:  targets,
 			PipelineNames: &worker.PipelineNames{
-				Build:   imageType.BuildPipelines(),
-				Payload: imageType.PayloadPipelines(),
+				Build:   manifest.BuildPipelines(),
+				Payload: manifest.PayloadPipelines(),
 			},
 			ImageBootMode: imageType.BootMode().String(),
 		}, "")
