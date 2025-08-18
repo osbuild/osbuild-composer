@@ -12,6 +12,149 @@
       - "geolite2-country"
       - "plymouth"
 
+  anaconda_pkgset: &anaconda_pkgset
+    include:
+      - "aajohan-comfortaa-fonts"
+      - "abattis-cantarell-fonts"
+      - "alsa-firmware"
+      - "alsa-tools-firmware"
+      - "anaconda"
+      - "anaconda-dracut"
+      - "anaconda-install-img-deps"
+      - "anaconda-widgets"
+      - "atheros-firmware"
+      - "audit"
+      - "bind-utils"
+      - "bitmap-fangsongti-fonts"
+      - "brcmfmac-firmware"
+      - "bzip2"
+      - "cryptsetup"
+      - "curl"
+      - "dbus-x11"
+      - "dejavu-sans-fonts"
+      - "dejavu-sans-mono-fonts"
+      - "device-mapper-persistent-data"
+      - "dmidecode"
+      - "dnf"
+      - "dracut-config-generic"
+      - "dracut-network"
+      - "efibootmgr"
+      - "ethtool"
+      - "fcoe-utils"
+      - "ftp"
+      - "gdb-gdbserver"
+      - "gdisk"
+      - "glibc-all-langpacks"
+      - "gnome-kiosk"
+      - "google-noto-sans-cjk-ttc-fonts"
+      - "grub2-tools"
+      - "grub2-tools-extra"
+      - "grub2-tools-minimal"
+      - "grubby"
+      - "gsettings-desktop-schemas"
+      - "hdparm"
+      - "hexedit"
+      - "hostname"
+      - "initscripts"
+      - "ipmitool"
+      - "iwlwifi-dvm-firmware"
+      - "iwlwifi-mvm-firmware"
+      - "jomolhari-fonts"
+      - "kacst-farsi-fonts"
+      - "kacst-qurn-fonts"
+      - "kbd"
+      - "kbd-misc"
+      - "kdump-anaconda-addon"
+      - "kernel"
+      - "khmeros-base-fonts"
+      - "less"
+      - "libblockdev-lvm-dbus"
+      - "libibverbs"
+      - "libreport-plugin-bugzilla"
+      - "libreport-plugin-reportuploader"
+      - "librsvg2"
+      - "linux-firmware"
+      - "lldpad"
+      - "lohit-assamese-fonts"
+      - "lohit-bengali-fonts"
+      - "lohit-devanagari-fonts"
+      - "lohit-gujarati-fonts"
+      - "lohit-gurmukhi-fonts"
+      - "lohit-kannada-fonts"
+      - "lohit-odia-fonts"
+      - "lohit-tamil-fonts"
+      - "lohit-telugu-fonts"
+      - "lsof"
+      - "madan-fonts"
+      - "mtr"
+      - "mt-st"
+      - "net-tools"
+      - "nfs-utils"
+      - "nmap-ncat"
+      - "nm-connection-editor"
+      - "nss-tools"
+      - "openssh-clients"
+      - "openssh-server"
+      - "ostree"
+      - "pciutils"
+      - "perl-interpreter"
+      - "pigz"
+      - "plymouth"
+      - "prefixdevname"
+      - "python3-pyatspi"
+      - "rdma-core"
+      - "realtek-firmware"
+      - "rit-meera-new-fonts"
+      - "rng-tools"
+      - "rpcbind"
+      - "rpm-ostree"
+      - "rsync"
+      - "rsyslog"
+      - "selinux-policy-targeted"
+      - "sg3_utils"
+      - "sil-abyssinica-fonts"
+      - "sil-padauk-fonts"
+      - "sil-scheherazade-new-fonts"
+      - "smartmontools"
+      - "spice-vdagent"
+      - "strace"
+      - "systemd"
+      - "tar"
+      - "thai-scalable-waree-fonts"
+      - "tigervnc-server-minimal"
+      - "tigervnc-server-module"
+      - "udisks2"
+      - "udisks2-iscsi"
+      - "usbutils"
+      - "vim-minimal"
+      - "volume_key"
+      - "wget"
+      - "xfsdump"
+      - "xfsprogs"
+      - "xorg-x11-drivers"
+      - "xorg-x11-fonts-misc"
+      - "xorg-x11-server-Xorg"
+      - "xorg-x11-xauth"
+      - "metacity"
+      - "xrdb"
+      - "xz"
+    conditions:
+      "x86_64 specific anaconda pkgs":
+        when:
+          arch: "x86_64"
+        append:
+          include:
+            - "biosdevname"
+            - "dmidecode"
+            - "grub2-tools-efi"
+            - "memtest86+"
+      "aarch64 specific anaconda pkgs":
+        when:
+          arch: "aarch64"
+        append:
+          include:
+            - "dmidecode"
+
   cloud_init_services: &cloud_init_services
     - "cloud-init.service"
     - "cloud-config.service"
@@ -90,11 +233,35 @@
       image_format: "raw"
       packages:
         <<: *x86_64_bios_platform_packages
-        firmware:
+        booting:
           - "biosdevname"
+          - "grub2-pc-modules"
+          - "grub2-tools-efi"
+          - "grub2-tools"
+          - "grub2-tools-extra"
+          - "shim-ia32"
+          - "grub2-efi-ia32-cdboot"
+        firmware:
+          - "microcode_ctl"
+          - "amd-gpu-firmware"
+          - "amd-ucode-firmware"
+          - "atheros-firmware"
+          - "atmel-firmware"
+          - "b43-openfwwf"
+          - "brcmfmac-firmware"
+          - "intel-gpu-firmware"
+          - "iwlegacy-firmware"
           - "iwlwifi-dvm-firmware"
           - "iwlwifi-mvm-firmware"
-          - "microcode_ctl"
+          - "libertas-firmware"
+          - "linux-firmware"
+          - "mt7xxx-firmware"
+          - "nvidia-gpu-firmware"
+          - "nxpwireless-firmware"
+          - "qed-firmware"
+          - "realtek-firmware"
+          - "tiwilink-firmware"
+          - "zd1211-firmware"
       bootloader: "grub2"
     aarch64_platform: &aarch64_platform
       arch: "aarch64"
@@ -114,20 +281,41 @@
       uefi_vendor: "fedora"
       packages:
         <<: *aarch64_uefi_platform_packages
-        firmware:
+        booting:
           - "arm-image-installer"
+          - "grub2-efi-aa64-cdboot"
+          - "uboot-images-armv8"
+          - "uboot-tools"
+        firmware:
+          - "amd-gpu-firmware"
+          - "atheros-firmware"
+          - "atmel-firmware"
+          - "b43-openfwwf"
+          - "bcm2711-firmware"
+          - "bcm2835-firmware"
           - "bcm283x-firmware"
           - "brcmfmac-firmware"
+          - "intel-gpu-firmware"
+          - "iwlegacy-firmware"
+          - "iwlwifi-dvm-firmware"
           - "iwlwifi-mvm-firmware"
+          - "libertas-firmware"
+          - "linux-firmware"
+          - "mt7xxx-firmware"
+          - "nvidia-gpu-firmware"
+          - "nxpwireless-firmware"
+          - "qcom-firmware"
+          - "qed-firmware"
           - "realtek-firmware"
-          - "uboot-images-armv8"
+          - "tiwilink-firmware"
+          - "zd1211-firmware"
       bootloader: "grub2"
     ppc64le_bios_platform: &ppc64le_bios_platform
       arch: "ppc64le"
       bios_platform: "powerpc-ieee1275"
       image_format: "qcow2"
       qcow2_compat: "1.1"
-      packages:
+      packages: &ppc64le_bios_platform_packages
         bios:
           - "dracut-config-generic"
           - "powerpc-utils"
@@ -138,6 +326,36 @@
           - "grub2-ppc64le"
           - "grub2-ppc64le-modules"
       bootloader: "grub2"
+    ppc64le_installer_platform: &ppc64le_installer_platform
+      <<: *ppc64le_bios_platform
+      image_format: "qcow2"
+      packages:
+        <<: *ppc64le_bios_platform_packages
+        booting:
+          - "lsvpd"
+          - "ppc64-diag"
+          - "grub2-tools"
+          - "grub2-tools-minimal"
+          - "grub2-tools-extra"
+        firmware:
+          - "amd-gpu-firmware"
+          - "atheros-firmware"
+          - "atmel-firmware"
+          - "b43-openfwwf"
+          - "brcmfmac-firmware"
+          - "intel-gpu-firmware"
+          - "iwlegacy-firmware"
+          - "iwlwifi-dvm-firmware"
+          - "iwlwifi-mvm-firmware"
+          - "libertas-firmware"
+          - "linux-firmware"
+          - "mt7xxx-firmware"
+          - "nvidia-gpu-firmware"
+          - "nxpwireless-firmware"
+          - "qed-firmware"
+          - "realtek-firmware"
+          - "tiwilink-firmware"
+          - "zd1211-firmware"
     s390x_zipl_platform: &s390x_zipl_platform
       arch: "s390x"
       zipl_support: true
@@ -169,6 +387,7 @@
 
 
   installer_config: &default_installer_config
+    iso_rootfs_type: "squashfs"
     enabled_anaconda_modules: &install_config_enabled_anaconda_modules
       - "org.fedoraproject.Anaconda.Modules.Localization"
       - "org.fedoraproject.Anaconda.Modules.Network"
@@ -180,8 +399,8 @@
     additional_dracut_modules:
       - "net-lib"
       - "dbus-broker"
-    squashfs_rootfs: true
-    conditions:
+    default_menu: 1
+    conditions: &default_installer_config_conditions
       "f41 dracut requires ifcfg, rootfs is squashfs":
         when:
           version_equal: "41"
@@ -189,14 +408,11 @@
           additional_dracut_modules:
             - "ifcfg"
             - "dbus-broker"
-      "f40 and lower uses ifcfg in dracut and squashfs+ext4 rootfs":
+      "x86_64 uses grub2":
         when:
-          version_less_than: "41"
+          arch: "x86_64"
         shallow_merge:
-          additional_dracut_modules:
-            - "ifcfg"
-            - "dbus-broker"
-          squashfs_rootfs: false
+          iso_boot_type: "grub2"
 
   image_config:
     iot_enabled_services: &image_config_iot_enabled_services
@@ -553,8 +769,6 @@ image_types:
     bootable: true
     default_size: 5_368_709_120  # 5 * datasizes.GibiByte
     image_func: "disk"
-    build_pipelines: ["build"]
-    payload_pipelines: ["os", "image", "vagrant", "archive"]
     exports: ["archive"]
     required_partition_sizes: *default_required_dir_sizes
     image_config: &image_config_vagrant
@@ -615,8 +829,6 @@ image_types:
     bootable: true
     default_size: 5_368_709_120  # 5 * datasizes.GibiByte
     image_func: "disk"
-    build_pipelines: ["build"]
-    payload_pipelines: ["os", "image", "qcow2"]
     exports: ["qcow2"]
     required_partition_sizes: *default_required_dir_sizes
     image_config: &image_config_qcow2
@@ -657,7 +869,6 @@ image_types:
     name_aliases: ["ami", "aws"]
     filename: "image.raw"
     mime_type: "application/octet-stream"
-    payload_pipelines: ["os", "image"]
     exports: ["image"]
     environment: *ec2_env
     platforms:
@@ -691,7 +902,6 @@ image_types:
     name_aliases: ["vhd", "azure"]
     filename: "disk.vhd"
     mime_type: "application/x-vhd"
-    payload_pipelines: ["os", "image", "vpc"]
     exports: ["vpc"]
     environment: *azure_env
     platforms:
@@ -718,8 +928,6 @@ image_types:
     bootable: true
     default_size: 2_147_483_648  # 2 * datasizes.GibiByte
     image_func: "disk"
-    build_pipelines: ["build"]
-    payload_pipelines: ["os", "image", "vmdk"]
     exports: ["vmdk"]
     required_partition_sizes: *default_required_dir_sizes
     platforms:
@@ -768,7 +976,6 @@ image_types:
     name_aliases: ["ova", "vsphere-ova"]
     filename: "image.ova"
     mime_type: "application/ovf"
-    payload_pipelines: ["os", "image", "vmdk", "ovf", "archive"]
     exports: ["archive"]
     platforms:
       - <<: *x86_64_bios_platform
@@ -782,8 +989,6 @@ image_types:
     filename: "commit.tar"
     mime_type: "application/x-tar"
     image_func: "iot_commit"
-    build_pipelines: ["build"]
-    payload_pipelines: ["os", "ostree-commit", "commit-archive"]
     exports: ["commit-archive"]
     required_partition_sizes: *default_required_dir_sizes
     image_config: &image_config_iot_commit
@@ -902,12 +1107,6 @@ image_types:
             - "xz"
             - "zram-generator"
           conditions:
-            "f40 and below use dnsmasq":
-              when:
-                version_less_than: "41"
-              append:
-                include:
-                  - "dnsmasq"
             "f41 and below uses parsec/zezere":
               when:
                 version_less_than: "42"
@@ -943,8 +1142,6 @@ image_types:
     filename: "container.tar"
     mime_type: "application/x-tar"
     image_func: "iot_container"
-    build_pipelines: ["build"]
-    payload_pipelines: ["os", "ostree-commit", "container-tree", "container"]
     exports: ["container"]
     required_partition_sizes: *default_required_dir_sizes
     image_config:
@@ -960,14 +1157,12 @@ image_types:
     filename: "image.raw.xz"
     compression: "xz"
     mime_type: "application/xz"
-    default_size: 4_294_967_296  # 4 * datasizes.GibiByte
+    default_size: 5_368_709_120  # 5 * datasizes.GibiByte
     bootable: true
     image_func: "iot"
     ostree:
       name: "fedora-iot"
       remote_name: "fedora-iot"
-    build_pipelines: ["build"]
-    payload_pipelines: ["ostree-deployment", "image", "xz"]
     exports: ["xz"]
     # Passing an empty map into the required partition sizes disables the
     # default partition sizes normally set so our `basePartitionTables` can
@@ -1045,8 +1240,6 @@ image_types:
     ostree:
       name: "fedora-iot"
       remote_name: "fedora-iot"
-    build_pipelines: ["build"]
-    payload_pipelines: ["ostree-deployment", "image", "qcow2"]
     exports: ["qcow2"]
     required_partition_sizes: *default_required_dir_sizes
     image_config:
@@ -1068,8 +1261,6 @@ image_types:
     filename: "iot-bootable-container.tar"
     mime_type: "application/x-tar"
     image_func: "bootable_container"
-    build_pipelines: ["build"]
-    payload_pipelines: ["os", "ostree-commit", "ostree-encapsulate"]
     exports: ["ostree-encapsulate"]
     required_partition_sizes: *default_required_dir_sizes
     image_config:
@@ -1219,8 +1410,6 @@ image_types:
     bootable: true
     default_size: 2_147_483_648  # 2 * datasizes.GibiByte
     image_func: "disk"
-    build_pipelines: ["build"]
-    payload_pipelines: ["os", "image", "xz"]
     exports: ["xz"]
     required_partition_sizes: *default_required_dir_sizes
     platforms:
@@ -1310,195 +1499,7 @@ image_types:
     name_aliases: []
     filename: "disk.raw.zst"
     compression: zstd
-    payload_pipelines: ["os", "image", "zstd"]
     exports: ["zstd"]
-
-  installer:
-    package_sets:
-      os:
-        - *minimal_raw_pkgset
-      installer:
-        - &installer_pkgset
-          include:
-            - "anaconda-dracut"
-            - "atheros-firmware"
-            - "brcmfmac-firmware"
-            - "curl"
-            - "dracut-config-generic"
-            - "dracut-network"
-            - "hostname"
-            - "iwlwifi-dvm-firmware"
-            - "iwlwifi-mvm-firmware"
-            - "kernel"
-            - "linux-firmware"
-            - "less"
-            - "nfs-utils"
-            - "openssh-clients"
-            - "ostree"
-            - "plymouth"
-            - "realtek-firmware"
-            - "rng-tools"
-            - "rpcbind"
-            - "selinux-policy-targeted"
-            - "systemd"
-            - "tar"
-            - "xfsprogs"
-            - "xz"
-
-  anaconda: &anaconda
-    installer_config: *default_installer_config
-    image_config:
-      locale: "en_US.UTF-8"
-      # ideally we would centralize the iso_rootfs_type here - but
-      # some installers (like coreos_installer) do things differently
-      # than the anaconda iso so we do not want to disturb whatever
-      # special things they expect in their images.
-    package_sets:
-      os:
-        - *minimal_raw_pkgset
-      installer:
-        - &anaconda_pkgset
-          include:
-            - "aajohan-comfortaa-fonts"
-            - "abattis-cantarell-fonts"
-            - "alsa-firmware"
-            - "alsa-tools-firmware"
-            - "anaconda"
-            - "anaconda-dracut"
-            - "anaconda-install-img-deps"
-            - "anaconda-widgets"
-            - "atheros-firmware"
-            - "audit"
-            - "bind-utils"
-            - "bitmap-fangsongti-fonts"
-            - "brcmfmac-firmware"
-            - "bzip2"
-            - "cryptsetup"
-            - "curl"
-            - "dbus-x11"
-            - "dejavu-sans-fonts"
-            - "dejavu-sans-mono-fonts"
-            - "device-mapper-persistent-data"
-            - "dmidecode"
-            - "dnf"
-            - "dracut-config-generic"
-            - "dracut-network"
-            - "efibootmgr"
-            - "ethtool"
-            - "fcoe-utils"
-            - "ftp"
-            - "gdb-gdbserver"
-            - "gdisk"
-            - "glibc-all-langpacks"
-            - "gnome-kiosk"
-            - "google-noto-sans-cjk-ttc-fonts"
-            - "grub2-tools"
-            - "grub2-tools-extra"
-            - "grub2-tools-minimal"
-            - "grubby"
-            - "gsettings-desktop-schemas"
-            - "hdparm"
-            - "hexedit"
-            - "hostname"
-            - "initscripts"
-            - "ipmitool"
-            - "iwlwifi-dvm-firmware"
-            - "iwlwifi-mvm-firmware"
-            - "jomolhari-fonts"
-            - "kacst-farsi-fonts"
-            - "kacst-qurn-fonts"
-            - "kbd"
-            - "kbd-misc"
-            - "kdump-anaconda-addon"
-            - "kernel"
-            - "khmeros-base-fonts"
-            - "less"
-            - "libblockdev-lvm-dbus"
-            - "libibverbs"
-            - "libreport-plugin-bugzilla"
-            - "libreport-plugin-reportuploader"
-            - "librsvg2"
-            - "linux-firmware"
-            - "lldpad"
-            - "lohit-assamese-fonts"
-            - "lohit-bengali-fonts"
-            - "lohit-devanagari-fonts"
-            - "lohit-gujarati-fonts"
-            - "lohit-gurmukhi-fonts"
-            - "lohit-kannada-fonts"
-            - "lohit-odia-fonts"
-            - "lohit-tamil-fonts"
-            - "lohit-telugu-fonts"
-            - "lsof"
-            - "madan-fonts"
-            - "mtr"
-            - "mt-st"
-            - "net-tools"
-            - "nfs-utils"
-            - "nmap-ncat"
-            - "nm-connection-editor"
-            - "nss-tools"
-            - "openssh-clients"
-            - "openssh-server"
-            - "ostree"
-            - "pciutils"
-            - "perl-interpreter"
-            - "pigz"
-            - "plymouth"
-            - "prefixdevname"
-            - "python3-pyatspi"
-            - "rdma-core"
-            - "realtek-firmware"
-            - "rit-meera-new-fonts"
-            - "rng-tools"
-            - "rpcbind"
-            - "rpm-ostree"
-            - "rsync"
-            - "rsyslog"
-            - "selinux-policy-targeted"
-            - "sg3_utils"
-            - "sil-abyssinica-fonts"
-            - "sil-padauk-fonts"
-            - "sil-scheherazade-new-fonts"
-            - "smartmontools"
-            - "spice-vdagent"
-            - "strace"
-            - "systemd"
-            - "tar"
-            - "thai-scalable-waree-fonts"
-            - "tigervnc-server-minimal"
-            - "tigervnc-server-module"
-            - "udisks2"
-            - "udisks2-iscsi"
-            - "usbutils"
-            - "vim-minimal"
-            - "volume_key"
-            - "wget"
-            - "xfsdump"
-            - "xfsprogs"
-            - "xorg-x11-drivers"
-            - "xorg-x11-fonts-misc"
-            - "xorg-x11-server-Xorg"
-            - "xorg-x11-xauth"
-            - "metacity"
-            - "xrdb"
-            - "xz"
-          conditions:
-            "x86_64 specific anaconda pkgs":
-              when:
-                arch: "x86_64"
-              append:
-                include:
-                  - "biosdevname"
-                  - "dmidecode"
-                  - "grub2-tools-efi"
-                  - "memtest86+"
-            "aarch64 specific anaconda pkgs":
-              when:
-                arch: "aarch64"
-              append:
-                include:
-                  - "dmidecode"
 
   "iot-installer":
     <<: *rpm_ostree_imgtype_common
@@ -1512,30 +1513,14 @@ image_types:
     ostree:
       name: "fedora-iot"
       remote_name: "fedora-iot"
-    build_pipelines: ["build"]
-    payload_pipelines:
-      - "anaconda-tree"
-      - "efiboot-tree"
-      - "bootiso-tree"
-      - "bootiso"
     exports: ["bootiso"]
     required_partition_sizes: *default_required_dir_sizes
-    installer_config: *default_installer_config
+    installer_config:
+      <<: *default_installer_config
+      default_menu: 0
     image_config:
       <<: *image_config_iot_enabled_services
       locale: "en_US.UTF-8"
-      iso_rootfs_type: "squashfs"
-      conditions:
-        "f40 and below uses ext4 based iso rootfs":
-          when:
-            version_less_than: "41"
-          shallow_merge:
-            iso_rootfs_type: "squashfs-ext4"
-        "x86_64 uses grub2":
-          when:
-            arch: "x86_64"
-          shallow_merge:
-            iso_boot_type: "grub2"
     package_sets:
       installer:
         - *anaconda_pkgset
@@ -1553,29 +1538,25 @@ image_types:
     boot_iso: true
     image_func: "live_installer"
     iso_label: "Workstation"
-    build_pipelines: ["build"]
-    payload_pipelines:
-      - "anaconda-tree"
-      - "efiboot-tree"
-      - "bootiso-tree"
-      - "bootiso"
     exports: ["bootiso"]
     required_partition_sizes: *default_required_dir_sizes
-    installer_config: *default_installer_config
+    installer_config: 
+      <<: *default_installer_config
+      # for some reason the live-installer never had or never took into account
+      # the additional dracut modules. This might be a bug but for now we reset
+      # them to empty to avoid changing the live-installer definition
+      additional_dracut_modules: []
+      # also reset the condition that adds dracut modules
+      conditions:
+        <<: *default_installer_config_conditions
+        "f41 dracut requires ifcfg, rootfs is squashfs":
+          when:
+            version_equal: "41"
+          shallow_merge:
+            additional_dracut_modules: []
+
     image_config:
       locale: "en_US.UTF-8"
-      iso_rootfs_type: "squashfs"
-      conditions:
-        "f40 and below uses ext4 based iso rootfs":
-          when:
-            version_less_than: "41"
-          shallow_merge:
-            iso_rootfs_type: "squashfs-ext4"
-        "x86_64 uses grub2":
-          when:
-            arch: "x86_64"
-          shallow_merge:
-            iso_boot_type: "grub2"
     package_sets:
       installer:
         - include:
@@ -1616,7 +1597,6 @@ image_types:
       - *aarch64_installer_platform
 
   "minimal-installer":
-    <<: *anaconda
     name_aliases: ["image-installer", "fedora-image-installer"]
     filename: "installer.iso"
     mime_type: "application/x-iso9660-image"
@@ -1627,13 +1607,6 @@ image_types:
     iso_label: "Unknown"
     # We don't know the variant that goes into the OS pipeline that gets installed
     variant: "Unknown"
-    build_pipelines: ["build"]
-    payload_pipelines:
-      - "anaconda-tree"
-      - "efiboot-tree"
-      - "os"
-      - "bootiso-tree"
-      - "bootiso"
     exports: ["bootiso"]
     required_partition_sizes: *default_required_dir_sizes
     installer_config:
@@ -1656,29 +1629,20 @@ image_types:
         - "org.fedoraproject.Anaconda.Modules.Users"
     image_config:
       locale: "en_US.UTF-8"
-      iso_rootfs_type: "squashfs"
-      conditions:
-        "on f40 and below we used ext4 on squashfs":
-          when:
-            version_less_than: "41"
-          shallow_merge:
-            iso_rootfs_type: "squashfs-ext4"
-        "x86_64 uses grub2":
-          when:
-            arch: "x86_64"
-          shallow_merge:
-            iso_boot_type: "grub2"
     platforms:
       - *x86_64_installer_platform
       - *aarch64_installer_platform
+    package_sets:
+      os:
+        - *minimal_raw_pkgset
+      installer:
+        - *anaconda_pkgset
 
   container: &container
     filename: "container.tar"
     mime_type: "application/x-tar"
     image_func: "container"
     bootable: false
-    build_pipelines: ["build"]
-    payload_pipelines: ["os", "container"]
     exports: ["container"]
     required_partition_sizes: *default_required_dir_sizes
     platforms:
@@ -1750,8 +1714,6 @@ image_types:
     compression: "xz"
     mime_type: "application/x-tar"
     image_func: "tar"
-    build_pipelines: ["build"]
-    payload_pipelines: ["os", "archive", "xz"]
     exports: ["xz"]
     required_partition_sizes: *default_required_dir_sizes
     platforms:
@@ -1859,18 +1821,11 @@ image_types:
     ostree:
       name: "fedora"
       remote_name: "fedora-iot"
-    build_pipelines: ["build"]
-    payload_pipelines:
-      - "ostree-deployment"
-      - "image"
-      - "xz"
-      - "coi-tree"
-      - "efiboot-tree"
-      - "bootiso-tree"
-      - "bootiso"
     exports: ["bootiso"]
     required_partition_sizes: *default_required_dir_sizes
-    installer_config: *default_installer_config
+    installer_config:
+      <<: *default_installer_config
+      default_menu: 0
     image_config:
       <<: *image_config_iot
       ignition_platform: "metal"
@@ -1878,11 +1833,13 @@ image_types:
       <<: *iot_simplified_installer_partition_tables
     package_sets:
       installer:
-        - *installer_pkgset
         - include:
+            - "anaconda-dracut"
+            - "atheros-firmware"
             - "attr"
             - "basesystem"
             - "binutils"
+            - "brcmfmac-firmware"
             - "bsdtar"
             - "clevis-dracut"
             - "clevis-luks"
@@ -1890,48 +1847,61 @@ image_types:
             - "coreos-installer"
             - "coreos-installer-dracut"
             - "coreutils"
+            - "curl"
             - "device-mapper-multipath"
             - "dosfstools"
+            - "dracut-config-generic"
             - "dracut-live"
+            - "dracut-network"
             - "e2fsprogs"
             - "fcoe-utils"
             - "fdo-init"
             - "fedora-logos"
             - "gdisk"
             - "gzip"
+            - "hostname"
             - "ima-evm-utils"
             - "iproute"
             - "iptables"
             - "iputils"
             - "iscsi-initiator-utils"
+            - "iwlwifi-dvm-firmware"
+            - "iwlwifi-mvm-firmware"
+            - "kernel"
             - "keyutils"
+            - "less"
+            - "linux-firmware"
             - "lldpad"
             - "lvm2"
             - "mdadm"
+            - "nfs-utils"
             - "nss-softokn"
+            - "openssh-clients"
+            - "ostree"
+            - "plymouth"
             - "policycoreutils"
             - "policycoreutils-python-utils"
             - "procps-ng"
+            - "realtek-firmware"
+            - "rng-tools"
             - "rootfiles"
+            - "rpcbind"
+            - "selinux-policy-targeted"
             - "setools-console"
+            - "shadow-utils"  # includes passwd
             - "sudo"
+            - "systemd"
+            - "tar"
             - "traceroute"
             - "util-linux"
-            - "shadow-utils"  # includes passwd
-          conditions:
-            "dnsmasq got deprecated in f41":
-              when:
-                version_less_than: "41"
-              append:
-                include:
-                  - "dnsmasq"  # deprecated for F41+
+            - "xfsprogs"
+            - "xz"
     platforms:
       - <<: *x86_64_uefi_platform
         packages:
           <<: *x86_64_uefi_platform_packages
           firmware:
             - "grub2-efi-x64"
-            - "grub2-efi-x64-cdboot"
             - "grub2-tools"
             - "grub2-tools-minimal"
             - "efibootmgr"
@@ -1948,7 +1918,6 @@ image_types:
             - "arm-image-installer"
             - "bcm283x-firmware"
             - "grub2-efi-aa64"
-            - "grub2-efi-aa64-cdboot"
             - "grub2-tools"
             - "grub2-tools-minimal"
             - "efibootmgr"
@@ -1958,3 +1927,115 @@ image_types:
             - "iwlwifi-mvm-firmware"
             - "realtek-firmware"
             - "uboot-images-armv8"
+
+  # Based on lorax runtime-install.tmpl
+  "everything-netinst":
+    name_aliases: ["netinst"]
+    filename: "netinst.iso"
+    mime_type: "application/x-iso9660-image"
+    bootable: true
+    boot_iso: true
+    image_func: "netinst"
+    iso_label: "Everything"
+    variant: "Everything"
+    exports: ["bootiso"]
+    required_partition_sizes: *default_required_dir_sizes
+    installer_config: *default_installer_config
+    image_config:
+      locale: "en_US.UTF-8"
+    package_sets:
+      installer:
+        - include:
+            - anaconda
+            - anaconda-widgets
+            - anaconda-install-img-deps
+            - ostree
+            - rpm-ostree
+            - pigz
+            - audit
+            - bind-utils
+            - kernel
+            - kernel-modules
+            - kernel-modules-extra
+            - grubby
+            - glibc-all-langpacks
+            - plymouth
+            - anaconda-dracut
+            - dracut-network
+            - dracut-config-generic
+            - initscripts
+            - cryptsetup
+            - rpcbind
+            - kbd
+            - kbd-misc
+            - tar
+            - xz
+            - curl
+            - bzip2
+            - rsyslog
+            - device-mapper-persistent-data
+            - xfsdump
+            - volume_key
+            - nss-tools
+            - selinux-policy-targeted
+            - audit
+            - ethtool
+            - openssh-server
+            - nfs-utils
+            - openssh-clients
+            - tigervnc-server-minimal
+            - tigervnc-server-module
+            - net-tools
+            - bridge-utils
+            - nmap-ncat
+            - prefixdevname
+            - pciutils
+            - usbutils
+            - ipmitool
+            - mt-st
+            - smartmontools
+            - hdparm
+            - rdma-core
+            - rng-tools
+            - nvme-cli
+            - default-fonts-core-sans
+            - default-fonts-other-sans
+            - google-noto-sans-cjk-fonts
+            - gdb-gdbserver
+            - libreport-plugin-bugzilla
+            - libreport-plugin-reportuploader
+            - fpaste
+            - python3-pyatspi
+            - nano
+            - nano-default-editor
+            - vim-minimal
+            - strace
+            - lsof
+            - dump
+            - less
+            - wget2-wget
+            - rsync
+            - bind-utils
+            - ftp
+            - mtr
+            - vconfig
+            - spice-vdagent
+            - gdisk
+            - hexedit
+            - sg3_utils
+          conditions:
+            "x86_64 specific anaconda pkgs":
+              when:
+                arch: "x86_64"
+              append:
+                include:
+                  - dmidecode
+            "aarch64 specific anaconda pkgs":
+              when:
+                arch: "aarch64"
+              append:
+                include:
+                  - dmidecode
+    platforms:
+      - *x86_64_installer_platform
+      - *aarch64_installer_platform

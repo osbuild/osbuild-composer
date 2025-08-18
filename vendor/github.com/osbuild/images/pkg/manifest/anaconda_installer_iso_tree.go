@@ -17,16 +17,16 @@ import (
 	"github.com/osbuild/images/pkg/ostree"
 )
 
-type RootfsType uint64
+type ISORootfsType uint64
 
 // These constants are used by the ISO images to control the style of the root filesystem
 const ( // Rootfs type enum
-	SquashfsExt4Rootfs RootfsType = iota // Create an EXT4 rootfs compressed by Squashfs
-	SquashfsRootfs                       // Create a plain squashfs rootfs
-	ErofsRootfs                          // Create a plain erofs rootfs
+	SquashfsExt4Rootfs ISORootfsType = iota // Create an EXT4 rootfs compressed by Squashfs
+	SquashfsRootfs                          // Create a plain squashfs rootfs
+	ErofsRootfs                             // Create a plain erofs rootfs
 )
 
-func (r *RootfsType) UnmarshalJSON(data []byte) error {
+func (r *ISORootfsType) UnmarshalJSON(data []byte) error {
 	var s string
 	if err := json.Unmarshal(data, &s); err != nil {
 		return err
@@ -39,13 +39,13 @@ func (r *RootfsType) UnmarshalJSON(data []byte) error {
 	case "erofs":
 		*r = ErofsRootfs
 	default:
-		return fmt.Errorf("unknown RootfsType: %q", s)
+		return fmt.Errorf("unknown ISORootfsType: %q", s)
 	}
 
 	return nil
 }
 
-func (r *RootfsType) UnmarshalYAML(unmarshal func(any) error) error {
+func (r *ISORootfsType) UnmarshalYAML(unmarshal func(any) error) error {
 	return common.UnmarshalYAMLviaJSON(r, unmarshal)
 }
 
@@ -106,7 +106,7 @@ type AnacondaInstallerISOTree struct {
 	isoLabel string
 
 	RootfsCompression string
-	RootfsType        RootfsType
+	RootfsType        ISORootfsType
 
 	OSPipeline         *OS
 	OSTreeCommitSource *ostree.SourceSpec
@@ -242,14 +242,18 @@ var installerBootExcludePaths = []string{
 func (p *AnacondaInstallerISOTree) NewSquashfsStage() *osbuild.Stage {
 	var squashfsOptions osbuild.SquashfsStageOptions
 
-	if p.anacondaPipeline.Type == AnacondaInstallerTypePayload {
+	switch p.anacondaPipeline.Type {
+	case AnacondaInstallerTypePayload, AnacondaInstallerTypeNetinst:
 		squashfsOptions = osbuild.SquashfsStageOptions{
 			Filename: "images/install.img",
 		}
-	} else if p.anacondaPipeline.Type == AnacondaInstallerTypeLive {
+	case AnacondaInstallerTypeLive:
 		squashfsOptions = osbuild.SquashfsStageOptions{
 			Filename: "LiveOS/squashfs.img",
 		}
+	default:
+		// Shouldn't be possible, but catch it anyway
+		panic(fmt.Errorf("unknown AnacondaInstallerType %v in NewSquashfsStage", p.anacondaPipeline.Type))
 	}
 
 	if p.RootfsCompression != "" {
@@ -281,14 +285,18 @@ func (p *AnacondaInstallerISOTree) NewSquashfsStage() *osbuild.Stage {
 func (p *AnacondaInstallerISOTree) NewErofsStage() *osbuild.Stage {
 	var erofsOptions osbuild.ErofsStageOptions
 
-	if p.anacondaPipeline.Type == AnacondaInstallerTypePayload {
+	switch p.anacondaPipeline.Type {
+	case AnacondaInstallerTypePayload, AnacondaInstallerTypeNetinst:
 		erofsOptions = osbuild.ErofsStageOptions{
 			Filename: "images/install.img",
 		}
-	} else if p.anacondaPipeline.Type == AnacondaInstallerTypeLive {
+	case AnacondaInstallerTypeLive:
 		erofsOptions = osbuild.ErofsStageOptions{
 			Filename: "LiveOS/squashfs.img",
 		}
+	default:
+		// Shouldn't be possible, but catch it anyway
+		panic(fmt.Errorf("unknown AnacondaInstallerType %v in NewErofsStage", p.anacondaPipeline.Type))
 	}
 
 	var compression osbuild.ErofsCompression
@@ -367,7 +375,8 @@ func (p *AnacondaInstallerISOTree) serialize() osbuild.Pipeline {
 
 	kernelOpts := []string{}
 
-	if p.anacondaPipeline.Type == AnacondaInstallerTypePayload {
+	if p.anacondaPipeline.Type == AnacondaInstallerTypePayload ||
+		p.anacondaPipeline.Type == AnacondaInstallerTypeNetinst {
 		kernelOpts = append(kernelOpts, fmt.Sprintf("inst.stage2=hd:LABEL=%s", p.isoLabel))
 		if p.Kickstart != nil && p.Kickstart.Path != "" {
 			kernelOpts = append(kernelOpts, fmt.Sprintf("inst.ks=hd:LABEL=%s:%s", p.isoLabel, p.Kickstart.Path))
@@ -441,6 +450,13 @@ func (p *AnacondaInstallerISOTree) serialize() osbuild.Pipeline {
 		stage := osbuild.NewISOLinuxStage(options, p.anacondaPipeline.Name())
 		pipeline.AddStage(stage)
 	} else if p.ISOBoot == Grub2ISOBoot {
+		var grub2config *osbuild.Grub2Config
+		if p.anacondaPipeline.InstallerCustomizations.DefaultMenu > 0 {
+			grub2config = &osbuild.Grub2Config{
+				Default: p.anacondaPipeline.InstallerCustomizations.DefaultMenu,
+			}
+		}
+
 		options := &osbuild.Grub2ISOLegacyStageOptions{
 			Product: osbuild.Product{
 				Name:    p.anacondaPipeline.product,
@@ -452,6 +468,7 @@ func (p *AnacondaInstallerISOTree) serialize() osbuild.Pipeline {
 			},
 			ISOLabel: p.isoLabel,
 			FIPS:     p.anacondaPipeline.platform.GetFIPSMenu(),
+			Config:   grub2config,
 		}
 
 		stage := osbuild.NewGrub2ISOLegacyStage(options)

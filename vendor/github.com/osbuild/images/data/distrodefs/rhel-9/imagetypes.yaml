@@ -202,6 +202,84 @@
         append:
           include:
             - "system-reinstall-bootc"
+  azure_base_pkgset: &azure_base_pkgset
+    include:
+      - "@Server"
+      - "bzip2"
+      - "cloud-init"
+      - "cloud-utils-growpart"
+      - "dracut-config-generic"
+      - "efibootmgr"
+      - "gdisk"
+      - "hyperv-daemons"
+      - "langpacks-en"
+      - "lvm2"
+      - "NetworkManager"
+      - "NetworkManager-cloud-setup"
+      - "nvme-cli"
+      - "patch"
+      - "rng-tools"
+      - "selinux-policy-targeted"
+      - "uuid"
+      - "WALinuxAgent"
+      - "yum-utils"
+    exclude:
+      - "aic94xx-firmware"
+      - "alsa-firmware"
+      - "alsa-lib"
+      - "alsa-sof-firmware"
+      - "alsa-tools-firmware"
+      - "biosdevname"
+      - "bolt"
+      - "buildah"
+      - "cockpit-podman"
+      - "containernetworking-plugins"
+      - "dnf-plugin-spacewalk"
+      - "dracut-config-rescue"
+      - "glibc-all-langpacks"
+      - "iprutils"
+      - "ivtv-firmware"
+      - "iwl100-firmware"
+      - "iwl1000-firmware"
+      - "iwl105-firmware"
+      - "iwl135-firmware"
+      - "iwl2000-firmware"
+      - "iwl2030-firmware"
+      - "iwl3160-firmware"
+      - "iwl3945-firmware"
+      - "iwl4965-firmware"
+      - "iwl5000-firmware"
+      - "iwl5150-firmware"
+      - "iwl6000-firmware"
+      - "iwl6000g2a-firmware"
+      - "iwl6000g2b-firmware"
+      - "iwl6050-firmware"
+      - "iwl7260-firmware"
+      - "libertas-sd8686-firmware"
+      - "libertas-sd8787-firmware"
+      - "libertas-usb8388-firmware"
+      - "NetworkManager-config-server"
+      - "plymouth"
+      - "podman"
+      - "python3-dnf-plugin-spacewalk"
+      - "python3-hwdata"
+      - "python3-rhnlib"
+      - "rhn-check"
+      - "rhn-client-tools"
+      - "rhn-setup"
+      - "rhnlib"
+      - "rhnsd"
+      - "usb_modeswitch"
+    conditions:
+      <<: *conditions_pkgsets_insights_client_on_rhel
+      "rhel-9.6+ gets system-reinstall-bootc and drops microcode_ctl":
+        when:
+          version_greater_or_equal: "9.6"
+        append:
+          include:
+            - "system-reinstall-bootc"
+          exclude:
+            - "microcode_ctl"
 
   sapapps_image_config: &sapapps_image_config
     selinux_config:
@@ -1088,6 +1166,13 @@
       - "cuse"
       - "ipmi_devintf"
       - "ipmi_msghandler"
+    default_menu: 1
+    conditions:
+      "x86_64 uses syslinux":
+        when:
+          arch: "x86_64"
+        shallow_merge:
+          iso_boot_type: "syslinux"
 
 image_config:
   default:
@@ -1172,8 +1257,6 @@ image_types:
     bootable: true
     default_size: 10_737_418_240  # 10 * datasizes.GibiByte
     image_func: "disk"
-    build_pipelines: ["build"]
-    payload_pipelines: ["os", "image", "qcow2"]
     exports: ["qcow2"]
     required_partition_sizes: *default_required_dir_sizes
     platforms:
@@ -1285,8 +1368,6 @@ image_types:
     bootable: true
     default_size: 10_737_418_240  # 10 * datasizes.GibiByte
     image_func: "disk"
-    build_pipelines: ["build"]
-    payload_pipelines: ["os", "image", "vagrant", "archive"]
     exports: ["archive"]
     required_partition_sizes: *default_required_dir_sizes
     platforms:
@@ -1335,7 +1416,6 @@ image_types:
     filename: "disk.vhd"
     mime_type: "application/x-vhd"
     default_size: 4_294_967_296  # 4 * datasizes.GibiByte
-    payload_pipelines: ["os", "image", "vpc"]
     exports: ["vpc"]
     platforms:
       - <<: *x86_64_bios_platform
@@ -1378,92 +1458,11 @@ image_types:
       <<: *default_partition_tables
     package_sets:
       os:
-        - &vhd_pkgset
-          include:
-            - "@Server"
-            - "bzip2"
-            - "cloud-init"
-            - "cloud-utils-growpart"
-            - "dracut-config-generic"
-            - "efibootmgr"
-            - "gdisk"
-            - "hyperv-daemons"
-            - "kernel-core"
-            - "kernel-modules"
-            - "kernel"
-            - "langpacks-en"
-            - "lvm2"
-            - "NetworkManager"
-            - "NetworkManager-cloud-setup"
-            - "nvme-cli"
-            - "patch"
-            - "rng-tools"
-            - "selinux-policy-targeted"
-            - "uuid"
-            - "WALinuxAgent"
-            - "yum-utils"
-          exclude:
-            - "aic94xx-firmware"
-            - "alsa-firmware"
-            - "alsa-lib"
-            - "alsa-sof-firmware"
-            - "alsa-tools-firmware"
-            - "biosdevname"
-            - "bolt"
-            - "buildah"
-            - "cockpit-podman"
-            - "containernetworking-plugins"
-            - "dnf-plugin-spacewalk"
-            - "dracut-config-rescue"
-            - "glibc-all-langpacks"
-            - "iprutils"
-            - "ivtv-firmware"
-            - "iwl100-firmware"
-            - "iwl1000-firmware"
-            - "iwl105-firmware"
-            - "iwl135-firmware"
-            - "iwl2000-firmware"
-            - "iwl2030-firmware"
-            - "iwl3160-firmware"
-            - "iwl3945-firmware"
-            - "iwl4965-firmware"
-            - "iwl5000-firmware"
-            - "iwl5150-firmware"
-            - "iwl6000-firmware"
-            - "iwl6000g2a-firmware"
-            - "iwl6000g2b-firmware"
-            - "iwl6050-firmware"
-            - "iwl7260-firmware"
-            - "libertas-sd8686-firmware"
-            - "libertas-sd8787-firmware"
-            - "libertas-usb8388-firmware"
-            - "NetworkManager-config-server"
-            - "plymouth"
-            - "podman"
-            - "python3-dnf-plugin-spacewalk"
-            - "python3-hwdata"
-            - "python3-rhnlib"
-            - "rhn-check"
-            - "rhn-client-tools"
-            - "rhn-setup"
-            - "rhnlib"
-            - "rhnsd"
-            - "usb_modeswitch"
-          conditions:
-            <<: *conditions_pkgsets_insights_client_on_rhel
-            "rhel-9.6+ gets system-reinstall-bootc and drops microcode_ctl":
-              when:
-                version_greater_or_equal: "9.6"
-              append:
-                include:
-                  - "system-reinstall-bootc"
-                exclude:
-                  - "microcode_ctl"
+        - *azure_base_pkgset
 
   "azure": &azure
     <<: *vhd
     mime_type: "application/xz"
-    payload_pipelines: ["os", "image", "vpc", "xz"]
     exports: ["xz"]
     compression: "xz"
     filename: "disk.vhd.xz"
@@ -1628,7 +1627,7 @@ image_types:
       <<: [*image_config_vhd, *sap_image_config]
     package_sets:
       os:
-        - *vhd_pkgset
+        - *azure_base_pkgset
         - *sap_base_pkgset
         - *sap_extras_pkgset
 
@@ -1641,15 +1640,13 @@ image_types:
       <<: [*image_config_vhd, *sapapps_image_config]
     package_sets:
       os:
-        - *vhd_pkgset
+        - *azure_base_pkgset
         - *sap_base_pkgset
 
   tar:
     filename: "root.tar.xz"
     mime_type: "application/x-tar"
     image_func: "tar"
-    build_pipelines: ["build"]
-    payload_pipelines: ["os", "archive"]
     exports: ["archive"]
     platforms:
       - arch: "x86_64"
@@ -1671,8 +1668,6 @@ image_types:
     bootable: true
     default_size: 4_294_967_296  # 4 * datasizes.GibiByte
     image_func: "disk"
-    build_pipelines: ["build"]
-    payload_pipelines: ["os", "image", "vmdk"]
     exports: ["vmdk"]
     required_partition_sizes: *default_required_dir_sizes
     platforms:
@@ -1702,7 +1697,6 @@ image_types:
     name_aliases: ["vsphere-ova"]
     filename: "image.ova"
     mime_type: "application/ovf"
-    payload_pipelines: ["os", "image", "vmdk", "ovf", "archive"]
     exports: ["archive"]
     platforms:
       - <<: *x86_64_bios_platform
@@ -1711,8 +1705,6 @@ image_types:
   ec2: &ec2
     filename: "image.raw.xz"
     mime_type: "application/xz"
-    build_pipelines: ["build"]
-    payload_pipelines: ["os", "image", "xz"]
     exports: ["xz"]
     compression: "xz"
     image_func: "disk"
@@ -1860,7 +1852,6 @@ image_types:
     name_aliases: ["aws"]
     mime_type: "application/octet-stream"
     filename: "image.raw"
-    payload_pipelines: ["os", "image"]
     exports: ["image"]
     compression: ""
 
@@ -1939,8 +1930,6 @@ image_types:
     filename: "image.wsl"
     mime_type: "application/x-tar"
     image_func: "tar"
-    build_pipelines: ["build"]
-    payload_pipelines: ["os", "archive"]
     exports: ["xz"]
     compression: "xz"
     platforms:
@@ -2067,13 +2056,6 @@ image_types:
     image_func: "image_installer"
     # We don't know the variant of the OS pipeline being installed
     iso_label: "Unknown"
-    build_pipelines: ["build"]
-    payload_pipelines:
-      - "anaconda-tree"
-      - "efiboot-tree"
-      - "os"
-      - "bootiso-tree"
-      - "bootiso"
     exports: ["bootiso"]
     required_partition_sizes: *default_required_dir_sizes
     platforms:
@@ -2092,12 +2074,6 @@ image_types:
     installer_config: *default_installer_config
     image_config:
       locale: "C.UTF-8"
-      conditions:
-        "x86_64 uses syslinux":
-          when:
-            arch: "x86_64"
-          shallow_merge:
-            iso_boot_type: "syslinux"
     package_sets:
       <<: *bare_metal_pkgset
       installer:
@@ -2111,8 +2087,6 @@ image_types:
     filename: "image.tar.gz"
     mime_type: "application/gzip"
     image_func: "disk"
-    build_pipelines: ["build"]
-    payload_pipelines: ["os", "image", "archive"]
     exports: ["archive"]
     bootable: true
     default_size: 21_474_836_480  # 20 * datasizes.GibiByte
@@ -2271,8 +2245,6 @@ image_types:
     bootable: true
     default_size: 2_147_483_648  # 2 * datasizes.GibiByte
     image_func: "disk"
-    build_pipelines: ["build"]
-    payload_pipelines: ["os", "image", "xz"]
     exports: ["xz"]
     required_partition_sizes: *default_required_dir_sizes
     platforms:
@@ -2408,8 +2380,6 @@ image_types:
     mime_type: "application/x-tar"
     rpm_ostree: true
     image_func: "iot_commit"
-    build_pipelines: ["build"]
-    payload_pipelines: ["os", "ostree-commit", "commit-archive"]
     exports: ["commit-archive"]
     platforms:
       - *x86_64_bios_platform
@@ -2581,8 +2551,6 @@ image_types:
     mime_type: "application/x-tar"
     rpm_ostree: true
     image_func: "iot_container"
-    build_pipelines: ["build"]
-    payload_pipelines: ["os", "ostree-commit", "container-tree", "container"]
     exports: ["container"]
     <<: *edge_commit
 
@@ -2591,8 +2559,6 @@ image_types:
     filename: "image.raw.xz"
     compression: "xz"
     mime_type: "application/xz"
-    build_pipelines: ["build"]
-    payload_pipelines: ["ostree-deployment", "image", "xz"]
     exports: ["xz"]
     default_size: 10_737_418_240  # 10 * datasizes.GibiByte
     rpm_ostree: true
@@ -2651,27 +2617,17 @@ image_types:
     variant: "edge"
     ostree:
       name: "rhel-edge"
-    build_pipelines: ["build"]
-    payload_pipelines:
-      - "anaconda-tree"
-      - "efiboot-tree"
-      - "bootiso-tree"
-      - "bootiso"
     exports: ["bootiso"]
     required_partition_sizes: *default_required_dir_sizes
     platforms:
       - *x86_64_uefi_platform
       - *aarch64_platform
-    installer_config: *default_installer_config
+    installer_config:
+      <<: *default_installer_config
+      default_menu: 0
     image_config:
       enabled_services: *enabled_services_edge
       locale: "en_US.UTF-8"
-      conditions:
-        "x86_64 uses syslinux":
-          when:
-            arch: "x86_64"
-          shallow_merge:
-            iso_boot_type: "syslinux"
     package_sets:
       installer:
         - *installer_pkgset
@@ -2697,15 +2653,6 @@ image_types:
       remote_name: "rhel-edge"
     # XXX: find better name
     use_ostree_remotes: true
-    build_pipelines: ["build"]
-    payload_pipelines:
-      - "ostree-deployment"
-      - "image"
-      - "xz"
-      - "coi-tree"
-      - "efiboot-tree"
-      - "bootiso-tree"
-      - "bootiso"
     exports: ["bootiso"]
     required_partition_sizes: *default_required_dir_sizes
     installer_config:
@@ -2797,8 +2744,6 @@ image_types:
     filename: "image.raw"
     mime_type: "application/octet-stream"
     default_size: 10_737_418_240  # 10 * datasizes.GibiByte
-    build_pipelines: ["build"]
-    payload_pipelines: ["ostree-deployment", "image"]
     exports: ["image"]
     rpm_ostree: true
     bootable: true
@@ -2853,7 +2798,6 @@ image_types:
     <<: *edge_ami
     filename: "image.vmdk"
     mime_type: "application/x-vmdk"
-    payload_pipelines: ["ostree-deployment", "image", "vmdk"]
     exports: ["vmdk"]
     platforms:
       - <<: *x86_64_bios_platform
@@ -2880,7 +2824,6 @@ image_types:
     <<: *vhd
     filename: "disk.vhd.xz"
     mime_type: "application/xz"
-    payload_pipelines: ["os", "image", "vpc", "xz"]
     exports: ["xz"]
     compression: "xz"
     default_size: 34_359_738_368  # 32 * datasizes.GibiByte
@@ -2956,14 +2899,18 @@ image_types:
             - "cloud-init"
             - "cloud-utils-growpart"
             - "cryptsetup"
+            - "langpacks-en"
+            - "lvm2"
             - "NetworkManager-cloud-setup"
+            - "nvme-cli"
             - "openssh-server"
             - "redhat-cloud-client-configuration"
             - "redhat-release"
             - "tpm2-tools"
+            - "uuid"
             - "WALinuxAgent"
             - "yum-utils"
-        - exclude:
+          exclude:
             - "dracut-config-rescue"
             - "iwl*"
             - "linux-firmware*"

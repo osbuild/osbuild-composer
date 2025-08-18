@@ -17,7 +17,9 @@ import (
 // is not predictable nor reproducible. For the purposes of building the
 // build pipeline, we do use the build host's filesystem, this means we should
 // make minimal assumptions about what's available there.
-
+//
+// Any pipeline that implements the "Build" interface will be returned
+// from "Manifest.BuildPipeline()"
 type Build interface {
 	Name() string
 	Checkpoint()

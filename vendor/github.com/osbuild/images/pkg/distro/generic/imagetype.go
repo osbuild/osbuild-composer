@@ -67,6 +67,8 @@ func newImageTypeFrom(d *distribution, ar *architecture, imgYAML defs.ImageTypeY
 		it.image = iotSimplifiedInstallerImage
 	case "tar":
 		it.image = tarImage
+	case "netinst":
+		it.image = netinstImage
 	default:
 		err := fmt.Errorf("unknown image func: %v for %v", imgYAML.Image, imgYAML.Name())
 		panic(err)
@@ -123,14 +125,6 @@ func (t *imageType) Size(size uint64) uint64 {
 		size = t.ImageTypeYAML.DefaultSize
 	}
 	return size
-}
-
-func (t *imageType) BuildPipelines() []string {
-	return t.ImageTypeYAML.BuildPipelines
-}
-
-func (t *imageType) PayloadPipelines() []string {
-	return t.ImageTypeYAML.PayloadPipelines
 }
 
 func (t *imageType) PayloadPackageSets() []string {

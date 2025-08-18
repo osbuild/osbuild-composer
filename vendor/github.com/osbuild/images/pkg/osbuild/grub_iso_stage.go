@@ -16,6 +16,8 @@ type GrubISOStageOptions struct {
 	Vendor string `json:"vendor,omitempty"`
 
 	FIPS bool `json:"fips,omitempty"`
+
+	Config *Grub2Config `json:"config,omitempty"`
 }
 
 func (GrubISOStageOptions) isStageOptions() {}
@@ -49,6 +51,15 @@ type ISOKernel struct {
 
 	// Additional kernel boot options
 	Opts []string `json:"opts,omitempty"`
+}
+
+type Grub2Config struct {
+	// Override the default grub menu timeout
+	// Note: 0 means to not override the  stage default
+	Timeout int `json:"timeout,omitempty"`
+
+	// Override the default boot menu entry
+	Default int `json:"default,omitempty"`
 }
 
 // Assemble a file system tree for a bootable ISO

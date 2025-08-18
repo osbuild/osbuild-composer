@@ -230,7 +230,7 @@ func DistroFactory(idStr string) distro.Distro {
 		return nil
 	}
 	if err != nil {
-		panic(err)
+		panic(fmt.Errorf("%w with distro %s", err, idStr))
 	}
 	return distro
 }

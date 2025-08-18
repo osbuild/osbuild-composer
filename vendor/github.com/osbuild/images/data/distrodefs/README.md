@@ -40,8 +40,6 @@ image_types:
   container:
     filename: container.tar
     image_func: container
-    build_pipelines: ["build"]
-    payload_pipelines: ["os", "container"]
     exports: ["container"]
     platforms:
       - arch: "x86_64"
@@ -52,12 +50,6 @@ image_types:
 ```
 With that the "images" library can now create a "container"
 image type that is available on x86_64 and only adds "bash".
-
-For the build_pipelines, payload_pipelines, exports some
-knowledge about the inner workings of osbuild is required,
-it is recommended to use the existing image types as examples.
-We are exploring infering the pipelines from `image_func`
-information.
 
 Now only a `data/repositories/simonos-1.json` file is needed
 to make a complete new distro.
