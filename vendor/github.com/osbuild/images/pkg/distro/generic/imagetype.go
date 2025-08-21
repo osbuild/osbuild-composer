@@ -8,7 +8,6 @@ import (
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
 	"github.com/osbuild/images/internal/common"
-	"github.com/osbuild/images/internal/workload"
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/datasizes"
 	"github.com/osbuild/images/pkg/disk"
@@ -21,7 +20,7 @@ import (
 	"github.com/osbuild/images/pkg/rpmmd"
 )
 
-type imageFunc func(workload workload.Workload, t *imageType, bp *blueprint.Blueprint, options distro.ImageOptions, packageSets map[string]rpmmd.PackageSet, containers []container.SourceSpec, rng *rand.Rand) (image.ImageKind, error)
+type imageFunc func(imgTypeCustomizations manifest.OSCustomizations, t *imageType, bp *blueprint.Blueprint, options distro.ImageOptions, packageSets map[string]rpmmd.PackageSet, containers []container.SourceSpec, rng *rand.Rand) (image.ImageKind, error)
 
 type isoLabelFunc func(t *imageType) string
 
@@ -258,15 +257,13 @@ func (t *imageType) Manifest(bp *blueprint.Blueprint,
 	installFromRepos := blueprint.RepoCustomizationsInstallFromOnly(customRepos)
 	payloadRepos = append(payloadRepos, installFromRepos...)
 
-	cw := &workload.Custom{
-		BaseWorkload: workload.BaseWorkload{
-			Repos: payloadRepos,
-		},
-		Packages:       bp.GetPackagesEx(false),
-		EnabledModules: bp.GetEnabledModules(),
+	cw := manifest.OSCustomizations{
+		ExtraBaseRepos: payloadRepos,
+		BasePackages:   bp.GetPackagesEx(false),
+		BaseModules:    bp.GetEnabledModules(),
 	}
 	if services := bp.Customizations.GetServices(); services != nil {
-		cw.Services = services.Enabled
+		cw.EnabledServices = services.Enabled
 		cw.DisabledServices = services.Disabled
 		cw.MaskedServices = services.Masked
 	}

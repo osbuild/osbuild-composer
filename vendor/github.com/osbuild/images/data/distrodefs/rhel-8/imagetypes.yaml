@@ -868,7 +868,6 @@
       - "org.fedoraproject.Anaconda.Modules.Network"
       - "org.fedoraproject.Anaconda.Modules.Payloads"
       - "org.fedoraproject.Anaconda.Modules.Storage"
-    iso_root_kickstart: true
     additional_dracut_modules:
       - "ifcfg"
     default_menu: 1

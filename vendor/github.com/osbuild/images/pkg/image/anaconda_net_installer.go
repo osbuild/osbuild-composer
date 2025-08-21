@@ -5,7 +5,6 @@ import (
 	"math/rand"
 
 	"github.com/osbuild/images/internal/environment"
-	"github.com/osbuild/images/internal/workload"
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/artifact"
 	"github.com/osbuild/images/pkg/customizations/anaconda"
@@ -21,7 +20,7 @@ type AnacondaNetInstaller struct {
 	Platform                platform.Platform
 	InstallerCustomizations manifest.InstallerCustomizations
 	Environment             environment.Environment
-	Workload                workload.Workload
+	ImgTypeCustomizations   manifest.OSCustomizations
 
 	ExtraBasePackages rpmmd.PackageSet
 

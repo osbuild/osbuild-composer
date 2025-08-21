@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/osbuild/images/internal/environment"
-	"github.com/osbuild/images/internal/workload"
 	"github.com/osbuild/images/pkg/artifact"
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/manifest"
@@ -19,13 +18,13 @@ import (
 
 type DiskImage struct {
 	Base
-	Platform         platform.Platform
-	PartitionTable   *disk.PartitionTable
-	OSCustomizations manifest.OSCustomizations
-	Environment      environment.Environment
-	Workload         workload.Workload
-	Filename         string
-	Compression      string
+	Platform              platform.Platform
+	PartitionTable        *disk.PartitionTable
+	OSCustomizations      manifest.OSCustomizations
+	Environment           environment.Environment
+	ImgTypeCustomizations manifest.OSCustomizations
+	Filename              string
+	Compression           string
 
 	// Control the VPC subformat use of force_size
 	VPCForceSize *bool
@@ -56,7 +55,7 @@ func (img *DiskImage) InstantiateManifest(m *manifest.Manifest,
 	osPipeline.PartitionTable = img.PartitionTable
 	osPipeline.OSCustomizations = img.OSCustomizations
 	osPipeline.Environment = img.Environment
-	osPipeline.Workload = img.Workload
+	osPipeline.ImgTypeCustomizations = img.ImgTypeCustomizations
 	osPipeline.OSProduct = img.OSProduct
 	osPipeline.OSVersion = img.OSVersion
 	osPipeline.OSNick = img.OSNick

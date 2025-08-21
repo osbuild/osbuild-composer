@@ -4,7 +4,6 @@ import (
 	"math/rand"
 
 	"github.com/osbuild/images/internal/environment"
-	"github.com/osbuild/images/internal/workload"
 	"github.com/osbuild/images/pkg/artifact"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/ostree"
@@ -15,10 +14,10 @@ import (
 
 type OSTreeContainer struct {
 	Base
-	Platform         platform.Platform
-	OSCustomizations manifest.OSCustomizations
-	Environment      environment.Environment
-	Workload         workload.Workload
+	Platform              platform.Platform
+	OSCustomizations      manifest.OSCustomizations
+	Environment           environment.Environment
+	ImgTypeCustomizations manifest.OSCustomizations
 
 	// OSTreeParent specifies the source for an optional parent commit for the
 	// new commit being built.
@@ -50,7 +49,7 @@ func (img *OSTreeContainer) InstantiateManifest(m *manifest.Manifest,
 	osPipeline := manifest.NewOS(buildPipeline, img.Platform, repos)
 	osPipeline.OSCustomizations = img.OSCustomizations
 	osPipeline.Environment = img.Environment
-	osPipeline.Workload = img.Workload
+	osPipeline.ImgTypeCustomizations = img.ImgTypeCustomizations
 	osPipeline.OSTreeRef = img.OSTreeRef
 	osPipeline.OSTreeParent = img.OSTreeParent
 

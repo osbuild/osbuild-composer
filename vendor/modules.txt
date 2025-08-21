@@ -958,14 +958,13 @@ github.com/oracle/oci-go-sdk/v54/workrequests
 ## explicit; go 1.23.9
 github.com/osbuild/blueprint/internal/common
 github.com/osbuild/blueprint/pkg/blueprint
-# github.com/osbuild/images v0.177.0
+# github.com/osbuild/images v0.178.0
 ## explicit; go 1.23.9
 github.com/osbuild/images/data/dependencies
 github.com/osbuild/images/data/distrodefs
 github.com/osbuild/images/data/repositories
 github.com/osbuild/images/internal/common
 github.com/osbuild/images/internal/environment
-github.com/osbuild/images/internal/workload
 github.com/osbuild/images/pkg/arch
 github.com/osbuild/images/pkg/artifact
 github.com/osbuild/images/pkg/cert

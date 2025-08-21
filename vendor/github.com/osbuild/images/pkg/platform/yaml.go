@@ -4,9 +4,9 @@ import (
 	"github.com/osbuild/images/pkg/arch"
 )
 
-// PlatformConf is a platform configured from YAML inputs
+// Data is a platform configured from YAML inputs
 // that implements the "Platform" interface
-type PlatformConf struct {
+type Data struct {
 	Arch         arch.Arch   `yaml:"arch"`
 	ImageFormat  ImageFormat `yaml:"image_format"`
 	QCOW2Compat  string      `yaml:"qcow2_compat"`
@@ -25,50 +25,50 @@ type PlatformConf struct {
 	FIPSMenu   bool       `yaml:"fips_menu"` // Add FIPS entry to iso bootloader menu
 }
 
-// ensure PlatformConf implements the Platform interface
-var _ = Platform(&PlatformConf{})
+// ensure platform.Data implements the Platform interface
+var _ = Platform(&Data{})
 
-func (pc *PlatformConf) GetArch() arch.Arch {
-	return pc.Arch
+func (d *Data) GetArch() arch.Arch {
+	return d.Arch
 }
-func (pc *PlatformConf) GetImageFormat() ImageFormat {
-	return pc.ImageFormat
+func (d *Data) GetImageFormat() ImageFormat {
+	return d.ImageFormat
 }
-func (pc *PlatformConf) GetQCOW2Compat() string {
-	return pc.QCOW2Compat
+func (d *Data) GetQCOW2Compat() string {
+	return d.QCOW2Compat
 }
-func (pc *PlatformConf) GetBIOSPlatform() string {
-	return pc.BIOSPlatform
+func (d *Data) GetBIOSPlatform() string {
+	return d.BIOSPlatform
 }
-func (pc *PlatformConf) GetUEFIVendor() string {
-	return pc.UEFIVendor
+func (d *Data) GetUEFIVendor() string {
+	return d.UEFIVendor
 }
-func (pc *PlatformConf) GetZiplSupport() bool {
-	return pc.ZiplSupport
+func (d *Data) GetZiplSupport() bool {
+	return d.ZiplSupport
 }
-func (pc *PlatformConf) GetPackages() []string {
+func (d *Data) GetPackages() []string {
 	var merged []string
-	for _, pkgList := range pc.Packages {
+	for _, pkgList := range d.Packages {
 		merged = append(merged, pkgList...)
 	}
 	return merged
 }
-func (pc *PlatformConf) GetBuildPackages() []string {
+func (d *Data) GetBuildPackages() []string {
 	var merged []string
-	for _, pkgList := range pc.BuildPackages {
+	for _, pkgList := range d.BuildPackages {
 		merged = append(merged, pkgList...)
 	}
 	return merged
 }
-func (pc *PlatformConf) GetBootFiles() [][2]string {
-	return pc.BootFiles
+func (d *Data) GetBootFiles() [][2]string {
+	return d.BootFiles
 }
 
-func (pc *PlatformConf) GetBootloader() Bootloader {
-	return pc.Bootloader
+func (d *Data) GetBootloader() Bootloader {
+	return d.Bootloader
 }
 
 // GetFIPSMenu is used to add the FIPS entry to the iso bootloader menu
-func (pc *PlatformConf) GetFIPSMenu() bool {
-	return pc.FIPSMenu
+func (d *Data) GetFIPSMenu() bool {
+	return d.FIPSMenu
 }
