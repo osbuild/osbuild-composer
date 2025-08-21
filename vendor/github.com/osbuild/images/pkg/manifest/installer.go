@@ -24,12 +24,4 @@ type InstallerCustomizations struct {
 	ISOBoot       ISOBootType
 
 	DefaultMenu int
-
-	// If set, the kickstart file will be added to the bootiso-tree at the
-	// default path for osbuild, otherwise any kickstart options will be
-	// configured in the default location for interactive defaults in the
-	// rootfs. Enabling UnattendedKickstart automatically enables this option
-	// because automatic installations cannot be configured using interactive
-	// defaults.
-	ISORootKickstart bool
 }

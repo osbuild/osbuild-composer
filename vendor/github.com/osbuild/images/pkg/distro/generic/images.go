@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
-	"github.com/osbuild/images/internal/workload"
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/customizations/anaconda"
 	"github.com/osbuild/images/pkg/customizations/bootc"
@@ -344,15 +343,6 @@ func installerCustomizations(t *imageType, c *blueprint.Customizations) (manifes
 		if isoboot := installerConfig.ISOBootType; isoboot != nil {
 			isc.ISOBoot = *isoboot
 		}
-
-		// Put the kickstart file in the root of the iso, some image
-		// types (like rhel10/image-installer) put them there, some
-		// others (like fedora/image-installer) do not and because
-		// its not uniform we need to make it configurable.
-		// XXX: unify with rhel-11 ? or rhel-10.x?
-		if rootkickstart := installerConfig.ISORootKickstart; rootkickstart != nil {
-			isc.ISORootKickstart = *rootkickstart
-		}
 	}
 
 	installerCust, err := c.GetInstaller()
@@ -439,7 +429,7 @@ func ostreeDeploymentCustomizations(
 
 // IMAGES
 
-func diskImage(workload workload.Workload,
+func diskImage(imgTypeCustomizations manifest.OSCustomizations,
 	t *imageType,
 	bp *blueprint.Blueprint,
 	options distro.ImageOptions,
@@ -457,7 +447,7 @@ func diskImage(workload workload.Workload,
 	}
 
 	img.Environment = &t.ImageTypeYAML.Environment
-	img.Workload = workload
+	img.ImgTypeCustomizations = imgTypeCustomizations
 	img.Compression = t.ImageTypeYAML.Compression
 	if bp.Minimal {
 		// Disable weak dependencies if the 'minimal' option is enabled
@@ -487,7 +477,7 @@ func diskImage(workload workload.Workload,
 	return img, nil
 }
 
-func tarImage(workload workload.Workload,
+func tarImage(imgTypeCustomizations manifest.OSCustomizations,
 	t *imageType,
 	bp *blueprint.Blueprint,
 	options distro.ImageOptions,
@@ -507,7 +497,7 @@ func tarImage(workload workload.Workload,
 	d := t.arch.distro
 
 	img.Environment = &t.ImageTypeYAML.Environment
-	img.Workload = workload
+	img.ImgTypeCustomizations = imgTypeCustomizations
 	img.Compression = t.ImageTypeYAML.Compression
 	img.OSVersion = d.OsVersion()
 
@@ -516,7 +506,7 @@ func tarImage(workload workload.Workload,
 	return img, nil
 }
 
-func containerImage(workload workload.Workload,
+func containerImage(imgTypeCustomizations manifest.OSCustomizations,
 	t *imageType,
 	bp *blueprint.Blueprint,
 	options distro.ImageOptions,
@@ -534,14 +524,14 @@ func containerImage(workload workload.Workload,
 	}
 
 	img.Environment = &t.ImageTypeYAML.Environment
-	img.Workload = workload
+	img.ImgTypeCustomizations = imgTypeCustomizations
 
 	img.Filename = t.Filename()
 
 	return img, nil
 }
 
-func liveInstallerImage(workload workload.Workload,
+func liveInstallerImage(imgTypeCustomizations manifest.OSCustomizations,
 	t *imageType,
 	bp *blueprint.Blueprint,
 	options distro.ImageOptions,
@@ -552,7 +542,7 @@ func liveInstallerImage(workload workload.Workload,
 	img := image.NewAnacondaLiveInstaller()
 
 	img.Platform = t.platform
-	img.Workload = workload
+	img.ImgTypeCustomizations = imgTypeCustomizations
 	img.ExtraBasePackages = packageSets[installerPkgsKey]
 
 	d := t.arch.distro
@@ -585,7 +575,7 @@ func liveInstallerImage(workload workload.Workload,
 	return img, nil
 }
 
-func imageInstallerImage(workload workload.Workload,
+func imageInstallerImage(imgTypeCustomizations manifest.OSCustomizations,
 	t *imageType,
 	bp *blueprint.Blueprint,
 	options distro.ImageOptions,
@@ -612,7 +602,7 @@ func imageInstallerImage(workload workload.Workload,
 	img.Kickstart.Timezone = &img.OSCustomizations.Timezone
 
 	img.Platform = t.platform
-	img.Workload = workload
+	img.ImgTypeCustomizations = imgTypeCustomizations
 
 	img.ExtraBasePackages = packageSets[installerPkgsKey]
 
@@ -655,7 +645,7 @@ func imageInstallerImage(workload workload.Workload,
 	return img, nil
 }
 
-func iotCommitImage(workload workload.Workload,
+func iotCommitImage(imgTypeCustomizations manifest.OSCustomizations,
 	t *imageType,
 	bp *blueprint.Blueprint,
 	options distro.ImageOptions,
@@ -683,7 +673,7 @@ func iotCommitImage(workload workload.Workload,
 	}
 
 	img.Environment = &t.ImageTypeYAML.Environment
-	img.Workload = workload
+	img.ImgTypeCustomizations = imgTypeCustomizations
 	img.OSTreeParent = parentCommit
 	img.OSVersion = d.OsVersion()
 	img.Filename = t.Filename()
@@ -691,7 +681,7 @@ func iotCommitImage(workload workload.Workload,
 	return img, nil
 }
 
-func bootableContainerImage(workload workload.Workload,
+func bootableContainerImage(imgTypeCustomizations manifest.OSCustomizations,
 	t *imageType,
 	bp *blueprint.Blueprint,
 	options distro.ImageOptions,
@@ -713,7 +703,7 @@ func bootableContainerImage(workload workload.Workload,
 	}
 
 	img.Environment = &t.ImageTypeYAML.Environment
-	img.Workload = workload
+	img.ImgTypeCustomizations = imgTypeCustomizations
 	img.OSTreeParent = parentCommit
 	img.OSVersion = d.OsVersion()
 	img.Filename = t.Filename()
@@ -731,7 +721,7 @@ func bootableContainerImage(workload workload.Workload,
 	return img, nil
 }
 
-func iotContainerImage(workload workload.Workload,
+func iotContainerImage(imgTypeCustomizations manifest.OSCustomizations,
 	t *imageType,
 	bp *blueprint.Blueprint,
 	options distro.ImageOptions,
@@ -758,7 +748,7 @@ func iotContainerImage(workload workload.Workload,
 
 	img.ContainerLanguage = img.OSCustomizations.Language
 	img.Environment = &t.ImageTypeYAML.Environment
-	img.Workload = workload
+	img.ImgTypeCustomizations = imgTypeCustomizations
 	img.OSTreeParent = parentCommit
 	img.OSVersion = d.OsVersion()
 	img.ExtraContainerPackages = packageSets[containerPkgsKey]
@@ -767,7 +757,7 @@ func iotContainerImage(workload workload.Workload,
 	return img, nil
 }
 
-func iotInstallerImage(workload workload.Workload,
+func iotInstallerImage(imgTypeCustomizations manifest.OSCustomizations,
 	t *imageType,
 	bp *blueprint.Blueprint,
 	options distro.ImageOptions,
@@ -837,7 +827,7 @@ func iotInstallerImage(workload workload.Workload,
 	return img, nil
 }
 
-func iotImage(workload workload.Workload,
+func iotImage(imgTypeCustomizations manifest.OSCustomizations,
 	t *imageType,
 	bp *blueprint.Blueprint,
 	options distro.ImageOptions,
@@ -859,7 +849,7 @@ func iotImage(workload workload.Workload,
 	img.OSTreeDeploymentCustomizations = deploymentConfig
 
 	img.Platform = t.platform
-	img.Workload = workload
+	img.ImgTypeCustomizations = imgTypeCustomizations
 
 	img.Remote = ostree.Remote{
 		Name: t.ImageTypeYAML.OSTree.RemoteName,
@@ -885,7 +875,7 @@ func iotImage(workload workload.Workload,
 	return img, nil
 }
 
-func iotSimplifiedInstallerImage(workload workload.Workload,
+func iotSimplifiedInstallerImage(imgTypeCustomizations manifest.OSCustomizations,
 	t *imageType,
 	bp *blueprint.Blueprint,
 	options distro.ImageOptions,
@@ -907,7 +897,7 @@ func iotSimplifiedInstallerImage(workload workload.Workload,
 	rawImg.OSTreeDeploymentCustomizations = deploymentConfig
 
 	rawImg.Platform = t.platform
-	rawImg.Workload = workload
+	rawImg.ImgTypeCustomizations = imgTypeCustomizations
 	rawImg.Remote = ostree.Remote{
 		Name: t.OSTree.RemoteName,
 	}
@@ -928,7 +918,7 @@ func iotSimplifiedInstallerImage(workload workload.Workload,
 
 	img := image.NewOSTreeSimplifiedInstaller(rawImg, customizations.InstallationDevice)
 	img.ExtraBasePackages = packageSets[installerPkgsKey]
-	// img.Workload = workload
+	// img.ImgTypeCustomizations = imgTypeCustomizations
 	img.Platform = t.platform
 	img.Filename = t.Filename()
 	if bpFDO := customizations.GetFDO(); bpFDO != nil {
@@ -970,7 +960,7 @@ func iotSimplifiedInstallerImage(workload workload.Workload,
 }
 
 // Make an Anaconda installer boot.iso
-func netinstImage(workload workload.Workload,
+func netinstImage(imgTypeCustomizations manifest.OSCustomizations,
 	t *imageType,
 	bp *blueprint.Blueprint,
 	options distro.ImageOptions,
@@ -987,7 +977,7 @@ func netinstImage(workload workload.Workload,
 	}
 
 	img.Platform = t.platform
-	img.Workload = workload
+	img.ImgTypeCustomizations = imgTypeCustomizations
 	img.ExtraBasePackages = packageSets[installerPkgsKey]
 
 	var err error

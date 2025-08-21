@@ -4,7 +4,6 @@ import (
 	"math/rand"
 
 	"github.com/osbuild/images/internal/environment"
-	"github.com/osbuild/images/internal/workload"
 	"github.com/osbuild/images/pkg/artifact"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/platform"
@@ -14,11 +13,11 @@ import (
 
 type BaseContainer struct {
 	Base
-	Platform         platform.Platform
-	OSCustomizations manifest.OSCustomizations
-	Environment      environment.Environment
-	Workload         workload.Workload
-	Filename         string
+	Platform              platform.Platform
+	OSCustomizations      manifest.OSCustomizations
+	Environment           environment.Environment
+	ImgTypeCustomizations manifest.OSCustomizations
+	Filename              string
 }
 
 func NewBaseContainer() *BaseContainer {
@@ -37,7 +36,7 @@ func (img *BaseContainer) InstantiateManifest(m *manifest.Manifest,
 	osPipeline := manifest.NewOS(buildPipeline, img.Platform, repos)
 	osPipeline.OSCustomizations = img.OSCustomizations
 	osPipeline.Environment = img.Environment
-	osPipeline.Workload = img.Workload
+	osPipeline.ImgTypeCustomizations = img.ImgTypeCustomizations
 
 	ociPipeline := manifest.NewOCIContainer(buildPipeline, osPipeline)
 	ociPipeline.SetFilename(img.Filename)

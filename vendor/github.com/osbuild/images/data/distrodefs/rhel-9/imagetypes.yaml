@@ -1157,8 +1157,6 @@
       - "org.fedoraproject.Anaconda.Modules.Payloads"
       - "org.fedoraproject.Anaconda.Modules.Runtime"
       - "org.fedoraproject.Anaconda.Modules.Storage"
-    # see commit c6bfb22f54, controls the kickstart location
-    iso_root_kickstart: true
     additional_dracut_modules:
       - "nvdimm"  # non-volatile DIMM firmware (provides nfit, cuse, and nd_e820)
       - "ifcfg"

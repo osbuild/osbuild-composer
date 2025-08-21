@@ -16,7 +16,6 @@ type InstallerConfig struct {
 	// XXX: this is really here only for compatibility/because of drift in the "imageInstallerImage"
 	// between fedora/rhel
 	KickstartUnattendedExtraKernelOpts []string `yaml:"kickstart_unattended_extra_kernel_opts"`
-	ISORootKickstart                   *bool    `yaml:"iso_root_kickstart"`
 
 	// DefaultMenu will set the grub2 iso menu's default setting
 	DefaultMenu *int `yaml:"default_menu"`

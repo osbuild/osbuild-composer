@@ -103,7 +103,7 @@ distros:
           - azure
     # rhel & centos share the same list of allowed profiles so a
     # single allow list can be used
-    oscap_profiles_allowlist: &oscap_profile_allowlist_rhel
+    oscap_profiles_allowlist: &oscap_profile_allowlist_rhel_10
       - "xccdf_org.ssgproject.content_profile_anssi_bp28_enhanced"
       - "xccdf_org.ssgproject.content_profile_anssi_bp28_high"
       - "xccdf_org.ssgproject.content_profile_anssi_bp28_intermediary"
@@ -112,7 +112,6 @@ distros:
       - "xccdf_org.ssgproject.content_profile_cis_server_l1"
       - "xccdf_org.ssgproject.content_profile_cis_workstation_l1"
       - "xccdf_org.ssgproject.content_profile_cis_workstation_l2"
-      - "xccdf_org.ssgproject.content_profile_cui"
       - "xccdf_org.ssgproject.content_profile_e8"
       - "xccdf_org.ssgproject.content_profile_hipaa"
       - "xccdf_org.ssgproject.content_profile_ism_o"
@@ -150,7 +149,7 @@ distros:
     runner:
       name: org.osbuild.centos10
       build_packages: *rhel10_runner_build_packages
-    oscap_profiles_allowlist: *oscap_profile_allowlist_rhel
+    oscap_profiles_allowlist: *oscap_profile_allowlist_rhel_10
     bootstrap_containers:
       # we need the toolbox container because stock centos has e.g. no
       # mount util
@@ -210,7 +209,27 @@ distros:
         - "platform-python"  # osbuild
         - "python3"
     # rhel9 allow all
-    oscap_profiles_allowlist: *oscap_profile_allowlist_rhel
+    oscap_profiles_allowlist: &oscap_profile_allowlist_rhel_9
+      - "xccdf_org.ssgproject.content_profile_anssi_bp28_enhanced"
+      - "xccdf_org.ssgproject.content_profile_anssi_bp28_high"
+      - "xccdf_org.ssgproject.content_profile_anssi_bp28_intermediary"
+      - "xccdf_org.ssgproject.content_profile_anssi_bp28_minimal"
+      - "xccdf_org.ssgproject.content_profile_ccn_advanced"
+      - "xccdf_org.ssgproject.content_profile_ccn_basic"
+      - "xccdf_org.ssgproject.content_profile_ccn_intermediate"
+      - "xccdf_org.ssgproject.content_profile_cis"
+      - "xccdf_org.ssgproject.content_profile_cis_server_l1"
+      - "xccdf_org.ssgproject.content_profile_cis_workstation_l1"
+      - "xccdf_org.ssgproject.content_profile_cis_workstation_l2"
+      - "xccdf_org.ssgproject.content_profile_cui"
+      - "xccdf_org.ssgproject.content_profile_e8"
+      - "xccdf_org.ssgproject.content_profile_hipaa"
+      - "xccdf_org.ssgproject.content_profile_ism_o"
+      - "xccdf_org.ssgproject.content_profile_ospp"
+      - "xccdf_org.ssgproject.content_profile_pci-dss"
+      - "xccdf_org.ssgproject.content_profile_stig"
+      - "xccdf_org.ssgproject.content_profile_stig_gui"
+
     bootstrap_containers:
       x86_64: "registry.access.redhat.com/ubi{{.MajorVersion}}/ubi:latest"
       aarch64: "registry.access.redhat.com/ubi{{.MajorVersion}}/ubi:latest"
@@ -231,6 +250,7 @@ distros:
     runner:
       name: org.osbuild.centos9
       build_packages: *rhel9_runner_build_packages
+    oscap_profiles_allowlist: *oscap_profile_allowlist_rhel_9
     bootstrap_containers:
       # we need the toolbox container because stock centos has e.g. no
       # mount util
@@ -282,7 +302,23 @@ distros:
         # https://github.com/osbuild/osbuild/blob/ea8261cad6c5c606c00c0f2824c3f483c01a0cc9/runners/org.osbuild.rhel82#L61
         # Install python36 explicitly for RHEL 8.
         - "python36"
-    oscap_profiles_allowlist: *oscap_profile_allowlist_rhel
+    oscap_profiles_allowlist: &oscap_profile_allowlist_rhel_8
+      - "xccdf_org.ssgproject.content_profile_anssi_bp28_enhanced"
+      - "xccdf_org.ssgproject.content_profile_anssi_bp28_high"
+      - "xccdf_org.ssgproject.content_profile_anssi_bp28_intermediary"
+      - "xccdf_org.ssgproject.content_profile_anssi_bp28_minimal"
+      - "xccdf_org.ssgproject.content_profile_cis"
+      - "xccdf_org.ssgproject.content_profile_cis_server_l1"
+      - "xccdf_org.ssgproject.content_profile_cis_workstation_l1"
+      - "xccdf_org.ssgproject.content_profile_cis_workstation_l2"
+      - "xccdf_org.ssgproject.content_profile_cui"
+      - "xccdf_org.ssgproject.content_profile_e8"
+      - "xccdf_org.ssgproject.content_profile_hipaa"
+      - "xccdf_org.ssgproject.content_profile_ism_o"
+      - "xccdf_org.ssgproject.content_profile_ospp"
+      - "xccdf_org.ssgproject.content_profile_pci-dss"
+      - "xccdf_org.ssgproject.content_profile_stig"
+      - "xccdf_org.ssgproject.content_profile_stig_gui"
     bootstrap_containers:
       x86_64: "registry.access.redhat.com/ubi{{.MajorVersion}}/ubi:latest"
       aarch64: "registry.access.redhat.com/ubi{{.MajorVersion}}/ubi:latest"
@@ -301,7 +337,7 @@ distros:
     runner:
       name: org.osbuild.centos8
       build_packages: *rhel8_runner_build_packages
-    oscap_profiles_allowlist: *oscap_profile_allowlist_rhel
+    oscap_profiles_allowlist: *oscap_profile_allowlist_rhel_8
     bootstrap_containers:
       # we need the toolbox container because stock centos has e.g. no
       # mount util

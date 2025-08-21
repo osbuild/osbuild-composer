@@ -10,7 +10,6 @@ import (
 
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/internal/environment"
-	"github.com/osbuild/images/internal/workload"
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/customizations/bootc"
@@ -39,6 +38,10 @@ type OSCustomizations struct {
 	// Packages to install in addition to the ones required by the pipeline.
 	// These are the statically defined packages for the image type.
 	BasePackages []string
+
+	// Modules to install in addition to the ones required by the pipeline.
+	// These are the statically defined packages for the image type.
+	BaseModules []string
 
 	// Packages to exclude from the base package set. This is useful in
 	// case of weak dependencies, comps groups, or where multiple packages
@@ -193,8 +196,10 @@ type OS struct {
 
 	// Environment the system will run in
 	Environment environment.Environment
-	// Workload to install on top of the base system
-	Workload workload.Workload
+
+	// ImageTypeCustomizations come from the image type
+	ImgTypeCustomizations OSCustomizations
+
 	// Ref of ostree commit (optional). If empty the tree cannot be in an ostree commit
 	OSTreeRef string
 	// OSTreeParent source spec (optional). If nil the new commit (if
@@ -335,23 +340,21 @@ func (p *OS) getPackageSetChain(Distro) []rpmmd.PackageSet {
 		},
 	}
 
-	if p.Workload != nil {
-		workloadPackages := p.Workload.GetPackages()
-		if len(workloadPackages) > 0 {
-			ps := rpmmd.PackageSet{
-				Include:      workloadPackages,
-				Repositories: append(osRepos, p.Workload.GetRepos()...),
-				// Although 'false' is the default value, set it explicitly to make
-				// it visible that we are not adding weak dependencies.
-				InstallWeakDeps: false,
-			}
-
-			workloadModules := p.Workload.GetEnabledModules()
-			if len(workloadModules) > 0 {
-				ps.EnabledModules = workloadModules
-			}
-			chain = append(chain, ps)
+	imgTypePackages := p.ImgTypeCustomizations.BasePackages
+	if len(imgTypePackages) > 0 {
+		ps := rpmmd.PackageSet{
+			Include:      imgTypePackages,
+			Repositories: append(osRepos, p.ImgTypeCustomizations.ExtraBaseRepos...),
+			// Although 'false' is the default value, set it explicitly to make
+			// it visible that we are not adding weak dependencies.
+			InstallWeakDeps: false,
 		}
+
+		imgTypeModules := p.ImgTypeCustomizations.BaseModules
+		if len(imgTypeModules) > 0 {
+			ps.EnabledModules = imgTypeModules
+		}
+		chain = append(chain, ps)
 	}
 
 	return chain
@@ -503,9 +506,8 @@ func (p *OS) serialize() osbuild.Pipeline {
 
 	// collect all repos for this pipeline to create the repository options
 	allRepos := append(p.repos, p.OSCustomizations.ExtraBaseRepos...)
-	if p.Workload != nil {
-		allRepos = append(allRepos, p.Workload.GetRepos()...)
-	}
+	allRepos = append(allRepos, p.ImgTypeCustomizations.ExtraBaseRepos...)
+
 	rpmOptions := osbuild.NewRPMStageOptions(allRepos)
 	if p.OSCustomizations.ExcludeDocs {
 		if rpmOptions.Exclude == nil {
@@ -858,11 +860,10 @@ func (p *OS) serialize() osbuild.Pipeline {
 	if p.Environment != nil {
 		enabledServices = append(enabledServices, p.Environment.GetServices()...)
 	}
-	if p.Workload != nil {
-		enabledServices = append(enabledServices, p.Workload.GetServices()...)
-		disabledServices = append(disabledServices, p.Workload.GetDisabledServices()...)
-		maskedServices = append(maskedServices, p.Workload.GetMaskedServices()...)
-	}
+	enabledServices = append(enabledServices, p.ImgTypeCustomizations.EnabledServices...)
+	disabledServices = append(disabledServices, p.ImgTypeCustomizations.DisabledServices...)
+	maskedServices = append(maskedServices, p.ImgTypeCustomizations.MaskedServices...)
+
 	if len(enabledServices) != 0 ||
 		len(disabledServices) != 0 ||
 		len(maskedServices) != 0 || p.OSCustomizations.DefaultTarget != "" {
