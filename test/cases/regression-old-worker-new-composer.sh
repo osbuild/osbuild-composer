@@ -34,12 +34,6 @@ DESIRED_WORKER_RPM="osbuild-composer-worker-$((CURRENT_WORKER_VERSION - 3))"
 DESIRED_TAG_SHA=$(curl -s "https://api.github.com/repos/osbuild/osbuild-composer/git/ref/tags/v$((CURRENT_WORKER_VERSION-3))" | jq -r '.object.sha')
 DESIRED_COMMIT_SHA=$(curl -s "https://api.github.com/repos/osbuild/osbuild-composer/git/tags/$DESIRED_TAG_SHA" | jq -r '.object.sha')
 
-# Get commit hash of latest composer version, only used for verification.
-CURRENT_COMPOSER_VERSION=$(rpm -q --qf '%{version}\n' osbuild-composer)
-
-COMPOSER_LATEST_TAG_SHA=$(curl -s "https://api.github.com/repos/osbuild/osbuild-composer/git/ref/tags/v$((CURRENT_COMPOSER_VERSION-1))" | jq -r '.object.sha')
-COMPOSER_LATEST_COMMIT_SHA=$(curl -s "https://api.github.com/repos/osbuild/osbuild-composer/git/tags/$COMPOSER_LATEST_TAG_SHA" | jq -r '.object.sha')
-
 COMPOSER_CONTAINER_NAME="composer"
 
 # Container image used for cloud provider CLI tools
@@ -393,7 +387,6 @@ $AWS_CMD s3api put-object-tagging \
 
 greenprint "✅ Successfully tagged S3 object"
 
-setup_repo osbuild-composer "$COMPOSER_LATEST_COMMIT_SHA" 10
 OSBUILD_GIT_COMMIT=$(cat Schutzfile | jq -r '.["'"${ID}-${VERSION_ID}"'"].dependencies.osbuild.commit')
 setup_repo osbuild "$OSBUILD_GIT_COMMIT" 10
 
