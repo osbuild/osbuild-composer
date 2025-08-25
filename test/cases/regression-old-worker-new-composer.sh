@@ -22,17 +22,77 @@ fi
 # Provision the software under test.
 /usr/libexec/osbuild-composer-test/provision.sh
 
-CURRENT_WORKER_VERSION=$(rpm -q --qf '%{version}\n' osbuild-composer-worker)
-DESIRED_WORKER_RPM="osbuild-composer-worker-$((CURRENT_WORKER_VERSION - 3))"
+# Check if there is a working repository for the given commit SHA on the S3 AWS bucket.
+function check_s3_repo_for_composer_sha {
+    if [[ $# -ne 1 ]]; then
+        redprint "Usage: check_s3_repo_for_composer_sha <commit-sha>"
+        return 1
+    fi
+    local COMMIT_SHA=$1
 
-# Get the commit hash of the worker version we want to test by comparing the
-# tag for 2 versions back - since the current version might still be unreleased,
-# we subtract 3 from the current version.
+    local REPOMD_URL
+    REPOMD_URL="http://osbuild-composer-repos.s3-website.us-east-2.amazonaws.com/osbuild-composer/rhel-$(echo "$VERSION_ID" | sed -E 's/\..*//')-cdn/x86_64/${COMMIT_SHA}/repodata/repomd.xml"
+    if ! curl --silent --head --fail "$REPOMD_URL" > /dev/null; then
+        return 0
+    fi
+    return 1
+}
+
+# Determine the commit SHA of the osbuild-composer worker version we want to test.
+# This function will try to find a working repository for the commit SHA corresponding
+# to the given version. If that commit doesn't have a working repository, it will try
+# to iterate back 10 commits to find a working repository. If not found it will exit
+# with error.
+#
+# The function expects the current worker version as argument.
+#
 # WARNING - with introduction of a new major version, new `rhel-*-cdn` directory on S3 AWS bucket will be new as well
 # that means it will lack the repositories built from commits tagged with previous versions,
 # so you need to manually copy them there from directories for minor versions on the same S3 AWS bucket.
-DESIRED_TAG_SHA=$(curl -s "https://api.github.com/repos/osbuild/osbuild-composer/git/ref/tags/v$((CURRENT_WORKER_VERSION-3))" | jq -r '.object.sha')
-DESIRED_COMMIT_SHA=$(curl -s "https://api.github.com/repos/osbuild/osbuild-composer/git/tags/$DESIRED_TAG_SHA" | jq -r '.object.sha')
+function determine_composer_repo_sha {
+    if [ $# -ne 1 ]; then
+        echo "Usage: determine_composer_repo_sha <composer_version>"
+        return 1
+    fi
+    local COMPOSER_VERSION=$1
+
+    local DESIRED_TAG_SHA
+    DESIRED_TAG_SHA=$(curl -s --fail "https://api.github.com/repos/osbuild/osbuild-composer/git/ref/tags/v${COMPOSER_VERSION}" | jq -r '.object.sha')
+    if [[ -z "$DESIRED_TAG_SHA" || "$DESIRED_TAG_SHA" == "null" ]]; then
+        redprint "Could not find a git tag for osbuild-composer version ${COMPOSER_VERSION}"
+        return 1
+    fi
+    local DESIRED_COMMIT_SHA
+    DESIRED_COMMIT_SHA=$(curl -s --fail "https://api.github.com/repos/osbuild/osbuild-composer/git/tags/$DESIRED_TAG_SHA" | jq -r '.object.sha')
+    if [[ -z "$DESIRED_COMMIT_SHA" || "$DESIRED_COMMIT_SHA" == "null" ]]; then
+        redprint "Could not find a commit SHA for osbuild-composer version ${COMPOSER_VERSION}"
+        return 1
+    fi
+
+    local TRIES=0
+    while [[ $TRIES -lt 10 ]]; do
+        if ! check_s3_repo_for_composer_sha "$DESIRED_COMMIT_SHA"; then
+            greenprint "Found working composer RPM repository for commit ${DESIRED_COMMIT_SHA}"
+            echo "$DESIRED_COMMIT_SHA"
+            return
+        fi
+
+        yellowprint "No working repository found for commit ${DESIRED_COMMIT_SHA}, trying parent commit"
+        DESIRED_COMMIT_SHA=$(curl -s "https://api.github.com/repos/osbuild/osbuild-composer/commits/$DESIRED_COMMIT_SHA" | jq -r '.parents[0].sha')
+        TRIES=$((TRIES + 1))
+    done
+    redprint "Could not find a working repository for any commit in the last 10 versions"
+    return 1
+}
+
+CURRENT_WORKER_VERSION=$(rpm -q --qf '%{version}\n' osbuild-composer-worker)
+# Get the worker version we want to test by comparing the tag for 2 versions
+# back - since the current version might still be unreleased, we subtract 3
+# from the current version.
+
+OLD_WORKER_VERSION=$((CURRENT_WORKER_VERSION - 3))
+DESIRED_WORKER_RPM="osbuild-composer-worker-${OLD_WORKER_VERSION}"
+DESIRED_COMMIT_SHA=$(determine_composer_repo_sha "$OLD_WORKER_VERSION")
 
 COMPOSER_CONTAINER_NAME="composer"
 
@@ -75,6 +135,12 @@ setup_repo osbuild-composer "$DESIRED_COMMIT_SHA" 20
 sudo dnf install -y osbuild-composer-worker podman composer-cli
 
 # verify the right worker is installed just to be sure
+#
+# NB: the package version may be lower if the determine_composer_repo_sha
+# function had to go back more commits than the number of commits between
+# the OLD_WORKER_VERSION version tag and the previous version tag. The
+# expectation is that such situations will be rare, but you may need to adjust
+# the test if it happens.
 rpm -q "$DESIRED_WORKER_RPM"
 
 if type -p podman 2>/dev/null >&2; then
