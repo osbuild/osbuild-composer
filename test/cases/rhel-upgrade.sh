@@ -116,7 +116,7 @@ CONSOLE_PID=$!
 
 # Install the test VM
 sudo virt-install --name rhel-test \
-                  --memory 3072 \
+                  --memory 4096 \
                   --vcpus 2 \
                   --disk size=20 \
                   --location "$VIRT_BASEOS_REPO_URL" \
