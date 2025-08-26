@@ -212,9 +212,9 @@ jobs:
       with:
         ignore: vendor # We don't want to fix the code in vendored dependencies
       env:
-        # don't check /etc/os-release sourcing, allow useless cats to live inside our codebase, and
-        # allow seemingly unreachable commands
-        SHELLCHECK_OPTS: -e SC1091 -e SC2002 -e SC2317
+        # don't check /etc/os-release sourcing, allow useless cats to live inside our codebase,
+        # allow seemingly unreachable commands, and allow unused functions
+        SHELLCHECK_OPTS: -e SC1091 -e SC2002 -e SC2317 -e SC2329
 
     - name: Do not doube trap signals inside test scripts
       run: |
