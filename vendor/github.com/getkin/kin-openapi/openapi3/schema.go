@@ -17,6 +17,7 @@ import (
 
 	"github.com/go-openapi/jsonpointer"
 	"github.com/mohae/deepcopy"
+	"github.com/woodsbury/decimal128"
 )
 
 const (
@@ -245,7 +246,7 @@ func (addProps *AdditionalProperties) UnmarshalJSON(data []byte) error {
 			addProps.Schema = &SchemaRef{Value: &Schema{}}
 		} else {
 			buf := new(bytes.Buffer)
-			json.NewEncoder(buf).Encode(y)
+			_ = json.NewEncoder(buf).Encode(y)
 			if err := json.NewDecoder(buf).Decode(&addProps.Schema); err != nil {
 				return err
 			}
@@ -837,12 +838,12 @@ func (schema *Schema) WithMaxProperties(i int64) *Schema {
 }
 
 func (schema *Schema) WithAnyAdditionalProperties() *Schema {
-	schema.AdditionalProperties = AdditionalProperties{Has: BoolPtr(true)}
+	schema.AdditionalProperties = AdditionalProperties{Has: Ptr(true)}
 	return schema
 }
 
 func (schema *Schema) WithoutAdditionalProperties() *Schema {
-	schema.AdditionalProperties = AdditionalProperties{Has: BoolPtr(false)}
+	schema.AdditionalProperties = AdditionalProperties{Has: Ptr(false)}
 	return schema
 }
 
@@ -1428,6 +1429,7 @@ func (schema *Schema) visitXOFOperations(settings *schemaValidationSettings, val
 		visitedAnyOf = true
 	}
 
+	validationErrors := multiErrorForAllOf{}
 	for _, item := range schema.AllOf {
 		v := item.Value
 		if v == nil {
@@ -1437,16 +1439,19 @@ func (schema *Schema) visitXOFOperations(settings *schemaValidationSettings, val
 			if settings.failfast {
 				return errSchema, false
 			}
-			return &SchemaError{
-				Value:                 value,
-				Schema:                schema,
-				SchemaField:           "allOf",
-				Reason:                `doesn't match all schemas from "allOf"`,
-				Origin:                err,
-				customizeMessageError: settings.customizeMessageError,
-			}, false
+			validationErrors = append(validationErrors, err)
 		}
 		visitedAllOf = true
+	}
+	if len(validationErrors) > 0 {
+		return &SchemaError{
+			Value:                 value,
+			Schema:                schema,
+			SchemaField:           "allOf",
+			Reason:                `doesn't match all schemas from "allOf"`,
+			Origin:                fmt.Errorf("doesn't match schema due to: %w", validationErrors),
+			customizeMessageError: settings.customizeMessageError,
+		}, false
 	}
 
 	run = !((visitedOneOf || visitedAnyOf || visitedAllOf) && value == nil)
@@ -1643,7 +1648,10 @@ func (schema *Schema) visitJSONNumber(settings *schemaValidationSettings, value 
 	if v := schema.MultipleOf; v != nil {
 		// "A numeric instance is valid only if division by this keyword's
 		//    value results in an integer."
-		if bigFloat := big.NewFloat(value / *v); !bigFloat.IsInt() {
+		numParsed, _ := decimal128.Parse(fmt.Sprintf("%.10f", value))
+		denParsed, _ := decimal128.Parse(fmt.Sprintf("%.10f", *v))
+		_, remainder := numParsed.QuoRem(denParsed)
+		if !remainder.IsZero() {
 			if settings.failfast {
 				return errSchema
 			}
