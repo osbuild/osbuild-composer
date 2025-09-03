@@ -165,6 +165,9 @@ build {
       "-e", "RH_ACTIVATION_KEY=${var.rh_activation_key}",
       "-e", "RH_ORG_ID=${var.rh_org_id}",
       "--tags", "${var.ansible_tags}",
+      # Use legacy SCP protocol, instead of SFTP, to prevent issues like:
+      # "Failed to connect to the host via scp: bash: line 1: /usr/lib/sftp-server: No such file or directory"
+      "--scp-extra-args='-O'",
     ]
     inventory_directory = "${path.root}/ansible/inventory/${source.name}"
   }
