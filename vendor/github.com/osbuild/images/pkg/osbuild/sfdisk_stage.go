@@ -40,6 +40,9 @@ type SfdiskPartition struct {
 
 	// UUID of the partition (GPT)
 	UUID string `json:"uuid,omitempty"`
+
+	// Partition attribute flags to set (GPT)
+	Attrs []uint `json:"attrs,omitempty"`
 }
 
 func (o SfdiskStageOptions) validate() error {

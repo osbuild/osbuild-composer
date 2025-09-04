@@ -9,5 +9,5 @@ import (
 func Quote(s string) string {
 	// use single quotes, and put single quotes into double quotes
 	// the string $'b is then quoted as '$'"'"'b'
-	return `'` + strings.Replace(s, `'`, `'"'"'`, -1) + `'`
+	return `'` + strings.ReplaceAll(s, `'`, `'"'"'`) + `'`
 }

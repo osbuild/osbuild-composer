@@ -60,14 +60,15 @@ func xorrisofsStageOptions(filename, isolabel string, isoboot ISOBootType) *osbu
 		ISOLevel: 3,
 	}
 
-	if isoboot == SyslinuxISOBoot {
+	switch isoboot {
+	case SyslinuxISOBoot:
 		// Syslinux BIOS ISO creation
 		options.Boot = &osbuild.XorrisofsBoot{
 			Image:   "isolinux/isolinux.bin",
 			Catalog: "isolinux/boot.cat",
 		}
 		options.IsohybridMBR = "/usr/share/syslinux/isohdpfx.bin"
-	} else if isoboot == Grub2ISOBoot {
+	case Grub2ISOBoot:
 		// grub2 BIOS ISO creation
 		options.Boot = &osbuild.XorrisofsBoot{
 			Image:   "images/eltorito.img",

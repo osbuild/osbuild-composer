@@ -181,8 +181,8 @@ func parseRepoFile(content []byte) ([]subscription, error) {
 func (s *Subscriptions) GetSecretsForBaseurl(baseurls []string, arch, releasever string) (*RHSMSecrets, error) {
 	for _, subs := range s.available {
 		for _, baseurl := range baseurls {
-			url := strings.Replace(subs.baseurl, "$basearch", arch, -1)
-			url = strings.Replace(url, "$releasever", releasever, -1)
+			url := strings.ReplaceAll(subs.baseurl, "$basearch", arch)
+			url = strings.ReplaceAll(url, "$releasever", releasever)
 			if url == baseurl {
 				return &RHSMSecrets{
 					SSLCACert:     subs.sslCACert,

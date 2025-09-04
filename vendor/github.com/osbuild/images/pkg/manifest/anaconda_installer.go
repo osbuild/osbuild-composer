@@ -48,17 +48,11 @@ type AnacondaInstaller struct {
 	// the naming of network devices on the target system.
 	Biosdevname bool
 
-	// Variant is the variant of the product being installed, if applicable.
-	Variant string
-
 	platform     platform.Platform
 	repos        []rpmmd.RepoConfig
 	packageSpecs []rpmmd.PackageSpec
 	kernelName   string
 	kernelVer    string
-	product      string
-	version      string
-	preview      bool
 
 	// Interactive defaults is a kickstart stage that can be provided, it
 	// will be written to /usr/share/anaconda/interactive-defaults
@@ -85,20 +79,17 @@ func NewAnacondaInstaller(installerType AnacondaInstallerType,
 	buildPipeline Build,
 	platform platform.Platform,
 	repos []rpmmd.RepoConfig,
-	kernelName,
-	product,
-	version string,
-	preview bool) *AnacondaInstaller {
+	kernelName string,
+	instCust InstallerCustomizations,
+) *AnacondaInstaller {
 	name := "anaconda-tree"
 	p := &AnacondaInstaller{
-		Base:       NewBase(name, buildPipeline),
-		Type:       installerType,
-		platform:   platform,
-		repos:      filterRepos(repos, name),
-		kernelName: kernelName,
-		product:    product,
-		version:    version,
-		preview:    preview,
+		Base:                    NewBase(name, buildPipeline),
+		Type:                    installerType,
+		platform:                platform,
+		repos:                   filterRepos(repos, name),
+		kernelName:              kernelName,
+		InstallerCustomizations: instCust,
 	}
 	buildPipeline.addDependent(p)
 	return p
@@ -232,10 +223,10 @@ func (p *AnacondaInstaller) serialize() osbuild.Pipeline {
 	pipeline.AddStage(osbuild.NewRPMStage(options, osbuild.NewRpmStageSourceFilesInputs(p.packageSpecs)))
 	pipeline.AddStage(osbuild.NewBuildstampStage(&osbuild.BuildstampStageOptions{
 		Arch:    p.platform.GetArch().String(),
-		Product: p.product,
-		Variant: p.Variant,
-		Version: p.version,
-		Final:   !p.preview,
+		Product: p.InstallerCustomizations.Product,
+		Variant: p.InstallerCustomizations.Variant,
+		Version: p.InstallerCustomizations.OSVersion,
+		Final:   !p.InstallerCustomizations.Preview,
 	}))
 
 	locale := p.Locale

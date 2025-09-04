@@ -403,7 +403,7 @@ func (cl *Client) GetManifest(ctx context.Context, instanceDigest digest.Digest,
 		if local {
 			localId, err = cl.getLocalImageIDFromDigest(instanceDigest)
 			if err != nil {
-				return r, err
+				return RawManifest{}, err
 			}
 		} else {
 			// We can pass the instance digest, if it is nil, then this is the primary manifest.
@@ -417,12 +417,12 @@ func (cl *Client) GetManifest(ctx context.Context, instanceDigest digest.Digest,
 
 	ref, err := cl.getImageRef(localId, local)
 	if err != nil {
-		return
+		return RawManifest{}, err
 	}
 
 	src, err := ref.NewImageSource(ctx, cl.sysCtx)
 	if err != nil {
-		return
+		return RawManifest{}, err
 	}
 
 	defer func() {
@@ -454,10 +454,10 @@ func (cl *Client) GetManifest(ctx context.Context, instanceDigest digest.Digest,
 
 		return nil
 	}, &retryOpts); err != nil {
-		return
+		return RawManifest{}, err
 	}
 
-	return
+	return r, nil
 }
 
 type manifestList interface {
@@ -533,11 +533,9 @@ func (cl *Client) resolveRawManifest(ctx context.Context, rm RawManifest, local 
 
 	case manifest.DockerV2Schema2MediaType:
 		m, err := manifest.Schema2FromManifest(rm.Data)
-
 		if err != nil {
 			return resolvedIds{}, nil, nil
 		}
-
 		imageID = m.ConfigInfo().Digest
 
 	default:
@@ -545,7 +543,6 @@ func (cl *Client) resolveRawManifest(ctx context.Context, rm RawManifest, local 
 	}
 
 	dg, err := rm.Digest()
-
 	if err != nil {
 		return resolvedIds{}, nil, err
 	}

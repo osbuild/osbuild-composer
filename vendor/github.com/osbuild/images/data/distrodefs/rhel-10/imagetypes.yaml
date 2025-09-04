@@ -66,18 +66,25 @@
       image_format: "raw"
       packages:
         <<: *x86_64_bios_platform_packages
+        booting:
+          - "biosdevname"
         firmware:
-          - "microcode_ctl"  # ??
-          - "iwl1000-firmware"
-          - "iwl100-firmware"
-          - "iwl105-firmware"
-          - "iwl135-firmware"
-          - "iwl2000-firmware"
-          - "iwl2030-firmware"
-          - "iwl3160-firmware"
-          - "iwl5000-firmware"
-          - "iwl5150-firmware"
-          - "iwl6050-firmware"
+          - "amd-gpu-firmware"
+          - "amd-ucode-firmware"
+          - "atheros-firmware"
+          - "brcmfmac-firmware"
+          - "intel-gpu-firmware"
+          - "iwlegacy-firmware"
+          - "iwlwifi-dvm-firmware"
+          - "iwlwifi-mvm-firmware"
+          - "libertas-firmware"
+          - "linux-firmware"
+          - "linux-firmware"
+          - "mt7xxx-firmware"
+          - "nvidia-gpu-firmware"
+          - "nxpwireless-firmware"
+          - "realtek-firmware"
+          - "tiwilink-firmware"
     aarch64_platform: &aarch64_platform
       arch: "aarch64"
       bootloader: "grub2"
@@ -91,6 +98,29 @@
           - "grub2-efi-aa64"
           - "grub2-tools"
           - "shim-aa64"
+    aarch64_installer_platform: &aarch64_installer_platform
+      <<: *aarch64_platform
+      packages:
+        <<: *aarch64_uefi_platform_packages
+        booting:
+          - "grub2-efi-aa64-cdboot"
+        firmware:
+          - "amd-gpu-firmware"
+          - "amd-ucode-firmware"
+          - "atheros-firmware"
+          - "brcmfmac-firmware"
+          - "intel-gpu-firmware"
+          - "iwlegacy-firmware"
+          - "iwlwifi-dvm-firmware"
+          - "iwlwifi-mvm-firmware"
+          - "libertas-firmware"
+          - "linux-firmware"
+          - "linux-firmware"
+          - "mt7xxx-firmware"
+          - "nvidia-gpu-firmware"
+          - "nxpwireless-firmware"
+          - "realtek-firmware"
+          - "tiwilink-firmware"
     ppc64le_bios_platform: &ppc64le_bios_platform
       arch: "ppc64le"
       bootloader: "grub2"
@@ -442,6 +472,8 @@
     disable_submenu: true
     distributor: "$(sed 's, release .*$,,g' /etc/system-release)"
     serial: "serial --speed=115200 --unit=0 --word=8 --parity=no --stop=1"
+    terminal_input: ["serial"]
+    terminal_output: ["serial"]
     timeout: 10
     timeout_style: "countdown"
 
@@ -1983,3 +2015,114 @@ image_types:
             # package here.
             - "linux-firmware"
             - "os-prober"
+
+  # Based on lorax runtime-install.tmpl
+  "netinst":
+    filename: "netinst.iso"
+    mime_type: "application/x-iso9660-image"
+    bootable: true
+    boot_iso: true
+    image_func: "netinst"
+    # We don't know the variant of the OS pipeline being installed
+    iso_label: "Unknown"
+    exports: ["bootiso"]
+    required_partition_sizes: *default_required_dir_sizes
+    installer_config: *default_installer_config
+    image_config:
+      locale: "en_US.UTF-8"
+    platforms:
+      - *x86_64_installer_platform
+      - *aarch64_installer_platform
+    platforms_override:
+      conditions:
+        "RHEL 10.1+ adds FIPS menu":
+          when:
+            version_greater_or_equal: "10.1"
+          override:
+            - <<: *x86_64_installer_platform
+              fips_menu: true
+            - <<: *aarch64_installer_platform
+              fips_menu: true
+    package_sets:
+      installer:
+        - include:
+            - "anaconda"
+            - "anaconda-widgets"
+            - "kdump-anaconda-addon"
+            - "anaconda-install-img-deps"
+            - "redhat-release-eula"
+            - "device-mapper-multipath"
+            - "dnf"
+            - "rpm-ostree"
+            - "ostree"
+            - "pigz"
+            - "kernel"
+            - "kernel-modules"
+            - "kernel-modules-extra"
+            - "grubby"
+            - "glibc-all-langpacks"
+            - "plymouth"
+            - "anaconda-dracut"
+            - "dracut-network"
+            - "dracut-config-generic"
+            - "initscripts"
+            - "cryptsetup"
+            - "rpcbind"
+            - "kbd"
+            - "kbd-misc"
+            - "tar"
+            - "xz"
+            - "curl"
+            - "bzip2"
+            - "rsvg-pixbuf-loader"
+            - "rsyslog"
+            - "xfsprogs"
+            - "dosfstools"
+            - "device-mapper-persistent-data"
+            - "xfsdump"
+            - "udisks2"
+            - "udisks2-iscsi"
+            - "hostname"
+            - "libblockdev-lvm-dbus"
+            - "volume_key"
+            - "nss-tools"
+            - "selinux-policy-targeted"
+            - "audit"
+            - "ethtool"
+            - "openssh-server"
+            - "nfs-utils"
+            - "openssh-clients"
+            - "net-tools"
+            - "ipcalc"
+            - "nmap-ncat"
+            - "prefixdevname"
+            - "pciutils"
+            - "usbutils"
+            - "ipmitool"
+            - "mt-st"
+            - "smartmontools"
+            - "hdparm"
+            - "rdma-core"
+            - "rng-tools"
+            - "nvme-cli"
+            - "default-fonts-core-sans"
+            - "default-fonts-other-sans"
+            - "google-noto-sans-cjk-fonts"
+            - "gdb-gdbserver"
+            - "python3-pyatspi"
+            - "nano"
+            - "vim-minimal"
+            - "strace"
+            - "lsof"
+            - "xz"
+            - "less"
+            - "wget"
+            - "rsync"
+            - "bind-utils"
+            - "ftp"
+            - "mtr"
+            - "spice-vdagent"
+            - "hexedit"
+            - "sg3_utils"
+            - "perl-interpreter"
+            - "restore"

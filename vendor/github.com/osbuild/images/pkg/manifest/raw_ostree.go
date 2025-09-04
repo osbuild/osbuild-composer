@@ -58,7 +58,7 @@ func (p *RawOSTreeImage) serialize() osbuild.Pipeline {
 		panic("no partition table in live image")
 	}
 
-	for _, stage := range osbuild.GenImagePrepareStages(pt, p.Filename(), osbuild.PTSfdisk) {
+	for _, stage := range osbuild.GenImagePrepareStages(pt, p.Filename(), osbuild.PTSfdisk, p.treePipeline.Name()) {
 		pipeline.AddStage(stage)
 	}
 

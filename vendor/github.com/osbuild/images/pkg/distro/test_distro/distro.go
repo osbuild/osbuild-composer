@@ -302,6 +302,14 @@ func (t *TestImageType) Manifest(b *blueprint.Blueprint, options distro.ImageOpt
 	return m, nil, nil
 }
 
+func (t *TestImageType) RequiredBlueprintOptions() []string {
+	return nil
+}
+
+func (t *TestImageType) SupportedBlueprintOptions() []string {
+	return nil
+}
+
 // newTestDistro returns a new instance of TestDistro with the
 // given release version.
 //
