@@ -14,10 +14,8 @@ import (
 
 type OSTreeContainer struct {
 	Base
-	Platform              platform.Platform
-	OSCustomizations      manifest.OSCustomizations
-	Environment           environment.Environment
-	ImgTypeCustomizations manifest.OSCustomizations
+	OSCustomizations manifest.OSCustomizations
+	Environment      environment.Environment
 
 	// OSTreeParent specifies the source for an optional parent commit for the
 	// new commit being built.
@@ -29,12 +27,12 @@ type OSTreeContainer struct {
 	OSVersion              string
 	ExtraContainerPackages rpmmd.PackageSet // FIXME: this is never read
 	ContainerLanguage      string
-	Filename               string
 }
 
-func NewOSTreeContainer(ref string) *OSTreeContainer {
+func NewOSTreeContainer(platform platform.Platform, filename string, ref string) *OSTreeContainer {
 	return &OSTreeContainer{
-		Base:      NewBase("ostree-container"),
+		Base: NewBase("ostree-container", platform, filename),
+
 		OSTreeRef: ref,
 	}
 }
@@ -46,10 +44,9 @@ func (img *OSTreeContainer) InstantiateManifest(m *manifest.Manifest,
 	buildPipeline := addBuildBootstrapPipelines(m, runner, repos, nil)
 	buildPipeline.Checkpoint()
 
-	osPipeline := manifest.NewOS(buildPipeline, img.Platform, repos)
+	osPipeline := manifest.NewOS(buildPipeline, img.platform, repos)
 	osPipeline.OSCustomizations = img.OSCustomizations
 	osPipeline.Environment = img.Environment
-	osPipeline.ImgTypeCustomizations = img.ImgTypeCustomizations
 	osPipeline.OSTreeRef = img.OSTreeRef
 	osPipeline.OSTreeParent = img.OSTreeParent
 
@@ -61,7 +58,7 @@ func (img *OSTreeContainer) InstantiateManifest(m *manifest.Manifest,
 
 	serverPipeline := manifest.NewOSTreeCommitServer(
 		buildPipeline,
-		img.Platform,
+		img.platform,
 		repos,
 		commitPipeline,
 		nginxConfigPath,
@@ -72,7 +69,7 @@ func (img *OSTreeContainer) InstantiateManifest(m *manifest.Manifest,
 	containerPipeline := manifest.NewOCIContainer(buildPipeline, serverPipeline)
 	containerPipeline.Cmd = []string{"nginx", "-c", nginxConfigPath}
 	containerPipeline.ExposedPorts = []string{listenPort}
-	containerPipeline.SetFilename(img.Filename)
+	containerPipeline.SetFilename(img.filename)
 	artifact := containerPipeline.Export()
 
 	return artifact, nil

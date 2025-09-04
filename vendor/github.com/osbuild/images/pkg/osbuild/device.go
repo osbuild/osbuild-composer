@@ -164,6 +164,8 @@ func deviceName(p disk.Entity) string {
 		return "btrfs-" + payload.UUID[:4]
 	case *disk.Swap:
 		return "swap-" + payload.UUID[:4]
+	case *disk.Raw:
+		return "raw-" + pathEscape(payload.SourcePath)
 	}
 	panic(fmt.Sprintf("unsupported device type in deviceName: '%T'", p))
 }

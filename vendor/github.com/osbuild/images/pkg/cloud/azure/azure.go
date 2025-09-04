@@ -7,6 +7,7 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v5"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v7"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
 
@@ -26,15 +27,41 @@ type Client struct {
 	resourceGroups ResourceGroupsClient
 	accounts       AccountsClient
 	images         ImagesClient
+	vms            VMsClient
+	disks          DisksClient
+	vnets          VirtualNetworksClient
+	subnets        SubnetsClient
+	securityGroups SecurityGroupsClient
+	publicIPs      PublicIPsClient
+	interfaces     InterfacesClient
 }
 
-func newTestClient(rc ResourcesClient, rgc ResourceGroupsClient, ac AccountsClient, ic ImagesClient) *Client {
+func newTestClient(
+	rc ResourcesClient,
+	rgc ResourceGroupsClient,
+	ac AccountsClient,
+	ic ImagesClient,
+	vnets VirtualNetworksClient,
+	subnets SubnetsClient,
+	pips PublicIPsClient,
+	sgs SecurityGroupsClient,
+	intfs InterfacesClient,
+	vms VMsClient,
+	disks DisksClient,
+) *Client {
 	return &Client{
 		creds:          nil,
 		resources:      rc,
 		resourceGroups: rgc,
 		accounts:       ac,
 		images:         ic,
+		vnets:          vnets,
+		subnets:        subnets,
+		publicIPs:      pips,
+		securityGroups: sgs,
+		interfaces:     intfs,
+		vms:            vms,
+		disks:          disks,
 	}
 }
 
@@ -42,7 +69,7 @@ func newTestClient(rc ResourcesClient, rgc ResourceGroupsClient, ac AccountsClie
 // See https://docs.microsoft.com/en-us/rest/api/azure/
 // If you need to work with the Azure Storage API, see NewStorageClient
 func NewClient(credentials Credentials, tenantID, subscriptionID string) (*Client, error) {
-	creds, err := azidentity.NewClientSecretCredential(tenantID, credentials.clientID, credentials.clientSecret, nil)
+	creds, err := azidentity.NewClientSecretCredential(tenantID, credentials.ClientID, credentials.ClientSecret, nil)
 	if err != nil {
 		return nil, fmt.Errorf("creating azure ClientSecretCredential failed: %w", err)
 	}
@@ -62,12 +89,23 @@ func NewClient(credentials Credentials, tenantID, subscriptionID string) (*Clien
 		return nil, fmt.Errorf("creating compute client factory failed: %w", err)
 	}
 
+	networkFact, err := armnetwork.NewClientFactory(subscriptionID, creds, nil)
+	if err != nil {
+		return nil, fmt.Errorf("creating compute client factory failed: %w", err)
+	}
 	return &Client{
 		creds,
 		resFact.NewClient(),
 		resFact.NewResourceGroupsClient(),
 		storFact.NewAccountsClient(),
 		compFact.NewImagesClient(),
+		compFact.NewVirtualMachinesClient(),
+		compFact.NewDisksClient(),
+		networkFact.NewVirtualNetworksClient(),
+		networkFact.NewSubnetsClient(),
+		networkFact.NewSecurityGroupsClient(),
+		networkFact.NewPublicIPAddressesClient(),
+		networkFact.NewInterfacesClient(),
 	}, nil
 }
 
@@ -210,5 +248,17 @@ func (ac Client) RegisterImage(ctx context.Context, resourceGroup, storageAccoun
 		return fmt.Errorf("create image request failed: %w", err)
 	}
 
+	return nil
+}
+
+func (ac Client) DeleteImage(ctx context.Context, resourceGroup, imageName string) error {
+	poller, err := ac.images.BeginDelete(ctx, resourceGroup, imageName, nil)
+	if err != nil {
+		return err
+	}
+	_, err = poller.PollUntilDone(ctx, nil)
+	if err != nil {
+		return err
+	}
 	return nil
 }

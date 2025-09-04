@@ -20,6 +20,7 @@ func sfdiskStageOptions(pt *disk.PartitionTable) *SfdiskStageOptions {
 			Type:     p.Type,
 			UUID:     p.UUID,
 			Name:     p.Label,
+			Attrs:    p.Attrs,
 		}
 	}
 	stageOptions := &SfdiskStageOptions{
@@ -42,6 +43,7 @@ func sgdiskStageOptions(pt *disk.PartitionTable) *SgdiskStageOptions {
 			Size:     pt.BytesToSectors(p.Size),
 			Type:     p.Type,
 			Name:     p.Label,
+			Attrs:    p.Attrs,
 		}
 
 		if p.UUID != "" {
@@ -65,7 +67,7 @@ const (
 	PTSgdisk PartTool = "sgdisk"
 )
 
-func GenImagePrepareStages(pt *disk.PartitionTable, filename string, partTool PartTool) []*Stage {
+func GenImagePrepareStages(pt *disk.PartitionTable, filename string, partTool PartTool, sourcePipeline string) []*Stage {
 	stages := make([]*Stage, 0)
 
 	// create an empty file of the given size via `org.osbuild.truncate`
@@ -85,15 +87,16 @@ func GenImagePrepareStages(pt *disk.PartitionTable, filename string, partTool Pa
 		},
 	)
 
-	if partTool == PTSfdisk {
+	switch partTool {
+	case PTSfdisk:
 		sfOptions := sfdiskStageOptions(pt)
 		sfdisk := NewSfdiskStage(sfOptions, loopback)
 		stages = append(stages, sfdisk)
-	} else if partTool == PTSgdisk {
+	case PTSgdisk:
 		sgOptions := sgdiskStageOptions(pt)
 		sgdisk := NewSgdiskStage(sgOptions, loopback)
 		stages = append(stages, sgdisk)
-	} else {
+	default:
 		panic("programming error: unknown PartTool: " + partTool)
 	}
 
@@ -103,7 +106,7 @@ func GenImagePrepareStages(pt *disk.PartitionTable, filename string, partTool Pa
 
 	// Generate all the filesystems, subvolumes, and swap areas on partitons
 	// and devices
-	s = GenFsStages(pt, filename)
+	s = GenFsStages(pt, filename, sourcePipeline)
 	stages = append(stages, s...)
 
 	return stages

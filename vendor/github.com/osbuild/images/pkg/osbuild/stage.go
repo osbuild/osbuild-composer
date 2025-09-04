@@ -5,6 +5,9 @@ type Stage struct {
 	// Well-known name in reverse domain-name notation, uniquely identifying
 	// the stage type.
 	Type string `json:"type"`
+
+	ID string `json:"id,omitempty"`
+
 	// Stage-type specific options fully determining the operations of the
 
 	Inputs  Inputs            `json:"inputs,omitempty"`

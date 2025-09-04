@@ -7,8 +7,8 @@ import (
 )
 
 type Credentials struct {
-	clientID     string
-	clientSecret string
+	ClientID     string
+	ClientSecret string
 }
 
 // ParseAzureCredentialsFile parses a credentials file for azure.
@@ -29,7 +29,7 @@ func ParseAzureCredentialsFile(filename string) (*Credentials, error) {
 	}
 
 	return &Credentials{
-		clientID:     creds.ClientID,
-		clientSecret: creds.ClientSecret,
+		ClientID:     creds.ClientID,
+		ClientSecret: creds.ClientSecret,
 	}, nil
 }

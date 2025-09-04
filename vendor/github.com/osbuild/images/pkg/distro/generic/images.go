@@ -24,7 +24,8 @@ import (
 	"github.com/osbuild/images/pkg/rpmmd"
 )
 
-func osCustomizations(t *imageType, osPackageSet rpmmd.PackageSet, options distro.ImageOptions, containers []container.SourceSpec, c *blueprint.Customizations) (manifest.OSCustomizations, error) {
+func osCustomizations(t *imageType, osPackageSet rpmmd.PackageSet, options distro.ImageOptions, containers []container.SourceSpec, bp *blueprint.Blueprint) (manifest.OSCustomizations, error) {
+	c := bp.Customizations
 	osc := manifest.OSCustomizations{}
 
 	imageConfig := t.getDefaultImageConfig()
@@ -56,7 +57,10 @@ func osCustomizations(t *imageType, osPackageSet rpmmd.PackageSet, options distr
 	osc.BasePackages = osPackageSet.Include
 	osc.ExcludeBasePackages = osPackageSet.Exclude
 	osc.ExtraBaseRepos = osPackageSet.Repositories
-
+	// false here means bootable=false which means the kernel
+	// package is excluded
+	osc.BlueprintPackages = bp.GetPackagesEx(false)
+	osc.BlueprintModules = bp.GetEnabledModules()
 	osc.Containers = containers
 
 	osc.GPGKeyFiles = imageConfig.GPGKeyFiles
@@ -80,6 +84,12 @@ func osCustomizations(t *imageType, osPackageSet rpmmd.PackageSet, options distr
 	osc.EnabledServices = imageConfig.EnabledServices
 	osc.DisabledServices = imageConfig.DisabledServices
 	osc.MaskedServices = imageConfig.MaskedServices
+	if services := bp.Customizations.GetServices(); services != nil {
+		osc.EnabledServices = append(osc.EnabledServices, services.Enabled...)
+		osc.DisabledServices = append(osc.DisabledServices, services.Disabled...)
+		osc.MaskedServices = append(osc.MaskedServices, services.Masked...)
+	}
+
 	if imageConfig.DefaultTarget != nil {
 		osc.DefaultTarget = *imageConfig.DefaultTarget
 	}
@@ -318,9 +328,22 @@ func osCustomizations(t *imageType, osPackageSet rpmmd.PackageSet, options distr
 }
 
 func installerCustomizations(t *imageType, c *blueprint.Customizations) (manifest.InstallerCustomizations, error) {
-	isc := manifest.InstallerCustomizations{}
-	isc.FIPS = c.GetFIPS()
-	isc.UseLegacyAnacondaConfig = t.ImageTypeYAML.UseLegacyAnacondaConfig
+	d := t.arch.distro
+	isoLabel, err := t.ISOLabel()
+	if err != nil {
+		return manifest.InstallerCustomizations{}, err
+	}
+
+	isc := manifest.InstallerCustomizations{
+		FIPS:                    c.GetFIPS(),
+		UseLegacyAnacondaConfig: t.ImageTypeYAML.UseLegacyAnacondaConfig,
+		Product:                 d.Product(),
+		OSVersion:               d.OsVersion(),
+		Release:                 fmt.Sprintf("%s %s", d.Product(), d.OsVersion()),
+		Preview:                 d.DistroYAML.Preview,
+		ISOLabel:                isoLabel,
+		Variant:                 t.Variant,
+	}
 
 	installerConfig, err := t.getDefaultInstallerConfig()
 	if err != nil {
@@ -429,25 +452,24 @@ func ostreeDeploymentCustomizations(
 
 // IMAGES
 
-func diskImage(imgTypeCustomizations manifest.OSCustomizations,
-	t *imageType,
+func diskImage(t *imageType,
 	bp *blueprint.Blueprint,
 	options distro.ImageOptions,
 	packageSets map[string]rpmmd.PackageSet,
+	payloadRepos []rpmmd.RepoConfig,
 	containers []container.SourceSpec,
 	rng *rand.Rand) (image.ImageKind, error) {
 
-	img := image.NewDiskImage()
-	img.Platform = t.platform
+	img := image.NewDiskImage(t.platform, t.Filename())
 
 	var err error
-	img.OSCustomizations, err = osCustomizations(t, packageSets[osPkgsKey], options, containers, bp.Customizations)
+	img.OSCustomizations, err = osCustomizations(t, packageSets[osPkgsKey], options, containers, bp)
 	if err != nil {
 		return nil, err
 	}
+	img.OSCustomizations.PayloadRepos = payloadRepos
 
 	img.Environment = &t.ImageTypeYAML.Environment
-	img.ImgTypeCustomizations = imgTypeCustomizations
 	img.Compression = t.ImageTypeYAML.Compression
 	if bp.Minimal {
 		// Disable weak dependencies if the 'minimal' option is enabled
@@ -459,8 +481,6 @@ func diskImage(imgTypeCustomizations manifest.OSCustomizations,
 		return nil, err
 	}
 	img.PartitionTable = pt
-
-	img.Filename = t.Filename()
 
 	img.VPCForceSize = t.ImageTypeYAML.DiskImageVPCForceSize
 
@@ -477,97 +497,70 @@ func diskImage(imgTypeCustomizations manifest.OSCustomizations,
 	return img, nil
 }
 
-func tarImage(imgTypeCustomizations manifest.OSCustomizations,
-	t *imageType,
+func tarImage(t *imageType,
 	bp *blueprint.Blueprint,
 	options distro.ImageOptions,
 	packageSets map[string]rpmmd.PackageSet,
+	payloadRepos []rpmmd.RepoConfig,
 	containers []container.SourceSpec,
 	rng *rand.Rand) (image.ImageKind, error) {
-	img := image.NewArchive()
-
-	img.Platform = t.platform
+	img := image.NewArchive(t.platform, t.Filename())
 
 	var err error
-	img.OSCustomizations, err = osCustomizations(t, packageSets[osPkgsKey], options, containers, bp.Customizations)
+	img.OSCustomizations, err = osCustomizations(t, packageSets[osPkgsKey], options, containers, bp)
 	if err != nil {
 		return nil, err
 	}
+	img.OSCustomizations.PayloadRepos = payloadRepos
 
 	d := t.arch.distro
 
 	img.Environment = &t.ImageTypeYAML.Environment
-	img.ImgTypeCustomizations = imgTypeCustomizations
 	img.Compression = t.ImageTypeYAML.Compression
 	img.OSVersion = d.OsVersion()
 
-	img.Filename = t.Filename()
-
 	return img, nil
 }
 
-func containerImage(imgTypeCustomizations manifest.OSCustomizations,
-	t *imageType,
+func containerImage(t *imageType,
 	bp *blueprint.Blueprint,
 	options distro.ImageOptions,
 	packageSets map[string]rpmmd.PackageSet,
+	payloadRepos []rpmmd.RepoConfig,
 	containers []container.SourceSpec,
 	rng *rand.Rand) (image.ImageKind, error) {
-	img := image.NewBaseContainer()
-
-	img.Platform = t.platform
+	img := image.NewBaseContainer(t.platform, t.Filename())
 
 	var err error
-	img.OSCustomizations, err = osCustomizations(t, packageSets[osPkgsKey], options, containers, bp.Customizations)
+	img.OSCustomizations, err = osCustomizations(t, packageSets[osPkgsKey], options, containers, bp)
 	if err != nil {
 		return nil, err
 	}
-
+	img.OSCustomizations.PayloadRepos = payloadRepos
 	img.Environment = &t.ImageTypeYAML.Environment
-	img.ImgTypeCustomizations = imgTypeCustomizations
-
-	img.Filename = t.Filename()
 
 	return img, nil
 }
 
-func liveInstallerImage(imgTypeCustomizations manifest.OSCustomizations,
-	t *imageType,
+func liveInstallerImage(t *imageType,
 	bp *blueprint.Blueprint,
 	options distro.ImageOptions,
 	packageSets map[string]rpmmd.PackageSet,
+	payloadRepos []rpmmd.RepoConfig,
 	containers []container.SourceSpec,
 	rng *rand.Rand) (image.ImageKind, error) {
 
-	img := image.NewAnacondaLiveInstaller()
+	img := image.NewAnacondaLiveInstaller(t.platform, t.Filename())
 
-	img.Platform = t.platform
-	img.ImgTypeCustomizations = imgTypeCustomizations
 	img.ExtraBasePackages = packageSets[installerPkgsKey]
-
-	d := t.arch.distro
-
-	img.Product = d.Product()
-	img.Variant = "Workstation"
-	img.OSVersion = d.OsVersion()
-	img.Release = fmt.Sprintf("%s %s", d.Product(), d.OsVersion())
-	img.Preview = d.DistroYAML.Preview
-
-	var err error
-	img.ISOLabel, err = t.ISOLabel()
-	if err != nil {
-		return nil, err
-	}
-
-	img.Filename = t.Filename()
 
 	imgConfig := t.getDefaultImageConfig()
 	if locale := imgConfig.Locale; locale != nil {
 		img.Locale = *locale
 	}
 
+	var err error
 	img.InstallerCustomizations, err = installerCustomizations(t, bp.Customizations)
-
 	if err != nil {
 		return nil, err
 	}
@@ -575,23 +568,24 @@ func liveInstallerImage(imgTypeCustomizations manifest.OSCustomizations,
 	return img, nil
 }
 
-func imageInstallerImage(imgTypeCustomizations manifest.OSCustomizations,
-	t *imageType,
+func imageInstallerImage(t *imageType,
 	bp *blueprint.Blueprint,
 	options distro.ImageOptions,
 	packageSets map[string]rpmmd.PackageSet,
+	payloadRepos []rpmmd.RepoConfig,
 	containers []container.SourceSpec,
 	rng *rand.Rand) (image.ImageKind, error) {
 
 	customizations := bp.Customizations
 
-	img := image.NewAnacondaTarInstaller()
+	img := image.NewAnacondaTarInstaller(t.platform, t.Filename())
 
 	var err error
-	img.OSCustomizations, err = osCustomizations(t, packageSets[osPkgsKey], options, containers, bp.Customizations)
+	img.OSCustomizations, err = osCustomizations(t, packageSets[osPkgsKey], options, containers, bp)
 	if err != nil {
 		return nil, err
 	}
+	img.OSCustomizations.PayloadRepos = payloadRepos
 
 	img.Kickstart, err = kickstart.New(customizations)
 	if err != nil {
@@ -600,9 +594,6 @@ func imageInstallerImage(imgTypeCustomizations manifest.OSCustomizations,
 	img.Kickstart.Language = &img.OSCustomizations.Language
 	img.Kickstart.Keyboard = img.OSCustomizations.Keyboard
 	img.Kickstart.Timezone = &img.OSCustomizations.Timezone
-
-	img.Platform = t.platform
-	img.ImgTypeCustomizations = imgTypeCustomizations
 
 	img.ExtraBasePackages = packageSets[installerPkgsKey]
 
@@ -624,47 +615,30 @@ func imageInstallerImage(imgTypeCustomizations manifest.OSCustomizations,
 		img.InstallerCustomizations.AdditionalKernelOpts = append(img.InstallerCustomizations.AdditionalKernelOpts, installerConfig.KickstartUnattendedExtraKernelOpts...)
 	}
 
-	d := t.arch.distro
-
-	img.Product = d.Product()
-
-	img.OSVersion = d.OsVersion()
-	img.Release = fmt.Sprintf("%s %s", d.Product(), d.OsVersion())
-	img.Variant = t.Variant
-	img.Preview = d.DistroYAML.Preview
-
-	img.ISOLabel, err = t.ISOLabel()
-	if err != nil {
-		return nil, err
-	}
-
-	img.Filename = t.Filename()
-
 	img.RootfsCompression = "xz" // This also triggers using the bcj filter
 
 	return img, nil
 }
 
-func iotCommitImage(imgTypeCustomizations manifest.OSCustomizations,
-	t *imageType,
+func iotCommitImage(t *imageType,
 	bp *blueprint.Blueprint,
 	options distro.ImageOptions,
 	packageSets map[string]rpmmd.PackageSet,
+	payloadRepos []rpmmd.RepoConfig,
 	containers []container.SourceSpec,
 	rng *rand.Rand) (image.ImageKind, error) {
 
 	parentCommit, commitRef := makeOSTreeParentCommit(options.OSTree, t.OSTreeRef())
-	img := image.NewOSTreeArchive(commitRef)
+	img := image.NewOSTreeArchive(t.platform, t.Filename(), commitRef)
 
 	d := t.arch.distro
 
-	img.Platform = t.platform
-
 	var err error
-	img.OSCustomizations, err = osCustomizations(t, packageSets[osPkgsKey], options, containers, bp.Customizations)
+	img.OSCustomizations, err = osCustomizations(t, packageSets[osPkgsKey], options, containers, bp)
 	if err != nil {
 		return nil, err
 	}
+	img.OSCustomizations.PayloadRepos = payloadRepos
 
 	imgConfig := t.getDefaultImageConfig()
 	img.OSCustomizations.Presets = imgConfig.Presets
@@ -673,40 +647,35 @@ func iotCommitImage(imgTypeCustomizations manifest.OSCustomizations,
 	}
 
 	img.Environment = &t.ImageTypeYAML.Environment
-	img.ImgTypeCustomizations = imgTypeCustomizations
 	img.OSTreeParent = parentCommit
 	img.OSVersion = d.OsVersion()
-	img.Filename = t.Filename()
 
 	return img, nil
 }
 
-func bootableContainerImage(imgTypeCustomizations manifest.OSCustomizations,
-	t *imageType,
+func bootableContainerImage(t *imageType,
 	bp *blueprint.Blueprint,
 	options distro.ImageOptions,
 	packageSets map[string]rpmmd.PackageSet,
+	payloadRepos []rpmmd.RepoConfig,
 	containers []container.SourceSpec,
 	rng *rand.Rand) (image.ImageKind, error) {
 
 	parentCommit, commitRef := makeOSTreeParentCommit(options.OSTree, t.OSTreeRef())
-	img := image.NewOSTreeArchive(commitRef)
+	img := image.NewOSTreeArchive(t.platform, t.Filename(), commitRef)
 
 	d := t.arch.distro
 
-	img.Platform = t.platform
-
 	var err error
-	img.OSCustomizations, err = osCustomizations(t, packageSets[osPkgsKey], options, containers, bp.Customizations)
+	img.OSCustomizations, err = osCustomizations(t, packageSets[osPkgsKey], options, containers, bp)
 	if err != nil {
 		return nil, err
 	}
+	img.OSCustomizations.PayloadRepos = payloadRepos
 
 	img.Environment = &t.ImageTypeYAML.Environment
-	img.ImgTypeCustomizations = imgTypeCustomizations
 	img.OSTreeParent = parentCommit
 	img.OSVersion = d.OsVersion()
-	img.Filename = t.Filename()
 	img.InstallWeakDeps = false
 	img.BootContainer = true
 	id, err := distro.ParseID(d.Name())
@@ -721,21 +690,20 @@ func bootableContainerImage(imgTypeCustomizations manifest.OSCustomizations,
 	return img, nil
 }
 
-func iotContainerImage(imgTypeCustomizations manifest.OSCustomizations,
-	t *imageType,
+func iotContainerImage(t *imageType,
 	bp *blueprint.Blueprint,
 	options distro.ImageOptions,
 	packageSets map[string]rpmmd.PackageSet,
+	payloadRepos []rpmmd.RepoConfig,
 	containers []container.SourceSpec,
 	rng *rand.Rand) (image.ImageKind, error) {
 
 	parentCommit, commitRef := makeOSTreeParentCommit(options.OSTree, t.OSTreeRef())
-	img := image.NewOSTreeContainer(commitRef)
+	img := image.NewOSTreeContainer(t.platform, t.Filename(), commitRef)
 	d := t.arch.distro
-	img.Platform = t.platform
 
 	var err error
-	img.OSCustomizations, err = osCustomizations(t, packageSets[osPkgsKey], options, containers, bp.Customizations)
+	img.OSCustomizations, err = osCustomizations(t, packageSets[osPkgsKey], options, containers, bp)
 	if err != nil {
 		return nil, err
 	}
@@ -745,39 +713,34 @@ func iotContainerImage(imgTypeCustomizations manifest.OSCustomizations,
 	if imgConfig.InstallWeakDeps != nil {
 		img.OSCustomizations.InstallWeakDeps = *imgConfig.InstallWeakDeps
 	}
+	img.OSCustomizations.PayloadRepos = payloadRepos
 
 	img.ContainerLanguage = img.OSCustomizations.Language
 	img.Environment = &t.ImageTypeYAML.Environment
-	img.ImgTypeCustomizations = imgTypeCustomizations
 	img.OSTreeParent = parentCommit
 	img.OSVersion = d.OsVersion()
 	img.ExtraContainerPackages = packageSets[containerPkgsKey]
-	img.Filename = t.Filename()
 
 	return img, nil
 }
 
-func iotInstallerImage(imgTypeCustomizations manifest.OSCustomizations,
-	t *imageType,
+func iotInstallerImage(t *imageType,
 	bp *blueprint.Blueprint,
 	options distro.ImageOptions,
 	packageSets map[string]rpmmd.PackageSet,
+	payloadRepos []rpmmd.RepoConfig,
 	containers []container.SourceSpec,
 	rng *rand.Rand) (image.ImageKind, error) {
-
-	d := t.arch.distro
 
 	commit, err := makeOSTreePayloadCommit(options.OSTree, t.OSTreeRef())
 	if err != nil {
 		return nil, fmt.Errorf("%s: %s", t.Name(), err.Error())
 	}
 
-	img := image.NewAnacondaOSTreeInstaller(commit)
+	img := image.NewAnacondaOSTreeInstaller(t.platform, t.Filename(), commit)
 
 	customizations := bp.Customizations
-	img.Platform = t.platform
 	img.ExtraBasePackages = packageSets[installerPkgsKey]
-
 	img.Kickstart, err = kickstart.New(customizations)
 	if err != nil {
 		return nil, err
@@ -805,19 +768,6 @@ func iotInstallerImage(imgTypeCustomizations manifest.OSCustomizations,
 		img.InstallerCustomizations.EnabledAnacondaModules = append(img.InstallerCustomizations.EnabledAnacondaModules, anaconda.ModuleUsers)
 	}
 
-	img.Product = d.Product()
-	img.Variant = t.ImageTypeYAML.Variant
-	img.OSVersion = d.OsVersion()
-	img.Release = fmt.Sprintf("%s %s", d.Product(), d.OsVersion())
-	img.Preview = d.DistroYAML.Preview
-
-	img.ISOLabel, err = t.ISOLabel()
-	if err != nil {
-		return nil, err
-	}
-
-	img.Filename = t.Filename()
-
 	img.RootfsCompression = "xz" // This also triggers using the bcj filter
 	imgConfig := t.getDefaultImageConfig()
 	if locale := imgConfig.Locale; locale != nil {
@@ -827,11 +777,11 @@ func iotInstallerImage(imgTypeCustomizations manifest.OSCustomizations,
 	return img, nil
 }
 
-func iotImage(imgTypeCustomizations manifest.OSCustomizations,
-	t *imageType,
+func iotImage(t *imageType,
 	bp *blueprint.Blueprint,
 	options distro.ImageOptions,
 	packageSets map[string]rpmmd.PackageSet,
+	payloadRepos []rpmmd.RepoConfig,
 	containers []container.SourceSpec,
 	rng *rand.Rand) (image.ImageKind, error) {
 
@@ -839,7 +789,7 @@ func iotImage(imgTypeCustomizations manifest.OSCustomizations,
 	if err != nil {
 		return nil, fmt.Errorf("%s: %s", t.Name(), err.Error())
 	}
-	img := image.NewOSTreeDiskImageFromCommit(commit)
+	img := image.NewOSTreeDiskImageFromCommit(t.platform, t.Filename(), commit)
 
 	customizations := bp.Customizations
 	deploymentConfig, err := ostreeDeploymentCustomizations(t, customizations)
@@ -847,9 +797,7 @@ func iotImage(imgTypeCustomizations manifest.OSCustomizations,
 		return nil, err
 	}
 	img.OSTreeDeploymentCustomizations = deploymentConfig
-
-	img.Platform = t.platform
-	img.ImgTypeCustomizations = imgTypeCustomizations
+	img.OSCustomizations.PayloadRepos = payloadRepos
 
 	img.Remote = ostree.Remote{
 		Name: t.ImageTypeYAML.OSTree.RemoteName,
@@ -869,17 +817,16 @@ func iotImage(imgTypeCustomizations manifest.OSCustomizations,
 	}
 	img.PartitionTable = pt
 
-	img.Filename = t.Filename()
 	img.Compression = t.ImageTypeYAML.Compression
 
 	return img, nil
 }
 
-func iotSimplifiedInstallerImage(imgTypeCustomizations manifest.OSCustomizations,
-	t *imageType,
+func iotSimplifiedInstallerImage(t *imageType,
 	bp *blueprint.Blueprint,
 	options distro.ImageOptions,
 	packageSets map[string]rpmmd.PackageSet,
+	payloadRepos []rpmmd.RepoConfig,
 	containers []container.SourceSpec,
 	rng *rand.Rand) (image.ImageKind, error) {
 
@@ -887,7 +834,7 @@ func iotSimplifiedInstallerImage(imgTypeCustomizations manifest.OSCustomizations
 	if err != nil {
 		return nil, fmt.Errorf("%s: %s", t.Name(), err.Error())
 	}
-	rawImg := image.NewOSTreeDiskImageFromCommit(commit)
+	rawImg := image.NewOSTreeDiskImageFromCommit(t.platform, t.Filename(), commit)
 
 	customizations := bp.Customizations
 	deploymentConfig, err := ostreeDeploymentCustomizations(t, customizations)
@@ -896,8 +843,7 @@ func iotSimplifiedInstallerImage(imgTypeCustomizations manifest.OSCustomizations
 	}
 	rawImg.OSTreeDeploymentCustomizations = deploymentConfig
 
-	rawImg.Platform = t.platform
-	rawImg.ImgTypeCustomizations = imgTypeCustomizations
+	rawImg.OSCustomizations.PayloadRepos = payloadRepos
 	rawImg.Remote = ostree.Remote{
 		Name: t.OSTree.RemoteName,
 	}
@@ -914,13 +860,9 @@ func iotSimplifiedInstallerImage(imgTypeCustomizations manifest.OSCustomizations
 	}
 	rawImg.PartitionTable = pt
 
-	rawImg.Filename = t.Filename()
-
-	img := image.NewOSTreeSimplifiedInstaller(rawImg, customizations.InstallationDevice)
+	// XXX: can we take platform/filename in NewOSTreeSimplifiedInstaller from rawImg instead?
+	img := image.NewOSTreeSimplifiedInstaller(t.platform, t.Filename(), rawImg, customizations.InstallationDevice)
 	img.ExtraBasePackages = packageSets[installerPkgsKey]
-	// img.ImgTypeCustomizations = imgTypeCustomizations
-	img.Platform = t.platform
-	img.Filename = t.Filename()
 	if bpFDO := customizations.GetFDO(); bpFDO != nil {
 		img.FDO = fdo.FromBP(*bpFDO)
 	}
@@ -945,6 +887,7 @@ func iotSimplifiedInstallerImage(imgTypeCustomizations manifest.OSCustomizations
 		img.AdditionalDrivers = append(img.AdditionalDrivers, installerConfig.AdditionalDrivers...)
 	}
 
+	// XXX: move to use InstallerCustomizations too
 	d := t.arch.distro
 	img.Product = d.Product()
 	img.Variant = t.ImageTypeYAML.Variant
@@ -960,48 +903,29 @@ func iotSimplifiedInstallerImage(imgTypeCustomizations manifest.OSCustomizations
 }
 
 // Make an Anaconda installer boot.iso
-func netinstImage(imgTypeCustomizations manifest.OSCustomizations,
-	t *imageType,
+func netinstImage(t *imageType,
 	bp *blueprint.Blueprint,
 	options distro.ImageOptions,
 	packageSets map[string]rpmmd.PackageSet,
+	payloadRepos []rpmmd.RepoConfig,
 	containers []container.SourceSpec,
 	rng *rand.Rand) (image.ImageKind, error) {
 
 	customizations := bp.Customizations
 
-	img := image.NewAnacondaNetInstaller()
+	img := image.NewAnacondaNetInstaller(t.platform, t.Filename())
 	language, _ := customizations.GetPrimaryLocale()
 	if language != nil {
 		img.Language = *language
 	}
 
-	img.Platform = t.platform
-	img.ImgTypeCustomizations = imgTypeCustomizations
 	img.ExtraBasePackages = packageSets[installerPkgsKey]
 
 	var err error
-
 	img.InstallerCustomizations, err = installerCustomizations(t, bp.Customizations)
-
 	if err != nil {
 		return nil, err
 	}
-
-	d := t.arch.distro
-
-	img.Product = d.Product()
-	img.Variant = t.Variant
-	img.OSVersion = d.OsVersion()
-	img.Release = fmt.Sprintf("%s %s", d.Product(), d.OsVersion())
-	img.Preview = d.DistroYAML.Preview
-
-	img.ISOLabel, err = t.ISOLabel()
-	if err != nil {
-		return nil, err
-	}
-
-	img.Filename = t.Filename()
 
 	img.RootfsCompression = "xz" // This also triggers using the bcj filter
 

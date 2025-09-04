@@ -6,6 +6,7 @@ import (
 
 	"github.com/osbuild/images/pkg/artifact"
 	"github.com/osbuild/images/pkg/manifest"
+	"github.com/osbuild/images/pkg/platform"
 	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/images/pkg/runner"
 )
@@ -16,16 +17,20 @@ type ImageKind interface {
 }
 
 type Base struct {
-	name string
+	name     string
+	platform platform.Platform
+	filename string
 }
 
 func (img Base) Name() string {
 	return img.name
 }
 
-func NewBase(name string) Base {
+func NewBase(name string, platform platform.Platform, filename string) Base {
 	return Base{
-		name: name,
+		name:     name,
+		platform: platform,
+		filename: filename,
 	}
 }
 

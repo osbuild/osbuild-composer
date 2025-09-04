@@ -37,12 +37,12 @@ func (img *BootcLegacyDiskImage) InstantiateManifestFromContainers(m *manifest.M
 	// XXX: hardcoded for now
 	ref := "ostree/1/1/0"
 	ostreeImg := &OSTreeDiskImage{
-		Base:            NewBase("bootc-raw-image"),
+		Base:            NewBase("bootc-raw-image", img.bootcImg.platform, img.bootcImg.filename),
 		ContainerSource: img.bootcImg.ContainerSource,
 		Ref:             ref,
 		OSName:          "default",
 	}
-	ostreeImg.Platform = img.bootcImg.Platform
+	ostreeImg.platform = img.bootcImg.platform
 	ostreeImg.PartitionTable = img.bootcImg.PartitionTable
 	ostreeImg.OSTreeDeploymentCustomizations.KernelOptionsAppend = img.bootcImg.OSCustomizations.KernelOptionsAppend
 	ostreeImg.OSTreeDeploymentCustomizations.Users = img.bootcImg.OSCustomizations.Users
@@ -57,7 +57,7 @@ func (img *BootcLegacyDiskImage) InstantiateManifestFromContainers(m *manifest.M
 
 	opts := &baseRawOstreeImageOpts{useBootupd: true}
 
-	fileBasename := img.bootcImg.Filename
+	fileBasename := img.bootcImg.filename
 
 	// In BIB, we export multiple images from the same pipeline so we use the
 	// filename as the basename for each export and set the extensions based on
@@ -66,7 +66,7 @@ func (img *BootcLegacyDiskImage) InstantiateManifestFromContainers(m *manifest.M
 	baseImage.SetFilename(fmt.Sprintf("%s.raw", fileBasename))
 
 	qcow2Pipeline := manifest.NewQCOW2(hostPipeline, baseImage)
-	qcow2Pipeline.Compat = ostreeImg.Platform.GetQCOW2Compat()
+	qcow2Pipeline.Compat = ostreeImg.platform.GetQCOW2Compat()
 	qcow2Pipeline.SetFilename(fmt.Sprintf("%s.qcow2", fileBasename))
 
 	vmdkPipeline := manifest.NewVMDK(hostPipeline, baseImage)
