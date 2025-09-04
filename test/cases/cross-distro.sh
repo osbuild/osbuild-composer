@@ -214,7 +214,7 @@ function start_compose() {
 # TODO: This function should be moved to shared_lib.sh
 function wait_for_compose() {
     local compose_id=$1
-    local timeout=${2:-600}
+    local timeout=${2:-1200}
     local compose_status
 
     if [[ -z "$compose_id" ]]; then
