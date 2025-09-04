@@ -249,6 +249,19 @@ func (c StorageClient) TagBlob(ctx context.Context, metadata BlobMetadata, tags 
 	return nil
 }
 
+func (c StorageClient) DeleteBlob(ctx context.Context, metadata BlobMetadata) error {
+	URL, _ := url.Parse(fmt.Sprintf("https://%s.blob.core.windows.net/%s/%s", metadata.StorageAccount, metadata.ContainerName, metadata.BlobName))
+	client, err := blob.NewClientWithSharedKeyCredential(URL.String(), c.credential, nil)
+	if err != nil {
+		return fmt.Errorf("cannot create a blob client: %w", err)
+	}
+	_, err = client.Delete(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("cannot delete the blob: %w", err)
+	}
+	return nil
+}
+
 // RandomStorageAccountName returns a randomly generated name that can be used
 // for a storage account. This means that it must use only alphanumeric
 // characters and its length must be 24 or lower.

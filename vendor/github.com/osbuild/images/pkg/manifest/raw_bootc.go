@@ -48,6 +48,9 @@ type RawBootcImage struct {
 	// MountUnits creates systemd .mount units to describe the filesystem
 	// instead of writing to /etc/fstab
 	MountUnits bool
+
+	// Source pipeline for files written to raw partitions
+	SourcePipeline string
 }
 
 func (p RawBootcImage) Filename() string {
@@ -64,7 +67,8 @@ func NewRawBootcImage(buildPipeline Build, containers []container.SourceSpec, pl
 		filename: "disk.img",
 		platform: platform,
 
-		containers: containers,
+		containers:     containers,
+		SourcePipeline: buildPipeline.Name(),
 	}
 	buildPipeline.addDependent(p)
 	return p
@@ -133,7 +137,7 @@ func (p *RawBootcImage) serialize() osbuild.Pipeline {
 		panic(fmt.Errorf("no partition table in live image"))
 	}
 
-	for _, stage := range osbuild.GenImagePrepareStages(pt, p.filename, osbuild.PTSfdisk) {
+	for _, stage := range osbuild.GenImagePrepareStages(pt, p.filename, osbuild.PTSfdisk, p.SourcePipeline) {
 		pipeline.AddStage(stage)
 	}
 

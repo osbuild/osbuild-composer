@@ -35,6 +35,9 @@ type SgdiskPartition struct {
 
 	// UUID of the partition
 	UUID *uuid.UUID `json:"uuid,omitempty"`
+
+	// Partition attribute flags to set (GPT)
+	Attrs []uint `json:"attrs,omitempty"`
 }
 
 func NewSgdiskStage(options *SgdiskStageOptions, device *Device) *Stage {

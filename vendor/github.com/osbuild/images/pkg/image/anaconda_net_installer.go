@@ -17,29 +17,19 @@ import (
 
 type AnacondaNetInstaller struct {
 	Base
-	Platform                platform.Platform
 	InstallerCustomizations manifest.InstallerCustomizations
 	Environment             environment.Environment
-	ImgTypeCustomizations   manifest.OSCustomizations
 
 	ExtraBasePackages rpmmd.PackageSet
 
 	RootfsCompression string
 
-	ISOLabel  string
-	Product   string
-	Variant   string
-	OSVersion string
-	Release   string
-	Preview   bool
-
-	Filename string
 	Language string
 }
 
-func NewAnacondaNetInstaller() *AnacondaNetInstaller {
+func NewAnacondaNetInstaller(platform platform.Platform, filename string) *AnacondaNetInstaller {
 	return &AnacondaNetInstaller{
-		Base: NewBase("netinst"),
+		Base: NewBase("netinst", platform, filename),
 	}
 }
 
@@ -54,21 +44,16 @@ func (img *AnacondaNetInstaller) InstantiateManifest(m *manifest.Manifest,
 	anacondaPipeline := manifest.NewAnacondaInstaller(
 		installerType,
 		buildPipeline,
-		img.Platform,
+		img.platform,
 		repos,
 		"kernel",
-		img.Product,
-		img.OSVersion,
-		img.Preview,
+		img.InstallerCustomizations,
 	)
 
 	anacondaPipeline.ExtraPackages = img.ExtraBasePackages.Include
 	anacondaPipeline.ExcludePackages = img.ExtraBasePackages.Exclude
 	anacondaPipeline.ExtraRepos = img.ExtraBasePackages.Repositories
-	anacondaPipeline.Variant = img.Variant
-	anacondaPipeline.Biosdevname = (img.Platform.GetArch() == arch.ARCH_X86_64)
-
-	anacondaPipeline.InstallerCustomizations = img.InstallerCustomizations
+	anacondaPipeline.Biosdevname = (img.platform.GetArch() == arch.ARCH_X86_64)
 
 	if anacondaPipeline.InstallerCustomizations.FIPS {
 		anacondaPipeline.InstallerCustomizations.EnabledAnacondaModules = append(
@@ -89,13 +74,13 @@ func (img *AnacondaNetInstaller) InstantiateManifest(m *manifest.Manifest,
 	default:
 	}
 
-	bootTreePipeline := manifest.NewEFIBootTree(buildPipeline, img.Product, img.OSVersion)
-	bootTreePipeline.Platform = img.Platform
-	bootTreePipeline.UEFIVendor = img.Platform.GetUEFIVendor()
-	bootTreePipeline.ISOLabel = img.ISOLabel
+	bootTreePipeline := manifest.NewEFIBootTree(buildPipeline, img.InstallerCustomizations.Product, img.InstallerCustomizations.OSVersion)
+	bootTreePipeline.Platform = img.platform
+	bootTreePipeline.UEFIVendor = img.platform.GetUEFIVendor()
+	bootTreePipeline.ISOLabel = img.InstallerCustomizations.ISOLabel
 	bootTreePipeline.DefaultMenu = img.InstallerCustomizations.DefaultMenu
 
-	kernelOpts := []string{fmt.Sprintf("inst.stage2=hd:LABEL=%s", img.ISOLabel)}
+	kernelOpts := []string{fmt.Sprintf("inst.stage2=hd:LABEL=%s", img.InstallerCustomizations.ISOLabel)}
 	if anacondaPipeline.InstallerCustomizations.FIPS {
 		kernelOpts = append(kernelOpts, "fips=1")
 	}
@@ -105,7 +90,7 @@ func (img *AnacondaNetInstaller) InstantiateManifest(m *manifest.Manifest,
 	isoTreePipeline := manifest.NewAnacondaInstallerISOTree(buildPipeline, anacondaPipeline, rootfsImagePipeline, bootTreePipeline)
 	// TODO: the partition table is required - make it a ctor arg or set a default one in the pipeline
 	isoTreePipeline.PartitionTable = efiBootPartitionTable(rng)
-	isoTreePipeline.Release = img.Release
+	isoTreePipeline.Release = img.InstallerCustomizations.Release
 
 	isoTreePipeline.RootfsCompression = img.RootfsCompression
 	isoTreePipeline.RootfsType = img.InstallerCustomizations.ISORootfsType
@@ -117,8 +102,8 @@ func (img *AnacondaNetInstaller) InstantiateManifest(m *manifest.Manifest,
 
 	isoTreePipeline.ISOBoot = img.InstallerCustomizations.ISOBoot
 
-	isoPipeline := manifest.NewISO(buildPipeline, isoTreePipeline, img.ISOLabel)
-	isoPipeline.SetFilename(img.Filename)
+	isoPipeline := manifest.NewISO(buildPipeline, isoTreePipeline, img.InstallerCustomizations.ISOLabel)
+	isoPipeline.SetFilename(img.filename)
 	isoPipeline.ISOBoot = img.InstallerCustomizations.ISOBoot
 
 	artifact := isoPipeline.Export()

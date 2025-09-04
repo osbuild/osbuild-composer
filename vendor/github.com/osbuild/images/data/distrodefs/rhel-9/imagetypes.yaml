@@ -72,9 +72,8 @@
       build_packages:
         bios:
           - "grub2-pc"
-    x86_64_installer_platform: &x86_64_installer_platform
+    x86_64_edge_platform: &x86_64_edge_platform
       <<: *x86_64_bios_platform
-      image_format: "raw"
       packages:
         <<: *x86_64_bios_platform_packages
         firmware:
@@ -89,6 +88,40 @@
           - "iwl5000-firmware"
           - "iwl5150-firmware"
           - "iwl6050-firmware"
+    x86_64_installer_platform: &x86_64_installer_platform
+      <<: *x86_64_bios_platform
+      image_format: "raw"
+      packages:
+        <<: *x86_64_bios_platform_packages
+        booting:
+          - "biosdevname"
+          - "memtest86+"
+        firmware:
+          - "iwl100-firmware"
+          - "iwl1000-firmware"
+          - "iwl105-firmware"
+          - "iwl135-firmware"
+          - "iwl2000-firmware"
+          - "iwl2030-firmware"
+          - "iwl3160-firmware"
+          # NOTE: Some firmware packages are only available in Buildroot
+          # - "iwl3945-firmware"
+          # - "iwl4965-firmware"
+          - "iwl5000-firmware"
+          - "iwl5150-firmware"
+          # - "iwl6000-firmware"
+          - "iwl6000g2a-firmware"
+          - "iwl6000g2b-firmware"
+          - "iwl6050-firmware"
+          - "iwl7260-firmware"
+          # - "libertas-sd8686-firmware"
+          - "libertas-sd8787-firmware"
+          # - "libertas-usb8388-firmware"
+          # - "libertas-usb8388-olpc-firmware"
+          - "linux-firmware"
+          # - "liquidio-firmware"
+          - "netronome-firmware"
+          # - "opal-firmware"
     aarch64_platform: &aarch64_platform
       arch: "aarch64"
       bootloader: "grub2"
@@ -102,6 +135,38 @@
           - "grub2-efi-aa64"
           - "grub2-tools"
           - "shim-aa64"
+    aarch64_installer_platform: &aarch64_installer_platform
+      <<: *aarch64_platform
+      packages:
+        <<: *aarch64_uefi_platform_packages
+        booting:
+          - "grub2-efi-aa64-cdboot"
+        firmware:
+          - "iwl100-firmware"
+          - "iwl1000-firmware"
+          - "iwl105-firmware"
+          - "iwl135-firmware"
+          - "iwl2000-firmware"
+          - "iwl2030-firmware"
+          - "iwl3160-firmware"
+          # NOTE: Some firmware packages are only available in Buildroot
+          # - "iwl3945-firmware"
+          # - "iwl4965-firmware"
+          - "iwl5000-firmware"
+          - "iwl5150-firmware"
+          # - "iwl6000-firmware"
+          - "iwl6000g2a-firmware"
+          - "iwl6000g2b-firmware"
+          - "iwl6050-firmware"
+          - "iwl7260-firmware"
+          # - "libertas-sd8686-firmware"
+          - "libertas-sd8787-firmware"
+          # - "libertas-usb8388-firmware"
+          # - "libertas-usb8388-olpc-firmware"
+          - "linux-firmware"
+          # - "liquidio-firmware"
+          - "netronome-firmware"
+          # - "opal-firmware"
     ppc64le_bios_platform: &ppc64le_bios_platform
       arch: "ppc64le"
       bootloader: "grub2"
@@ -1118,6 +1183,8 @@
           grub2_config:
             <<: *azure_common_grub2_config
             terminal: ["serial"]
+            terminal_input: ["serial"]
+            terminal_output: ["serial"]
       "aarch64 grub2 config terminal=console":
         when:
           arch: "aarch64"
@@ -2057,7 +2124,22 @@ image_types:
     exports: ["bootiso"]
     required_partition_sizes: *default_required_dir_sizes
     platforms:
-      - *x86_64_installer_platform
+      # TODO: Use x86_64_installer_platform for all anaconda images
+      - <<: *x86_64_bios_platform
+        packages:
+          <<: *x86_64_bios_platform_packages
+          firmware:
+            - "microcode_ctl"  # ??
+            - "iwl1000-firmware"
+            - "iwl100-firmware"
+            - "iwl105-firmware"
+            - "iwl135-firmware"
+            - "iwl2000-firmware"
+            - "iwl2030-firmware"
+            - "iwl3160-firmware"
+            - "iwl5000-firmware"
+            - "iwl5150-firmware"
+            - "iwl6050-firmware"
       - *aarch64_platform
     platforms_override:
       conditions:
@@ -2065,8 +2147,22 @@ image_types:
           when:
             version_greater_or_equal: "9.7"
           override:
-            - <<: *x86_64_installer_platform
+            # TODO: Use x86_64_installer_platform for all anaconda images
+            - <<: *x86_64_bios_platform
               fips_menu: true
+              packages:
+                <<: *x86_64_bios_platform_packages
+                firmware:
+                  - "microcode_ctl"  # ??
+                  - "iwl1000-firmware"
+                  - "iwl100-firmware"
+                  - "iwl105-firmware"
+                  - "iwl135-firmware"
+                  - "iwl2000-firmware"
+                  - "iwl2030-firmware"
+                  - "iwl3160-firmware"
+                  - "iwl5000-firmware"
+                  - "iwl5150-firmware"
             - <<: *aarch64_platform
               fips_menu: true
     installer_config: *default_installer_config
@@ -2125,7 +2221,6 @@ image_types:
           repos:
             - id: "google-compute-engine"
               name: "Google Compute Engine"
-              # TODO: use el10 repo once it's available
               baseurl:
                 - "https://packages.cloud.google.com/yum/repos/google-compute-engine-el9-x86_64-stable"
               enabled: true
@@ -2567,7 +2662,7 @@ image_types:
       remote_name: "rhel-edge"
     use_ostree_remotes: true
     platforms:
-      - <<: *x86_64_installer_platform
+      - <<: *x86_64_edge_platform
         image_format: "raw"
       - <<: *aarch64_platform
         image_format: "raw"
@@ -2751,7 +2846,7 @@ image_types:
       remote_name: "rhel-edge"
     use_ostree_remotes: true
     platforms:
-      - <<: *x86_64_installer_platform
+      - <<: *x86_64_edge_platform
         image_format: "raw"
       - <<: *aarch64_platform
         image_format: "raw"
@@ -2914,3 +3009,152 @@ image_types:
             - "linux-firmware*"
             - "grubby"
             - "os-prober"
+
+  # Based on lorax runtime-install.tmpl
+  "netinst":
+    filename: "netinst.iso"
+    mime_type: "application/x-iso9660-image"
+    bootable: true
+    boot_iso: true
+    image_func: "netinst"
+    # We don't know the variant of the OS pipeline being installed
+    iso_label: "Unknown"
+    exports: ["bootiso"]
+    required_partition_sizes: *default_required_dir_sizes
+    installer_config: *default_installer_config
+    image_config:
+      locale: "en_US.UTF-8"
+    platforms:
+      - *x86_64_installer_platform
+      - *aarch64_installer_platform
+    platforms_override:
+      conditions:
+        "RHEL 9.7+ adds FIPS menu":
+          when:
+            version_greater_or_equal: "9.7"
+          override:
+            - <<: *x86_64_installer_platform
+              fips_menu: true
+            - <<: *aarch64_installer_platform
+              fips_menu: true
+    package_sets:
+      installer:
+        - include:
+            - "anaconda"
+            - "anaconda-widgets"
+            - "kexec-tools-anaconda-addon"
+            - "anaconda-install-img-deps"
+            - "oscap-anaconda-addon"
+            - "redhat-release-eula"
+            - "device-mapper-multipath"
+            - "dnf"
+            - "rpm-ostree"
+            - "ostree"
+            - "pigz"
+            - "kernel"
+            - "kernel-modules"
+            - "kernel-modules-extra"
+            - "grubby"
+            - "glibc-all-langpacks"
+            - "plymouth"
+            - "anaconda-dracut"
+            - "dracut-network"
+            - "dracut-config-generic"
+            - "initscripts"
+            - "cryptsetup"
+            - "rpcbind"
+            - "kbd"
+            - "kbd-misc"
+            - "tar"
+            - "xz"
+            - "curl"
+            - "bzip2"
+            - "systemd"
+            - "rsyslog"
+            - "xorg-x11-drivers"
+            - "xorg-x11-server-Xorg"
+            - "xorg-x11-server-utils"
+            - "xorg-x11-xauth"
+            - "dbus-x11"
+            - "gsettings-desktop-schemas"
+            - "nm-connection-editor"
+            - "librsvg2"
+            - "gnome-kiosk"
+            - "xfsprogs"
+            - "device-mapper-persistent-data"
+            - "xfsdump"
+            - "libblockdev-plugins-all"
+            - "libblockdev"
+            - "udisks2"
+            - "udisks2-iscsi"
+            - "hostname"
+            - "libblockdev-lvm-dbus"
+            - "volume_key"
+            - "nss-tools"
+            - "selinux-policy-targeted"
+            - "audit"
+            - "ethtool"
+            - "openssh-server"
+            - "nfs-utils"
+            - "openssh-clients"
+            - "tigervnc-server-minimal"
+            - "tigervnc-server-module"
+            - "net-tools"
+            - "nmap-ncat"
+            - "prefixdevname"
+            - "ipcalc"
+            - "pciutils"
+            - "usbutils"
+            - "ipmitool"
+            - "mt-st"
+            - "smartmontools"
+            - "hdparm"
+            - "libmlx4"
+            - "rdma-core"
+            - "nvme-cli"
+            - "bitmap-fangsongti-fonts"
+            - "dejavu-sans-fonts"
+            - "dejavu-sans-mono-fonts"
+            - "kacst-farsi-fonts"
+            - "kacst-qurn-fonts"
+            - "lklug-fonts"
+            - "lohit-assamese-fonts"
+            - "lohit-bengali-fonts"
+            - "lohit-devanagari-fonts"
+            - "lohit-gujarati-fonts"
+            - "lohit-gurmukhi-fonts"
+            - "lohit-kannada-fonts"
+            - "lohit-odia-fonts"
+            - "lohit-tamil-fonts"
+            - "lohit-telugu-fonts"
+            - "madan-fonts"
+            - "smc-meera-fonts"
+            - "thai-scalable-waree-fonts"
+            - "sil-abyssinica-fonts"
+            - "xorg-x11-fonts-misc"
+            - "aajohan-comfortaa-fonts"
+            - "abattis-cantarell-fonts"
+            - "sil-scheherazade-fonts"
+            - "jomolhari-fonts"
+            - "khmeros-base-fonts"
+            - "sil-padauk-fonts"
+            - "google-noto-sans-cjk-ttc-fonts"
+            - "gdb-gdbserver"
+            - "libreport-plugin-reportuploader"
+            - "python3-pyatspi"
+            - "vim-minimal"
+            - "strace"
+            - "lsof"
+            - "xz"
+            - "less"
+            - "rsync"
+            - "bind-utils"
+            - "ftp"
+            - "mtr"
+            - "wget"
+            - "gdisk"
+            - "hexedit"
+            - "sg3_utils"
+            - "perl-interpreter"
+            - "restore"
+            - "spice-vdagent"
