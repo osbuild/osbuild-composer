@@ -2355,7 +2355,6 @@ image_types:
           repos:
             - id: "google-compute-engine"
               name: "Google Compute Engine"
-              # TODO: use el10 repo once it's available
               baseurl:
                 - "https://packages.cloud.google.com/yum/repos/google-compute-engine-el8-x86_64-stable"
               enabled: true
