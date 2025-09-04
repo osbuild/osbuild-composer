@@ -116,8 +116,20 @@ function verify() {
   # a repo and poke into the container storage to see if the container we put
   # in there matches the one we expect to be in there.
 
-  local CONFIG_DIGEST
-  CONFIG_DIGEST=$(skopeo inspect --raw "docker://$CONTAINER_SOURCE" | jq -r .config.digest)
+  # We need to first get the image ID of the container with our architecture
+  # and then use its ID to find the config digest
+  local CONTAINER_ARCH
+  case "$ARCH" in
+    "x86_64") CONTAINER_ARCH="amd64" ;;
+    "aarch64") CONTAINER_ARCH="arm64" ;;
+    "ppc64le") CONTAINER_ARCH="ppc64le" ;;
+    "s390x") CONTAINER_ARCH="s390x" ;;
+    *) echo "Unknown arch $ARCH"; exit 1 ;;
+  esac
+  local IMAGE_MANIFEST_ID
+  IMAGE_MANIFEST_ID=$(skopeo inspect --raw "docker://$CONTAINER_SOURCE" | jq -r --arg CONTAINER_ARCH "$CONTAINER_ARCH" '.manifests[] | select(.platform.architecture == $CONTAINER_ARCH) | .digest')
+  local IMAGE_ID
+  IMAGE_ID=$(skopeo inspect --raw "docker://$CONTAINER_SOURCE@$IMAGE_MANIFEST_ID" | jq -r .config.digest)
 
   ostree init --repo=repo
   ostree remote --repo=repo add --no-gpg-verify container http://localhost:8080/repo
@@ -126,6 +138,6 @@ function verify() {
   local EMBEDDED_ID
   EMBEDDED_ID=$(sudo ostree cat --repo=repo "${BUILD_OSTREE_COMMIT}" /usr/share/containers/storage/overlay-images/images.json | jq -r .[0].id)
 
-  echo -e "have: sha256:${EMBEDDED_ID}\nwant: ${CONFIG_DIGEST}"
-  test "sha256:${EMBEDDED_ID}" = "${CONFIG_DIGEST}"
+  echo -e "have: sha256:${EMBEDDED_ID}\nwant: ${IMAGE_ID}"
+  test "sha256:${EMBEDDED_ID}" = "${IMAGE_ID}"
 }
