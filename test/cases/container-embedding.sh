@@ -56,10 +56,25 @@ BLUEPRINT_FILE=${TEMPDIR}/blueprint.toml
 COMPOSE_START=${TEMPDIR}/compose-start-${IMAGE_KEY}.json
 COMPOSE_INFO=${TEMPDIR}/compose-info-${IMAGE_KEY}.json
 
-FEDORA_IMAGE_DIGEST="sha256:4d76a7480ce1861c95975945633dc9d03807ffb45c64b664ef22e673798d414b"
+CONTAINER_ARCH=""
+case "$ARCH" in
+  "x86_64") CONTAINER_ARCH="amd64" ;;
+  "aarch64") CONTAINER_ARCH="arm64" ;;
+  "ppc64le") CONTAINER_ARCH="ppc64le" ;;
+  "s390x") CONTAINER_ARCH="s390x" ;;
+  *) echo "Unknown arch $ARCH"; exit 1 ;;
+esac
+FEDORA_IMAGE_SOURCE="registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/fedora-minimal"
+FEDORA_IMAGE_MANIFEST_ID=$(skopeo inspect --raw "docker://$FEDORA_IMAGE_SOURCE" | jq -r --arg CONTAINER_ARCH "$CONTAINER_ARCH" '.manifests[] | select(.platform.architecture == $CONTAINER_ARCH) | .digest')
+FEDORA_IMAGE_ID=$(skopeo inspect --raw "docker://$FEDORA_IMAGE_SOURCE@$FEDORA_IMAGE_MANIFEST_ID" | jq -r .config.digest)
 FEDORA_LOCAL_NAME="localhost/fedora-minimal:v1"
-MANIFEST_LIST_DIGEST="sha256:58150862447d05feeb263ddb7257bf11d2ce2a697362ac117de2184d10f028fc"
+echo "Using fedora image source: ${FEDORA_IMAGE_SOURCE}"
+echo "Using fedora image manifest id: ${FEDORA_IMAGE_MANIFEST_ID}"
+echo "Using fedora image id: ${FEDORA_IMAGE_ID}"
+
+MANIFEST_LIST_DIGEST=$(skopeo inspect docker://registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/manifest-list-test:latest --format '{{.Digest}}')
 MANIFEST_LIST_SOURCE="registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/manifest-list-test@${MANIFEST_LIST_DIGEST}"
+echo "Using manifest list source: ${MANIFEST_LIST_SOURCE}"
 
 # Write a basic blueprint for our container.
 tee "$BLUEPRINT_FILE" > /dev/null << EOF
@@ -68,7 +83,7 @@ description = "A qcow2 with an container"
 version = "0.0.1"
 
 [[containers]]
-source = "registry.gitlab.com/redhat/services/products/image-builder/ci/osbuild-composer/fedora-minimal@${FEDORA_IMAGE_DIGEST}"
+source = "${FEDORA_IMAGE_SOURCE}@${FEDORA_IMAGE_MANIFEST_ID}"
 name = "${FEDORA_LOCAL_NAME}"
 
 [[containers]]
@@ -130,13 +145,14 @@ IMAGE_FILENAME="${COMPOSE_ID}-disk.qcow2"
 greenprint "💬 Checking that image exists"
 INFO="$(sudo osbuild-image-info "${IMAGE_FILENAME}")"
 
-IMAGE_ID="d4ee87dab8193afad523b1042b9d3f5ec887555a704e5aaec2876798ebb585a6"
-FEDORA_CONTAINER_EXISTS=$(jq -e --arg id "${IMAGE_ID}" 'any(."container-images" | select(. != null and .[].Id == $id); .)' <<< "${INFO}")
+# FEDORA_IMAGE_ID has the sha256: prefix, but image-info reports Id without it.
+FEDORA_IMAGE_ID_WO_PREFIX="${FEDORA_IMAGE_ID#*:}"
+FEDORA_CONTAINER_EXISTS=$(jq -e --arg id "${FEDORA_IMAGE_ID_WO_PREFIX}" 'any(."container-images" | select(. != null and .[].Id == $id); .)' <<< "${INFO}")
 
 if $FEDORA_CONTAINER_EXISTS; then
-  greenprint "💚 fedora container image '${IMAGE_ID}' was found!"
+  greenprint "💚 fedora container image '${FEDORA_IMAGE_ID_WO_PREFIX}' was found!"
 else
-  echo "😢 fedora container image '${IMAGE_ID}' not in image."
+  echo "😢 fedora container image '${FEDORA_IMAGE_ID_WO_PREFIX}' not in image."
   exit 1
 fi
 
