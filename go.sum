@@ -78,8 +78,8 @@ github.com/VividCortex/ewma v1.2.0 h1:f58SaIzcDXrSy3kWaHNvuJgJ3Nmz59Zji6XoJR/q1o
 github.com/VividCortex/ewma v1.2.0/go.mod h1:nz4BbCtbLyFDeC9SUHbtcT5644juEuWfUAUnGx7j5l4=
 github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d h1:licZJFw2RwpHMqeKTCYkitsPqHNxTmd4SNR5r94FGM8=
 github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d/go.mod h1:asat636LX7Bqt5lYEZ27JNDcqxfjdBQuJ/MM4CN/Lzo=
-github.com/achilleas-k/images v0.0.0-20250904172021-e987c3921518 h1:6wB8vpDweQZKPJyVKpxUTU0EFnAAuup0JBhbduAH9Rw=
-github.com/achilleas-k/images v0.0.0-20250904172021-e987c3921518/go.mod h1:mRp0NKABLeJxFFuUKzWKw+qL5JktftMtn0hALDyxqHM=
+github.com/achilleas-k/images v0.0.0-20250905094743-ef4101900a1b h1:eWlCasiPapN3xytyzxXL+whS9ca2tFMOY5lBfaxkjRo=
+github.com/achilleas-k/images v0.0.0-20250905094743-ef4101900a1b/go.mod h1:mRp0NKABLeJxFFuUKzWKw+qL5JktftMtn0hALDyxqHM=
 github.com/apapsch/go-jsonmerge/v2 v2.0.0 h1:axGnT1gRIfimI7gJifB699GoE/oq+F2MU7Dml6nw9rQ=
 github.com/apapsch/go-jsonmerge/v2 v2.0.0/go.mod h1:lvDnEdqiQrp0O42VQGgmlKpxL1AP2+08jFMw88y4klk=
 github.com/aws/aws-sdk-go-v2 v1.38.3 h1:B6cV4oxnMs45fql4yRH+/Po/YU+597zgWqvDpYMturk=

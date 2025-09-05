@@ -1489,16 +1489,7 @@ image_types:
                 exclude:
                   - "perl"
                   - "perl-interpreter"
-    supported_blueprint_options:
-      # Only supporting a few basic options for now because we never tested any
-      # other customization with this image type
-      - "distro"
-      - "packages"
-      - "modules"
-      - "groups"
-      - "enabled_modules"
-      - "containers"
-      - "minimal"
+    supported_blueprint_options: *supported_options_ostree_commit
 
   "minimal-raw-xz": &minimal_raw_xz
     name_aliases: ["minimal-raw"]
