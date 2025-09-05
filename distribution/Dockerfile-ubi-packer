@@ -1,7 +1,7 @@
 FROM registry.access.redhat.com/ubi9/ubi-minimal:latest
 
 RUN curl --location --output /etc/yum.repos.d/hashicorp.repo https://rpm.releases.hashicorp.com/RHEL/hashicorp.repo
-RUN microdnf install -y packer openssh-clients unzip python3 python3-pip
+RUN microdnf install -y packer openssh-clients unzip python3 python3-pip rsync
 
 RUN pip3 install ansible
 RUN ansible-galaxy collection install ansible.posix
