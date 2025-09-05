@@ -752,6 +752,109 @@
       aarch64:
         <<: *iot_simplified_installer_partition_tables_x86
 
+  supported_options_lists:
+    # common options supported by all disk image types this includes everything
+    # that is not specific to installers or ostree-based images
+    supported_options_disk: &supported_options_disk
+      - "distro"
+      - "packages"
+      - "modules"
+      - "groups"
+      - "enabled_modules"
+      - "containers"
+      - "minimal"
+      - "customizations.cacerts"
+      - "customizations.directories"
+      - "customizations.disk"
+      - "customizations.files"
+      - "customizations.filesystem"
+      - "customizations.partitioning_mode"
+      - "customizations.fips"
+      - "customizations.firewall"
+      - "customizations.user"
+      - "customizations.sshkey"
+      - "customizations.group"
+      - "customizations.hostname"
+      - "customizations.kernel"
+      - "customizations.locale"
+      - "customizations.openscap"
+      - "customizations.repositories"
+      - "customizations.rpm"
+      - "customizations.services"
+      - "customizations.timezone"
+
+    # options supported by base ostree image types (commit and container)
+    supported_options_ostree_commit: &supported_options_ostree_commit
+      - "distro"
+      - "packages"
+      - "modules"
+      - "groups"
+      - "enabled_modules"
+      - "minimal"
+      - "containers"
+      - "customizations.directories"
+      - "customizations.files"
+      - "customizations.fips"
+      - "customizations.firewall"
+      - "customizations.user"
+      - "customizations.sshkey"
+      - "customizations.group"
+      - "customizations.hostname"
+      - "customizations.kernel.name"
+      - "customizations.locale"
+      - "customizations.repositories"
+      - "customizations.services"
+      - "customizations.timezone"
+
+    # supported options for container types (container and wsl)
+    supported_options_container: &supported_options_container
+      - "distro"
+      - "packages"
+      - "modules"
+      - "groups"
+      - "enabled_modules"
+      - "minimal"
+      - "containers"
+      - "customizations.directories"
+      - "customizations.files"
+      - "customizations.firewall"
+      - "customizations.user"
+      - "customizations.sshkey"
+      - "customizations.group"
+      - "customizations.hostname"
+      - "customizations.locale"
+      - "customizations.repositories"
+      - "customizations.services"
+      - "customizations.timezone"
+
+    # options supported by ostree disk (deployment) image types
+    supported_options_ostree_disk: &supported_options_ostree_disk
+      - "distro"
+      - "customizations.files"
+      - "customizations.directories"
+      - "customizations.disk"
+      - "customizations.filesystem"
+      - "customizations.partitioning_mode"
+      - "customizations.fips"
+      - "customizations.user"
+      - "customizations.sshkey"
+      - "customizations.group"
+      - "customizations.kernel.append"
+      - "customizations.locale"
+      - "customizations.services"
+
+    # options supported by Anaconda installer (ISO) image types
+    supported_options_anaconda: &supported_options_anaconda
+      - "distro"
+      - "customizations.installer"
+      - "customizations.user"
+      - "customizations.sshkey"
+      - "customizations.group"
+      - "customizations.fips"
+      - "customizations.timezone"
+      - "customizations.locale"
+
+
 image_config:
   default:
     default_oscap_datastream: "/usr/share/xml/scap/ssg/content/ssg-fedora-ds.xml"
@@ -813,6 +916,7 @@ image_types:
         image_format: "vagrant_libvirt"
       - <<: *aarch64_platform
         image_format: "vagrant_libvirt"
+    supported_blueprint_options: *supported_options_disk
 
   "server-vagrant-virtualbox": &server_vagrant_virtualbox
     <<: *server_vagrant_libvirt
@@ -863,6 +967,7 @@ image_types:
         image_format: "qcow2"
       - <<: *s390x_zipl_platform
         image_format: "qcow2"
+    supported_blueprint_options: *supported_options_disk
 
   "server-ami":
     <<: *server_qcow2
@@ -970,6 +1075,7 @@ image_types:
             - "zram-generator-defaults"
             - "grubby-deprecated"
             - "extlinux-bootloader"
+    supported_blueprint_options: *supported_options_disk
 
   "server-ova":
     <<: *server_vmdk
@@ -1135,6 +1241,7 @@ image_types:
               append:
                 include:
                   - "filesystem"
+    supported_blueprint_options: *supported_options_ostree_commit
 
   "iot-container":
     <<: *iot_commit
@@ -1228,6 +1335,7 @@ image_types:
                 - *iot_base_partition_table_part_efi_aarch64
                 - *iot_base_partition_table_part_boot_aarch64
                 - *iot_base_partition_table_part_root_fstab_ro_aarch64
+    supported_blueprint_options: *supported_options_ostree_disk
 
   "iot-qcow2":
     <<: *rpm_ostree_imgtype_common
@@ -1255,6 +1363,7 @@ image_types:
       - <<: *aarch64_platform
         image_format: "qcow2"
         qcow2_compat: "1.1"
+    supported_blueprint_options: *supported_options_ostree_disk
 
   "iot-bootable-container":
     <<: *rpm_ostree_imgtype_common
@@ -1401,6 +1510,7 @@ image_types:
                 exclude:
                   - "perl"
                   - "perl-interpreter"
+    supported_blueprint_options: *supported_options_ostree_commit
 
   "minimal-raw-xz": &minimal_raw_xz
     name_aliases: ["minimal-raw"]
@@ -1443,6 +1553,7 @@ image_types:
         timeout: 5
       install_weak_deps: false
       mount_units: true
+      machine_id_uninitialized: false
       enabled_services:
         - "NetworkManager.service"
         - "initial-setup.service"
@@ -1470,12 +1581,16 @@ image_types:
         - &minimal_raw_pkgset
           include:
             - "@core"
+            - "bash-completion"
+            - "grubby"
+            - "fwupd-efi"
             - "initial-setup"
             - "libxkbcommon"
             - "NetworkManager-wifi"
+            - "linux-firmware"
             - "brcmfmac-firmware"
-            - "realtek-firmware"
             - "iwlwifi-mvm-firmware"
+            - "realtek-firmware"
           exclude:
             - "dracut-config-rescue"
           conditions:
@@ -1494,6 +1609,8 @@ image_types:
               append:
                 exclude:
                   - "firewalld"
+    supported_blueprint_options: *supported_options_disk
+
   "minimal-raw-zst":
     <<: *minimal_raw_xz
     name_aliases: []
@@ -1529,6 +1646,7 @@ image_types:
     platforms:
       - *x86_64_installer_platform
       - *aarch64_installer_platform
+    supported_blueprint_options: *supported_options_anaconda
 
   "workstation-live-installer":
     name_aliases: ["live-installer"]
@@ -1538,9 +1656,10 @@ image_types:
     boot_iso: true
     image_func: "live_installer"
     iso_label: "Workstation"
+    variant: "Workstation"
     exports: ["bootiso"]
     required_partition_sizes: *default_required_dir_sizes
-    installer_config: 
+    installer_config:
       <<: *default_installer_config
       # for some reason the live-installer never had or never took into account
       # the additional dracut modules. This might be a bug but for now we reset
@@ -1595,6 +1714,9 @@ image_types:
     platforms:
       - *x86_64_installer_platform
       - *aarch64_installer_platform
+    supported_blueprint_options:
+      - "distro"
+      - "customizations.installer"
 
   "minimal-installer":
     name_aliases: ["image-installer", "fedora-image-installer"]
@@ -1637,6 +1759,7 @@ image_types:
         - *minimal_raw_pkgset
       installer:
         - *anaconda_pkgset
+    supported_blueprint_options: *supported_options_anaconda
 
   container: &container
     filename: "container.tar"
@@ -1702,6 +1825,7 @@ image_types:
             - "trousers"
             - "whois-nls"
             - "xkeyboard-config"
+    supported_blueprint_options: *supported_options_container
 
   wsl:
     # this is the eventual name, and `wsl` the alias but we've been
@@ -1807,6 +1931,7 @@ image_types:
               append:
                 exclude:
                   - "fuse-libs"
+    supported_blueprint_options: *supported_options_container
 
   "iot-simplified-installer":
     <<: *rpm_ostree_imgtype_common
@@ -1927,6 +2052,18 @@ image_types:
             - "iwlwifi-mvm-firmware"
             - "realtek-firmware"
             - "uboot-images-armv8"
+    supported_blueprint_options:
+      - "distro"
+      - "customizations.installation_device"
+      - "customizations.fdo"
+      - "customizations.ignition"
+      - "customizations.kernel"
+      - "customizations.user"
+      - "customizations.sshkey"
+      - "customizations.group"
+      - "customizations.fips"
+    required_blueprint_options:
+      - "customizations.installation_device"
 
   # Based on lorax runtime-install.tmpl
   "everything-netinst":
@@ -2039,3 +2176,7 @@ image_types:
     platforms:
       - *x86_64_installer_platform
       - *aarch64_installer_platform
+    supported_blueprint_options:
+      - "distro"
+      - "customizations.fips"
+      - "customizations.locale"

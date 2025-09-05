@@ -18,13 +18,11 @@ import (
 
 type DiskImage struct {
 	Base
-	Platform              platform.Platform
-	PartitionTable        *disk.PartitionTable
-	OSCustomizations      manifest.OSCustomizations
-	Environment           environment.Environment
-	ImgTypeCustomizations manifest.OSCustomizations
-	Filename              string
-	Compression           string
+
+	PartitionTable   *disk.PartitionTable
+	OSCustomizations manifest.OSCustomizations
+	Environment      environment.Environment
+	Compression      string
 
 	// Control the VPC subformat use of force_size
 	VPCForceSize *bool
@@ -36,9 +34,9 @@ type DiskImage struct {
 	OSNick    string
 }
 
-func NewDiskImage() *DiskImage {
+func NewDiskImage(platform platform.Platform, filename string) *DiskImage {
 	return &DiskImage{
-		Base:     NewBase("disk"),
+		Base:     NewBase("disk", platform, filename),
 		PartTool: osbuild.PTSfdisk,
 	}
 }
@@ -51,11 +49,10 @@ func (img *DiskImage) InstantiateManifest(m *manifest.Manifest,
 	buildPipeline := addBuildBootstrapPipelines(m, runner, repos, nil)
 	buildPipeline.Checkpoint()
 
-	osPipeline := manifest.NewOS(buildPipeline, img.Platform, repos)
+	osPipeline := manifest.NewOS(buildPipeline, img.platform, repos)
 	osPipeline.PartitionTable = img.PartitionTable
 	osPipeline.OSCustomizations = img.OSCustomizations
 	osPipeline.Environment = img.Environment
-	osPipeline.ImgTypeCustomizations = img.ImgTypeCustomizations
 	osPipeline.OSProduct = img.OSProduct
 	osPipeline.OSVersion = img.OSVersion
 	osPipeline.OSNick = img.OSNick
@@ -64,16 +61,16 @@ func (img *DiskImage) InstantiateManifest(m *manifest.Manifest,
 	rawImagePipeline.PartTool = img.PartTool
 
 	var imagePipeline manifest.FilePipeline
-	switch img.Platform.GetImageFormat() {
+	switch img.platform.GetImageFormat() {
 	case platform.FORMAT_RAW:
 		imagePipeline = rawImagePipeline
 	case platform.FORMAT_QCOW2:
 		qcow2Pipeline := manifest.NewQCOW2(buildPipeline, rawImagePipeline)
-		qcow2Pipeline.Compat = img.Platform.GetQCOW2Compat()
+		qcow2Pipeline.Compat = img.platform.GetQCOW2Compat()
 		imagePipeline = qcow2Pipeline
 	case platform.FORMAT_VAGRANT_LIBVIRT:
 		qcow2Pipeline := manifest.NewQCOW2(buildPipeline, rawImagePipeline)
-		qcow2Pipeline.Compat = img.Platform.GetQCOW2Compat()
+		qcow2Pipeline.Compat = img.platform.GetQCOW2Compat()
 
 		vagrantPipeline := manifest.NewVagrant(buildPipeline, qcow2Pipeline, osbuild.VagrantProviderLibvirt, rng)
 
@@ -89,7 +86,7 @@ func (img *DiskImage) InstantiateManifest(m *manifest.Manifest,
 
 		tarPipeline := manifest.NewTar(buildPipeline, vagrantPipeline, "archive")
 		tarPipeline.Format = osbuild.TarArchiveFormatUstar
-		tarPipeline.SetFilename(img.Filename)
+		tarPipeline.SetFilename(img.filename)
 
 		imagePipeline = tarPipeline
 	case platform.FORMAT_VHD:
@@ -103,8 +100,8 @@ func (img *DiskImage) InstantiateManifest(m *manifest.Manifest,
 		ovfPipeline := manifest.NewOVF(buildPipeline, vmdkPipeline)
 		tarPipeline := manifest.NewTar(buildPipeline, ovfPipeline, "archive")
 		tarPipeline.Format = osbuild.TarArchiveFormatUstar
-		tarPipeline.SetFilename(img.Filename)
-		extLess := strings.TrimSuffix(img.Filename, filepath.Ext(img.Filename))
+		tarPipeline.SetFilename(img.filename)
+		extLess := strings.TrimSuffix(img.filename, filepath.Ext(img.filename))
 		// The .ovf descriptor needs to be the first file in the archive
 		tarPipeline.Paths = []string{
 			fmt.Sprintf("%s.ovf", extLess),
@@ -123,7 +120,7 @@ func (img *DiskImage) InstantiateManifest(m *manifest.Manifest,
 	}
 
 	compressionPipeline := GetCompressionPipeline(img.Compression, buildPipeline, imagePipeline)
-	compressionPipeline.SetFilename(img.Filename)
+	compressionPipeline.SetFilename(img.filename)
 
 	return compressionPipeline.Export(), nil
 }

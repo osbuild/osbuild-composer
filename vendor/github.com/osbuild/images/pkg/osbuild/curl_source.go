@@ -37,11 +37,12 @@ func NewCurlPackageItem(pkg rpmmd.PackageSpec) (CurlSourceItem, error) {
 	}
 	item := new(CurlSourceOptions)
 	item.URL = pkg.RemoteLocation
-	if pkg.Secrets == "org.osbuild.rhsm" {
+	switch pkg.Secrets {
+	case "org.osbuild.rhsm":
 		item.Secrets = &URLSecrets{
 			Name: "org.osbuild.rhsm",
 		}
-	} else if pkg.Secrets == "org.osbuild.mtls" {
+	case "org.osbuild.mtls":
 		item.Secrets = &URLSecrets{
 			Name: "org.osbuild.mtls",
 		}

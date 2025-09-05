@@ -188,7 +188,7 @@ func checkOptionsRhel9(t *imageType, bp *blueprint.Blueprint, options distro.Ima
 	}
 	if (mountpoints != nil || partitioning != nil) && t.RPMOSTree && (t.Name() == "edge-container" || t.Name() == "edge-commit") {
 		return warnings, fmt.Errorf("custom mountpoints and partitioning are not supported for ostree types")
-	} else if (mountpoints != nil || partitioning != nil) && t.RPMOSTree && !(t.Name() == "edge-container" || t.Name() == "edge-commit") {
+	} else if (mountpoints != nil || partitioning != nil) && t.RPMOSTree && (t.Name() != "edge-container" && t.Name() != "edge-commit") {
 		//customization allowed for edge-raw-image,edge-ami,edge-vsphere,edge-simplified-installer
 		err := blueprint.CheckMountpointsPolicy(mountpoints, policies.OstreeMountpointPolicies)
 		if err != nil {
@@ -526,13 +526,14 @@ func checkOptionsFedora(t *imageType, bp *blueprint.Blueprint, options distro.Im
 
 	var warnings []string
 
+	errPrefix := fmt.Sprintf("blueprint validation failed for image type %q", t.Name())
+
 	if !t.RPMOSTree && options.OSTree != nil {
 		return warnings, fmt.Errorf("OSTree is not supported for %q", t.Name())
 	}
 
-	// we do not support embedding containers on ostree-derived images, only on commits themselves
-	if len(bp.Containers) > 0 && t.RPMOSTree && (t.Name() != "iot-commit" && t.Name() != "iot-container") {
-		return warnings, fmt.Errorf("embedding containers is not supported for %s on %s", t.Name(), t.arch.distro.Name())
+	if err := distro.ValidateConfig(t, *bp); err != nil {
+		return warnings, fmt.Errorf("%s: %w", errPrefix, err)
 	}
 
 	if options.OSTree != nil {
@@ -541,78 +542,40 @@ func checkOptionsFedora(t *imageType, bp *blueprint.Blueprint, options distro.Im
 		}
 	}
 
-	if t.BootISO && t.RPMOSTree {
+	if (t.BootISO || t.Bootable) && t.RPMOSTree {
 		// ostree-based ISOs require a URL from which to pull a payload commit
 		if options.OSTree == nil || options.OSTree.URL == "" {
-			return warnings, fmt.Errorf("boot ISO image type %q requires specifying a URL from which to retrieve the OSTree commit", t.Name())
+			return warnings, fmt.Errorf("options validation failed for image type %q: ostree.url: required", t.Name())
 		}
 	}
 
-	if t.Name() == "iot-raw-xz" || t.Name() == "iot-qcow2" {
-		allowed := []string{"User", "Group", "Directories", "Files", "Services", "FIPS"}
-		if err := customizations.CheckAllowed(allowed...); err != nil {
-			return warnings, fmt.Errorf(distro.UnsupportedCustomizationError, t.Name(), strings.Join(allowed, ", "))
+	// FDO is optional, but when specified has some restrictions
+	if customizations.GetFDO() != nil {
+		if customizations.GetFDO().ManufacturingServerURL == "" {
+			return warnings, fmt.Errorf("%s: customizations.fdo.manufacturing_server_url: required when using fdo", errPrefix)
 		}
-		// TODO: consider additional checks, such as those in "edge-simplified-installer" in RHEL distros
-	}
-
-	// BootISOs have limited support for customizations.
-	// TODO: Support kernel name selection for image-installer
-	if t.BootISO {
-		if t.Name() == "iot-simplified-installer" {
-			allowed := []string{"InstallationDevice", "FDO", "Ignition", "Kernel", "User", "Group", "FIPS"}
-			if err := customizations.CheckAllowed(allowed...); err != nil {
-				return warnings, fmt.Errorf(distro.UnsupportedCustomizationError, t.Name(), strings.Join(allowed, ", "))
-			}
-			if customizations.GetInstallationDevice() == "" {
-				return warnings, fmt.Errorf("boot ISO image type %q requires specifying an installation device to install to", t.Name())
-			}
-
-			// FDO is optional, but when specified has some restrictions
-			if customizations.GetFDO() != nil {
-				if customizations.GetFDO().ManufacturingServerURL == "" {
-					return warnings, fmt.Errorf("boot ISO image type %q requires specifying FDO.ManufacturingServerURL configuration to install to when using FDO", t.Name())
-				}
-				var diunSet int
-				if customizations.GetFDO().DiunPubKeyHash != "" {
-					diunSet++
-				}
-				if customizations.GetFDO().DiunPubKeyInsecure != "" {
-					diunSet++
-				}
-				if customizations.GetFDO().DiunPubKeyRootCerts != "" {
-					diunSet++
-				}
-				if diunSet != 1 {
-					return warnings, fmt.Errorf("boot ISO image type %q requires specifying one of [FDO.DiunPubKeyHash,FDO.DiunPubKeyInsecure,FDO.DiunPubKeyRootCerts] configuration to install to when using FDO", t.Name())
-				}
-			}
-
-			// ignition is optional, we might be using FDO
-			if customizations.GetIgnition() != nil {
-				if customizations.GetIgnition().Embedded != nil && customizations.GetIgnition().FirstBoot != nil {
-					return warnings, fmt.Errorf("both ignition embedded and firstboot configurations found")
-				}
-				if customizations.GetIgnition().FirstBoot != nil && customizations.GetIgnition().FirstBoot.ProvisioningURL == "" {
-					return warnings, fmt.Errorf("ignition.firstboot requires a provisioning url")
-				}
-			}
-		} else if t.Name() == "iot-installer" || t.Name() == "minimal-installer" {
-			// "Installer" is actually not allowed for image-installer right now, but this is checked at the end
-			allowed := []string{"User", "Group", "FIPS", "Installer", "Timezone", "Locale"}
-			if err := customizations.CheckAllowed(allowed...); err != nil {
-				return warnings, fmt.Errorf(distro.UnsupportedCustomizationError, t.Name(), strings.Join(allowed, ", "))
-			}
-		} else if t.Name() == "workstation-live-installer" {
-			allowed := []string{"Installer"}
-			if err := customizations.CheckAllowed(allowed...); err != nil {
-				return warnings, fmt.Errorf(distro.NoCustomizationsAllowedError, t.Name())
-			}
+		var diunSet int
+		if customizations.GetFDO().DiunPubKeyHash != "" {
+			diunSet++
+		}
+		if customizations.GetFDO().DiunPubKeyInsecure != "" {
+			diunSet++
+		}
+		if customizations.GetFDO().DiunPubKeyRootCerts != "" {
+			diunSet++
+		}
+		if diunSet != 1 {
+			return warnings, fmt.Errorf("%s: one of customizations.fdo.diun_pub_key_hash, customizations.fdo.diun_pub_key_insecure, customizations.fdo.diun_pub_key_root_certs: required when using fdo", errPrefix)
 		}
 	}
 
-	if kernelOpts := customizations.GetKernel(); kernelOpts.Append != "" && t.RPMOSTree {
-		return warnings, fmt.Errorf("kernel boot parameter customizations are not supported for ostree types")
+	if customizations.GetIgnition() != nil {
+		if customizations.GetIgnition().Embedded != nil && customizations.GetIgnition().FirstBoot != nil {
+			return warnings, fmt.Errorf("%s: customizations.ignition.embedded cannot be used with customizations.ignition.firstboot", errPrefix)
+		}
+		if customizations.GetIgnition().FirstBoot != nil && customizations.GetIgnition().FirstBoot.ProvisioningURL == "" {
+			return warnings, fmt.Errorf("%s: customizations.ignition.firstboot requires customizations.ignition.firstboot.provisioning_url", errPrefix)
+		}
 	}
 
 	mountpoints := customizations.GetFilesystems()
@@ -620,33 +583,27 @@ func checkOptionsFedora(t *imageType, bp *blueprint.Blueprint, options distro.Im
 	if err != nil {
 		return warnings, err
 	}
-	if (len(mountpoints) > 0 || partitioning != nil) && t.RPMOSTree {
-		return warnings, fmt.Errorf("Custom mountpoints and partitioning are not supported for ostree types")
-	}
 	if len(mountpoints) > 0 && partitioning != nil {
-		return warnings, fmt.Errorf("partitioning customizations cannot be used with custom filesystems (mountpoints)")
+		return warnings, fmt.Errorf("%s: customizations.disk cannot be used with customizations.filesystem", errPrefix)
 	}
 
 	if err := blueprint.CheckMountpointsPolicy(mountpoints, policies.MountpointPolicies); err != nil {
-		return warnings, err
+		return warnings, fmt.Errorf("%s: %w", errPrefix, err)
 	}
 	if err := blueprint.CheckDiskMountpointsPolicy(partitioning, policies.MountpointPolicies); err != nil {
-		return warnings, err
+		return warnings, fmt.Errorf("%s: %w", errPrefix, err)
 	}
 	if err := partitioning.ValidateLayoutConstraints(); err != nil {
-		return nil, err
+		return warnings, fmt.Errorf("%s: %w", errPrefix, err)
 	}
 
 	if osc := customizations.GetOpenSCAP(); osc != nil {
 		supported := oscap.IsProfileAllowed(osc.ProfileID, t.arch.distro.DistroYAML.OscapProfilesAllowList)
 		if !supported {
-			return warnings, fmt.Errorf("OpenSCAP unsupported profile: %s", osc.ProfileID)
-		}
-		if t.RPMOSTree {
-			return warnings, fmt.Errorf("OpenSCAP customizations are not supported for ostree types")
+			return warnings, fmt.Errorf("%s: customizations.oscap.profile_id: unsupported profile %s", errPrefix, osc.ProfileID)
 		}
 		if osc.ProfileID == "" {
-			return warnings, fmt.Errorf("OpenSCAP profile cannot be empty")
+			return warnings, fmt.Errorf("%s: customizations.oscap.profile_id: required when using customizations.oscap", errPrefix)
 		}
 	}
 
@@ -669,18 +626,18 @@ func checkOptionsFedora(t *imageType, bp *blueprint.Blueprint, options distro.Im
 
 	err = blueprint.CheckDirectoryCustomizationsPolicy(dc, dcp)
 	if err != nil {
-		return warnings, err
+		return warnings, fmt.Errorf("%s: %w", errPrefix, err)
 	}
 
 	err = blueprint.CheckFileCustomizationsPolicy(fc, fcp)
 	if err != nil {
-		return warnings, err
+		return warnings, fmt.Errorf("%s: %w", errPrefix, err)
 	}
 
 	// check if repository customizations are valid
 	_, err = customizations.GetRepositories()
 	if err != nil {
-		return warnings, err
+		return warnings, fmt.Errorf("%s: %w", errPrefix, err)
 	}
 
 	if customizations.GetFIPS() && !common.IsBuildHostFIPSEnabled() {
@@ -689,25 +646,11 @@ func checkOptionsFedora(t *imageType, bp *blueprint.Blueprint, options distro.Im
 
 	instCust, err := customizations.GetInstaller()
 	if err != nil {
-		return warnings, err
+		return warnings, fmt.Errorf("%s: %w", errPrefix, err)
 	}
-	if instCust != nil {
-		// only supported by the Anaconda installer
-		if slices.Index([]string{"iot-installer"}, t.Name()) == -1 {
-			return warnings, fmt.Errorf("installer customizations are not supported for %q", t.Name())
-		}
-
-		// NOTE: the image type check is redundant with the check above, but
-		// let's keep it explicit in case one of the two changes.
-		// The kickstart contents is incompatible with the users and groups
-		// customization only for the iot-installer.
-		if t.Name() == "iot-installer" &&
-			instCust.Kickstart != nil &&
-			len(instCust.Kickstart.Contents) > 0 &&
-			(customizations.GetUsers() != nil || customizations.GetGroups() != nil) {
-			return warnings, fmt.Errorf("iot-installer installer.kickstart.contents are not supported in combination with users or groups")
-		}
+	if instCust != nil && instCust.Kickstart != nil && len(instCust.Kickstart.Contents) > 0 &&
+		(customizations.GetUsers() != nil || customizations.GetGroups() != nil) {
+		return warnings, fmt.Errorf("%s: customizations.installer.kickstart.contents cannot be used with customizations.user or customizations.group", errPrefix)
 	}
-
 	return warnings, nil
 }

@@ -16,10 +16,7 @@ import (
 type BootcDiskImage struct {
 	Base
 
-	Platform       platform.Platform
 	PartitionTable *disk.PartitionTable
-
-	Filename string
 
 	ContainerSource      *container.SourceSpec
 	BuildContainerSource *container.SourceSpec
@@ -28,9 +25,9 @@ type BootcDiskImage struct {
 	OSCustomizations manifest.OSCustomizations
 }
 
-func NewBootcDiskImage(container container.SourceSpec, buildContainer container.SourceSpec) *BootcDiskImage {
+func NewBootcDiskImage(platform platform.Platform, filename string, container container.SourceSpec, buildContainer container.SourceSpec) *BootcDiskImage {
 	return &BootcDiskImage{
-		Base:                 NewBase("bootc-raw-image"),
+		Base:                 NewBase("bootc-raw-image", platform, filename),
 		ContainerSource:      &container,
 		BuildContainerSource: &buildContainer,
 	}
@@ -49,6 +46,7 @@ func (img *BootcDiskImage) InstantiateManifestFromContainers(m *manifest.Manifes
 	var copyFilesFrom map[string][]string
 	var ensureDirs []*fsnode.Directory
 
+	var customSourcePipeline = ""
 	if *img.ContainerSource != *img.BuildContainerSource {
 		// If we're using a different build container from the target container then we copy
 		// the bootc customization file directories from the target container. This includes the
@@ -82,6 +80,8 @@ func (img *BootcDiskImage) InstantiateManifestFromContainers(m *manifest.Manifes
 				EnsureDirs:         ensureDirs,
 			})
 		targetBuildPipeline.Checkpoint()
+
+		customSourcePipeline = targetBuildPipeline.Name()
 	}
 
 	buildContainers := []container.SourceSpec{*img.BuildContainerSource}
@@ -99,7 +99,10 @@ func (img *BootcDiskImage) InstantiateManifestFromContainers(m *manifest.Manifes
 	// this is signified by passing nil to the below pipelines.
 	var hostPipeline manifest.Build
 
-	rawImage := manifest.NewRawBootcImage(buildPipeline, containers, img.Platform)
+	rawImage := manifest.NewRawBootcImage(buildPipeline, containers, img.platform)
+	if customSourcePipeline != "" {
+		rawImage.SourcePipeline = customSourcePipeline
+	}
 	rawImage.PartitionTable = img.PartitionTable
 	rawImage.Users = img.OSCustomizations.Users
 	rawImage.Groups = img.OSCustomizations.Groups
@@ -112,11 +115,11 @@ func (img *BootcDiskImage) InstantiateManifestFromContainers(m *manifest.Manifes
 	// In BIB, we export multiple images from the same pipeline so we use the
 	// filename as the basename for each export and set the extensions based on
 	// each file format.
-	fileBasename := img.Filename
+	fileBasename := img.filename
 	rawImage.SetFilename(fmt.Sprintf("%s.raw", fileBasename))
 
 	qcow2Pipeline := manifest.NewQCOW2(hostPipeline, rawImage)
-	qcow2Pipeline.Compat = img.Platform.GetQCOW2Compat()
+	qcow2Pipeline.Compat = img.platform.GetQCOW2Compat()
 	qcow2Pipeline.SetFilename(fmt.Sprintf("%s.qcow2", fileBasename))
 
 	vmdkPipeline := manifest.NewVMDK(hostPipeline, rawImage)

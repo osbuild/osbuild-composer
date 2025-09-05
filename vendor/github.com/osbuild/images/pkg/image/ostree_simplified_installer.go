@@ -21,10 +21,8 @@ type OSTreeSimplifiedInstaller struct {
 	// Raw image that will be created and embedded
 	rawImage *OSTreeDiskImage
 
-	Platform              platform.Platform
-	OSCustomizations      manifest.OSCustomizations
-	Environment           environment.Environment
-	ImgTypeCustomizations manifest.OSCustomizations
+	OSCustomizations manifest.OSCustomizations
+	Environment      environment.Environment
 
 	ExtraBasePackages rpmmd.PackageSet
 
@@ -47,8 +45,6 @@ type OSTreeSimplifiedInstaller struct {
 
 	installDevice string
 
-	Filename string
-
 	FDO *fdo.Options
 
 	// Ignition firstboot configuration options
@@ -61,9 +57,9 @@ type OSTreeSimplifiedInstaller struct {
 	AdditionalDrivers       []string
 }
 
-func NewOSTreeSimplifiedInstaller(rawImage *OSTreeDiskImage, installDevice string) *OSTreeSimplifiedInstaller {
+func NewOSTreeSimplifiedInstaller(platform platform.Platform, filename string, rawImage *OSTreeDiskImage, installDevice string) *OSTreeSimplifiedInstaller {
 	return &OSTreeSimplifiedInstaller{
-		Base:          NewBase("ostree-simplified-installer"),
+		Base:          NewBase("ostree-simplified-installer", platform, filename),
 		rawImage:      rawImage,
 		installDevice: installDevice,
 	}
@@ -84,7 +80,7 @@ func (img *OSTreeSimplifiedInstaller) InstantiateManifest(m *manifest.Manifest,
 
 	coiPipeline := manifest.NewCoreOSInstaller(
 		buildPipeline,
-		img.Platform,
+		img.platform,
 		repos,
 		"kernel",
 		img.Product,
@@ -95,7 +91,7 @@ func (img *OSTreeSimplifiedInstaller) InstantiateManifest(m *manifest.Manifest,
 	coiPipeline.ExtraRepos = img.ExtraBasePackages.Repositories
 	coiPipeline.FDO = img.FDO
 	coiPipeline.Ignition = img.IgnitionEmbedded
-	coiPipeline.Biosdevname = (img.Platform.GetArch() == arch.ARCH_X86_64)
+	coiPipeline.Biosdevname = (img.platform.GetArch() == arch.ARCH_X86_64)
 	coiPipeline.Variant = img.Variant
 	coiPipeline.AdditionalDracutModules = img.AdditionalDracutModules
 	coiPipeline.AdditionalDrivers = img.AdditionalDrivers
@@ -106,12 +102,12 @@ func (img *OSTreeSimplifiedInstaller) InstantiateManifest(m *manifest.Manifest,
 		isoLabel = img.ISOLabel
 	} else {
 		// TODO: replace isoLabelTmpl with more high-level properties
-		isoLabel = fmt.Sprintf(img.ISOLabelTmpl, img.Platform.GetArch())
+		isoLabel = fmt.Sprintf(img.ISOLabelTmpl, img.platform.GetArch())
 	}
 
 	bootTreePipeline := manifest.NewEFIBootTree(buildPipeline, img.Product, img.OSVersion)
-	bootTreePipeline.Platform = img.Platform
-	bootTreePipeline.UEFIVendor = img.Platform.GetUEFIVendor()
+	bootTreePipeline.Platform = img.platform
+	bootTreePipeline.UEFIVendor = img.platform.GetUEFIVendor()
 	bootTreePipeline.ISOLabel = isoLabel
 
 	// kernel options for EFI boot tree grub stage
@@ -144,7 +140,7 @@ func (img *OSTreeSimplifiedInstaller) InstantiateManifest(m *manifest.Manifest,
 	bootTreePipeline.KernelOpts = kernelOpts
 
 	// enable ISOLinux on x86_64 only
-	isoLinuxEnabled := img.Platform.GetArch() == arch.ARCH_X86_64
+	isoLinuxEnabled := img.platform.GetArch() == arch.ARCH_X86_64
 
 	isoTreePipeline := manifest.NewCoreOSISOTree(buildPipeline, compressedImage, coiPipeline, bootTreePipeline)
 	isoTreePipeline.KernelOpts = kernelOpts
@@ -154,7 +150,7 @@ func (img *OSTreeSimplifiedInstaller) InstantiateManifest(m *manifest.Manifest,
 	isoTreePipeline.ISOLinux = isoLinuxEnabled
 
 	isoPipeline := manifest.NewISO(buildPipeline, isoTreePipeline, isoLabel)
-	isoPipeline.SetFilename(img.Filename)
+	isoPipeline.SetFilename(img.filename)
 	if isoLinuxEnabled {
 		isoPipeline.ISOBoot = manifest.SyslinuxISOBoot
 	}

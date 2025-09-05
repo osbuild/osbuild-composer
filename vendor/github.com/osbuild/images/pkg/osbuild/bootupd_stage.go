@@ -118,13 +118,13 @@ func genMountsForBootupd(source string, pt *disk.PartitionTable) ([]Mount, error
 					}
 					mount.Source = lv.Name
 					mounts = append(mounts, *mount)
-				case *disk.Swap:
+				case *disk.Swap, *disk.Raw:
 					// nothing to do
 				default:
 					return nil, fmt.Errorf("expected LV payload %+[1]v to be mountable or swap, got %[1]T", lv.Payload)
 				}
 			}
-		case *disk.Swap:
+		case *disk.Swap, *disk.Raw:
 			// nothing to do
 		default:
 			return nil, fmt.Errorf("type %T not supported by bootupd handling yet", part.Payload)

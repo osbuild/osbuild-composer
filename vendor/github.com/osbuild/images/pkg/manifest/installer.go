@@ -24,4 +24,11 @@ type InstallerCustomizations struct {
 	ISOBoot       ISOBootType
 
 	DefaultMenu int
+
+	ISOLabel  string
+	Product   string
+	Variant   string
+	OSVersion string
+	Release   string
+	Preview   bool
 }

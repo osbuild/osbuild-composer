@@ -15,10 +15,8 @@ import (
 
 type OSTreeArchive struct {
 	Base
-	Platform              platform.Platform
-	OSCustomizations      manifest.OSCustomizations
-	Environment           environment.Environment
-	ImgTypeCustomizations manifest.OSCustomizations
+	OSCustomizations manifest.OSCustomizations
+	Environment      environment.Environment
 
 	// OSTreeParent specifies the source for an optional parent commit for the
 	// new commit being built.
@@ -28,7 +26,6 @@ type OSTreeArchive struct {
 	OSTreeRef string
 
 	OSVersion string
-	Filename  string
 
 	InstallWeakDeps bool
 
@@ -40,9 +37,9 @@ type OSTreeArchive struct {
 	BootcConfig *bootc.Config
 }
 
-func NewOSTreeArchive(ref string) *OSTreeArchive {
+func NewOSTreeArchive(platform platform.Platform, filename string, ref string) *OSTreeArchive {
 	return &OSTreeArchive{
-		Base:            NewBase("ostree-archive"),
+		Base:            NewBase("ostree-archive", platform, filename),
 		OSTreeRef:       ref,
 		InstallWeakDeps: true,
 	}
@@ -55,10 +52,9 @@ func (img *OSTreeArchive) InstantiateManifest(m *manifest.Manifest,
 	buildPipeline := addBuildBootstrapPipelines(m, runner, repos, nil)
 	buildPipeline.Checkpoint()
 
-	osPipeline := manifest.NewOS(buildPipeline, img.Platform, repos)
+	osPipeline := manifest.NewOS(buildPipeline, img.platform, repos)
 	osPipeline.OSCustomizations = img.OSCustomizations
 	osPipeline.Environment = img.Environment
-	osPipeline.ImgTypeCustomizations = img.ImgTypeCustomizations
 	osPipeline.OSTreeParent = img.OSTreeParent
 	osPipeline.OSTreeRef = img.OSTreeRef
 	osPipeline.OSCustomizations.InstallWeakDeps = img.InstallWeakDeps
@@ -71,11 +67,11 @@ func (img *OSTreeArchive) InstantiateManifest(m *manifest.Manifest,
 		osPipeline.Bootupd = true
 		osPipeline.BootcConfig = img.BootcConfig
 		encapsulatePipeline := manifest.NewOSTreeEncapsulate(buildPipeline, ostreeCommitPipeline, "ostree-encapsulate")
-		encapsulatePipeline.SetFilename(img.Filename)
+		encapsulatePipeline.SetFilename(img.filename)
 		artifact = encapsulatePipeline.Export()
 	} else {
 		tarPipeline := manifest.NewTar(buildPipeline, ostreeCommitPipeline, "commit-archive")
-		tarPipeline.SetFilename(img.Filename)
+		tarPipeline.SetFilename(img.filename)
 		artifact = tarPipeline.Export()
 	}
 

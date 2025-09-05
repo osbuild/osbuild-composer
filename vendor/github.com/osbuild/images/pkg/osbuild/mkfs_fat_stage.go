@@ -31,5 +31,5 @@ func isFATVolID(id string) bool {
 	// when generating the mkfs stage in mkfs_stage.go. This check removes all
 	// dashes to determine if the given id is a valid vfat volid.
 	volidre := regexp.MustCompile(fatVolIDRegex)
-	return volidre.MatchString(strings.Replace(id, "-", "", -1))
+	return volidre.MatchString(strings.ReplaceAll(id, "-", ""))
 }

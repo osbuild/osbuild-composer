@@ -47,11 +47,12 @@ func (source *LibrepoSource) AddPackage(pkg rpmmd.PackageSpec, repos []rpmmd.Rep
 	if mirror.Insecure && !pkg.IgnoreSSL {
 		return fmt.Errorf("inconsistent SSL configuration: package %v requires SSL but mirror %v is configured to ignore SSL", pkg.Name, mirror.URL)
 	}
-	if pkg.Secrets == "org.osbuild.rhsm" {
+	switch pkg.Secrets {
+	case "org.osbuild.rhsm":
 		mirror.Secrets = &URLSecrets{
 			Name: "org.osbuild.rhsm",
 		}
-	} else if pkg.Secrets == "org.osbuild.mtls" {
+	case "org.osbuild.mtls":
 		mirror.Secrets = &URLSecrets{
 			Name: "org.osbuild.mtls",
 		}

@@ -20,7 +20,6 @@ import (
 
 type AnacondaOSTreeInstaller struct {
 	Base
-	Platform                platform.Platform
 	InstallerCustomizations manifest.InstallerCustomizations
 	ExtraBasePackages       rpmmd.PackageSet
 
@@ -31,25 +30,16 @@ type AnacondaOSTreeInstaller struct {
 
 	RootfsCompression string
 
-	ISOLabel  string
-	Product   string
-	Variant   string
-	OSVersion string
-	Release   string
-	Preview   bool
-
 	Commit ostree.SourceSpec
-
-	Filename string
 
 	// Locale for the installer. This should be set to the same locale as the
 	// ISO OS payload, if known.
 	Locale string
 }
 
-func NewAnacondaOSTreeInstaller(commit ostree.SourceSpec) *AnacondaOSTreeInstaller {
+func NewAnacondaOSTreeInstaller(platform platform.Platform, filename string, commit ostree.SourceSpec) *AnacondaOSTreeInstaller {
 	return &AnacondaOSTreeInstaller{
-		Base:   NewBase("ostree-installer"),
+		Base:   NewBase("ostree-installer", platform, filename),
 		Commit: commit,
 	}
 }
@@ -64,12 +54,10 @@ func (img *AnacondaOSTreeInstaller) InstantiateManifest(m *manifest.Manifest,
 	anacondaPipeline := manifest.NewAnacondaInstaller(
 		manifest.AnacondaInstallerTypePayload,
 		buildPipeline,
-		img.Platform,
+		img.platform,
 		repos,
 		"kernel",
-		img.Product,
-		img.OSVersion,
-		img.Preview,
+		img.InstallerCustomizations,
 	)
 	anacondaPipeline.ExtraPackages = img.ExtraBasePackages.Include
 	anacondaPipeline.ExcludePackages = img.ExtraBasePackages.Exclude
@@ -80,11 +68,8 @@ func (img *AnacondaOSTreeInstaller) InstantiateManifest(m *manifest.Manifest,
 			Groups: img.Kickstart.Groups,
 		}
 	}
-	anacondaPipeline.Variant = img.Variant
-	anacondaPipeline.Biosdevname = (img.Platform.GetArch() == arch.ARCH_X86_64)
+	anacondaPipeline.Biosdevname = (img.platform.GetArch() == arch.ARCH_X86_64)
 	anacondaPipeline.Checkpoint()
-
-	anacondaPipeline.InstallerCustomizations = img.InstallerCustomizations
 
 	if anacondaPipeline.InstallerCustomizations.FIPS {
 		anacondaPipeline.InstallerCustomizations.EnabledAnacondaModules = append(
@@ -103,10 +88,10 @@ func (img *AnacondaOSTreeInstaller) InstantiateManifest(m *manifest.Manifest,
 	default:
 	}
 
-	bootTreePipeline := manifest.NewEFIBootTree(buildPipeline, img.Product, img.OSVersion)
-	bootTreePipeline.Platform = img.Platform
-	bootTreePipeline.UEFIVendor = img.Platform.GetUEFIVendor()
-	bootTreePipeline.ISOLabel = img.ISOLabel
+	bootTreePipeline := manifest.NewEFIBootTree(buildPipeline, img.InstallerCustomizations.Product, img.InstallerCustomizations.OSVersion)
+	bootTreePipeline.Platform = img.platform
+	bootTreePipeline.UEFIVendor = img.platform.GetUEFIVendor()
+	bootTreePipeline.ISOLabel = img.InstallerCustomizations.ISOLabel
 	bootTreePipeline.DefaultMenu = img.InstallerCustomizations.DefaultMenu
 
 	if img.Kickstart == nil || img.Kickstart.OSTree == nil {
@@ -115,7 +100,7 @@ func (img *AnacondaOSTreeInstaller) InstantiateManifest(m *manifest.Manifest,
 	if img.Kickstart.Path == "" {
 		img.Kickstart.Path = osbuild.KickstartPathOSBuild
 	}
-	bootTreePipeline.KernelOpts = []string{fmt.Sprintf("inst.stage2=hd:LABEL=%s", img.ISOLabel), fmt.Sprintf("inst.ks=hd:LABEL=%s:%s", img.ISOLabel, img.Kickstart.Path)}
+	bootTreePipeline.KernelOpts = []string{fmt.Sprintf("inst.stage2=hd:LABEL=%s", img.InstallerCustomizations.ISOLabel), fmt.Sprintf("inst.ks=hd:LABEL=%s:%s", img.InstallerCustomizations.ISOLabel, img.Kickstart.Path)}
 	if anacondaPipeline.InstallerCustomizations.FIPS {
 		bootTreePipeline.KernelOpts = append(bootTreePipeline.KernelOpts, "fips=1")
 	}
@@ -128,7 +113,7 @@ func (img *AnacondaOSTreeInstaller) InstantiateManifest(m *manifest.Manifest,
 
 	isoTreePipeline := manifest.NewAnacondaInstallerISOTree(buildPipeline, anacondaPipeline, rootfsImagePipeline, bootTreePipeline)
 	isoTreePipeline.PartitionTable = efiBootPartitionTable(rng)
-	isoTreePipeline.Release = img.Release
+	isoTreePipeline.Release = img.InstallerCustomizations.Release
 	isoTreePipeline.Kickstart = img.Kickstart
 	isoTreePipeline.RootfsCompression = img.RootfsCompression
 	isoTreePipeline.RootfsType = img.InstallerCustomizations.ISORootfsType
@@ -142,8 +127,8 @@ func (img *AnacondaOSTreeInstaller) InstantiateManifest(m *manifest.Manifest,
 	}
 	isoTreePipeline.SubscriptionPipeline = subscriptionPipeline
 
-	isoPipeline := manifest.NewISO(buildPipeline, isoTreePipeline, img.ISOLabel)
-	isoPipeline.SetFilename(img.Filename)
+	isoPipeline := manifest.NewISO(buildPipeline, isoTreePipeline, img.InstallerCustomizations.ISOLabel)
+	isoPipeline.SetFilename(img.filename)
 	isoPipeline.ISOBoot = img.InstallerCustomizations.ISOBoot
 	artifact := isoPipeline.Export()
 

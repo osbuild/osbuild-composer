@@ -402,7 +402,7 @@ func createCustomRetryableClient(logger rh.LeveledLogger) *rh.Client {
 			}
 		}
 
-		if logger != nil && (!shouldRetry && !(resp.StatusCode >= 200 && resp.StatusCode < 300)) {
+		if logger != nil && (!shouldRetry && (resp.StatusCode < 200 || resp.StatusCode >= 300)) {
 			logger.Info(fmt.Sprintf("Not retrying: %v", resp.Status))
 		}
 

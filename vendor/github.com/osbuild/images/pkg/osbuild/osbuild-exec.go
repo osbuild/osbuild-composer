@@ -144,3 +144,16 @@ func OSBuildVersion() (string, error) {
 	version = strings.TrimSpace(version)
 	return version, nil
 }
+
+// OSBuildInspect converts a manifest to an inspected manifest.
+func OSBuildInspect(manifest []byte) ([]byte, error) {
+	cmd := exec.Command("osbuild", "--inspect")
+	cmd.Stdin = bytes.NewBuffer(manifest)
+
+	out, err := cmd.Output()
+	if err != nil {
+		return nil, err
+	}
+
+	return out, nil
+}

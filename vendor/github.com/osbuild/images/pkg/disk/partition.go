@@ -3,6 +3,7 @@ package disk
 import (
 	"encoding/json"
 	"fmt"
+	"slices"
 
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/datasizes"
@@ -27,6 +28,9 @@ type Partition struct {
 
 	// If nil, the partition is raw; It doesn't contain a payload.
 	Payload PayloadEntity `json:"payload,omitempty" yaml:"payload,omitempty"`
+
+	// Partition GPT attribute flags to set
+	Attrs []uint `json:"attrs,omitempty" yaml:"attrs,omitempty"`
 }
 
 func (p *Partition) Clone() Entity {
@@ -41,6 +45,7 @@ func (p *Partition) Clone() Entity {
 		Bootable: p.Bootable,
 		UUID:     p.UUID,
 		Label:    p.Label,
+		Attrs:    slices.Clone(p.Attrs),
 	}
 
 	if p.Payload != nil {

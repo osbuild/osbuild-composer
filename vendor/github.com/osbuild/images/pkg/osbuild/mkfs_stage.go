@@ -2,6 +2,7 @@ package osbuild
 
 import (
 	"fmt"
+	"path/filepath"
 	"slices"
 	"strings"
 
@@ -9,26 +10,33 @@ import (
 	"github.com/osbuild/images/pkg/disk"
 )
 
+// Helper to create the `devices` option for the stage with the right
+// name such that the last device is the target.
+func getDevicesForFsStage(path []disk.Entity, filename string) map[string]Device {
+	stageDevices, lastName := getDevices(path, filename, true)
+
+	// The last device in the chain must be named "device",
+	// because that's the device that mkfs and write-device stages
+	// run on. See the stage schemas for reference.
+	lastDevice := stageDevices[lastName]
+	delete(stageDevices, lastName)
+	stageDevices["device"] = lastDevice
+
+	return stageDevices
+}
+
 // GenFsStages generates a list of stages that create the filesystem and other
 // related entities. Specifically, it creates stages for:
 //   - org.osbuild.mkfs.*: for all filesystems and btrfs volumes
 //   - org.osbuild.btrfs.subvol: for all btrfs subvolumes
 //   - org.osbuild.mkswap: for swap areas
-func GenFsStages(pt *disk.PartitionTable, filename string) []*Stage {
+func GenFsStages(pt *disk.PartitionTable, filename string, soucePipeline string) []*Stage {
 	stages := make([]*Stage, 0, len(pt.Partitions))
 
 	genStage := func(ent disk.Entity, path []disk.Entity) error {
 		switch e := ent.(type) {
 		case *disk.Filesystem:
-			// TODO: extract last device renaming into helper
-			stageDevices, lastName := getDevices(path, filename, true)
-
-			// The last device in the chain must be named "device", because that's
-			// the device that mkfs stages run on. See the stage schemas for
-			// reference.
-			lastDevice := stageDevices[lastName]
-			delete(stageDevices, lastName)
-			stageDevices["device"] = lastDevice
+			stageDevices := getDevicesForFsStage(path, filename)
 
 			switch e.GetFSType() {
 			case "xfs":
@@ -39,7 +47,7 @@ func GenFsStages(pt *disk.PartitionTable, filename string) []*Stage {
 				stages = append(stages, NewMkfsXfsStage(options, stageDevices))
 			case "vfat":
 				options := &MkfsFATStageOptions{
-					VolID: strings.Replace(e.UUID, "-", "", -1),
+					VolID: strings.ReplaceAll(e.UUID, "-", ""),
 					Label: e.Label,
 				}
 				stages = append(stages, NewMkfsFATStage(options, stageDevices))
@@ -57,14 +65,7 @@ func GenFsStages(pt *disk.PartitionTable, filename string) []*Stage {
 				panic(fmt.Sprintf("unknown fs type: %s", e.GetFSType()))
 			}
 		case *disk.Btrfs:
-			stageDevices, lastName := getDevices(path, filename, true)
-
-			// The last device in the chain must be named "device", because that's
-			// the device that mkfs stages run on. See the stage schemas for
-			// reference.
-			lastDevice := stageDevices[lastName]
-			delete(stageDevices, lastName)
-			stageDevices["device"] = lastDevice
+			stageDevices := getDevicesForFsStage(path, filename)
 
 			options := &MkfsBtrfsStageOptions{
 				UUID:  e.UUID,
@@ -84,21 +85,22 @@ func GenFsStages(pt *disk.PartitionTable, filename string) []*Stage {
 			mount := *NewBtrfsMount("volume", "device", "/", "", "")
 			stages = append(stages, NewBtrfsSubVol(&BtrfsSubVolOptions{subvolumes}, &stageDevices, &[]Mount{mount}))
 		case *disk.Swap:
-			// TODO: extract last device renaming into helper
-			stageDevices, lastName := getDevices(path, filename, true)
-
-			// The last device in the chain must be named "device", because that's
-			// the device that the mkswap stage runs on. See the stage schema
-			// for reference.
-			lastDevice := stageDevices[lastName]
-			delete(stageDevices, lastName)
-			stageDevices["device"] = lastDevice
+			stageDevices := getDevicesForFsStage(path, filename)
 
 			options := &MkswapStageOptions{
 				UUID:  e.UUID,
 				Label: e.Label,
 			}
 			stages = append(stages, NewMkswapStage(options, stageDevices))
+		case *disk.Raw:
+			stageDevices := getDevicesForFsStage(path, filename)
+
+			inputName := "tree"
+			options := &WriteDeviceStageOptions{
+				From: fmt.Sprintf("input://%s", filepath.Join(inputName, e.SourcePath)),
+			}
+			inputs := NewPipelineTreeInputs(inputName, soucePipeline)
+			stages = append(stages, NewWriteDeviceStage(options, inputs, stageDevices))
 		}
 		return nil
 	}

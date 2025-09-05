@@ -22,6 +22,10 @@ func NewGroupsStage(options *GroupsStageOptions) *Stage {
 }
 
 func NewGroupsStageOptions(groups []users.Group) *GroupsStageOptions {
+	if len(groups) == 0 {
+		return nil
+	}
+
 	options := GroupsStageOptions{
 		Groups: map[string]GroupsStageOptionsGroup{},
 	}

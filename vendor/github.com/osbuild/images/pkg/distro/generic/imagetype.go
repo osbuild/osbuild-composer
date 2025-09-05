@@ -20,7 +20,7 @@ import (
 	"github.com/osbuild/images/pkg/rpmmd"
 )
 
-type imageFunc func(imgTypeCustomizations manifest.OSCustomizations, t *imageType, bp *blueprint.Blueprint, options distro.ImageOptions, packageSets map[string]rpmmd.PackageSet, containers []container.SourceSpec, rng *rand.Rand) (image.ImageKind, error)
+type imageFunc func(t *imageType, bp *blueprint.Blueprint, options distro.ImageOptions, packageSets map[string]rpmmd.PackageSet, payloadRepos []rpmmd.RepoConfig, containers []container.SourceSpec, rng *rand.Rand) (image.ImageKind, error)
 
 type isoLabelFunc func(t *imageType) string
 
@@ -257,17 +257,6 @@ func (t *imageType) Manifest(bp *blueprint.Blueprint,
 	installFromRepos := blueprint.RepoCustomizationsInstallFromOnly(customRepos)
 	payloadRepos = append(payloadRepos, installFromRepos...)
 
-	cw := manifest.OSCustomizations{
-		ExtraBaseRepos: payloadRepos,
-		BasePackages:   bp.GetPackagesEx(false),
-		BaseModules:    bp.GetEnabledModules(),
-	}
-	if services := bp.Customizations.GetServices(); services != nil {
-		cw.EnabledServices = services.Enabled
-		cw.DisabledServices = services.Disabled
-		cw.MaskedServices = services.Masked
-	}
-
 	if experimentalflags.Bool("no-fstab") {
 		if t.ImageConfigYAML.ImageConfig != nil {
 			t.ImageConfigYAML.ImageConfig = &distro.ImageConfig{}
@@ -290,7 +279,7 @@ func (t *imageType) Manifest(bp *blueprint.Blueprint,
 	/* #nosec G404 */
 	rng := rand.New(source)
 
-	img, err := t.image(cw, t, bp, options, staticPackageSets, containerSources, rng)
+	img, err := t.image(t, bp, options, staticPackageSets, payloadRepos, containerSources, rng)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -335,6 +324,17 @@ func (t *imageType) checkOptions(bp *blueprint.Blueprint, options distro.ImageOp
 	default:
 		return nil, fmt.Errorf("checkOptions called with unknown distro-like %v", idLike)
 	}
+}
+
+func (t *imageType) RequiredBlueprintOptions() []string {
+	return t.ImageTypeYAML.RequiredBlueprintOptions
+}
+
+func (t *imageType) SupportedBlueprintOptions() []string {
+	// The blueprint contains a few fields that are essentially metadata and
+	// not configuration / customizations. These should always be implicitly
+	// supported by all image types.
+	return append(t.ImageTypeYAML.SupportedBlueprintOptions, "name", "version", "description")
 }
 
 func bootstrapContainerFor(t *imageType) string {

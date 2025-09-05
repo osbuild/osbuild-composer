@@ -13,16 +13,13 @@ import (
 
 type BaseContainer struct {
 	Base
-	Platform              platform.Platform
-	OSCustomizations      manifest.OSCustomizations
-	Environment           environment.Environment
-	ImgTypeCustomizations manifest.OSCustomizations
-	Filename              string
+	OSCustomizations manifest.OSCustomizations
+	Environment      environment.Environment
 }
 
-func NewBaseContainer() *BaseContainer {
+func NewBaseContainer(platform platform.Platform, filename string) *BaseContainer {
 	return &BaseContainer{
-		Base: NewBase("base-container"),
+		Base: NewBase("base-container", platform, filename),
 	}
 }
 
@@ -33,13 +30,12 @@ func (img *BaseContainer) InstantiateManifest(m *manifest.Manifest,
 	buildPipeline := addBuildBootstrapPipelines(m, runner, repos, nil)
 	buildPipeline.Checkpoint()
 
-	osPipeline := manifest.NewOS(buildPipeline, img.Platform, repos)
+	osPipeline := manifest.NewOS(buildPipeline, img.platform, repos)
 	osPipeline.OSCustomizations = img.OSCustomizations
 	osPipeline.Environment = img.Environment
-	osPipeline.ImgTypeCustomizations = img.ImgTypeCustomizations
 
 	ociPipeline := manifest.NewOCIContainer(buildPipeline, osPipeline)
-	ociPipeline.SetFilename(img.Filename)
+	ociPipeline.SetFilename(img.filename)
 	artifact := ociPipeline.Export()
 
 	return artifact, nil

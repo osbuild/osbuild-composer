@@ -119,6 +119,12 @@ type ImageType interface {
 	// Returns the names of the stages that will produce the build output.
 	Exports() []string
 
+	// A list of customization options that this image requires.
+	RequiredBlueprintOptions() []string
+
+	// A list of customization options that this image supports.
+	SupportedBlueprintOptions() []string
+
 	// Returns an osbuild manifest, containing the sources and pipeline necessary
 	// to build an image, given output format with all packages and customizations
 	// specified in the given blueprint; it also returns any warnings (e.g.

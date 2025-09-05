@@ -39,9 +39,12 @@ type OSCustomizations struct {
 	// These are the statically defined packages for the image type.
 	BasePackages []string
 
-	// Modules to install in addition to the ones required by the pipeline.
-	// These are the statically defined packages for the image type.
-	BaseModules []string
+	// Module streams to make available for installation from the
+	// blueprint
+	BlueprintModules []string
+
+	// Packages to install from the blueprint
+	BlueprintPackages []string
 
 	// Packages to exclude from the base package set. This is useful in
 	// case of weak dependencies, comps groups, or where multiple packages
@@ -51,6 +54,10 @@ type OSCustomizations struct {
 
 	// Additional repos to install the base packages from.
 	ExtraBaseRepos []rpmmd.RepoConfig
+
+	// Payload repos provided by the users, used to resolve
+	// blueprint packages
+	PayloadRepos []rpmmd.RepoConfig
 
 	// Containers to embed in the image (source specification)
 	// TODO: move to workload
@@ -197,9 +204,6 @@ type OS struct {
 	// Environment the system will run in
 	Environment environment.Environment
 
-	// ImageTypeCustomizations come from the image type
-	ImgTypeCustomizations OSCustomizations
-
 	// Ref of ostree commit (optional). If empty the tree cannot be in an ostree commit
 	OSTreeRef string
 	// OSTreeParent source spec (optional). If nil the new commit (if
@@ -340,19 +344,19 @@ func (p *OS) getPackageSetChain(Distro) []rpmmd.PackageSet {
 		},
 	}
 
-	imgTypePackages := p.ImgTypeCustomizations.BasePackages
-	if len(imgTypePackages) > 0 {
+	bpPackages := p.OSCustomizations.BlueprintPackages
+	if len(bpPackages) > 0 {
 		ps := rpmmd.PackageSet{
-			Include:      imgTypePackages,
-			Repositories: append(osRepos, p.ImgTypeCustomizations.ExtraBaseRepos...),
+			Include:      bpPackages,
+			Repositories: append(osRepos, p.OSCustomizations.PayloadRepos...),
 			// Although 'false' is the default value, set it explicitly to make
 			// it visible that we are not adding weak dependencies.
 			InstallWeakDeps: false,
 		}
 
-		imgTypeModules := p.ImgTypeCustomizations.BaseModules
-		if len(imgTypeModules) > 0 {
-			ps.EnabledModules = imgTypeModules
+		bpModules := p.OSCustomizations.BlueprintModules
+		if len(bpModules) > 0 {
+			ps.EnabledModules = bpModules
 		}
 		chain = append(chain, ps)
 	}
@@ -506,7 +510,7 @@ func (p *OS) serialize() osbuild.Pipeline {
 
 	// collect all repos for this pipeline to create the repository options
 	allRepos := append(p.repos, p.OSCustomizations.ExtraBaseRepos...)
-	allRepos = append(allRepos, p.ImgTypeCustomizations.ExtraBaseRepos...)
+	allRepos = append(allRepos, p.OSCustomizations.PayloadRepos...)
 
 	rpmOptions := osbuild.NewRPMStageOptions(allRepos)
 	if p.OSCustomizations.ExcludeDocs {
@@ -860,9 +864,6 @@ func (p *OS) serialize() osbuild.Pipeline {
 	if p.Environment != nil {
 		enabledServices = append(enabledServices, p.Environment.GetServices()...)
 	}
-	enabledServices = append(enabledServices, p.ImgTypeCustomizations.EnabledServices...)
-	disabledServices = append(disabledServices, p.ImgTypeCustomizations.DisabledServices...)
-	maskedServices = append(maskedServices, p.ImgTypeCustomizations.MaskedServices...)
 
 	if len(enabledServices) != 0 ||
 		len(disabledServices) != 0 ||
