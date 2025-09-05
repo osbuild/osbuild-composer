@@ -806,6 +806,27 @@
       - "customizations.services"
       - "customizations.timezone"
 
+    # supported options for container types (container and wsl)
+    supported_options_container: &supported_options_container
+      - "distro"
+      - "packages"
+      - "modules"
+      - "groups"
+      - "enabled_modules"
+      - "minimal"
+      - "containers"
+      - "customizations.directories"
+      - "customizations.files"
+      - "customizations.firewall"
+      - "customizations.user"
+      - "customizations.sshkey"
+      - "customizations.group"
+      - "customizations.hostname"
+      - "customizations.locale"
+      - "customizations.repositories"
+      - "customizations.services"
+      - "customizations.timezone"
+
     # options supported by ostree disk (deployment) image types
     supported_options_ostree_disk: &supported_options_ostree_disk
       - "distro"
@@ -1804,15 +1825,7 @@ image_types:
             - "trousers"
             - "whois-nls"
             - "xkeyboard-config"
-    supported_blueprint_options:
-      # Only supporting a few basic options for now because we never tested any
-      # other customization with this image type
-      - "distro"
-      - "packages"
-      - "modules"
-      - "groups"
-      - "enabled_modules"
-      - "minimal"
+    supported_blueprint_options: *supported_options_container
 
   wsl:
     # this is the eventual name, and `wsl` the alias but we've been
@@ -1918,15 +1931,7 @@ image_types:
               append:
                 exclude:
                   - "fuse-libs"
-    supported_blueprint_options:
-      # Only supporting a few basic options for now because we never tested any
-      # other customization with this image type
-      - "distro"
-      - "packages"
-      - "modules"
-      - "groups"
-      - "enabled_modules"
-      - "minimal"
+    supported_blueprint_options: *supported_options_container
 
   "iot-simplified-installer":
     <<: *rpm_ostree_imgtype_common
