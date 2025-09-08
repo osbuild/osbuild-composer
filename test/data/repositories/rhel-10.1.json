@@ -94,18 +94,12 @@
     },
     {
       "name": "google-compute-engine",
-      "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/el9-x86_64-google-compute-engine-20250825/",
-      "check_gpg": false,
+      "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el10/el10-x86_64-google-compute-engine-20250901",
+      "check_gpg": true,
+      "gpgkey": "-----BEGIN PGP PUBLIC KEY BLOCK-----\n\nmQINBGfoJEcBEACuF94Bd+EFfhP6nHIs1YRe0zLzOyGGCYIFdiO5A7V1Ta3XgtXo\nlR/r7omYIDhB49NU/x4qgWmakd10tFpQER5sP0iWK40ywnwLxrMUsm3Rp+CKI/Dg\nHAGM7eez4JjLWLsmxlFLOf1b0X+M5d4j6/GqnaBoMUbYeDBEPQIzmVss1juBCLUs\np7qs+QGs1CThD0O5zQoGNzpoTfzSd24xADAPSTaaqw9vsFlBRjiw5bGc7OE5tKfn\nuj/0C9d5wVFuGOM/yrmNBduut4C+iAaSESxYfmu+l1LE/8u96+gWCcTGwLteI8gj\nZcrTSglHwo4V013AHHeuO0Wc1P7H6QE9onFa/JS4jAYh3asHOrjGOzrEN3ae8ZJk\nGgfJ+GImbShs9d2rOk9QuLVzPkoAsbsi6xqLz7PD81nTb3r8Tn8gFM3bSjZsQ1K0\nGDNe7J4MfZbTzhHsst2Srk8w/JSvCCzamSu/29VpQLnF2gciNA7+EnqanFIq0xh/\nDJcpICYjMsAFzJCpObrfw6Vme0n+32gQ8AT39hriBjG4GAcK0FL2qgxhigmXTUya\nVdXy7579uxOWk6Gl3NTVkOGIqFTty3fkmXGzyF9HiZ7Pj1EOx3xlDB8kqdZiq2Li\npGJDFOvbwIpuB+iGxnF/Of9NgYQP5SZ83egN0NC0uXqFwmeZdo4XpZioIQARAQAB\ntEBHb29nbGUgQ2xvdWQgdjEwIFJQTSBQYWNrYWdlIFNpZ25pbmcgS2V5IHYxIDxn\nYy10ZWFtQGdvb2dsZS5jb20+iQJUBBMBCgA+FiEExfdEoJgTb0DDcOhJMVbGMbZJ\nNvkFAmfoJEcCGwMFCRjH8gAFCwkIBwIGFQoJCAsCBBYCAwECHgECF4AACgkQMVbG\nMbZJNvnP5A//dHk3tyLxdKsEId4C6jgB9zcCvafsMUhkE3relhsrHiZuX02loULU\nkTEfaFB9VICLjSD8wOChg9labL6+aSoN8fwWHb2OSqDm7RgtmDLwUjDthmu37YLx\nUGeX+vaF17gMrJUwpcDjjSsEXF5ako8/UQe0MBVtfijEfPwm0snO4dE6DYgnJXZR\nOpKIYofakO1tOtMHGWHHeRu+Sl8PQ6xE07cUVr3ytpgNeJiDQeffb5upYMxyk3/V\npBnS5OhfAbTl9/2OJ01tNJkNQkr96+tuI90pu8TVIfS0yxseg3JpwG2UXgKMqoPV\nX4jSXzCXz+Tle5oh/thAWmUAOALirZzmNLsKVAs+JCjnroHEBpIuafzd3rBGxNHS\nJApch5Qtl+2CmRVysK/FrZIzsEq2CKpMO+SDKldn2sYPE+gQQKtEPGmZb4DpQgsb\n6WACWoCWPynRVW179ugiHI7MgeHMGynHexL/ADMSDAe/HZ7OYM34yfpCh9dLY8S2\n1oghowrIYayonr32E/1l5YQMoGVM8HWQZBBecseWoxpSd2ukHiIfkj4s2K0oFb6F\nfHYyGQJcSHIfHs+Ayr/4oaEz2V+SS8V6ubB8vKmJkSpx6hrzDi9hSpxGVpRwIBiH\nEa9YaVfL5VB2gQV2jkjIi/wR5+zq0EYbA5qnmHwmKMGD9zKklAzk2sO5Ag0EZ+gk\nRwEQAME4Lj74iBrX6VoMvQZzilef/0Vx2OPy25n45TPwn/HDDHyRdNNCl1fcHQ/v\n7agVDpDpcTUu+8vkkMI84aCIoheY3jPdqhbETwhxNt2hUtf/1cbAm1gkvdcdci4C\nk3myuTzuwRF1U7svrLcc/EEx9tDfNOlCxuremj1eIpbUHpKx51IqYlxUK0X24yAq\n6pBrl6wOPysaThw/lwC8Y3w/2zm9t18L2+xs370jWj5e/2JBbWt6gpCV59ucW9WZ\nr9Nw/Vr/nUB7kEoujg85rNRyX1U7/y+dEVgZTKT4DsVLcGs1YWXoYfvV2yZV7ah1\ntdNS7VkcZC4sP4Vulw6j/Yt69rE9eBnBlJGARqxrdwUCpDuO+7TsfkTfRQHvMZqR\npZX/2cq+xfFFe1erGjtkZ90y07nfpQ9zpmFyq7Y87NLqvG/IHk2lXfGYV1ynYo7u\ndez/jj60NkHaXvwJrdnwCP3CH5qspVDEXVWlfXX0KFwp6gCCRLqQXwaHNsYWladd\nVuagApLglBS0ClcmSG3Ydp4yUAMxNQzw2NDJu7cyyrGWQCPT50ILhbT589N9+Sdl\nx7k7qRUO3y0F2qw5GDcxAhsuTOcFElRVFGU7Df4wy1i17QeUddzbKborugDgBgyN\n9/GRQGAEkLlksaMPY1dpgiOWqz2h9+QB4/7Emkgx/s3Rts8LABEBAAGJAjwEGAEK\nACYWIQTF90SgmBNvQMNw6EkxVsYxtkk2+QUCZ+gkRwIbDAUJGMfyAAAKCRAxVsYx\ntkk2+RySD/97Cpqq9xbQP33Pcv3y+nvsKm+HTiE5w/8uatWw78C/G+LNYsQcFb0q\nhyj2DoPWO3DQZlnYxSr+K5xtn293IdBBMPoZZUfZjLbiSTQpR0ZxcHqtDZvgLpGz\nhX1Sb8By0/uNGDYKsof2ipqTZYwhJIITt1R2prUEpIwmBGFIUFWFs/2DnH7KmzWP\n4OmbfzAae6Vqhizbiq/bTsD0EwoLHUxonPt22nP8JbeuV0ennUR1DiRDOvn7XZej\n/aah7+Kb8bl1r38HvecCcwXMpDgAx+dHFnI1GfafZDIHOVR+96HkgAz7H6BeNxzy\naLd3MLQR30/CV/7IZtiMFMfM2598rplIMku0MCRgY5IOzxhhiZ4VUshGI+EXN7Fq\nGTIsuHYGeqqUY7GbXXgM3R1HgBLA7VWStuARuPXiSDgDH2XpDLBRQiDD6OR62D9E\n/Gllspl5fhkl9VefiTrhjGc32emZ6aqA4jGz2LH8h2OVw7fGEDlsr7YrfD5EbZ4u\nbdZwoHQk+pWs40JK4T6MANw4NV161Mokq6Wb3eHL3E+Jm2vXOdg2yv8jL0hzVOY5\ng81ieWhRr3yivw+aBLdeWA54dSdSYMPLssA8nIUwzHoinE+AKPWq3t3u/am5Q2j+\nvr0oRTdkSzSA9kKgEBJgm9jogAgq5WXfKgo9xJkXj2J9y2oDnRnGeA==\n=mYRk\n-----END PGP PUBLIC KEY BLOCK-----",
       "image_type_tags": [
-        "gce"
-      ]
-    },
-    {
-      "name": "google-cloud-sdk",
-      "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/el9/el9-x86_64-google-cloud-sdk-20250825/",
-      "check_gpg": false,
-      "image_type_tags": [
-        "gce"
+        "gce",
+        "gcp"
       ]
     }
   ]

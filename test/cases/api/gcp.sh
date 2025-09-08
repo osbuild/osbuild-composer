@@ -144,15 +144,6 @@ function verify() {
   GCP_SSH_KEY="$WORKDIR/id_google_compute_engine"
   ssh-keygen -t rsa-sha2-512 -f "$GCP_SSH_KEY" -C "$SSH_USER" -N ""
 
-  # TODO: remove this once el10 / c10s image moves to oslogin
-  GCP_METADATA_OPTION=
-  # On el10 / c10s, we need to temporarily set the metadata key to "ssh-keys", because there is no "oslogin" feature
-  if [[ ($ID == rhel || $ID == centos) && ${VERSION_ID%.*} == 10 ]]; then
-    GCP_SSH_METADATA_FILE="$WORKDIR/gcp-ssh-keys-metadata"
-    echo "${SSH_USER}:$(cat "$GCP_SSH_KEY".pub)" > "$GCP_SSH_METADATA_FILE"
-    GCP_METADATA_OPTION="--metadata-from-file=ssh-keys=$GCP_SSH_METADATA_FILE"
-  fi
-
   # create the instance
   # resource ID can have max 62 characters, the $GCP_TEST_ID_HASH contains 56 characters
   GCP_INSTANCE_NAME="vm-$GCP_TEST_ID_HASH"
@@ -176,7 +167,7 @@ function verify() {
     --image-project="$GCP_PROJECT" \
     --image="$GCP_IMAGE_NAME" \
     --machine-type="$GCP_MACHINE_TYPE" \
-    $GCP_METADATA_OPTION --labels=gitlab-ci-test=true
+    --labels=gitlab-ci-test=true
 
   HOST=$($GCP_CMD --format=json compute instances describe "$GCP_INSTANCE_NAME" --zone="$GCP_ZONE" --format='get(networkInterfaces[0].accessConfigs[0].natIP)')
 
@@ -185,12 +176,6 @@ function verify() {
 
   # Verify image
   _ssh="$GCP_CMD compute ssh --strict-host-key-checking=no --ssh-key-file=$GCP_SSH_KEY --zone=$GCP_ZONE $SSH_USER@$GCP_INSTANCE_NAME --"
-
-  # TODO: remove this once el10 / c10s image moves to oslogin
-  # On el10 / c10s, we need to ssh directly, because there is no "oslogin" feature
-  if [[ ($ID == rhel || $ID == centos) && ${VERSION_ID%.*} == 10 ]]; then
-    _ssh="ssh -oStrictHostKeyChecking=no -i $GCP_SSH_KEY $SSH_USER@$HOST"
-  fi
 
   _instanceCheck "$_ssh"
 }
