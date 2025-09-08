@@ -127,8 +127,8 @@ func GetDefaultConfig() *ComposerConfigFile {
 		DistroAliases: map[string]string{
 			"rhel-7":  "rhel-7.9",
 			"rhel-8":  "rhel-8.10",
-			"rhel-9":  "rhel-9.7",
-			"rhel-10": "rhel-10.1",
+			"rhel-9":  "rhel-9.8",
+			"rhel-10": "rhel-10.2",
 		},
 		LogLevel:           "info",
 		LogFormat:          "journal",
