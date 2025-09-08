@@ -10,6 +10,7 @@ REGION=$(curl -Ls http://169.254.169.254/latest/dynamic/instance-identity/docume
 HOSTNAME=$(hostname)
 CLOUDWATCH_ENDPOINT="https://logs.$REGION.amazonaws.com"
 OSBUILD_EXECUTOR_CLOUDWATCH_GROUP=${OSBUILD_EXECUTOR_CLOUDWATCH_GROUP:-osbuild-executor-log-group}
+HOST_WORKER_ADDRESS=${HOST_WORKER_ADDRESS:-127.0.0.1}
 
 sudo mkdir -p /etc/vector
 sudo tee /etc/vector/vector.yaml > /dev/null << EOF
@@ -19,7 +20,7 @@ sources:
     exclude_units:
       - vector.service
 sinks:
-  out:
+  cloudwatch:
     type: aws_cloudwatch_logs
     inputs:
       - journald
@@ -30,6 +31,17 @@ sinks:
     encoding:
       codec: json
 EOF
+
+if [ "$HOST_WORKER_ADDRESS" != "127.0.0.1" ]; then
+    sudo tee -a /etc/vector/vector.yaml > /dev/null <<EOF
+  host_worker:
+    type: vector
+    inputs:
+      - journald
+    address: ${HOST_WORKER_ADDRESS}:12005
+EOF
+fi
+
 sudo systemctl enable --now vector
 
 echo "Starting worker executor"
