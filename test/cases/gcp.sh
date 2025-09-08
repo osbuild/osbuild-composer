@@ -120,12 +120,15 @@ function verifyInGCP() {
     ssh-keygen -t rsa-sha2-512 -f "$GCP_SSH_KEY" -C "$SSH_USER" -N ""
 
     # TODO: remove this once el10 / c10s image moves to oslogin
+    # NB (thozza): kept here for backward compatibility with RHEL nightly CI pipeline
     GCP_METADATA_OPTION=
-    # On el10 / c10s, we need to temporarily set the metadata key to "ssh-keys", because there is no "oslogin" feature
-    if [[ ($ID == rhel || $ID == centos) && ${VERSION_ID%.*} == 10 ]]; then
-        GCP_SSH_METADATA_FILE="$TEMPDIR/gcp-ssh-keys-metadata"
-        echo "${SSH_USER}:$(cat "$GCP_SSH_KEY".pub)" > "$GCP_SSH_METADATA_FILE"
-        GCP_METADATA_OPTION="--metadata-from-file=ssh-keys=$GCP_SSH_METADATA_FILE"
+    if ! nvrGreaterOrEqual "osbuild-composer" "151"; then
+        # On el10 / c10s, we need to temporarily set the metadata key to "ssh-keys", because there is no "oslogin" feature
+        if [[ ($ID == rhel || $ID == centos) && ${VERSION_ID%.*} == 10 ]]; then
+            GCP_SSH_METADATA_FILE="$TEMPDIR/gcp-ssh-keys-metadata"
+            echo "${SSH_USER}:$(cat "$GCP_SSH_KEY".pub)" > "$GCP_SSH_METADATA_FILE"
+            GCP_METADATA_OPTION="--metadata-from-file=ssh-keys=$GCP_SSH_METADATA_FILE"
+        fi
     fi
 
     # create the instance
@@ -162,9 +165,12 @@ function verifyInGCP() {
     _ssh="$GCP_CMD compute ssh --strict-host-key-checking=no --ssh-key-file=$GCP_SSH_KEY --zone=$GCP_ZONE --quiet $SSH_USER@$GCP_INSTANCE_NAME --"
 
     # TODO: remove this once el10 / c10s image moves to oslogin
-    # On el10 / c10s, we need to ssh directly, because there is no "oslogin" feature
-    if [[ ($ID == rhel || $ID == centos) && ${VERSION_ID%.*} == 10 ]]; then
-        _ssh="ssh -oStrictHostKeyChecking=no -i $GCP_SSH_KEY $SSH_USER@$HOST"
+    # NB (thozza): kept here for backward compatibility with RHEL nightly CI pipeline
+    if ! nvrGreaterOrEqual "osbuild-composer" "151"; then
+        # On el10 / c10s, we need to ssh directly, because there is no "oslogin" feature
+        if [[ ($ID == rhel || $ID == centos) && ${VERSION_ID%.*} == 10 ]]; then
+            _ssh="ssh -oStrictHostKeyChecking=no -i $GCP_SSH_KEY $SSH_USER@$HOST"
+        fi
     fi
 
     _instanceCheck "$_ssh"
