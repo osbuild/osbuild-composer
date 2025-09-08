@@ -130,7 +130,7 @@
     },
     {
       "name": "rhui-azure-sap",
-      "baseurl": "http://download.eng.bos.redhat.com/devel/stratosphere-rhui-sync/rhui-microsoft-azure-rhel9-sap-ha/",
+      "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el9/el9-x86_64-sap-rhui-azure-20250901",
       "image_type_tags": [
         "azure-sap-rhui"
       ],
