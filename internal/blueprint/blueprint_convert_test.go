@@ -233,6 +233,10 @@ func TestConvert(t *testing.T) {
 							Selected:   []string{"cloth"},
 							Unselected: []string{"leather"},
 						},
+						JSONTailoring: &OpenSCAPJSONTailoringCustomizations{
+							ProfileID: "tailored_profile",
+							Filepath:  "path-to-json-file",
+						},
 					},
 					Ignition: &IgnitionCustomization{
 						Embedded: &EmbeddedIgnitionCustomization{
@@ -531,6 +535,10 @@ func TestConvert(t *testing.T) {
 						Tailoring: &iblueprint.OpenSCAPTailoringCustomizations{
 							Selected:   []string{"cloth"},
 							Unselected: []string{"leather"},
+						},
+						JSONTailoring: &iblueprint.OpenSCAPJSONTailoringCustomizations{
+							ProfileID: "tailored_profile",
+							Filepath:  "path-to-json-file",
 						},
 					},
 					Ignition: &iblueprint.IgnitionCustomization{
