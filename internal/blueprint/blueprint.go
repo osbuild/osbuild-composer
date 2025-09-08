@@ -253,6 +253,10 @@ func Convert(bp Blueprint) iblueprint.Blueprint {
 				itailoring := iblueprint.OpenSCAPTailoringCustomizations(*tailoring)
 				ioscap.Tailoring = &itailoring
 			}
+			if jsonTailoring := oscap.JSONTailoring; jsonTailoring != nil {
+				ijsonTailoring := iblueprint.OpenSCAPJSONTailoringCustomizations(*jsonTailoring)
+				ioscap.JSONTailoring = &ijsonTailoring
+			}
 			customizations.OpenSCAP = &ioscap
 		}
 		if ign := c.Ignition; ign != nil {
