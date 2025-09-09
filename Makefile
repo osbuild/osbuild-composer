@@ -152,7 +152,6 @@ build: $(BUILDDIR)/bin/ build-maintenance
 	# also build the test binaries
 	go test -c -tags=integration -o $<osbuild-composer-cli-tests ./cmd/osbuild-composer-cli-tests/main_test.go
 	go test -c -tags=integration -o $<osbuild-weldr-tests ./internal/client/
-	go test -c -tags=integration -o $<osbuild-dnf-json-tests ./cmd/osbuild-dnf-json-tests/main_test.go
 	go test -c -tags=integration -o $<osbuild-auth-tests ./cmd/osbuild-auth-tests/
 	go test -c -tags=integration -o $<osbuild-koji-tests ./cmd/osbuild-koji-tests/
 	go test -c -tags=integration -o $<osbuild-composer-dbjobqueue-tests ./cmd/osbuild-composer-dbjobqueue-tests/

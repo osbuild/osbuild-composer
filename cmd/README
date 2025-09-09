@@ -21,7 +21,6 @@ mock-dnf-json
 osbuild-auth-tests
 osbuild-composer-cli-tests
 osbuild-composer-dbjobqueue-tests
-osbuild-dnf-json-tests
 osbuild-koji-tests
 osbuild-mock-openid-provider
 
