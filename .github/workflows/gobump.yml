@@ -4,19 +4,33 @@ name: "Updates Go dependencies via gobump"
 on:  # yamllint disable-line rule:truthy
   workflow_dispatch:
   schedule:
-    # Every Sunday at 15:00
-    - cron: "0 15 * * 0"
+    # Every Monday at 6:00 PM (one hour after images release)
+    - cron: "0 6 * * 1"
 
 jobs:
-  bump-deps-ubuntu:
+  bump-deps-without-images:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
 
-      - name: Run gobump-deps action
+      - name: Run gobump-deps action - images
         uses: lzap/gobump@main
         with:
           go_version: "1.23.9"
           token: ${{ secrets.SCHUTZBOT_GITHUB_ACCESS_TOKEN }}
           exec_pr: ./tools/prepare-source.sh
+          include: "github.com/osbuild/images"
+          commit_message: "deps: bump osbuild/images dependency"
+
+      - name: Cleaup repository
+        run: "git reset --hard HEAD"
+
+      - name: Run gobump-deps action - all other
+        uses: lzap/gobump@main
+        with:
+          go_version: "1.23.9"
+          token: ${{ secrets.SCHUTZBOT_GITHUB_ACCESS_TOKEN }}
+          exec_pr: ./tools/prepare-source.sh
+          exclude: "github.com/osbuild/images"
+          commit_message: "deps: update dependencies (w/o osbuild/images)"
