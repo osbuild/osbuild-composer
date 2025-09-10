@@ -131,8 +131,11 @@ func createTestWeldrAPI(tempdir, hostDistroName, hostArchName string, fixtureGen
 
 	respfile := fixture.ResponseGenerator(dspath)
 	solver.SetDNFJSONPath(dnfjsonPath, respfile)
+	getSolverFn := func(modulePlatformID, releaseVer, arch, distro string) Solver {
+		return solver.NewWithConfig(modulePlatformID, releaseVer, arch, distro)
+	}
 
-	testApi := NewTestAPI(solver, rr, nil, fixture.StoreFixture, fixture.Workers, "", distroImageTypeDenylist)
+	testApi := NewTestAPI(getSolverFn, rr, nil, fixture.StoreFixture, fixture.Workers, "", distroImageTypeDenylist)
 	return testApi, fixture.StoreFixture
 }
 
