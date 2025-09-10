@@ -50,11 +50,22 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/worker"
 )
 
+// Solver interface defines the methods required for dependency solving by the API
+type Solver interface {
+	CleanCache() error
+	Depsolve(pkgSets []rpmmd.PackageSet, sbomType sbom.StandardType) (*dnfjson.DepsolveResult, error)
+	FetchMetadata(repos []rpmmd.RepoConfig) (rpmmd.PackageList, error)
+	SearchMetadata(repos []rpmmd.RepoConfig, packages []string) (rpmmd.PackageList, error)
+}
+
+// GetSolverFn is a function type that returns a Solver instance based on the provided parameters
+type GetSolverFn func(modulePlatformID, releaseVer, arch, distro string) Solver
+
 type API struct {
 	store   *store.Store
 	workers *worker.Server
 
-	solver       *dnfjson.BaseSolver
+	getSolver    GetSolverFn
 	hostArch     string
 	repoRegistry *reporegistry.RepoRegistry
 
@@ -138,14 +149,13 @@ func (api *API) validDistros(arch string) []string {
 var ValidBlueprintName = regexp.MustCompile(`^[a-zA-Z0-9._-]+$`)
 
 // NewTestAPI is used for the test framework, sets up a single distro
-func NewTestAPI(solver *dnfjson.BaseSolver, rr *reporegistry.RepoRegistry,
-	logger *log.Logger, storeFixture *store.Fixture, workers *worker.Server,
-	compatOutputDir string, distrosImageTypeDenylist map[string][]string) *API {
+func NewTestAPI(getSolver GetSolverFn, rr *reporegistry.RepoRegistry, logger *log.Logger, storeFixture *store.Fixture,
+	workers *worker.Server, compatOutputDir string, distrosImageTypeDenylist map[string][]string) *API {
 
 	api := &API{
 		store:                    storeFixture.Store,
 		workers:                  workers,
-		solver:                   solver,
+		getSolver:                getSolver,
 		hostArch:                 storeFixture.HostArchName,
 		repoRegistry:             rr,
 		logger:                   logger,
@@ -193,9 +203,11 @@ func New(rr *reporegistry.RepoRegistry, stateDir string, solver *dnfjson.BaseSol
 	compatOutputDir := path.Join(stateDir, "outputs")
 
 	api := &API{
-		store:                    store,
-		workers:                  workers,
-		solver:                   solver,
+		store:   store,
+		workers: workers,
+		getSolver: func(modulePlatformID, releaseVer, arch, distro string) Solver {
+			return solver.NewWithConfig(modulePlatformID, releaseVer, arch, distro)
+		},
 		hostArch:                 hostArch,
 		repoRegistry:             rr,
 		logger:                   logger,
@@ -326,7 +338,7 @@ func (api *API) PreloadMetadata() {
 				return
 			}
 
-			solver := api.solver.NewWithConfig(d.ModulePlatformID(), d.Releasever(), api.hostArch, d.Name())
+			solver := api.getSolver(d.ModulePlatformID(), d.Releasever(), api.hostArch, d.Name())
 			_, err = solver.Depsolve([]rpmmd.PackageSet{{Include: []string{"filesystem"}, Repositories: repos}}, sbom.StandardTypeNone)
 			if err != nil {
 				log.Printf("Problem preloading distro metadata for %s: %s", distro, err)
@@ -1288,7 +1300,7 @@ func (api *API) modulesInfoHandler(writer http.ResponseWriter, request *http.Req
 			return
 		}
 
-		solver := api.solver.NewWithConfig(d.ModulePlatformID(), d.Releasever(), archName, d.Name())
+		solver := api.getSolver(d.ModulePlatformID(), d.Releasever(), archName, d.Name())
 		for i := range packageInfos {
 			pkgName := packageInfos[i].Name
 			res, err := solver.Depsolve([]rpmmd.PackageSet{{Include: []string{pkgName}, Repositories: repos}}, sbom.StandardTypeNone)
@@ -1377,7 +1389,7 @@ func (api *API) projectsDepsolveHandler(writer http.ResponseWriter, request *htt
 		return
 	}
 
-	solver := api.solver.NewWithConfig(d.ModulePlatformID(), d.Releasever(), archName, d.Name())
+	solver := api.getSolver(d.ModulePlatformID(), d.Releasever(), archName, d.Name())
 	res, err := solver.Depsolve([]rpmmd.PackageSet{{Include: names, Repositories: repos}}, sbom.StandardTypeNone)
 	if err != nil {
 		errors := responseError{
@@ -2289,7 +2301,7 @@ func (api *API) depsolve(packageSets map[string][]rpmmd.PackageSet, distroName s
 	distro := arch.Distro()
 	platformID := distro.ModulePlatformID()
 	releasever := distro.Releasever()
-	solver := api.solver.NewWithConfig(platformID, releasever, arch.Name(), distroName)
+	solver := api.getSolver(platformID, releasever, arch.Name(), distroName)
 
 	depsolvedSets := make(map[string]dnfjson.DepsolveResult, len(packageSets))
 
@@ -3523,7 +3535,7 @@ func (api *API) fetchPackageList(distroName, arch string, names []string) (packa
 		return nil, err
 	}
 
-	solver := api.solver.NewWithConfig(d.ModulePlatformID(), d.Releasever(), arch, d.Name())
+	solver := api.getSolver(d.ModulePlatformID(), d.Releasever(), arch, d.Name())
 	if len(names) == 0 {
 		packages, err = solver.FetchMetadata(repos)
 	} else {
@@ -3609,7 +3621,7 @@ func (api *API) depsolveBlueprint(bp blueprint.Blueprint) ([]rpmmd.PackageSpec, 
 		return nil, err
 	}
 
-	solver := api.solver.NewWithConfig(d.ModulePlatformID(), d.Releasever(), arch, d.Name())
+	solver := api.getSolver(d.ModulePlatformID(), d.Releasever(), arch, d.Name())
 	res, err := solver.Depsolve([]rpmmd.PackageSet{{Include: bp.GetPackages(), EnabledModules: bp.GetEnabledModules(), Repositories: repos}}, sbom.StandardTypeNone)
 	if err != nil {
 		return nil, err
