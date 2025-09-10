@@ -27,7 +27,7 @@ type SecureInstance struct {
 }
 
 // SecureInstanceUserData returns the cloud-init user data for a secure instance.
-func SecureInstanceUserData(cloudWatchGroup, hostname string) string {
+func SecureInstanceUserData(cloudWatchGroup, hostname, hostIP string) string {
 	additionalFiles := ""
 
 	if cloudWatchGroup != "" || hostname != "" {
@@ -42,6 +42,10 @@ func SecureInstanceUserData(cloudWatchGroup, hostname string) string {
 	if hostname != "" {
 		additionalFiles += fmt.Sprintf(`      OSBUILD_EXECUTOR_HOSTNAME='%s'
 `, hostname)
+	}
+	if hostIP != "" {
+		additionalFiles += fmt.Sprintf(`      HOST_WORKER_ADDRESS='%s'
+`, hostIP)
 	}
 
 	return fmt.Sprintf(`#cloud-config
@@ -105,7 +109,7 @@ func (a *AWS) RunSecureInstance(iamProfile, keyName, cloudWatchGroup, hostname s
 		return nil, err
 	}
 
-	ltID, err := a.createOrReplaceLT(identity.InstanceID, imageID, sgID, iamProfile, keyName, cloudWatchGroup, hostname)
+	ltID, err := a.createOrReplaceLT(identity.InstanceID, imageID, sgID, iamProfile, keyName, cloudWatchGroup, hostname, identity.PrivateIP)
 	if ltID != "" {
 		secureInstance.LTID = ltID
 	}
@@ -432,7 +436,7 @@ func isLaunchTemplateNotFoundError(err error) bool {
 	return false
 }
 
-func (a *AWS) createOrReplaceLT(hostInstanceID, imageID, sgID, iamProfile, keyName, cloudWatchGroup, hostname string) (string, error) {
+func (a *AWS) createOrReplaceLT(hostInstanceID, imageID, sgID, iamProfile, keyName, cloudWatchGroup, hostname, hostIP string) (string, error) {
 	ltName := fmt.Sprintf("launch-template-for-%s-runner-instance", hostInstanceID)
 	descrLTOutput, err := a.ec2.DescribeLaunchTemplates(
 		context.Background(),
@@ -503,7 +507,7 @@ func (a *AWS) createOrReplaceLT(hostInstanceID, imageID, sgID, iamProfile, keyNa
 			SecurityGroupIds: []string{
 				sgID,
 			},
-			UserData: aws.String(base64.StdEncoding.EncodeToString([]byte(SecureInstanceUserData(cloudWatchGroup, hostname)))),
+			UserData: aws.String(base64.StdEncoding.EncodeToString([]byte(SecureInstanceUserData(cloudWatchGroup, hostname, hostIP)))),
 		},
 		TagSpecifications: []ec2types.TagSpecification{
 			ec2types.TagSpecification{

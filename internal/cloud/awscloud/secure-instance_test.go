@@ -16,6 +16,7 @@ func TestSIUserData(t *testing.T) {
 	type testCase struct {
 		CloudWatchGroup  string
 		Hostname         string
+		HostIP           string
 		ExpectedUserData string
 	}
 
@@ -53,6 +54,7 @@ write_files:
 		},
 		{
 			CloudWatchGroup: "test-group",
+			HostIP:          "test-host-address",
 			ExpectedUserData: `#cloud-config
 write_files:
   - path: /tmp/worker-run-executor-service
@@ -60,12 +62,13 @@ write_files:
   - path: /tmp/cloud_init_vars
     content: |
       OSBUILD_EXECUTOR_CLOUDWATCH_GROUP='test-group'
+      HOST_WORKER_ADDRESS='test-host-address'
 `,
 		}}
 
 	for idx, tc := range testCases {
 		t.Run(fmt.Sprintf("Test case %d", idx), func(t *testing.T) {
-			userData := awscloud.SecureInstanceUserData(tc.CloudWatchGroup, tc.Hostname)
+			userData := awscloud.SecureInstanceUserData(tc.CloudWatchGroup, tc.Hostname, tc.HostIP)
 			if userData != tc.ExpectedUserData {
 				t.Errorf("Expected: %s, got: %s", tc.ExpectedUserData, userData)
 			}
