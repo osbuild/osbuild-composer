@@ -220,6 +220,18 @@ func getMockDepsolveDNFSolverFn(m *dnfjson_mock.MockDepsolveDNF) GetSolverFn {
 	}
 }
 
+// getBaseMockDepsolveDNFSolverFn returns a SolverFn that uses the MockDepsolveDNF
+// with base test data. No errors are returned by the solver.
+func getBaseMockDepsolveDNFSolverFn(deosolveRepoID string) GetSolverFn {
+	return getMockDepsolveDNFSolverFn(&dnfjson_mock.MockDepsolveDNF{
+		DepsolveRes: &dnfjson.DepsolveResult{
+			Packages: dnfjson_mock.BaseDepsolveResult(deosolveRepoID),
+		},
+		FetchRes:     dnfjson_mock.BaseFetchResult(),
+		SearchResMap: dnfjson_mock.BaseSearchResultsMap(),
+	})
+}
+
 // ResolveContent transforms content source specs into resolved specs for serialization.
 // For packages, it uses the dnfjson_mock.BaseDeps() every time, but retains
 // the map keys from the input.
@@ -817,7 +829,7 @@ func TestBlueprintsFreeze(t *testing.T) {
 
 		for idx, c := range cases {
 			t.Run(fmt.Sprintf("case %d", idx), func(t *testing.T) {
-				api, sf := createTestWeldrAPI(t.TempDir(), test_distro.TestDistro1Name, test_distro.TestArchName, c.Fixture, nil)
+				api, sf := createTestWeldrAPI2(t.TempDir(), test_distro.TestDistro1Name, test_distro.TestArchName, getBaseMockDepsolveDNFSolverFn(testRepoID), c.Fixture, nil)
 				t.Cleanup(sf.Cleanup)
 				test.SendHTTP(api, false, "POST", "/api/v0/blueprints/new", `{"name":"test","description":"Test","packages":[{"name":"dep-package1","version":"*"},{"name":"dep-package3","version":"*"}], "modules":[{"name":"dep-package2","version":"*"}],"enabled_modules": [],"version":"0.0.0"}`)
 				test.SendHTTP(api, false, "POST", "/api/v0/blueprints/new", `{"name":"test2","description":"Test","packages":[{"name":"dep-package1","version":"*"},{"name":"dep-package3","version":"*"}], "modules":[{"name":"dep-package2","version":"*"}],"enabled_modules": [],"version":"0.0.0"}`)
@@ -839,7 +851,7 @@ func TestBlueprintsFreeze(t *testing.T) {
 
 		for idx, c := range cases {
 			t.Run(fmt.Sprintf("case %d", idx), func(t *testing.T) {
-				api, sf := createTestWeldrAPI(t.TempDir(), test_distro.TestDistro1Name, test_distro.TestArchName, c.Fixture, nil)
+				api, sf := createTestWeldrAPI2(t.TempDir(), test_distro.TestDistro1Name, test_distro.TestArchName, getBaseMockDepsolveDNFSolverFn(testRepoID), c.Fixture, nil)
 				t.Cleanup(sf.Cleanup)
 				test.SendHTTP(api, false, "POST", "/api/v0/blueprints/new", `{"name":"test","description":"Test","packages":[{"name":"dep-package1","version":"*"},{"name":"dep-package3","version":"*"}], "modules":[{"name":"dep-package2","version":"*"}],"enabled_modules": [],"version":"0.0.0"}`)
 				test.TestTOMLRoute(t, api, false, "GET", c.Path, ``, c.ExpectedStatus, c.ExpectedTOML)
@@ -859,7 +871,7 @@ func TestBlueprintsFreeze(t *testing.T) {
 
 		for idx, c := range cases {
 			t.Run(fmt.Sprintf("case %d", idx), func(t *testing.T) {
-				api, sf := createTestWeldrAPI(t.TempDir(), test_distro.TestDistro1Name, test_distro.TestArchName, c.Fixture, nil)
+				api, sf := createTestWeldrAPI2(t.TempDir(), test_distro.TestDistro1Name, test_distro.TestArchName, getBaseMockDepsolveDNFSolverFn(testRepoID), c.Fixture, nil)
 				t.Cleanup(sf.Cleanup)
 				test.SendHTTP(api, false, "POST", "/api/v0/blueprints/new", `{"name":"test","description":"Test","packages":[{"name":"dep-package1","version":"*"},{"name":"dep-package3","version":"*"}], "modules":[{"name":"dep-package2","version":"*"}],"enabled_modules": [],"version":"0.0.0"}`)
 				test.SendHTTP(api, false, "POST", "/api/v0/blueprints/new", `{"name":"test2","description":"Test","packages":[{"name":"dep-package1","version":"*"},{"name":"dep-package3","version":"*"}], "modules":[{"name":"dep-package2","version":"*"}],"enabled_modules": [],"version":"0.0.0"}`)
@@ -980,17 +992,37 @@ func TestBlueprintChange(t *testing.T) {
 func TestBlueprintsDepsolve(t *testing.T) {
 	var cases = []struct {
 		Fixture        rpmmd_mock.FixtureGenerator
+		getSolverFn    GetSolverFn
 		ExpectedStatus int
 		ExpectedJSON   string
 	}{
-		{rpmmd_mock.BaseFixture, http.StatusOK, depsolveTestResponse},
-		{rpmmd_mock.NonExistingPackage, http.StatusOK, depsolvePackageNotExistErrorAPIResponse},
-		{rpmmd_mock.BadDepsolve, http.StatusOK, depsolveBadErrorAPIResponse},
+		{
+			rpmmd_mock.BaseFixture,
+			getBaseMockDepsolveDNFSolverFn(testRepoID),
+			http.StatusOK,
+			depsolveTestResponse,
+		},
+		{
+			rpmmd_mock.NonExistingPackage,
+			getMockDepsolveDNFSolverFn(&dnfjson_mock.MockDepsolveDNF{
+				DepsolveErr: dnfjson_mock.DepsolvePackageNotExistError,
+			}),
+			http.StatusOK,
+			depsolvePackageNotExistErrorAPIResponse,
+		},
+		{
+			rpmmd_mock.BadDepsolve,
+			getMockDepsolveDNFSolverFn(&dnfjson_mock.MockDepsolveDNF{
+				DepsolveErr: dnfjson_mock.DepsolveBadError,
+			}),
+			http.StatusOK,
+			depsolveBadErrorAPIResponse,
+		},
 	}
 
 	for idx, c := range cases {
 		t.Run(fmt.Sprintf("case %d", idx), func(t *testing.T) {
-			api, sf := createTestWeldrAPI(t.TempDir(), test_distro.TestDistro1Name, test_distro.TestArchName, c.Fixture, nil)
+			api, sf := createTestWeldrAPI2(t.TempDir(), test_distro.TestDistro1Name, test_distro.TestArchName, c.getSolverFn, c.Fixture, nil)
 			t.Cleanup(sf.Cleanup)
 			test.SendHTTP(api, false, "POST", "/api/v0/blueprints/new", `{"name":"test","description":"Test","packages":[{"name":"dep-package1","version":"*"}],"modules":[{"name":"dep-package3","version":"*"}],"version":"0.0.0"}`)
 			test.TestRoute(t, api, false, "GET", "/api/v0/blueprints/depsolve/test", ``, c.ExpectedStatus, c.ExpectedJSON)
@@ -1300,6 +1332,8 @@ func TestCompose(t *testing.T) {
 		Packages: dnfjson_mock.BaseDepsolveResult(testRepoID2),
 	}
 
+	getSolverFn := getBaseMockDepsolveDNFSolverFn(testRepoID)
+
 	var cases = map[string]struct {
 		External        bool
 		Method          string
@@ -1309,6 +1343,7 @@ func TestCompose(t *testing.T) {
 		ExpectedJSON    string
 		ExpectedCompose *store.Compose
 		IgnoreFields    []string
+		GetSolverFn     GetSolverFn
 	}{
 		"bad-request": {
 			true,
@@ -1319,6 +1354,7 @@ func TestCompose(t *testing.T) {
 			`{"status":false,"errors":[{"id":"UnknownBlueprint","msg":"Unknown blueprint name: http-server"}]}`,
 			nil,
 			[]string{"build_id", "warnings"},
+			getSolverFn,
 		},
 		"local": {
 			false,
@@ -1329,6 +1365,7 @@ func TestCompose(t *testing.T) {
 			`{"status": true}`,
 			expectedComposeLocal,
 			[]string{"build_id", "warnings"},
+			getSolverFn,
 		},
 		"aws": {
 			false,
@@ -1339,6 +1376,7 @@ func TestCompose(t *testing.T) {
 			`{"status": true}`,
 			expectedComposeLocalAndAws,
 			[]string{"build_id", "warnings"},
+			getSolverFn,
 		},
 		"good-distro": {
 			false,
@@ -1349,6 +1387,11 @@ func TestCompose(t *testing.T) {
 			`{"status": true}`,
 			expectedComposeGoodDistro,
 			[]string{"build_id", "warnings"},
+			getMockDepsolveDNFSolverFn(&dnfjson_mock.MockDepsolveDNF{
+				DepsolveRes: &dnfjson.DepsolveResult{
+					Packages: dnfjson_mock.BaseDepsolveResult(testRepoID2),
+				},
+			}),
 		},
 		"unknown-distro": {
 			false,
@@ -1359,6 +1402,7 @@ func TestCompose(t *testing.T) {
 			`{"status": false,"errors":[{"id":"DistroError", "msg":"Unknown distribution: fedora-1 for arch test_arch"}]}`,
 			nil,
 			[]string{"build_id", "warnings"},
+			getSolverFn,
 		},
 		"bad-arch": {
 			false,
@@ -1369,6 +1413,7 @@ func TestCompose(t *testing.T) {
 			`{"status": false,"errors":[{"id":"DistroError", "msg":"Unknown distribution: test-distro-1 for arch badarch"}]}`,
 			nil,
 			[]string{"build_id", "warnings"},
+			getSolverFn,
 		},
 		"cross-arch": {
 			false,
@@ -1379,6 +1424,7 @@ func TestCompose(t *testing.T) {
 			`{"status": false,"errors":[{"id":"ComposePushErrored", "msg":"No worker for arch 'test_arch2'  available"}]}`,
 			nil,
 			[]string{"build_id", "warnings"},
+			getSolverFn,
 		},
 		"imaginary": {
 			false,
@@ -1389,6 +1435,7 @@ func TestCompose(t *testing.T) {
 			`{"status": false,"errors":[{"id":"ComposeError", "msg":"Failed to get compose type \"imaginary_type\": invalid image type: imaginary_type"}]}`,
 			nil,
 			[]string{"build_id", "warnings"},
+			getSolverFn,
 		},
 
 		// === OSTree params ===
@@ -1402,6 +1449,7 @@ func TestCompose(t *testing.T) {
 			`{"status": false, "errors":[{"id":"ManifestCreationFailed","msg":"failed to initialize osbuild manifest: ostree parent ref specified, but no URL to retrieve it"}]}`,
 			expectedComposeOSTree,
 			[]string{"build_id", "warnings"},
+			getSolverFn,
 		},
 		// Valid Ref + URL = OK
 		"ostree-valid": {
@@ -1413,6 +1461,7 @@ func TestCompose(t *testing.T) {
 			`{"status": true}`,
 			expectedComposeOSTreeOther,
 			[]string{"build_id", "warnings"},
+			getSolverFn,
 		},
 		// Ref + invalid URL = error
 		"ostree-invalid-url": {
@@ -1424,6 +1473,7 @@ func TestCompose(t *testing.T) {
 			`{"status":false,"errors":[{"id":"OSTreeOptionsError","msg":"error sending request to ostree repository \"invalid-url/refs/heads/whatever\": Get \"invalid-url/refs/heads/whatever\": unsupported protocol scheme \"\""}]}`,
 			nil,
 			[]string{"build_id", "warnings"},
+			getSolverFn,
 		},
 		// Bad Ref + URL = error
 		"ostree-bad-ref": {
@@ -1435,6 +1485,7 @@ func TestCompose(t *testing.T) {
 			`{"status":false,"errors":[{"id":"OSTreeOptionsError","msg":"Invalid ostree ref or commit \"/bad/ref\""}]}`,
 			expectedComposeOSTree,
 			[]string{"build_id", "warnings"},
+			getSolverFn,
 		},
 		// Incorrect Ref + URL = the parameters are okay, but the ostree repo returns 404
 		"ostree-404": {
@@ -1446,6 +1497,7 @@ func TestCompose(t *testing.T) {
 			fmt.Sprintf(`{"status":false,"errors":[{"id":"OSTreeOptionsError","msg":"ostree repository \"%s/refs/heads/the/wrong/ref\" returned status: 404 Not Found"}]}`, ostreeRepoDefault.Server.URL),
 			expectedComposeOSTree,
 			[]string{"build_id", "warnings"},
+			getSolverFn,
 		},
 		// Ref + Parent + URL = OK
 		"ostree-all-params": {
@@ -1457,6 +1509,7 @@ func TestCompose(t *testing.T) {
 			`{"status":true}`,
 			expectedComposeOSTreeOther,
 			[]string{"build_id", "warnings"},
+			getSolverFn,
 		},
 		// Parent + URL = OK
 		"ostree-parent-url": {
@@ -1468,6 +1521,7 @@ func TestCompose(t *testing.T) {
 			`{"status":true}`,
 			expectedComposeOSTree,
 			[]string{"build_id", "warnings"},
+			getSolverFn,
 		},
 		// URL only = OK (uses default ref, so we need to specify URL for ostree repo with default ref)
 		"ostree-url-only": {
@@ -1479,12 +1533,13 @@ func TestCompose(t *testing.T) {
 			`{"status":true}`,
 			expectedComposeOSTree,
 			[]string{"build_id", "warnings"},
+			getSolverFn,
 		},
 	}
 
 	for name, c := range cases {
 		t.Run(name, func(t *testing.T) {
-			api, sf := createTestWeldrAPI(t.TempDir(), test_distro.TestDistro1Name, test_distro.TestArchName, rpmmd_mock.NoComposesFixture, nil)
+			api, sf := createTestWeldrAPI2(t.TempDir(), test_distro.TestDistro1Name, test_distro.TestArchName, c.GetSolverFn, rpmmd_mock.NoComposesFixture, nil)
 			t.Cleanup(sf.Cleanup)
 
 			_, err = api.workers.RegisterWorker("", arch.Name())
@@ -2088,20 +2143,55 @@ func TestSourcesDelete(t *testing.T) {
 func TestProjectsDepsolve(t *testing.T) {
 	var cases = []struct {
 		Fixture        rpmmd_mock.FixtureGenerator
+		GetSolverFn    GetSolverFn
 		Path           string
 		ExpectedStatus int
 		ExpectedJSON   string
 	}{
-		{rpmmd_mock.NonExistingPackage, "/api/v0/projects/depsolve/fash", http.StatusBadRequest, `{"status":false,"errors":[{"id":"ProjectsError","msg":"BadRequest: running osbuild-depsolve-dnf failed:\nDNF error occurred: MarkingErrors: Error occurred when marking packages for installation: Problems in request:\nmissing packages: fash"}]}`},
-		{rpmmd_mock.BaseFixture, "/api/v0/projects/depsolve/fish", http.StatusOK, fmt.Sprintf(`{"projects":[{"name":"dep-package3","epoch":7,"version":"3.0.3","release":"1.fc30","arch":"x86_64","checksum":"sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720","check_gpg":true,"repo_id":"%[1]s"},{"name":"dep-package1","epoch":0,"version":"1.33","release":"2.fc30","arch":"x86_64","checksum":"sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893","check_gpg":true,"repo_id":"%[1]s"},{"name":"dep-package2","epoch":0,"version":"2.9","release":"1.fc30","arch":"x86_64","checksum":"sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2","check_gpg":true,"repo_id":"%[1]s"}]}`, testRepoID)},
-		{rpmmd_mock.BaseFixture, "/api/v0/projects/depsolve/fish?distro=test-distro-2", http.StatusOK, fmt.Sprintf(`{"projects":[{"name":"dep-package3","epoch":7,"version":"3.0.3","release":"1.fc30","arch":"x86_64","checksum":"sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720","check_gpg":true,"repo_id":"%[1]s"},{"name":"dep-package1","epoch":0,"version":"1.33","release":"2.fc30","arch":"x86_64","checksum":"sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893","check_gpg":true,"repo_id":"%[1]s"},{"name":"dep-package2","epoch":0,"version":"2.9","release":"1.fc30","arch":"x86_64","checksum":"sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2","check_gpg":true,"repo_id":"%[1]s"}]}`, testRepoID2)},
-		{rpmmd_mock.BadDepsolve, "/api/v0/projects/depsolve/go2rpm", http.StatusBadRequest, `{"status":false,"errors":[{"id":"ProjectsError","msg":"BadRequest: running osbuild-depsolve-dnf failed:\nDNF error occurred: DepsolveError: There was a problem depsolving ['go2rpm']: \n Problem: conflicting requests\n  - nothing provides askalono-cli needed by go2rpm-1-4.fc31.noarch"}]}`},
-		{rpmmd_mock.BaseFixture, "/api/v0/projects/depsolve/fish?distro=fedora-1", http.StatusBadRequest, `{"status":false,"errors":[{"id":"DistroError","msg":"Invalid distro: fedora-1"}]}`},
+		{
+			rpmmd_mock.NonExistingPackage,
+			getMockDepsolveDNFSolverFn(&dnfjson_mock.MockDepsolveDNF{
+				DepsolveErr: dnfjson_mock.DepsolvePackageNotExistError,
+			}),
+			"/api/v0/projects/depsolve/fash",
+			http.StatusBadRequest,
+			`{"status":false,"errors":[{"id":"ProjectsError","msg":"BadRequest: running osbuild-depsolve-dnf failed:\nDNF error occurred: MarkingErrors: Error occurred when marking packages for installation: Problems in request:\nmissing packages: fash"}]}`,
+		},
+		{
+			rpmmd_mock.BaseFixture,
+			getBaseMockDepsolveDNFSolverFn(testRepoID),
+			"/api/v0/projects/depsolve/fish",
+			http.StatusOK,
+			fmt.Sprintf(`{"projects":[{"name":"dep-package3","epoch":7,"version":"3.0.3","release":"1.fc30","arch":"x86_64","checksum":"sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720","check_gpg":true,"repo_id":"%[1]s"},{"name":"dep-package1","epoch":0,"version":"1.33","release":"2.fc30","arch":"x86_64","checksum":"sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893","check_gpg":true,"repo_id":"%[1]s"},{"name":"dep-package2","epoch":0,"version":"2.9","release":"1.fc30","arch":"x86_64","checksum":"sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2","check_gpg":true,"repo_id":"%[1]s"}]}`, testRepoID),
+		},
+		{
+			rpmmd_mock.BaseFixture,
+			getBaseMockDepsolveDNFSolverFn(testRepoID2),
+			"/api/v0/projects/depsolve/fish?distro=test-distro-2",
+			http.StatusOK,
+			fmt.Sprintf(`{"projects":[{"name":"dep-package3","epoch":7,"version":"3.0.3","release":"1.fc30","arch":"x86_64","checksum":"sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720","check_gpg":true,"repo_id":"%[1]s"},{"name":"dep-package1","epoch":0,"version":"1.33","release":"2.fc30","arch":"x86_64","checksum":"sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893","check_gpg":true,"repo_id":"%[1]s"},{"name":"dep-package2","epoch":0,"version":"2.9","release":"1.fc30","arch":"x86_64","checksum":"sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2","check_gpg":true,"repo_id":"%[1]s"}]}`, testRepoID2),
+		},
+		{
+			rpmmd_mock.BadDepsolve,
+			getMockDepsolveDNFSolverFn(&dnfjson_mock.MockDepsolveDNF{
+				DepsolveErr: dnfjson_mock.DepsolveBadError,
+			}),
+			"/api/v0/projects/depsolve/go2rpm",
+			http.StatusBadRequest,
+			`{"status":false,"errors":[{"id":"ProjectsError","msg":"BadRequest: running osbuild-depsolve-dnf failed:\nDNF error occurred: DepsolveError: There was a problem depsolving ['go2rpm']: \n Problem: conflicting requests\n  - nothing provides askalono-cli needed by go2rpm-1-4.fc31.noarch"}]}`,
+		},
+		{
+			rpmmd_mock.BaseFixture,
+			getBaseMockDepsolveDNFSolverFn(testRepoID),
+			"/api/v0/projects/depsolve/fish?distro=fedora-1",
+			http.StatusBadRequest,
+			`{"status":false,"errors":[{"id":"DistroError","msg":"Invalid distro: fedora-1"}]}`,
+		},
 	}
 
 	for idx, c := range cases {
 		t.Run(fmt.Sprintf("case %d", idx), func(t *testing.T) {
-			api, sf := createTestWeldrAPI(t.TempDir(), test_distro.TestDistro1Name, test_distro.TestArchName, c.Fixture, nil)
+			api, sf := createTestWeldrAPI2(t.TempDir(), test_distro.TestDistro1Name, test_distro.TestArchName, c.GetSolverFn, c.Fixture, nil)
 			t.Cleanup(sf.Cleanup)
 			test.TestRoute(t, api, true, "GET", c.Path, ``, c.ExpectedStatus, c.ExpectedJSON)
 		})
@@ -2111,23 +2201,74 @@ func TestProjectsDepsolve(t *testing.T) {
 func TestProjectsInfo(t *testing.T) {
 	var cases = []struct {
 		Fixture        rpmmd_mock.FixtureGenerator
+		GetSolverFn    GetSolverFn
 		Path           string
 		ExpectedStatus int
 		ExpectedJSON   string
 	}{
-		{rpmmd_mock.BaseFixture, "/api/v0/projects/info", http.StatusBadRequest, `{"status":false,"errors":[{"id":"UnknownProject","msg":"No packages specified."}]}`},
-		{rpmmd_mock.BaseFixture, "/api/v0/projects/info/", http.StatusBadRequest, `{"status":false,"errors":[{"id":"UnknownProject","msg":"No packages specified."}]}`},
-		{rpmmd_mock.BaseFixture, "/api/v0/projects/info/nonexistingpkg", http.StatusBadRequest, `{"status":false,"errors":[{"id":"UnknownProject","msg":"No packages have been found."}]}`},
-		{rpmmd_mock.BaseFixture, "/api/v0/projects/info/*", http.StatusOK, projectsInfoResponse},
-		{rpmmd_mock.BaseFixture, "/api/v0/projects/info/package2*,package16", http.StatusOK, projectsInfoFilteredResponse},
-		{rpmmd_mock.BadFetch, "/api/v0/projects/info/badpackage1", http.StatusBadRequest, `{"status":false,"errors":[{"id":"ProjectsError","msg":"msg: DNF error occurred: FetchError: There was a problem when fetching packages."}]}`},
-		{rpmmd_mock.BaseFixture, "/api/v0/projects/info/package16?distro=test-distro-2", http.StatusOK, projectsInfoPackage16Response},
-		{rpmmd_mock.BaseFixture, "/api/v0/projects/info/package16?distro=fedora-1", http.StatusBadRequest, `{"status":false,"errors":[{"id":"DistroError","msg":"Invalid distro: fedora-1"}]}`},
+		{
+			rpmmd_mock.BaseFixture,
+			nil,
+			"/api/v0/projects/info",
+			http.StatusBadRequest,
+			`{"status":false,"errors":[{"id":"UnknownProject","msg":"No packages specified."}]}`,
+		},
+		{
+			rpmmd_mock.BaseFixture,
+			nil,
+			"/api/v0/projects/info/",
+			http.StatusBadRequest,
+			`{"status":false,"errors":[{"id":"UnknownProject","msg":"No packages specified."}]}`,
+		},
+		{
+			rpmmd_mock.BaseFixture,
+			nil,
+			"/api/v0/projects/info/nonexistingpkg",
+			http.StatusBadRequest,
+			`{"status":false,"errors":[{"id":"UnknownProject","msg":"No packages have been found."}]}`,
+		},
+		{
+			rpmmd_mock.BaseFixture,
+			getBaseMockDepsolveDNFSolverFn(testRepoID),
+			"/api/v0/projects/info/*",
+			http.StatusOK,
+			projectsInfoResponse,
+		},
+		{
+			rpmmd_mock.BaseFixture,
+			getBaseMockDepsolveDNFSolverFn(testRepoID),
+			"/api/v0/projects/info/package2*,package16",
+			http.StatusOK,
+			projectsInfoFilteredResponse,
+		},
+		{
+			rpmmd_mock.BadFetch,
+			getMockDepsolveDNFSolverFn(&dnfjson_mock.MockDepsolveDNF{
+				SearchErr: dnfjson_mock.FetchError,
+			}),
+			"/api/v0/projects/info/badpackage1",
+			http.StatusBadRequest,
+			`{"status":false,"errors":[{"id":"ProjectsError","msg":"msg: DNF error occurred: FetchError: There was a problem when fetching packages."}]}`,
+		},
+		{
+			rpmmd_mock.BaseFixture,
+			getBaseMockDepsolveDNFSolverFn(testRepoID),
+			"/api/v0/projects/info/package16?distro=test-distro-2",
+			http.StatusOK,
+			projectsInfoPackage16Response,
+		},
+		{
+			rpmmd_mock.BaseFixture,
+			nil,
+			"/api/v0/projects/info/package16?distro=fedora-1",
+			http.StatusBadRequest,
+			`{"status":false,"errors":[{"id":"DistroError","msg":"Invalid distro: fedora-1"}]}`,
+		},
 	}
 
 	for idx, c := range cases {
 		t.Run(fmt.Sprintf("case %d", idx), func(t *testing.T) {
-			api, sf := createTestWeldrAPI(t.TempDir(), test_distro.TestDistro1Name, test_distro.TestArchName, c.Fixture, nil)
+			api, sf := createTestWeldrAPI2(t.TempDir(), test_distro.TestDistro1Name, test_distro.TestArchName, c.GetSolverFn, c.Fixture, nil)
 			t.Cleanup(sf.Cleanup)
 			test.TestRoute(t, api, true, "GET", c.Path, ``, c.ExpectedStatus, c.ExpectedJSON)
 		})
@@ -2137,26 +2278,94 @@ func TestProjectsInfo(t *testing.T) {
 func TestModulesInfo(t *testing.T) {
 	var cases = []struct {
 		Fixture        rpmmd_mock.FixtureGenerator
+		GetSolverFn    GetSolverFn
 		Path           string
 		ExpectedStatus int
 		ExpectedJSON   string
 	}{
-		{rpmmd_mock.BaseFixture, "/api/v0/modules/info", http.StatusBadRequest, `{"status":false,"errors":[{"id":"UnknownModule","msg":"No packages specified."}]}`},
-		{rpmmd_mock.BaseFixture, "/api/v0/modules/info/", http.StatusBadRequest, `{"status":false,"errors":[{"id":"UnknownModule","msg":"No packages specified."}]}`},
-		{rpmmd_mock.BaseFixture, "/api/v0/modules/info/nonexistingpkg", http.StatusBadRequest, `{"status":false,"errors":[{"id":"UnknownModule","msg":"No packages have been found."}]}`},
-		{rpmmd_mock.BadDepsolve, "/api/v0/modules/info/baddepsolve", http.StatusBadRequest, `{"status":false,"errors":[{"id":"ModulesError","msg":"Cannot depsolve package package1: running osbuild-depsolve-dnf failed:\nDNF error occurred: DepsolveError: There was a problem depsolving ['go2rpm']: \n Problem: conflicting requests\n  - nothing provides askalono-cli needed by go2rpm-1-4.fc31.noarch"}]}`},
-		{rpmmd_mock.BaseFixture, "/api/v0/modules/info/package2*,package16", http.StatusOK, modulesInfoFilteredResponse},
-		{rpmmd_mock.BaseFixture, "/api/v0/modules/info/*", http.StatusOK, modulesInfoResponse},
-		{rpmmd_mock.BadFetch, "/api/v0/modules/info/badpackage1", http.StatusBadRequest, `{"status":false,"errors":[{"id":"ModulesError","msg":"msg: DNF error occurred: FetchError: There was a problem when fetching packages."}]}`},
-		{rpmmd_mock.BaseFixture, "/api/v1/modules/info/package2*,package16", http.StatusOK, modulesInfoFilteredResponse},
-		{rpmmd_mock.BaseFixture, "/api/v1/modules/info/package16?distro=test-distro-2", http.StatusOK, modulesInfoPackage16Response},
-		{rpmmd_mock.BaseFixture, "/api/v1/modules/info/package16?distro=fedora-1", http.StatusBadRequest, `{"status":false,"errors":[{"id":"DistroError","msg":"Invalid distro: fedora-1"}]}`},
+		{
+			rpmmd_mock.BaseFixture,
+			nil,
+			"/api/v0/modules/info",
+			http.StatusBadRequest,
+			`{"status":false,"errors":[{"id":"UnknownModule","msg":"No packages specified."}]}`,
+		},
+		{
+			rpmmd_mock.BaseFixture,
+			nil,
+			"/api/v0/modules/info/",
+			http.StatusBadRequest,
+			`{"status":false,"errors":[{"id":"UnknownModule","msg":"No packages specified."}]}`,
+		},
+		{
+			rpmmd_mock.BaseFixture,
+			nil,
+			"/api/v0/modules/info/nonexistingpkg",
+			http.StatusBadRequest,
+			`{"status":false,"errors":[{"id":"UnknownModule","msg":"No packages have been found."}]}`,
+		},
+		{
+			rpmmd_mock.BadDepsolve,
+			getMockDepsolveDNFSolverFn(&dnfjson_mock.MockDepsolveDNF{
+				SearchResMap: map[string]rpmmd.PackageList{
+					"baddepsolve": dnfjson_mock.BaseFetchResult()[2:4], // package1-1, package1-1.1
+				},
+				DepsolveErr: dnfjson_mock.DepsolveBadError,
+			}),
+			"/api/v0/modules/info/baddepsolve",
+			http.StatusBadRequest,
+			`{"status":false,"errors":[{"id":"ModulesError","msg":"Cannot depsolve package package1: running osbuild-depsolve-dnf failed:\nDNF error occurred: DepsolveError: There was a problem depsolving ['go2rpm']: \n Problem: conflicting requests\n  - nothing provides askalono-cli needed by go2rpm-1-4.fc31.noarch"}]}`,
+		},
+		{
+			rpmmd_mock.BaseFixture,
+			getBaseMockDepsolveDNFSolverFn(testRepoID),
+			"/api/v0/modules/info/package2*,package16",
+			http.StatusOK,
+			modulesInfoFilteredResponse,
+		},
+		{
+			rpmmd_mock.BaseFixture,
+			getBaseMockDepsolveDNFSolverFn(testRepoID),
+			"/api/v0/modules/info/*",
+			http.StatusOK,
+			modulesInfoResponse,
+		},
+		{
+			rpmmd_mock.BadFetch,
+			getMockDepsolveDNFSolverFn(&dnfjson_mock.MockDepsolveDNF{
+				SearchErr: dnfjson_mock.FetchError,
+			}),
+			"/api/v0/modules/info/badpackage1",
+			http.StatusBadRequest,
+			`{"status":false,"errors":[{"id":"ModulesError","msg":"msg: DNF error occurred: FetchError: There was a problem when fetching packages."}]}`,
+		},
+		{
+			rpmmd_mock.BaseFixture,
+			getBaseMockDepsolveDNFSolverFn(testRepoID),
+			"/api/v1/modules/info/package2*,package16",
+			http.StatusOK,
+			modulesInfoFilteredResponse,
+		},
+		{
+			rpmmd_mock.BaseFixture,
+			getBaseMockDepsolveDNFSolverFn(testRepoID2),
+			"/api/v1/modules/info/package16?distro=test-distro-2",
+			http.StatusOK,
+			modulesInfoPackage16Response,
+		},
+		{
+			rpmmd_mock.BaseFixture,
+			nil,
+			"/api/v1/modules/info/package16?distro=fedora-1",
+			http.StatusBadRequest,
+			`{"status":false,"errors":[{"id":"DistroError","msg":"Invalid distro: fedora-1"}]}`,
+		},
 	}
 
 	for _, c := range cases {
 		name := fmt.Sprintf("Path=%s", c.Path)
 		t.Run(name, func(t *testing.T) {
-			api, sf := createTestWeldrAPI(t.TempDir(), test_distro.TestDistro1Name, test_distro.TestArchName, c.Fixture, nil)
+			api, sf := createTestWeldrAPI2(t.TempDir(), test_distro.TestDistro1Name, test_distro.TestArchName, c.GetSolverFn, c.Fixture, nil)
 			t.Cleanup(sf.Cleanup)
 			test.TestRoute(t, api, true, "GET", c.Path, ``, c.ExpectedStatus, c.ExpectedJSON)
 		})
@@ -2166,21 +2375,60 @@ func TestModulesInfo(t *testing.T) {
 func TestProjectsList(t *testing.T) {
 	var cases = []struct {
 		Fixture        rpmmd_mock.FixtureGenerator
+		GetSolverFn    GetSolverFn
 		Path           string
 		ExpectedStatus int
 		ExpectedJSON   string
 	}{
-		{rpmmd_mock.BaseFixture, "/api/v0/projects/list", http.StatusOK, projectsListResponse},
-		{rpmmd_mock.BaseFixture, "/api/v0/projects/list/", http.StatusOK, projectsListResponse},
-		{rpmmd_mock.BadFetch, "/api/v0/projects/list/", http.StatusBadRequest, `{"status":false,"errors":[{"id":"ProjectsError","msg":"msg: DNF error occurred: FetchError: There was a problem when fetching packages."}]}`},
-		{rpmmd_mock.BaseFixture, "/api/v0/projects/list?offset=1&limit=1", http.StatusOK, projectsList1Response},
-		{rpmmd_mock.BaseFixture, "/api/v0/projects/list?distro=test-distro-2&offset=1&limit=1", http.StatusOK, projectsList1Response},
-		{rpmmd_mock.BaseFixture, "/api/v0/projects/list?distro=fedora-1&offset=1&limit=1", http.StatusBadRequest, `{"status":false,"errors":[{"id":"DistroError","msg":"Invalid distro: fedora-1"}]}`},
+		{
+			rpmmd_mock.BaseFixture,
+			getBaseMockDepsolveDNFSolverFn(testRepoID),
+			"/api/v0/projects/list",
+			http.StatusOK,
+			projectsListResponse,
+		},
+		{
+			rpmmd_mock.BaseFixture,
+			getBaseMockDepsolveDNFSolverFn(testRepoID),
+			"/api/v0/projects/list/",
+			http.StatusOK,
+			projectsListResponse,
+		},
+		{
+			rpmmd_mock.BadFetch,
+			getMockDepsolveDNFSolverFn(&dnfjson_mock.MockDepsolveDNF{
+				FetchErr: dnfjson_mock.FetchError,
+			}),
+			"/api/v0/projects/list/",
+			http.StatusBadRequest,
+			`{"status":false,"errors":[{"id":"ProjectsError","msg":"msg: DNF error occurred: FetchError: There was a problem when fetching packages."}]}`,
+		},
+		{
+			rpmmd_mock.BaseFixture,
+			getBaseMockDepsolveDNFSolverFn(testRepoID),
+			"/api/v0/projects/list?offset=1&limit=1",
+			http.StatusOK,
+			projectsList1Response,
+		},
+		{
+			rpmmd_mock.BaseFixture,
+			getBaseMockDepsolveDNFSolverFn(testRepoID),
+			"/api/v0/projects/list?distro=test-distro-2&offset=1&limit=1",
+			http.StatusOK,
+			projectsList1Response,
+		},
+		{
+			rpmmd_mock.BaseFixture,
+			nil,
+			"/api/v0/projects/list?distro=fedora-1&offset=1&limit=1",
+			http.StatusBadRequest,
+			`{"status":false,"errors":[{"id":"DistroError","msg":"Invalid distro: fedora-1"}]}`,
+		},
 	}
 
 	for idx, c := range cases {
 		t.Run(fmt.Sprintf("case %d", idx), func(t *testing.T) {
-			api, sf := createTestWeldrAPI(t.TempDir(), test_distro.TestDistro1Name, test_distro.TestArchName, c.Fixture, nil)
+			api, sf := createTestWeldrAPI2(t.TempDir(), test_distro.TestDistro1Name, test_distro.TestArchName, c.GetSolverFn, c.Fixture, nil)
 			t.Cleanup(sf.Cleanup)
 			test.TestRoute(t, api, true, "GET", c.Path, ``, c.ExpectedStatus, c.ExpectedJSON)
 		})
@@ -2190,24 +2438,81 @@ func TestProjectsList(t *testing.T) {
 func TestModulesList(t *testing.T) {
 	var cases = []struct {
 		Fixture        rpmmd_mock.FixtureGenerator
+		GetSolverFn    GetSolverFn
 		Path           string
 		ExpectedStatus int
 		ExpectedJSON   string
 	}{
-		{rpmmd_mock.BaseFixture, "/api/v0/modules/list", http.StatusOK, modulesListResponse},
-		{rpmmd_mock.BaseFixture, "/api/v0/modules/list/", http.StatusOK, modulesListResponse},
-		{rpmmd_mock.BaseFixture, "/api/v0/modules/list/nonexistingpkg", http.StatusBadRequest, `{"status":false,"errors":[{"id":"UnknownModule","msg":"No packages have been found."}]}`},
-		{rpmmd_mock.BaseFixture, "/api/v0/modules/list/package2*,package16", http.StatusOK, modulesListFilteredResponse},
-		{rpmmd_mock.BadFetch, "/api/v0/modules/list/badpackage1", http.StatusBadRequest, `{"status":false,"errors":[{"id":"ModulesError","msg":"msg: DNF error occurred: FetchError: There was a problem when fetching packages."}]}`},
-		{rpmmd_mock.BaseFixture, "/api/v0/modules/list/package2*,package16?offset=1&limit=1", http.StatusOK, `{"total":4,"offset":1,"limit":1,"modules":[{"name":"package2","group_type":"rpm"}]}`},
-		{rpmmd_mock.BaseFixture, "/api/v0/modules/list/*", http.StatusOK, modulesListResponse},
-		{rpmmd_mock.BaseFixture, "/api/v0/modules/list/package2*,package16?distro=test-distro-2&offset=1&limit=1", http.StatusOK, `{"total":4,"offset":1,"limit":1,"modules":[{"name":"package2","group_type":"rpm"}]}`},
-		{rpmmd_mock.BaseFixture, "/api/v0/modules/list/package2*,package16?distro=fedora-1&offset=1&limit=1", http.StatusBadRequest, `{"status":false,"errors":[{"id":"DistroError","msg":"Invalid distro: fedora-1"}]}`},
+		{
+			rpmmd_mock.BaseFixture,
+			getBaseMockDepsolveDNFSolverFn(testRepoID),
+			"/api/v0/modules/list",
+			http.StatusOK,
+			modulesListResponse,
+		},
+		{
+			rpmmd_mock.BaseFixture,
+			getBaseMockDepsolveDNFSolverFn(testRepoID),
+			"/api/v0/modules/list/",
+			http.StatusOK,
+			modulesListResponse,
+		},
+		{
+			rpmmd_mock.BaseFixture,
+			nil,
+			"/api/v0/modules/list/nonexistingpkg",
+			http.StatusBadRequest,
+			`{"status":false,"errors":[{"id":"UnknownModule","msg":"No packages have been found."}]}`,
+		},
+		{
+			rpmmd_mock.BaseFixture,
+			getBaseMockDepsolveDNFSolverFn(testRepoID),
+			"/api/v0/modules/list/package2*,package16",
+			http.StatusOK,
+			modulesListFilteredResponse,
+		},
+		{
+			rpmmd_mock.BadFetch,
+			getMockDepsolveDNFSolverFn(&dnfjson_mock.MockDepsolveDNF{
+				SearchErr: dnfjson_mock.FetchError,
+			}),
+			"/api/v0/modules/list/badpackage1",
+			http.StatusBadRequest,
+			`{"status":false,"errors":[{"id":"ModulesError","msg":"msg: DNF error occurred: FetchError: There was a problem when fetching packages."}]}`,
+		},
+		{
+			rpmmd_mock.BaseFixture,
+			getBaseMockDepsolveDNFSolverFn(testRepoID),
+			"/api/v0/modules/list/package2*,package16?offset=1&limit=1",
+			http.StatusOK,
+			`{"total":4,"offset":1,"limit":1,"modules":[{"name":"package2","group_type":"rpm"}]}`,
+		},
+		{
+			rpmmd_mock.BaseFixture,
+			getBaseMockDepsolveDNFSolverFn(testRepoID),
+			"/api/v0/modules/list/*",
+			http.StatusOK,
+			modulesListResponse,
+		},
+		{
+			rpmmd_mock.BaseFixture,
+			getBaseMockDepsolveDNFSolverFn(testRepoID),
+			"/api/v0/modules/list/package2*,package16?distro=test-distro-2&offset=1&limit=1",
+			http.StatusOK,
+			`{"total":4,"offset":1,"limit":1,"modules":[{"name":"package2","group_type":"rpm"}]}`,
+		},
+		{
+			rpmmd_mock.BaseFixture,
+			nil,
+			"/api/v0/modules/list/package2*,package16?distro=fedora-1&offset=1&limit=1",
+			http.StatusBadRequest,
+			`{"status":false,"errors":[{"id":"DistroError","msg":"Invalid distro: fedora-1"}]}`,
+		},
 	}
 
 	for idx, c := range cases {
 		t.Run(fmt.Sprintf("case %d", idx), func(t *testing.T) {
-			api, sf := createTestWeldrAPI(t.TempDir(), test_distro.TestDistro1Name, test_distro.TestArchName, c.Fixture, nil)
+			api, sf := createTestWeldrAPI2(t.TempDir(), test_distro.TestDistro1Name, test_distro.TestArchName, c.GetSolverFn, c.Fixture, nil)
 			t.Cleanup(sf.Cleanup)
 			test.TestRoute(t, api, true, "GET", c.Path, ``, c.ExpectedStatus, c.ExpectedJSON)
 		})
@@ -2377,6 +2682,7 @@ func TestComposePOST_ImageTypeDenylist(t *testing.T) {
 		ExpectedJSON      string
 		ExpectedCompose   *store.Compose
 		IgnoreFields      []string
+		GetSolverFn       GetSolverFn
 	}{
 		{
 			"/api/v1/compose",
@@ -2386,6 +2692,7 @@ func TestComposePOST_ImageTypeDenylist(t *testing.T) {
 			`{"status":true}`,
 			expectedComposeLocal,
 			[]string{"build_id", "warnings"},
+			getBaseMockDepsolveDNFSolverFn(testRepoID),
 		},
 		{
 			"/api/v1/compose",
@@ -2395,6 +2702,7 @@ func TestComposePOST_ImageTypeDenylist(t *testing.T) {
 			`{"status": true}`,
 			expectedComposeLocal2,
 			[]string{"build_id", "warnings"},
+			getBaseMockDepsolveDNFSolverFn(testRepoID),
 		},
 		{
 			"/api/v1/compose",
@@ -2405,6 +2713,7 @@ func TestComposePOST_ImageTypeDenylist(t *testing.T) {
 				test_distro.TestImageTypeName, testDistro2Name),
 			expectedComposeLocal,
 			[]string{"build_id", "warnings"},
+			nil,
 		},
 		{
 			"/api/v1/compose",
@@ -2414,6 +2723,7 @@ func TestComposePOST_ImageTypeDenylist(t *testing.T) {
 			`{"status": true}`,
 			expectedComposeLocal2,
 			[]string{"build_id", "warnings"},
+			getBaseMockDepsolveDNFSolverFn(testRepoID),
 		},
 		{
 			"/api/v1/compose",
@@ -2424,6 +2734,7 @@ func TestComposePOST_ImageTypeDenylist(t *testing.T) {
 				test_distro.TestImageTypeName, testDistro2Name),
 			expectedComposeLocal,
 			[]string{"build_id", "warnings"},
+			nil,
 		},
 		{
 			"/api/v1/compose",
@@ -2434,6 +2745,7 @@ func TestComposePOST_ImageTypeDenylist(t *testing.T) {
 				test_distro.TestImageType2Name, testDistro2Name),
 			expectedComposeLocal2,
 			[]string{"build_id", "warnings"},
+			nil,
 		},
 		{
 			"/api/v1/compose",
@@ -2444,6 +2756,7 @@ func TestComposePOST_ImageTypeDenylist(t *testing.T) {
 				test_distro.TestImageTypeName, testDistro2Name),
 			expectedComposeLocal,
 			[]string{"build_id", "warnings"},
+			nil,
 		},
 		{
 			"/api/v1/compose",
@@ -2454,6 +2767,7 @@ func TestComposePOST_ImageTypeDenylist(t *testing.T) {
 				test_distro.TestImageTypeName, testDistro2Name),
 			expectedComposeLocal,
 			[]string{"build_id", "warnings"},
+			nil,
 		},
 		{
 			"/api/v1/compose",
@@ -2464,6 +2778,7 @@ func TestComposePOST_ImageTypeDenylist(t *testing.T) {
 				test_distro.TestImageTypeName, testDistro2Name),
 			expectedComposeLocal,
 			[]string{"build_id", "warnings"},
+			nil,
 		},
 		{
 			"/api/v1/compose",
@@ -2474,12 +2789,13 @@ func TestComposePOST_ImageTypeDenylist(t *testing.T) {
 				test_distro.TestImageType2Name, testDistro2Name),
 			expectedComposeLocal,
 			[]string{"build_id", "warnings"},
+			nil,
 		},
 	}
 
 	for idx, c := range cases {
 		t.Run(fmt.Sprintf("case %d", idx), func(t *testing.T) {
-			api, sf := createTestWeldrAPI(t.TempDir(), distro2.Name(), arch.Name(), rpmmd_mock.NoComposesFixture, c.imageTypeDenylist)
+			api, sf := createTestWeldrAPI2(t.TempDir(), distro2.Name(), arch.Name(), c.GetSolverFn, rpmmd_mock.NoComposesFixture, c.imageTypeDenylist)
 			t.Cleanup(sf.Cleanup)
 			_, err = api.workers.RegisterWorker("", arch.Name())
 			require.NoError(t, err)

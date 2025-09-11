@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"time"
 
 	"github.com/osbuild/images/pkg/dnfjson"
@@ -66,6 +67,27 @@ var DepsolveBadError = dnfjson.Error{
 var FetchError = dnfjson.Error{
 	Kind:   "FetchError",
 	Reason: "There was a problem when fetching packages.",
+}
+
+// BaseSearchResultsMap creates results map for use with the Solver search command
+// which is used for listing a subset of content from the repositories.
+// The map key is a comma-separated list of the packages requested.
+func BaseSearchResultsMap() map[string]rpmmd.PackageList {
+	allPackages := BaseFetchResult()
+
+	return map[string]rpmmd.PackageList{
+		"":                  allPackages,
+		"*":                 allPackages,
+		"nonexistingpkg":    {},
+		"package1":          allPackages[2:4],
+		"package1,package2": allPackages[2:6],
+		"package2*,package16": slices.Concat(
+			allPackages[4:6],   // package2-2, package2-2.1
+			allPackages[32:34], // package16-16, package16-16.1
+			allPackages[40:44], // package20-20, package20-20.1, package21-21, package21-21.1
+		),
+		"package16": allPackages[32:34],
+	}
 }
 
 // generateSearchResults creates results for use with the dnfjson search command
