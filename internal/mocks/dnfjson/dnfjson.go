@@ -12,7 +12,14 @@ import (
 	"github.com/osbuild/images/pkg/rpmmd"
 )
 
-func generatePackageList() rpmmd.PackageList {
+// BaseRepoFetchResult returns a mock list of packages for a repository.
+// It contains 22 packages, package0 to package21. For each package,
+// a second build is created with the version and build time incremented by 1.
+// The returned list is ordered by package name and the version, i.e.:
+// package0-0.0, package0-0.1, package1-1.0, package1-1.1, ...
+//
+// The return value is used for the FetchMetadata() and SearchMetadata() methods.
+func BaseRepoFetchResult() rpmmd.PackageList {
 	baseTime, err := time.Parse(time.RFC3339, "2006-01-02T15:04:05Z")
 
 	if err != nil {
@@ -67,7 +74,7 @@ var DepsolveBadError = dnfjson.Error{
 // baddepsolve returns package1, the test then tries to depsolve package1 using BadDepsolve()
 // wich will return a depsolve error.
 func generateSearchResults() map[string]interface{} {
-	allPackages := generatePackageList()
+	allPackages := BaseRepoFetchResult()
 
 	// This includes package16, package2, package20, and package21
 	var wildcardResults rpmmd.PackageList
@@ -188,7 +195,7 @@ type ResponseGenerator func(string) string
 func Base(tmpdir string) string {
 	data := map[string]interface{}{
 		"depsolve": createBaseDepsolveFixture(),
-		"dump":     generatePackageList(),
+		"dump":     BaseRepoFetchResult(),
 		"search":   generateSearchResults(),
 	}
 	path := filepath.Join(tmpdir, "base.json")
@@ -217,7 +224,7 @@ func BadDepsolve(tmpdir string) string {
 
 	data := map[string]interface{}{
 		"depsolve": deps,
-		"dump":     generatePackageList(),
+		"dump":     BaseRepoFetchResult(),
 		"search":   generateSearchResults(),
 	}
 	path := filepath.Join(tmpdir, "baddepsolve.json")
