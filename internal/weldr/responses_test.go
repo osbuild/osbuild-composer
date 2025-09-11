@@ -1,5 +1,11 @@
 package weldr
 
+import (
+	"fmt"
+
+	dnfjson_mock "github.com/osbuild/osbuild-composer/internal/mocks/dnfjson"
+)
+
 // Expected responses for API tests
 //
 // Smaller responses can be defined in-line, but larger, complex structures
@@ -125,7 +131,7 @@ const depsolveTestResponse = `
 }
 `
 
-const depsolvePackageNotExistError = `
+var depsolvePackageNotExistErrorAPIResponse = fmt.Sprintf(`
 {
   "blueprints": [
     {
@@ -154,13 +160,13 @@ const depsolvePackageNotExistError = `
   "errors": [
     {
       "id": "BlueprintsError",
-      "msg": "test: running osbuild-depsolve-dnf failed:\nDNF error occurred: MarkingErrors: Error occurred when marking packages for installation: Problems in request:\nmissing packages: fash"
+      "msg": %q
     }
   ]
 }
-`
+`, "test: running osbuild-depsolve-dnf failed:\n"+dnfjson_mock.DepsolvePackageNotExistError.Error())
 
-const depsolveBadError = `
+var depsolveBadErrorAPIResponse = fmt.Sprintf(`
 {
   "blueprints": [
     {
@@ -189,11 +195,11 @@ const depsolveBadError = `
   "errors": [
     {
       "id": "BlueprintsError",
-      "msg": "test: running osbuild-depsolve-dnf failed:\nDNF error occurred: DepsolveError: There was a problem depsolving ['go2rpm']: \n Problem: conflicting requests\n  - nothing provides askalono-cli needed by go2rpm-1-4.fc31.noarch"
+      "msg": %q
     }
   ]
 }
-`
+`, "test: running osbuild-depsolve-dnf failed:\n"+dnfjson_mock.DepsolveBadError.Error())
 
 const oldBlueprintsUndoResponse = `
 {

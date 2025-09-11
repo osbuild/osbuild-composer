@@ -905,8 +905,8 @@ func TestBlueprintsDepsolve(t *testing.T) {
 		ExpectedJSON   string
 	}{
 		{rpmmd_mock.BaseFixture, http.StatusOK, depsolveTestResponse},
-		{rpmmd_mock.NonExistingPackage, http.StatusOK, depsolvePackageNotExistError},
-		{rpmmd_mock.BadDepsolve, http.StatusOK, depsolveBadError},
+		{rpmmd_mock.NonExistingPackage, http.StatusOK, depsolvePackageNotExistErrorAPIResponse},
+		{rpmmd_mock.BadDepsolve, http.StatusOK, depsolveBadErrorAPIResponse},
 	}
 
 	for idx, c := range cases {
