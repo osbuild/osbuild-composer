@@ -84,12 +84,17 @@ func executeTests(m *testing.M) int {
 	defer os.RemoveAll(dspath)
 
 	logger := log.New(os.Stdout, "", 0)
-	dnfjsonFixture := dnfjson_mock.Base(dspath)
-	solver := dnfjson.NewBaseSolver(path.Join(tmpdir, "dnfjson-cache"))
-	solver.SetDNFJSONPath(dnfjsonPath, dnfjsonFixture)
+
 	getSolverFn := func(modulePlatformID, releaseVer, arch, distro string) weldr.Solver {
-		return solver.NewWithConfig(modulePlatformID, releaseVer, arch, distro)
+		return &dnfjson_mock.MockDepsolveDNF{
+			DepsolveRes: &dnfjson.DepsolveResult{
+				Packages: dnfjson_mock.BaseDepsolveResult(""),
+			},
+			FetchRes:     dnfjson_mock.BaseFetchResult(),
+			SearchResMap: dnfjson_mock.BaseSearchResultsMap(),
+		}
 	}
+
 	api := weldr.NewTestAPI(getSolverFn, rr, logger, fixture.StoreFixture, fixture.Workers, "", nil)
 	server := http.Server{Handler: api}
 	defer server.Close()
