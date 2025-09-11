@@ -12,14 +12,14 @@ import (
 	"github.com/osbuild/images/pkg/rpmmd"
 )
 
-// BaseRepoFetchResult returns a mock list of packages for a repository.
+// BaseFetchResult returns a mock list of packages for a repository.
 // It contains 22 packages, package0 to package21. For each package,
 // a second build is created with the version and build time incremented by 1.
 // The returned list is ordered by package name and the version, i.e.:
 // package0-0.0, package0-0.1, package1-1.0, package1-1.1, ...
 //
 // The return value is used for the FetchMetadata() and SearchMetadata() methods.
-func BaseRepoFetchResult() rpmmd.PackageList {
+func BaseFetchResult() rpmmd.PackageList {
 	baseTime, err := time.Parse(time.RFC3339, "2006-01-02T15:04:05Z")
 
 	if err != nil {
@@ -63,6 +63,11 @@ var DepsolveBadError = dnfjson.Error{
 	Reason: "There was a problem depsolving ['go2rpm']: \n Problem: conflicting requests\n  - nothing provides askalono-cli needed by go2rpm-1-4.fc31.noarch",
 }
 
+var FetchError = dnfjson.Error{
+	Kind:   "FetchError",
+	Reason: "There was a problem when fetching packages.",
+}
+
 // generateSearchResults creates results for use with the dnfjson search command
 // which is used for listing a subset of modules and projects.
 //
@@ -74,7 +79,7 @@ var DepsolveBadError = dnfjson.Error{
 // baddepsolve returns package1, the test then tries to depsolve package1 using BadDepsolve()
 // wich will return a depsolve error.
 func generateSearchResults() map[string]interface{} {
-	allPackages := BaseRepoFetchResult()
+	allPackages := BaseFetchResult()
 
 	// This includes package16, package2, package20, and package21
 	var wildcardResults rpmmd.PackageList
@@ -82,11 +87,6 @@ func generateSearchResults() map[string]interface{} {
 	wildcardResults = append(wildcardResults, allPackages[4], allPackages[5])
 	for i := 40; i < 44; i++ {
 		wildcardResults = append(wildcardResults, allPackages[i])
-	}
-
-	fetchError := dnfjson.Error{
-		Kind:   "FetchError",
-		Reason: "There was a problem when fetching packages.",
 	}
 
 	return map[string]interface{}{
@@ -97,7 +97,7 @@ func generateSearchResults() map[string]interface{} {
 		"package1,package2":   rpmmd.PackageList{allPackages[2], allPackages[3], allPackages[4], allPackages[5]},
 		"package2*,package16": wildcardResults,
 		"package16":           rpmmd.PackageList{allPackages[32], allPackages[33]},
-		"badpackage1":         fetchError,
+		"badpackage1":         FetchError,
 		"baddepsolve":         rpmmd.PackageList{allPackages[2], allPackages[3]},
 	}
 }
@@ -195,7 +195,7 @@ type ResponseGenerator func(string) string
 func Base(tmpdir string) string {
 	data := map[string]interface{}{
 		"depsolve": createBaseDepsolveFixture(),
-		"dump":     BaseRepoFetchResult(),
+		"dump":     BaseFetchResult(),
 		"search":   generateSearchResults(),
 	}
 	path := filepath.Join(tmpdir, "base.json")
@@ -224,7 +224,7 @@ func BadDepsolve(tmpdir string) string {
 
 	data := map[string]interface{}{
 		"depsolve": deps,
-		"dump":     BaseRepoFetchResult(),
+		"dump":     BaseFetchResult(),
 		"search":   generateSearchResults(),
 	}
 	path := filepath.Join(tmpdir, "baddepsolve.json")
