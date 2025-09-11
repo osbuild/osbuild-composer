@@ -178,5 +178,9 @@ func (l *EchoLogrusLogger) Panicj(j lslog.JSON) {
 }
 
 func (l *EchoLogrusLogger) Write(p []byte) (n int, err error) {
-	return l.Logger.WithContext(l.Ctx).Writer().Write(p)
+	// Writer() from logrus returns PIPE that needs to be closed
+	w := l.Logger.WithContext(l.Ctx).Writer()
+	defer w.Close()
+
+	return w.Write(p)
 }
