@@ -201,6 +201,13 @@ greenprint "Pulling cloud-image-val container"
 if [[ "$CI_PROJECT_NAME" =~ "cloud-image-val" ]]; then
   # If running on CIV, get dev container
   TAG=${CI_COMMIT_REF_SLUG}
+elif ! nvrGreaterOrEqual "osbuild-composer" "151"; then
+  # osbuild-composer v151 made changes in the Azure image definitions and CIV
+  # was updated to check for those changes:
+  # https://github.com/osbuild/cloud-image-val/pull/457
+  # This tag does not include those changes, so use it when running against
+  # older versions of composer.
+  TAG="pr-456"
 else
   # If not, get prod container
   TAG="prod"
