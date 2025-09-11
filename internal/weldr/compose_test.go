@@ -22,7 +22,7 @@ func TestComposeStatusFromLegacyError(t *testing.T) {
 		t.Skip("This test is for internal testing only")
 	}
 
-	api, sf := createTestWeldrAPI2(t.TempDir(), test_distro.TestDistro1Name, test_distro.TestArchName, nil, rpmmd_mock.BaseFixture, nil)
+	api, sf := createTestWeldrAPI(t.TempDir(), test_distro.TestDistro1Name, test_distro.TestArchName, nil, rpmmd_mock.BaseFixture, nil)
 	t.Cleanup(sf.Cleanup)
 
 	distroStruct := test_distro.DistroFactory(test_distro.TestDistro1Name)
@@ -78,7 +78,7 @@ func TestComposeStatusFromJobError(t *testing.T) {
 		t.Skip("This test is for internal testing only")
 	}
 
-	api, sf := createTestWeldrAPI2(t.TempDir(), test_distro.TestDistro1Name, test_distro.TestArchName, nil, rpmmd_mock.BaseFixture, nil)
+	api, sf := createTestWeldrAPI(t.TempDir(), test_distro.TestDistro1Name, test_distro.TestArchName, nil, rpmmd_mock.BaseFixture, nil)
 	t.Cleanup(sf.Cleanup)
 
 	distroStruct := test_distro.DistroFactory(test_distro.TestDistro1Name)
