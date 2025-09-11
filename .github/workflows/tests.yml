@@ -19,10 +19,9 @@ jobs:
 
     steps:
         # krb5-devel is needed to test internal/upload/koji package
-        # gcc is needed to build the mock dnf-json binary for the unit tests
         # gpgme-devel is needed for container upload dependencies
       - name: Install build and test dependencies
-        run: dnf -y install krb5-devel gcc git-core go gpgme-devel btrfs-progs-devel device-mapper-devel
+        run: dnf -y install krb5-devel git-core go gpgme-devel btrfs-progs-devel device-mapper-devel
 
       - name: Check out code into the Go module directory
         uses: actions/checkout@v5

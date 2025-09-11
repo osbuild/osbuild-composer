@@ -17,7 +17,6 @@ cloud instances.
 Development and test tools
 ==========================
 
-mock-dnf-json
 osbuild-auth-tests
 osbuild-composer-cli-tests
 osbuild-composer-dbjobqueue-tests
