@@ -44,6 +44,8 @@ import (
 var dnfjsonPath string
 
 var testDistro2Name string = fmt.Sprintf("%s-2", test_distro.TestDistroNameBase)
+var testRepoID string = "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e"
+var testRepoID2 string = "0a99a351a0031411571ddfacc8a131862cfc389d5516400d0cdbc9340a6ec423"
 
 func setupDNFJSON() {
 	// compile the mock-dnf-json binary to speed up tests
@@ -148,7 +150,7 @@ func ResolveContent(pkgs map[string][]rpmmd.PackageSet, containers map[string][]
 	depsolved := make(map[string]dnfjson.DepsolveResult, len(pkgs))
 	for name := range pkgs {
 		depsolved[name] = dnfjson.DepsolveResult{
-			Packages: dnfjson_mock.BaseDeps(),
+			Packages: dnfjson_mock.BaseDepsolveResult(testRepoID),
 		}
 	}
 
@@ -1056,9 +1058,8 @@ func TestCompose(t *testing.T) {
 				},
 			},
 		},
-		Packages: dnfjson_mock.BaseDeps(),
+		Packages: dnfjson_mock.BaseDepsolveResult(testRepoID),
 	}
-	addRepoID(expectedComposeLocal.Packages, "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e")
 
 	expectedComposeLocalAndAws := &store.Compose{
 		Blueprint: &blueprint.Blueprint{
@@ -1104,9 +1105,8 @@ func TestCompose(t *testing.T) {
 				},
 			},
 		},
-		Packages: dnfjson_mock.BaseDeps(),
+		Packages: dnfjson_mock.BaseDepsolveResult(testRepoID),
 	}
-	addRepoID(expectedComposeLocalAndAws.Packages, "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e")
 
 	expectedComposeOSTree := &store.Compose{
 		Blueprint: &blueprint.Blueprint{
@@ -1135,9 +1135,8 @@ func TestCompose(t *testing.T) {
 				},
 			},
 		},
-		Packages: dnfjson_mock.BaseDeps(),
+		Packages: dnfjson_mock.BaseDepsolveResult(testRepoID),
 	}
-	addRepoID(expectedComposeOSTree.Packages, "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e")
 
 	ostreeOptionsOther := ostree.ImageOptions{ImageRef: otherRef, URL: ostreeRepoOther.Server.URL}
 	ostreeManifestOther, _, err := ostreeImgType.Manifest(nil, distro.ImageOptions{OSTree: &ostreeOptionsOther}, nil, nil)
@@ -1174,9 +1173,8 @@ func TestCompose(t *testing.T) {
 				},
 			},
 		},
-		Packages: dnfjson_mock.BaseDeps(),
+		Packages: dnfjson_mock.BaseDepsolveResult(testRepoID),
 	}
-	addRepoID(expectedComposeOSTreeOther.Packages, "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e")
 
 	// For 2nd distribution
 	distro2 := test_distro.DistroFactory(testDistro2Name)
@@ -1220,9 +1218,8 @@ func TestCompose(t *testing.T) {
 				},
 			},
 		},
-		Packages: dnfjson_mock.BaseDeps(),
+		Packages: dnfjson_mock.BaseDepsolveResult(testRepoID2),
 	}
-	addRepoID(expectedComposeGoodDistro.Packages, "0a99a351a0031411571ddfacc8a131862cfc389d5516400d0cdbc9340a6ec423")
 
 	var cases = map[string]struct {
 		External        bool
@@ -2017,8 +2014,8 @@ func TestProjectsDepsolve(t *testing.T) {
 		ExpectedJSON   string
 	}{
 		{rpmmd_mock.NonExistingPackage, "/api/v0/projects/depsolve/fash", http.StatusBadRequest, `{"status":false,"errors":[{"id":"ProjectsError","msg":"BadRequest: running osbuild-depsolve-dnf failed:\nDNF error occurred: MarkingErrors: Error occurred when marking packages for installation: Problems in request:\nmissing packages: fash"}]}`},
-		{rpmmd_mock.BaseFixture, "/api/v0/projects/depsolve/fish", http.StatusOK, `{"projects":[{"name":"dep-package3","epoch":7,"version":"3.0.3","release":"1.fc30","arch":"x86_64","checksum":"sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720","check_gpg":true,"repo_id":"ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e"},{"name":"dep-package1","epoch":0,"version":"1.33","release":"2.fc30","arch":"x86_64","checksum":"sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893","check_gpg":true,"repo_id":"ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e"},{"name":"dep-package2","epoch":0,"version":"2.9","release":"1.fc30","arch":"x86_64","checksum":"sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2","check_gpg":true,"repo_id":"ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e"}]}`},
-		{rpmmd_mock.BaseFixture, "/api/v0/projects/depsolve/fish?distro=test-distro-2", http.StatusOK, `{"projects":[{"name":"dep-package3","epoch":7,"version":"3.0.3","release":"1.fc30","arch":"x86_64","checksum":"sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720","check_gpg":true,"repo_id":"0a99a351a0031411571ddfacc8a131862cfc389d5516400d0cdbc9340a6ec423"},{"name":"dep-package1","epoch":0,"version":"1.33","release":"2.fc30","arch":"x86_64","checksum":"sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893","check_gpg":true,"repo_id":"0a99a351a0031411571ddfacc8a131862cfc389d5516400d0cdbc9340a6ec423"},{"name":"dep-package2","epoch":0,"version":"2.9","release":"1.fc30","arch":"x86_64","checksum":"sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2","check_gpg":true,"repo_id":"0a99a351a0031411571ddfacc8a131862cfc389d5516400d0cdbc9340a6ec423"}]}`},
+		{rpmmd_mock.BaseFixture, "/api/v0/projects/depsolve/fish", http.StatusOK, fmt.Sprintf(`{"projects":[{"name":"dep-package3","epoch":7,"version":"3.0.3","release":"1.fc30","arch":"x86_64","checksum":"sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720","check_gpg":true,"repo_id":"%[1]s"},{"name":"dep-package1","epoch":0,"version":"1.33","release":"2.fc30","arch":"x86_64","checksum":"sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893","check_gpg":true,"repo_id":"%[1]s"},{"name":"dep-package2","epoch":0,"version":"2.9","release":"1.fc30","arch":"x86_64","checksum":"sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2","check_gpg":true,"repo_id":"%[1]s"}]}`, testRepoID)},
+		{rpmmd_mock.BaseFixture, "/api/v0/projects/depsolve/fish?distro=test-distro-2", http.StatusOK, fmt.Sprintf(`{"projects":[{"name":"dep-package3","epoch":7,"version":"3.0.3","release":"1.fc30","arch":"x86_64","checksum":"sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720","check_gpg":true,"repo_id":"%[1]s"},{"name":"dep-package1","epoch":0,"version":"1.33","release":"2.fc30","arch":"x86_64","checksum":"sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893","check_gpg":true,"repo_id":"%[1]s"},{"name":"dep-package2","epoch":0,"version":"2.9","release":"1.fc30","arch":"x86_64","checksum":"sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2","check_gpg":true,"repo_id":"%[1]s"}]}`, testRepoID2)},
 		{rpmmd_mock.BadDepsolve, "/api/v0/projects/depsolve/go2rpm", http.StatusBadRequest, `{"status":false,"errors":[{"id":"ProjectsError","msg":"BadRequest: running osbuild-depsolve-dnf failed:\nDNF error occurred: DepsolveError: There was a problem depsolving ['go2rpm']: \n Problem: conflicting requests\n  - nothing provides askalono-cli needed by go2rpm-1-4.fc31.noarch"}]}`},
 		{rpmmd_mock.BaseFixture, "/api/v0/projects/depsolve/fish?distro=fedora-1", http.StatusBadRequest, `{"status":false,"errors":[{"id":"DistroError","msg":"Invalid distro: fedora-1"}]}`},
 	}
@@ -2217,13 +2214,6 @@ func TestComposeTypes_ImageTypeDenylist(t *testing.T) {
 	}
 }
 
-func addRepoID(packages []rpmmd.PackageSpec, id string) {
-	for idx, pkg := range packages {
-		pkg.RepoID = id
-		packages[idx] = pkg
-	}
-}
-
 func TestComposePOST_ImageTypeDenylist(t *testing.T) {
 	distro2 := test_distro.DistroFactory(testDistro2Name)
 	require.NotNil(t, distro2)
@@ -2267,11 +2257,8 @@ func TestComposePOST_ImageTypeDenylist(t *testing.T) {
 				},
 			},
 		},
-		Packages: dnfjson_mock.BaseDeps(),
+		Packages: dnfjson_mock.BaseDepsolveResult(testRepoID),
 	}
-	// the repo ID can't be statically added to the package list because it
-	// changes based on the test repository configuration
-	addRepoID(expectedComposeLocal.Packages, "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e")
 
 	expectedComposeLocal2 := &store.Compose{
 		Blueprint: &blueprint.Blueprint{
@@ -2300,9 +2287,8 @@ func TestComposePOST_ImageTypeDenylist(t *testing.T) {
 				},
 			},
 		},
-		Packages: dnfjson_mock.BaseDeps(),
+		Packages: dnfjson_mock.BaseDepsolveResult(testRepoID),
 	}
-	addRepoID(expectedComposeLocal2.Packages, "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e")
 
 	var cases = []struct {
 		Path              string
