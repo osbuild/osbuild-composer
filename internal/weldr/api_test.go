@@ -11,8 +11,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"os/exec"
-	"path/filepath"
 	"strconv"
 	"testing"
 	"time"
@@ -41,24 +39,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var dnfjsonPath string
-
 var testDistro2Name string = fmt.Sprintf("%s-2", test_distro.TestDistroNameBase)
 var testRepoID string = "ac982f7c76771e898d1112d1a81d182eeb48af4a26792df248ebf6a47de06a4e"
 var testRepoID2 string = "0a99a351a0031411571ddfacc8a131862cfc389d5516400d0cdbc9340a6ec423"
-
-func setupDNFJSON() {
-	// compile the mock-dnf-json binary to speed up tests
-	tmpdir, err := os.MkdirTemp("", "")
-	if err != nil {
-		panic(err)
-	}
-	dnfjsonPath = filepath.Join(tmpdir, "mock-dnf-json")
-	cmd := exec.Command("go", "build", "-o", dnfjsonPath, "../../cmd/mock-dnf-json")
-	if err := cmd.Run(); err != nil {
-		panic(err)
-	}
-}
 
 func createTestWeldrAPI(tempdir, hostDistroName, hostArchName string, getSolverFn GetSolverFn, fixtureGenerator rpmmd_mock.FixtureGenerator,
 	distroImageTypeDenylist map[string][]string) (*API, *store.Fixture) {
@@ -2877,8 +2860,6 @@ func TestExpandBlueprintGlobs(t *testing.T) {
 }
 
 func TestMain(m *testing.M) {
-	setupDNFJSON()
-	defer os.RemoveAll(dnfjsonPath)
 	code := m.Run()
 	os.Exit(code)
 }
