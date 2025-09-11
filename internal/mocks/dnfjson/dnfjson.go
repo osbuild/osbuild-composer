@@ -46,6 +46,16 @@ func generatePackageList() rpmmd.PackageList {
 	return packageList
 }
 
+var DepsolvePackageNotExistError = dnfjson.Error{
+	Kind:   "MarkingErrors",
+	Reason: "Error occurred when marking packages for installation: Problems in request:\nmissing packages: fash",
+}
+
+var DepsolveBadError = dnfjson.Error{
+	Kind:   "DepsolveError",
+	Reason: "There was a problem depsolving ['go2rpm']: \n Problem: conflicting requests\n  - nothing provides askalono-cli needed by go2rpm-1-4.fc31.noarch",
+}
+
 // generateSearchResults creates results for use with the dnfjson search command
 // which is used for listing a subset of modules and projects.
 //
