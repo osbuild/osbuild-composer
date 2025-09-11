@@ -10,9 +10,7 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"os/exec"
 	"path"
-	"path/filepath"
 	"testing"
 
 	"github.com/osbuild/images/pkg/distro/test_distro"
@@ -26,21 +24,6 @@ import (
 
 // Hold test state to share between tests
 var testState *TestState
-var dnfjsonPath string
-
-func setupDNFJSON() string {
-	// compile the mock-dnf-json binary to speed up tests
-	tmpdir, err := os.MkdirTemp("", "")
-	if err != nil {
-		panic(err)
-	}
-	dnfjsonPath = filepath.Join(tmpdir, "mock-dnf-json")
-	cmd := exec.Command("go", "build", "-o", dnfjsonPath, "../../cmd/mock-dnf-json")
-	if err := cmd.Run(); err != nil {
-		panic(err)
-	}
-	return tmpdir
-}
 
 func executeTests(m *testing.M) int {
 	// Setup the mocked server running on a temporary domain socket
@@ -116,7 +99,5 @@ func executeTests(m *testing.M) int {
 }
 
 func TestMain(m *testing.M) {
-	tmpdir := setupDNFJSON()
-	defer os.RemoveAll(tmpdir)
 	os.Exit(executeTests(m))
 }
