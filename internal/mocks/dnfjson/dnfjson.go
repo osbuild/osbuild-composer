@@ -136,9 +136,9 @@ func createBaseDepsolveFixture() depsolveResult {
 	}
 }
 
-// BaseDeps is the expected list of dependencies (as rpmmd.PackageSpec) from
+// BaseDepsolveResult is the expected list of dependencies (as rpmmd.PackageSpec) from
 // the Base ResponseGenerator
-func BaseDeps() []rpmmd.PackageSpec {
+func BaseDepsolveResult(repoID string) []rpmmd.PackageSpec {
 	return []rpmmd.PackageSpec{
 		{
 			Name:     "dep-package3",
@@ -148,7 +148,7 @@ func BaseDeps() []rpmmd.PackageSpec {
 			Arch:     "x86_64",
 			CheckGPG: true,
 			Checksum: "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720",
-			RepoID:   "REPOID", // added by test case
+			RepoID:   repoID,
 		},
 		{
 			Name:     "dep-package1",
@@ -158,7 +158,7 @@ func BaseDeps() []rpmmd.PackageSpec {
 			Arch:     "x86_64",
 			CheckGPG: true,
 			Checksum: "sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893",
-			RepoID:   "REPOID", // added by test case
+			RepoID:   repoID,
 		},
 		{
 			Name:     "dep-package2",
@@ -168,7 +168,7 @@ func BaseDeps() []rpmmd.PackageSpec {
 			Arch:     "x86_64",
 			CheckGPG: true,
 			Checksum: "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2",
-			RepoID:   "REPOID", // added by test case
+			RepoID:   repoID,
 		},
 	}
 }
