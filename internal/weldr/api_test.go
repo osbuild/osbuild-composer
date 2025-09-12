@@ -27,7 +27,7 @@ import (
 	"github.com/osbuild/images/pkg/reporegistry"
 	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/common"
-	dnfjson_mock "github.com/osbuild/osbuild-composer/internal/mocks/dnfjson"
+	depsolvednf_mock "github.com/osbuild/osbuild-composer/internal/mocks/depsolvednf"
 	rpmmd_mock "github.com/osbuild/osbuild-composer/internal/mocks/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/store"
 	"github.com/osbuild/osbuild-composer/internal/target"
@@ -109,14 +109,14 @@ func createTestWeldrAPI(tempdir, hostDistroName, hostArchName string, getSolverF
 
 	// If no solver function is provided, use a simple mock solver
 	if getSolverFn == nil {
-		getSolverFn = getMockDepsolveDNFSolverFn(&dnfjson_mock.MockDepsolveDNF{})
+		getSolverFn = getMockDepsolveDNFSolverFn(&depsolvednf_mock.MockDepsolveDNF{})
 	}
 
 	testApi := NewTestAPI(getSolverFn, rr, nil, fixture.StoreFixture, fixture.Workers, "", distroImageTypeDenylist)
 	return testApi, fixture.StoreFixture
 }
 
-func getMockDepsolveDNFSolverFn(m *dnfjson_mock.MockDepsolveDNF) GetSolverFn {
+func getMockDepsolveDNFSolverFn(m *depsolvednf_mock.MockDepsolveDNF) GetSolverFn {
 	return func(modulePlatformID, releaseVer, arch, distro string) Solver {
 		return m
 	}
@@ -125,12 +125,12 @@ func getMockDepsolveDNFSolverFn(m *dnfjson_mock.MockDepsolveDNF) GetSolverFn {
 // getBaseMockDepsolveDNFSolverFn returns a SolverFn that uses the MockDepsolveDNF
 // with base test data. No errors are returned by the solver.
 func getBaseMockDepsolveDNFSolverFn(deosolveRepoID string) GetSolverFn {
-	return getMockDepsolveDNFSolverFn(&dnfjson_mock.MockDepsolveDNF{
+	return getMockDepsolveDNFSolverFn(&depsolvednf_mock.MockDepsolveDNF{
 		DepsolveRes: &dnfjson.DepsolveResult{
-			Packages: dnfjson_mock.BaseDepsolveResult(deosolveRepoID),
+			Packages: depsolvednf_mock.BaseDepsolveResult(deosolveRepoID),
 		},
-		FetchRes:     dnfjson_mock.BaseFetchResult(),
-		SearchResMap: dnfjson_mock.BaseSearchResultsMap(),
+		FetchRes:     depsolvednf_mock.BaseFetchResult(),
+		SearchResMap: depsolvednf_mock.BaseSearchResultsMap(),
 	})
 }
 
@@ -143,7 +143,7 @@ func ResolveContent(pkgs map[string][]rpmmd.PackageSet, containers map[string][]
 	depsolved := make(map[string]dnfjson.DepsolveResult, len(pkgs))
 	for name := range pkgs {
 		depsolved[name] = dnfjson.DepsolveResult{
-			Packages: dnfjson_mock.BaseDepsolveResult(testRepoID),
+			Packages: depsolvednf_mock.BaseDepsolveResult(testRepoID),
 		}
 	}
 
@@ -906,16 +906,16 @@ func TestBlueprintsDepsolve(t *testing.T) {
 		},
 		{
 			rpmmd_mock.NonExistingPackage,
-			getMockDepsolveDNFSolverFn(&dnfjson_mock.MockDepsolveDNF{
-				DepsolveErr: dnfjson_mock.DepsolvePackageNotExistError,
+			getMockDepsolveDNFSolverFn(&depsolvednf_mock.MockDepsolveDNF{
+				DepsolveErr: depsolvednf_mock.DepsolvePackageNotExistError,
 			}),
 			http.StatusOK,
 			depsolvePackageNotExistErrorAPIResponse,
 		},
 		{
 			rpmmd_mock.BadDepsolve,
-			getMockDepsolveDNFSolverFn(&dnfjson_mock.MockDepsolveDNF{
-				DepsolveErr: dnfjson_mock.DepsolveBadError,
+			getMockDepsolveDNFSolverFn(&depsolvednf_mock.MockDepsolveDNF{
+				DepsolveErr: depsolvednf_mock.DepsolveBadError,
 			}),
 			http.StatusOK,
 			depsolveBadErrorAPIResponse,
@@ -1071,7 +1071,7 @@ func TestCompose(t *testing.T) {
 				},
 			},
 		},
-		Packages: dnfjson_mock.BaseDepsolveResult(testRepoID),
+		Packages: depsolvednf_mock.BaseDepsolveResult(testRepoID),
 	}
 
 	expectedComposeLocalAndAws := &store.Compose{
@@ -1118,7 +1118,7 @@ func TestCompose(t *testing.T) {
 				},
 			},
 		},
-		Packages: dnfjson_mock.BaseDepsolveResult(testRepoID),
+		Packages: depsolvednf_mock.BaseDepsolveResult(testRepoID),
 	}
 
 	expectedComposeOSTree := &store.Compose{
@@ -1148,7 +1148,7 @@ func TestCompose(t *testing.T) {
 				},
 			},
 		},
-		Packages: dnfjson_mock.BaseDepsolveResult(testRepoID),
+		Packages: depsolvednf_mock.BaseDepsolveResult(testRepoID),
 	}
 
 	ostreeOptionsOther := ostree.ImageOptions{ImageRef: otherRef, URL: ostreeRepoOther.Server.URL}
@@ -1186,7 +1186,7 @@ func TestCompose(t *testing.T) {
 				},
 			},
 		},
-		Packages: dnfjson_mock.BaseDepsolveResult(testRepoID),
+		Packages: depsolvednf_mock.BaseDepsolveResult(testRepoID),
 	}
 
 	// For 2nd distribution
@@ -1231,7 +1231,7 @@ func TestCompose(t *testing.T) {
 				},
 			},
 		},
-		Packages: dnfjson_mock.BaseDepsolveResult(testRepoID2),
+		Packages: depsolvednf_mock.BaseDepsolveResult(testRepoID2),
 	}
 
 	getSolverFn := getBaseMockDepsolveDNFSolverFn(testRepoID)
@@ -1289,9 +1289,9 @@ func TestCompose(t *testing.T) {
 			`{"status": true}`,
 			expectedComposeGoodDistro,
 			[]string{"build_id", "warnings"},
-			getMockDepsolveDNFSolverFn(&dnfjson_mock.MockDepsolveDNF{
+			getMockDepsolveDNFSolverFn(&depsolvednf_mock.MockDepsolveDNF{
 				DepsolveRes: &dnfjson.DepsolveResult{
-					Packages: dnfjson_mock.BaseDepsolveResult(testRepoID2),
+					Packages: depsolvednf_mock.BaseDepsolveResult(testRepoID2),
 				},
 			}),
 		},
@@ -2052,8 +2052,8 @@ func TestProjectsDepsolve(t *testing.T) {
 	}{
 		{
 			rpmmd_mock.NonExistingPackage,
-			getMockDepsolveDNFSolverFn(&dnfjson_mock.MockDepsolveDNF{
-				DepsolveErr: dnfjson_mock.DepsolvePackageNotExistError,
+			getMockDepsolveDNFSolverFn(&depsolvednf_mock.MockDepsolveDNF{
+				DepsolveErr: depsolvednf_mock.DepsolvePackageNotExistError,
 			}),
 			"/api/v0/projects/depsolve/fash",
 			http.StatusBadRequest,
@@ -2075,8 +2075,8 @@ func TestProjectsDepsolve(t *testing.T) {
 		},
 		{
 			rpmmd_mock.BadDepsolve,
-			getMockDepsolveDNFSolverFn(&dnfjson_mock.MockDepsolveDNF{
-				DepsolveErr: dnfjson_mock.DepsolveBadError,
+			getMockDepsolveDNFSolverFn(&depsolvednf_mock.MockDepsolveDNF{
+				DepsolveErr: depsolvednf_mock.DepsolveBadError,
 			}),
 			"/api/v0/projects/depsolve/go2rpm",
 			http.StatusBadRequest,
@@ -2145,8 +2145,8 @@ func TestProjectsInfo(t *testing.T) {
 		},
 		{
 			rpmmd_mock.BadFetch,
-			getMockDepsolveDNFSolverFn(&dnfjson_mock.MockDepsolveDNF{
-				SearchErr: dnfjson_mock.FetchError,
+			getMockDepsolveDNFSolverFn(&depsolvednf_mock.MockDepsolveDNF{
+				SearchErr: depsolvednf_mock.FetchError,
 			}),
 			"/api/v0/projects/info/badpackage1",
 			http.StatusBadRequest,
@@ -2208,11 +2208,11 @@ func TestModulesInfo(t *testing.T) {
 		},
 		{
 			rpmmd_mock.BadDepsolve,
-			getMockDepsolveDNFSolverFn(&dnfjson_mock.MockDepsolveDNF{
+			getMockDepsolveDNFSolverFn(&depsolvednf_mock.MockDepsolveDNF{
 				SearchResMap: map[string]rpmmd.PackageList{
-					"baddepsolve": dnfjson_mock.BaseFetchResult()[2:4], // package1-1, package1-1.1
+					"baddepsolve": depsolvednf_mock.BaseFetchResult()[2:4], // package1-1, package1-1.1
 				},
-				DepsolveErr: dnfjson_mock.DepsolveBadError,
+				DepsolveErr: depsolvednf_mock.DepsolveBadError,
 			}),
 			"/api/v0/modules/info/baddepsolve",
 			http.StatusBadRequest,
@@ -2234,8 +2234,8 @@ func TestModulesInfo(t *testing.T) {
 		},
 		{
 			rpmmd_mock.BadFetch,
-			getMockDepsolveDNFSolverFn(&dnfjson_mock.MockDepsolveDNF{
-				SearchErr: dnfjson_mock.FetchError,
+			getMockDepsolveDNFSolverFn(&depsolvednf_mock.MockDepsolveDNF{
+				SearchErr: depsolvednf_mock.FetchError,
 			}),
 			"/api/v0/modules/info/badpackage1",
 			http.StatusBadRequest,
@@ -2298,8 +2298,8 @@ func TestProjectsList(t *testing.T) {
 		},
 		{
 			rpmmd_mock.BadFetch,
-			getMockDepsolveDNFSolverFn(&dnfjson_mock.MockDepsolveDNF{
-				FetchErr: dnfjson_mock.FetchError,
+			getMockDepsolveDNFSolverFn(&depsolvednf_mock.MockDepsolveDNF{
+				FetchErr: depsolvednf_mock.FetchError,
 			}),
 			"/api/v0/projects/list/",
 			http.StatusBadRequest,
@@ -2375,8 +2375,8 @@ func TestModulesList(t *testing.T) {
 		},
 		{
 			rpmmd_mock.BadFetch,
-			getMockDepsolveDNFSolverFn(&dnfjson_mock.MockDepsolveDNF{
-				SearchErr: dnfjson_mock.FetchError,
+			getMockDepsolveDNFSolverFn(&depsolvednf_mock.MockDepsolveDNF{
+				SearchErr: depsolvednf_mock.FetchError,
 			}),
 			"/api/v0/modules/list/badpackage1",
 			http.StatusBadRequest,
@@ -2543,7 +2543,7 @@ func TestComposePOST_ImageTypeDenylist(t *testing.T) {
 				},
 			},
 		},
-		Packages: dnfjson_mock.BaseDepsolveResult(testRepoID),
+		Packages: depsolvednf_mock.BaseDepsolveResult(testRepoID),
 	}
 
 	expectedComposeLocal2 := &store.Compose{
@@ -2573,7 +2573,7 @@ func TestComposePOST_ImageTypeDenylist(t *testing.T) {
 				},
 			},
 		},
-		Packages: dnfjson_mock.BaseDepsolveResult(testRepoID),
+		Packages: depsolvednf_mock.BaseDepsolveResult(testRepoID),
 	}
 
 	var cases = []struct {
