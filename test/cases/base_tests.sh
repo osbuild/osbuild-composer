@@ -16,7 +16,6 @@ FAILED_TESTS=()
 
 TEST_CASES_ON_PREM=(
   "osbuild-weldr-tests"
-  "osbuild-dnf-json-tests"
   "osbuild-composer-cli-tests"
 )
 

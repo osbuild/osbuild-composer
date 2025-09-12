@@ -10,37 +10,20 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"os/exec"
 	"path"
-	"path/filepath"
 	"testing"
 
 	"github.com/osbuild/images/pkg/distro/test_distro"
 	"github.com/osbuild/images/pkg/dnfjson"
 	"github.com/osbuild/images/pkg/reporegistry"
 	"github.com/osbuild/images/pkg/rpmmd"
-	dnfjson_mock "github.com/osbuild/osbuild-composer/internal/mocks/dnfjson"
+	depsolvednf_mock "github.com/osbuild/osbuild-composer/internal/mocks/depsolvednf"
 	rpmmd_mock "github.com/osbuild/osbuild-composer/internal/mocks/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/weldr"
 )
 
 // Hold test state to share between tests
 var testState *TestState
-var dnfjsonPath string
-
-func setupDNFJSON() string {
-	// compile the mock-dnf-json binary to speed up tests
-	tmpdir, err := os.MkdirTemp("", "")
-	if err != nil {
-		panic(err)
-	}
-	dnfjsonPath = filepath.Join(tmpdir, "mock-dnf-json")
-	cmd := exec.Command("go", "build", "-o", dnfjsonPath, "../../cmd/mock-dnf-json")
-	if err := cmd.Run(); err != nil {
-		panic(err)
-	}
-	return tmpdir
-}
 
 func executeTests(m *testing.M) int {
 	// Setup the mocked server running on a temporary domain socket
@@ -83,11 +66,19 @@ func executeTests(m *testing.M) int {
 	}
 	defer os.RemoveAll(dspath)
 
-	dnfjsonFixture := dnfjson_mock.Base(dspath)
-	solver := dnfjson.NewBaseSolver(path.Join(tmpdir, "dnfjson-cache"))
-	solver.SetDNFJSONPath(dnfjsonPath, dnfjsonFixture)
 	logger := log.New(os.Stdout, "", 0)
-	api := weldr.NewTestAPI(solver, rr, logger, fixture.StoreFixture, fixture.Workers, "", nil)
+
+	getSolverFn := func(modulePlatformID, releaseVer, arch, distro string) weldr.Solver {
+		return &depsolvednf_mock.MockDepsolveDNF{
+			DepsolveRes: &dnfjson.DepsolveResult{
+				Packages: depsolvednf_mock.BaseDepsolveResult(""),
+			},
+			FetchRes:     depsolvednf_mock.BaseFetchResult(),
+			SearchResMap: depsolvednf_mock.BaseSearchResultsMap(),
+		}
+	}
+
+	api := weldr.NewTestAPI(getSolverFn, rr, logger, fixture.StoreFixture, fixture.Workers, "", nil)
 	server := http.Server{Handler: api}
 	defer server.Close()
 
@@ -108,7 +99,5 @@ func executeTests(m *testing.M) int {
 }
 
 func TestMain(m *testing.M) {
-	tmpdir := setupDNFJSON()
-	defer os.RemoveAll(tmpdir)
 	os.Exit(executeTests(m))
 }
