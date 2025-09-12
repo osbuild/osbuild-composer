@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/osbuild/images/pkg/dnfjson"
+	"github.com/osbuild/images/pkg/depsolvednf"
 	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
@@ -10,7 +10,7 @@ import (
 
 // SearchPackagesJobImpl shares the solver with the depsolve job.
 type SearchPackagesJobImpl struct {
-	Solver               *dnfjson.BaseSolver
+	Solver               *depsolvednf.BaseSolver
 	RepositoryMTLSConfig *RepositoryMTLSConfig
 }
 

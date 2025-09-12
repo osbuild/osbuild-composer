@@ -15,6 +15,7 @@ import (
 	"github.com/osbuild/images/pkg/bib/blueprintload"
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/distro"
+	"github.com/osbuild/images/pkg/osbuild"
 )
 
 // XXX: use image-builder instead?
@@ -35,13 +36,14 @@ type KernelInfo struct {
 }
 
 type Info struct {
-	OSRelease          OSRelease
-	UEFIVendor         string
-	SELinuxPolicy      string
+	OSRelease          OSRelease `yaml:"os_release"`
+	UEFIVendor         string    `yaml:"uefi_vendor"`
+	SELinuxPolicy      string    `yaml:"selinux_policy"`
 	ImageCustomization *blueprint.Customizations
 	KernelInfo         *KernelInfo
 
-	PartitionTable *disk.PartitionTable
+	MountConfiguration *osbuild.MountConfiguration
+	PartitionTable     *disk.PartitionTable
 }
 
 func validateOSRelease(osrelease map[string]string) error {
@@ -131,10 +133,11 @@ func readImageCustomization(root string) (*blueprint.Customizations, error) {
 }
 
 type diskYAML struct {
-	PartitionTable *disk.PartitionTable `json:"partition_table" yaml:"partition_table"`
+	MountConfiguration *osbuild.MountConfiguration `json:"mount_configuration" yaml:"mount_configuration"`
+	PartitionTable     *disk.PartitionTable        `json:"partition_table" yaml:"partition_table"`
 }
 
-func readPartitionTable(root string) (*disk.PartitionTable, error) {
+func readDiskYaml(root string) (*diskYAML, error) {
 	p := path.Join(root, bibPathPrefix, "disk.yaml")
 	var disk diskYAML
 	f, err := os.Open(p)
@@ -150,7 +153,7 @@ func readPartitionTable(root string) (*disk.PartitionTable, error) {
 		return nil, fmt.Errorf("cannot parse disk definitions from %q: %w", p, err)
 	}
 
-	return disk.PartitionTable, nil
+	return &disk, nil
 }
 
 func readKernelInfo(root string) (*KernelInfo, error) {
@@ -205,9 +208,15 @@ func Load(root string) (*Info, error) {
 		return nil, err
 	}
 
-	pt, err := readPartitionTable(root)
+	diskYaml, err := readDiskYaml(root)
 	if err != nil {
 		return nil, err
+	}
+	var mc *osbuild.MountConfiguration
+	var pt *disk.PartitionTable
+	if diskYaml != nil {
+		mc = diskYaml.MountConfiguration
+		pt = diskYaml.PartitionTable
 	}
 
 	kernelInfo, err := readKernelInfo(root)
@@ -239,6 +248,7 @@ func Load(root string) (*Info, error) {
 		SELinuxPolicy:      selinuxPolicy,
 		ImageCustomization: customization,
 		KernelInfo:         kernelInfo,
+		MountConfiguration: mc,
 		PartitionTable:     pt,
 	}, nil
 }

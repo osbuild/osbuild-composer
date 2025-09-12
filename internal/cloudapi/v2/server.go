@@ -23,8 +23,8 @@ import (
 	"github.com/osbuild/osbuild-composer/pkg/jobqueue"
 
 	"github.com/osbuild/images/pkg/container"
+	"github.com/osbuild/images/pkg/depsolvednf"
 	"github.com/osbuild/images/pkg/distrofactory"
-	"github.com/osbuild/images/pkg/dnfjson"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/ostree"
 	"github.com/osbuild/images/pkg/reporegistry"
@@ -663,7 +663,7 @@ func serializeManifest(ctx context.Context, manifestSource *manifest.Manifest, w
 	}
 
 	// XXX: fix worker.DepsolveJobResult
-	depsolveResultsInTheRightFormat := map[string]dnfjson.DepsolveResult{}
+	depsolveResultsInTheRightFormat := map[string]depsolvednf.DepsolveResult{}
 	for plName, res := range depsolveResults.PackageSpecs {
 		r := depsolveResultsInTheRightFormat[plName]
 		r.Packages = res

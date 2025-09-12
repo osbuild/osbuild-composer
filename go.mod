@@ -5,7 +5,7 @@ go 1.23.9
 exclude github.com/mattn/go-sqlite3 v2.0.3+incompatible
 
 require (
-	cloud.google.com/go/compute v1.44.0
+	cloud.google.com/go/compute v1.45.0
 	github.com/BurntSushi/toml v1.5.1-0.20250403130103-3d3abc24416a
 	github.com/aws/aws-sdk-go-v2 v1.38.3
 	github.com/aws/aws-sdk-go-v2/config v1.31.6
@@ -34,7 +34,7 @@ require (
 	github.com/oapi-codegen/runtime v1.1.2
 	github.com/openshift-online/ocm-sdk-go v0.1.473
 	github.com/osbuild/blueprint v1.13.0
-	github.com/osbuild/images v0.188.0
+	github.com/osbuild/images v0.190.0
 	github.com/osbuild/osbuild-composer/pkg/splunk_logger v0.0.0-20240814102216-0239db53236d
 	github.com/prometheus/client_golang v1.23.0
 	github.com/segmentio/ksuid v1.0.4

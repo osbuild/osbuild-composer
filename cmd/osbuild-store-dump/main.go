@@ -11,9 +11,9 @@ import (
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
 	"github.com/osbuild/images/pkg/arch"
+	"github.com/osbuild/images/pkg/depsolvednf"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distrofactory"
-	"github.com/osbuild/images/pkg/dnfjson"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/reporegistry"
 	"github.com/osbuild/images/pkg/rpmmd"
@@ -27,8 +27,8 @@ func getManifest(bp blueprint.Blueprint, t distro.ImageType, a distro.Arch, d di
 	if err != nil {
 		panic(err)
 	}
-	depsolved := make(map[string]dnfjson.DepsolveResult)
-	solver := dnfjson.NewSolver(d.ModulePlatformID(), d.Releasever(), a.Name(), d.Name(), cacheDir)
+	depsolved := make(map[string]depsolvednf.DepsolveResult)
+	solver := depsolvednf.NewSolver(d.ModulePlatformID(), d.Releasever(), a.Name(), d.Name(), cacheDir)
 	for name, packages := range manifest.GetPackageSetChains() {
 		res, err := solver.Depsolve(packages, sbom.StandardTypeNone)
 		if err != nil {

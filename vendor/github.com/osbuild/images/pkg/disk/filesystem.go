@@ -1,55 +1,29 @@
 package disk
 
 import (
-	"encoding/json"
-	"fmt"
 	"math/rand"
 	"reflect"
 
 	"github.com/google/uuid"
 )
 
-type MkfsOption int
-
-const ( // MkfsOption type enum
-	MkfsVerity MkfsOption = iota // Enable fs-verity option if needed (typically for EXT4)
-)
-
-func getMkfsOptionMapping() []string {
-	return []string{"verity"}
+type MkfsOptionGeometry struct {
+	Heads           int `json:"heads" yaml:"heads"`
+	SectorsPerTrack int `json:"sectors_per_track" yaml:"sectors_per_track"`
 }
 
-// String converts MkfsOption into a human readable string
-func (option MkfsOption) String() string {
-	return getMkfsOptionMapping()[int(option)]
+type MkfsOptions struct {
+	Verity   bool                `json:"verity,omitempty" yaml:"verity,omitempty"`
+	Geometry *MkfsOptionGeometry `json:"geometry,omitempty" yaml:"geometry,omitempty"`
 }
 
-func unmarshalHelper(data []byte, mapping []string) (int, error) {
-	var stringInput string
-	err := json.Unmarshal(data, &stringInput)
-	if err != nil {
-		return 0, err
+func (opts MkfsOptions) Clone() MkfsOptions {
+	clone := opts
+	if opts.Geometry != nil {
+		g := *opts.Geometry
+		clone.Geometry = &g
 	}
-	for n, str := range mapping {
-		if str == stringInput {
-			return n, nil
-		}
-	}
-	return 0, fmt.Errorf("invalid mkfsoption: %s", stringInput)
-}
-
-// UnmarshalJSON converts a JSON string into an MkfsOption
-func (option *MkfsOption) UnmarshalJSON(data []byte) error {
-	val, err := unmarshalHelper(data, getMkfsOptionMapping())
-	if err != nil {
-		return err
-	}
-	*option = MkfsOption(val)
-	return nil
-}
-
-func (option MkfsOption) MarshalJSON() ([]byte, error) {
-	return json.Marshal(getMkfsOptionMapping()[option])
+	return clone
 }
 
 // Filesystem related functions
@@ -68,7 +42,7 @@ type Filesystem struct {
 	// The sixth field of fstab(5); fs_passno
 	FSTabPassNo uint64 `json:"fstab_passno,omitempty" yaml:"fstab_passno,omitempty"`
 	// Custom mkfs options
-	MkfsOptions []MkfsOption `json:"mkfs_options,omitempty" yaml:"mkfs_options,omitempty"`
+	MkfsOptions MkfsOptions `json:"mkfs_options,omitempty" yaml:"mkfs_options,omitempty"`
 }
 
 func init() {
@@ -93,8 +67,9 @@ func (fs *Filesystem) Clone() Entity {
 		FSTabOptions: fs.FSTabOptions,
 		FSTabFreq:    fs.FSTabFreq,
 		FSTabPassNo:  fs.FSTabPassNo,
-		MkfsOptions:  fs.MkfsOptions,
+		MkfsOptions:  fs.MkfsOptions.Clone(),
 	}
+
 }
 
 func (fs *Filesystem) GetMountpoint() string {

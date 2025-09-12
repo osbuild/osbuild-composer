@@ -26,6 +26,9 @@ type RPMStageOptions struct {
 
 	// Set environment variables understood by kernel-install and plugins (kernel-install(8))
 	KernelInstallEnv *KernelInstallEnv `json:"kernel_install_env,omitempty"`
+
+	// Only install certain locales (sets `_install_langs` RPM macro)
+	InstallLangs []string `json:"install_langs,omitempty"`
 }
 
 type Exclude struct {
@@ -125,7 +128,7 @@ func pkgRefs(specs []rpmmd.PackageSpec) FilesInputRef {
 }
 
 func NewRPMStageOptions(repos []rpmmd.RepoConfig) *RPMStageOptions {
-	gpgKeys := make([]string, 0)
+	var gpgKeys []string
 	keyMap := make(map[string]bool) // for deduplicating keys
 	for _, repo := range repos {
 		if len(repo.GPGKeys) == 0 {

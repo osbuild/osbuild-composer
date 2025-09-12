@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/osbuild/images/pkg/container"
-	"github.com/osbuild/images/pkg/dnfjson"
+	"github.com/osbuild/images/pkg/depsolvednf"
 	"github.com/osbuild/images/pkg/hashutil"
 	"github.com/osbuild/images/pkg/ostree"
 	"github.com/osbuild/images/pkg/rpmmd"
@@ -25,7 +25,7 @@ const (
 // Note that for Packages/RpmRepos the depsolve resolved results
 // must be passed
 type SourceInputs struct {
-	Depsolved  dnfjson.DepsolveResult
+	Depsolved  depsolvednf.DepsolveResult
 	Containers []container.Spec
 	Commits    []ostree.CommitSpec
 	// InlineData contans the inline data for fsnode.Files

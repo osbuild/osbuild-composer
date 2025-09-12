@@ -22,7 +22,7 @@ import (
 
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/cloud/azure"
-	"github.com/osbuild/images/pkg/dnfjson"
+	"github.com/osbuild/images/pkg/depsolvednf"
 	"github.com/osbuild/images/pkg/olog"
 	"github.com/osbuild/images/pkg/upload/koji"
 	"github.com/osbuild/images/pkg/upload/oci"
@@ -426,9 +426,9 @@ var run = func() {
 
 	// depsolve and search jobs can be done during other jobs
 	depsolveCtx, depsolveCtxCancel := context.WithCancel(context.Background())
-	solver := dnfjson.NewBaseSolver(rpmmd_cache)
+	solver := depsolvednf.NewBaseSolver(rpmmd_cache)
 	if config.DNFJson != "" {
-		solver.SetDNFJSONPath(config.DNFJson)
+		solver.SetDepsolveDNFPath(config.DNFJson)
 	}
 	defer depsolveCtxCancel()
 	go func() {

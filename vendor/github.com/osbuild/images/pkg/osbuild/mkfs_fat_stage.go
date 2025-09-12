@@ -8,10 +8,16 @@ import (
 // vfat volume-id is a 32-bit hex number (mkfs.vfat(8))
 const fatVolIDRegex = `^[a-fA-F0-9]{8}$`
 
+type MkfsFATStageGeometryOptions struct {
+	Heads           int `json:"heads"`
+	SectorsPerTrack int `json:"sectors-per-track"`
+}
+
 type MkfsFATStageOptions struct {
-	VolID   string `json:"volid"`
-	Label   string `json:"label,omitempty"`
-	FATSize *int   `json:"fat-size,omitempty"`
+	VolID    string                       `json:"volid"`
+	Label    string                       `json:"label,omitempty"`
+	FATSize  *int                         `json:"fat-size,omitempty"`
+	Geometry *MkfsFATStageGeometryOptions `json:"geometry,omitempty"`
 }
 
 func (MkfsFATStageOptions) isStageOptions() {}

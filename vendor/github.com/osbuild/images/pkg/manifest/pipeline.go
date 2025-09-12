@@ -38,7 +38,7 @@ type Pipeline interface {
 	getBuildPackages(Distro) []string
 	// getPackageSetChain returns the list of package names to be required by
 	// the pipeline. Each set should be depsolved sequentially to resolve
-	// dependencies and full package specs. See the dnfjson package for more
+	// dependencies and full package specs. See the depsolvednf package for more
 	// details.
 	getPackageSetChain(Distro) []rpmmd.PackageSet
 	// getContainerSources returns the list of containers sources to be resolved and

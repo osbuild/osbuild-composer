@@ -8,7 +8,7 @@ import (
 
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/bib/osinfo"
-	"github.com/osbuild/images/pkg/dnfjson"
+	"github.com/osbuild/images/pkg/depsolvednf"
 )
 
 func forceSymlink(symlinkPath, target string) error {
@@ -107,8 +107,8 @@ func (cnt *Container) setupRunSecrets() error {
 	return nil
 }
 
-func (cnt *Container) NewContainerSolver(cacheRoot string, architecture arch.Arch, sourceInfo *osinfo.Info) (*dnfjson.Solver, error) {
-	solver := dnfjson.NewSolver(
+func (cnt *Container) NewContainerSolver(cacheRoot string, architecture arch.Arch, sourceInfo *osinfo.Info) (*depsolvednf.Solver, error) {
+	solver := depsolvednf.NewSolver(
 		sourceInfo.OSRelease.PlatformID,
 		sourceInfo.OSRelease.VersionID,
 		architecture.String(),

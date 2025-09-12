@@ -2,6 +2,7 @@ package container
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -16,6 +17,7 @@ import (
 type Container struct {
 	id   string
 	root string
+	arch string
 }
 
 // New creates a new running container from the given image reference.
@@ -62,6 +64,15 @@ func New(ref string) (*Container, error) {
 			c = nil
 		}
 	}()
+	// not all containers set {{.Architecture}} so fallback
+	c.arch, err = findContainerArchInspect(c.id, ref)
+	if err != nil {
+		var err2 error
+		c.arch, err2 = findContainerArchUname(c.id, ref)
+		if err2 != nil {
+			return nil, errors.Join(err, err2)
+		}
+	}
 
 	/* #nosec G204 */
 	output, err = exec.Command("podman", "mount", c.id).Output()
@@ -96,6 +107,11 @@ func (c *Container) Stop() error {
 // Root returns the root directory of the container as available on the host.
 func (c *Container) Root() string {
 	return c.root
+}
+
+// Arch returns the architecture of the container
+func (c *Container) Arch() string {
+	return c.arch
 }
 
 // Reads a file from the container
@@ -167,4 +183,28 @@ func (c *Container) DefaultRootfsType() (string, error) {
 	}
 
 	return fsType, nil
+}
+
+func findContainerArchInspect(cntId, ref string) (string, error) {
+	/* #nosec G204 */
+	output, err := exec.Command("podman", "inspect", "-f", "{{.Architecture}}", cntId).Output()
+	if err != nil {
+		if err, ok := err.(*exec.ExitError); ok {
+			return "", fmt.Errorf("inspecting container %q failed: %w\nstderr:\n%s", ref, err, err.Stderr)
+		}
+		return "", fmt.Errorf("inspecting %s container failed with generic error: %w", ref, err)
+	}
+	return strings.TrimSpace(string(output)), nil
+}
+
+func findContainerArchUname(cntId, ref string) (string, error) {
+	/* #nosec G204 */
+	output, err := exec.Command("podman", "exec", cntId, "uname", "-m").Output()
+	if err != nil {
+		if err, ok := err.(*exec.ExitError); ok {
+			return "", fmt.Errorf("running 'uname -m' from container %q failed: %w\nstderr:\n%s", cntId, err, err.Stderr)
+		}
+		return "", fmt.Errorf("running 'uname -m' from container %q failed with generic error: %w", cntId, err)
+	}
+	return strings.TrimSpace(string(output)), nil
 }

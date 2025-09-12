@@ -5,7 +5,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/osbuild/images/pkg/dnfjson"
+	"github.com/osbuild/images/pkg/depsolvednf"
 	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/images/pkg/sbom"
 )
@@ -15,7 +15,7 @@ type MockDepsolveDNF struct {
 	CleanCacheErr error
 
 	DepsolveErr error
-	DepsolveRes *dnfjson.DepsolveResult
+	DepsolveRes *depsolvednf.DepsolveResult
 
 	FetchErr error
 	FetchRes rpmmd.PackageList
@@ -33,14 +33,14 @@ func (m *MockDepsolveDNF) CleanCache() error {
 	return nil
 }
 
-func (m *MockDepsolveDNF) Depsolve(packages []rpmmd.PackageSet, sbomType sbom.StandardType) (*dnfjson.DepsolveResult, error) {
+func (m *MockDepsolveDNF) Depsolve(packages []rpmmd.PackageSet, sbomType sbom.StandardType) (*depsolvednf.DepsolveResult, error) {
 	if m.DepsolveErr != nil {
 		return nil, fmt.Errorf("running osbuild-depsolve-dnf failed:\n%w", m.DepsolveErr)
 	}
 	if m.DepsolveRes != nil {
 		return m.DepsolveRes, nil
 	}
-	return &dnfjson.DepsolveResult{}, nil
+	return &depsolvednf.DepsolveResult{}, nil
 }
 
 func (m *MockDepsolveDNF) FetchMetadata(repos []rpmmd.RepoConfig) (rpmmd.PackageList, error) {
