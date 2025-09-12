@@ -1,4 +1,4 @@
-package dnfjson_mock
+package depsolvednf_mock
 
 import (
 	"fmt"

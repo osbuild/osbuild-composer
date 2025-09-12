@@ -17,7 +17,7 @@ import (
 	"github.com/osbuild/images/pkg/dnfjson"
 	"github.com/osbuild/images/pkg/reporegistry"
 	"github.com/osbuild/images/pkg/rpmmd"
-	dnfjson_mock "github.com/osbuild/osbuild-composer/internal/mocks/dnfjson"
+	depsolvednf_mock "github.com/osbuild/osbuild-composer/internal/mocks/depsolvednf"
 	rpmmd_mock "github.com/osbuild/osbuild-composer/internal/mocks/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/weldr"
 )
@@ -69,12 +69,12 @@ func executeTests(m *testing.M) int {
 	logger := log.New(os.Stdout, "", 0)
 
 	getSolverFn := func(modulePlatformID, releaseVer, arch, distro string) weldr.Solver {
-		return &dnfjson_mock.MockDepsolveDNF{
+		return &depsolvednf_mock.MockDepsolveDNF{
 			DepsolveRes: &dnfjson.DepsolveResult{
-				Packages: dnfjson_mock.BaseDepsolveResult(""),
+				Packages: depsolvednf_mock.BaseDepsolveResult(""),
 			},
-			FetchRes:     dnfjson_mock.BaseFetchResult(),
-			SearchResMap: dnfjson_mock.BaseSearchResultsMap(),
+			FetchRes:     depsolvednf_mock.BaseFetchResult(),
+			SearchResMap: depsolvednf_mock.BaseSearchResultsMap(),
 		}
 	}
 

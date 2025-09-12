@@ -3,7 +3,7 @@ package weldr
 import (
 	"fmt"
 
-	dnfjson_mock "github.com/osbuild/osbuild-composer/internal/mocks/dnfjson"
+	depsolvednf_mock "github.com/osbuild/osbuild-composer/internal/mocks/depsolvednf"
 )
 
 // Expected responses for API tests
@@ -164,7 +164,7 @@ var depsolvePackageNotExistErrorAPIResponse = fmt.Sprintf(`
     }
   ]
 }
-`, "test: running osbuild-depsolve-dnf failed:\n"+dnfjson_mock.DepsolvePackageNotExistError.Error())
+`, "test: running osbuild-depsolve-dnf failed:\n"+depsolvednf_mock.DepsolvePackageNotExistError.Error())
 
 var depsolveBadErrorAPIResponse = fmt.Sprintf(`
 {
@@ -199,7 +199,7 @@ var depsolveBadErrorAPIResponse = fmt.Sprintf(`
     }
   ]
 }
-`, "test: running osbuild-depsolve-dnf failed:\n"+dnfjson_mock.DepsolveBadError.Error())
+`, "test: running osbuild-depsolve-dnf failed:\n"+depsolvednf_mock.DepsolveBadError.Error())
 
 const oldBlueprintsUndoResponse = `
 {
