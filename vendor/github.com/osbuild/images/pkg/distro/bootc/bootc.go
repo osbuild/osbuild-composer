@@ -3,11 +3,13 @@ package bootc
 import (
 	"errors"
 	"fmt"
+	"math/rand"
 	"sort"
 	"strings"
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
 
+	"github.com/osbuild/images/internal/cmdutil"
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/arch"
 	bibcontainer "github.com/osbuild/images/pkg/bib/container"
@@ -77,9 +79,19 @@ func (d *BootcDistro) SetBuildContainer(imgref string) (err error) {
 	if err != nil {
 		return err
 	}
+	return d.setBuildContainer(imgref, info)
+}
+
+func (d *BootcDistro) setBuildContainer(imgref string, info *osinfo.Info) error {
 	d.buildImgref = imgref
 	d.buildSourceInfo = info
 	return nil
+}
+
+// SetBuildContainerForTesting should only be used for in tests
+// please use "SetBuildContainer" instead
+func (d *BootcDistro) SetBuildContainerForTesting(imgref string, info *osinfo.Info) error {
+	return d.setBuildContainer(imgref, info)
 }
 
 func (d *BootcDistro) SetDefaultFs(defaultFs string) error {
@@ -270,7 +282,6 @@ func (t *BootcImageType) Manifest(bp *blueprint.Blueprint, options distro.ImageO
 	if t.arch.distro.imgref == "" {
 		return nil, nil, fmt.Errorf("internal error: no base image defined")
 	}
-
 	containerSource := container.SourceSpec{
 		Source: t.arch.distro.imgref,
 		Name:   t.arch.distro.imgref,
@@ -286,6 +297,12 @@ func (t *BootcImageType) Manifest(bp *blueprint.Blueprint, options distro.ImageO
 	if bp != nil {
 		customizations = bp.Customizations
 	}
+	seed, err := cmdutil.SeedArgFor(nil, t.Name(), t.arch.Name(), t.arch.distro.Name())
+	if err != nil {
+		return nil, nil, err
+	}
+	//nolint:gosec
+	rng := rand.New(rand.NewSource(seed))
 
 	archi := common.Must(arch.FromString(t.arch.Name()))
 	platform := &platform.Data{
@@ -313,6 +330,9 @@ func (t *BootcImageType) Manifest(bp *blueprint.Blueprint, options distro.ImageO
 	if t.arch.distro.buildSourceInfo != nil {
 		img.OSCustomizations.BuildSELinux = t.arch.distro.buildSourceInfo.SELinuxPolicy
 	}
+	if t.arch.distro.sourceInfo != nil && t.arch.distro.sourceInfo.MountConfiguration != nil {
+		img.OSCustomizations.MountConfiguration = *t.arch.distro.sourceInfo.MountConfiguration
+	}
 
 	img.OSCustomizations.KernelOptionsAppend = []string{
 		"rw",
@@ -327,7 +347,7 @@ func (t *BootcImageType) Manifest(bp *blueprint.Blueprint, options distro.ImageO
 	}
 
 	rootfsMinSize := max(t.arch.distro.rootfsMinSize, options.Size)
-	rng := createRand()
+
 	pt, err := t.genPartitionTable(customizations, rootfsMinSize, rng)
 	if err != nil {
 		return nil, nil, err
@@ -368,7 +388,7 @@ func (t *BootcImageType) Manifest(bp *blueprint.Blueprint, options distro.ImageO
 
 // newBootcDistro returns a new instance of BootcDistro
 // from the given url
-func NewBootcDistro(imgref string) (bd *BootcDistro, err error) {
+func NewBootcDistro(imgref string) (*BootcDistro, error) {
 	cnt, err := bibcontainer.New(imgref)
 	if err != nil {
 		return nil, err
@@ -381,7 +401,6 @@ func NewBootcDistro(imgref string) (bd *BootcDistro, err error) {
 	if err != nil {
 		return nil, err
 	}
-
 	// XXX: provide a way to set defaultfs (needed for bib)
 	defaultFs, err := cnt.DefaultRootfsType()
 	if err != nil {
@@ -391,9 +410,12 @@ func NewBootcDistro(imgref string) (bd *BootcDistro, err error) {
 	if err != nil {
 		return nil, fmt.Errorf("cannot get container size: %w", err)
 	}
+	return newBootcDistroAfterIntrospect(cnt.Arch(), info, imgref, defaultFs, cntSize)
+}
 
+func newBootcDistroAfterIntrospect(archStr string, info *osinfo.Info, imgref, defaultFs string, cntSize uint64) (*BootcDistro, error) {
 	nameVer := fmt.Sprintf("bootc-%s-%s", info.OSRelease.ID, info.OSRelease.VersionID)
-	bd = &BootcDistro{
+	bd := &BootcDistro{
 		name:          nameVer,
 		releasever:    info.OSRelease.VersionID,
 		defaultFs:     defaultFs,
@@ -407,53 +429,60 @@ func NewBootcDistro(imgref string) (bd *BootcDistro, err error) {
 		buildSourceInfo: info,
 	}
 
-	for _, archStr := range []string{"x86_64", "aarch64", "ppc64le", "s390x", "riscv64"} {
-		ba := &BootcArch{
-			arch: common.Must(arch.FromString(archStr)),
-		}
-		// TODO: add iso image types, see bootc-image-builder
-		//
-		// Note that the file extension is hardcoded in
-		// pkg/image/bootc_disk.go, we have no way to access
-		// it here so we need to duplicate it
-		// XXX: find a way to avoid this duplication
-		ba.addImageTypes(
-			BootcImageType{
-				name:   "ami",
-				export: "image",
-				ext:    "raw",
-			},
-			BootcImageType{
-				name:   "qcow2",
-				export: "qcow2",
-				ext:    "qcow2",
-			},
-			BootcImageType{
-				name:   "raw",
-				export: "image",
-				ext:    "raw",
-			},
-			BootcImageType{
-				name:   "vmdk",
-				export: "vmdk",
-				ext:    "vmdk",
-			},
-			BootcImageType{
-				name:   "vhd",
-				export: "bpc",
-				ext:    "vhd",
-			},
-			BootcImageType{
-				name:   "gce",
-				export: "gce",
-				ext:    "tar.gz",
-			},
-		)
-		bd.addArches(ba)
+	archi, err := arch.FromString(archStr)
+	if err != nil {
+		return nil, err
 	}
+	ba := &BootcArch{
+		arch: archi,
+	}
+	// TODO: add iso image types, see bootc-image-builder
+	//
+	// Note that the file extension is hardcoded in
+	// pkg/image/bootc_disk.go, we have no way to access
+	// it here so we need to duplicate it
+	// XXX: find a way to avoid this duplication
+	ba.addImageTypes(
+		BootcImageType{
+			name:   "ami",
+			export: "image",
+			ext:    "raw",
+		},
+		BootcImageType{
+			name:   "qcow2",
+			export: "qcow2",
+			ext:    "qcow2",
+		},
+		BootcImageType{
+			name:   "raw",
+			export: "image",
+			ext:    "raw",
+		},
+		BootcImageType{
+			name:   "vmdk",
+			export: "vmdk",
+			ext:    "vmdk",
+		},
+		BootcImageType{
+			name:   "vhd",
+			export: "bpc",
+			ext:    "vhd",
+		},
+		BootcImageType{
+			name:   "gce",
+			export: "gce",
+			ext:    "tar.gz",
+		},
+	)
+	bd.addArches(ba)
 
 	return bd, nil
 }
+
+// NewBootcDistroForTesting can be used to generate test manifests.
+// The container introspection is skipped. Do not use this for
+// anything but tests.
+var NewBootcDistroForTesting = newBootcDistroAfterIntrospect
 
 func DistroFactory(idStr string) distro.Distro {
 	l := strings.SplitN(idStr, ":", 2)

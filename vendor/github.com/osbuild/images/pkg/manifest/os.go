@@ -182,15 +182,18 @@ type OSCustomizations struct {
 	// "ConditionFirstBoot" to work in systemd
 	MachineIdUninitialized bool
 
-	// MountUnits creates systemd .mount units to describe the filesystem
-	// instead of writing to /etc/fstab
-	MountUnits bool
+	// What type of mount configuration should we create, systemd units, fstab
+	// or none
+	MountConfiguration osbuild.MountConfiguration
 
 	// VersionlockPackges uses dnf versionlock to lock a package to the version
 	// that is installed during image build, preventing it from being updated.
 	// This is only supported for distributions that use dnf4, because osbuild
 	// only has a stage for dnf4 version locking.
 	VersionlockPackages []string
+
+	// InstallLangs determines which locale files are installed by RPMs
+	InstallLangs []string
 }
 
 // OS represents the filesystem tree of the target image. This roughly
@@ -531,6 +534,8 @@ func (p *OS) serialize() osbuild.Pipeline {
 		// https://github.com/osbuild/images/issues/624
 		rpmOptions.DisableDracut = true
 	}
+	rpmOptions.InstallLangs = p.OSCustomizations.InstallLangs
+
 	if p.platform.GetBootloader() == platform.BOOTLOADER_UKI && p.PartitionTable != nil {
 		espMountpoint, err := findESPMountpoint(p.PartitionTable)
 		if err != nil {
@@ -633,7 +638,7 @@ func (p *OS) serialize() osbuild.Pipeline {
 	}
 
 	for _, dracutConfConfig := range p.OSCustomizations.DracutConf {
-		pipeline.AddStage(osbuild.NewDracutConfStage(dracutConfConfig))
+		pipeline = prependStage(pipeline, osbuild.NewDracutConfStage(dracutConfConfig))
 	}
 
 	for _, systemdUnitConfig := range p.OSCustomizations.SystemdDropin {
@@ -738,7 +743,7 @@ func (p *OS) serialize() osbuild.Pipeline {
 	}
 
 	if pt := p.PartitionTable; pt != nil {
-		rootUUID, kernelOptions, err := osbuild.GenImageKernelOptions(p.PartitionTable, p.OSCustomizations.MountUnits)
+		rootUUID, kernelOptions, err := osbuild.GenImageKernelOptions(p.PartitionTable, p.OSCustomizations.MountConfiguration)
 		if err != nil {
 			panic(err)
 		}
@@ -752,7 +757,7 @@ func (p *OS) serialize() osbuild.Pipeline {
 			}))
 		}
 
-		fsCfgStages, err := filesystemConfigStages(pt, p.OSCustomizations.MountUnits)
+		fsCfgStages, err := filesystemConfigStages(pt, p.OSCustomizations.MountConfiguration)
 		if err != nil {
 			panic(err)
 		}
@@ -982,6 +987,11 @@ func (p *OS) serialize() osbuild.Pipeline {
 func prependKernelCmdlineStage(pipeline osbuild.Pipeline, rootUUID string, kernelOptions []string) osbuild.Pipeline {
 	kernelStage := osbuild.NewKernelCmdlineStage(osbuild.NewKernelCmdlineStageOptions(rootUUID, strings.Join(kernelOptions, " ")))
 	pipeline.Stages = append([]*osbuild.Stage{kernelStage}, pipeline.Stages...)
+	return pipeline
+}
+
+func prependStage(pipeline osbuild.Pipeline, stage *osbuild.Stage) osbuild.Pipeline {
+	pipeline.Stages = append([]*osbuild.Stage{stage}, pipeline.Stages...)
 	return pipeline
 }
 

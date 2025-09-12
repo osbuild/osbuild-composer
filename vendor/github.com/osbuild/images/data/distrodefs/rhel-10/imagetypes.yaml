@@ -472,8 +472,6 @@
     disable_submenu: true
     distributor: "$(sed 's, release .*$,,g' /etc/system-release)"
     serial: "serial --speed=115200 --unit=0 --word=8 --parity=no --stop=1"
-    terminal_input: ["serial"]
-    terminal_output: ["serial"]
     timeout: 10
     timeout_style: "countdown"
 
@@ -681,6 +679,8 @@
           grub2_config:
             <<: *azure_common_grub2_config
             terminal: ["serial"]
+            terminal_input: ["serial"]
+            terminal_output: ["serial"]
       "aarch64 grub2 config terminal=console":
         when:
           arch: "aarch64"
@@ -703,7 +703,6 @@
       - "NetworkManager-cloud-setup"
       - "nvme-cli"
       - "patch"
-      - "rng-tools"
       - "selinux-policy-targeted"
       - "system-reinstall-bootc"
       - "uuid"
@@ -764,6 +763,43 @@
         append:
           include:
             - "insights-client"
+      "x86_64 alone supports rngd":
+        when:
+          arch: "x86_64"
+        append:
+          include:
+            - "rng-tools"
+  supported_options_lists:
+    # Common options supported by all disk image types.
+    # This includes everything that is not specific to installers.
+    supported_options_disk: &supported_options_disk
+      - "distro"
+      - "packages"
+      - "modules"
+      - "groups"
+      - "enabled_modules"
+      - "containers"
+      - "minimal"
+      - "customizations.cacerts"
+      - "customizations.directories"
+      - "customizations.disk"
+      - "customizations.files"
+      - "customizations.filesystem"
+      - "customizations.partitioning_mode"
+      - "customizations.fips"
+      - "customizations.firewall"
+      - "customizations.user"
+      - "customizations.sshkey"
+      - "customizations.group"
+      - "customizations.hostname"
+      - "customizations.kernel"
+      - "customizations.locale"
+      - "customizations.openscap"
+      - "customizations.repositories"
+      - "customizations.rpm"
+      - "customizations.services"
+      - "customizations.timezone"
+      - "customizations.rhsm"
 
 image_config:
   default:
@@ -942,6 +978,7 @@ image_types:
                 include:
                   - "insights-client"
                   - "subscription-manager-cockpit"
+    supported_blueprint_options: *supported_options_disk
 
   "vagrant-libvirt": &vagrant_libvirt
     <<: *qcow2
@@ -983,6 +1020,7 @@ image_types:
     platforms:
       - <<: *x86_64_bios_platform
         image_format: "vagrant_virtualbox"
+    supported_blueprint_options: *supported_options_disk
 
   oci:
     <<: *qcow2
@@ -992,6 +1030,7 @@ image_types:
     platforms:
       - <<: *x86_64_bios_platform
         image_format: "qcow2"
+    supported_blueprint_options: *supported_options_disk
 
   vhd: &vhd
     <<: *qcow2
@@ -1040,6 +1079,7 @@ image_types:
     package_sets:
       os:
         - *azure_base_pkgset
+    supported_blueprint_options: *supported_options_disk
 
   "azure": &azure
     <<: *vhd
@@ -1137,9 +1177,11 @@ image_types:
           # NB: we currently don't support /boot on LVM
           - *azure_rhui_part_boot
           - *azure_rhui_part_lvm
+    supported_blueprint_options: *supported_options_disk
 
   "azure-rhui": &azure_rhui
     <<: *azure
+    supported_blueprint_options: *supported_options_disk
 
   "azure-sap-rhui":
     <<: *azure_rhui
@@ -1153,6 +1195,7 @@ image_types:
         - *azure_base_pkgset
         - *sap_base_pkgset
         - *sap_extras_pkgset
+    supported_blueprint_options: *supported_options_disk
 
   azure-sapapps-rhui:
     <<: *azure_rhui
@@ -1165,6 +1208,7 @@ image_types:
       os:
         - *azure_base_pkgset
         - *sap_base_pkgset
+    supported_blueprint_options: *supported_options_disk
 
   tar:
     filename: "root.tar.xz"
@@ -1183,6 +1227,31 @@ image_types:
       - arch: "aarch64"
       - arch: "ppc64le"
       - arch: "s390x"
+    supported_blueprint_options:
+      # We've never tested many options or customizations with this image type
+      # and we also never restricted any, but it uses the OS pipeline, so it
+      # should support most standard/basic customizations
+      - "distro"
+      - "packages"
+      - "modules"
+      - "groups"
+      - "containers"
+      - "enabled_modules"
+      - "minimal"
+      - "customizations.cacerts"
+      - "customizations.directories"
+      - "customizations.files"
+      - "customizations.firewall"
+      - "customizations.user"
+      - "customizations.sshkey"
+      - "customizations.group"
+      - "customizations.hostname"
+      - "customizations.kernel.name"
+      - "customizations.locale"
+      - "customizations.repositories"
+      - "customizations.rpm"
+      - "customizations.services"
+      - "customizations.timezone"
 
   vmdk: &vmdk
     name_aliases: ["vshpere"]
@@ -1214,6 +1283,7 @@ image_types:
           exclude:
             - "dracut-config-rescue"
             - "rng-tools"
+    supported_blueprint_options: *supported_options_disk
 
   ova:
     <<: *vmdk
@@ -1224,6 +1294,7 @@ image_types:
     platforms:
       - <<: *x86_64_bios_platform
         image_format: "ova"
+    supported_blueprint_options: *supported_options_disk
 
   ami: &ami
     name_aliases: ['aws']
@@ -1402,6 +1473,7 @@ image_types:
               append:
                 include:
                   - "insights-client"
+    supported_blueprint_options: *supported_options_disk
 
   # RHEL internal-only x86_64 EC2 image type
   ec2: &ec2
@@ -1412,6 +1484,7 @@ image_types:
     exports: ["xz"]
     filename: "image.raw.xz"
     compression: "xz"
+    supported_blueprint_options: *supported_options_disk
 
   "ec2-ha":
     <<: *ec2
@@ -1427,6 +1500,7 @@ image_types:
             - "fence-agents-all"
             - "pacemaker"
             - "pcs"
+    supported_blueprint_options: *supported_options_disk
 
   "ec2-sap":
     <<: *ec2
@@ -1459,6 +1533,7 @@ image_types:
               # amiSapKernelOptions()
               - "processor.max_cstate=1"
               - "intel_idle.max_cstate=1"
+    supported_blueprint_options: *supported_options_disk
 
   wsl:
     filename: "image.wsl"
@@ -1584,6 +1659,26 @@ image_types:
                   - "wsl-setup"
                   - "centos-logos"
                   - "centos-release"
+    supported_blueprint_options:
+      - "distro"
+      - "packages"
+      - "modules"
+      - "groups"
+      - "enabled_modules"
+      - "minimal"
+      - "containers"
+      - "customizations.directories"
+      - "customizations.files"
+      - "customizations.firewall"
+      - "customizations.user"
+      - "customizations.sshkey"
+      - "customizations.group"
+      - "customizations.hostname"
+      - "customizations.locale"
+      - "customizations.repositories"
+      - "customizations.services"
+      - "customizations.timezone"
+      - "customizations.rhsm"
 
 
   "image-installer":
@@ -1740,6 +1835,32 @@ image_types:
               append:
                 include:
                   - "dmidecode"
+    supported_blueprint_options:
+      - "distro"
+      - "packages"
+      - "modules"
+      - "groups"
+      - "enabled_modules"
+      - "containers"
+      - "minimal"
+      - "customizations.installer"
+      - "customizations.cacerts"
+      - "customizations.directories"
+      - "customizations.files"
+      - "customizations.firewall"
+      - "customizations.user"
+      - "customizations.sshkey"
+      - "customizations.group"
+      - "customizations.fips"
+      - "customizations.timezone"
+      - "customizations.hostname"
+      - "customizations.kernel.name"
+      - "customizations.locale"
+      - "customizations.openscap"
+      - "customizations.repositories"
+      - "customizations.rpm"
+      - "customizations.services"
+      - "customizations.rhsm"
 
   gce:
     # this image type is set to `gcp` in image-builder-crc
@@ -1898,6 +2019,7 @@ image_types:
               append:
                 include:
                   - "insights-client"
+    supported_blueprint_options: *supported_options_disk
 
   "azure-cvm":
     <<: *vhd
@@ -1998,6 +2120,34 @@ image_types:
             # package here.
             - "linux-firmware"
             - "os-prober"
+    supported_blueprint_options:
+      # same as disk image types, but kernel customizations are not supported
+      - "distro"
+      - "packages"
+      - "modules"
+      - "groups"
+      - "enabled_modules"
+      - "containers"
+      - "minimal"
+      - "customizations.cacerts"
+      - "customizations.directories"
+      - "customizations.disk"
+      - "customizations.files"
+      - "customizations.filesystem"
+      - "customizations.partitioning_mode"
+      - "customizations.fips"
+      - "customizations.firewall"
+      - "customizations.user"
+      - "customizations.sshkey"
+      - "customizations.group"
+      - "customizations.hostname"
+      - "customizations.locale"
+      - "customizations.openscap"
+      - "customizations.repositories"
+      - "customizations.rpm"
+      - "customizations.services"
+      - "customizations.timezone"
+      - "customizations.rhsm"
 
   # Based on lorax runtime-install.tmpl
   "netinst":
@@ -2109,3 +2259,7 @@ image_types:
             - "sg3_utils"
             - "perl-interpreter"
             - "restore"
+    supported_blueprint_options:
+      - "distro"
+      - "customizations.fips"
+      - "customizations.locale"

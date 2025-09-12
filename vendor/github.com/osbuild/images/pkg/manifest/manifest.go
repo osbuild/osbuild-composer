@@ -18,7 +18,7 @@ import (
 
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/container"
-	"github.com/osbuild/images/pkg/dnfjson"
+	"github.com/osbuild/images/pkg/depsolvednf"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/ostree"
 	"github.com/osbuild/images/pkg/rpmmd"
@@ -172,7 +172,7 @@ type SerializeOptions struct {
 	RpmDownloader osbuild.RpmDownloader
 }
 
-func (m Manifest) Serialize(depsolvedSets map[string]dnfjson.DepsolveResult, containerSpecs map[string][]container.Spec, ostreeCommits map[string][]ostree.CommitSpec, opts *SerializeOptions) (OSBuildManifest, error) {
+func (m Manifest) Serialize(depsolvedSets map[string]depsolvednf.DepsolveResult, containerSpecs map[string][]container.Spec, ostreeCommits map[string][]ostree.CommitSpec, opts *SerializeOptions) (OSBuildManifest, error) {
 	if opts == nil {
 		opts = &SerializeOptions{}
 	}

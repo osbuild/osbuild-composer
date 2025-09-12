@@ -30,6 +30,9 @@ func NewBootcDiskImage(platform platform.Platform, filename string, container co
 		Base:                 NewBase("bootc-raw-image", platform, filename),
 		ContainerSource:      &container,
 		BuildContainerSource: &buildContainer,
+		OSCustomizations: manifest.OSCustomizations{
+			MountConfiguration: osbuild.MOUNT_CONFIGURATION_UNITS, // default use mount units for bootc disk images
+		},
 	}
 }
 
@@ -110,7 +113,7 @@ func (img *BootcDiskImage) InstantiateManifestFromContainers(m *manifest.Manifes
 	rawImage.Directories = img.OSCustomizations.Directories
 	rawImage.KernelOptionsAppend = img.OSCustomizations.KernelOptionsAppend
 	rawImage.SELinux = img.OSCustomizations.SELinux
-	rawImage.MountUnits = true // always use mount units for bootc disk images
+	rawImage.MountConfiguration = img.OSCustomizations.MountConfiguration
 
 	// In BIB, we export multiple images from the same pipeline so we use the
 	// filename as the basename for each export and set the extensions based on

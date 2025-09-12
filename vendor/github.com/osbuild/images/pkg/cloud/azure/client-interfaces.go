@@ -37,6 +37,21 @@ type DisksClient interface {
 	BeginDelete(context.Context, string, string, *armcompute.DisksClientBeginDeleteOptions) (*runtime.Poller[armcompute.DisksClientDeleteResponse], error)
 }
 
+type GalleriesClient interface {
+	BeginCreateOrUpdate(context.Context, string, string, armcompute.Gallery, *armcompute.GalleriesClientBeginCreateOrUpdateOptions) (*runtime.Poller[armcompute.GalleriesClientCreateOrUpdateResponse], error)
+	BeginDelete(context.Context, string, string, *armcompute.GalleriesClientBeginDeleteOptions) (*runtime.Poller[armcompute.GalleriesClientDeleteResponse], error)
+}
+
+type GalleryImagesClient interface {
+	BeginCreateOrUpdate(context.Context, string, string, string, armcompute.GalleryImage, *armcompute.GalleryImagesClientBeginCreateOrUpdateOptions) (*runtime.Poller[armcompute.GalleryImagesClientCreateOrUpdateResponse], error)
+	BeginDelete(context.Context, string, string, string, *armcompute.GalleryImagesClientBeginDeleteOptions) (*runtime.Poller[armcompute.GalleryImagesClientDeleteResponse], error)
+}
+
+type GalleryImageVersionsClient interface {
+	BeginCreateOrUpdate(context.Context, string, string, string, string, armcompute.GalleryImageVersion, *armcompute.GalleryImageVersionsClientBeginCreateOrUpdateOptions) (*runtime.Poller[armcompute.GalleryImageVersionsClientCreateOrUpdateResponse], error)
+	BeginDelete(context.Context, string, string, string, string, *armcompute.GalleryImageVersionsClientBeginDeleteOptions) (*runtime.Poller[armcompute.GalleryImageVersionsClientDeleteResponse], error)
+}
+
 type VirtualNetworksClient interface {
 	BeginCreateOrUpdate(context.Context, string, string, armnetwork.VirtualNetwork, *armnetwork.VirtualNetworksClientBeginCreateOrUpdateOptions) (*runtime.Poller[armnetwork.VirtualNetworksClientCreateOrUpdateResponse], error)
 	BeginDelete(context.Context, string, string, *armnetwork.VirtualNetworksClientBeginDeleteOptions) (*runtime.Poller[armnetwork.VirtualNetworksClientDeleteResponse], error)

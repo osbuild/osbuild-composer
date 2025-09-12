@@ -118,7 +118,7 @@ func (t *BootcImageType) genPartitionTable(customizations *blueprint.Customizati
 		switch elem := rootfs.(type) {
 		case *disk.Filesystem:
 			if elem.Type == "ext4" {
-				elem.MkfsOptions = append(elem.MkfsOptions, []disk.MkfsOption{disk.MkfsVerity}...)
+				elem.MkfsOptions.Verity = true
 			}
 		}
 	}

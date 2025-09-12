@@ -125,6 +125,10 @@ type ImageConfig struct {
 	// that are statically defined for the pipeline.
 	InstallWeakDeps *bool `yaml:"install_weak_deps,omitempty"`
 
+	// InstallLangs determines which locales are installed by RPM, the default
+	// is `all`.
+	InstallLangs []string `yaml:"install_langs,omitempty"`
+
 	// How to handle the /etc/machine-id file, when set to true it causes the
 	// machine id to be set to 'uninitialized' which causes ConditionFirstboot
 	// to be triggered in systemd

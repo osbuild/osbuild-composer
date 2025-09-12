@@ -5,7 +5,7 @@ import (
 	"slices"
 	"time"
 
-	"github.com/osbuild/images/pkg/dnfjson"
+	"github.com/osbuild/images/pkg/depsolvednf"
 	"github.com/osbuild/images/pkg/rpmmd"
 )
 
@@ -50,17 +50,17 @@ func BaseFetchResult() rpmmd.PackageList {
 	return packageList
 }
 
-var DepsolvePackageNotExistError = dnfjson.Error{
+var DepsolvePackageNotExistError = depsolvednf.Error{
 	Kind:   "MarkingErrors",
 	Reason: "Error occurred when marking packages for installation: Problems in request:\nmissing packages: fash",
 }
 
-var DepsolveBadError = dnfjson.Error{
+var DepsolveBadError = depsolvednf.Error{
 	Kind:   "DepsolveError",
 	Reason: "There was a problem depsolving ['go2rpm']: \n Problem: conflicting requests\n  - nothing provides askalono-cli needed by go2rpm-1-4.fc31.noarch",
 }
 
-var FetchError = dnfjson.Error{
+var FetchError = depsolvednf.Error{
 	Kind:   "FetchError",
 	Reason: "There was a problem when fetching packages.",
 }

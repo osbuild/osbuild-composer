@@ -8,7 +8,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/osbuild/images/pkg/dnfjson"
+	"github.com/osbuild/images/pkg/depsolvednf"
 	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/images/pkg/sbom"
 	"github.com/osbuild/osbuild-composer/internal/worker"
@@ -51,7 +51,7 @@ func (rmc *RepositoryMTLSConfig) CompareBaseURL(baseURLStr string) (bool, error)
 }
 
 type DepsolveJobImpl struct {
-	Solver               *dnfjson.BaseSolver
+	Solver               *depsolvednf.BaseSolver
 	RepositoryMTLSConfig *RepositoryMTLSConfig
 }
 
@@ -94,7 +94,7 @@ func workerClientErrorFrom(err error, logWithId *logrus.Entry) *clienterrors.Err
 		logWithId.Errorf("workerClientErrorFrom expected an error to be processed. Not nil")
 	}
 
-	var dnfjsonErr dnfjson.Error
+	var dnfjsonErr depsolvednf.Error
 	if errors.As(err, &dnfjsonErr) {
 		// Error originates from dnf-json
 		reason := fmt.Sprintf("DNF error occurred: %s", dnfjsonErr.Kind)

@@ -18,10 +18,10 @@ import (
 	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/osbuild/blueprint/pkg/blueprint"
 	"github.com/osbuild/images/pkg/container"
+	"github.com/osbuild/images/pkg/depsolvednf"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distro/test_distro"
 	"github.com/osbuild/images/pkg/distrofactory"
-	"github.com/osbuild/images/pkg/dnfjson"
 	"github.com/osbuild/images/pkg/ostree"
 	"github.com/osbuild/images/pkg/ostree/mock_ostree_repo"
 	"github.com/osbuild/images/pkg/reporegistry"
@@ -126,7 +126,7 @@ func getMockDepsolveDNFSolverFn(m *depsolvednf_mock.MockDepsolveDNF) GetSolverFn
 // with base test data. No errors are returned by the solver.
 func getBaseMockDepsolveDNFSolverFn(deosolveRepoID string) GetSolverFn {
 	return getMockDepsolveDNFSolverFn(&depsolvednf_mock.MockDepsolveDNF{
-		DepsolveRes: &dnfjson.DepsolveResult{
+		DepsolveRes: &depsolvednf.DepsolveResult{
 			Packages: depsolvednf_mock.BaseDepsolveResult(deosolveRepoID),
 		},
 		FetchRes:     depsolvednf_mock.BaseFetchResult(),
@@ -138,11 +138,11 @@ func getBaseMockDepsolveDNFSolverFn(deosolveRepoID string) GetSolverFn {
 // For packages, it uses the dnfjson_mock.BaseDeps() every time, but retains
 // the map keys from the input.
 // For ostree commits it hashes the URL+Ref to create a checksum.
-func ResolveContent(pkgs map[string][]rpmmd.PackageSet, containers map[string][]container.SourceSpec, commits map[string][]ostree.SourceSpec) (map[string]dnfjson.DepsolveResult, map[string][]container.Spec, map[string][]ostree.CommitSpec) {
+func ResolveContent(pkgs map[string][]rpmmd.PackageSet, containers map[string][]container.SourceSpec, commits map[string][]ostree.SourceSpec) (map[string]depsolvednf.DepsolveResult, map[string][]container.Spec, map[string][]ostree.CommitSpec) {
 
-	depsolved := make(map[string]dnfjson.DepsolveResult, len(pkgs))
+	depsolved := make(map[string]depsolvednf.DepsolveResult, len(pkgs))
 	for name := range pkgs {
-		depsolved[name] = dnfjson.DepsolveResult{
+		depsolved[name] = depsolvednf.DepsolveResult{
 			Packages: depsolvednf_mock.BaseDepsolveResult(testRepoID),
 		}
 	}
@@ -1290,7 +1290,7 @@ func TestCompose(t *testing.T) {
 			expectedComposeGoodDistro,
 			[]string{"build_id", "warnings"},
 			getMockDepsolveDNFSolverFn(&depsolvednf_mock.MockDepsolveDNF{
-				DepsolveRes: &dnfjson.DepsolveResult{
+				DepsolveRes: &depsolvednf.DepsolveResult{
 					Packages: depsolvednf_mock.BaseDepsolveResult(testRepoID2),
 				},
 			}),

@@ -1,12 +1,67 @@
 package osbuild
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/google/uuid"
 
+	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/disk"
 )
+
+type MountConfiguration uint
+
+const ( // MountConfiguration enum
+	// fstab is default/0 to keep compatibility
+	MOUNT_CONFIGURATION_FSTAB MountConfiguration = iota
+	MOUNT_CONFIGURATION_UNITS
+	MOUNT_CONFIGURATION_NONE
+)
+
+func (c MountConfiguration) String() string {
+	switch c {
+	case MOUNT_CONFIGURATION_FSTAB:
+		return "fstab"
+	case MOUNT_CONFIGURATION_UNITS:
+		return "units"
+	case MOUNT_CONFIGURATION_NONE:
+		return "none"
+	default:
+		panic(fmt.Sprintf("unknown or unsupported mount configuration enum value %d", c))
+	}
+}
+
+func (c *MountConfiguration) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return err
+	}
+
+	new, err := NewMountConfiguration(s)
+	if err != nil {
+		return err
+	}
+	*c = new
+	return nil
+}
+
+func (c *MountConfiguration) UnmarshalYAML(unmarshal func(any) error) error {
+	return common.UnmarshalYAMLviaJSON(c, unmarshal)
+}
+
+func NewMountConfiguration(s string) (MountConfiguration, error) {
+	switch s {
+	case "fstab":
+		return MOUNT_CONFIGURATION_FSTAB, nil
+	case "units":
+		return MOUNT_CONFIGURATION_UNITS, nil
+	case "none":
+		return MOUNT_CONFIGURATION_NONE, nil
+	default:
+		return 0, fmt.Errorf("unknown or unsupported filesystem type name: %s", s)
+	}
+}
 
 // sfdiskStageOptions creates the options and devices properties for an
 // org.osbuild.sfdisk stage based on a partition table description
@@ -116,7 +171,7 @@ func GenImageFinishStages(pt *disk.PartitionTable, filename string) []*Stage {
 	return GenDeviceFinishStages(pt, filename)
 }
 
-func GenImageKernelOptions(pt *disk.PartitionTable, mountUnits bool) (string, []string, error) {
+func GenImageKernelOptions(pt *disk.PartitionTable, mountConfiguration MountConfiguration) (string, []string, error) {
 	cmdline := make([]string, 0)
 
 	rootFs := pt.FindMountable("/")
@@ -130,7 +185,7 @@ func GenImageKernelOptions(pt *disk.PartitionTable, mountUnits bool) (string, []
 	// see:
 	//  - https://github.com/systemd/systemd/issues/24027
 	//  - https://github.com/systemd/systemd/pull/33397
-	if usrFs := pt.FindMountable("/usr"); usrFs != nil && mountUnits {
+	if usrFs := pt.FindMountable("/usr"); usrFs != nil && mountConfiguration != MOUNT_CONFIGURATION_FSTAB {
 		fsOptions, err := usrFs.GetFSTabOptions()
 		if err != nil {
 			panic(fmt.Sprintf("error getting filesystem options for /usr mountpoint: %s", err))
@@ -149,7 +204,7 @@ func GenImageKernelOptions(pt *disk.PartitionTable, mountUnits bool) (string, []
 			karg := "luks.uuid=" + ent.UUID
 			cmdline = append(cmdline, karg)
 		case *disk.BtrfsSubvolume:
-			if ent.Mountpoint == "/" && !mountUnits {
+			if ent.Mountpoint == "/" && mountConfiguration != MOUNT_CONFIGURATION_UNITS {
 				// if we're using mount units, the rootflags will be added
 				// separately (below)
 				karg := "rootflags=subvol=" + ent.Name
@@ -159,7 +214,7 @@ func GenImageKernelOptions(pt *disk.PartitionTable, mountUnits bool) (string, []
 		return nil
 	}
 
-	if mountUnits {
+	if mountConfiguration == MOUNT_CONFIGURATION_UNITS {
 		// The systemd-remount-fs service reads /etc/fstab to discover mount
 		// options for / and /usr. Without an /etc/fstab, / and /usr do not get
 		// remounted, which means if they are mounted read-only in the initrd,

@@ -843,17 +843,6 @@
       - "customizations.locale"
       - "customizations.services"
 
-    # options supported by Anaconda installer (ISO) image types
-    supported_options_anaconda: &supported_options_anaconda
-      - "distro"
-      - "customizations.installer"
-      - "customizations.user"
-      - "customizations.sshkey"
-      - "customizations.group"
-      - "customizations.fips"
-      - "customizations.timezone"
-      - "customizations.locale"
-
 
 image_config:
   default:
@@ -1646,7 +1635,15 @@ image_types:
     platforms:
       - *x86_64_installer_platform
       - *aarch64_installer_platform
-    supported_blueprint_options: *supported_options_anaconda
+    supported_blueprint_options:
+      - "distro"
+      - "customizations.installer"
+      - "customizations.user"
+      - "customizations.sshkey"
+      - "customizations.group"
+      - "customizations.fips"
+      - "customizations.timezone"
+      - "customizations.locale"
 
   "workstation-live-installer":
     name_aliases: ["live-installer"]
@@ -1759,7 +1756,31 @@ image_types:
         - *minimal_raw_pkgset
       installer:
         - *anaconda_pkgset
-    supported_blueprint_options: *supported_options_anaconda
+    supported_blueprint_options:
+      - "distro"
+      - "packages"
+      - "modules"
+      - "groups"
+      - "enabled_modules"
+      - "containers"
+      - "minimal"
+      - "customizations.installer"
+      - "customizations.cacerts"
+      - "customizations.directories"
+      - "customizations.files"
+      - "customizations.firewall"
+      - "customizations.user"
+      - "customizations.sshkey"
+      - "customizations.group"
+      - "customizations.fips"
+      - "customizations.timezone"
+      - "customizations.hostname"
+      - "customizations.kernel.name"
+      - "customizations.locale"
+      - "customizations.openscap"
+      - "customizations.repositories"
+      - "customizations.rpm"
+      - "customizations.services"
 
   container: &container
     filename: "container.tar"

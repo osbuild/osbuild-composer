@@ -283,7 +283,6 @@
       - "NetworkManager-cloud-setup"
       - "nvme-cli"
       - "patch"
-      - "rng-tools"
       - "selinux-policy-targeted"
       - "uuid"
       - "WALinuxAgent"
@@ -345,6 +344,12 @@
             - "system-reinstall-bootc"
           exclude:
             - "microcode_ctl"
+      "x86_64 alone supports rngd":
+        when:
+          arch: "x86_64"
+        append:
+          include:
+            - "rng-tools"
 
   sapapps_image_config: &sapapps_image_config
     selinux_config:
@@ -1238,6 +1243,78 @@
           arch: "x86_64"
         shallow_merge:
           iso_boot_type: "syslinux"
+  supported_options_lists:
+    # Common options supported by all disk image types.
+    # This includes everything that is not specific to installers or
+    # ostree-based images.
+    supported_options_disk: &supported_options_disk
+      - "distro"
+      - "packages"
+      - "modules"
+      - "groups"
+      - "enabled_modules"
+      - "containers"
+      - "minimal"
+      - "customizations.cacerts"
+      - "customizations.directories"
+      - "customizations.disk"
+      - "customizations.files"
+      - "customizations.filesystem"
+      - "customizations.partitioning_mode"
+      - "customizations.fips"
+      - "customizations.firewall"
+      - "customizations.user"
+      - "customizations.sshkey"
+      - "customizations.group"
+      - "customizations.hostname"
+      - "customizations.kernel"
+      - "customizations.locale"
+      - "customizations.openscap"
+      - "customizations.repositories"
+      - "customizations.rpm"
+      - "customizations.services"
+      - "customizations.timezone"
+      - "customizations.rhsm"
+
+    # options supported by base ostree image types (commit and container)
+    supported_options_ostree_commit: &supported_options_ostree_commit
+      - "distro"
+      - "packages"
+      - "modules"
+      - "groups"
+      - "enabled_modules"
+      - "minimal"
+      - "containers"
+      - "customizations.directories"
+      - "customizations.files"
+      - "customizations.fips"
+      - "customizations.firewall"
+      - "customizations.user"
+      - "customizations.sshkey"
+      - "customizations.group"
+      - "customizations.hostname"
+      - "customizations.kernel.name"
+      - "customizations.locale"
+      - "customizations.repositories"
+      - "customizations.services"
+      - "customizations.timezone"
+      - "customizations.rhsm"
+
+    # options supported by ostree disk (deployment) image types
+    supported_options_ostree_disk: &supported_options_ostree_disk
+      - "distro"
+      - "customizations.files"
+      - "customizations.directories"
+      - "customizations.disk"
+      - "customizations.filesystem"
+      - "customizations.partitioning_mode"
+      - "customizations.fips"
+      - "customizations.user"
+      - "customizations.sshkey"
+      - "customizations.group"
+      - "customizations.kernel.append"
+      - "customizations.locale"
+      - "customizations.services"
 
 image_config:
   default:
@@ -1422,6 +1499,7 @@ image_types:
                 include:
                   - "insights-client"
                   - "subscription-manager-cockpit"
+    supported_blueprint_options: *supported_options_disk
 
   "vagrant-libvirt": &vagrant_libvirt
     <<: *qcow2
@@ -1456,6 +1534,7 @@ image_types:
           mode: 440
           data: |
             vagrant ALL=(ALL) NOPASSWD: ALL
+    supported_blueprint_options: *supported_options_disk
 
   "vagrant-virtualbox":
     <<: *vagrant_libvirt
@@ -1463,6 +1542,7 @@ image_types:
     platforms:
       - <<: *x86_64_bios_platform
         image_format: "vagrant_virtualbox"
+    supported_blueprint_options: *supported_options_disk
 
   oci:
     <<: *qcow2
@@ -1472,6 +1552,7 @@ image_types:
     platforms:
       - <<: *x86_64_bios_platform
         image_format: "qcow2"
+    supported_blueprint_options: *supported_options_disk
 
   vhd: &vhd
     <<: *qcow2
@@ -1524,6 +1605,7 @@ image_types:
     package_sets:
       os:
         - *azure_base_pkgset
+    supported_blueprint_options: *supported_options_disk
 
   "azure": &azure
     <<: *vhd
@@ -1679,9 +1761,11 @@ image_types:
                 - *azure_rhui_part_boot_efi
                 - *azure_rhui_part_boot_600
                 - *azure_rhui_part_lvm
+    supported_blueprint_options: *supported_options_disk
 
   "azure-rhui": &azure_rhui
     <<: *azure
+    supported_blueprint_options: *supported_options_disk
 
   "azure-sap-rhui":
     <<: *azure_rhui
@@ -1695,6 +1779,7 @@ image_types:
         - *azure_base_pkgset
         - *sap_base_pkgset
         - *sap_extras_pkgset
+    supported_blueprint_options: *supported_options_disk
 
   azure-sapapps-rhui:
     <<: *azure_rhui
@@ -1707,6 +1792,7 @@ image_types:
       os:
         - *azure_base_pkgset
         - *sap_base_pkgset
+    supported_blueprint_options: *supported_options_disk
 
   tar:
     filename: "root.tar.xz"
@@ -1725,6 +1811,31 @@ image_types:
             - "selinux-policy-targeted"
           exclude:
             - "rng-tools"
+    supported_blueprint_options:
+      # We've never tested many options or customizations with this image type
+      # and we also never restricted any, but it uses the OS pipeline, so it
+      # should support most standard/basic customizations
+      - "distro"
+      - "packages"
+      - "modules"
+      - "groups"
+      - "containers"
+      - "enabled_modules"
+      - "minimal"
+      - "customizations.cacerts"
+      - "customizations.directories"
+      - "customizations.files"
+      - "customizations.firewall"
+      - "customizations.user"
+      - "customizations.sshkey"
+      - "customizations.group"
+      - "customizations.hostname"
+      - "customizations.kernel.name"
+      - "customizations.locale"
+      - "customizations.repositories"
+      - "customizations.rpm"
+      - "customizations.services"
+      - "customizations.timezone"
 
   vmdk: &vmdk
     name_aliases: ["vsphere"]
@@ -1756,6 +1867,7 @@ image_types:
           exclude:
             - "dracut-config-rescue"
             - "rng-tools"
+    supported_blueprint_options: *supported_options_disk
 
   ova:
     <<: *vmdk
@@ -1766,6 +1878,7 @@ image_types:
     platforms:
       - <<: *x86_64_bios_platform
         image_format: "ova"
+    supported_blueprint_options: *supported_options_disk
 
   ec2: &ec2
     filename: "image.raw.xz"
@@ -1911,6 +2024,7 @@ image_types:
         - *ec2_base_pkgset
         - exclude:
             - "alsa-lib"
+    supported_blueprint_options: *supported_options_disk
 
   ami:
     <<: *ec2
@@ -1919,6 +2033,7 @@ image_types:
     filename: "image.raw"
     exports: ["image"]
     compression: ""
+    supported_blueprint_options: *supported_options_disk
 
   "ec2-ha":
     <<: *ec2
@@ -1944,6 +2059,7 @@ image_types:
             - "pcs"
           exclude:
             - "alsa-lib"
+    supported_blueprint_options: *supported_options_disk
 
   "ec2-sap":
     <<: *ec2
@@ -1990,6 +2106,7 @@ image_types:
           exclude:
             # COMPOSER-1829
             - "firewalld"
+    supported_blueprint_options: *supported_options_disk
 
   wsl: &wsl
     filename: "image.wsl"
@@ -2109,6 +2226,26 @@ image_types:
                   - "wsl-setup"
                   - "centos-logos"
                   - "centos-release"
+    supported_blueprint_options:
+      - "distro"
+      - "packages"
+      - "modules"
+      - "groups"
+      - "enabled_modules"
+      - "minimal"
+      - "containers"
+      - "customizations.directories"
+      - "customizations.files"
+      - "customizations.firewall"
+      - "customizations.user"
+      - "customizations.sshkey"
+      - "customizations.group"
+      - "customizations.hostname"
+      - "customizations.locale"
+      - "customizations.repositories"
+      - "customizations.services"
+      - "customizations.timezone"
+      - "customizations.rhsm"
 
 
   "image-installer":
@@ -2173,6 +2310,33 @@ image_types:
       installer:
         - *installer_pkgset
         - *anaconda_pkgset
+    supported_blueprint_options:
+      - "distro"
+      - "packages"
+      - "modules"
+      - "groups"
+      - "enabled_modules"
+      - "containers"
+      - "minimal"
+      - "customizations.installer"
+      - "customizations.cacerts"
+      - "customizations.directories"
+      - "customizations.files"
+      - "customizations.firewall"
+      - "customizations.user"
+      - "customizations.sshkey"
+      - "customizations.group"
+      - "customizations.fips"
+      - "customizations.timezone"
+      - "customizations.hostname"
+      - "customizations.kernel.name"
+      - "customizations.locale"
+      - "customizations.openscap"
+      - "customizations.repositories"
+      - "customizations.rpm"
+      - "customizations.services"
+      - "customizations.rhsm"
+
 
   gce:
     # this image type is set to `gcp` in image-builder-crc
@@ -2330,6 +2494,7 @@ image_types:
             - "qemu-guest-agent"
           conditions:
             <<: *conditions_pkgsets_insights_client_on_rhel
+    supported_blueprint_options: *supported_options_disk
 
   "minimal-raw":
     filename: "disk.raw.xz"
@@ -2434,6 +2599,7 @@ image_types:
             - "NetworkManager-wifi"
             - "iwl7260-firmware"
             - "iwl3160-firmware"
+    supported_blueprint_options: *supported_options_disk
 
   openstack:
     <<: *qcow2
@@ -2466,6 +2632,7 @@ image_types:
           exclude:
             - "dracut-config-rescue"
             - "rng-tools"
+    supported_blueprint_options: *supported_options_disk
 
   "edge-commit": &edge_commit
     name_aliases: ["rhel-edge-commit"]
@@ -2637,6 +2804,7 @@ image_types:
                 include:
                   # dnsmasq removed in 9.6+ but kept in older versions
                   - "dnsmasq"
+    supported_blueprint_options: *supported_options_ostree_commit
 
   "edge-container":
     name_aliases: ["rhel-edge-container"]
@@ -2646,6 +2814,7 @@ image_types:
     image_func: "iot_container"
     exports: ["container"]
     <<: *edge_commit
+    supported_blueprint_options: *supported_options_ostree_commit
 
   "edge-raw-image":
     name_aliases: ["rhel-edge-raw-image"]
@@ -2689,6 +2858,7 @@ image_types:
             ostree_conf_sysroot_readonly: false
             ignition_platform: ""
             kernel_options: ["modprobe.blacklist=vc4"]
+    supported_blueprint_options: *supported_options_ostree_disk
 
   # XXX: not a real pkgset but the "containerPkgsKey"
   "edge-container-pipeline-pkgset":
@@ -2725,6 +2895,15 @@ image_types:
       installer:
         - *installer_pkgset
         - *anaconda_pkgset
+    supported_blueprint_options:
+      - "distro"
+      - "customizations.installer"
+      - "customizations.user"
+      - "customizations.sshkey"
+      - "customizations.group"
+      - "customizations.fips"
+      - "customizations.timezone"
+      - "customizations.locale"
 
   "edge-simplified-installer":
     name_aliases: ["rhel-edge-simplified-installer"]
@@ -2832,6 +3011,22 @@ image_types:
                 arch: "aarch64"
               append:
                 <<: *edge_commit_aarch64_pkgset
+    supported_blueprint_options:
+      - "distro"
+      - "customizations.installation_device"
+      - "customizations.filesystem"
+      - "customizations.disk"
+      - "customizations.fdo"
+      - "customizations.ignition"
+      - "customizations.kernel"
+      - "customizations.user"
+      - "customizations.sshkey"
+      - "customizations.group"
+      - "customizations.fips"
+      - "customizations.files"
+      - "customizations.directories"
+    required_blueprint_options:
+      - "customizations.installation_device"
 
   "edge-ami": &edge_ami
     filename: "image.raw"
@@ -2886,6 +3081,7 @@ image_types:
               - "nvme_core.io_timeout=4294967295"
               # edge-ami
               - "modprobe.blacklist=vc4"
+    supported_blueprint_options: *supported_options_ostree_disk
 
   "edge-vsphere":
     <<: *edge_ami
@@ -2912,6 +3108,7 @@ image_types:
           shallow_merge:
             kernel_options:
               - "modprobe.blacklist=vc4"
+    supported_blueprint_options: *supported_options_ostree_disk
 
   "azure-cvm":
     <<: *vhd
@@ -3009,6 +3206,34 @@ image_types:
             - "linux-firmware*"
             - "grubby"
             - "os-prober"
+    supported_blueprint_options:
+      # same as disk image types, but kernel customizations are not supported
+      - "distro"
+      - "packages"
+      - "modules"
+      - "groups"
+      - "enabled_modules"
+      - "containers"
+      - "minimal"
+      - "customizations.cacerts"
+      - "customizations.directories"
+      - "customizations.disk"
+      - "customizations.files"
+      - "customizations.filesystem"
+      - "customizations.partitioning_mode"
+      - "customizations.fips"
+      - "customizations.firewall"
+      - "customizations.user"
+      - "customizations.sshkey"
+      - "customizations.group"
+      - "customizations.hostname"
+      - "customizations.locale"
+      - "customizations.openscap"
+      - "customizations.repositories"
+      - "customizations.rpm"
+      - "customizations.services"
+      - "customizations.timezone"
+      - "customizations.rhsm"
 
   # Based on lorax runtime-install.tmpl
   "netinst":
@@ -3158,3 +3383,7 @@ image_types:
             - "perl-interpreter"
             - "restore"
             - "spice-vdagent"
+    supported_blueprint_options:
+      - "distro"
+      - "customizations.fips"
+      - "customizations.locale"

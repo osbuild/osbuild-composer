@@ -33,11 +33,11 @@ import (
 	"github.com/osbuild/blueprint/pkg/blueprint"
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/container"
+	"github.com/osbuild/images/pkg/depsolvednf"
 	"github.com/osbuild/images/pkg/disk/partition"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distrofactory"
 	"github.com/osbuild/images/pkg/distroidparser"
-	"github.com/osbuild/images/pkg/dnfjson"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/ostree"
 	"github.com/osbuild/images/pkg/reporegistry"
@@ -53,7 +53,7 @@ import (
 // Solver interface defines the methods required for dependency solving by the API
 type Solver interface {
 	CleanCache() error
-	Depsolve(pkgSets []rpmmd.PackageSet, sbomType sbom.StandardType) (*dnfjson.DepsolveResult, error)
+	Depsolve(pkgSets []rpmmd.PackageSet, sbomType sbom.StandardType) (*depsolvednf.DepsolveResult, error)
 	FetchMetadata(repos []rpmmd.RepoConfig) (rpmmd.PackageList, error)
 	SearchMetadata(repos []rpmmd.RepoConfig, packages []string) (rpmmd.PackageList, error)
 }
@@ -167,7 +167,7 @@ func NewTestAPI(getSolver GetSolverFn, rr *reporegistry.RepoRegistry, logger *lo
 	return setupRouter(api)
 }
 
-func New(rr *reporegistry.RepoRegistry, stateDir string, solver *dnfjson.BaseSolver, df *distrofactory.Factory,
+func New(rr *reporegistry.RepoRegistry, stateDir string, solver *depsolvednf.BaseSolver, df *distrofactory.Factory,
 	logger *log.Logger, workers *worker.Server, distrosImageTypeDenylist map[string][]string) (*API, error) {
 	if logger == nil {
 		logger = log.New(os.Stdout, "", 0)
@@ -2296,14 +2296,14 @@ func (api *API) blueprintsTagHandler(writer http.ResponseWriter, request *http.R
 // repositories for the depsolving. The actual distro object name may not correspond to the alias.
 // Since the solver uses the distro name to namespace cache, it is important to use the same distro
 // name as the one used to get the repositories.
-func (api *API) depsolve(packageSets map[string][]rpmmd.PackageSet, distroName string, arch distro.Arch) (map[string]dnfjson.DepsolveResult, error) {
+func (api *API) depsolve(packageSets map[string][]rpmmd.PackageSet, distroName string, arch distro.Arch) (map[string]depsolvednf.DepsolveResult, error) {
 
 	distro := arch.Distro()
 	platformID := distro.ModulePlatformID()
 	releasever := distro.Releasever()
 	solver := api.getSolver(platformID, releasever, arch.Name(), distroName)
 
-	depsolvedSets := make(map[string]dnfjson.DepsolveResult, len(packageSets))
+	depsolvedSets := make(map[string]depsolvednf.DepsolveResult, len(packageSets))
 
 	for name, pkgSet := range packageSets {
 		res, err := solver.Depsolve(pkgSet, sbom.StandardTypeNone)

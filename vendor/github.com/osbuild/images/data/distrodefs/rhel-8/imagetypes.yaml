@@ -1268,6 +1268,81 @@
         - *azure_rhui_part_boot
         - *azure_rhui_part_lvm
 
+  supported_options_lists:
+    # Common options supported by all disk image types.
+    # This includes everything that is not specific to installers or
+    # ostree-based images.
+    supported_options_disk: &supported_options_disk
+      - "distro"
+      - "packages"
+      - "modules"
+      - "groups"
+      - "enabled_modules"
+      - "containers"
+      - "minimal"
+      - "customizations.cacerts"
+      - "customizations.directories"
+      - "customizations.disk"
+      - "customizations.files"
+      - "customizations.filesystem"
+      - "customizations.partitioning_mode"
+      - "customizations.fips"
+      - "customizations.firewall"
+      - "customizations.user"
+      - "customizations.sshkey"
+      - "customizations.group"
+      - "customizations.hostname"
+      - "customizations.kernel"
+      - "customizations.locale"
+      - "customizations.openscap"
+      - "customizations.repositories"
+      - "customizations.rpm"
+      - "customizations.services"
+      - "customizations.timezone"
+      - "customizations.rhsm"
+
+    # options supported by base ostree image types (commit and container)
+    supported_options_ostree_commit: &supported_options_ostree_commit
+      - "distro"
+      - "packages"
+      - "modules"
+      - "groups"
+      - "enabled_modules"
+      - "minimal"
+      - "containers"
+      - "customizations.directories"
+      - "customizations.files"
+      - "customizations.fips"
+      - "customizations.firewall"
+      - "customizations.user"
+      - "customizations.sshkey"
+      - "customizations.group"
+      - "customizations.hostname"
+      - "customizations.kernel.name"
+      - "customizations.locale"
+      - "customizations.repositories"
+      - "customizations.services"
+      - "customizations.timezone"
+      - "customizations.rhsm"
+
+    # options supported by ostree disk (deployment) image types
+    supported_options_ostree_disk: &supported_options_ostree_disk
+      - "distro"
+      - "customizations.files"
+      - "customizations.directories"
+      - "customizations.disk"
+      - "customizations.filesystem"
+      - "customizations.partitioning_mode"
+      - "customizations.fips"
+      - "customizations.user"
+      - "customizations.sshkey"
+      - "customizations.group"
+      - "customizations.kernel.append"
+      - "customizations.locale"
+      - "customizations.services"
+      - "customizations.rhsm"
+
+
 image_config:
   default:
     default_kernel: "kernel"
@@ -1376,6 +1451,7 @@ image_types:
     partition_tables_override:
       <<: *ec2_partition_tables_override
     image_config: *ami_image_config
+    supported_blueprint_options: *supported_options_disk
 
   ec2: &ec2
     <<: *ami
@@ -1402,6 +1478,7 @@ image_types:
               append:
                 include:
                   - "redhat-cloud-client-configuration"
+    supported_blueprint_options: *supported_options_disk
 
   "ec2-ha":
     <<: *ec2
@@ -1430,6 +1507,7 @@ image_types:
             - "alsa-lib"
           conditions:
             <<: *conditions_rh_cloud_client
+    supported_blueprint_options: *supported_options_disk
 
   "ec2-sap":
     <<: *ec2
@@ -1485,6 +1563,7 @@ image_types:
               append:
                 include:
                   - "rh-amazon-rhui-client-sap-bundle"
+    supported_blueprint_options: *supported_options_disk
 
   qcow2: &qcow2
     name_aliases: ["guest-image"]
@@ -1535,6 +1614,7 @@ image_types:
     package_sets: &qcow2_pkgset
       os:
         - *qcow2_common_pkgset
+    supported_blueprint_options: *supported_options_disk
 
   vhd:
     name_aliases: ["azure"]
@@ -1695,6 +1775,7 @@ image_types:
             - "firewalld"
           exclude:
             - "alsa-lib"
+    supported_blueprint_options: *supported_options_disk
 
   "azure-rhui": &azure_rhui
     filename: "disk.vhd.xz"
@@ -1745,6 +1826,7 @@ image_types:
             - "alsa-lib"
     partition_table:
       <<: *azure_rhui_partition_tables
+    supported_blueprint_options: *supported_options_disk
 
   "azure-sap-rhui":
     <<: *azure_rhui
@@ -1774,6 +1856,7 @@ image_types:
               append:
                 include:
                   - "rhui-azure-rhel8-sap-ha"
+    supported_blueprint_options: *supported_options_disk
 
   "azure-eap7-rhui":
     <<: *azure_rhui
@@ -1845,6 +1928,9 @@ image_types:
                 exclude:
                   - "python3-webencodings"
                   - "python3-html5lib"
+    # the azure-eap7-rhui image type is internal only and generally is never
+    # build with customizations, but let's treat it like a regular disk image
+    supported_blueprint_options: *supported_options_disk
 
   "image-installer":
     filename: "installer.iso"
@@ -1886,6 +1972,32 @@ image_types:
         - *installer_pkgset
         - *anaconda_pkgset
         - *anaconda_boot_pkgset
+    supported_blueprint_options:
+      - "distro"
+      - "packages"
+      - "modules"
+      - "groups"
+      - "enabled_modules"
+      - "containers"
+      - "minimal"
+      - "customizations.installer"
+      - "customizations.cacerts"
+      - "customizations.directories"
+      - "customizations.files"
+      - "customizations.firewall"
+      - "customizations.user"
+      - "customizations.sshkey"
+      - "customizations.group"
+      - "customizations.fips"
+      - "customizations.timezone"
+      - "customizations.hostname"
+      - "customizations.kernel.name"
+      - "customizations.locale"
+      - "customizations.openscap"
+      - "customizations.repositories"
+      - "customizations.rpm"
+      - "customizations.services"
+      - "customizations.rhsm"
 
   tar:
     filename: "root.tar.xz"
@@ -1904,6 +2016,32 @@ image_types:
             - "selinux-policy-targeted"
           exclude:
             - "rng-tools"
+    supported_blueprint_options:
+      # We've never tested many options or customizations with this image type
+      # and we also never restricted any, but it uses the OS pipeline, so it
+      # should support most standard/basic customizations
+      - "distro"
+      - "packages"
+      - "modules"
+      - "groups"
+      - "containers"
+      - "enabled_modules"
+      - "minimal"
+      - "customizations.cacerts"
+      - "customizations.directories"
+      - "customizations.files"
+      - "customizations.firewall"
+      - "customizations.user"
+      - "customizations.sshkey"
+      - "customizations.group"
+      - "customizations.hostname"
+      - "customizations.kernel.name"
+      - "customizations.locale"
+      - "customizations.repositories"
+      - "customizations.rpm"
+      - "customizations.services"
+      - "customizations.timezone"
+      - "customizations.rhsm"
 
   "edge-commit": &edge_commit
     name_aliases: ["rhel-edge-commit"]
@@ -2081,6 +2219,7 @@ image_types:
                   - "fdo-owner-cli"
                   - "greenboot-default-health-checks"
                   - "sos"
+    supported_blueprint_options: *supported_options_ostree_commit
 
   "edge-installer":
     name_aliases: ["rhel-edge-installer"]
@@ -2117,6 +2256,15 @@ image_types:
         - *installer_pkgset
         - *anaconda_pkgset
         - *anaconda_boot_pkgset
+    supported_blueprint_options:
+      - "distro"
+      - "customizations.installer"
+      - "customizations.user"
+      - "customizations.sshkey"
+      - "customizations.group"
+      - "customizations.fips"
+      - "customizations.timezone"
+      - "customizations.locale"
 
   # XXX: only available for rhel-8.6+, this is not possible to limit right now
   "edge-raw-image":
@@ -2149,6 +2297,7 @@ image_types:
     supported_partitioning_modes:
       - ""  # default partitioning mode is supported (in original go based code)
       - "raw"
+    supported_blueprint_options: *supported_options_ostree_disk
 
   "edge-simplified-installer":
     filename: "simplified-installer.iso"
@@ -2250,6 +2399,22 @@ image_types:
                 arch: "aarch64"
               append:
                 <<: *edge_commit_aarch64_pkgset
+    supported_blueprint_options:
+      - "distro"
+      - "customizations.installation_device"
+      - "customizations.filesystem"
+      - "customizations.disk"
+      - "customizations.fdo"
+      - "customizations.ignition"
+      - "customizations.kernel"
+      - "customizations.user"
+      - "customizations.sshkey"
+      - "customizations.group"
+      - "customizations.fips"
+      - "customizations.files"
+      - "customizations.directories"
+    required_blueprint_options:
+      - "customizations.installation_device"
 
   "edge-container":
     name_aliases: ["rhel-edge-container"]
@@ -2267,6 +2432,7 @@ image_types:
     package_sets:
       os:
         - *edge_commit_pkgset
+    supported_blueprint_options: *supported_options_ostree_commit
 
   vmdk: &vmdk
     name_aliases: ["vsphere"]
@@ -2299,6 +2465,7 @@ image_types:
           exclude:
             - "dracut-config-rescue"
             - "rng-tools"
+    supported_blueprint_options: *supported_options_disk
 
   ova:
     <<: *vmdk
@@ -2309,6 +2476,7 @@ image_types:
     platforms:
       - <<: *x86_64_bios_platform
         image_format: "ova"
+    supported_blueprint_options: *supported_options_disk
 
   gce: &gce
     # this image type is set to `gcp` in image-builder-crc
@@ -2411,6 +2579,7 @@ image_types:
     package_sets:
       os:
         - *gce_common_pkgset
+    supported_blueprint_options: *supported_options_disk
 
   "gce-rhui":
     <<: *gce
@@ -2437,6 +2606,7 @@ image_types:
         - *gce_common_pkgset
         - include:
             - "google-rhui-client-rhel8"
+    supported_blueprint_options: *supported_options_disk
 
   oci:
     <<: *qcow2
@@ -2447,6 +2617,7 @@ image_types:
       - <<: *x86_64_bios_platform
         image_format: "qcow2"
         qcow2_compat: "0.10"
+    supported_blueprint_options: *supported_options_disk
 
   openstack:
     <<: *qcow2
@@ -2478,6 +2649,7 @@ image_types:
           exclude:
             - "dracut-config-rescue"
             - "rng-tools"
+    supported_blueprint_options: *supported_options_disk
 
   wsl:
     filename: "image.wsl"
@@ -2599,6 +2771,26 @@ image_types:
             - "unbound-libs"
             - "xkeyboard-config"
             - "xz"
+    supported_blueprint_options:
+      - "distro"
+      - "packages"
+      - "modules"
+      - "groups"
+      - "enabled_modules"
+      - "minimal"
+      - "containers"
+      - "customizations.directories"
+      - "customizations.files"
+      - "customizations.firewall"
+      - "customizations.user"
+      - "customizations.sshkey"
+      - "customizations.group"
+      - "customizations.hostname"
+      - "customizations.locale"
+      - "customizations.repositories"
+      - "customizations.services"
+      - "customizations.timezone"
+      - "customizations.rhsm"
 
   "minimal-raw":
     filename: "disk.raw.xz"
@@ -2643,6 +2835,7 @@ image_types:
             - "NetworkManager-wifi"
             - "iwl7260-firmware"
             - "iwl3160-firmware"
+    supported_blueprint_options: *supported_options_disk
 
   # Based on lorax runtime-install.tmpl
   "netinst":
@@ -2783,3 +2976,7 @@ image_types:
             - "hexedit"
             - "sg3_utils"
             - "perl-interpreter"
+    supported_blueprint_options:
+      - "distro"
+      - "customizations.fips"
+      - "customizations.locale"

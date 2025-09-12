@@ -31,7 +31,7 @@ type repository struct {
 
 type RepoConfig struct {
 	// the repo id is not always required and is ignored in some cases.
-	// For example, it is not required in dnf-json, but it is a required
+	// For example, it is not required in osbuild-depsolve-dnf, but it is a required
 	// field for creating a repo file in `/etc/yum.repos.d/`
 	Id             string   `json:"id,omitempty"`
 	Name           string   `json:"name,omitempty"`

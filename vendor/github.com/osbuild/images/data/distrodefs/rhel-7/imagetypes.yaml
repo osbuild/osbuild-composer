@@ -238,6 +238,30 @@
           - "efibootmgr"
           - "grub2-efi-x64"
           - "shim-x64"
+  supported_blueprint_options: &supported_blueprint_options
+    - "distro"
+    - "packages"
+    - "modules"
+    - "groups"
+    - "minimal"
+    - "customizations.cacerts"
+    - "customizations.directories"
+    - "customizations.disk"
+    - "customizations.files"
+    - "customizations.filesystem"
+    - "customizations.partitioning_mode"
+    - "customizations.fips"
+    - "customizations.firewall"
+    - "customizations.user"
+    - "customizations.sshkey"
+    - "customizations.group"
+    - "customizations.hostname"
+    - "customizations.kernel"
+    - "customizations.locale"
+    - "customizations.repositories"
+    - "customizations.rpm"
+    - "customizations.services"
+    - "customizations.timezone"
 
 image_config:
   default:
@@ -412,6 +436,7 @@ image_types:
     package_sets:
       os:
         - *azure_rhui_common_pkgset
+    supported_blueprint_options: *supported_blueprint_options
 
   ec2:
     filename: "image.raw.xz"
@@ -565,6 +590,7 @@ image_types:
             # so we can't exclude it.
             # - "linux-firmware"
             - "firewalld"
+    supported_blueprint_options: *supported_blueprint_options
 
   qcow2:
     filename: "disk.qcow2"
@@ -653,3 +679,4 @@ image_types:
             - "libertas-usb8388-firmware"
           conditions:
             <<: *conditions_for_insights_client
+    supported_blueprint_options: *supported_blueprint_options

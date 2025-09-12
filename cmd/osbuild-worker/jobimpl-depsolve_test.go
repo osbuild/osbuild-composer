@@ -8,8 +8,7 @@ import (
 	"github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/osbuild/images/pkg/dnfjson"
-
+	"github.com/osbuild/images/pkg/depsolvednf"
 	worker "github.com/osbuild/osbuild-composer/cmd/osbuild-worker"
 )
 
@@ -19,7 +18,7 @@ func makeMockEntry() (*logrus.Entry, *test.Hook) {
 }
 
 func TestWorkerClientErrorFromDnfJson(t *testing.T) {
-	dnfJsonErr := dnfjson.Error{
+	dnfJsonErr := depsolvednf.Error{
 		Kind:   "DepsolveError",
 		Reason: "something is terribly wrong",
 	}
@@ -35,7 +34,7 @@ func TestWorkerClientErrorFromDnfJson(t *testing.T) {
 }
 
 func TestWorkerClientErrorFromDnfJsonOtherKind(t *testing.T) {
-	dnfJsonErr := dnfjson.Error{
+	dnfJsonErr := depsolvednf.Error{
 		Kind:   "something-else",
 		Reason: "something is terribly wrong",
 	}

@@ -27,7 +27,7 @@ cloud.google.com/go/auth/internal/transport/cert
 # cloud.google.com/go/auth/oauth2adapt v0.2.8
 ## explicit; go 1.23.0
 cloud.google.com/go/auth/oauth2adapt
-# cloud.google.com/go/compute v1.44.0
+# cloud.google.com/go/compute v1.45.0
 ## explicit; go 1.23.0
 cloud.google.com/go/compute/apiv1
 cloud.google.com/go/compute/apiv1/computepb
@@ -961,11 +961,13 @@ github.com/oracle/oci-go-sdk/v54/workrequests
 ## explicit; go 1.23.9
 github.com/osbuild/blueprint/internal/common
 github.com/osbuild/blueprint/pkg/blueprint
-# github.com/osbuild/images v0.188.0
+# github.com/osbuild/images v0.190.0
 ## explicit; go 1.23.9
 github.com/osbuild/images/data/dependencies
 github.com/osbuild/images/data/distrodefs
 github.com/osbuild/images/data/repositories
+github.com/osbuild/images/internal/buildconfig
+github.com/osbuild/images/internal/cmdutil
 github.com/osbuild/images/internal/common
 github.com/osbuild/images/internal/environment
 github.com/osbuild/images/pkg/arch
@@ -992,6 +994,7 @@ github.com/osbuild/images/pkg/customizations/subscription
 github.com/osbuild/images/pkg/customizations/users
 github.com/osbuild/images/pkg/customizations/wsl
 github.com/osbuild/images/pkg/datasizes
+github.com/osbuild/images/pkg/depsolvednf
 github.com/osbuild/images/pkg/disk
 github.com/osbuild/images/pkg/disk/partition
 github.com/osbuild/images/pkg/distro
@@ -1001,7 +1004,6 @@ github.com/osbuild/images/pkg/distro/generic
 github.com/osbuild/images/pkg/distro/test_distro
 github.com/osbuild/images/pkg/distrofactory
 github.com/osbuild/images/pkg/distroidparser
-github.com/osbuild/images/pkg/dnfjson
 github.com/osbuild/images/pkg/experimentalflags
 github.com/osbuild/images/pkg/hashutil
 github.com/osbuild/images/pkg/image
