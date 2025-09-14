@@ -472,8 +472,6 @@
     disable_submenu: true
     distributor: "$(sed 's, release .*$,,g' /etc/system-release)"
     serial: "serial --speed=115200 --unit=0 --word=8 --parity=no --stop=1"
-    terminal_input: ["serial"]
-    terminal_output: ["serial"]
     timeout: 10
     timeout_style: "countdown"
 
@@ -681,6 +679,8 @@
           grub2_config:
             <<: *azure_common_grub2_config
             terminal: ["serial"]
+            terminal_input: ["serial"]
+            terminal_output: ["serial"]
       "aarch64 grub2 config terminal=console":
         when:
           arch: "aarch64"
@@ -703,7 +703,6 @@
       - "NetworkManager-cloud-setup"
       - "nvme-cli"
       - "patch"
-      - "rng-tools"
       - "selinux-policy-targeted"
       - "system-reinstall-bootc"
       - "uuid"
@@ -764,6 +763,12 @@
         append:
           include:
             - "insights-client"
+      "x86_64 alone supports rngd":
+        when:
+          arch: "x86_64"
+        append:
+          include:
+            - "rng-tools"
 
 image_config:
   default:

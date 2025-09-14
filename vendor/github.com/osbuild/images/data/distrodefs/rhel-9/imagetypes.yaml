@@ -283,7 +283,6 @@
       - "NetworkManager-cloud-setup"
       - "nvme-cli"
       - "patch"
-      - "rng-tools"
       - "selinux-policy-targeted"
       - "uuid"
       - "WALinuxAgent"
@@ -345,6 +344,12 @@
             - "system-reinstall-bootc"
           exclude:
             - "microcode_ctl"
+      "x86_64 alone supports rngd":
+        when:
+          arch: "x86_64"
+        append:
+          include:
+            - "rng-tools"
 
   sapapps_image_config: &sapapps_image_config
     selinux_config:
