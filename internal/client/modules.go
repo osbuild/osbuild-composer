@@ -6,9 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	//	"strings"
 
-	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/weldr"
 )
 
@@ -56,7 +54,7 @@ func ListModulesV0(socket *http.Client, moduleNames string) ([]weldr.ModuleName,
 }
 
 // GetModulesInfoV0 returns detailed module info on the named modules
-func GetModulesInfoV0(socket *http.Client, modulesNames string) ([]rpmmd.PackageInfo, *APIResponse, error) {
+func GetModulesInfoV0(socket *http.Client, modulesNames string) ([]weldr.PackageInfo, *APIResponse, error) {
 	body, resp, err := GetRaw(socket, "GET", "/api/v0/modules/info/"+modulesNames)
 	if resp != nil || err != nil {
 		return nil, resp, err

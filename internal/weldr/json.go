@@ -254,21 +254,104 @@ type SourceInfoResponseV1 struct {
 	Errors  []responseError           `json:"errors"`
 }
 
+type PackageSource struct {
+	License   string   `json:"license"`
+	Version   string   `json:"version"`
+	SourceRef string   `json:"source_ref"`
+	Metadata  struct{} `json:"metadata"` // it's just an empty struct in lorax-composer
+}
+
+type PackageBuild struct {
+	Arch           string        `json:"arch"`
+	BuildTime      string        `json:"build_time"`
+	Epoch          uint          `json:"epoch"`
+	Release        string        `json:"release"`
+	Source         PackageSource `json:"source"`
+	Changelog      string        `json:"changelog"`
+	BuildConfigRef string        `json:"build_config_ref"`
+	BuildEnvRef    string        `json:"build_env_ref"`
+	Metadata       struct{}      `json:"metadata"` // it's just an empty struct in lorax-composer
+}
+
+type PackageInfo struct {
+	Name        string         `json:"name"`
+	Summary     string         `json:"summary"`
+	Description string         `json:"description"`
+	Homepage    string         `json:"homepage"`
+	UpstreamVCS string         `json:"upstream_vcs"`
+	Builds      []PackageBuild `json:"builds"`
+	// XXX: Dependencies should not be using rpmmd.PackageSpec for serialization
+	Dependencies []rpmmd.PackageSpec `json:"dependencies,omitempty"`
+}
+
+func RPMMDPackageToPackageBuild(pkg rpmmd.Package) PackageBuild {
+	// Convert the time to the API time format
+	return PackageBuild{
+		Arch:           pkg.Arch,
+		BuildTime:      pkg.BuildTime.Format("2006-01-02T15:04:05"),
+		Epoch:          pkg.Epoch,
+		Release:        pkg.Release,
+		Changelog:      "CHANGELOG_NEEDED", // the same value as lorax-composer puts here
+		BuildConfigRef: "BUILD_CONFIG_REF", // the same value as lorax-composer puts here
+		BuildEnvRef:    "BUILD_ENV_REF",    // the same value as lorax-composer puts here
+		Source: PackageSource{
+			License:   pkg.License,
+			Version:   pkg.Version,
+			SourceRef: "SOURCE_REF", // the same value as lorax-composer puts here
+		},
+	}
+}
+
+func RPMMDPackageToPackageInfo(pkg rpmmd.Package) PackageInfo {
+	return PackageInfo{
+		Name:         pkg.Name,
+		Summary:      pkg.Summary,
+		Description:  pkg.Description,
+		Homepage:     pkg.URL,
+		UpstreamVCS:  "UPSTREAM_VCS", // the same value as lorax-composer puts here
+		Builds:       []PackageBuild{RPMMDPackageToPackageBuild(pkg)},
+		Dependencies: nil,
+	}
+}
+
+func RPMMDPackageListToPackageInfos(packages rpmmd.PackageList) []PackageInfo {
+	resultsNames := make(map[string]int)
+	var results []PackageInfo
+
+	for _, pkg := range packages {
+		if index, ok := resultsNames[pkg.Name]; ok {
+			foundPkg := &results[index]
+
+			foundPkg.Builds = append(foundPkg.Builds, RPMMDPackageToPackageBuild(pkg))
+		} else {
+			newIndex := len(results)
+			resultsNames[pkg.Name] = newIndex
+
+			packageInfo := RPMMDPackageToPackageInfo(pkg)
+
+			results = append(results, packageInfo)
+		}
+	}
+
+	return results
+}
+
 // ProjectsListV0 is the response to /projects/list request
 type ProjectsListV0 struct {
-	Total    uint                `json:"total"`
-	Offset   uint                `json:"offset"`
-	Limit    uint                `json:"limit"`
-	Projects []rpmmd.PackageInfo `json:"projects"`
+	Total    uint          `json:"total"`
+	Offset   uint          `json:"offset"`
+	Limit    uint          `json:"limit"`
+	Projects []PackageInfo `json:"projects"`
 }
 
 // ProjectsInfoV0 is the response to /projects/info request
 type ProjectsInfoV0 struct {
-	Projects []rpmmd.PackageInfo `json:"projects"`
+	Projects []PackageInfo `json:"projects"`
 }
 
 // ProjectsDependenciesV0 is the response to /projects/depsolve request
 type ProjectsDependenciesV0 struct {
+	// XXX: Projects should not be using rpmmd.PackageSpec for serialization
 	Projects []rpmmd.PackageSpec `json:"projects"`
 }
 
@@ -286,7 +369,7 @@ type ModulesListV0 struct {
 
 // ModulesInfoV0 is the response to /modules/info request
 type ModulesInfoV0 struct {
-	Modules []rpmmd.PackageInfo `json:"modules"`
+	Modules []PackageInfo `json:"modules"`
 }
 
 type ComposeRequestV0 struct {

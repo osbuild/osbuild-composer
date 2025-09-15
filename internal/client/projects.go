@@ -6,14 +6,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	//	"strings"
 
 	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/weldr"
 )
 
 // ListAllProjectsV0 returns a list of all the available project names
-func ListAllProjectsV0(socket *http.Client) ([]rpmmd.PackageInfo, *APIResponse, error) {
+func ListAllProjectsV0(socket *http.Client) ([]weldr.PackageInfo, *APIResponse, error) {
 	body, resp, err := GetJSONAll(socket, "/api/v0/projects/list")
 	if resp != nil || err != nil {
 		return nil, resp, err
@@ -27,7 +26,7 @@ func ListAllProjectsV0(socket *http.Client) ([]rpmmd.PackageInfo, *APIResponse, 
 }
 
 // ListSomeProjectsV0 returns a list of all the available project names
-func ListSomeProjectsV0(socket *http.Client, offset, limit int) ([]rpmmd.PackageInfo, *APIResponse, error) {
+func ListSomeProjectsV0(socket *http.Client, offset, limit int) ([]weldr.PackageInfo, *APIResponse, error) {
 	path := fmt.Sprintf("/api/v0/projects/list?offset=%d&limit=%d", offset, limit)
 	body, resp, err := GetRaw(socket, "GET", path)
 	if resp != nil || err != nil {
@@ -42,7 +41,7 @@ func ListSomeProjectsV0(socket *http.Client, offset, limit int) ([]rpmmd.Package
 }
 
 // GetProjectsInfoV0 returns detailed project info on the named projects
-func GetProjectsInfoV0(socket *http.Client, projNames string) ([]rpmmd.PackageInfo, *APIResponse, error) {
+func GetProjectsInfoV0(socket *http.Client, projNames string) ([]weldr.PackageInfo, *APIResponse, error) {
 	body, resp, err := GetRaw(socket, "GET", "/api/v0/projects/info/"+projNames)
 	if resp != nil || err != nil {
 		return nil, resp, err
