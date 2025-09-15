@@ -1138,10 +1138,10 @@ func (api *API) projectsListHandler(writer http.ResponseWriter, request *http.Re
 	}
 
 	type reply struct {
-		Total    uint                `json:"total"`
-		Offset   uint                `json:"offset"`
-		Limit    uint                `json:"limit"`
-		Projects []rpmmd.PackageInfo `json:"projects"`
+		Total    uint          `json:"total"`
+		Offset   uint          `json:"offset"`
+		Limit    uint          `json:"limit"`
+		Projects []PackageInfo `json:"projects"`
 	}
 
 	offset, limit, err := parseOffsetAndLimit(request.URL.Query())
@@ -1181,13 +1181,13 @@ func (api *API) projectsListHandler(writer http.ResponseWriter, request *http.Re
 		return
 	}
 
-	packageInfos := availablePackages.ToPackageInfos()
+	packageInfos := RPMMDPackageListToPackageInfos(availablePackages)
 
 	total := uint(len(packageInfos))
 	start := min(offset, total)
 	n := min(limit, total-start)
 
-	packages := make([]rpmmd.PackageInfo, n)
+	packages := make([]PackageInfo, n)
 	for i := uint(0); i < n; i++ {
 		packages[i] = packageInfos[start+i]
 	}
@@ -1207,10 +1207,10 @@ func (api *API) modulesInfoHandler(writer http.ResponseWriter, request *http.Req
 	}
 
 	type projectsReply struct {
-		Projects []rpmmd.PackageInfo `json:"projects"`
+		Projects []PackageInfo `json:"projects"`
 	}
 	type modulesReply struct {
-		Modules []rpmmd.PackageInfo `json:"modules"`
+		Modules []PackageInfo `json:"modules"`
 	}
 
 	// handle both projects/info and modules/info, the latter includes dependencies
@@ -1278,7 +1278,7 @@ func (api *API) modulesInfoHandler(writer http.ResponseWriter, request *http.Req
 		return
 	}
 
-	packageInfos := foundPackages.ToPackageInfos()
+	packageInfos := RPMMDPackageListToPackageInfos(foundPackages)
 
 	if modulesRequested {
 		repos, err := api.allRepositories(distroName, archName)
@@ -1334,6 +1334,7 @@ func (api *API) projectsDepsolveHandler(writer http.ResponseWriter, request *htt
 	}
 
 	type reply struct {
+		// XXX: Projects should not be using rpmmd.PackageSpec for serialization
 		Projects []rpmmd.PackageSpec `json:"projects"`
 	}
 
