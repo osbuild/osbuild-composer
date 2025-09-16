@@ -9,6 +9,7 @@ import (
 	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/store"
+	"github.com/osbuild/osbuild-composer/internal/weldrtypes"
 )
 
 // StatusV0 is the response to /api/status from a v0+ server
@@ -274,14 +275,13 @@ type PackageBuild struct {
 }
 
 type PackageInfo struct {
-	Name        string         `json:"name"`
-	Summary     string         `json:"summary"`
-	Description string         `json:"description"`
-	Homepage    string         `json:"homepage"`
-	UpstreamVCS string         `json:"upstream_vcs"`
-	Builds      []PackageBuild `json:"builds"`
-	// XXX: Dependencies should not be using rpmmd.PackageSpec for serialization
-	Dependencies []rpmmd.PackageSpec `json:"dependencies,omitempty"`
+	Name         string                            `json:"name"`
+	Summary      string                            `json:"summary"`
+	Description  string                            `json:"description"`
+	Homepage     string                            `json:"homepage"`
+	UpstreamVCS  string                            `json:"upstream_vcs"`
+	Builds       []PackageBuild                    `json:"builds"`
+	Dependencies []weldrtypes.DepsolvedPackageInfo `json:"dependencies,omitempty"`
 }
 
 func RPMMDPackageToPackageBuild(pkg rpmmd.Package) PackageBuild {
@@ -351,8 +351,7 @@ type ProjectsInfoV0 struct {
 
 // ProjectsDependenciesV0 is the response to /projects/depsolve request
 type ProjectsDependenciesV0 struct {
-	// XXX: Projects should not be using rpmmd.PackageSpec for serialization
-	Projects []rpmmd.PackageSpec `json:"projects"`
+	Projects []weldrtypes.DepsolvedPackageInfo `json:"projects"`
 }
 
 type ModuleName struct {
@@ -436,7 +435,7 @@ type ComposeInfoResponseV0 struct {
 	Blueprint *blueprint.Blueprint `json:"blueprint"` // blueprint not frozen!
 	Commit    string               `json:"commit"`    // empty for now
 	Deps      struct {
-		Packages []rpmmd.Package `json:"packages"`
+		Packages []weldrtypes.DepsolvedPackageInfo `json:"packages"`
 	} `json:"deps"`
 	ComposeType string           `json:"compose_type"`
 	QueueStatus string           `json:"queue_status"`

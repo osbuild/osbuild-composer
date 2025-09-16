@@ -2,7 +2,6 @@ package weldrtypes
 
 import (
 	"github.com/osbuild/blueprint/pkg/blueprint"
-	"github.com/osbuild/images/pkg/rpmmd"
 )
 
 // A Compose represent the task of building a set of images from a single blueprint.
@@ -11,7 +10,7 @@ import (
 type Compose struct {
 	Blueprint  *blueprint.Blueprint
 	ImageBuild ImageBuild
-	Packages   []rpmmd.PackageSpec
+	Packages   []DepsolvedPackageInfo
 }
 
 // DeepCopy creates a copy of the Compose structure
@@ -21,7 +20,7 @@ func (c *Compose) DeepCopy() Compose {
 		bpCopy := *c.Blueprint
 		newBpPtr = &bpCopy
 	}
-	pkgs := make([]rpmmd.PackageSpec, len(c.Packages))
+	pkgs := make([]DepsolvedPackageInfo, len(c.Packages))
 	copy(pkgs, c.Packages)
 
 	return Compose{

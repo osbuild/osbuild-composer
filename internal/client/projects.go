@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/weldr"
+	"github.com/osbuild/osbuild-composer/internal/weldrtypes"
 )
 
 // ListAllProjectsV0 returns a list of all the available project names
@@ -55,7 +55,7 @@ func GetProjectsInfoV0(socket *http.Client, projNames string) ([]weldr.PackageIn
 }
 
 // DepsolveProjectsV0 returns the dependencies of the names projects
-func DepsolveProjectsV0(socket *http.Client, projNames string) ([]rpmmd.PackageSpec, *APIResponse, error) {
+func DepsolveProjectsV0(socket *http.Client, projNames string) ([]weldrtypes.DepsolvedPackageInfo, *APIResponse, error) {
 	body, resp, err := GetRaw(socket, "GET", "/api/v0/projects/depsolve/"+projNames)
 	if resp != nil || err != nil {
 		return nil, resp, err

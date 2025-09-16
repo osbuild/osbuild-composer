@@ -17,7 +17,6 @@ import (
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distro/test_distro"
 	"github.com/osbuild/images/pkg/distrofactory"
-	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/weldrtypes"
@@ -1199,7 +1198,7 @@ func Test_newComposeV0(t *testing.T) {
 						QueueStatus: common.IBFinished,
 					},
 				},
-				Packages: []rpmmd.PackageSpec{},
+				Packages: []weldrtypes.DepsolvedPackageInfo{},
 			},
 		},
 	}
@@ -1307,7 +1306,7 @@ func Test_newComposeFromV0(t *testing.T) {
 					JobID:       uuid.MustParse("22445cd3-7fa5-4dca-b7f8-4f9857b3e3a0"),
 					QueueStatus: common.IBFinished,
 				},
-				Packages: []rpmmd.PackageSpec{},
+				Packages: []weldrtypes.DepsolvedPackageInfo{},
 			},
 		},
 	}
@@ -1440,7 +1439,7 @@ func Test_newComposesV0(t *testing.T) {
 							QueueStatus: common.IBFinished,
 						},
 					},
-					Packages: []rpmmd.PackageSpec{},
+					Packages: []weldrtypes.DepsolvedPackageInfo{},
 				},
 				uuid.MustParse("14c454d0-26f3-4a56-8ceb-a5673aaba686"): {
 					Blueprint: &bp,
@@ -1474,7 +1473,7 @@ func Test_newComposesV0(t *testing.T) {
 							QueueStatus: common.IBFinished,
 						},
 					},
-					Packages: []rpmmd.PackageSpec{},
+					Packages: []weldrtypes.DepsolvedPackageInfo{},
 				},
 			},
 		},
@@ -1616,7 +1615,7 @@ func Test_newComposesFromV0(t *testing.T) {
 						JobID:       uuid.MustParse("22445cd3-7fa5-4dca-b7f8-4f9857b3e3a0"),
 						QueueStatus: common.IBFinished,
 					},
-					Packages: []rpmmd.PackageSpec{},
+					Packages: []weldrtypes.DepsolvedPackageInfo{},
 				},
 				uuid.MustParse("14c454d0-26f3-4a56-8ceb-a5673aaba686"): {
 					Blueprint: &bp,
@@ -1648,7 +1647,7 @@ func Test_newComposesFromV0(t *testing.T) {
 						JobID:       uuid.MustParse("6ac04049-341a-4297-b50b-5424bec9f193"),
 						QueueStatus: common.IBFinished,
 					},
-					Packages: []rpmmd.PackageSpec{},
+					Packages: []weldrtypes.DepsolvedPackageInfo{},
 				},
 			},
 		},
