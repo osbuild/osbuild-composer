@@ -12,14 +12,6 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/target"
 )
 
-type StateTransitionError struct {
-	message string
-}
-
-func (ste *StateTransitionError) Error() string {
-	return ste.message
-}
-
 // ImageBuild represents a single image build inside a compose
 type ImageBuild struct {
 	ID          int
