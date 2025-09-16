@@ -374,7 +374,7 @@ func (s *Store) PushCompose(composeID uuid.UUID,
 	size uint64,
 	targets []*target.Target,
 	jobId uuid.UUID,
-	packages []rpmmd.PackageSpec) error {
+	packages []weldrtypes.DepsolvedPackageInfo) error {
 
 	if _, exists := s.GetCompose(composeID); exists {
 		panic("a compose with this id already exists")
@@ -413,7 +413,7 @@ func (s *Store) PushTestCompose(composeID uuid.UUID,
 	size uint64,
 	targets []*target.Target,
 	testSuccess bool,
-	packages []rpmmd.PackageSpec) error {
+	packages []weldrtypes.DepsolvedPackageInfo) error {
 
 	if targets == nil {
 		targets = []*target.Target{}

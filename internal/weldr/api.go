@@ -1313,7 +1313,7 @@ func (api *API) modulesInfoHandler(writer http.ResponseWriter, request *http.Req
 				statusResponseError(writer, http.StatusBadRequest, errors)
 				return
 			}
-			packageInfos[i].Dependencies = res.Packages
+			packageInfos[i].Dependencies = weldrtypes.RPMMDPackageSpecListToDepsolvedPackageInfoList(res.Packages)
 		}
 		if err := solver.CleanCache(); err != nil {
 			// log and ignore
@@ -1335,8 +1335,7 @@ func (api *API) projectsDepsolveHandler(writer http.ResponseWriter, request *htt
 	}
 
 	type reply struct {
-		// XXX: Projects should not be using rpmmd.PackageSpec for serialization
-		Projects []rpmmd.PackageSpec `json:"projects"`
+		Projects []weldrtypes.DepsolvedPackageInfo `json:"projects"`
 	}
 
 	projects := params.ByName("projects")
@@ -1405,7 +1404,7 @@ func (api *API) projectsDepsolveHandler(writer http.ResponseWriter, request *htt
 		// log and ignore
 		log.Printf("Error during rpm repo cache cleanup: %s", err.Error())
 	}
-	err = json.NewEncoder(writer).Encode(reply{Projects: res.Packages})
+	err = json.NewEncoder(writer).Encode(reply{Projects: weldrtypes.RPMMDPackageSpecListToDepsolvedPackageInfoList(res.Packages)})
 	common.PanicOnError(err)
 }
 
@@ -2657,12 +2656,13 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		return
 	}
 
+	weldrPackages := weldrtypes.RPMMDPackageSpecListToDepsolvedPackageInfoList(packages)
 	if testMode == "1" {
 		// Create a failed compose
-		err = api.store.PushTestCompose(composeID, mf, imageType, bp, size, targets, false, packages)
+		err = api.store.PushTestCompose(composeID, mf, imageType, bp, size, targets, false, weldrPackages)
 	} else if testMode == "2" {
 		// Create a successful compose
-		err = api.store.PushTestCompose(composeID, mf, imageType, bp, size, targets, true, packages)
+		err = api.store.PushTestCompose(composeID, mf, imageType, bp, size, targets, true, weldrPackages)
 	} else {
 		var jobId uuid.UUID
 		jobId, err = api.workers.EnqueueOSBuild(archName, &worker.OSBuildJob{
@@ -2675,7 +2675,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 			ImageBootMode: imageType.BootMode().String(),
 		}, "")
 		if err == nil {
-			err = api.store.PushCompose(composeID, mf, imageType, bp, size, targets, jobId, packages)
+			err = api.store.PushCompose(composeID, mf, imageType, bp, size, targets, jobId, weldrPackages)
 		}
 	}
 
@@ -3071,7 +3071,7 @@ func (api *API) composeInfoHandler(writer http.ResponseWriter, request *http.Req
 		Blueprint *blueprint.Blueprint `json:"blueprint"` // blueprint not frozen!
 		Commit    string               `json:"commit"`    // empty for now
 		Deps      struct {
-			Packages []rpmmd.PackageSpec `json:"packages"`
+			Packages []weldrtypes.DepsolvedPackageInfo `json:"packages"`
 		} `json:"deps"`
 		ComposeType string           `json:"compose_type"`
 		QueueStatus string           `json:"queue_status"`

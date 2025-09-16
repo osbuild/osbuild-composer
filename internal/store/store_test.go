@@ -39,9 +39,9 @@ type storeTest struct {
 	myImageType      distro.ImageType
 	myManifest       manifest.OSBuildManifest
 	myRepoConfig     []rpmmd.RepoConfig
-	myPackageSpec    []rpmmd.PackageSpec
+	myPackageSpec    []weldrtypes.DepsolvedPackageInfo
 	myImageOptions   distro.ImageOptions
-	myPackages       []rpmmd.PackageSpec
+	myPackages       []weldrtypes.DepsolvedPackageInfo
 }
 
 // func to initialize some default values before the suite is ran
@@ -51,7 +51,7 @@ func (suite *storeTest) SetupSuite() {
 		Name:       "testRepo",
 		MirrorList: "testURL",
 	}}
-	suite.myPackageSpec = []rpmmd.PackageSpec{rpmmd.PackageSpec{}}
+	suite.myPackageSpec = []weldrtypes.DepsolvedPackageInfo{weldrtypes.DepsolvedPackageInfo{}}
 	suite.myDistro = test_distro.DistroFactory(test_distro.TestDistro1Name)
 	suite.NotNil(suite.myDistro)
 	suite.myArch, err = suite.myDistro.GetArch(test_distro.TestArchName)
@@ -63,7 +63,7 @@ func (suite *storeTest) SetupSuite() {
 	suite.mySourceConfig = SourceConfig{
 		Name: "testSourceConfig",
 	}
-	suite.myPackages = []rpmmd.PackageSpec{
+	suite.myPackages = []weldrtypes.DepsolvedPackageInfo{
 		{
 			Name:    "test1",
 			Epoch:   0,
@@ -315,10 +315,10 @@ func (suite *storeTest) TestDeleteBlueprintFromWorkspace() {
 
 func (suite *storeTest) TestPushCompose() {
 	testID := uuid.New()
-	err := suite.myStore.PushCompose(testID, suite.myManifest, suite.myImageType, &suite.myBP, 123, nil, uuid.New(), []rpmmd.PackageSpec{})
+	err := suite.myStore.PushCompose(testID, suite.myManifest, suite.myImageType, &suite.myBP, 123, nil, uuid.New(), []weldrtypes.DepsolvedPackageInfo{})
 	suite.NoError(err)
 	suite.Panics(func() {
-		err = suite.myStore.PushCompose(testID, suite.myManifest, suite.myImageType, &suite.myBP, 123, []*target.Target{suite.myTarget}, uuid.New(), []rpmmd.PackageSpec{})
+		err = suite.myStore.PushCompose(testID, suite.myManifest, suite.myImageType, &suite.myBP, 123, []*target.Target{suite.myTarget}, uuid.New(), []weldrtypes.DepsolvedPackageInfo{})
 	})
 	suite.NoError(err)
 
@@ -330,11 +330,11 @@ func (suite *storeTest) TestPushCompose() {
 
 func (suite *storeTest) TestPushTestCompose() {
 	ID := uuid.New()
-	err := suite.myStore.PushTestCompose(ID, suite.myManifest, suite.myImageType, &suite.myBP, 123, nil, true, []rpmmd.PackageSpec{})
+	err := suite.myStore.PushTestCompose(ID, suite.myManifest, suite.myImageType, &suite.myBP, 123, nil, true, []weldrtypes.DepsolvedPackageInfo{})
 	suite.NoError(err)
 	suite.Equal(common.ImageBuildState(2), suite.myStore.composes[ID].ImageBuild.QueueStatus)
 	ID = uuid.New()
-	err = suite.myStore.PushTestCompose(ID, suite.myManifest, suite.myImageType, &suite.myBP, 123, []*target.Target{suite.myTarget}, false, []rpmmd.PackageSpec{})
+	err = suite.myStore.PushTestCompose(ID, suite.myManifest, suite.myImageType, &suite.myBP, 123, []*target.Target{suite.myTarget}, false, []weldrtypes.DepsolvedPackageInfo{})
 	suite.NoError(err)
 	suite.Equal(common.ImageBuildState(3), suite.myStore.composes[ID].ImageBuild.QueueStatus)
 

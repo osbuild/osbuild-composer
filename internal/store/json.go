@@ -13,7 +13,6 @@ import (
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distrofactory"
 	"github.com/osbuild/images/pkg/manifest"
-	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/weldrtypes"
@@ -38,9 +37,9 @@ type workspaceV0 map[string]blueprint.Blueprint
 // It contains all the information necessary to generate the inputs for the job, as
 // well as the job's state.
 type composeV0 struct {
-	Blueprint   *blueprint.Blueprint `json:"blueprint"`
-	ImageBuilds []imageBuildV0       `json:"image_builds"`
-	Packages    []rpmmd.PackageSpec  `json:"packages"`
+	Blueprint   *blueprint.Blueprint              `json:"blueprint"`
+	ImageBuilds []imageBuildV0                    `json:"image_builds"`
+	Packages    []weldrtypes.DepsolvedPackageInfo `json:"packages"`
 }
 
 type composesV0 map[uuid.UUID]composeV0
@@ -185,7 +184,7 @@ func newComposeFromV0(composeStruct composeV0, df *distrofactory.Factory) (weldr
 		return weldrtypes.Compose{}, err
 	}
 
-	pkgs := make([]rpmmd.PackageSpec, len(composeStruct.Packages))
+	pkgs := make([]weldrtypes.DepsolvedPackageInfo, len(composeStruct.Packages))
 	copy(pkgs, composeStruct.Packages)
 
 	return weldrtypes.Compose{
@@ -297,7 +296,7 @@ func newWorkspaceV0(workspace map[string]blueprint.Blueprint) workspaceV0 {
 func newComposeV0(compose weldrtypes.Compose) composeV0 {
 	bp := compose.Blueprint.DeepCopy()
 
-	pkgs := make([]rpmmd.PackageSpec, len(compose.Packages))
+	pkgs := make([]weldrtypes.DepsolvedPackageInfo, len(compose.Packages))
 	copy(pkgs, compose.Packages)
 
 	return composeV0{
