@@ -19,7 +19,7 @@ sources:
     type: vector
     address: ${PRIVATE_IP}:12005
 sinks:
-  worker:
+  worker_out:
     type: aws_cloudwatch_logs
     inputs:
       - journald
@@ -29,7 +29,7 @@ sinks:
     stream_name: worker_syslog_{{ host }}
     encoding:
       codec: json
-  executor:
+  executor_out:
     type: aws_cloudwatch_logs
     inputs:
       - executor
