@@ -12,6 +12,7 @@ import (
 	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/target"
+	"github.com/osbuild/osbuild-composer/internal/weldrtypes"
 )
 
 func setupTestHostDistro(distroName, archName string) (Cleanup func()) {
@@ -111,10 +112,10 @@ func FixtureBase(hostDistroName, hostArchName string) *Fixture {
 
 	s.blueprints[bName] = b
 
-	s.composes = map[uuid.UUID]Compose{
+	s.composes = map[uuid.UUID]weldrtypes.Compose{
 		uuid.MustParse("30000000-0000-0000-0000-000000000000"): {
 			Blueprint: &b,
-			ImageBuild: ImageBuild{
+			ImageBuild: weldrtypes.ImageBuild{
 				QueueStatus: common.IBWaiting,
 				ImageType:   imgType,
 				Manifest:    mf,
@@ -125,7 +126,7 @@ func FixtureBase(hostDistroName, hostArchName string) *Fixture {
 		},
 		uuid.MustParse("30000000-0000-0000-0000-000000000001"): {
 			Blueprint: &b,
-			ImageBuild: ImageBuild{
+			ImageBuild: weldrtypes.ImageBuild{
 				QueueStatus: common.IBRunning,
 				ImageType:   imgType,
 				Manifest:    mf,
@@ -137,7 +138,7 @@ func FixtureBase(hostDistroName, hostArchName string) *Fixture {
 		},
 		uuid.MustParse("30000000-0000-0000-0000-000000000002"): {
 			Blueprint: &b,
-			ImageBuild: ImageBuild{
+			ImageBuild: weldrtypes.ImageBuild{
 				QueueStatus: common.IBFinished,
 				ImageType:   imgType,
 				Manifest:    mf,
@@ -150,7 +151,7 @@ func FixtureBase(hostDistroName, hostArchName string) *Fixture {
 		},
 		uuid.MustParse("30000000-0000-0000-0000-000000000003"): {
 			Blueprint: &b,
-			ImageBuild: ImageBuild{
+			ImageBuild: weldrtypes.ImageBuild{
 				QueueStatus: common.IBFailed,
 				ImageType:   imgType,
 				Manifest:    mf,
@@ -163,7 +164,7 @@ func FixtureBase(hostDistroName, hostArchName string) *Fixture {
 		},
 		uuid.MustParse("30000000-0000-0000-0000-000000000004"): {
 			Blueprint: &b,
-			ImageBuild: ImageBuild{
+			ImageBuild: weldrtypes.ImageBuild{
 				QueueStatus: common.IBFinished,
 				ImageType:   imgType,
 				Manifest:    mf,
@@ -261,10 +262,10 @@ func FixtureFinished(hostDistroName, hostArchName string) *Fixture {
 		}}
 
 	s.blueprints[bName] = b
-	s.composes = map[uuid.UUID]Compose{
+	s.composes = map[uuid.UUID]weldrtypes.Compose{
 		uuid.MustParse("30000000-0000-0000-0000-000000000000"): {
 			Blueprint: &b,
-			ImageBuild: ImageBuild{
+			ImageBuild: weldrtypes.ImageBuild{
 				QueueStatus: common.IBFinished,
 				ImageType:   imgType,
 				Manifest:    mf,
@@ -275,7 +276,7 @@ func FixtureFinished(hostDistroName, hostArchName string) *Fixture {
 		},
 		uuid.MustParse("30000000-0000-0000-0000-000000000001"): {
 			Blueprint: &b,
-			ImageBuild: ImageBuild{
+			ImageBuild: weldrtypes.ImageBuild{
 				QueueStatus: common.IBFinished,
 				ImageType:   imgType,
 				Manifest:    mf,
@@ -287,7 +288,7 @@ func FixtureFinished(hostDistroName, hostArchName string) *Fixture {
 		},
 		uuid.MustParse("30000000-0000-0000-0000-000000000003"): {
 			Blueprint: &b,
-			ImageBuild: ImageBuild{
+			ImageBuild: weldrtypes.ImageBuild{
 				QueueStatus: common.IBFailed,
 				ImageType:   imgType,
 				Manifest:    mf,
@@ -300,7 +301,7 @@ func FixtureFinished(hostDistroName, hostArchName string) *Fixture {
 		},
 		uuid.MustParse("30000000-0000-0000-0000-000000000004"): {
 			Blueprint: &b,
-			ImageBuild: ImageBuild{
+			ImageBuild: weldrtypes.ImageBuild{
 				QueueStatus: common.IBFinished,
 				ImageType:   imgType,
 				Manifest:    mf,
@@ -498,10 +499,10 @@ func FixtureJobs(hostDistroName, hostArchName string) *Fixture {
 		}}
 
 	s.blueprints[bName] = b
-	s.composes = map[uuid.UUID]Compose{
+	s.composes = map[uuid.UUID]weldrtypes.Compose{
 		uuid.MustParse("30000000-0000-0000-0000-000000000000"): {
 			Blueprint: &b,
-			ImageBuild: ImageBuild{
+			ImageBuild: weldrtypes.ImageBuild{
 				QueueStatus: common.IBWaiting,
 				ImageType:   imgType,
 				Manifest:    mf,
@@ -512,7 +513,7 @@ func FixtureJobs(hostDistroName, hostArchName string) *Fixture {
 		},
 		uuid.MustParse("30000000-0000-0000-0000-000000000001"): {
 			Blueprint: &b,
-			ImageBuild: ImageBuild{
+			ImageBuild: weldrtypes.ImageBuild{
 				QueueStatus: common.IBRunning,
 				ImageType:   imgType,
 				Manifest:    mf,
@@ -524,7 +525,7 @@ func FixtureJobs(hostDistroName, hostArchName string) *Fixture {
 		},
 		uuid.MustParse("30000000-0000-0000-0000-000000000002"): {
 			Blueprint: &b,
-			ImageBuild: ImageBuild{
+			ImageBuild: weldrtypes.ImageBuild{
 				QueueStatus: common.IBFinished,
 				ImageType:   imgType,
 				Manifest:    mf,
@@ -537,7 +538,7 @@ func FixtureJobs(hostDistroName, hostArchName string) *Fixture {
 		},
 		uuid.MustParse("30000000-0000-0000-0000-000000000003"): {
 			Blueprint: &b,
-			ImageBuild: ImageBuild{
+			ImageBuild: weldrtypes.ImageBuild{
 				QueueStatus: common.IBFailed,
 				ImageType:   imgType,
 				Manifest:    mf,
@@ -550,7 +551,7 @@ func FixtureJobs(hostDistroName, hostArchName string) *Fixture {
 		},
 		uuid.MustParse("30000000-0000-0000-0000-000000000004"): {
 			Blueprint: &b,
-			ImageBuild: ImageBuild{
+			ImageBuild: weldrtypes.ImageBuild{
 				QueueStatus: common.IBFinished,
 				ImageType:   imgType,
 				Manifest:    mf,
@@ -563,7 +564,7 @@ func FixtureJobs(hostDistroName, hostArchName string) *Fixture {
 		},
 		uuid.MustParse("30000000-0000-0000-0000-000000000005"): {
 			Blueprint: &b,
-			ImageBuild: ImageBuild{
+			ImageBuild: weldrtypes.ImageBuild{
 				QueueStatus: common.IBFinished,
 				ImageType:   imgType,
 				Manifest:    mf,

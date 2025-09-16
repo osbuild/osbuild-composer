@@ -47,6 +47,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/store"
 	"github.com/osbuild/osbuild-composer/internal/target"
+	"github.com/osbuild/osbuild-composer/internal/weldrtypes"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 )
 
@@ -379,7 +380,7 @@ func composeStateFromJobStatus(js *worker.JobStatus, result *worker.OSBuildJobRe
 // Returns the state of the image in `compose` and the times the job was
 // queued, started, and finished. Assumes that there's only one image in the
 // compose.
-func (api *API) getComposeStatus(compose store.Compose) (*composeStatus, error) {
+func (api *API) getComposeStatus(compose weldrtypes.Compose) (*composeStatus, error) {
 	jobId := compose.ImageBuild.JobID
 
 	// backwards compatibility: composes that were around before splitting
@@ -425,7 +426,7 @@ func (api *API) getComposeStatus(compose store.Compose) (*composeStatus, error) 
 // Opens the image file for `compose`. This asks the worker server for the
 // artifact first, and then falls back to looking in
 // `{outputs}/{composeId}/{imageBuildId}` for backwards compatibility.
-func (api *API) openImageFile(composeId uuid.UUID, compose store.Compose) (io.Reader, int64, error) {
+func (api *API) openImageFile(composeId uuid.UUID, compose weldrtypes.Compose) (io.Reader, int64, error) {
 	name := compose.ImageBuild.ImageType.Filename()
 
 	reader, size, err := api.workers.JobArtifact(compose.ImageBuild.JobID, name)

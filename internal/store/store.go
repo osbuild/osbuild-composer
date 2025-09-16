@@ -21,6 +21,7 @@ import (
 	"github.com/osbuild/images/pkg/distrofactory"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/osbuild-composer/internal/jsondb"
+	"github.com/osbuild/osbuild-composer/internal/weldrtypes"
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
 	"github.com/osbuild/images/pkg/rpmmd"
@@ -46,7 +47,7 @@ const StoreDBName = "state"
 type Store struct {
 	blueprints        map[string]blueprint.Blueprint
 	workspace         map[string]blueprint.Blueprint
-	composes          map[uuid.UUID]Compose
+	composes          map[uuid.UUID]weldrtypes.Compose
 	sources           map[string]SourceConfig
 	blueprintsChanges map[string]map[string]blueprint.Change
 	blueprintsCommits map[string][]string
@@ -342,7 +343,7 @@ func (s *Store) TagBlueprint(name string) error {
 	})
 }
 
-func (s *Store) GetCompose(id uuid.UUID) (Compose, bool) {
+func (s *Store) GetCompose(id uuid.UUID) (weldrtypes.Compose, bool) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -352,11 +353,11 @@ func (s *Store) GetCompose(id uuid.UUID) (Compose, bool) {
 
 // GetAllComposes creates a deep copy of all composes present in this store
 // and returns them as a dictionary with compose UUIDs as keys
-func (s *Store) GetAllComposes() map[uuid.UUID]Compose {
+func (s *Store) GetAllComposes() map[uuid.UUID]weldrtypes.Compose {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	composes := make(map[uuid.UUID]Compose)
+	composes := make(map[uuid.UUID]weldrtypes.Compose)
 
 	for id, singleCompose := range s.composes {
 		newCompose := singleCompose.DeepCopy()
@@ -385,9 +386,9 @@ func (s *Store) PushCompose(composeID uuid.UUID,
 
 	// FIXME: handle or comment this possible error
 	_ = s.change(func() error {
-		s.composes[composeID] = Compose{
+		s.composes[composeID] = weldrtypes.Compose{
 			Blueprint: bp,
-			ImageBuild: ImageBuild{
+			ImageBuild: weldrtypes.ImageBuild{
 				Manifest:   manifest,
 				ImageType:  imageType,
 				Targets:    targets,
@@ -427,9 +428,9 @@ func (s *Store) PushTestCompose(composeID uuid.UUID,
 
 	// FIXME: handle or comment this possible error
 	_ = s.change(func() error {
-		s.composes[composeID] = Compose{
+		s.composes[composeID] = weldrtypes.Compose{
 			Blueprint: bp,
-			ImageBuild: ImageBuild{
+			ImageBuild: weldrtypes.ImageBuild{
 				QueueStatus: status,
 				Manifest:    manifest,
 				ImageType:   imageType,

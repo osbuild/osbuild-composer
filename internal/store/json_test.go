@@ -20,6 +20,7 @@ import (
 	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/target"
+	"github.com/osbuild/osbuild-composer/internal/weldrtypes"
 )
 
 // MustParseTime parses a time string and panics if there is an error
@@ -145,7 +146,7 @@ func TestStore_toStoreV0(t *testing.T) {
 	type fields struct {
 		blueprints        map[string]blueprint.Blueprint
 		workspace         map[string]blueprint.Blueprint
-		composes          map[uuid.UUID]Compose
+		composes          map[uuid.UUID]weldrtypes.Compose
 		sources           map[string]SourceConfig
 		blueprintsChanges map[string]map[string]blueprint.Change
 		blueprintsCommits map[string][]string
@@ -1130,14 +1131,14 @@ func Test_newComposeV0(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		compose Compose
+		compose weldrtypes.Compose
 		want    composeV0
 	}{
 		{
 			name: "qcow2 compose",
-			compose: Compose{
+			compose: weldrtypes.Compose{
 				Blueprint: &bp,
-				ImageBuild: ImageBuild{
+				ImageBuild: weldrtypes.ImageBuild{
 					ID:        0,
 					ImageType: testImageType,
 					Manifest:  []byte("JSON MANIFEST GOES HERE"),
@@ -1229,14 +1230,14 @@ func Test_newComposeFromV0(t *testing.T) {
 		name    string
 		compose composeV0
 		factory *distrofactory.Factory
-		want    Compose
+		want    weldrtypes.Compose
 		errOk   bool
 	}{
 		{
 			name:    "empty",
 			compose: composeV0{},
 			factory: df,
-			want:    Compose{},
+			want:    weldrtypes.Compose{},
 			errOk:   true,
 		},
 		{
@@ -1276,9 +1277,9 @@ func Test_newComposeFromV0(t *testing.T) {
 					},
 				},
 			},
-			want: Compose{
+			want: weldrtypes.Compose{
 				Blueprint: &bp,
-				ImageBuild: ImageBuild{
+				ImageBuild: weldrtypes.ImageBuild{
 					ID:        0,
 					ImageType: testImageType,
 					Manifest:  []byte("JSON MANIFEST GOES HERE"),
@@ -1337,15 +1338,15 @@ func Test_newComposesV0(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		composes map[uuid.UUID]Compose
+		composes map[uuid.UUID]weldrtypes.Compose
 		want     composesV0
 	}{
 		{
 			name: "two composes",
-			composes: map[uuid.UUID]Compose{
+			composes: map[uuid.UUID]weldrtypes.Compose{
 				uuid.MustParse("f53b49c0-d321-447e-8ab8-6e827891e3f0"): {
 					Blueprint: &bp,
-					ImageBuild: ImageBuild{
+					ImageBuild: weldrtypes.ImageBuild{
 						ID:        0,
 						ImageType: testImageType,
 						Manifest:  []byte("JSON MANIFEST GOES HERE"),
@@ -1376,7 +1377,7 @@ func Test_newComposesV0(t *testing.T) {
 				},
 				uuid.MustParse("14c454d0-26f3-4a56-8ceb-a5673aaba686"): {
 					Blueprint: &bp,
-					ImageBuild: ImageBuild{
+					ImageBuild: weldrtypes.ImageBuild{
 						ID:        0,
 						ImageType: testImageType,
 						Manifest:  []byte("JSON MANIFEST GOES HERE"),
@@ -1505,13 +1506,13 @@ func Test_newComposesFromV0(t *testing.T) {
 		name     string
 		registry *distrofactory.Factory
 		composes composesV0
-		want     map[uuid.UUID]Compose
+		want     map[uuid.UUID]weldrtypes.Compose
 	}{
 		{
 			name:     "empty",
 			registry: df,
 			composes: composesV0{},
-			want:     make(map[uuid.UUID]Compose),
+			want:     make(map[uuid.UUID]weldrtypes.Compose),
 		},
 		{
 			name:     "two composes",
@@ -1584,10 +1585,10 @@ func Test_newComposesFromV0(t *testing.T) {
 					},
 				},
 			},
-			want: map[uuid.UUID]Compose{
+			want: map[uuid.UUID]weldrtypes.Compose{
 				uuid.MustParse("f53b49c0-d321-447e-8ab8-6e827891e3f0"): {
 					Blueprint: &bp,
-					ImageBuild: ImageBuild{
+					ImageBuild: weldrtypes.ImageBuild{
 						ID:        0,
 						ImageType: testImageType,
 						Manifest:  []byte("JSON MANIFEST GOES HERE"),
@@ -1619,7 +1620,7 @@ func Test_newComposesFromV0(t *testing.T) {
 				},
 				uuid.MustParse("14c454d0-26f3-4a56-8ceb-a5673aaba686"): {
 					Blueprint: &bp,
-					ImageBuild: ImageBuild{
+					ImageBuild: weldrtypes.ImageBuild{
 						ID:        0,
 						ImageType: testImageType,
 						Manifest:  []byte("JSON MANIFEST GOES HERE"),
@@ -1668,7 +1669,7 @@ func Test_newImageBuildFromV0(t *testing.T) {
 		name  string
 		arch  distro.Arch
 		ib    imageBuildV0
-		want  ImageBuild
+		want  weldrtypes.ImageBuild
 		errOk bool
 	}{
 		{
@@ -1676,7 +1677,7 @@ func Test_newImageBuildFromV0(t *testing.T) {
 			arch:  testArch,
 			errOk: true,
 			ib:    imageBuildV0{},
-			want:  ImageBuild{},
+			want:  weldrtypes.ImageBuild{},
 		},
 		{
 			name:  "qcow2 image build",
@@ -1710,7 +1711,7 @@ func Test_newImageBuildFromV0(t *testing.T) {
 				JobID:       uuid.MustParse("22445cd3-7fa5-4dca-b7f8-4f9857b3e3a0"),
 				QueueStatus: common.IBFinished,
 			},
-			want: ImageBuild{
+			want: weldrtypes.ImageBuild{
 				ID:        0,
 				ImageType: testImageType,
 				Manifest:  []byte("JSON MANIFEST GOES HERE"),
