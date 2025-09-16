@@ -16,6 +16,7 @@ import (
 	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/target"
+	"github.com/osbuild/osbuild-composer/internal/weldrtypes"
 )
 
 // struct for sharing state between tests
@@ -30,8 +31,8 @@ type storeTest struct {
 	myChange         []blueprint.Change
 	myTarget         *target.Target
 	mySources        map[string]osbuild.Source
-	myCompose        Compose
-	myImageBuild     ImageBuild
+	myCompose        weldrtypes.Compose
+	myImageBuild     weldrtypes.ImageBuild
 	mySourceConfig   SourceConfig
 	myDistro         distro.Distro
 	myArch           distro.Arch
@@ -76,12 +77,12 @@ func (suite *storeTest) SetupSuite() {
 			Release: "1.fc35",
 			Arch:    "x86_64",
 		}}
-	suite.myCompose = Compose{
+	suite.myCompose = weldrtypes.Compose{
 		Blueprint:  &suite.myBP,
 		ImageBuild: suite.myImageBuild,
 		Packages:   suite.myPackages,
 	}
-	suite.myImageBuild = ImageBuild{
+	suite.myImageBuild = weldrtypes.ImageBuild{
 		ID: 123,
 	}
 	suite.mySources = make(map[string]osbuild.Source)
@@ -349,7 +350,7 @@ func (suite *storeTest) TestPushTestCompose() {
 }
 
 func (suite *storeTest) TestGetAllComposes() {
-	suite.myStore.composes = make(map[uuid.UUID]Compose)
+	suite.myStore.composes = make(map[uuid.UUID]weldrtypes.Compose)
 	suite.myStore.composes[uuid.New()] = suite.myCompose
 	compose := suite.myStore.GetAllComposes()
 	suite.Equal(suite.myStore.composes, compose)
@@ -357,11 +358,11 @@ func (suite *storeTest) TestGetAllComposes() {
 
 func (suite *storeTest) TestDeleteCompose() {
 	ID := uuid.New()
-	suite.myStore.composes = make(map[uuid.UUID]Compose)
+	suite.myStore.composes = make(map[uuid.UUID]weldrtypes.Compose)
 	suite.myStore.composes[ID] = suite.myCompose
 	err := suite.myStore.DeleteCompose(ID)
 	suite.NoError(err)
-	suite.Equal(suite.myStore.composes, map[uuid.UUID]Compose{})
+	suite.Equal(suite.myStore.composes, map[uuid.UUID]weldrtypes.Compose{})
 	err = suite.myStore.DeleteCompose(ID)
 	suite.Error(err)
 }

@@ -16,6 +16,7 @@ import (
 	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/target"
+	"github.com/osbuild/osbuild-composer/internal/weldrtypes"
 )
 
 var getHostDistroName func() (string, error) = distro.GetHostDistroName
@@ -106,8 +107,8 @@ func newWorkspaceFromV0(workspaceStruct workspaceV0) map[string]blueprint.Bluepr
 	return workspace
 }
 
-func newComposesFromV0(composesStruct composesV0, df *distrofactory.Factory, log *log.Logger) map[uuid.UUID]Compose {
-	composes := make(map[uuid.UUID]Compose)
+func newComposesFromV0(composesStruct composesV0, df *distrofactory.Factory, log *log.Logger) map[uuid.UUID]weldrtypes.Compose {
+	composes := make(map[uuid.UUID]weldrtypes.Compose)
 
 	for composeID, composeStruct := range composesStruct {
 		c, err := newComposeFromV0(composeStruct, df)
@@ -123,12 +124,12 @@ func newComposesFromV0(composesStruct composesV0, df *distrofactory.Factory, log
 	return composes
 }
 
-func newImageBuildFromV0(imageBuildStruct imageBuildV0, arch distro.Arch) (ImageBuild, error) {
+func newImageBuildFromV0(imageBuildStruct imageBuildV0, arch distro.Arch) (weldrtypes.ImageBuild, error) {
 	imgType := imageTypeFromCompatString(imageBuildStruct.ImageType, arch)
 	if imgType == nil {
 		// Invalid type strings in serialization format, this may happen
 		// on upgrades.
-		return ImageBuild{}, errors.New("invalid Image Type string")
+		return weldrtypes.ImageBuild{}, errors.New("invalid Image Type string")
 	}
 	// Backwards compatibility: fail all builds that are queued or
 	// running. Jobs status is now handled outside of the store
@@ -139,7 +140,7 @@ func newImageBuildFromV0(imageBuildStruct imageBuildV0, arch distro.Arch) (Image
 	case common.IBRunning, common.IBWaiting:
 		queueStatus = common.IBFailed
 	}
-	return ImageBuild{
+	return weldrtypes.ImageBuild{
 		ID:          imageBuildStruct.ID,
 		ImageType:   imgType,
 		Manifest:    imageBuildStruct.Manifest,
@@ -153,9 +154,9 @@ func newImageBuildFromV0(imageBuildStruct imageBuildV0, arch distro.Arch) (Image
 	}, nil
 }
 
-func newComposeFromV0(composeStruct composeV0, df *distrofactory.Factory) (Compose, error) {
+func newComposeFromV0(composeStruct composeV0, df *distrofactory.Factory) (weldrtypes.Compose, error) {
 	if len(composeStruct.ImageBuilds) != 1 {
-		return Compose{}, errors.New("compose with unsupported number of image builds")
+		return weldrtypes.Compose{}, errors.New("compose with unsupported number of image builds")
 	}
 
 	// Get the distro from the blueprint (empty means use host distro)
@@ -165,29 +166,29 @@ func newComposeFromV0(composeStruct composeV0, df *distrofactory.Factory) (Compo
 		var err error
 		distroName, err = getHostDistroName()
 		if err != nil {
-			return Compose{}, fmt.Errorf("Failed to get host distro name: %v", err)
+			return weldrtypes.Compose{}, fmt.Errorf("Failed to get host distro name: %v", err)
 		}
 	}
 	distro := df.GetDistro(distroName)
 	if distro == nil {
-		return Compose{}, fmt.Errorf("Unknown distro - %s", distroName)
+		return weldrtypes.Compose{}, fmt.Errorf("Unknown distro - %s", distroName)
 	}
 
 	// Get the host distro's architecture. This contains the distro+arch specific image types
 	arch, err := distro.GetArch(getHostArch())
 	if err != nil {
-		return Compose{}, err
+		return weldrtypes.Compose{}, err
 	}
 
 	ib, err := newImageBuildFromV0(composeStruct.ImageBuilds[0], arch)
 	if err != nil {
-		return Compose{}, err
+		return weldrtypes.Compose{}, err
 	}
 
 	pkgs := make([]rpmmd.PackageSpec, len(composeStruct.Packages))
 	copy(pkgs, composeStruct.Packages)
 
-	return Compose{
+	return weldrtypes.Compose{
 		Blueprint:  &bp,
 		ImageBuild: ib,
 		Packages:   pkgs,
@@ -293,7 +294,7 @@ func newWorkspaceV0(workspace map[string]blueprint.Blueprint) workspaceV0 {
 	return workspaceStruct
 }
 
-func newComposeV0(compose Compose) composeV0 {
+func newComposeV0(compose weldrtypes.Compose) composeV0 {
 	bp := compose.Blueprint.DeepCopy()
 
 	pkgs := make([]rpmmd.PackageSpec, len(compose.Packages))
@@ -319,7 +320,7 @@ func newComposeV0(compose Compose) composeV0 {
 	}
 }
 
-func newComposesV0(composes map[uuid.UUID]Compose) composesV0 {
+func newComposesV0(composes map[uuid.UUID]weldrtypes.Compose) composesV0 {
 	composesStruct := make(composesV0)
 	for composeID, compose := range composes {
 		composesStruct[composeID] = newComposeV0(compose)

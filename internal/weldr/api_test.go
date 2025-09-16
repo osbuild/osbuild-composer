@@ -32,6 +32,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/store"
 	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/test"
+	"github.com/osbuild/osbuild-composer/internal/weldrtypes"
 
 	"github.com/BurntSushi/toml"
 	"github.com/google/go-cmp/cmp"
@@ -1044,7 +1045,7 @@ func TestCompose(t *testing.T) {
 	omf, err := ostreeManifest.Serialize(rPkgs, rContainers, rCommits, nil)
 	require.NoError(t, err)
 
-	expectedComposeLocal := &store.Compose{
+	expectedComposeLocal := &weldrtypes.Compose{
 		Blueprint: &blueprint.Blueprint{
 			Name:           "test",
 			Version:        "0.0.0",
@@ -1054,7 +1055,7 @@ func TestCompose(t *testing.T) {
 			Groups:         []blueprint.Group{},
 			Customizations: nil,
 		},
-		ImageBuild: store.ImageBuild{
+		ImageBuild: weldrtypes.ImageBuild{
 			QueueStatus: common.IBWaiting,
 			ImageType:   imgType,
 			Size:        imgType.Size(0),
@@ -1074,7 +1075,7 @@ func TestCompose(t *testing.T) {
 		Packages: depsolvednf_mock.BaseDepsolveResult(testRepoID),
 	}
 
-	expectedComposeLocalAndAws := &store.Compose{
+	expectedComposeLocalAndAws := &weldrtypes.Compose{
 		Blueprint: &blueprint.Blueprint{
 			Name:           "test",
 			Version:        "0.0.0",
@@ -1084,7 +1085,7 @@ func TestCompose(t *testing.T) {
 			Groups:         []blueprint.Group{},
 			Customizations: nil,
 		},
-		ImageBuild: store.ImageBuild{
+		ImageBuild: weldrtypes.ImageBuild{
 			QueueStatus: common.IBWaiting,
 			ImageType:   imgType,
 			Size:        imgType.Size(0),
@@ -1121,7 +1122,7 @@ func TestCompose(t *testing.T) {
 		Packages: depsolvednf_mock.BaseDepsolveResult(testRepoID),
 	}
 
-	expectedComposeOSTree := &store.Compose{
+	expectedComposeOSTree := &weldrtypes.Compose{
 		Blueprint: &blueprint.Blueprint{
 			Name:           "test",
 			Version:        "0.0.0",
@@ -1131,7 +1132,7 @@ func TestCompose(t *testing.T) {
 			Groups:         []blueprint.Group{},
 			Customizations: nil,
 		},
-		ImageBuild: store.ImageBuild{
+		ImageBuild: weldrtypes.ImageBuild{
 			QueueStatus: common.IBWaiting,
 			ImageType:   ostreeImgType,
 			Size:        ostreeImgType.Size(0),
@@ -1159,7 +1160,7 @@ func TestCompose(t *testing.T) {
 
 	omfo, err := ostreeManifest.Serialize(rPkgs, rContainers, rCommits, nil)
 	require.NoError(t, err)
-	expectedComposeOSTreeOther := &store.Compose{
+	expectedComposeOSTreeOther := &weldrtypes.Compose{
 		Blueprint: &blueprint.Blueprint{
 			Name:           "test",
 			Version:        "0.0.0",
@@ -1169,7 +1170,7 @@ func TestCompose(t *testing.T) {
 			Groups:         []blueprint.Group{},
 			Customizations: nil,
 		},
-		ImageBuild: store.ImageBuild{
+		ImageBuild: weldrtypes.ImageBuild{
 			QueueStatus: common.IBWaiting,
 			ImageType:   ostreeImgType,
 			Size:        ostreeImgType.Size(0),
@@ -1203,7 +1204,7 @@ func TestCompose(t *testing.T) {
 	mf2, err := manifest2.Serialize(rPkgs, rContainers, rCommits, nil)
 	require.NoError(t, err)
 
-	expectedComposeGoodDistro := &store.Compose{
+	expectedComposeGoodDistro := &weldrtypes.Compose{
 		Blueprint: &blueprint.Blueprint{
 			Name:           "test-distro-2",
 			Version:        "0.0.0",
@@ -1214,7 +1215,7 @@ func TestCompose(t *testing.T) {
 			Customizations: nil,
 			Distro:         testDistro2Name,
 		},
-		ImageBuild: store.ImageBuild{
+		ImageBuild: weldrtypes.ImageBuild{
 			QueueStatus: common.IBWaiting,
 			ImageType:   imgType2,
 			Size:        imgType2.Size(0),
@@ -1243,7 +1244,7 @@ func TestCompose(t *testing.T) {
 		Body            string
 		ExpectedStatus  int
 		ExpectedJSON    string
-		ExpectedCompose *store.Compose
+		ExpectedCompose *weldrtypes.Compose
 		IgnoreFields    []string
 		GetSolverFn     GetSolverFn
 	}{
@@ -1457,7 +1458,7 @@ func TestCompose(t *testing.T) {
 			require.Equalf(t, 1, len(composes), "%s: %s: bad compose count in store", name, c.Path)
 
 			// I have no idea how to get the compose in better way
-			var composeStruct store.Compose
+			var composeStruct weldrtypes.Compose
 			for _, c := range composes {
 				composeStruct = c
 				break
@@ -2516,7 +2517,7 @@ func TestComposePOST_ImageTypeDenylist(t *testing.T) {
 	mf, err := manifest.Serialize(rPkgs, rContainers, rCommits, nil)
 	require.NoError(t, err)
 
-	expectedComposeLocal := &store.Compose{
+	expectedComposeLocal := &weldrtypes.Compose{
 		Blueprint: &blueprint.Blueprint{
 			Name:           "test",
 			Version:        "0.0.0",
@@ -2526,7 +2527,7 @@ func TestComposePOST_ImageTypeDenylist(t *testing.T) {
 			Groups:         []blueprint.Group{},
 			Customizations: nil,
 		},
-		ImageBuild: store.ImageBuild{
+		ImageBuild: weldrtypes.ImageBuild{
 			QueueStatus: common.IBWaiting,
 			ImageType:   imgType,
 			Size:        imgType.Size(0),
@@ -2546,7 +2547,7 @@ func TestComposePOST_ImageTypeDenylist(t *testing.T) {
 		Packages: depsolvednf_mock.BaseDepsolveResult(testRepoID),
 	}
 
-	expectedComposeLocal2 := &store.Compose{
+	expectedComposeLocal2 := &weldrtypes.Compose{
 		Blueprint: &blueprint.Blueprint{
 			Name:           "test",
 			Version:        "0.0.0",
@@ -2556,7 +2557,7 @@ func TestComposePOST_ImageTypeDenylist(t *testing.T) {
 			Groups:         []blueprint.Group{},
 			Customizations: nil,
 		},
-		ImageBuild: store.ImageBuild{
+		ImageBuild: weldrtypes.ImageBuild{
 			QueueStatus: common.IBWaiting,
 			ImageType:   imgType2,
 			Size:        imgType2.Size(0),
@@ -2582,7 +2583,7 @@ func TestComposePOST_ImageTypeDenylist(t *testing.T) {
 		imageTypeDenylist map[string][]string
 		ExpectedStatus    int
 		ExpectedJSON      string
-		ExpectedCompose   *store.Compose
+		ExpectedCompose   *weldrtypes.Compose
 		IgnoreFields      []string
 		GetSolverFn       GetSolverFn
 	}{
@@ -2710,7 +2711,7 @@ func TestComposePOST_ImageTypeDenylist(t *testing.T) {
 			composes := sf.Store.GetAllComposes()
 			require.Equalf(t, 1, len(composes), "%s: bad compose count in store", c.Path)
 
-			var composeStruct store.Compose
+			var composeStruct weldrtypes.Compose
 			for _, c := range composes {
 				composeStruct = c
 				break
