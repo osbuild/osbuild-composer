@@ -464,6 +464,11 @@ func serializeManifest(ctx context.Context, manifestSource *manifest.Manifest, w
 	logWithId := logrus.WithField("jobId", manifestJobID)
 
 	defer func() {
+		if r := recover(); r != nil {
+			logWithId.Errorf("Recovered from panic in serializeManifest: %v", r)
+			jobResult.JobError = clienterrors.New(clienterrors.ErrorManifestGeneration, "Error serializing manifest", r)
+		}
+
 		// token == uuid.Nil indicates that no worker even started processing
 		if token == uuid.Nil {
 			if jobResult.JobError != nil {
