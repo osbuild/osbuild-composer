@@ -68,10 +68,9 @@ type containersConfig struct {
 }
 
 type executorConfig struct {
-	Type            string `toml:"type"`
-	IAMProfile      string `toml:"iam_profile"`
-	KeyName         string `toml:"key_name"`
-	CloudWatchGroup string `toml:"cloudwatch_group"`
+	Type       string `toml:"type"`
+	IAMProfile string `toml:"iam_profile"`
+	KeyName    string `toml:"key_name"`
 }
 
 type repositoryMTLSConfig struct {

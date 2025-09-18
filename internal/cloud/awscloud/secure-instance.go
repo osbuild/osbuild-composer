@@ -27,17 +27,13 @@ type SecureInstance struct {
 }
 
 // SecureInstanceUserData returns the cloud-init user data for a secure instance.
-func SecureInstanceUserData(cloudWatchGroup, hostname, hostIP string) string {
+func SecureInstanceUserData(hostname, hostIP string) string {
 	additionalFiles := ""
 
-	if cloudWatchGroup != "" || hostname != "" {
+	if hostname != "" || hostIP != "" {
 		additionalFiles += `  - path: /tmp/cloud_init_vars
     content: |
 `
-	}
-	if cloudWatchGroup != "" {
-		additionalFiles += fmt.Sprintf(`      OSBUILD_EXECUTOR_CLOUDWATCH_GROUP='%s'
-`, cloudWatchGroup)
 	}
 	if hostname != "" {
 		additionalFiles += fmt.Sprintf(`      OSBUILD_EXECUTOR_HOSTNAME='%s'
@@ -57,7 +53,7 @@ write_files:
 
 // Runs an instance with a security group that only allows traffic to
 // the host. Will replace resources if they already exists.
-func (a *AWS) RunSecureInstance(iamProfile, keyName, cloudWatchGroup, hostname string) (*SecureInstance, error) {
+func (a *AWS) RunSecureInstance(iamProfile, keyName, hostname string) (*SecureInstance, error) {
 	identity, err := a.ec2imds.GetInstanceIdentityDocument(context.Background(), &imds.GetInstanceIdentityDocumentInput{})
 	if err != nil {
 		logrus.Errorf("Error getting the identity document, %s", err)
@@ -109,7 +105,7 @@ func (a *AWS) RunSecureInstance(iamProfile, keyName, cloudWatchGroup, hostname s
 		return nil, err
 	}
 
-	ltID, err := a.createOrReplaceLT(identity.InstanceID, imageID, sgID, iamProfile, keyName, cloudWatchGroup, hostname, identity.PrivateIP)
+	ltID, err := a.createOrReplaceLT(identity.InstanceID, imageID, sgID, iamProfile, keyName, hostname, identity.PrivateIP)
 	if ltID != "" {
 		secureInstance.LTID = ltID
 	}
@@ -436,7 +432,7 @@ func isLaunchTemplateNotFoundError(err error) bool {
 	return false
 }
 
-func (a *AWS) createOrReplaceLT(hostInstanceID, imageID, sgID, iamProfile, keyName, cloudWatchGroup, hostname, hostIP string) (string, error) {
+func (a *AWS) createOrReplaceLT(hostInstanceID, imageID, sgID, iamProfile, keyName, hostname, hostIP string) (string, error) {
 	ltName := fmt.Sprintf("launch-template-for-%s-runner-instance", hostInstanceID)
 	descrLTOutput, err := a.ec2.DescribeLaunchTemplates(
 		context.Background(),
@@ -507,7 +503,7 @@ func (a *AWS) createOrReplaceLT(hostInstanceID, imageID, sgID, iamProfile, keyNa
 			SecurityGroupIds: []string{
 				sgID,
 			},
-			UserData: aws.String(base64.StdEncoding.EncodeToString([]byte(SecureInstanceUserData(cloudWatchGroup, hostname, hostIP)))),
+			UserData: aws.String(base64.StdEncoding.EncodeToString([]byte(SecureInstanceUserData(hostname, hostIP)))),
 		},
 		TagSpecifications: []ec2types.TagSpecification{
 			ec2types.TagSpecification{
