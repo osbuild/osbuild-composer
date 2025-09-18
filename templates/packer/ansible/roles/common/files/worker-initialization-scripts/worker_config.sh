@@ -11,5 +11,4 @@ sudo tee -a /etc/osbuild-worker/osbuild-worker.toml > /dev/null << EOF
 [osbuild_executor]
 type = "${OSBUILD_EXECUTOR_TYPE}"
 iam_profile = "${OSBUILD_EXECUTOR_IAM_PROFILE}"
-${CLOUDWATCH_GROUP_CONFIG}
 EOF
