@@ -47,6 +47,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/store"
 	"github.com/osbuild/osbuild-composer/internal/target"
+	"github.com/osbuild/osbuild-composer/internal/weldrtypes"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 )
 
@@ -379,7 +380,7 @@ func composeStateFromJobStatus(js *worker.JobStatus, result *worker.OSBuildJobRe
 // Returns the state of the image in `compose` and the times the job was
 // queued, started, and finished. Assumes that there's only one image in the
 // compose.
-func (api *API) getComposeStatus(compose store.Compose) (*composeStatus, error) {
+func (api *API) getComposeStatus(compose weldrtypes.Compose) (*composeStatus, error) {
 	jobId := compose.ImageBuild.JobID
 
 	// backwards compatibility: composes that were around before splitting
@@ -425,7 +426,7 @@ func (api *API) getComposeStatus(compose store.Compose) (*composeStatus, error) 
 // Opens the image file for `compose`. This asks the worker server for the
 // artifact first, and then falls back to looking in
 // `{outputs}/{composeId}/{imageBuildId}` for backwards compatibility.
-func (api *API) openImageFile(composeId uuid.UUID, compose store.Compose) (io.Reader, int64, error) {
+func (api *API) openImageFile(composeId uuid.UUID, compose weldrtypes.Compose) (io.Reader, int64, error) {
 	name := compose.ImageBuild.ImageType.Filename()
 
 	reader, size, err := api.workers.JobArtifact(compose.ImageBuild.JobID, name)
@@ -1138,10 +1139,10 @@ func (api *API) projectsListHandler(writer http.ResponseWriter, request *http.Re
 	}
 
 	type reply struct {
-		Total    uint                `json:"total"`
-		Offset   uint                `json:"offset"`
-		Limit    uint                `json:"limit"`
-		Projects []rpmmd.PackageInfo `json:"projects"`
+		Total    uint          `json:"total"`
+		Offset   uint          `json:"offset"`
+		Limit    uint          `json:"limit"`
+		Projects []PackageInfo `json:"projects"`
 	}
 
 	offset, limit, err := parseOffsetAndLimit(request.URL.Query())
@@ -1181,13 +1182,13 @@ func (api *API) projectsListHandler(writer http.ResponseWriter, request *http.Re
 		return
 	}
 
-	packageInfos := availablePackages.ToPackageInfos()
+	packageInfos := RPMMDPackageListToPackageInfos(availablePackages)
 
 	total := uint(len(packageInfos))
 	start := min(offset, total)
 	n := min(limit, total-start)
 
-	packages := make([]rpmmd.PackageInfo, n)
+	packages := make([]PackageInfo, n)
 	for i := uint(0); i < n; i++ {
 		packages[i] = packageInfos[start+i]
 	}
@@ -1207,10 +1208,10 @@ func (api *API) modulesInfoHandler(writer http.ResponseWriter, request *http.Req
 	}
 
 	type projectsReply struct {
-		Projects []rpmmd.PackageInfo `json:"projects"`
+		Projects []PackageInfo `json:"projects"`
 	}
 	type modulesReply struct {
-		Modules []rpmmd.PackageInfo `json:"modules"`
+		Modules []PackageInfo `json:"modules"`
 	}
 
 	// handle both projects/info and modules/info, the latter includes dependencies
@@ -1278,7 +1279,7 @@ func (api *API) modulesInfoHandler(writer http.ResponseWriter, request *http.Req
 		return
 	}
 
-	packageInfos := foundPackages.ToPackageInfos()
+	packageInfos := RPMMDPackageListToPackageInfos(foundPackages)
 
 	if modulesRequested {
 		repos, err := api.allRepositories(distroName, archName)
@@ -1312,7 +1313,7 @@ func (api *API) modulesInfoHandler(writer http.ResponseWriter, request *http.Req
 				statusResponseError(writer, http.StatusBadRequest, errors)
 				return
 			}
-			packageInfos[i].Dependencies = res.Packages
+			packageInfos[i].Dependencies = weldrtypes.RPMMDPackageSpecListToDepsolvedPackageInfoList(res.Packages)
 		}
 		if err := solver.CleanCache(); err != nil {
 			// log and ignore
@@ -1334,7 +1335,7 @@ func (api *API) projectsDepsolveHandler(writer http.ResponseWriter, request *htt
 	}
 
 	type reply struct {
-		Projects []rpmmd.PackageSpec `json:"projects"`
+		Projects []weldrtypes.DepsolvedPackageInfo `json:"projects"`
 	}
 
 	projects := params.ByName("projects")
@@ -1403,7 +1404,7 @@ func (api *API) projectsDepsolveHandler(writer http.ResponseWriter, request *htt
 		// log and ignore
 		log.Printf("Error during rpm repo cache cleanup: %s", err.Error())
 	}
-	err = json.NewEncoder(writer).Encode(reply{Projects: res.Packages})
+	err = json.NewEncoder(writer).Encode(reply{Projects: weldrtypes.RPMMDPackageSpecListToDepsolvedPackageInfoList(res.Packages)})
 	common.PanicOnError(err)
 }
 
@@ -2655,12 +2656,13 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		return
 	}
 
+	weldrPackages := weldrtypes.RPMMDPackageSpecListToDepsolvedPackageInfoList(packages)
 	if testMode == "1" {
 		// Create a failed compose
-		err = api.store.PushTestCompose(composeID, mf, imageType, bp, size, targets, false, packages)
+		err = api.store.PushTestCompose(composeID, mf, imageType, bp, size, targets, false, weldrPackages)
 	} else if testMode == "2" {
 		// Create a successful compose
-		err = api.store.PushTestCompose(composeID, mf, imageType, bp, size, targets, true, packages)
+		err = api.store.PushTestCompose(composeID, mf, imageType, bp, size, targets, true, weldrPackages)
 	} else {
 		var jobId uuid.UUID
 		jobId, err = api.workers.EnqueueOSBuild(archName, &worker.OSBuildJob{
@@ -2673,7 +2675,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 			ImageBootMode: imageType.BootMode().String(),
 		}, "")
 		if err == nil {
-			err = api.store.PushCompose(composeID, mf, imageType, bp, size, targets, jobId, packages)
+			err = api.store.PushCompose(composeID, mf, imageType, bp, size, targets, jobId, weldrPackages)
 		}
 	}
 
@@ -3069,7 +3071,7 @@ func (api *API) composeInfoHandler(writer http.ResponseWriter, request *http.Req
 		Blueprint *blueprint.Blueprint `json:"blueprint"` // blueprint not frozen!
 		Commit    string               `json:"commit"`    // empty for now
 		Deps      struct {
-			Packages []rpmmd.PackageSpec `json:"packages"`
+			Packages []weldrtypes.DepsolvedPackageInfo `json:"packages"`
 		} `json:"deps"`
 		ComposeType string           `json:"compose_type"`
 		QueueStatus string           `json:"queue_status"`

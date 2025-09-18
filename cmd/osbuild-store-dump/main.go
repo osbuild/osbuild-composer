@@ -20,6 +20,7 @@ import (
 	"github.com/osbuild/images/pkg/sbom"
 	"github.com/osbuild/osbuild-composer/internal/store"
 	"github.com/osbuild/osbuild-composer/internal/target"
+	"github.com/osbuild/osbuild-composer/internal/weldrtypes"
 )
 
 func getManifest(bp blueprint.Blueprint, t distro.ImageType, a distro.Arch, d distro.Distro, cacheDir string, repos []rpmmd.RepoConfig) (manifest.OSBuildManifest, []rpmmd.PackageSpec) {
@@ -180,7 +181,7 @@ func main() {
 			awsTarget,
 		},
 		id1,
-		packages,
+		weldrtypes.RPMMDPackageSpecListToDepsolvedPackageInfoList(packages),
 	)
 	if err != nil {
 		panic(err)
@@ -195,7 +196,7 @@ func main() {
 			awsTarget,
 		},
 		id2,
-		packages,
+		weldrtypes.RPMMDPackageSpecListToDepsolvedPackageInfoList(packages),
 	)
 	if err != nil {
 		panic(err)
