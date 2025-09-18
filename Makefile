@@ -143,11 +143,6 @@ build: $(BUILDDIR)/bin/ build-maintenance
 	go build -o $<osbuild-composer ./cmd/osbuild-composer/
 	go build -o $<osbuild-worker ./cmd/osbuild-worker/
 	go build -o $<osbuild-worker-executor ./cmd/osbuild-worker-executor/
-	go build -o $<osbuild-upload-azure ./cmd/osbuild-upload-azure/
-	go build -o $<osbuild-upload-aws ./cmd/osbuild-upload-aws/
-	go build -o $<osbuild-upload-gcp ./cmd/osbuild-upload-gcp/
-	go build -o $<osbuild-upload-oci ./cmd/osbuild-upload-oci/
-	go build -o $<osbuild-upload-generic-s3 ./cmd/osbuild-upload-generic-s3/
 	go build -o $<osbuild-mock-openid-provider ./cmd/osbuild-mock-openid-provider
 	# also build the test binaries
 	go test -c -tags=integration -o $<osbuild-composer-cli-tests ./cmd/osbuild-composer-cli-tests/main_test.go
