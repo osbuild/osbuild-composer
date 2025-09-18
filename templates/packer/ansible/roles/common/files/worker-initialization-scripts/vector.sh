@@ -7,6 +7,7 @@ echo "Writing vector config."
 ID_DOC=$(curl -Ls http://169.254.169.254/latest/dynamic/instance-identity/document)
 REGION=$(echo "$ID_DOC" | jq -r .region)
 PRIVATE_IP=$(echo "$ID_DOC" | jq -r .privateIp)
+OSBUILD_EXECUTOR_CLOUDWATCH_GROUP=${OSBUILD_EXECUTOR_CLOUDWATCH_GROUP:-osbuild-executor-log-group}
 
 sudo mkdir -p /etc/vector
 sudo tee /etc/vector/vector.yaml > /dev/null << EOF
@@ -35,7 +36,7 @@ sinks:
       - executor
     region: ${REGION}
     endpoint: ${CLOUDWATCH_LOGS_ENDPOINT_URL}
-    group_name: ${OSBUILD_EXECUTOR_CLOUDWATCH_GROUP:-osbuild-executor-log-group}
+    group_name: ${OSBUILD_EXECUTOR_CLOUDWATCH_GROUP}
     stream_name: executor_syslog__{{ host }}
     encoding:
       codec: json
