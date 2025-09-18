@@ -79,10 +79,9 @@ type PulpConfiguration struct {
 }
 
 type ExecutorConfiguration struct {
-	Type            string
-	IAMProfile      string
-	KeyName         string
-	CloudWatchGroup string
+	Type       string
+	IAMProfile string
+	KeyName    string
 }
 
 type OSBuildJobImpl struct {
@@ -513,7 +512,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			return err
 		}
 		defer os.RemoveAll(tmpDir)
-		executor = osbuildexecutor.NewAWSEC2Executor(impl.OSBuildExecutor.IAMProfile, impl.OSBuildExecutor.KeyName, impl.OSBuildExecutor.CloudWatchGroup, job.Id().String(), tmpDir)
+		executor = osbuildexecutor.NewAWSEC2Executor(impl.OSBuildExecutor.IAMProfile, impl.OSBuildExecutor.KeyName, job.Id().String(), tmpDir)
 	default:
 		osbuildJobResult.JobError = clienterrors.New(clienterrors.ErrorInvalidConfig, "No osbuild executor defined", nil)
 		return err

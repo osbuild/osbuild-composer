@@ -470,10 +470,9 @@ var run = func() {
 			Store:  store,
 			Output: output,
 			OSBuildExecutor: ExecutorConfiguration{
-				Type:            config.OSBuildExecutor.Type,
-				IAMProfile:      config.OSBuildExecutor.IAMProfile,
-				KeyName:         config.OSBuildExecutor.KeyName,
-				CloudWatchGroup: config.OSBuildExecutor.CloudWatchGroup,
+				Type:       config.OSBuildExecutor.Type,
+				IAMProfile: config.OSBuildExecutor.IAMProfile,
+				KeyName:    config.OSBuildExecutor.KeyName,
 			},
 			KojiServers: kojiServers,
 			GCPConfig:   gcpConfig,

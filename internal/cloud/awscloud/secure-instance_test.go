@@ -14,7 +14,6 @@ import (
 
 func TestSIUserData(t *testing.T) {
 	type testCase struct {
-		CloudWatchGroup  string
 		Hostname         string
 		HostIP           string
 		ExpectedUserData string
@@ -29,19 +28,6 @@ write_files:
 `,
 		},
 		{
-			CloudWatchGroup: "test-group",
-			Hostname:        "test-hostname",
-			ExpectedUserData: `#cloud-config
-write_files:
-  - path: /tmp/worker-run-executor-service
-    content: ''
-  - path: /tmp/cloud_init_vars
-    content: |
-      OSBUILD_EXECUTOR_CLOUDWATCH_GROUP='test-group'
-      OSBUILD_EXECUTOR_HOSTNAME='test-hostname'
-`,
-		},
-		{
 			Hostname: "test-hostname",
 			ExpectedUserData: `#cloud-config
 write_files:
@@ -53,22 +39,20 @@ write_files:
 `,
 		},
 		{
-			CloudWatchGroup: "test-group",
-			HostIP:          "test-host-address",
+			HostIP: "test-host-address",
 			ExpectedUserData: `#cloud-config
 write_files:
   - path: /tmp/worker-run-executor-service
     content: ''
   - path: /tmp/cloud_init_vars
     content: |
-      OSBUILD_EXECUTOR_CLOUDWATCH_GROUP='test-group'
       HOST_WORKER_ADDRESS='test-host-address'
 `,
 		}}
 
 	for idx, tc := range testCases {
 		t.Run(fmt.Sprintf("Test case %d", idx), func(t *testing.T) {
-			userData := awscloud.SecureInstanceUserData(tc.CloudWatchGroup, tc.Hostname, tc.HostIP)
+			userData := awscloud.SecureInstanceUserData(tc.Hostname, tc.HostIP)
 			if userData != tc.ExpectedUserData {
 				t.Errorf("Expected: %s, got: %s", tc.ExpectedUserData, userData)
 			}
@@ -81,7 +65,7 @@ func TestSIRunSecureInstance(t *testing.T) {
 	aws := awscloud.NewForTest(m, &ec2imdsmock{t, "instance-id", "region1"})
 	require.NotNil(t, aws)
 
-	si, err := aws.RunSecureInstance("iam-profile", "key-name", "cw-group", "hostname")
+	si, err := aws.RunSecureInstance("iam-profile", "key-name", "hostname")
 	require.NoError(t, err)
 	require.NotNil(t, si)
 	require.Equal(t, 1, m.calledFn["CreateFleet"])
@@ -117,7 +101,7 @@ func TestSICreateSGFailures(t *testing.T) {
 	require.NotNil(t, aws)
 
 	m.failFn["CreateSecurityGroup"] = fmt.Errorf("some-error")
-	si, err := aws.RunSecureInstance("iam-profile", "key-name", "cw-group", "hostname")
+	si, err := aws.RunSecureInstance("iam-profile", "key-name", "hostname")
 	require.Error(t, err)
 	require.Nil(t, si)
 	require.Equal(t, 1, m.calledFn["CreateSecurityGroup"])
@@ -133,7 +117,7 @@ func TestSICreateLTFailures(t *testing.T) {
 	require.NotNil(t, aws)
 
 	m.failFn["CreateLaunchTemplate"] = fmt.Errorf("some-error")
-	si, err := aws.RunSecureInstance("iam-profile", "key-name", "cw-group", "hostname")
+	si, err := aws.RunSecureInstance("iam-profile", "key-name", "hostname")
 	require.Error(t, err)
 	require.Nil(t, si)
 	require.Equal(t, 1, m.calledFn["CreateSecurityGroup"])
@@ -150,7 +134,7 @@ func TestSICreateFleetFailures(t *testing.T) {
 
 	// create fleet error should call create fleet thrice
 	m.failFn["CreateFleet"] = nil
-	si, err := aws.RunSecureInstance("iam-profile", "key-name", "cw-group", "hostname")
+	si, err := aws.RunSecureInstance("iam-profile", "key-name", "hostname")
 	require.Error(t, err)
 	require.Nil(t, si)
 	require.Equal(t, 3, m.calledFn["CreateFleet"])
@@ -161,7 +145,7 @@ func TestSICreateFleetFailures(t *testing.T) {
 
 	// other errors should just fail immediately
 	m.failFn["CreateFleet"] = fmt.Errorf("random error")
-	si, err = aws.RunSecureInstance("iam-profile", "key-name", "cw-group", "hostname")
+	si, err = aws.RunSecureInstance("iam-profile", "key-name", "hostname")
 	require.Error(t, err)
 	require.Nil(t, si)
 	require.Equal(t, 4, m.calledFn["CreateFleet"])
