@@ -17,7 +17,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/oasdiff/yaml3"
+	yaml "github.com/oasdiff/yaml3"
 
 	"github.com/getkin/kin-openapi/openapi3"
 )
@@ -899,26 +899,6 @@ func deepSet(m map[string]any, keys []string, value any) {
 	m[keys[len(keys)-1]] = value
 }
 
-func findNestedSchema(parentSchema *openapi3.SchemaRef, keys []string) (*openapi3.SchemaRef, error) {
-	currentSchema := parentSchema
-	for _, key := range keys {
-		if currentSchema.Value.Type.Includes(openapi3.TypeArray) {
-			currentSchema = currentSchema.Value.Items
-		} else {
-			propertySchema, ok := currentSchema.Value.Properties[key]
-			if !ok {
-				if currentSchema.Value.AdditionalProperties.Schema == nil {
-					return nil, fmt.Errorf("nested schema for key %q not found", key)
-				}
-				currentSchema = currentSchema.Value.AdditionalProperties.Schema
-				continue
-			}
-			currentSchema = propertySchema
-		}
-	}
-	return currentSchema, nil
-}
-
 // makeObject returns an object that contains properties from props.
 func makeObject(props map[string]string, schema *openapi3.SchemaRef) (map[string]any, error) {
 	mobj := make(map[string]any)
@@ -1233,6 +1213,13 @@ var headerCT = http.CanonicalHeaderKey("Content-Type")
 
 const prefixUnsupportedCT = "unsupported content type"
 
+func isBinary(schema *openapi3.SchemaRef) bool {
+	if schema == nil || schema.Value == nil {
+		return false
+	}
+	return schema.Value.Type.Is("string") && schema.Value.Format == "binary"
+}
+
 // decodeBody returns a decoded body.
 // The function returns ParseError when a body is invalid.
 func decodeBody(body io.Reader, header http.Header, schema *openapi3.SchemaRef, encFn EncodingFn) (
@@ -1246,8 +1233,13 @@ func decodeBody(body io.Reader, header http.Header, schema *openapi3.SchemaRef, 
 			contentType = "text/plain"
 		}
 	}
+
 	mediaType := parseMediaType(contentType)
 	decoder, ok := bodyDecoders[mediaType]
+	if !ok && isBinary(schema) {
+		ok, decoder = true, FileBodyDecoder
+	}
+
 	if !ok {
 		return "", nil, &ParseError{
 			Kind:   KindUnsupportedFormat,
@@ -1264,6 +1256,7 @@ func decodeBody(body io.Reader, header http.Header, schema *openapi3.SchemaRef, 
 func init() {
 	RegisterBodyDecoder("application/json", JSONBodyDecoder)
 	RegisterBodyDecoder("application/json-patch+json", JSONBodyDecoder)
+	RegisterBodyDecoder("application/merge-patch+json", JSONBodyDecoder)
 	RegisterBodyDecoder("application/ld+json", JSONBodyDecoder)
 	RegisterBodyDecoder("application/hal+json", JSONBodyDecoder)
 	RegisterBodyDecoder("application/vnd.api+json", JSONBodyDecoder)
@@ -1459,13 +1452,25 @@ func MultipartBodyDecoder(body io.Reader, header http.Header, schema *openapi3.S
 			}
 		}
 
+		partHeader := http.Header(part.Header)
 		var value any
-		if _, value, err = decodeBody(part, http.Header(part.Header), valueSchema, subEncFn); err != nil {
+		if _, value, err = decodeBody(part, partHeader, valueSchema, subEncFn); err != nil {
 			if v, ok := err.(*ParseError); ok {
 				return nil, &ParseError{path: []any{name}, Cause: v}
 			}
 			return nil, fmt.Errorf("part %s: %w", name, err)
 		}
+
+		// Parse primitive types when no content type is explicitely provided, or the content type is set to text/plain
+		if contentType := partHeader.Get(headerCT); contentType == "" || contentType == "text/plain" {
+			if value, err = parsePrimitive(value.(string), valueSchema); err != nil {
+				if v, ok := err.(*ParseError); ok {
+					return nil, &ParseError{path: []any{name}, Cause: v}
+				}
+				return nil, fmt.Errorf("part %s: %w", name, err)
+			}
+		}
+
 		values[name] = append(values[name], value)
 	}
 
