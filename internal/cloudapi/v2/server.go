@@ -169,8 +169,12 @@ func (s *Server) enqueueCompose(irs []imageRequest, channel string) (uuid.UUID, 
 		return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
 	}
 
+	pkgSetChains, err := manifestSource.GetPackageSetChains()
+	if err != nil {
+		return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
+	}
 	depsolveJobID, err := s.workers.EnqueueDepsolve(&worker.DepsolveJob{
-		PackageSets:      manifestSource.GetPackageSetChains(),
+		PackageSets:      pkgSetChains,
 		ModulePlatformID: distribution.ModulePlatformID(),
 		Arch:             arch.Name(),
 		Releasever:       distribution.Releasever(),
@@ -301,8 +305,12 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 			return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
 		}
 
+		pkgSetChains, err := manifestSource.GetPackageSetChains()
+		if err != nil {
+			return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
+		}
 		depsolveJobID, err := s.workers.EnqueueDepsolve(&worker.DepsolveJob{
-			PackageSets:      manifestSource.GetPackageSetChains(),
+			PackageSets:      pkgSetChains,
 			ModulePlatformID: distribution.ModulePlatformID(),
 			Arch:             arch.Name(),
 			Releasever:       distribution.Releasever(),

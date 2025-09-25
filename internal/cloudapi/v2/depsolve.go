@@ -86,7 +86,10 @@ func (request *DepsolveRequest) Depsolve(df *distrofactory.Factory, rr *reporegi
 			return nil, HTTPErrorWithInternal(ErrorFailedToDepsolve, err)
 		}
 
-		packageSet = manifestSource.GetPackageSetChains()
+		packageSet, err = manifestSource.GetPackageSetChains()
+		if err != nil {
+			return nil, HTTPErrorWithInternal(ErrorFailedToDepsolve, err)
+		}
 	} else {
 		// Send the depsolve request to the worker
 		packageSet["os"] = []rpmmd.PackageSet{

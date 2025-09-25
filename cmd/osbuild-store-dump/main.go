@@ -18,6 +18,7 @@ import (
 	"github.com/osbuild/images/pkg/reporegistry"
 	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/images/pkg/sbom"
+	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/store"
 	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/weldrtypes"
@@ -30,7 +31,7 @@ func getManifest(bp blueprint.Blueprint, t distro.ImageType, a distro.Arch, d di
 	}
 	depsolved := make(map[string]depsolvednf.DepsolveResult)
 	solver := depsolvednf.NewSolver(d.ModulePlatformID(), d.Releasever(), a.Name(), d.Name(), cacheDir)
-	for name, packages := range manifest.GetPackageSetChains() {
+	for name, packages := range common.Must(manifest.GetPackageSetChains()) {
 		res, err := solver.Depsolve(packages, sbom.StandardTypeNone)
 		if err != nil {
 			panic(err)
