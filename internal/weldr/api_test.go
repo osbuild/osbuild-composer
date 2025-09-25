@@ -1029,7 +1029,7 @@ func TestCompose(t *testing.T) {
 	manifest, _, err := imgType.Manifest(nil, distro.ImageOptions{}, nil, nil)
 	require.NoError(t, err)
 
-	rPkgs, rContainers, rCommits := ResolveContent(manifest.GetPackageSetChains(), manifest.GetContainerSourceSpecs(), manifest.GetOSTreeSourceSpecs())
+	rPkgs, rContainers, rCommits := ResolveContent(common.Must(manifest.GetPackageSetChains()), manifest.GetContainerSourceSpecs(), manifest.GetOSTreeSourceSpecs())
 
 	mf, err := manifest.Serialize(rPkgs, rContainers, rCommits, nil)
 	require.NoError(t, err)
@@ -1040,7 +1040,7 @@ func TestCompose(t *testing.T) {
 	ostreeManifest, _, err := ostreeImgType.Manifest(nil, distro.ImageOptions{OSTree: &ostreeOptions}, nil, nil)
 	require.NoError(t, err)
 
-	rPkgs, rContainers, rCommits = ResolveContent(ostreeManifest.GetPackageSetChains(), ostreeManifest.GetContainerSourceSpecs(), ostreeManifest.GetOSTreeSourceSpecs())
+	rPkgs, rContainers, rCommits = ResolveContent(common.Must(ostreeManifest.GetPackageSetChains()), ostreeManifest.GetContainerSourceSpecs(), ostreeManifest.GetOSTreeSourceSpecs())
 
 	omf, err := ostreeManifest.Serialize(rPkgs, rContainers, rCommits, nil)
 	require.NoError(t, err)
@@ -1156,7 +1156,7 @@ func TestCompose(t *testing.T) {
 	ostreeManifestOther, _, err := ostreeImgType.Manifest(nil, distro.ImageOptions{OSTree: &ostreeOptionsOther}, nil, nil)
 	require.NoError(t, err)
 
-	rPkgs, rContainers, rCommits = ResolveContent(ostreeManifestOther.GetPackageSetChains(), ostreeManifestOther.GetContainerSourceSpecs(), ostreeManifestOther.GetOSTreeSourceSpecs())
+	rPkgs, rContainers, rCommits = ResolveContent(common.Must(ostreeManifestOther.GetPackageSetChains()), ostreeManifestOther.GetContainerSourceSpecs(), ostreeManifestOther.GetOSTreeSourceSpecs())
 
 	omfo, err := ostreeManifest.Serialize(rPkgs, rContainers, rCommits, nil)
 	require.NoError(t, err)
@@ -1200,7 +1200,7 @@ func TestCompose(t *testing.T) {
 	manifest2, _, err := imgType.Manifest(nil, distro.ImageOptions{}, nil, nil)
 	require.NoError(t, err)
 
-	rPkgs, rContainers, rCommits = ResolveContent(manifest2.GetPackageSetChains(), manifest2.GetContainerSourceSpecs(), manifest2.GetOSTreeSourceSpecs())
+	rPkgs, rContainers, rCommits = ResolveContent(common.Must(manifest2.GetPackageSetChains()), manifest2.GetContainerSourceSpecs(), manifest2.GetOSTreeSourceSpecs())
 	mf2, err := manifest2.Serialize(rPkgs, rContainers, rCommits, nil)
 	require.NoError(t, err)
 
@@ -2513,7 +2513,7 @@ func TestComposePOST_ImageTypeDenylist(t *testing.T) {
 	manifest, _, err := imgType.Manifest(nil, distro.ImageOptions{}, nil, nil)
 	require.NoError(t, err)
 
-	rPkgs, rContainers, rCommits := ResolveContent(manifest.GetPackageSetChains(), manifest.GetContainerSourceSpecs(), manifest.GetOSTreeSourceSpecs())
+	rPkgs, rContainers, rCommits := ResolveContent(common.Must(manifest.GetPackageSetChains()), manifest.GetContainerSourceSpecs(), manifest.GetOSTreeSourceSpecs())
 	mf, err := manifest.Serialize(rPkgs, rContainers, rCommits, nil)
 	require.NoError(t, err)
 

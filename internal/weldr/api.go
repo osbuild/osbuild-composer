@@ -2586,7 +2586,16 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		return
 	}
 
-	depsolved, err := api.depsolve(manifest.GetPackageSetChains(), distroName, imageType.Arch())
+	pkgSetChains, err := manifest.GetPackageSetChains()
+	if err != nil {
+		errors := responseError{
+			ID:  "DepsolveError",
+			Msg: fmt.Sprintf("failed to get package set chains: %v", err),
+		}
+		statusResponseError(writer, http.StatusBadRequest, errors)
+		return
+	}
+	depsolved, err := api.depsolve(pkgSetChains, distroName, imageType.Arch())
 	if err != nil {
 		errors := responseError{
 			ID:  "DepsolveError",
