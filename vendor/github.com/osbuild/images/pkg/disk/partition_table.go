@@ -32,6 +32,8 @@ type PartitionTable struct {
 	StartOffset uint64 `json:"start_offset,omitempty" yaml:"start_offset,omitempty"`
 }
 
+var _ = MountpointCreator(&PartitionTable{})
+
 // DefaultBootPartitionSize is the default size of the /boot partition if it
 // needs to be auto-created. This happens if the custom partitioning don't
 // specify one, but the image requires one to boot (/ is on btrfs, or an LV).
@@ -90,15 +92,20 @@ const DefaultBootPartitionSize = 1 * datasizes.GiB
 // containing the root filesystem is grown to fill any left over space on the
 // partition table. Logical Volumes are not grown to fill the space in the
 // Volume Group since they are trivial to grow on a live system.
-func NewPartitionTable(basePT *PartitionTable, mountpoints []blueprint.FilesystemCustomization, imageSize uint64, mode partition.PartitioningMode, architecture arch.Arch, requiredSizes map[string]uint64, rng *rand.Rand) (*PartitionTable, error) {
+func NewPartitionTable(basePT *PartitionTable, mountpoints []blueprint.FilesystemCustomization, imageSize uint64, mode partition.PartitioningMode, architecture arch.Arch, requiredSizes map[string]uint64, defaultFs string, rng *rand.Rand) (*PartitionTable, error) {
 	newPT := basePT.Clone().(*PartitionTable)
 
 	if basePT.features().LVM && (mode == partition.RawPartitioningMode || mode == partition.BtrfsPartitioningMode) {
 		return nil, fmt.Errorf("%s partitioning mode set for a base partition table with LVM, this is unsupported", mode)
 	}
 
+	// compatibility with previous versions of images, if no
+	// default filesystem is given we pick "xfs"
+	if defaultFs == "" {
+		defaultFs = "xfs"
+	}
 	// first pass: enlarge existing mountpoints and collect new ones
-	newMountpoints, _ := newPT.applyCustomization(mountpoints, false)
+	newMountpoints, _ := newPT.applyCustomization(mountpoints, defaultFs, false)
 
 	var ensureLVM, ensureBtrfs bool
 	switch mode {
@@ -110,16 +117,17 @@ func NewPartitionTable(basePT *PartitionTable, mountpoints []blueprint.Filesyste
 		ensureLVM = len(newMountpoints) > 0
 	case partition.BtrfsPartitioningMode:
 		ensureBtrfs = true
+		defaultFs = "btrfs"
 	default:
 		return nil, fmt.Errorf("unsupported partitioning mode %q", mode)
 	}
 	if ensureLVM {
-		err := newPT.ensureLVM()
+		err := newPT.ensureLVM(defaultFs)
 		if err != nil {
 			return nil, err
 		}
 	} else if ensureBtrfs {
-		err := newPT.ensureBtrfs(architecture)
+		err := newPT.ensureBtrfs(defaultFs, architecture)
 		if err != nil {
 			return nil, err
 		}
@@ -127,7 +135,7 @@ func NewPartitionTable(basePT *PartitionTable, mountpoints []blueprint.Filesyste
 
 	// second pass: deal with new mountpoints and newly created ones, after switching to
 	// the LVM layout, if requested, which might introduce new mount points, i.e. `/boot`
-	_, err := newPT.applyCustomization(newMountpoints, true)
+	_, err := newPT.applyCustomization(newMountpoints, defaultFs, true)
 	if err != nil {
 		return nil, err
 	}
@@ -336,9 +344,9 @@ func (pt *PartitionTable) EnsureDirectorySizes(dirSizeMap map[string]uint64) {
 	}
 }
 
-func (pt *PartitionTable) CreateMountpoint(mountpoint string, size uint64) (Entity, error) {
+func (pt *PartitionTable) CreateMountpoint(mountpoint, defaultFs string, size uint64) (Entity, error) {
 	filesystem := Filesystem{
-		Type:         "xfs",
+		Type:         defaultFs,
 		Mountpoint:   mountpoint,
 		FSTabOptions: "defaults",
 		FSTabFreq:    0,
@@ -437,7 +445,7 @@ func (pt *PartitionTable) HeaderSize() uint64 {
 // return a list of left-over mountpoints (i.e. mountpoints in the input that
 // were not created). An error can only occur if create is set.
 // Does not relayout the table, i.e. a call to relayout might be needed.
-func (pt *PartitionTable) applyCustomization(mountpoints []blueprint.FilesystemCustomization, create bool) ([]blueprint.FilesystemCustomization, error) {
+func (pt *PartitionTable) applyCustomization(mountpoints []blueprint.FilesystemCustomization, defaultFs string, create bool) ([]blueprint.FilesystemCustomization, error) {
 
 	newMountpoints := []blueprint.FilesystemCustomization{}
 
@@ -449,7 +457,7 @@ func (pt *PartitionTable) applyCustomization(mountpoints []blueprint.FilesystemC
 		} else {
 			if !create {
 				newMountpoints = append(newMountpoints, mnt)
-			} else if err := pt.createFilesystem(mnt.Mountpoint, size); err != nil {
+			} else if err := pt.createFilesystem(mnt.Mountpoint, defaultFs, size); err != nil {
 				return nil, err
 			}
 		}
@@ -523,7 +531,7 @@ func (pt *PartitionTable) relayout(size uint64) uint64 {
 	return start
 }
 
-func (pt *PartitionTable) createFilesystem(mountpoint string, size uint64) error {
+func (pt *PartitionTable) createFilesystem(mountpoint, defaultFs string, size uint64) error {
 	rootPath := entityPath(pt, "/")
 	if rootPath == nil {
 		panic("no root mountpoint for PartitionTable")
@@ -543,7 +551,7 @@ func (pt *PartitionTable) createFilesystem(mountpoint string, size uint64) error
 		panic("could not find root volume container")
 	}
 
-	newVol, err := vc.CreateMountpoint(mountpoint, 0)
+	newVol, err := vc.CreateMountpoint(mountpoint, defaultFs, 0)
 	if err != nil {
 		return fmt.Errorf("failed creating volume: %w", err)
 	}
@@ -722,7 +730,7 @@ func (pt *PartitionTable) GenUUID(rng *rand.Rand) {
 
 // ensureLVM will ensure that the root partition is on an LVM volume, i.e. if
 // it currently is not, it will wrap it in one
-func (pt *PartitionTable) ensureLVM() error {
+func (pt *PartitionTable) ensureLVM(defaultFS string) error {
 
 	rootPath := entityPath(pt, "/")
 	if rootPath == nil {
@@ -732,7 +740,7 @@ func (pt *PartitionTable) ensureLVM() error {
 	// we need a /boot partition to boot LVM, ensure one exists
 	bootPath := entityPath(pt, "/boot")
 	if bootPath == nil {
-		_, err := pt.CreateMountpoint("/boot", DefaultBootPartitionSize)
+		_, err := pt.CreateMountpoint("/boot", defaultFS, DefaultBootPartitionSize)
 
 		if err != nil {
 			return err
@@ -781,7 +789,7 @@ func (pt *PartitionTable) ensureLVM() error {
 
 // ensureBtrfs will ensure that the root partition is on a btrfs subvolume, i.e. if
 // it currently is not, it will wrap it in one
-func (pt *PartitionTable) ensureBtrfs(architecture arch.Arch) error {
+func (pt *PartitionTable) ensureBtrfs(defaultFS string, architecture arch.Arch) error {
 
 	rootPath := entityPath(pt, "/")
 	if rootPath == nil {
@@ -791,7 +799,7 @@ func (pt *PartitionTable) ensureBtrfs(architecture arch.Arch) error {
 	// we need a /boot partition to boot btrfs, ensure one exists
 	bootPath := entityPath(pt, "/boot")
 	if bootPath == nil {
-		_, err := pt.CreateMountpoint("/boot", DefaultBootPartitionSize)
+		_, err := pt.CreateMountpoint("/boot", defaultFS, DefaultBootPartitionSize)
 		if err != nil {
 			return fmt.Errorf("failed to create /boot partition when ensuring btrfs: %w", err)
 		}

@@ -200,13 +200,18 @@
           - "s390utils-base"
 
   common_conditions:
-    conditions: &conditions_pkgsets_insights_client_on_rhel
-      "add insights client on rhel":
-        when:
-          distro_name: "rhel"
-        append:
-          include:
-            - "insights-client"
+    "add insights client on rhel": &conditions_pkgsets_insights_client_on_rhel
+      when:
+        distro_name: "rhel"
+      append:
+        include:
+          - "insights-client"
+    "add system-reinstall-bootc to 9.6+": &conditions_pkgsets_system_reinstall_bootc
+      when:
+        version_greater_or_equal: "9.6"
+      append:
+        include:
+          - "system-reinstall-bootc"
 
   ec2_base_pkgset: &ec2_base_pkgset
     include:
@@ -260,20 +265,15 @@
       # RHBZ#2075815
       - "qemu-guest-agent"
     conditions:
-      <<: *conditions_pkgsets_insights_client_on_rhel
-      "rhel-9.6+ gets system-reinstall-bootc":
-        when:
-          version_greater_or_equal: "9.6"
-        append:
-          include:
-            - "system-reinstall-bootc"
+      "insights client on rhel": *conditions_pkgsets_insights_client_on_rhel
+      "system reinstall bootc": *conditions_pkgsets_system_reinstall_bootc
+
   azure_base_pkgset: &azure_base_pkgset
     include:
       - "@Server"
       - "bzip2"
       - "cloud-init"
       - "cloud-utils-growpart"
-      - "dracut-config-generic"
       - "efibootmgr"
       - "gdisk"
       - "hyperv-daemons"
@@ -283,6 +283,7 @@
       - "NetworkManager-cloud-setup"
       - "nvme-cli"
       - "patch"
+      - "rsync"
       - "selinux-policy-targeted"
       - "uuid"
       - "WALinuxAgent"
@@ -335,13 +336,12 @@
       - "rhnsd"
       - "usb_modeswitch"
     conditions:
-      <<: *conditions_pkgsets_insights_client_on_rhel
-      "rhel-9.6+ gets system-reinstall-bootc and drops microcode_ctl":
+      "insights clients on rhel": *conditions_pkgsets_insights_client_on_rhel
+      "system-reinstall-bootc": *conditions_pkgsets_system_reinstall_bootc
+      "rhel-9.6+ drops microcode_ctl":
         when:
           version_greater_or_equal: "9.6"
         append:
-          include:
-            - "system-reinstall-bootc"
           exclude:
             - "microcode_ctl"
       "x86_64 alone supports rngd":
@@ -350,6 +350,12 @@
         append:
           include:
             - "rng-tools"
+      "rhel-9.8+ gets azure-vm-utils":
+        when:
+          version_greater_or_equal: "9.8"
+        append:
+          include:
+            - "azure-vm-utils"
 
   sapapps_image_config: &sapapps_image_config
     selinux_config:
@@ -1316,6 +1322,34 @@
       - "customizations.locale"
       - "customizations.services"
 
+    # options supported by PXE image type
+    # Includes everything except disk, filesystem, and partitioning_mode
+    supported_options_pxe: &supported_options_pxe
+      - "distro"
+      - "packages"
+      - "modules"
+      - "groups"
+      - "enabled_modules"
+      - "containers"
+      - "minimal"
+      - "customizations.cacerts"
+      - "customizations.directories"
+      - "customizations.files"
+      - "customizations.fips"
+      - "customizations.firewall"
+      - "customizations.user"
+      - "customizations.sshkey"
+      - "customizations.group"
+      - "customizations.hostname"
+      - "customizations.kernel"
+      - "customizations.locale"
+      - "customizations.openscap"
+      - "customizations.repositories"
+      - "customizations.rpm"
+      - "customizations.services"
+      - "customizations.timezone"
+      - "customizations.rhsm"
+
 image_config:
   default:
     default_kernel: "kernel"
@@ -1415,7 +1449,6 @@ image_types:
       kernel_options:
         - "console=tty0"
         - "console=ttyS0,115200n8"
-        - "no_timer_check"
         - "net.ifnames=0"
       conditions:
         "tweak the rhsm config on rhel":
@@ -1705,62 +1738,6 @@ image_types:
           # NB: we currently don't support /boot on LVM
           - *azure_rhui_part_boot
           - *azure_rhui_part_lvm
-    partition_tables_override: &partition_tables_override_azure_internal
-      conditions:
-        "RHEL <= 9.2 had only 500 MiB /boot":
-          when:
-            version_less_than: "9.3"
-          override:
-            x86_64:
-              <<: *azure_rhui_partition_table_x86_64
-              partitions:
-                - *azure_rhui_part_boot_efi
-                - &azure_rhui_part_boot_500
-                  size: "500 MiB"
-                  type: *filesystem_data_guid
-                  uuid: *data_partition_uuid
-                  payload_type: "filesystem"
-                  payload:
-                    type: "xfs"
-                    mountpoint: "/boot"
-                    fstab_options: "defaults"
-                    fstab_freq: 0
-                    fstab_passno: 0
-                - *azure_rhui_part_bios
-                - *azure_rhui_part_lvm
-            aarch64:
-              <<: *azure_rhui_partition_table_aarch64
-              partitions:
-                - *azure_rhui_part_boot_efi
-                - *azure_rhui_part_boot_500
-                - *azure_rhui_part_lvm
-        "RHEL 9.3 had 600 MiB /boot, see RHEL-7999":
-          when:
-            version_equal: "9.3"
-          override:
-            x86_64:
-              <<: *azure_rhui_partition_table_x86_64
-              partitions:
-                - *azure_rhui_part_boot_efi
-                - &azure_rhui_part_boot_600
-                  size: "600 MiB"
-                  type: *filesystem_data_guid
-                  uuid: *data_partition_uuid
-                  payload_type: "filesystem"
-                  payload:
-                    type: "xfs"
-                    mountpoint: "/boot"
-                    fstab_options: "defaults"
-                    fstab_freq: 0
-                    fstab_passno: 0
-                - *azure_rhui_part_bios
-                - *azure_rhui_part_lvm
-            aarch64:
-              <<: *azure_rhui_partition_table_aarch64
-              partitions:
-                - *azure_rhui_part_boot_efi
-                - *azure_rhui_part_boot_600
-                - *azure_rhui_part_lvm
     supported_blueprint_options: *supported_options_disk
 
   "azure-rhui": &azure_rhui
@@ -2336,7 +2313,7 @@ image_types:
       - "customizations.rpm"
       - "customizations.services"
       - "customizations.rhsm"
-
+      - "customizations.kernel.append"
 
   gce:
     # this image type is set to `gcp` in image-builder-crc
@@ -2493,7 +2470,7 @@ image_types:
             # RHBZ#2075815
             - "qemu-guest-agent"
           conditions:
-            <<: *conditions_pkgsets_insights_client_on_rhel
+            "insights clients on rhel": *conditions_pkgsets_insights_client_on_rhel
     supported_blueprint_options: *supported_options_disk
 
   "minimal-raw":
@@ -3133,7 +3110,7 @@ image_types:
         uuid: "D209C89E-EA5E-4FBD-B161-B461CCE297E0"
         type: "gpt"
         partitions:
-          - size: 264_241_152  # 52 MiB
+          - size: "512 MiB"
             type: *efi_system_partition_guid
             uuid: *efi_system_partition_uuid
             payload_type: "filesystem"
@@ -3183,29 +3160,7 @@ image_types:
               - "shim-x64"
     package_sets:
       os:
-        - include:
-            - "@minimal-environment"
-            - "chrony"
-            - "cloud-init"
-            - "cloud-utils-growpart"
-            - "cryptsetup"
-            - "langpacks-en"
-            - "lvm2"
-            - "NetworkManager-cloud-setup"
-            - "nvme-cli"
-            - "openssh-server"
-            - "redhat-cloud-client-configuration"
-            - "redhat-release"
-            - "tpm2-tools"
-            - "uuid"
-            - "WALinuxAgent"
-            - "yum-utils"
-          exclude:
-            - "dracut-config-rescue"
-            - "iwl*"
-            - "linux-firmware*"
-            - "grubby"
-            - "os-prober"
+        - *azure_base_pkgset
     supported_blueprint_options:
       # same as disk image types, but kernel customizations are not supported
       - "distro"
@@ -3387,3 +3342,23 @@ image_types:
       - "distro"
       - "customizations.fips"
       - "customizations.locale"
+
+  "pxe-tar-xz":
+    filename: "pxe.tar.xz"
+    compression: "xz"
+    mime_type: "application/x-tar"
+    image_func: "pxe_tar"
+    exports: ["xz"]
+    bootable: true
+    package_sets:
+      os:
+        - include:
+            - "bash"
+            - "coreutils"
+            - "dracut-live"
+            - "dracut-network"
+            - "dracut-config-generic"
+    platforms:
+      - *x86_64_bios_platform
+      - *aarch64_platform
+    supported_blueprint_options: *supported_options_pxe

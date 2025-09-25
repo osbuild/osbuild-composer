@@ -2,7 +2,6 @@ package container
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -67,11 +66,7 @@ func New(ref string) (*Container, error) {
 	// not all containers set {{.Architecture}} so fallback
 	c.arch, err = findContainerArchInspect(c.id, ref)
 	if err != nil {
-		var err2 error
-		c.arch, err2 = findContainerArchUname(c.id, ref)
-		if err2 != nil {
-			return nil, errors.Join(err, err2)
-		}
+		return nil, err
 	}
 
 	/* #nosec G204 */
@@ -185,9 +180,9 @@ func (c *Container) DefaultRootfsType() (string, error) {
 	return fsType, nil
 }
 
-func findContainerArchInspect(cntId, ref string) (string, error) {
+func findImageIdFor(cntId, ref string) (string, error) {
 	/* #nosec G204 */
-	output, err := exec.Command("podman", "inspect", "-f", "{{.Architecture}}", cntId).Output()
+	output, err := exec.Command("podman", "inspect", "-f", "{{.Image}}", cntId).Output()
 	if err != nil {
 		if err, ok := err.(*exec.ExitError); ok {
 			return "", fmt.Errorf("inspecting container %q failed: %w\nstderr:\n%s", ref, err, err.Stderr)
@@ -197,14 +192,22 @@ func findContainerArchInspect(cntId, ref string) (string, error) {
 	return strings.TrimSpace(string(output)), nil
 }
 
-func findContainerArchUname(cntId, ref string) (string, error) {
+func findContainerArchInspect(cntId, ref string) (string, error) {
+	// get image id first, then get the arch from the image,
+	// it seems this is the most reliable way to get the
+	// architecture
+	imageId, err := findImageIdFor(cntId, ref)
+	if err != nil {
+		return "", err
+	}
+
 	/* #nosec G204 */
-	output, err := exec.Command("podman", "exec", cntId, "uname", "-m").Output()
+	output, err := exec.Command("podman", "inspect", "-f", "{{.Architecture}}", imageId).Output()
 	if err != nil {
 		if err, ok := err.(*exec.ExitError); ok {
-			return "", fmt.Errorf("running 'uname -m' from container %q failed: %w\nstderr:\n%s", cntId, err, err.Stderr)
+			return "", fmt.Errorf("inspecting container %q failed: %w\nstderr:\n%s", ref, err, err.Stderr)
 		}
-		return "", fmt.Errorf("running 'uname -m' from container %q failed with generic error: %w", cntId, err)
+		return "", fmt.Errorf("inspecting %s container failed with generic error: %w", ref, err)
 	}
 	return strings.TrimSpace(string(output)), nil
 }

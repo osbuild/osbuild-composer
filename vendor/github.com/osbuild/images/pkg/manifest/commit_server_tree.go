@@ -1,6 +1,8 @@
 package manifest
 
 import (
+	"errors"
+	"fmt"
 	"path/filepath"
 
 	"github.com/osbuild/images/internal/common"
@@ -54,7 +56,7 @@ func NewOSTreeCommitServer(buildPipeline Build,
 	return p
 }
 
-func (p *OSTreeCommitServer) getPackageSetChain(Distro) []rpmmd.PackageSet {
+func (p *OSTreeCommitServer) getPackageSetChain(Distro) ([]rpmmd.PackageSet, error) {
 	// FIXME: container package is defined here
 	packages := []string{"nginx"}
 	return []rpmmd.PackageSet{
@@ -63,27 +65,28 @@ func (p *OSTreeCommitServer) getPackageSetChain(Distro) []rpmmd.PackageSet {
 			Repositories:    append(p.repos, p.ExtraRepos...),
 			InstallWeakDeps: true,
 		},
-	}
+	}, nil
 }
 
-func (p *OSTreeCommitServer) getBuildPackages(Distro) []string {
+func (p *OSTreeCommitServer) getBuildPackages(Distro) ([]string, error) {
 	packages := []string{
 		"rpm",
 		"rpm-ostree",
 	}
-	return packages
+	return packages, nil
 }
 
 func (p *OSTreeCommitServer) getPackageSpecs() []rpmmd.PackageSpec {
 	return p.packageSpecs
 }
 
-func (p *OSTreeCommitServer) serializeStart(inputs Inputs) {
+func (p *OSTreeCommitServer) serializeStart(inputs Inputs) error {
 	if len(p.packageSpecs) > 0 {
-		panic("double call to serializeStart()")
+		return errors.New("OSTreeCommitServer: double call to serializeStart()")
 	}
 	p.packageSpecs = inputs.Depsolved.Packages
 	p.repos = append(p.repos, inputs.Depsolved.Repos...)
+	return nil
 }
 
 func (p *OSTreeCommitServer) serializeEnd() {
@@ -93,11 +96,14 @@ func (p *OSTreeCommitServer) serializeEnd() {
 	p.packageSpecs = nil
 }
 
-func (p *OSTreeCommitServer) serialize() osbuild.Pipeline {
+func (p *OSTreeCommitServer) serialize() (osbuild.Pipeline, error) {
 	if len(p.packageSpecs) == 0 {
-		panic("serialization not started")
+		return osbuild.Pipeline{}, fmt.Errorf("OSTreeCommitServer: serialization not started")
 	}
-	pipeline := p.Base.serialize()
+	pipeline, err := p.Base.serialize()
+	if err != nil {
+		return osbuild.Pipeline{}, err
+	}
 
 	pipeline.AddStage(osbuild.NewRPMStage(osbuild.NewRPMStageOptions(p.repos), osbuild.NewRpmStageSourceFilesInputs(p.packageSpecs)))
 	pipeline.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: p.Language}))
@@ -118,7 +124,7 @@ func (p *OSTreeCommitServer) serialize() osbuild.Pipeline {
 
 	pipeline.AddStage(osbuild.NewNginxConfigStage(nginxConfigStageOptions(p.nginxConfigPath, htmlRoot, p.listenPort)))
 
-	return pipeline
+	return pipeline, nil
 }
 
 func nginxConfigStageOptions(path, htmlRoot, listen string) *osbuild.NginxConfigStageOptions {

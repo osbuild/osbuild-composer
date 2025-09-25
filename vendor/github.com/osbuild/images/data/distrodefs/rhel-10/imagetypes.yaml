@@ -694,7 +694,6 @@
       - "bzip2"
       - "cloud-init"
       - "cloud-utils-growpart"
-      - "dracut-config-generic"
       - "efibootmgr"
       - "hyperv-daemons"
       - "langpacks-en"
@@ -703,6 +702,7 @@
       - "NetworkManager-cloud-setup"
       - "nvme-cli"
       - "patch"
+      - "rsync"
       - "selinux-policy-targeted"
       - "system-reinstall-bootc"
       - "uuid"
@@ -769,6 +769,12 @@
         append:
           include:
             - "rng-tools"
+      "rhel-10.2+ gets azure-vm-utils":
+        when:
+          version_greater_or_equal: "10.2"
+        append:
+          include:
+            - "azure-vm-utils"
   supported_options_lists:
     # Common options supported by all disk image types.
     # This includes everything that is not specific to installers.
@@ -786,6 +792,34 @@
       - "customizations.files"
       - "customizations.filesystem"
       - "customizations.partitioning_mode"
+      - "customizations.fips"
+      - "customizations.firewall"
+      - "customizations.user"
+      - "customizations.sshkey"
+      - "customizations.group"
+      - "customizations.hostname"
+      - "customizations.kernel"
+      - "customizations.locale"
+      - "customizations.openscap"
+      - "customizations.repositories"
+      - "customizations.rpm"
+      - "customizations.services"
+      - "customizations.timezone"
+      - "customizations.rhsm"
+
+    # options supported by PXE image type
+    # Includes everything except disk, filesystem, and partitioning_mode
+    supported_options_pxe: &supported_options_pxe
+      - "distro"
+      - "packages"
+      - "modules"
+      - "groups"
+      - "enabled_modules"
+      - "containers"
+      - "minimal"
+      - "customizations.cacerts"
+      - "customizations.directories"
+      - "customizations.files"
       - "customizations.fips"
       - "customizations.firewall"
       - "customizations.user"
@@ -895,7 +929,7 @@ image_types:
         image_format: "qcow2"
     image_config: &qcow2_image_config
       default_target: "multi-user.target"
-      kernel_options: ["console=tty0", "console=ttyS0,115200n8", "no_timer_check"]
+      kernel_options: ["console=tty0", "console=ttyS0,115200n8"]
       conditions:
         "tweak the rhsm config on rhel":
           when:
@@ -1861,6 +1895,7 @@ image_types:
       - "customizations.rpm"
       - "customizations.services"
       - "customizations.rhsm"
+      - "customizations.kernel.append"
 
   gce:
     # this image type is set to `gcp` in image-builder-crc
@@ -2044,7 +2079,7 @@ image_types:
         uuid: "D209C89E-EA5E-4FBD-B161-B461CCE297E0"
         type: "gpt"
         partitions:
-          - size: 264_241_152  # 52 MiB
+          - size: "512 MiB"
             type: *efi_system_partition_guid
             uuid: *efi_system_partition_uuid
             payload_type: "filesystem"
@@ -2093,33 +2128,7 @@ image_types:
               - "shim-x64"
     package_sets:
       os:
-        - include:
-            - "@minimal-environment"
-            - "chrony"
-            - "cloud-init"
-            - "cloud-utils-growpart"
-            - "cryptsetup"
-            - "langpacks-en"
-            - "lvm2"
-            - "NetworkManager-cloud-setup"
-            - "nvme-cli"
-            - "openssh-server"
-            - "redhat-cloud-client-configuration"
-            - "redhat-release"
-            - "tpm2-tools"
-            - "uuid"
-            - "WALinuxAgent"
-            - "yum-utils"
-          exclude:
-            - "dracut-config-rescue"
-            - "grubby"
-            - "iwl*"
-            # In EL9 we exclude linux-firmware* (note the asterisk).
-            # In EL10, packages in the minimal-environment group require
-            # linux-firmware-whence, so we only exclude the linux-firmware
-            # package here.
-            - "linux-firmware"
-            - "os-prober"
+        - *azure_base_pkgset
     supported_blueprint_options:
       # same as disk image types, but kernel customizations are not supported
       - "distro"
@@ -2263,3 +2272,23 @@ image_types:
       - "distro"
       - "customizations.fips"
       - "customizations.locale"
+
+  "pxe-tar-xz":
+    filename: "pxe.tar.xz"
+    compression: "xz"
+    mime_type: "application/x-tar"
+    image_func: "pxe_tar"
+    exports: ["xz"]
+    bootable: true
+    package_sets:
+      os:
+        - include:
+            - "bash"
+            - "coreutils"
+            - "dracut-live"
+            - "dracut-network"
+            - "dracut-config-generic"
+    platforms:
+      - *x86_64_bios_platform
+      - *aarch64_platform
+    supported_blueprint_options: *supported_options_pxe

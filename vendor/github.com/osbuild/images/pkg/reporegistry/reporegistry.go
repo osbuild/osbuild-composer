@@ -1,12 +1,17 @@
 package reporegistry
 
 import (
+	"errors"
 	"fmt"
 	"io/fs"
 
 	"github.com/osbuild/images/pkg/distroidparser"
 	"github.com/osbuild/images/pkg/rpmmd"
 )
+
+// ErrNoRepoFound is raied if a repository request for a given
+// distro or architecture failed.
+var ErrNoRepoFound = errors.New("requested repository not found")
 
 // RepoRegistry represents a database of distro and architecture
 // specific RPM repositories. Image types are considered only
@@ -77,7 +82,7 @@ func (r *RepoRegistry) ReposByArchName(distro, arch string, includeTagged bool) 
 
 	archRepos, err := r.DistroHasRepos(distro, arch)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to get repositories for distribution '%s' and architecture '%s': %v", distro, arch, err)
+		return nil, err
 	}
 
 	for _, repo := range archRepos {
@@ -103,11 +108,11 @@ func (r *RepoRegistry) DistroHasRepos(distro, arch string) ([]rpmmd.RepoConfig, 
 
 	distroRepos, found := r.repos[stdDistroName]
 	if !found {
-		return nil, fmt.Errorf("there are no repositories for distribution '%s'", stdDistroName)
+		return nil, fmt.Errorf("%w: for distribution %q", ErrNoRepoFound, stdDistroName)
 	}
 	repos, found := distroRepos[arch]
 	if !found {
-		return nil, fmt.Errorf("there are no repositories for distribution '%s' and architecture '%s'", stdDistroName, arch)
+		return nil, fmt.Errorf("%w: for distribution %q and architecture %q", ErrNoRepoFound, stdDistroName, arch)
 	}
 
 	return repos, nil

@@ -24,6 +24,6 @@ func filesystemConfigStages(pt *disk.PartitionTable, mountConfiguration osbuild.
 	case osbuild.MOUNT_CONFIGURATION_NONE:
 		return []*osbuild.Stage{}, nil
 	default:
-		panic(fmt.Sprintf("Unexpected mount configuration %d", mountConfiguration))
+		return nil, fmt.Errorf("Unexpected mount configuration %d", mountConfiguration)
 	}
 }

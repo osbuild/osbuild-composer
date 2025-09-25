@@ -59,8 +59,11 @@ func NewVagrant(buildPipeline Build, imgPipeline FilePipeline, provider osbuild.
 	return p
 }
 
-func (p *Vagrant) serialize() osbuild.Pipeline {
-	pipeline := p.Base.serialize()
+func (p *Vagrant) serialize() (osbuild.Pipeline, error) {
+	pipeline, err := p.Base.serialize()
+	if err != nil {
+		return osbuild.Pipeline{}, err
+	}
 
 	vagrantOptions := osbuild.NewVagrantStageOptions(p.provider)
 
@@ -101,11 +104,11 @@ func (p *Vagrant) serialize() osbuild.Pipeline {
 		osbuild.NewVagrantStagePipelineFilesInputs(p.imgPipeline.Name(), p.imgPipeline.Filename()),
 	))
 
-	return pipeline
+	return pipeline, nil
 }
 
-func (p *Vagrant) getBuildPackages(Distro) []string {
-	return []string{"qemu-img"}
+func (p *Vagrant) getBuildPackages(Distro) ([]string, error) {
+	return []string{"qemu-img"}, nil
 }
 
 func (p *Vagrant) Export() *artifact.Artifact {

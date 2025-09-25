@@ -246,23 +246,6 @@ func GetPackage(pkgs []PackageSpec, packageName string) (PackageSpec, error) {
 	return PackageSpec{}, fmt.Errorf("package %q not found in the PackageSpec list", packageName)
 }
 
-func GetVerStrFromPackageSpecList(pkgs []PackageSpec, packageName string) (string, error) {
-	pkg, err := GetPackage(pkgs, packageName)
-	if err != nil {
-		return "", err
-	}
-
-	return pkg.GetEVRA(), nil
-}
-
-func GetVerStrFromPackageSpecListPanic(pkgs []PackageSpec, packageName string) string {
-	pkgVerStr, err := GetVerStrFromPackageSpecList(pkgs, packageName)
-	if err != nil {
-		panic(err)
-	}
-	return pkgVerStr
-}
-
 func LoadRepositoriesFromFile(filename string) (map[string][]RepoConfig, error) {
 	f, err := os.Open(filename)
 	if err != nil {

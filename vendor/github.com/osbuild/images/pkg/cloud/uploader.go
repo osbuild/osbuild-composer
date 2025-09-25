@@ -20,5 +20,7 @@ type Uploader interface {
 	// the reader and write status message to the given
 	// status writer.
 	// To implement progress a proxy reader can be used.
-	UploadAndRegister(f io.Reader, status io.Writer) error
+	// For more complex scenarios an optional uploadSize can be
+	// passed.
+	UploadAndRegister(r io.Reader, uploadSize uint64, status io.Writer) error
 }

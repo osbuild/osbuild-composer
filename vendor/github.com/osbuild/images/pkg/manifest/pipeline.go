@@ -35,12 +35,12 @@ type Pipeline interface {
 
 	// getBuildPackages returns the list of packages required for the pipeline
 	// at build time.
-	getBuildPackages(Distro) []string
+	getBuildPackages(Distro) ([]string, error)
 	// getPackageSetChain returns the list of package names to be required by
 	// the pipeline. Each set should be depsolved sequentially to resolve
 	// dependencies and full package specs. See the depsolvednf package for more
 	// details.
-	getPackageSetChain(Distro) []rpmmd.PackageSet
+	getPackageSetChain(Distro) ([]rpmmd.PackageSet, error)
 	// getContainerSources returns the list of containers sources to be resolved and
 	// embedded by the pipeline. Each source should be resolved to its full
 	// Spec. See the container package for more details.
@@ -50,9 +50,9 @@ type Pipeline interface {
 	// its full Spec. See the ostree package for more details.
 	getOSTreeCommitSources() []ostree.SourceSpec
 
-	serializeStart(Inputs)
+	serializeStart(Inputs) error
 	serializeEnd()
-	serialize() osbuild.Pipeline
+	serialize() (osbuild.Pipeline, error)
 
 	// getPackageSpecs returns the list of specifications for packages that
 	// will be installed to the pipeline tree.
@@ -68,7 +68,7 @@ type Pipeline interface {
 	getInline() []string
 
 	// files generated from url references
-	fileRefs() []string
+	fileRefs() ([]string, error)
 }
 
 // ExportingPipeline is a pipeline that can export an artifact
@@ -120,12 +120,12 @@ func (p *Base) setManifest(m *Manifest) {
 	p.manifest = m
 }
 
-func (p Base) getBuildPackages(Distro) []string {
-	return []string{}
+func (p Base) getBuildPackages(Distro) ([]string, error) {
+	return nil, nil
 }
 
-func (p Base) getPackageSetChain(Distro) []rpmmd.PackageSet {
-	return nil
+func (p Base) getPackageSetChain(Distro) ([]rpmmd.PackageSet, error) {
+	return nil, nil
 }
 
 func (p Base) getContainerSources() []container.SourceSpec {
@@ -152,8 +152,8 @@ func (p Base) getInline() []string {
 	return []string{}
 }
 
-func (p Base) fileRefs() []string {
-	return nil
+func (p Base) fileRefs() ([]string, error) {
+	return nil, nil
 }
 
 // NewBase returns a generic Pipeline object. The name is mandatory, immutable and must
@@ -174,7 +174,9 @@ func NewBase(name string, build Build) Base {
 
 // serializeStart must be called exactly once before each call
 // to serialize().
-func (p Base) serializeStart(inputs Inputs) {
+func (p Base) serializeStart(inputs Inputs) error {
+	// XXX: we could do the "double call" check and other common mistakes here
+	return nil
 }
 
 // serializeEnd must be called exactly once after each call to
@@ -185,14 +187,14 @@ func (p Base) serializeEnd() {
 // Serialize turns a given pipeline into an osbuild.Pipeline object. This object is
 // meant to be treated as opaque and not to be modified further outside of the pipeline
 // package.
-func (p Base) serialize() osbuild.Pipeline {
+func (p Base) serialize() (osbuild.Pipeline, error) {
 	pipeline := osbuild.Pipeline{
 		Name: p.name,
 	}
 	if p.build != nil {
 		pipeline.Build = "name:" + p.build.Name()
 	}
-	return pipeline
+	return pipeline, nil
 }
 
 // TreePipeline is any pipeline that produces a directory tree.

@@ -1,6 +1,9 @@
 package manifest
 
 import (
+	"errors"
+	"fmt"
+
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/ostree"
@@ -41,8 +44,8 @@ func NewContentTest(m *Manifest, name string, packageSets []rpmmd.PackageSet, co
 	return pipeline
 }
 
-func (p *ContentTest) getPackageSetChain(Distro) []rpmmd.PackageSet {
-	return p.packageSets
+func (p *ContentTest) getPackageSetChain(Distro) ([]rpmmd.PackageSet, error) {
+	return p.packageSets, nil
 }
 
 func (p *ContentTest) getContainerSources() []container.SourceSpec {
@@ -65,9 +68,9 @@ func (p *ContentTest) getOSTreeCommits() []ostree.CommitSpec {
 	return p.commitSpecs
 }
 
-func (p *ContentTest) serializeStart(inputs Inputs) {
+func (p *ContentTest) serializeStart(inputs Inputs) error {
 	if p.serializing {
-		panic("double call to serializeStart()")
+		return errors.New("ContentTest: double call to serializeStart()")
 	}
 	p.packageSpecs = inputs.Depsolved.Packages
 	p.containerSpecs = inputs.Containers
@@ -75,6 +78,7 @@ func (p *ContentTest) serializeStart(inputs Inputs) {
 	p.repos = inputs.Depsolved.Repos
 
 	p.serializing = true
+	return nil
 }
 
 func (p *ContentTest) serializeEnd() {
@@ -88,14 +92,14 @@ func (p *ContentTest) serializeEnd() {
 	p.serializing = false
 }
 
-func (p *ContentTest) serialize() osbuild.Pipeline {
+func (p *ContentTest) serialize() (osbuild.Pipeline, error) {
 	if !p.serializing {
-		panic("serialization not started")
+		return osbuild.Pipeline{}, fmt.Errorf("ContentTest: serialization not started")
 	}
 
 	// no stages
 
 	return osbuild.Pipeline{
 		Name: p.name,
-	}
+	}, nil
 }

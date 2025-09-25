@@ -36,7 +36,7 @@ func NewRawOStreeImage(buildPipeline Build, treePipeline *OSTreeDeployment, plat
 	return p
 }
 
-func (p *RawOSTreeImage) getBuildPackages(Distro) []string {
+func (p *RawOSTreeImage) getBuildPackages(Distro) ([]string, error) {
 	packages := p.platform.GetBuildPackages()
 	packages = append(packages, p.platform.GetPackages()...)
 	packages = append(packages, p.treePipeline.PartitionTable.GetBuildPackages()...)
@@ -47,15 +47,18 @@ func (p *RawOSTreeImage) getBuildPackages(Distro) []string {
 		"dracut-config-generic",
 		"efibootmgr",
 	)
-	return packages
+	return packages, nil
 }
 
-func (p *RawOSTreeImage) serialize() osbuild.Pipeline {
-	pipeline := p.Base.serialize()
+func (p *RawOSTreeImage) serialize() (osbuild.Pipeline, error) {
+	pipeline, err := p.Base.serialize()
+	if err != nil {
+		return osbuild.Pipeline{}, err
+	}
 
 	pt := p.treePipeline.PartitionTable
 	if pt == nil {
-		panic("no partition table in live image")
+		return osbuild.Pipeline{}, fmt.Errorf("no partition table in live image")
 	}
 
 	for _, stage := range osbuild.GenImagePrepareStages(pt, p.Filename(), osbuild.PTSfdisk, p.treePipeline.Name()) {
@@ -93,7 +96,7 @@ func (p *RawOSTreeImage) serialize() osbuild.Pipeline {
 		}
 
 		if fsRootMntName == "" {
-			panic("no mount found for the filesystem root")
+			return osbuild.Pipeline{}, fmt.Errorf("no mount found for the filesystem root")
 		}
 
 		for _, paths := range bootFiles {
@@ -111,20 +114,22 @@ func (p *RawOSTreeImage) serialize() osbuild.Pipeline {
 	}
 
 	if p.treePipeline.UseBootupd {
-		p.addBootupdStage(&pipeline)
+		if err := p.addBootupdStage(&pipeline); err != nil {
+			return osbuild.Pipeline{}, err
+		}
 	} else {
 		p.maybeAddGrubInstStage(&pipeline)
 	}
 
-	return pipeline
+	return pipeline, nil
 }
 
-func (p *RawOSTreeImage) addBootupdStage(pipeline *osbuild.Pipeline) {
+func (p *RawOSTreeImage) addBootupdStage(pipeline *osbuild.Pipeline) error {
 	pt := p.treePipeline.PartitionTable
 
 	treeBootupdDevices, treeBootupdMounts, err := osbuild.GenBootupdDevicesMounts(p.Filename(), pt, p.platform)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	opts := &osbuild.BootupdStageOptions{
 		Deployment: &osbuild.OSTreeDeployment{
@@ -140,10 +145,11 @@ func (p *RawOSTreeImage) addBootupdStage(pipeline *osbuild.Pipeline) {
 	}
 	bootupd, err := osbuild.NewBootupdStage(opts, treeBootupdDevices, treeBootupdMounts, p.platform)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	pipeline.AddStage(bootupd)
+	return nil
 }
 
 func (p *RawOSTreeImage) maybeAddGrubInstStage(pipeline *osbuild.Pipeline) {

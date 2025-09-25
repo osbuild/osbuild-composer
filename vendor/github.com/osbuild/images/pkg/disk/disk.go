@@ -374,9 +374,11 @@ type FSTabEntity interface {
 // A MountpointCreator is a container that is able to create new volumes.
 //
 // CreateMountpoint creates a new mountpoint with the given size and
-// returns the entity that represents the new mountpoint.
+// default filesystem and returns the entity that represents the new
+// mountpoint. The defaultFs is only a hint and can be ignored by
+// e.g. btrfs subvolumes.
 type MountpointCreator interface {
-	CreateMountpoint(mountpoint string, size uint64) (Entity, error)
+	CreateMountpoint(mountpoint, defaultFs string, size uint64) (Entity, error)
 
 	// AlignUp will align the given bytes according to the
 	// requirements of the container type.
@@ -451,14 +453,16 @@ func newRandomUUIDFromReader(r io.Reader) (uuid.UUID, error) {
 }
 
 // NewVolIDFromRand creates a random 32 bit hex string to use as a volume ID
-// for FAT filesystems.
+// for FAT filesystems. It ensures there's a dash in the middle and the string
+// is uppercased.
 func NewVolIDFromRand(r *rand.Rand) string {
 	volid := make([]byte, 4)
 	len, _ := r.Read(volid)
 	if len != 4 {
 		panic("expected four random bytes")
 	}
-	return hex.EncodeToString(volid)
+	asHex := strings.ToUpper(hex.EncodeToString(volid))
+	return fmt.Sprintf("%s-%s", asHex[:4], asHex[4:])
 }
 
 // genUniqueString returns a string based on base that does does not exist in

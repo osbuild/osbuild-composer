@@ -1,0 +1,40 @@
+# About this archive
+
+This archive contains files suitable for use with PXE booting or UEFI HTTP booting.
+It includes this following:
+
+* EFI/ directory tree of shim and Grub2 bootloader files
+* vmlinuz - kernel
+* initrd.img - initial ramdisk
+* rootfs.img - compressed root filesystem
+* grub.cfg - a grub2 template
+
+Make sure that the system has enough RAM to hold the kernel, initrd, and rootfs
+in memory. This size will depend on how large your rootfs.img is and what kinds
+of workloads you are running. 2GiB is usually enough for a small image. If there isn't
+enough RAM to boot you will likely see a kernel panic.
+
+# PXE booting with a HTTP server
+
+The grub.cfg file is a template that will need to be modified for your specific situation.
+It expects the kernel, initrd, and rootfs to be placed at the / of the tftp server's
+directory tree.
+
+The first entry uses http to serve the rootfs.img you will need to replace
+'HTTP-SERVER' with the url of a http server. For experimentation you can launch
+a simple server using python like this:
+
+    python3 -m http.server 8000
+
+Run that from the directory with the rootfs.img file.
+
+# PXE booting with combined image
+
+The second entry is for use with a combined initrd and rootfs image. This saves you the
+step of setting up a HTTP server but requires that you assemble the combined image from
+the initrd and the root filesystem.
+
+## Create a combined image
+
+    echo rootfs.img | cpio -c --quiet -L -o > rootfs.cpio
+    cat initrd.img rootfs.cpio > combined.img

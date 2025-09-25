@@ -934,6 +934,31 @@ func netinstImage(t *imageType,
 	return img, nil
 }
 
+func pxeTarImage(t *imageType,
+	bp *blueprint.Blueprint,
+	options distro.ImageOptions,
+	packageSets map[string]rpmmd.PackageSet,
+	payloadRepos []rpmmd.RepoConfig,
+	containers []container.SourceSpec,
+	rng *rand.Rand) (image.ImageKind, error) {
+	img := image.NewPXETar(t.platform, t.Filename())
+
+	var err error
+	img.OSCustomizations, err = osCustomizations(t, packageSets[osPkgsKey], options, containers, bp)
+	if err != nil {
+		return nil, err
+	}
+	img.OSCustomizations.PayloadRepos = payloadRepos
+
+	d := t.arch.distro
+
+	img.Environment = &t.ImageTypeYAML.Environment
+	img.Compression = t.ImageTypeYAML.Compression
+	img.OSVersion = d.OsVersion()
+
+	return img, nil
+}
+
 // Create an ostree SourceSpec to define an ostree parent commit using the user
 // options and the default ref for the image type.  Additionally returns the
 // ref to be used for the new commit to be created.

@@ -68,6 +68,8 @@ func newImageTypeFrom(d *distribution, ar *architecture, imgYAML defs.ImageTypeY
 		it.image = tarImage
 	case "netinst":
 		it.image = netinstImage
+	case "pxe_tar":
+		it.image = pxeTarImage
 	default:
 		err := fmt.Errorf("unknown image func: %v for %v", imgYAML.Image, imgYAML.Name())
 		panic(err)
@@ -163,6 +165,8 @@ func (t *imageType) getPartitionTable(customizations *blueprint.Customizations, 
 	if err != nil {
 		return nil, err
 	}
+
+	defaultFsType := t.arch.distro.DefaultFSType
 	if partitioning != nil {
 		// Use the new custom partition table to create a PT fully based on the user's customizations.
 		// This overrides FilesystemCustomizations, but we should never have both defined.
@@ -175,7 +179,7 @@ func (t *imageType) getPartitionTable(customizations *blueprint.Customizations, 
 		partOptions := &disk.CustomPartitionTableOptions{
 			PartitionTableType: basePartitionTable.Type, // PT type is not customizable, it is determined by the base PT for an image type or architecture
 			BootMode:           t.BootMode(),
-			DefaultFSType:      t.arch.distro.DefaultFSType,
+			DefaultFSType:      defaultFsType,
 			RequiredMinSizes:   t.ImageTypeYAML.RequiredPartitionSizes,
 			Architecture:       t.platform.GetArch(),
 		}
@@ -183,7 +187,7 @@ func (t *imageType) getPartitionTable(customizations *blueprint.Customizations, 
 	}
 
 	mountpoints := customizations.GetFilesystems()
-	return disk.NewPartitionTable(basePartitionTable, mountpoints, imageSize, options.PartitioningMode, t.platform.GetArch(), t.ImageTypeYAML.RequiredPartitionSizes, rng)
+	return disk.NewPartitionTable(basePartitionTable, mountpoints, imageSize, options.PartitioningMode, t.platform.GetArch(), t.ImageTypeYAML.RequiredPartitionSizes, defaultFsType.String(), rng)
 }
 
 func (t *imageType) getDefaultImageConfig() *distro.ImageConfig {
@@ -306,24 +310,27 @@ func (t *imageType) Manifest(bp *blueprint.Blueprint,
 // Returns ([]string, error) where []string, if non-nil, will hold any generated warnings (e.g. deprecation notices).
 func (t *imageType) checkOptions(bp *blueprint.Blueprint, options distro.ImageOptions) ([]string, error) {
 
-	if warnings, err := checkOptionsCommon(t, bp, options); err != nil {
+	warnings, err := checkOptionsCommon(t, bp, options)
+	if err != nil {
 		return warnings, err
 	}
 
 	switch idLike := t.arch.distro.DistroYAML.DistroLike; idLike {
-	case manifest.DISTRO_FEDORA:
-		return checkOptionsFedora(t, bp, options)
-	case manifest.DISTRO_EL7:
-		return checkOptionsRhel7(t, bp, options)
+	case manifest.DISTRO_FEDORA, manifest.DISTRO_EL7, manifest.DISTRO_EL10:
+		// no specific options checkers
 	case manifest.DISTRO_EL8:
-		return checkOptionsRhel8(t, bp, options)
+		if err := checkOptionsRhel8(t, bp); err != nil {
+			return warnings, err
+		}
 	case manifest.DISTRO_EL9:
-		return checkOptionsRhel9(t, bp, options)
-	case manifest.DISTRO_EL10:
-		return checkOptionsRhel10(t, bp, options)
+		if err := checkOptionsRhel9(t, bp); err != nil {
+			return warnings, err
+		}
 	default:
 		return nil, fmt.Errorf("checkOptions called with unknown distro-like %v", idLike)
 	}
+
+	return warnings, nil
 }
 
 func (t *imageType) RequiredBlueprintOptions() []string {

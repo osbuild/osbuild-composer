@@ -189,7 +189,7 @@ image_types:
   qcow2: &qcow2
     image_config: &qcow2_image_config
       default_target: "multi-user.target"
-      kernel_options: ["console=tty0", "console=ttyS0,115200n8", "no_timer_check"]
+      kernel_options: ["console=tty0", "console=ttyS0,115200n8"]
       conditions:
         "tweak the rhsm config on rhel":
           when:

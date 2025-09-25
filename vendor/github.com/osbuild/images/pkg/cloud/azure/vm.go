@@ -20,13 +20,24 @@ type VM struct {
 	IPAddress     string `json:"ip-address"`
 	Nic           string `json:"nic"`
 	Name          string `json:"name"`
-	Disk          string `json:"disk"`
+	DiskName      string `json:"disk-name"`
+	DiskID        string `json:"disk-id"`
 }
 
-func (ac Client) CreateVM(ctx context.Context, resourceGroup, image, name, size, username, sshKey string) (*VM, error) {
+type VMOptions struct {
+	Name     string
+	Image    string
+	Snapshot string
+	Size     string
+	User     string
+	SSHKey   string
+	Windows  bool
+}
+
+func (ac Client) CreateVM(ctx context.Context, resourceGroup string, options VMOptions) (*VM, error) {
 	vm := VM{
 		ResourceGroup: resourceGroup,
-		Name:          name,
+		Name:          options.Name,
 	}
 	var err error
 	defer func() {
@@ -37,6 +48,10 @@ func (ac Client) CreateVM(ctx context.Context, resourceGroup, image, name, size,
 			}
 		}
 	}()
+
+	if options.Image != "" && options.Snapshot != "" {
+		return nil, fmt.Errorf("Either an image or a snapshot must be given to create a VM, not both")
+	}
 
 	location, err := ac.GetResourceGroupLocation(ctx, resourceGroup)
 	if err != nil {
@@ -74,12 +89,25 @@ func (ac Client) CreateVM(ctx context.Context, resourceGroup, image, name, size,
 	}
 	vm.Nic = common.ValueOrEmpty(intf.Name)
 
-	virtualMachine, err := ac.createVM(ctx, resourceGroup, location, image, size, *intf.ID, fmt.Sprintf("%s-disk", vm.Name), vm.Name, username, sshKey)
+	// When creating from a snapshot the disk ID is needed, otherwise azure will automatically
+	// create a new disk with the specified name. If options.Image is set, then diskRef will be
+	// the name of the disk.
+	diskRef := fmt.Sprintf("%s-disk", vm.Name)
+	if options.Snapshot != "" {
+		disk, err := ac.createDisk(ctx, resourceGroup, location, options.Snapshot, diskRef)
+		if err != nil {
+			return nil, err
+		}
+		vm.DiskID = common.ValueOrEmpty(disk.ID)
+		diskRef = vm.DiskID
+	}
+
+	virtualMachine, err := ac.createVM(ctx, resourceGroup, location, options, *intf.ID, diskRef, vm.Name)
 	if err != nil {
 		return nil, err
 	}
 	vm.Name = common.ValueOrEmpty(virtualMachine.Name)
-	vm.Disk = common.ValueOrEmpty(virtualMachine.Properties.StorageProfile.OSDisk.Name)
+	vm.DiskName = common.ValueOrEmpty(virtualMachine.Properties.StorageProfile.OSDisk.Name)
 	return &vm, nil
 }
 
@@ -316,43 +344,36 @@ func (ac Client) deleteInterface(ctx context.Context, vm *VM) error {
 	return nil
 }
 
-func (ac Client) createVM(ctx context.Context, resourceGroup, location, image, size, nic, diskName, name, username, sshKey string) (*armcompute.VirtualMachine, error) {
+func (ac Client) createDisk(ctx context.Context, resourceGroup, location, snapshot, name string) (*armcompute.Disk, error) {
+	poller, err := ac.disks.BeginCreateOrUpdate(ctx, resourceGroup, name, armcompute.Disk{
+		Location: &location,
+		Properties: &armcompute.DiskProperties{
+			CreationData: &armcompute.CreationData{
+				CreateOption:     common.ToPtr(armcompute.DiskCreateOptionCopy),
+				SourceResourceID: &snapshot,
+			},
+		},
+	}, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := poller.PollUntilDone(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &resp.Disk, nil
+}
+
+func (ac Client) createVM(ctx context.Context, resourceGroup, location string, options VMOptions, nic, diskRef, name string) (*armcompute.VirtualMachine, error) {
 	vm := armcompute.VirtualMachine{
 		Location: common.ToPtr(location),
 		Identity: &armcompute.VirtualMachineIdentity{
 			Type: common.ToPtr(armcompute.ResourceIdentityTypeNone),
 		},
 		Properties: &armcompute.VirtualMachineProperties{
-			StorageProfile: &armcompute.StorageProfile{
-				ImageReference: &armcompute.ImageReference{
-					ID: common.ToPtr(image),
-				},
-				OSDisk: &armcompute.OSDisk{
-					Name:         common.ToPtr(diskName),
-					CreateOption: common.ToPtr(armcompute.DiskCreateOptionTypesFromImage),
-					Caching:      common.ToPtr(armcompute.CachingTypesReadWrite),
-					ManagedDisk: &armcompute.ManagedDiskParameters{
-						StorageAccountType: common.ToPtr(armcompute.StorageAccountTypesStandardLRS),
-					},
-				},
-			},
 			HardwareProfile: &armcompute.HardwareProfile{
-				VMSize: common.ToPtr(armcompute.VirtualMachineSizeTypes(size)),
-			},
-			OSProfile: &armcompute.OSProfile{
-				ComputerName:  common.ToPtr(name),
-				AdminUsername: common.ToPtr(username),
-				LinuxConfiguration: &armcompute.LinuxConfiguration{
-					DisablePasswordAuthentication: common.ToPtr(true),
-					SSH: &armcompute.SSHConfiguration{
-						PublicKeys: []*armcompute.SSHPublicKey{
-							{
-								Path:    common.ToPtr(fmt.Sprintf("/home/%s/.ssh/authorized_keys", username)),
-								KeyData: common.ToPtr(sshKey),
-							},
-						},
-					},
-				},
+				VMSize: common.ToPtr(armcompute.VirtualMachineSizeTypes(options.Size)),
 			},
 			NetworkProfile: &armcompute.NetworkProfile{
 				NetworkInterfaces: []*armcompute.NetworkInterfaceReference{
@@ -362,6 +383,54 @@ func (ac Client) createVM(ctx context.Context, resourceGroup, location, image, s
 				},
 			},
 		},
+	}
+
+	if options.Image != "" {
+		vm.Properties.StorageProfile = &armcompute.StorageProfile{
+			ImageReference: &armcompute.ImageReference{
+				ID: common.ToPtr(options.Image),
+			},
+			OSDisk: &armcompute.OSDisk{
+				Name:         common.ToPtr(diskRef),
+				CreateOption: common.ToPtr(armcompute.DiskCreateOptionTypesFromImage),
+				Caching:      common.ToPtr(armcompute.CachingTypesReadWrite),
+				ManagedDisk: &armcompute.ManagedDiskParameters{
+					StorageAccountType: common.ToPtr(armcompute.StorageAccountTypesStandardLRS),
+				},
+			},
+		}
+		vm.Properties.OSProfile = &armcompute.OSProfile{
+			ComputerName:  common.ToPtr(name),
+			AdminUsername: common.ToPtr(options.User),
+		}
+	} else {
+		vm.Properties.StorageProfile = &armcompute.StorageProfile{
+			OSDisk: &armcompute.OSDisk{
+				CreateOption: common.ToPtr(armcompute.DiskCreateOptionTypesAttach),
+				ManagedDisk: &armcompute.ManagedDiskParameters{
+					ID: &diskRef,
+				},
+			},
+		}
+	}
+
+	if options.Windows {
+		vm.Properties.SecurityProfile = &armcompute.SecurityProfile{
+			SecurityType: common.ToPtr(armcompute.SecurityTypesTrustedLaunch),
+		}
+		vm.Properties.StorageProfile.OSDisk.OSType = common.ToPtr(armcompute.OperatingSystemTypesWindows)
+	} else {
+		vm.Properties.OSProfile.LinuxConfiguration = &armcompute.LinuxConfiguration{
+			DisablePasswordAuthentication: common.ToPtr(true),
+			SSH: &armcompute.SSHConfiguration{
+				PublicKeys: []*armcompute.SSHPublicKey{
+					{
+						Path:    common.ToPtr(fmt.Sprintf("/home/%s/.ssh/authorized_keys", options.User)),
+						KeyData: &options.SSHKey,
+					},
+				},
+			},
+		}
 	}
 
 	poller, err := ac.vms.BeginCreateOrUpdate(ctx, resourceGroup, name, vm, nil)
@@ -393,10 +462,10 @@ func (ac Client) deleteVirtualMachine(ctx context.Context, vm *VM) error {
 }
 
 func (ac Client) deleteDisk(ctx context.Context, vm *VM) error {
-	if vm.Disk == "" {
+	if vm.DiskName == "" {
 		return nil
 	}
-	poller, err := ac.disks.BeginDelete(ctx, vm.ResourceGroup, vm.Disk, nil)
+	poller, err := ac.disks.BeginDelete(ctx, vm.ResourceGroup, vm.DiskName, nil)
 	if err != nil {
 		return err
 	}

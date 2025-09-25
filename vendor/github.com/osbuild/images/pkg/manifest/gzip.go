@@ -33,19 +33,22 @@ func NewGzip(buildPipeline Build, imgPipeline FilePipeline) *Gzip {
 	return p
 }
 
-func (p *Gzip) serialize() osbuild.Pipeline {
-	pipeline := p.Base.serialize()
+func (p *Gzip) serialize() (osbuild.Pipeline, error) {
+	pipeline, err := p.Base.serialize()
+	if err != nil {
+		return osbuild.Pipeline{}, err
+	}
 
 	pipeline.AddStage(osbuild.NewGzipStage(
 		osbuild.NewGzipStageOptions(p.Filename()),
 		osbuild.NewGzipStageInputs(osbuild.NewFilesInputPipelineObjectRef(p.imgPipeline.Name(), p.imgPipeline.Export().Filename(), nil)),
 	))
 
-	return pipeline
+	return pipeline, nil
 }
 
-func (p *Gzip) getBuildPackages(Distro) []string {
-	return []string{"gzip"}
+func (p *Gzip) getBuildPackages(Distro) ([]string, error) {
+	return []string{"gzip"}, nil
 }
 
 func (p *Gzip) Export() *artifact.Artifact {

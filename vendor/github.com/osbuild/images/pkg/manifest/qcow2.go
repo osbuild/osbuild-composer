@@ -40,8 +40,11 @@ func NewQCOW2(buildPipeline Build, imgPipeline FilePipeline) *QCOW2 {
 	return p
 }
 
-func (p *QCOW2) serialize() osbuild.Pipeline {
-	pipeline := p.Base.serialize()
+func (p *QCOW2) serialize() (osbuild.Pipeline, error) {
+	pipeline, err := p.Base.serialize()
+	if err != nil {
+		return osbuild.Pipeline{}, err
+	}
 
 	pipeline.AddStage(osbuild.NewQEMUStage(
 		osbuild.NewQEMUStageOptions(p.Filename(),
@@ -52,11 +55,11 @@ func (p *QCOW2) serialize() osbuild.Pipeline {
 		osbuild.NewQemuStagePipelineFilesInputs(p.imgPipeline.Name(), p.imgPipeline.Filename()),
 	))
 
-	return pipeline
+	return pipeline, nil
 }
 
-func (p *QCOW2) getBuildPackages(Distro) []string {
-	return []string{"qemu-img"}
+func (p *QCOW2) getBuildPackages(Distro) ([]string, error) {
+	return []string{"qemu-img"}, nil
 }
 
 func (p *QCOW2) Export() *artifact.Artifact {

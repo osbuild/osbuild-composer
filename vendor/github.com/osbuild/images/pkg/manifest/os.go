@@ -1,6 +1,7 @@
 package manifest
 
 import (
+	"errors"
 	"fmt"
 	"net/url"
 	"path/filepath"
@@ -254,7 +255,7 @@ func NewOS(buildPipeline Build, platform platform.Platform, repos []rpmmd.RepoCo
 	return p
 }
 
-func (p *OS) getPackageSetChain(Distro) []rpmmd.PackageSet {
+func (p *OS) getPackageSetChain(Distro) ([]rpmmd.PackageSet, error) {
 	platformPackages := p.platform.GetPackages()
 
 	var environmentPackages []string
@@ -364,33 +365,33 @@ func (p *OS) getPackageSetChain(Distro) []rpmmd.PackageSet {
 		chain = append(chain, ps)
 	}
 
-	return chain
+	return chain, nil
 }
 
 func (p *OS) getContainerSources() []container.SourceSpec {
 	return p.OSCustomizations.Containers
 }
 
-func tomlPkgsFor(distro Distro) []string {
+func tomlPkgsFor(distro Distro) ([]string, error) {
 	switch distro {
 	case DISTRO_EL7:
 		// nothing needs toml in rhel7
-		panic("no support for toml on rhel7")
+		return nil, fmt.Errorf("no support for toml on rhel7")
 	case DISTRO_EL8:
 		// deprecated, needed for backwards compatibility (EL8 manifests)
-		return []string{"python3-pytoml"}
+		return []string{"python3-pytoml"}, nil
 	case DISTRO_EL9:
 		// older unmaintained lib, needed for backwards compatibility
-		return []string{"python3-toml"}
+		return []string{"python3-toml"}, nil
 	default:
 		// No extra package needed for reading, on rhel10 and
 		// fedora as stdlib has "tomlib" but we need tomli-w
 		// for writing
-		return []string{"python3-tomli-w"}
+		return []string{"python3-tomli-w"}, nil
 	}
 }
 
-func (p *OS) getBuildPackages(distro Distro) []string {
+func (p *OS) getBuildPackages(distro Distro) ([]string, error) {
 	packages := p.platform.GetBuildPackages()
 	if p.PartitionTable != nil {
 		packages = append(packages, p.PartitionTable.GetBuildPackages()...)
@@ -416,7 +417,11 @@ func (p *OS) getBuildPackages(distro Distro) []string {
 
 	if len(p.OSCustomizations.Containers) > 0 {
 		if p.OSCustomizations.ContainersStorage != nil {
-			packages = append(packages, tomlPkgsFor(distro)...)
+			tomlPkgs, err := tomlPkgsFor(distro)
+			if err != nil {
+				return nil, fmt.Errorf("cannot get toml packages for %s: %w", distro, err)
+			}
+			packages = append(packages, tomlPkgs...)
 		}
 		packages = append(packages, "skopeo")
 	}
@@ -426,7 +431,11 @@ func (p *OS) getBuildPackages(distro Distro) []string {
 	}
 
 	if p.BootcConfig != nil {
-		packages = append(packages, tomlPkgsFor(distro)...)
+		tomlPkgs, err := tomlPkgsFor(distro)
+		if err != nil {
+			return nil, fmt.Errorf("cannot get bootconfig toml packages for %s: %w", distro, err)
+		}
+		packages = append(packages, tomlPkgs...)
 	}
 
 	if p.platform.GetBootloader() == platform.BOOTLOADER_UKI {
@@ -440,7 +449,7 @@ func (p *OS) getBuildPackages(distro Distro) []string {
 		packages = append(packages, "shadow-utils")
 	}
 
-	return packages
+	return packages, nil
 }
 
 func (p *OS) getOSTreeCommitSources() []ostree.SourceSpec {
@@ -468,9 +477,9 @@ func (p *OS) getContainerSpecs() []container.Spec {
 	return p.containerSpecs
 }
 
-func (p *OS) serializeStart(inputs Inputs) {
+func (p *OS) serializeStart(inputs Inputs) error {
 	if len(p.packageSpecs) > 0 {
-		panic("double call to serializeStart()")
+		return errors.New("OS: double call to serializeStart()")
 	}
 
 	p.packageSpecs = inputs.Depsolved.Packages
@@ -478,16 +487,21 @@ func (p *OS) serializeStart(inputs Inputs) {
 	p.containerSpecs = inputs.Containers
 	if len(inputs.Commits) > 0 {
 		if len(inputs.Commits) > 1 {
-			panic("pipeline supports at most one ostree commit")
+			return errors.New("OS: pipeline supports at most one ostree commit")
 		}
 		p.ostreeParentSpec = &inputs.Commits[0]
 	}
 
 	if p.OSCustomizations.KernelName != "" {
-		p.kernelVer = rpmmd.GetVerStrFromPackageSpecListPanic(p.packageSpecs, p.OSCustomizations.KernelName)
+		kernelPkg, err := rpmmd.GetPackage(p.packageSpecs, p.OSCustomizations.KernelName)
+		if err != nil {
+			return fmt.Errorf("OS: %w", err)
+		}
+		p.kernelVer = kernelPkg.GetEVRA()
 	}
 
 	p.repos = append(p.repos, inputs.Depsolved.Repos...)
+	return nil
 }
 
 func (p *OS) serializeEnd() {
@@ -500,12 +514,15 @@ func (p *OS) serializeEnd() {
 	p.ostreeParentSpec = nil
 }
 
-func (p *OS) serialize() osbuild.Pipeline {
+func (p *OS) serialize() (osbuild.Pipeline, error) {
 	if len(p.packageSpecs) == 0 {
-		panic("serialization not started")
+		return osbuild.Pipeline{}, fmt.Errorf("serialization not started")
 	}
 
-	pipeline := p.Base.serialize()
+	pipeline, err := p.Base.serialize()
+	if err != nil {
+		return osbuild.Pipeline{}, err
+	}
 
 	if p.ostreeParentSpec != nil {
 		pipeline.AddStage(osbuild.NewOSTreePasswdStage("org.osbuild.source", p.ostreeParentSpec.Checksum))
@@ -539,7 +556,7 @@ func (p *OS) serialize() osbuild.Pipeline {
 	if p.platform.GetBootloader() == platform.BOOTLOADER_UKI && p.PartitionTable != nil {
 		espMountpoint, err := findESPMountpoint(p.PartitionTable)
 		if err != nil {
-			panic(err)
+			return osbuild.Pipeline{}, err
 		}
 		rpmOptions.KernelInstallEnv = &osbuild.KernelInstallEnv{
 			BootRoot: espMountpoint,
@@ -603,7 +620,7 @@ func (p *OS) serialize() osbuild.Pipeline {
 			usersStageSansKeys, err := osbuild.GenUsersStage(p.OSCustomizations.Users, true)
 			if err != nil {
 				// TODO: move encryption into weldr
-				panic("password encryption failed")
+				return osbuild.Pipeline{}, fmt.Errorf("password encryption failed")
 			}
 			pipeline.AddStage(usersStageSansKeys)
 			pipeline.AddStage(osbuild.NewFirstBootStage(usersFirstBootOptions(p.OSCustomizations.Users)))
@@ -611,7 +628,7 @@ func (p *OS) serialize() osbuild.Pipeline {
 			usersStage, err := osbuild.GenUsersStage(p.OSCustomizations.Users, false)
 			if err != nil {
 				// TODO: move encryption into weldr
-				panic("password encryption failed")
+				return osbuild.Pipeline{}, fmt.Errorf("password encryption failed")
 			}
 			pipeline.AddStage(usersStage)
 		}
@@ -722,7 +739,7 @@ func (p *OS) serialize() osbuild.Pipeline {
 			},
 		)
 		if err != nil {
-			panic(err)
+			return osbuild.Pipeline{}, err
 		}
 		pipeline.AddStage(subStage)
 		pipeline.AddStages(osbuild.GenDirectoryNodesStages(subDirs)...)
@@ -745,7 +762,7 @@ func (p *OS) serialize() osbuild.Pipeline {
 	if pt := p.PartitionTable; pt != nil {
 		rootUUID, kernelOptions, err := osbuild.GenImageKernelOptions(p.PartitionTable, p.OSCustomizations.MountConfiguration)
 		if err != nil {
-			panic(err)
+			return osbuild.Pipeline{}, err
 		}
 		kernelOptions = append(kernelOptions, p.OSCustomizations.KernelOptionsAppend...)
 
@@ -759,7 +776,7 @@ func (p *OS) serialize() osbuild.Pipeline {
 
 		fsCfgStages, err := filesystemConfigStages(pt, p.OSCustomizations.MountConfiguration)
 		if err != nil {
-			panic(err)
+			return osbuild.Pipeline{}, err
 		}
 		pipeline.AddStages(fsCfgStages...)
 
@@ -775,17 +792,17 @@ func (p *OS) serialize() osbuild.Pipeline {
 		case platform.BOOTLOADER_UKI:
 			espMountpoint, err := findESPMountpoint(pt)
 			if err != nil {
-				panic(err)
+				return osbuild.Pipeline{}, err
 			}
 			csvfile, err := ukiBootCSVfile(espMountpoint, p.platform.GetArch(), p.kernelVer, p.platform.GetUEFIVendor())
 			if err != nil {
-				panic(err)
+				return osbuild.Pipeline{}, err
 			}
 			p.addStagesForAllFilesAndInlineData(&pipeline, []*fsnode.File{csvfile})
 
 			stages, err := maybeAddHMACandDirStage(p.packageSpecs, espMountpoint, p.kernelVer)
 			if err != nil {
-				panic(err)
+				return osbuild.Pipeline{}, err
 			}
 			pipeline.AddStages(stages...)
 		}
@@ -833,7 +850,7 @@ func (p *OS) serialize() osbuild.Pipeline {
 			moduleFailsafeFile, err := fsnode.NewFile(module.FailsafeFile.Path, nil, nil, nil, []byte(module.FailsafeFile.Data))
 
 			if err != nil {
-				panic("failed to create module failsafe file")
+				return osbuild.Pipeline{}, fmt.Errorf("failed to create module failsafe file")
 			}
 
 			failsafeFiles = append(failsafeFiles, moduleFailsafeFile)
@@ -841,7 +858,7 @@ func (p *OS) serialize() osbuild.Pipeline {
 
 		failsafeDir, err := fsnode.NewDirectory("/var/lib/dnf/modulefailsafe", nil, nil, nil, true)
 		if err != nil {
-			panic("failed to create module failsafe directory")
+			return osbuild.Pipeline{}, fmt.Errorf("failed to create module failsafe directory")
 		}
 
 		pipeline.AddStages(osbuild.GenDirectoryNodesStages([]*fsnode.Directory{failsafeDir})...)
@@ -926,7 +943,7 @@ func (p *OS) serialize() osbuild.Pipeline {
 		for _, cc := range p.OSCustomizations.CACerts {
 			files, err := osbuild.NewCAFileNodes(cc)
 			if err != nil {
-				panic(err.Error())
+				return osbuild.Pipeline{}, err
 			}
 
 			if len(files) > 0 {
@@ -939,7 +956,7 @@ func (p *OS) serialize() osbuild.Pipeline {
 	if len(p.OSCustomizations.VersionlockPackages) > 0 {
 		versionlockStageOptions, err := osbuild.GenDNF4VersionlockStageOptions(p.OSCustomizations.VersionlockPackages, p.packageSpecs)
 		if err != nil {
-			panic(err)
+			return osbuild.Pipeline{}, err
 		}
 		pipeline.AddStage(osbuild.NewDNF4VersionlockStage(versionlockStageOptions))
 	}
@@ -974,14 +991,14 @@ func (p *OS) serialize() osbuild.Pipeline {
 		}
 	} else {
 		if p.Bootupd {
-			panic("bootupd is only compatible with ostree-based images, this is a programming error")
+			return osbuild.Pipeline{}, fmt.Errorf("bootupd is only compatible with ostree-based images, this is a programming error")
 		}
 		if p.BootcConfig != nil {
-			panic("bootc config is only compatible with ostree-based images, this is a programming error")
+			return osbuild.Pipeline{}, fmt.Errorf("bootc config is only compatible with ostree-based images, this is a programming error")
 		}
 	}
 
-	return pipeline
+	return pipeline, nil
 }
 
 func prependKernelCmdlineStage(pipeline osbuild.Pipeline, rootUUID string, kernelOptions []string) osbuild.Pipeline {
@@ -1040,7 +1057,7 @@ func grubStage(p *OS, pt *disk.PartitionTable, kernelOptions []string) *osbuild.
 			Nick:    p.OSNick,
 		}
 
-		_, err := rpmmd.GetVerStrFromPackageSpecList(p.packageSpecs, "dracut-config-rescue")
+		_, err := rpmmd.GetPackage(p.packageSpecs, "dracut-config-rescue")
 		hasRescue := err == nil
 		return osbuild.NewGrub2LegacyStage(
 			osbuild.NewGrub2LegacyStageOptions(
@@ -1211,24 +1228,24 @@ func (p *OS) addStagesForAllFilesAndInlineData(pipeline *osbuild.Pipeline, files
 // (e.g. via the "uri" key in customizations) are added to the manifests "sources"
 //
 // Note that the actual copy/chmod/... stages are generated via addStagesForAllFilesAndInlineData
-func (p *OS) fileRefs() []string {
+func (p *OS) fileRefs() ([]string, error) {
 	var fileRefs []string
 
 	for _, file := range p.OSCustomizations.Files {
 		if uriStr := file.URI(); uriStr != "" {
 			uri, err := url.Parse(uriStr)
 			if err != nil {
-				panic(fmt.Errorf("internal error: file customizations is not a valid URL: %w", err))
+				return nil, fmt.Errorf("internal error: file customizations is not a valid URL: %w", err)
 			}
 
 			switch uri.Scheme {
 			case "", "file":
 				fileRefs = append(fileRefs, uri.Path)
 			default:
-				panic(fmt.Errorf("internal error: unsupported schema for OSCustomizations.Files: %v", uriStr))
+				return nil, fmt.Errorf("internal error: unsupported schema for OSCustomizations.Files: %v", uriStr)
 			}
 		}
 	}
 
-	return fileRefs
+	return fileRefs, nil
 }

@@ -23,8 +23,11 @@ func NewISORootfsImg(buildPipeline Build, installerPipeline Pipeline) *ISORootfs
 	return p
 }
 
-func (p *ISORootfsImg) serialize() osbuild.Pipeline {
-	pipeline := p.Base.serialize()
+func (p *ISORootfsImg) serialize() (osbuild.Pipeline, error) {
+	pipeline, err := p.Base.serialize()
+	if err != nil {
+		return osbuild.Pipeline{}, err
+	}
 
 	pipeline.AddStage(osbuild.NewMkdirStage(&osbuild.MkdirStageOptions{
 		Paths: []osbuild.MkdirStagePath{
@@ -66,5 +69,5 @@ func (p *ISORootfsImg) serialize() osbuild.Pipeline {
 	copyStageMounts := []osbuild.Mount{*osbuild.NewExt4Mount(devName, devName, "/")}
 	copyStage := osbuild.NewCopyStage(copyStageOptions, copyStageInputs, devices, copyStageMounts)
 	pipeline.AddStage(copyStage)
-	return pipeline
+	return pipeline, nil
 }

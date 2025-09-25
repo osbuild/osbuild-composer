@@ -67,8 +67,8 @@ func validateSupportedConfig(supported []string, conf reflect.Value) *validation
 
 	confT := conf.Type()
 	for fieldIdx := 0; fieldIdx < confT.NumField(); fieldIdx++ {
-		field := confT.Field(fieldIdx)
-		if field.Anonymous {
+		fieldT := confT.Field(fieldIdx)
+		if fieldT.Anonymous {
 			// embedded struct: flatten with the parent
 			if err := validateSupportedConfig(supported, conf.Field(fieldIdx)); err != nil {
 				return err
@@ -76,11 +76,15 @@ func validateSupportedConfig(supported []string, conf reflect.Value) *validation
 			continue
 		}
 
-		tag := jsonTagFor(field)
+		tag := jsonTagFor(fieldT)
 		subList, listed := subMap[tag]
 		if !listed {
 			// not listed: check if it's non-zero
-			empty := conf.Field(fieldIdx).IsZero()
+			field := conf.Field(fieldIdx)
+
+			// NOTE: non-nil empty slices are not zero, but should be counted
+			// as empty
+			empty := field.IsZero() || (field.Kind() == reflect.Slice && field.Len() == 0)
 			if !empty && !supportedMap[tag] {
 				return &validationError{message: "not supported", revPath: []string{tag}}
 			}
