@@ -84,3 +84,12 @@ type nopSeekCloser struct {
 }
 
 func (nopSeekCloser) Close() error { return nil }
+
+// Must() can be used to shortcut all `NewT() (T, err)` constructors.
+// It will panic if an error is passed.
+func Must[T any](val T, err error) T {
+	if err != nil {
+		panic(err)
+	}
+	return val
+}
