@@ -39,13 +39,17 @@ type ParseError struct {
 }
 
 func (e ParseError) Error() string {
-	msg := fmt.Sprintf("error when parsing distro name (%s): %v", e.ToParse, e.Msg)
+	msg := fmt.Sprintf("error when parsing distro name %q: %v", e.ToParse, e.Msg)
 
 	if e.Inner != nil {
 		msg += fmt.Sprintf(", inner error:\n%v", e.Inner)
 	}
 
 	return msg
+}
+
+func (e ParseError) Unwrap() error {
+	return e.Inner
 }
 
 // ParseID parses a distro name and version from a Distro ID string.

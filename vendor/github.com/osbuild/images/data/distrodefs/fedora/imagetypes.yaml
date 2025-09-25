@@ -172,7 +172,6 @@
       - "ro"
     cloud_kernel_options: &cloud_kernel_options
       - "ro"
-      - "no_timer_check"
       - "console=ttyS0,115200n8"
       - "biosdevname=0"
       - "net.ifnames=0"
@@ -231,7 +230,7 @@
     x86_64_installer_platform: &x86_64_installer_platform
       <<: *x86_64_bios_platform
       image_format: "raw"
-      packages:
+      packages: &x86_64_installer_platform_packages
         <<: *x86_64_bios_platform_packages
         booting:
           - "biosdevname"
@@ -239,7 +238,6 @@
           - "grub2-tools-efi"
           - "grub2-tools"
           - "grub2-tools-extra"
-          - "shim-ia32"
           - "grub2-efi-ia32-cdboot"
         firmware:
           - "microcode_ctl"
@@ -263,6 +261,12 @@
           - "tiwilink-firmware"
           - "zd1211-firmware"
       bootloader: "grub2"
+    x86_64_installer_platform_compat: &x86_64_installer_platform_compat
+      <<: *x86_64_installer_platform
+      packages:
+        <<: *x86_64_installer_platform_packages
+        compat:
+          - "shim-ia32"
     aarch64_platform: &aarch64_platform
       arch: "aarch64"
       uefi_vendor: "fedora"
@@ -670,7 +674,7 @@
       aarch64: &minimal_raw_partition_table_aarch64
         uuid: "0xc1748067"
         type: "dos"
-        start_offset: "8 MiB"
+        start_offset: "16 MiB"
         partitions:
           - <<: *default_partition_table_part_efi
             bootable: true
@@ -696,7 +700,7 @@
       aarch64: &iot_base_partition_table_aarch64
         uuid: "0xc1748067"
         type: "dos"
-        start_offset: "8 MiB"
+        start_offset: "16 MiB"
         partitions:
           - *iot_base_partition_table_part_efi_aarch64
           - *iot_base_partition_table_part_boot_aarch64
@@ -843,6 +847,31 @@
       - "customizations.locale"
       - "customizations.services"
 
+    # options supported by PXE image type
+    # Includes everything except disk, filesystem, and partitioning_mode
+    supported_options_pxe: &supported_options_pxe
+      - "distro"
+      - "packages"
+      - "modules"
+      - "groups"
+      - "containers"
+      - "minimal"
+      - "customizations.cacerts"
+      - "customizations.directories"
+      - "customizations.files"
+      - "customizations.fips"
+      - "customizations.firewall"
+      - "customizations.user"
+      - "customizations.sshkey"
+      - "customizations.group"
+      - "customizations.hostname"
+      - "customizations.kernel"
+      - "customizations.locale"
+      - "customizations.openscap"
+      - "customizations.repositories"
+      - "customizations.rpm"
+      - "customizations.services"
+      - "customizations.timezone"
 
 image_config:
   default:
@@ -1106,6 +1135,14 @@ image_types:
     platforms:
       - *x86_64_installer_platform
       - *aarch64_installer_platform
+    platforms_override:
+      conditions:
+        "Fedora 44 no longer has shim-ia32":
+          when:
+            version_less_than: "44"
+          override:
+            - *x86_64_installer_platform_compat
+            - *aarch64_installer_platform
     package_sets:
       os:
         - include:
@@ -1246,6 +1283,14 @@ image_types:
     platforms:
       - *x86_64_installer_platform
       - *aarch64_installer_platform
+    platforms_override:
+      conditions:
+        "Fedora 44 no longer has shim-ia32":
+          when:
+            version_less_than: "44"
+          override:
+            - *x86_64_installer_platform_compat
+            - *aarch64_installer_platform
 
   "iot-raw-xz":
     <<: *rpm_ostree_imgtype_common
@@ -1635,6 +1680,14 @@ image_types:
     platforms:
       - *x86_64_installer_platform
       - *aarch64_installer_platform
+    platforms_override:
+      conditions:
+        "Fedora 44 no longer has shim-ia32":
+          when:
+            version_less_than: "44"
+          override:
+            - *x86_64_installer_platform_compat
+            - *aarch64_installer_platform
     supported_blueprint_options:
       - "distro"
       - "customizations.installer"
@@ -1711,6 +1764,14 @@ image_types:
     platforms:
       - *x86_64_installer_platform
       - *aarch64_installer_platform
+    platforms_override:
+      conditions:
+        "Fedora 44 no longer has shim-ia32":
+          when:
+            version_less_than: "44"
+          override:
+            - *x86_64_installer_platform_compat
+            - *aarch64_installer_platform
     supported_blueprint_options:
       - "distro"
       - "customizations.installer"
@@ -1751,6 +1812,14 @@ image_types:
     platforms:
       - *x86_64_installer_platform
       - *aarch64_installer_platform
+    platforms_override:
+      conditions:
+        "Fedora 44 no longer has shim-ia32":
+          when:
+            version_less_than: "44"
+          override:
+            - *x86_64_installer_platform_compat
+            - *aarch64_installer_platform
     package_sets:
       os:
         - *minimal_raw_pkgset
@@ -1781,6 +1850,7 @@ image_types:
       - "customizations.repositories"
       - "customizations.rpm"
       - "customizations.services"
+      - "customizations.kernel.append"
 
   container: &container
     filename: "container.tar"
@@ -2197,7 +2267,35 @@ image_types:
     platforms:
       - *x86_64_installer_platform
       - *aarch64_installer_platform
+    platforms_override:
+      conditions:
+        "Fedora 44 no longer has shim-ia32":
+          when:
+            version_less_than: "44"
+          override:
+            - *x86_64_installer_platform_compat
+            - *aarch64_installer_platform
     supported_blueprint_options:
       - "distro"
       - "customizations.fips"
       - "customizations.locale"
+
+  "pxe-tar-xz":
+    filename: "pxe.tar.xz"
+    compression: "xz"
+    mime_type: "application/x-tar"
+    image_func: "pxe_tar"
+    exports: ["xz"]
+    bootable: true
+    package_sets:
+      os:
+        - include:
+            - "bash"
+            - "coreutils"
+            - "dracut-live"
+            - "dracut-network"
+            - "dracut-config-generic"
+    platforms:
+      - *x86_64_bios_platform
+      - *aarch64_platform
+    supported_blueprint_options: *supported_options_pxe

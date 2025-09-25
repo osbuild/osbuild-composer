@@ -48,8 +48,11 @@ func NewTar(buildPipeline Build, inputPipeline Pipeline, pipelinename string) *T
 	return p
 }
 
-func (p *Tar) serialize() osbuild.Pipeline {
-	pipeline := p.Base.serialize()
+func (p *Tar) serialize() (osbuild.Pipeline, error) {
+	pipeline, err := p.Base.serialize()
+	if err != nil {
+		return osbuild.Pipeline{}, err
+	}
 
 	tarOptions := &osbuild.TarStageOptions{
 		Filename:    p.Filename(),
@@ -65,11 +68,11 @@ func (p *Tar) serialize() osbuild.Pipeline {
 	tarStage := osbuild.NewTarStage(tarOptions, p.inputPipeline.Name())
 	pipeline.AddStage(tarStage)
 
-	return pipeline
+	return pipeline, nil
 }
 
-func (p *Tar) getBuildPackages(Distro) []string {
-	return []string{"tar"}
+func (p *Tar) getBuildPackages(Distro) ([]string, error) {
+	return []string{"tar"}, nil
 }
 
 func (p *Tar) Export() *artifact.Artifact {

@@ -98,7 +98,7 @@ func (au *awsUploader) Check(status io.Writer) error {
 	return nil
 }
 
-func (au *awsUploader) UploadAndRegister(r io.Reader, status io.Writer) (err error) {
+func (au *awsUploader) UploadAndRegister(r io.Reader, _ uint64, status io.Writer) (err error) {
 	keyName := fmt.Sprintf("%s-%s", uuid.New().String(), au.imageName)
 	fmt.Fprintf(status, "Uploading %s to %s:%s\n", au.imageName, au.bucketName, keyName)
 

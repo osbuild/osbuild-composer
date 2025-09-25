@@ -1,6 +1,7 @@
 package manifest
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/osbuild/images/pkg/container"
@@ -120,7 +121,7 @@ func (p *BuildrootFromPackages) addDependent(dep Pipeline) {
 	man.addPipeline(dep)
 }
 
-func (p *BuildrootFromPackages) getPackageSetChain(distro Distro) []rpmmd.PackageSet {
+func (p *BuildrootFromPackages) getPackageSetChain(distro Distro) ([]rpmmd.PackageSet, error) {
 	// TODO: make the /usr/bin/cp dependency conditional
 	// TODO: make the /usr/bin/xz dependency conditional
 	policyPackage := fmt.Sprintf("selinux-policy-%s", p.selinuxPolicy)
@@ -133,7 +134,11 @@ func (p *BuildrootFromPackages) getPackageSetChain(distro Distro) []rpmmd.Packag
 	packages = append(packages, p.runner.GetBuildPackages()...)
 
 	for _, pipeline := range p.dependents {
-		packages = append(packages, pipeline.getBuildPackages(distro)...)
+		pipelineBuildPackages, err := pipeline.getBuildPackages(distro)
+		if err != nil {
+			return nil, fmt.Errorf("cannot get build packages for %s: %w", distro, err)
+		}
+		packages = append(packages, pipelineBuildPackages...)
 	}
 
 	return []rpmmd.PackageSet{
@@ -142,19 +147,20 @@ func (p *BuildrootFromPackages) getPackageSetChain(distro Distro) []rpmmd.Packag
 			Repositories:    p.repos,
 			InstallWeakDeps: true,
 		},
-	}
+	}, nil
 }
 
 func (p *BuildrootFromPackages) getPackageSpecs() []rpmmd.PackageSpec {
 	return p.packageSpecs
 }
 
-func (p *BuildrootFromPackages) serializeStart(inputs Inputs) {
+func (p *BuildrootFromPackages) serializeStart(inputs Inputs) error {
 	if len(p.packageSpecs) > 0 {
-		panic("double call to serializeStart()")
+		return errors.New("BuildrootFromPackages: double call to serializeStart()")
 	}
 	p.packageSpecs = inputs.Depsolved.Packages
 	p.repos = append(p.repos, inputs.Depsolved.Repos...)
+	return nil
 }
 
 func (p *BuildrootFromPackages) serializeEnd() {
@@ -164,11 +170,15 @@ func (p *BuildrootFromPackages) serializeEnd() {
 	p.packageSpecs = nil
 }
 
-func (p *BuildrootFromPackages) serialize() osbuild.Pipeline {
+func (p *BuildrootFromPackages) serialize() (osbuild.Pipeline, error) {
 	if len(p.packageSpecs) == 0 {
-		panic("serialization not started")
+		return osbuild.Pipeline{}, fmt.Errorf("BuildrootFromPackages: serialization not started")
 	}
-	pipeline := p.Base.serialize()
+	pipeline, err := p.Base.serialize()
+	if err != nil {
+		return osbuild.Pipeline{}, err
+	}
+
 	pipeline.Runner = p.runner.String()
 
 	pipeline.AddStage(osbuild.NewRPMStage(osbuild.NewRPMStageOptions(p.repos), osbuild.NewRpmStageSourceFilesInputs(p.packageSpecs)))
@@ -180,7 +190,7 @@ func (p *BuildrootFromPackages) serialize() osbuild.Pipeline {
 		))
 	}
 
-	return pipeline
+	return pipeline, nil
 }
 
 // Returns a map of paths to labels for the SELinux stage based on specific
@@ -264,11 +274,12 @@ func (p *BuildrootFromContainer) getContainerSpecs() []container.Spec {
 	return p.containerSpecs
 }
 
-func (p *BuildrootFromContainer) serializeStart(inputs Inputs) {
+func (p *BuildrootFromContainer) serializeStart(inputs Inputs) error {
 	if len(p.containerSpecs) > 0 {
-		panic("double call to serializeStart()")
+		return errors.New("BuildrootFromContainer: double call to serializeStart()")
 	}
 	p.containerSpecs = inputs.Containers
+	return nil
 }
 
 func (p *BuildrootFromContainer) serializeEnd() {
@@ -293,15 +304,19 @@ func (p *BuildrootFromContainer) getSELinuxLabels() map[string]string {
 	return labels
 }
 
-func (p *BuildrootFromContainer) serialize() osbuild.Pipeline {
+func (p *BuildrootFromContainer) serialize() (osbuild.Pipeline, error) {
 	if len(p.containerSpecs) == 0 {
-		panic("serialization not started")
+		return osbuild.Pipeline{}, fmt.Errorf("BuildrootFromContainer: serialization not started")
 	}
 	if len(p.containerSpecs) != 1 {
-		panic(fmt.Sprintf("BuildrootFromContainer expectes exactly one container input, got: %v", p.containerSpecs))
+		return osbuild.Pipeline{}, fmt.Errorf("BuildrootFromContainer expectes exactly one container input, got: %v", p.containerSpecs)
 	}
 
-	pipeline := p.Base.serialize()
+	pipeline, err := p.Base.serialize()
+	if err != nil {
+		return osbuild.Pipeline{}, err
+	}
+
 	pipeline.Runner = p.runner.String()
 
 	image := osbuild.NewContainersInputForSingleSource(p.containerSpecs[0])
@@ -309,7 +324,7 @@ func (p *BuildrootFromContainer) serialize() osbuild.Pipeline {
 	// build failures until https://github.com/containers/image/issues/2599 is implemented
 	stage, err := osbuild.NewContainerDeployStage(image, &osbuild.ContainerDeployOptions{RemoveSignatures: true})
 	if err != nil {
-		panic(err)
+		return osbuild.Pipeline{}, err
 	}
 	pipeline.AddStage(stage)
 
@@ -343,7 +358,7 @@ func (p *BuildrootFromContainer) serialize() osbuild.Pipeline {
 		))
 	}
 
-	return pipeline
+	return pipeline, nil
 }
 
 // NewBootstrap creates a new bootstrap build pipeline from the given

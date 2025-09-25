@@ -169,7 +169,7 @@ func (t *BootcImageType) genPartitionTableFsCust(basept *disk.PartitionTable, fs
 	}
 	fsCustomizations := updateFilesystemSizes(fsCust, rootfsMinSize)
 
-	pt, err := disk.NewPartitionTable(basept, fsCustomizations, DEFAULT_SIZE, partitioningMode, t.arch.arch, nil, rng)
+	pt, err := disk.NewPartitionTable(basept, fsCustomizations, DEFAULT_SIZE, partitioningMode, t.arch.arch, nil, t.arch.distro.defaultFs, rng)
 	if err != nil {
 		return nil, err
 	}

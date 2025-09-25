@@ -58,8 +58,11 @@ func NewCoreOSISOTree(
 	return p
 }
 
-func (p *CoreOSISOTree) serialize() osbuild.Pipeline {
-	pipeline := p.Base.serialize()
+func (p *CoreOSISOTree) serialize() (osbuild.Pipeline, error) {
+	pipeline, err := p.Base.serialize()
+	if err != nil {
+		return osbuild.Pipeline{}, err
+	}
 
 	pipeline.AddStage(osbuild.NewCopyStageSimple(
 		&osbuild.CopyStageOptions{
@@ -166,5 +169,5 @@ func (p *CoreOSISOTree) serialize() osbuild.Pipeline {
 		copyInputs,
 	))
 
-	return pipeline
+	return pipeline, nil
 }

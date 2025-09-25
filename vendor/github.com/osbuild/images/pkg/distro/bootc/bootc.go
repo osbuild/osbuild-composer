@@ -3,7 +3,9 @@ package bootc
 import (
 	"errors"
 	"fmt"
+	"maps"
 	"math/rand"
+	"slices"
 	"sort"
 	"strings"
 
@@ -147,7 +149,7 @@ func (d *BootcDistro) ListArches() []string {
 func (d *BootcDistro) GetArch(arch string) (distro.Arch, error) {
 	a, exists := d.arches[arch]
 	if !exists {
-		return nil, errors.New("invalid arch: " + arch)
+		return nil, fmt.Errorf("requested bootc arch %q does not match available arches %v", arch, slices.Collect(maps.Keys(d.arches)))
 	}
 	return a, nil
 }

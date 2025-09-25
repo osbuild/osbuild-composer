@@ -34,8 +34,11 @@ func NewOCIContainer(buildPipeline Build, treePipeline TreePipeline) *OCIContain
 	return p
 }
 
-func (p *OCIContainer) serialize() osbuild.Pipeline {
-	pipeline := p.Base.serialize()
+func (p *OCIContainer) serialize() (osbuild.Pipeline, error) {
+	pipeline, err := p.Base.serialize()
+	if err != nil {
+		return osbuild.Pipeline{}, err
+	}
 
 	options := &osbuild.OCIArchiveStageOptions{
 		Architecture: p.treePipeline.Platform().GetArch().String(),
@@ -49,11 +52,11 @@ func (p *OCIContainer) serialize() osbuild.Pipeline {
 	inputs := &osbuild.OCIArchiveStageInputs{Base: baseInput}
 	pipeline.AddStage(osbuild.NewOCIArchiveStage(options, inputs))
 
-	return pipeline
+	return pipeline, nil
 }
 
-func (p *OCIContainer) getBuildPackages(Distro) []string {
-	return []string{"tar"}
+func (p *OCIContainer) getBuildPackages(Distro) ([]string, error) {
+	return []string{"tar"}, nil
 }
 
 func (p *OCIContainer) Export() *artifact.Artifact {

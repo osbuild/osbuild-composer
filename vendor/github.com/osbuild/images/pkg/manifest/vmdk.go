@@ -40,8 +40,11 @@ func NewVMDK(buildPipeline Build, imgPipeline FilePipeline) *VMDK {
 	return p
 }
 
-func (p *VMDK) serialize() osbuild.Pipeline {
-	pipeline := p.Base.serialize()
+func (p *VMDK) serialize() (osbuild.Pipeline, error) {
+	pipeline, err := p.Base.serialize()
+	if err != nil {
+		return osbuild.Pipeline{}, err
+	}
 
 	pipeline.AddStage(osbuild.NewQEMUStage(
 		osbuild.NewQEMUStageOptions(p.Filename(), osbuild.QEMUFormatVMDK, osbuild.VMDKOptions{
@@ -50,11 +53,11 @@ func (p *VMDK) serialize() osbuild.Pipeline {
 		osbuild.NewQemuStagePipelineFilesInputs(p.imgPipeline.Name(), p.imgPipeline.Export().Filename()),
 	))
 
-	return pipeline
+	return pipeline, nil
 }
 
-func (p *VMDK) getBuildPackages(Distro) []string {
-	return []string{"qemu-img"}
+func (p *VMDK) getBuildPackages(Distro) ([]string, error) {
+	return []string{"qemu-img"}, nil
 }
 
 func (p *VMDK) Export() *artifact.Artifact {

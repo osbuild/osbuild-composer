@@ -21,6 +21,8 @@ type LVMVolumeGroup struct {
 	LogicalVolumes []LVMLogicalVolume `json:"logical_volumes,omitempty" yaml:"logical_volumes,omitempty"`
 }
 
+var _ = MountpointCreator(&LVMVolumeGroup{})
+
 func init() {
 	payloadEntityMap["lvm"] = reflect.TypeOf(LVMVolumeGroup{})
 }
@@ -73,10 +75,13 @@ func (vg *LVMVolumeGroup) GetChild(n uint) Entity {
 	return &vg.LogicalVolumes[n]
 }
 
-func (vg *LVMVolumeGroup) CreateMountpoint(mountpoint string, size uint64) (Entity, error) {
+func (vg *LVMVolumeGroup) CreateMountpoint(mountpoint, defaultFs string, size uint64) (Entity, error) {
+	if defaultFs == "btrfs" {
+		return nil, fmt.Errorf("btrfs under lvm is not supported")
+	}
 
 	filesystem := Filesystem{
-		Type:         "xfs",
+		Type:         defaultFs,
 		Mountpoint:   mountpoint,
 		FSTabOptions: "defaults",
 		FSTabFreq:    0,

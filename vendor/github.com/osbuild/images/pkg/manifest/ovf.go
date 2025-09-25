@@ -28,8 +28,11 @@ func NewOVF(buildPipeline Build, imgPipeline *VMDK) *OVF {
 	return p
 }
 
-func (p *OVF) serialize() osbuild.Pipeline {
-	pipeline := p.Base.serialize()
+func (p *OVF) serialize() (osbuild.Pipeline, error) {
+	pipeline, err := p.Base.serialize()
+	if err != nil {
+		return osbuild.Pipeline{}, err
+	}
 
 	inputName := "vmdk-tree"
 	pipeline.AddStage(osbuild.NewCopyStageSimple(
@@ -48,9 +51,9 @@ func (p *OVF) serialize() osbuild.Pipeline {
 		Vmdk: p.imgPipeline.Filename(),
 	}))
 
-	return pipeline
+	return pipeline, nil
 }
 
-func (p *OVF) getBuildPackages(Distro) []string {
-	return []string{"qemu-img"}
+func (p *OVF) getBuildPackages(Distro) ([]string, error) {
+	return []string{"qemu-img"}, nil
 }

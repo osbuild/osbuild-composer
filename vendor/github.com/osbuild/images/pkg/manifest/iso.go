@@ -35,20 +35,23 @@ func NewISO(buildPipeline Build, treePipeline Pipeline, isoLabel string) *ISO {
 	return p
 }
 
-func (p *ISO) getBuildPackages(Distro) []string {
+func (p *ISO) getBuildPackages(Distro) ([]string, error) {
 	return []string{
 		"isomd5sum",
 		"xorriso",
-	}
+	}, nil
 }
 
-func (p *ISO) serialize() osbuild.Pipeline {
-	pipeline := p.Base.serialize()
+func (p *ISO) serialize() (osbuild.Pipeline, error) {
+	pipeline, err := p.Base.serialize()
+	if err != nil {
+		return osbuild.Pipeline{}, err
+	}
 
 	pipeline.AddStage(osbuild.NewXorrisofsStage(xorrisofsStageOptions(p.Filename(), p.isoLabel, p.ISOBoot), p.treePipeline.Name()))
 	pipeline.AddStage(osbuild.NewImplantisomd5Stage(&osbuild.Implantisomd5StageOptions{Filename: p.Filename()}))
 
-	return pipeline
+	return pipeline, nil
 }
 
 func xorrisofsStageOptions(filename, isolabel string, isoboot ISOBootType) *osbuild.XorrisofsStageOptions {

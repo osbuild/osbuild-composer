@@ -33,19 +33,22 @@ func NewZstd(buildPipeline Build, imgPipeline FilePipeline) *Zstd {
 	return p
 }
 
-func (p *Zstd) serialize() osbuild.Pipeline {
-	pipeline := p.Base.serialize()
+func (p *Zstd) serialize() (osbuild.Pipeline, error) {
+	pipeline, err := p.Base.serialize()
+	if err != nil {
+		return osbuild.Pipeline{}, err
+	}
 
 	pipeline.AddStage(osbuild.NewZstdStage(
 		osbuild.NewZstdStageOptions(p.Filename()),
 		osbuild.NewZstdStageInputs(osbuild.NewFilesInputPipelineObjectRef(p.imgPipeline.Name(), p.imgPipeline.Export().Filename(), nil)),
 	))
 
-	return pipeline
+	return pipeline, nil
 }
 
-func (p *Zstd) getBuildPackages(Distro) []string {
-	return []string{"zstd"}
+func (p *Zstd) getBuildPackages(Distro) ([]string, error) {
+	return []string{"zstd"}, nil
 }
 
 func (p *Zstd) Export() *artifact.Artifact {

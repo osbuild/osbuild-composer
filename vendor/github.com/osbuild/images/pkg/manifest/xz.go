@@ -33,19 +33,22 @@ func NewXZ(buildPipeline Build, imgPipeline FilePipeline) *XZ {
 	return p
 }
 
-func (p *XZ) serialize() osbuild.Pipeline {
-	pipeline := p.Base.serialize()
+func (p *XZ) serialize() (osbuild.Pipeline, error) {
+	pipeline, err := p.Base.serialize()
+	if err != nil {
+		return osbuild.Pipeline{}, err
+	}
 
 	pipeline.AddStage(osbuild.NewXzStage(
 		osbuild.NewXzStageOptions(p.Filename()),
 		osbuild.NewXzStageInputs(osbuild.NewFilesInputPipelineObjectRef(p.imgPipeline.Name(), p.imgPipeline.Export().Filename(), nil)),
 	))
 
-	return pipeline
+	return pipeline, nil
 }
 
-func (p *XZ) getBuildPackages(Distro) []string {
-	return []string{"xz"}
+func (p *XZ) getBuildPackages(Distro) ([]string, error) {
+	return []string{"xz"}, nil
 }
 
 func (p *XZ) Export() *artifact.Artifact {

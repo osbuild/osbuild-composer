@@ -36,18 +36,22 @@ func NewSubscription(buildPipeline Build, subOptions *subscription.ImageOptions)
 	return p
 }
 
-func (p *Subscription) serialize() osbuild.Pipeline {
-	pipeline := p.Base.serialize()
+func (p *Subscription) serialize() (osbuild.Pipeline, error) {
+	pipeline, err := p.Base.serialize()
+	if err != nil {
+		return osbuild.Pipeline{}, err
+	}
+
 	if p.Subscription != nil {
 		serviceDir, err := fsnode.NewDirectory("/etc/systemd/system", nil, nil, nil, true)
 		if err != nil {
-			panic(err)
+			return osbuild.Pipeline{}, err
 		}
 		p.Directories = append(p.Directories, serviceDir)
 
 		subStage, subDirs, subFiles, _, err := subscriptionService(*p.Subscription, &subscriptionServiceOptions{InsightsOnBoot: true, UnitPath: osbuild.EtcUnitPath})
 		if err != nil {
-			panic(err)
+			return osbuild.Pipeline{}, err
 		}
 		p.Directories = append(p.Directories, subDirs...)
 		p.Files = append(p.Files, subFiles...)
@@ -56,7 +60,7 @@ func (p *Subscription) serialize() osbuild.Pipeline {
 		pipeline.AddStages(osbuild.GenFileNodesStages(p.Files)...)
 		pipeline.AddStage(subStage)
 	}
-	return pipeline
+	return pipeline, nil
 }
 
 func (p *Subscription) getInline() []string {

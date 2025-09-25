@@ -34,6 +34,7 @@ type VMsClient interface {
 }
 
 type DisksClient interface {
+	BeginCreateOrUpdate(context.Context, string, string, armcompute.Disk, *armcompute.DisksClientBeginCreateOrUpdateOptions) (*runtime.Poller[armcompute.DisksClientCreateOrUpdateResponse], error)
 	BeginDelete(context.Context, string, string, *armcompute.DisksClientBeginDeleteOptions) (*runtime.Poller[armcompute.DisksClientDeleteResponse], error)
 }
 

@@ -24,8 +24,6 @@ var MountpointPolicies = pathpolicy.NewPathPolicies(map[string]pathpolicy.PathPo
 	"/lib64": {Deny: true},
 	// used by ext filesystems
 	"/lost+found": {Deny: true},
-	// used by EFI
-	"/boot/efi": {Deny: true},
 	// used by systemd / ostree
 	"/sysroot": {Deny: true},
 	// symlink to ../run which is on tmpfs

@@ -41,8 +41,11 @@ func NewVPC(buildPipeline Build, imgPipeline FilePipeline) *VPC {
 	return p
 }
 
-func (p *VPC) serialize() osbuild.Pipeline {
-	pipeline := p.Base.serialize()
+func (p *VPC) serialize() (osbuild.Pipeline, error) {
+	pipeline, err := p.Base.serialize()
+	if err != nil {
+		return osbuild.Pipeline{}, err
+	}
 
 	formatOptions := osbuild.VPCOptions{ForceSize: p.ForceSize}
 
@@ -51,11 +54,11 @@ func (p *VPC) serialize() osbuild.Pipeline {
 		osbuild.NewQemuStagePipelineFilesInputs(p.imgPipeline.Name(), p.imgPipeline.Filename()),
 	))
 
-	return pipeline
+	return pipeline, nil
 }
 
-func (p *VPC) getBuildPackages(Distro) []string {
-	return []string{"qemu-img"}
+func (p *VPC) getBuildPackages(Distro) ([]string, error) {
+	return []string{"qemu-img"}, nil
 }
 
 func (p *VPC) Export() *artifact.Artifact {

@@ -27,13 +27,31 @@ import (
 type Distro uint64
 
 const (
-	DISTRO_NULL = iota
+	DISTRO_NULL Distro = iota
 	DISTRO_EL10
 	DISTRO_EL9
 	DISTRO_EL8
 	DISTRO_EL7
 	DISTRO_FEDORA
+	_distro_count
 )
+
+var distroNames = map[Distro]string{
+	DISTRO_NULL:   "unset",
+	DISTRO_EL10:   "rhel-10",
+	DISTRO_EL9:    "rhel-9",
+	DISTRO_EL8:    "rhel-8",
+	DISTRO_EL7:    "rhel-7",
+	DISTRO_FEDORA: "fedora",
+}
+
+func (d Distro) String() string {
+	s, ok := distroNames[d]
+	if !ok {
+		panic(fmt.Errorf("unknown distro: %d", d))
+	}
+	return s
+}
 
 func (d *Distro) UnmarshalJSON(data []byte) error {
 	var s string
@@ -41,21 +59,13 @@ func (d *Distro) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	switch s {
-	case "rhel-10":
-		*d = DISTRO_EL10
-	case "rhel-9":
-		*d = DISTRO_EL9
-	case "rhel-8":
-		*d = DISTRO_EL8
-	case "rhel-7":
-		*d = DISTRO_EL7
-	case "fedora":
-		*d = DISTRO_FEDORA
-	default:
-		return fmt.Errorf("unknown distro: %q", s)
+	for distro, distroName := range distroNames {
+		if s == distroName {
+			*d = distro
+			return nil
+		}
 	}
-	return nil
+	return fmt.Errorf("unknown distro: %q", s)
 }
 
 func (d *Distro) UnmarshalYAML(unmarshal func(any) error) error {
@@ -130,16 +140,20 @@ func (m *Manifest) addPipeline(p Pipeline) {
 
 type PackageSelector func([]rpmmd.PackageSet) []rpmmd.PackageSet
 
-func (m Manifest) GetPackageSetChains() map[string][]rpmmd.PackageSet {
+func (m Manifest) GetPackageSetChains() (map[string][]rpmmd.PackageSet, error) {
 	chains := make(map[string][]rpmmd.PackageSet)
 
 	for _, pipeline := range m.pipelines {
-		if chain := pipeline.getPackageSetChain(m.Distro); chain != nil {
+		chain, err := pipeline.getPackageSetChain(m.Distro)
+		if err != nil {
+			return nil, fmt.Errorf("cannot get package set chain for %q: %w", pipeline.Name(), err)
+		}
+		if chain != nil {
 			chains[pipeline.Name()] = chain
 		}
 	}
 
-	return chains
+	return chains, nil
 }
 
 func (m Manifest) GetContainerSourceSpecs() map[string][]container.SourceSpec {
@@ -178,23 +192,34 @@ func (m Manifest) Serialize(depsolvedSets map[string]depsolvednf.DepsolveResult,
 	}
 
 	for _, pipeline := range m.pipelines {
-		pipeline.serializeStart(Inputs{
+		err := pipeline.serializeStart(Inputs{
 			Depsolved:  depsolvedSets[pipeline.Name()],
 			Containers: containerSpecs[pipeline.Name()],
 			Commits:    ostreeCommits[pipeline.Name()],
 		})
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	var pipelines []osbuild.Pipeline
+	var osbuildPipelines []osbuild.Pipeline
 	var mergedInputs osbuild.SourceInputs
 	for _, pipeline := range m.pipelines {
-		pipelines = append(pipelines, pipeline.serialize())
+		osbuildPipeline, err := pipeline.serialize()
+		if err != nil {
+			return nil, fmt.Errorf("cannot serialize pipeline %q: %w", pipeline.Name(), err)
+		}
+		osbuildPipelines = append(osbuildPipelines, osbuildPipeline)
 		mergedInputs.Commits = append(mergedInputs.Commits, pipeline.getOSTreeCommits()...)
 		mergedInputs.Depsolved.Packages = append(mergedInputs.Depsolved.Packages, depsolvedSets[pipeline.Name()].Packages...)
 		mergedInputs.Depsolved.Repos = append(mergedInputs.Depsolved.Repos, depsolvedSets[pipeline.Name()].Repos...)
 		mergedInputs.Containers = append(mergedInputs.Containers, pipeline.getContainerSpecs()...)
 		mergedInputs.InlineData = append(mergedInputs.InlineData, pipeline.getInline()...)
-		mergedInputs.FileRefs = append(mergedInputs.FileRefs, pipeline.fileRefs()...)
+		fileRefs, err := pipeline.fileRefs()
+		if err != nil {
+			return nil, fmt.Errorf("cannot get files ref from %q: %w", pipeline.Name(), err)
+		}
+		mergedInputs.FileRefs = append(mergedInputs.FileRefs, fileRefs...)
 	}
 	for _, pipeline := range m.pipelines {
 		pipeline.serializeEnd()
@@ -208,7 +233,7 @@ func (m Manifest) Serialize(depsolvedSets map[string]depsolvednf.DepsolveResult,
 	return json.Marshal(
 		osbuild.Manifest{
 			Version:   "2",
-			Pipelines: pipelines,
+			Pipelines: osbuildPipelines,
 			Sources:   sources,
 		},
 	)

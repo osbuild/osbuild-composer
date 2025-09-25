@@ -19,6 +19,8 @@ type Btrfs struct {
 	Subvolumes []BtrfsSubvolume `json:"subvolumes,omitempty" yaml:"subvolumes,omitempty"`
 }
 
+var _ = MountpointCreator(&Btrfs{})
+
 func init() {
 	payloadEntityMap["btrfs"] = reflect.TypeOf(Btrfs{})
 }
@@ -58,7 +60,11 @@ func (b *Btrfs) GetItemCount() uint {
 func (b *Btrfs) GetChild(n uint) Entity {
 	return &b.Subvolumes[n]
 }
-func (b *Btrfs) CreateMountpoint(mountpoint string, size uint64) (Entity, error) {
+func (b *Btrfs) CreateMountpoint(mountpoint, defaultFs string, size uint64) (Entity, error) {
+	if defaultFs != "btrfs" {
+		return nil, fmt.Errorf("only btrfs mountpoints are supported with btrfs subvolumes not %q", defaultFs)
+	}
+
 	name := mountpoint
 	if name == "/" {
 		name = "root"

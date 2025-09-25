@@ -36,20 +36,26 @@ func NewRawImage(buildPipeline Build, treePipeline *OS) *RawImage {
 	return p
 }
 
-func (p *RawImage) getBuildPackages(d Distro) []string {
-	pkgs := p.treePipeline.getBuildPackages(d)
+func (p *RawImage) getBuildPackages(d Distro) ([]string, error) {
+	pkgs, err := p.treePipeline.getBuildPackages(d)
+	if err != nil {
+		return nil, fmt.Errorf("cannget get build packages from %q: %w", p.treePipeline.Name(), err)
+	}
 	if p.PartTool == osbuild.PTSgdisk {
 		pkgs = append(pkgs, "gdisk")
 	}
-	return pkgs
+	return pkgs, nil
 }
 
-func (p *RawImage) serialize() osbuild.Pipeline {
-	pipeline := p.Base.serialize()
+func (p *RawImage) serialize() (osbuild.Pipeline, error) {
+	pipeline, err := p.Base.serialize()
+	if err != nil {
+		return osbuild.Pipeline{}, err
+	}
 
 	pt := p.treePipeline.PartitionTable
 	if pt == nil {
-		panic("no partition table in live image")
+		return osbuild.Pipeline{}, fmt.Errorf("no partition table in live image")
 	}
 
 	for _, stage := range osbuild.GenImagePrepareStages(pt, p.Filename(), p.PartTool, p.treePipeline.Name()) {
@@ -80,7 +86,7 @@ func (p *RawImage) serialize() osbuild.Pipeline {
 		}
 
 		if fsRootMntName == "" {
-			panic("no mount found for the filesystem root")
+			return osbuild.Pipeline{}, fmt.Errorf("no mount found for the filesystem root")
 		}
 
 		for _, paths := range bootFiles {
@@ -107,7 +113,7 @@ func (p *RawImage) serialize() osbuild.Pipeline {
 		}
 	}
 
-	return pipeline
+	return pipeline, nil
 }
 
 func (p *RawImage) Export() *artifact.Artifact {
