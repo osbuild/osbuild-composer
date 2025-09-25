@@ -29,17 +29,18 @@ import (
 )
 
 const (
-	JobTypeOSBuild          string = "osbuild"
-	JobTypeKojiInit         string = "koji-init"
-	JobTypeKojiFinalize     string = "koji-finalize"
-	JobTypeDepsolve         string = "depsolve"
-	JobTypeSearchPackages   string = "search-packages"
-	JobTypeManifestIDOnly   string = "manifest-id-only"
-	JobTypeContainerResolve string = "container-resolve"
-	JobTypeFileResolve      string = "file-resolve"
-	JobTypeOSTreeResolve    string = "ostree-resolve"
-	JobTypeAWSEC2Copy       string = "aws-ec2-copy"
-	JobTypeAWSEC2Share      string = "aws-ec2-share"
+	JobTypeOSBuild              string = "osbuild"
+	JobTypeKojiInit             string = "koji-init"
+	JobTypeKojiFinalize         string = "koji-finalize"
+	JobTypeDepsolve             string = "depsolve"
+	JobTypeSearchPackages       string = "search-packages"
+	JobTypeManifestIDOnly       string = "manifest-id-only"
+	JobTypeContainerResolve     string = "container-resolve"
+	JobTypeFileResolve          string = "file-resolve"
+	JobTypeOSTreeResolve        string = "ostree-resolve"
+	JobTypeAWSEC2Copy           string = "aws-ec2-copy"
+	JobTypeAWSEC2Share          string = "aws-ec2-share"
+	JobTypeImageBuilderManifest string = "image-builder-manifest"
 )
 
 type Server struct {
@@ -234,6 +235,10 @@ func (s *Server) EnqueueAWSEC2CopyJob(job *AWSEC2CopyJob, parent uuid.UUID, chan
 
 func (s *Server) EnqueueAWSEC2ShareJob(job *AWSEC2ShareJob, parent uuid.UUID, channel string) (uuid.UUID, error) {
 	return s.enqueue(JobTypeAWSEC2Share, job, []uuid.UUID{parent}, channel)
+}
+
+func (s *Server) EnqueueImageBuilderManifestJob(job *ImageBuilderManifestJob, channel string) (uuid.UUID, error) {
+	return s.enqueue(JobTypeImageBuilderManifest, job, nil, channel)
 }
 
 func (s *Server) enqueue(jobType string, job interface{}, dependencies []uuid.UUID, channel string) (uuid.UUID, error) {

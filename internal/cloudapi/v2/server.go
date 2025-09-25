@@ -315,6 +315,61 @@ func (s *Server) enqueueCompose(irs []imageRequest, channel string) (uuid.UUID, 
 	return id, nil
 }
 
+func (s *Server) enqueueComposeIBCLI(irs []imageRequest, channel string) (uuid.UUID, error) {
+	var osbuildJobID uuid.UUID
+	if len(irs) != 1 {
+		return osbuildJobID, HTTPErrorWithInternal(ErrorInvalidNumberOfImageBuilds, fmt.Errorf("expected 1 image request, got %d", len(irs)))
+	}
+	ir := irs[0]
+
+	arch := ir.imageType.Arch()
+	distribution := arch.Distro()
+	imageType := ir.imageType
+
+	rawBlueprint, err := json.Marshal(ir.blueprint)
+	if err != nil {
+		return osbuildJobID, HTTPErrorWithInternal(ErrorJSONMarshallingError, fmt.Errorf("failed to marshal blueprint for image-builder-manifest job"))
+	}
+
+	args := worker.ImageBuilderArgs{
+		Distro:    distribution.Name(),
+		Arch:      arch.Name(),
+		ImageType: imageType.Name(),
+		Blueprint: rawBlueprint,
+	}
+
+	manifestJob := worker.ImageBuilderManifestJob{
+		Args: args,
+
+		// NOTE: image-builder doesn't support setting the rpmmd cache and tries to
+		// read XDG_CACHE_HOME, which fails when running as _osbuild-composer.
+		// Once https://github.com/osbuild/image-builder-cli/pull/358 is
+		// merged, we can use the new --rpmmd-cache option in the image-builder
+		// call instead.
+		// TODO: make sure we use the same rpmmd cache that's used by the depsolve
+		// job for consistency
+		ExtraEnv: []string{"XDG_CACHE_HOME=/var/cache/osbuild-composer/rpmmd"},
+	}
+
+	manifestJobID, err := s.workers.EnqueueImageBuilderManifestJob(&manifestJob, channel)
+	if err != nil {
+		return osbuildJobID, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
+	}
+	logrus.Debugf("manifest job enqueued: %v", manifestJobID)
+
+	osbuildJobID, err = s.workers.EnqueueOSBuildAsDependency(arch.Name(),
+		&worker.OSBuildJob{
+			Targets:       ir.targets,
+			PipelineNames: nil,
+		}, []uuid.UUID{manifestJobID}, channel)
+	if err != nil {
+		return osbuildJobID, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
+	}
+	logrus.Debugf("osbuild job enqueued: %v (with dep %v)", osbuildJobID, manifestJobID)
+
+	return osbuildJobID, nil
+}
+
 func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, release string, irs []imageRequest, channel string) (uuid.UUID, error) {
 	var id uuid.UUID
 	kojiDirectory := "osbuild-cg/osbuild-composer-koji-" + uuid.New().String()
