@@ -744,3 +744,16 @@ type AWSEC2CopyJobResult struct {
 	Ami    string `json:"ami"`
 	Region string `json:"region"`
 }
+
+// ImageBuilderManifestJob generates a manifest from a build request using
+// image-builder-cli. Includes resolving all content types.
+type ImageBuilderManifestJob struct {
+	// Arguments to the image-builder command line
+	Args ImageBuilderArgs
+
+	// Extra environment variables
+	ExtraEnv []string
+}
+
+// ImageBuilderManifestJobResult is an alias to [ManifestJobByIDResult].
+type ImageBuilderManifestJobResult = ManifestJobByIDResult
