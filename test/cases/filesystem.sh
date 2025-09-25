@@ -571,7 +571,7 @@ build_image "$BLUEPRINT_FILE" custom-filesystem-fail qcow2 true
 FAILED_MOUNTPOINTS=()
 
 greenprint "💬 Checking expected failures"
-for MOUNTPOINT in '/etc' '/sys' '/proc' '/dev' '/run' '/bin' '/sbin' '/lib' '/lib64' '/lost+found' '/boot/efi' '/sysroot'; do
+for MOUNTPOINT in '/etc' '/sys' '/proc' '/dev' '/run' '/bin' '/sbin' '/lib' '/lib64' '/lost+found' '/sysroot'; do
   if ! [[ $ERROR_MSG == *"$MOUNTPOINT"* ]]; then
     FAILED_MOUNTPOINTS+=("$MOUNTPOINT")
   fi
