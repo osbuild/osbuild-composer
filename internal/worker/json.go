@@ -367,12 +367,6 @@ type updateJobRequest struct {
 	Result interface{} `json:"result"`
 }
 
-// compat with images https://github.com/osbuild/images/pull/1766
-var (
-	BuildPipelinesFallback   = []string{"build"}
-	PayloadPipelinesFallback = []string{"os", "assembler"}
-)
-
 func (j *OSBuildJob) UnmarshalJSON(data []byte) error {
 	// handles unmarshalling old jobs in the queue that don't contain newer fields
 	// adds default/fallback values to missing data
@@ -385,12 +379,6 @@ func (j *OSBuildJob) UnmarshalJSON(data []byte) error {
 	var compat compatType
 	if err := json.Unmarshal(data, &compat); err != nil {
 		return err
-	}
-	if compat.PipelineNames == nil {
-		compat.PipelineNames = &PipelineNames{
-			Build:   BuildPipelinesFallback,
-			Payload: PayloadPipelinesFallback,
-		}
 	}
 
 	// Exports used to be specified in the job, but there could be always only a single export specified.
@@ -432,22 +420,4 @@ func (j OSBuildJob) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 	return data, nil
-}
-
-func (j *OSBuildJobResult) UnmarshalJSON(data []byte) error {
-	// handles unmarshalling old jobs in the queue that don't contain newer fields
-	// adds default/fallback values to missing data
-	type aliastype OSBuildJobResult
-	var alias aliastype
-	if err := json.Unmarshal(data, &alias); err != nil {
-		return err
-	}
-	if alias.PipelineNames == nil {
-		alias.PipelineNames = &PipelineNames{
-			Build:   BuildPipelinesFallback,
-			Payload: PayloadPipelinesFallback,
-		}
-	}
-	*j = OSBuildJobResult(alias)
-	return nil
 }
