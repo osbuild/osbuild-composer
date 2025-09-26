@@ -452,7 +452,7 @@ OpenShift_Virtualization:
         INTERNAL_NETWORK: ["true"]
 
 azure.sh:
-  extends: .integration
+  extends: .integration_rhel
   rules:
     # Run only on x86_64
     - !reference [.upstream_rules_x86_64, rules]
@@ -462,7 +462,7 @@ azure.sh:
     SCRIPT: azure.sh
 
 azure.sh_hyperv_gen2:
-  extends: .integration
+  extends: .integration_rhel
   rules:
     # Run only on x86_64
     - !reference [.upstream_rules_x86_64, rules]
