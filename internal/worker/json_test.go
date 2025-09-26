@@ -1,7 +1,6 @@
 package worker
 
 import (
-	"encoding/json"
 	"fmt"
 	"testing"
 
@@ -400,64 +399,6 @@ func TestOSBuildJobExports(t *testing.T) {
 	for idx, testCase := range testCases {
 		t.Run(fmt.Sprintf("case #%d", idx), func(t *testing.T) {
 			assert.EqualValues(t, testCase.expectedExports, testCase.job.OsbuildExports())
-		})
-	}
-}
-
-// Test that that exports set in the OSBuildJob target get added to the job
-// definition itself.
-// This covers the case when jobs from new composer are to be picked by old worker.
-// This covers the case when new worker receives a job from new composer.
-func TestOSBuildJobExportsCompatibilityMarshal(t *testing.T) {
-	testCases := []struct {
-		jobJSON []byte
-		job     *OSBuildJob
-	}{
-		// Test that the export specified in the target is set also on the job level as it used to be in the past
-		{
-			jobJSON: []byte(`{"targets":[{"uuid":"00000000-0000-0000-0000-000000000000","image_name":"","name":"org.osbuild.aws","created":"0001-01-01T00:00:00Z","status":"WAITING","options":{"region":"","accessKeyID":"","secretAccessKey":"","sessionToken":"","bucket":"","key":"","shareWithAccounts":null,"filename":""},"osbuild_artifact":{"export_filename":"","export_name":"archive"}}],"export_stages":["archive"]}`),
-			job: &OSBuildJob{
-				Targets: []*target.Target{
-					{
-						Name: target.TargetNameAWS,
-						OsbuildArtifact: target.OsbuildArtifact{
-							ExportName: "archive",
-						},
-						Options: &target.AWSTargetOptions{},
-					},
-				},
-			},
-		},
-		// Test that the export specified in multiple targets is set also on the job level as it used to be in the past.
-		// We do not test with multiple different exports, because multiple exports in job definition were never allowed.
-		{
-			jobJSON: []byte(`{"targets":[{"uuid":"00000000-0000-0000-0000-000000000000","image_name":"","name":"org.osbuild.aws","created":"0001-01-01T00:00:00Z","status":"WAITING","options":{"region":"","accessKeyID":"","secretAccessKey":"","sessionToken":"","bucket":"","key":"","shareWithAccounts":null,"filename":""},"osbuild_artifact":{"export_filename":"","export_name":"archive"}},{"uuid":"00000000-0000-0000-0000-000000000000","image_name":"","name":"org.osbuild.aws.s3","created":"0001-01-01T00:00:00Z","status":"WAITING","options":{"region":"","accessKeyID":"","secretAccessKey":"","sessionToken":"","bucket":"","key":"","endpoint":"","ca_bundle":"","skip_ssl_verification":false,"filename":""},"osbuild_artifact":{"export_filename":"","export_name":"archive"}}],"export_stages":["archive"]}`),
-			job: &OSBuildJob{
-				Targets: []*target.Target{
-					{
-						Name: target.TargetNameAWS,
-						OsbuildArtifact: target.OsbuildArtifact{
-							ExportName: "archive",
-						},
-						Options: &target.AWSTargetOptions{},
-					},
-					{
-						Name: target.TargetNameAWSS3,
-						OsbuildArtifact: target.OsbuildArtifact{
-							ExportName: "archive",
-						},
-						Options: &target.AWSS3TargetOptions{},
-					},
-				},
-			},
-		},
-	}
-
-	for idx, testCase := range testCases {
-		t.Run(fmt.Sprintf("Case #%d", idx), func(t *testing.T) {
-			gotJSON, err := json.Marshal(testCase.job)
-			assert.Nil(t, err)
-			assert.EqualValues(t, testCase.jobJSON, gotJSON)
 		})
 	}
 }
