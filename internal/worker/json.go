@@ -2,7 +2,6 @@ package worker
 
 import (
 	"encoding/json"
-	"fmt"
 	"runtime/debug"
 
 	"github.com/osbuild/images/pkg/manifest"
@@ -365,59 +364,4 @@ type AWSEC2CopyJobResult struct {
 
 type updateJobRequest struct {
 	Result interface{} `json:"result"`
-}
-
-func (j *OSBuildJob) UnmarshalJSON(data []byte) error {
-	// handles unmarshalling old jobs in the queue that don't contain newer fields
-	// adds default/fallback values to missing data
-	type aliasType OSBuildJob
-	type compatType struct {
-		aliasType
-		// Deprecated: Exports should not be used. The export is set in the `Target.OsbuildExport`
-		Exports []string `json:"export_stages,omitempty"`
-	}
-	var compat compatType
-	if err := json.Unmarshal(data, &compat); err != nil {
-		return err
-	}
-
-	// Exports used to be specified in the job, but there could be always only a single export specified.
-	if len(compat.Exports) != 0 {
-		if len(compat.Exports) > 1 {
-			return fmt.Errorf("osbuild job has more than one exports specified")
-		}
-		export := compat.Exports[0]
-		// add the single export to each target
-		for idx := range compat.Targets {
-			target := compat.Targets[idx]
-			if target.OsbuildArtifact.ExportName == "" {
-				target.OsbuildArtifact.ExportName = export
-			} else if target.OsbuildArtifact.ExportName != export {
-				return fmt.Errorf("osbuild job has different global exports and export in the target specified at the same time")
-			}
-			compat.Targets[idx] = target
-		}
-	}
-
-	*j = OSBuildJob(compat.aliasType)
-	return nil
-}
-
-func (j OSBuildJob) MarshalJSON() ([]byte, error) {
-	type aliasType OSBuildJob
-	type compatType struct {
-		aliasType
-		// Depredated: Exports should not be used. The export is set in the `Target.OsbuildExport`
-		Exports []string `json:"export_stages,omitempty"`
-	}
-	compat := compatType{
-		aliasType: aliasType(j),
-	}
-	compat.Exports = j.OsbuildExports()
-
-	data, err := json.Marshal(&compat)
-	if err != nil {
-		return nil, err
-	}
-	return data, nil
 }
