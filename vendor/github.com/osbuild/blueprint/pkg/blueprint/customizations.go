@@ -36,6 +36,7 @@ type Customizations struct {
 	RHSM               *RHSMCustomization             `json:"rhsm,omitempty" toml:"rhsm,omitempty"`
 	CACerts            *CACustomization               `json:"cacerts,omitempty" toml:"cacerts,omitempty"`
 	ContainersStorage  *ContainerStorageCustomization `json:"containers-storage,omitempty" toml:"containers-storage,omitempty"`
+	Firstboot          *FirstbootCustomization        `json:"firstboot,omitempty" toml:"firstboot,omitempty"`
 }
 
 type IgnitionCustomization struct {
