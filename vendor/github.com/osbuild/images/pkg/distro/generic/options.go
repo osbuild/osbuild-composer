@@ -28,7 +28,10 @@ func checkOptionsCommon(t *imageType, bp *blueprint.Blueprint, options distro.Im
 	errPrefix := fmt.Sprintf("blueprint validation failed for image type %q", t.Name())
 
 	if err := distro.ValidateConfig(t, *bp); err != nil {
-		return warnings, fmt.Errorf("%s: %w", errPrefix, err)
+		// NOTE (validation-warnings): appending to warnings now, because this
+		// is breaking a lot of things the service
+		errAsWarning := fmt.Errorf("%s: %w", errPrefix, err)
+		warnings = append(warnings, errAsWarning.Error())
 	}
 
 	if options.OSTree != nil {
@@ -95,10 +98,10 @@ func checkOptionsCommon(t *imageType, bp *blueprint.Blueprint, options distro.Im
 	if osc := customizations.GetOpenSCAP(); osc != nil {
 		supported := oscap.IsProfileAllowed(osc.ProfileID, t.arch.distro.DistroYAML.OscapProfilesAllowList)
 		if !supported {
-			return warnings, fmt.Errorf("%s: customizations.oscap.profile_id: unsupported profile %s", errPrefix, osc.ProfileID)
+			return warnings, fmt.Errorf("%s: customizations.openscap.profile_id: unsupported profile %s", errPrefix, osc.ProfileID)
 		}
 		if osc.ProfileID == "" {
-			return warnings, fmt.Errorf("%s: customizations.oscap.profile_id: required when using customizations.oscap", errPrefix)
+			return warnings, fmt.Errorf("%s: customizations.openscap.profile_id: required when using customizations.openscap", errPrefix)
 		}
 	}
 
@@ -158,7 +161,7 @@ func checkOptionsRhel9(t *imageType, bp *blueprint.Blueprint) error {
 		// TODO: remove this check when we add support for conditions in
 		// supported_blueprint_options.
 		if t.Arch().Distro().OsVersion() == "9.0" {
-			return fmt.Errorf("%s: customizations.oscap: not supported for distro version: %s", errPrefix, t.Arch().Distro().OsVersion())
+			return fmt.Errorf("%s: customizations.openscap: not supported for distro version: %s", errPrefix, t.Arch().Distro().OsVersion())
 		}
 	}
 	return nil
@@ -196,7 +199,7 @@ func checkOptionsRhel8(t *imageType, bp *blueprint.Blueprint) error {
 	}
 	if osc := customizations.GetOpenSCAP(); osc != nil {
 		if osVersion := t.Arch().Distro().OsVersion(); common.VersionLessThan(osVersion, "8.7") {
-			return fmt.Errorf("%s: customizations.oscap: not supported for distro version: %s", errPrefix, osVersion)
+			return fmt.Errorf("%s: customizations.openscap: not supported for distro version: %s", errPrefix, osVersion)
 		}
 	}
 
