@@ -63,6 +63,10 @@ func TestKojiCompose(t *testing.T) {
 				OSBuildOutput: &osbuild.Result{
 					Success: true,
 				},
+				PipelineNames: &worker.PipelineNames{
+					Build:   []string{"build"},
+					Payload: []string{"os"},
+				},
 			},
 			composeReplyCode: http.StatusCreated,
 			composeReply:     `{"href":"/api/image-builder-composer/v2/compose", "kind":"ComposeId"}`,
@@ -106,6 +110,10 @@ func TestKojiCompose(t *testing.T) {
 				})},
 				OSBuildOutput: &osbuild.Result{
 					Success: true,
+				},
+				PipelineNames: &worker.PipelineNames{
+					Build:   []string{"build"},
+					Payload: []string{"os"},
 				},
 			},
 			composeReplyCode: http.StatusCreated,
@@ -151,6 +159,10 @@ func TestKojiCompose(t *testing.T) {
 				OSBuildOutput: &osbuild.Result{
 					Success: true,
 				},
+				PipelineNames: &worker.PipelineNames{
+					Build:   []string{"build"},
+					Payload: []string{"os"},
+				},
 			},
 			composeReplyCode: http.StatusCreated,
 			composeReply:     `{"href":"/api/image-builder-composer/v2/compose", "kind":"ComposeId"}`,
@@ -193,6 +205,10 @@ func TestKojiCompose(t *testing.T) {
 				})},
 				OSBuildOutput: &osbuild.Result{
 					Success: false,
+				},
+				PipelineNames: &worker.PipelineNames{
+					Build:   []string{"build"},
+					Payload: []string{"os"},
 				},
 			},
 			composeReplyCode: http.StatusCreated,
@@ -241,6 +257,10 @@ func TestKojiCompose(t *testing.T) {
 				},
 				JobResult: worker.JobResult{
 					JobError: clienterrors.New(clienterrors.ErrorBuildJob, "Koji build error", nil),
+				},
+				PipelineNames: &worker.PipelineNames{
+					Build:   []string{"build"},
+					Payload: []string{"os"},
 				},
 			},
 			composeReplyCode: http.StatusCreated,
@@ -295,6 +315,10 @@ func TestKojiCompose(t *testing.T) {
 				OSBuildOutput: &osbuild.Result{
 					Success: true,
 				},
+				PipelineNames: &worker.PipelineNames{
+					Build:   []string{"build"},
+					Payload: []string{"os"},
+				},
 			},
 			finalizeResult: worker.KojiFinalizeJobResult{
 				KojiError: "failure",
@@ -342,6 +366,10 @@ func TestKojiCompose(t *testing.T) {
 				})},
 				OSBuildOutput: &osbuild.Result{
 					Success: true,
+				},
+				PipelineNames: &worker.PipelineNames{
+					Build:   []string{"build"},
+					Payload: []string{"os"},
 				},
 			},
 			finalizeResult: worker.KojiFinalizeJobResult{
@@ -473,6 +501,10 @@ func TestKojiCompose(t *testing.T) {
 							"image_size": 42,
 							"osbuild_output": {
 								"success": true
+							},
+							"pipeline_names": {
+								"build": ["build"],
+								"payload": ["os"]
 							}
 						}
 					}`, test_distro.TestArch3Name, test_distro.TestDistro1Name)
