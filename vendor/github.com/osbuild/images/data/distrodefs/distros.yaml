@@ -154,6 +154,8 @@ distros:
       # mount util
       x86_64: "quay.io/toolbx-images/centos-toolbox:stream{{.MajorVersion}}"
       aarch64: "quay.io/toolbx-images/centos-toolbox:stream{{.MajorVersion}}"
+      s390x: "quay.io/toolbx-images/centos-toolbox:stream{{.MajorVersion}}"
+      ppc64le: "quay.io/toolbx-images/centos-toolbox:stream{{.MajorVersion}}"
 
   - <<: *centos10
     name: "almalinux_kitten-10"
@@ -254,6 +256,8 @@ distros:
       # mount util
       x86_64: "quay.io/toolbx-images/centos-toolbox:stream{{.MajorVersion}}"
       aarch64: "quay.io/toolbx-images/centos-toolbox:stream{{.MajorVersion}}"
+      s390x: "quay.io/toolbx-images/centos-toolbox:stream{{.MajorVersion}}"
+      ppc64le: "quay.io/toolbx-images/centos-toolbox:stream{{.MajorVersion}}"
 
   - &rhel8
     name: "rhel-{{.MajorVersion}}.{{.MinorVersion}}"
