@@ -18,9 +18,6 @@ import (
 const (
 	// package set names
 
-	// build package set name
-	buildPkgsKey = "build"
-
 	// main/common os image package set name
 	osPkgsKey = "os"
 
@@ -296,8 +293,8 @@ func (t *TestImageType) Manifest(b *blueprint.Blueprint, options distro.ImageOpt
 
 	m := &manifest.Manifest{}
 
-	manifest.NewContentTest(m, buildPkgsKey, buildPackages, nil, nil)
-	manifest.NewContentTest(m, osPkgsKey, osPackages, nil, ostreeSources)
+	build := manifest.NewContentTestBuild(m, buildPackages, nil, nil)
+	manifest.NewContentTest(osPkgsKey, build, osPackages, nil, ostreeSources)
 
 	return m, nil, nil
 }
