@@ -354,6 +354,9 @@ case "${IMAGE_TYPE}" in
       },
       {
         "path": "/etc/custom_dir2"
+      },
+      {
+        "path": "/etc/systemd/system/serial-getty@.service.d"
       }
     ],
     "files": [
@@ -363,6 +366,10 @@ case "${IMAGE_TYPE}" in
       },
       {
         "path": "/etc/custom_dir2/empty_file.txt"
+      },
+      {
+        "path": "/etc/systemd/system/serial-getty@.service.d/override.conf",
+        "data": "[Service]\nExecStart=\nExecStart=-/sbin/agetty -a root -o '-p -- \\\\u' --noclear %I \$TERM\n"
       }
     ]
 EOF

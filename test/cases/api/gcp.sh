@@ -72,6 +72,13 @@ function createReqFile() {
       "nodejs",
       "postgresql",
       "dummy"
+    ],
+    "users": [
+      {
+        "name": "testuser",
+        "groups": ["wheel"],
+        "password": "\$6\$vECHDqXHWezw7CNK\$JGR9AE0IMdjIEWYUFiU8tClKh1oXDX/Wc89n1VHfE4JUA.n6gpA/7tUnAT9Xu34y.Ig13pmCYVNRx7WOkeUKW1"
+      }
     ]${SUBSCRIPTION_BLOCK}${DIR_FILES_CUSTOMIZATION_BLOCK}${REPOSITORY_CUSTOMIZATION_BLOCK}${OPENSCAP_CUSTOMIZATION_BLOCK}
 ${TIMEZONE_CUSTOMIZATION_BLOCK}${FIREWALL_CUSTOMIZATION_BLOCK}${RPM_CUSTOMIZATION_BLOCK}${RHSM_CUSTOMIZATION_BLOCK}${CACERTS_CUSTOMIZATION_BLOCK}${ENABLED_MODULES_BLOCK}
   },
@@ -167,6 +174,7 @@ function verify() {
     --image-project="$GCP_PROJECT" \
     --image="$GCP_IMAGE_NAME" \
     --machine-type="$GCP_MACHINE_TYPE" \
+    --metadata serial-port-enable=TRUE \
     --labels=gitlab-ci-test=true
 
   HOST=$($GCP_CMD --format=json compute instances describe "$GCP_INSTANCE_NAME" --zone="$GCP_ZONE" --format='get(networkInterfaces[0].accessConfigs[0].natIP)')
