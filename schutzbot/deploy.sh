@@ -175,7 +175,7 @@ fi
 # this in osbuild, we explicitly set the network backend to 'netavark'.
 # This is relevant only for RHEL-9 / c9s, because Fedora since F40 and el10
 # support only `netavark` backend.
-if [[ $ID == "rhel" && ${VERSION_ID%.*} == "9" ]]; then
+if [[ ($ID == "rhel" || $ID == "centos") && ${VERSION_ID%.*} == "9" ]]; then
     greenprint "containers.conf: explicitly setting network_backend to 'netavark'"
     sudo mkdir -p /etc/containers/containers.conf.d
     sudo tee /etc/containers/containers.conf.d/network_backend.conf > /dev/null << EOF
