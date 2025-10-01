@@ -781,6 +781,10 @@ func TestComposeStatusSuccess(t *testing.T) {
 	res, err := json.Marshal(&worker.OSBuildJobResult{
 		Success:       true,
 		OSBuildOutput: &osbuild.Result{Success: true},
+		PipelineNames: &worker.PipelineNames{
+			Build:   []string{"build"},
+			Payload: []string{"os"},
+		},
 	})
 	require.NoError(t, err)
 
@@ -824,8 +828,7 @@ func TestComposeStatusSuccess(t *testing.T) {
 						"build"
 					],
 					"payload": [
-						"os",
-						"assembler"
+						"os"
 					]
 				},
 				"success": true,

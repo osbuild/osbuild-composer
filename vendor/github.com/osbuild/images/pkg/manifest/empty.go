@@ -31,14 +31,38 @@ type ContentTest struct {
 	serializing bool
 }
 
+var _ Pipeline = (*ContentTest)(nil)
+
+type ContentTestBuild struct {
+	ContentTest
+
+	dependents []Pipeline
+}
+
+var _ Build = (*ContentTestBuild)(nil)
+
 // NewContentTest creates a new ContentTest pipeline with a given name and
 // content sources.
-func NewContentTest(m *Manifest, name string, packageSets []rpmmd.PackageSet, containers []container.SourceSpec, commits []ostree.SourceSpec) *ContentTest {
+func NewContentTest(name string, build Build, packageSets []rpmmd.PackageSet, containers []container.SourceSpec, commits []ostree.SourceSpec) *ContentTest {
 	pipeline := &ContentTest{
-		Base:        NewBase(name, nil),
+		Base:        NewBase(name, build),
 		packageSets: packageSets,
 		containers:  containers,
 		commits:     commits,
+	}
+	build.addDependent(pipeline)
+	return pipeline
+}
+
+func NewContentTestBuild(m *Manifest, packageSets []rpmmd.PackageSet, containers []container.SourceSpec, commits []ostree.SourceSpec) Build {
+	pipeline := &ContentTestBuild{
+		ContentTest: ContentTest{
+			Base:        NewBase("build", nil),
+			packageSets: packageSets,
+			containers:  containers,
+			commits:     commits,
+		},
+		dependents: make([]Pipeline, 0),
 	}
 	m.addPipeline(pipeline)
 	return pipeline
@@ -102,4 +126,13 @@ func (p *ContentTest) serialize() (osbuild.Pipeline, error) {
 	return osbuild.Pipeline{
 		Name: p.name,
 	}, nil
+}
+
+func (p *ContentTestBuild) addDependent(dep Pipeline) {
+	p.dependents = append(p.dependents, dep)
+	man := p.Manifest()
+	if man == nil {
+		panic("cannot add build dependent without a manifest")
+	}
+	man.addPipeline(dep)
 }
