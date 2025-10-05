@@ -226,6 +226,8 @@ func imageTypeFromApiImageType(it ImageTypes, arch distro.Arch) string {
 		return "minimal-raw"
 	case ImageTypesOci:
 		return "oci"
+	case ImageTypesPxeTarXz:
+		return "pxe-tar-xz"
 	case ImageTypesWsl:
 		return "wsl"
 	}
