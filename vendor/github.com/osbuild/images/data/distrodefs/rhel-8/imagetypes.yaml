@@ -935,6 +935,12 @@
       - "ifcfg"
     default_menu: 1
     iso_rootfs_type: "squashfs-ext4"
+    lorax_template_package: lorax-templates-rhel
+    lorax_templates:
+      - 80-rhel/runtime-postinstall.tmpl
+      - 80-rhel/runtime-cleanup.tmpl
+    lorax_logos_package: redhat-logos
+    lorax_release_package: redhat-release
     conditions:
       "x86_64 uses syslinux":
         when:

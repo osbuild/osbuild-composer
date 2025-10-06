@@ -304,6 +304,9 @@ distros:
         # https://github.com/osbuild/osbuild/blob/ea8261cad6c5c606c00c0f2824c3f483c01a0cc9/runners/org.osbuild.rhel82#L61
         # Install python36 explicitly for RHEL 8.
         - "python36"
+        # lorax-templates-rhel needs lorax, but rhel < 8.7 didn't Require lorax
+        # so we install it explicitly to make sure it is always installed.
+        - "lorax"
     oscap_profiles_allowlist: &oscap_profile_allowlist_rhel_8
       - "xccdf_org.ssgproject.content_profile_anssi_bp28_enhanced"
       - "xccdf_org.ssgproject.content_profile_anssi_bp28_high"

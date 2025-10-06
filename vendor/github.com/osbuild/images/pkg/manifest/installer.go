@@ -17,8 +17,10 @@ type InstallerCustomizations struct {
 	// Only for RHEL 8.
 	UseLegacyAnacondaConfig bool
 
-	// Temporary
-	UseRHELLoraxTemplates bool
+	LoraxTemplates       []string // Templates to run with org.osbuild.lorax
+	LoraxTemplatePackage string   // Package containing lorax templates, added to build pipeline
+	LoraxLogosPackage    string   // eg. fedora-logos, fedora-eln-logos, redhat-logos
+	LoraxReleasePackage  string   // eg. fedora-release, fedora-release-eln, redhat-release
 
 	ISORootfsType ISORootfsType
 	ISOBoot       ISOBootType
