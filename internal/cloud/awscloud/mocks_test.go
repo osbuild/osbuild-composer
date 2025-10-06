@@ -49,6 +49,13 @@ func newEc2Mock(t *testing.T) *ec2mock {
 	}
 }
 
+func (m *ec2mock) AuthorizeSecurityGroupEgress(ctx context.Context, input *ec2.AuthorizeSecurityGroupEgressInput, optfns ...func(*ec2.Options)) (*ec2.AuthorizeSecurityGroupEgressOutput, error) {
+	m.calledFn["AuthorizeSecurityGroupEgress"] += 1
+	return &ec2.AuthorizeSecurityGroupEgressOutput{
+		Return: aws.Bool(true),
+	}, nil
+}
+
 func (m *ec2mock) AuthorizeSecurityGroupIngress(ctx context.Context, input *ec2.AuthorizeSecurityGroupIngressInput, optfns ...func(*ec2.Options)) (*ec2.AuthorizeSecurityGroupIngressOutput, error) {
 	m.calledFn["AuthorizeSecurityGroupIngress"] += 1
 	return &ec2.AuthorizeSecurityGroupIngressOutput{
@@ -87,6 +94,25 @@ func (m *ec2mock) DescribeSecurityGroups(ctx context.Context, input *ec2.Describ
 				},
 			},
 		},
+	}, nil
+}
+
+func (m *ec2mock) DescribeSecurityGroupRules(ctx context.Context, input *ec2.DescribeSecurityGroupRulesInput, optfns ...func(*ec2.Options)) (*ec2.DescribeSecurityGroupRulesOutput, error) {
+	m.calledFn["DescribeSecurityGroupRules"] += 1
+	return &ec2.DescribeSecurityGroupRulesOutput{
+		SecurityGroupRules: []ec2types.SecurityGroupRule{
+			{
+				IsEgress:            aws.Bool(true),
+				SecurityGroupRuleId: aws.String("sgr-id"),
+			},
+		},
+	}, nil
+}
+
+func (m *ec2mock) RevokeSecurityGroupEgress(ctx context.Context, input *ec2.RevokeSecurityGroupEgressInput, optfns ...func(*ec2.Options)) (*ec2.RevokeSecurityGroupEgressOutput, error) {
+	m.calledFn["RevokeSecurityGroupEgress"] += 1
+	return &ec2.RevokeSecurityGroupEgressOutput{
+		Return: aws.Bool(true),
 	}, nil
 }
 

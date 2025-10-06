@@ -71,6 +71,9 @@ func TestSIRunSecureInstance(t *testing.T) {
 	require.Equal(t, 1, m.calledFn["CreateFleet"])
 	require.Equal(t, 1, m.calledFn["CreateSecurityGroup"])
 	require.Equal(t, 1, m.calledFn["CreateLaunchTemplate"])
+	require.Equal(t, 1, m.calledFn["AuthorizeSecurityGroupEgress"])
+	require.Equal(t, 1, m.calledFn["AuthorizeSecurityGroupIngress"])
+	require.Equal(t, 1, m.calledFn["RevokeSecurityGroupEgress"])
 }
 
 func TestSITerminateSecureInstance(t *testing.T) {
