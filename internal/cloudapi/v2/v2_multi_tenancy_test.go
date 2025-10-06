@@ -16,9 +16,11 @@ import (
 	"github.com/osbuild/osbuild-composer/pkg/jobqueue"
 
 	"github.com/osbuild/images/pkg/distro/test_distro"
+	"github.com/osbuild/images/pkg/rpmmd"
 	v2 "github.com/osbuild/osbuild-composer/internal/cloudapi/v2"
 	"github.com/osbuild/osbuild-composer/internal/test"
 	"github.com/osbuild/osbuild-composer/internal/worker"
+	"github.com/osbuild/osbuild-composer/internal/worker/api"
 )
 
 func kojiRequest() string {
@@ -136,13 +138,13 @@ func jobRequest() string {
 		test_distro.TestArch3Name)
 }
 
-func runNextJob(t *testing.T, jobs []uuid.UUID, workerHandler http.Handler, orgID string) {
+func runNextJob(t *testing.T, jobs []uuid.UUID, workerServer *worker.Server, orgID string) {
 	// test that a different tenant doesn't get any job
 	// 100ms ought to be enough 🤞
 	ctx, cancel := context.WithDeadline(reqContext("987"), time.Now().Add(time.Millisecond*100))
 	defer cancel()
 	test.APICall{
-		Handler:        workerHandler,
+		Handler:        workerServer.Handler(),
 		Method:         http.MethodPost,
 		Path:           "/api/worker/v1/jobs",
 		RequestBody:    test.JSONRequestBody(jobRequest()),
@@ -152,7 +154,7 @@ func runNextJob(t *testing.T, jobs []uuid.UUID, workerHandler http.Handler, orgI
 
 	// get a job using the right tenant
 	resp := test.APICall{
-		Handler:        workerHandler,
+		Handler:        workerServer.Handler(),
 		Method:         http.MethodPost,
 		Path:           "/api/worker/v1/jobs",
 		RequestBody:    test.JSONRequestBody(jobRequest()),
@@ -169,12 +171,48 @@ func runNextJob(t *testing.T, jobs []uuid.UUID, workerHandler http.Handler, orgI
 	jobID := uuid.MustParse(job.ID)
 	require.Contains(t, jobs, jobID)
 
+	jobType, err := workerServer.JobType(jobID)
+	require.NoError(t, err)
+
+	var requestBody []byte
+	switch jobType {
+	// We need to set dummy values for the depsolve job result, because otherwise
+	// the manifest generation job would fail on empty depsolved package list.
+	// This would make the ComposeManifests endpoint return an error.
+	case worker.JobTypeDepsolve:
+		dummyPackage := rpmmd.PackageSpec{
+			Name:           "pkg1",
+			Version:        "1.33",
+			Release:        "2.fc30",
+			Arch:           "x86_64",
+			Checksum:       "sha256:e50ddb78a37f5851d1a5c37a4c77d59123153c156e628e064b9daa378f45a2fe",
+			RemoteLocation: "https://pkg1.example.com/1.33-2.fc30.x86_64.rpm",
+		}
+		depsolveJobResult := &worker.DepsolveJobResult{
+			PackageSpecs: map[string][]rpmmd.PackageSpec{
+				// Used when depsolving a manifest
+				"build": {dummyPackage},
+				"os":    {dummyPackage},
+			},
+		}
+		rawDepsolveJobResult, err := json.Marshal(depsolveJobResult)
+		require.NoError(t, err)
+		result := api.UpdateJobRequest{
+			Result: json.RawMessage(rawDepsolveJobResult),
+		}
+		requestBody, err = json.Marshal(result)
+		require.NoError(t, err)
+	// For the purpose of the test, other job types results are not important
+	default:
+		requestBody = []byte(`{"result": {"job_result":{}}}`)
+	}
+
 	// finish the job
 	test.APICall{
-		Handler:        workerHandler,
+		Handler:        workerServer.Handler(),
 		Method:         http.MethodPatch,
 		Path:           job.Location,
-		RequestBody:    test.JSONRequestBody(`{"result": {"job_result":{}}}`),
+		RequestBody:    test.JSONRequestBody(requestBody),
 		Context:        reqContext(orgID),
 		ExpectedStatus: http.StatusOK,
 	}.Do(t)
@@ -257,7 +295,7 @@ func TestMultitenancy(t *testing.T) {
 
 		// Run all jobs
 		for j := 0; j < numjobs; j++ {
-			runNextJob(t, c.jobIDs, workerServer.Handler(), c.orgID)
+			runNextJob(t, c.jobIDs, workerServer, c.orgID)
 		}
 
 		// Make sure that the compose is not pending (i.e. all jobs did run)
