@@ -26,6 +26,12 @@ type InstallerConfig struct {
 
 	// BootType defines what type of bootloader is used for the iso
 	ISOBootType *manifest.ISOBootType `yaml:"iso_boot_type,omitempty"`
+
+	// Lorax template settings for org.osbuild.lorax stage
+	LoraxTemplates       []string `yaml:"lorax_templates,omitempty"`
+	LoraxTemplatePackage *string  `yaml:"lorax_template_package"`
+	LoraxLogosPackage    *string  `yaml:"lorax_logos_package"`
+	LoraxReleasePackage  *string  `yaml:"lorax_release_package"`
 }
 
 // InheritFrom inherits unset values from the provided parent configuration and

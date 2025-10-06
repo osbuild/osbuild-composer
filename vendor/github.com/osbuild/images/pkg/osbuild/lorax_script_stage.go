@@ -7,7 +7,8 @@ type LoraxScriptStageOptions struct {
 	// The basic architecture parameter to supply to the template
 	BaseArch string `json:"basearch,omitempty"`
 
-	Product Product `json:"product,omitempty"`
+	Product  Product  `json:"product,omitempty"`
+	Branding Branding `json:"branding,omitempty"`
 
 	LibDir string `json:"libdir,omitempty"`
 }
@@ -15,6 +16,11 @@ type LoraxScriptStageOptions struct {
 type Product struct {
 	Name    string `json:"name"`
 	Version string `json:"version"`
+}
+
+type Branding struct {
+	Release string `json:"release"`
+	Logos   string `json:"logos"`
 }
 
 func (LoraxScriptStageOptions) isStageOptions() {}

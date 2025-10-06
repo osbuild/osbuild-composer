@@ -21,6 +21,7 @@ type awsUploader struct {
 	region     string
 	bucketName string
 	imageName  string
+	tags       [][2]string
 	targetArch arch.Arch
 	bootMode   *platform.BootMode
 }
@@ -29,6 +30,7 @@ type UploaderOptions struct {
 	TargetArch arch.Arch
 	// BootMode to set for the AMI. If nil, no explicit boot mode will be set.
 	BootMode *platform.BootMode
+	Tags     [][2]string
 }
 
 // testing support
@@ -37,7 +39,7 @@ type awsClient interface {
 	Buckets() ([]string, error)
 	CheckBucketPermission(string, s3types.Permission) (bool, error)
 	UploadFromReader(io.Reader, string, string) (*s3manager.UploadOutput, error)
-	Register(name, bucket, key string, shareWith []string, architecture arch.Arch, bootMode *platform.BootMode, importRole *string) (string, string, error)
+	Register(name, bucket, key string, tags [][2]string, shareWith []string, architecture arch.Arch, bootMode *platform.BootMode, importRole *string) (string, string, error)
 	DeleteObject(string, string) error
 }
 
@@ -59,6 +61,7 @@ func NewUploader(region, bucketName, imageName string, opts *UploaderOptions) (c
 		region:     region,
 		bucketName: bucketName,
 		imageName:  imageName,
+		tags:       opts.Tags,
 		targetArch: opts.TargetArch,
 		bootMode:   opts.BootMode,
 	}, nil
@@ -119,7 +122,7 @@ func (au *awsUploader) UploadAndRegister(r io.Reader, _ uint64, status io.Writer
 	}
 
 	fmt.Fprintf(status, "Registering AMI %s\n", au.imageName)
-	ami, snapshot, err := au.client.Register(au.imageName, au.bucketName, keyName, nil, au.targetArch, au.bootMode, nil)
+	ami, snapshot, err := au.client.Register(au.imageName, au.bucketName, keyName, au.tags, nil, au.targetArch, au.bootMode, nil)
 	if err != nil {
 		return err
 	}

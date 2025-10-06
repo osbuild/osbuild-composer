@@ -404,6 +404,12 @@
       - "net-lib"
       - "dbus-broker"
     default_menu: 1
+    lorax_template_package: lorax-templates-generic
+    lorax_templates:
+      - 99-generic/runtime-postinstall.tmpl
+      - 99-generic/runtime-cleanup.tmpl
+    lorax_logos_package: fedora-logos
+    lorax_release_package: fedora-release
     conditions: &default_installer_config_conditions
       "f41 dracut requires ifcfg, rootfs is squashfs":
         when:
@@ -521,7 +527,7 @@
           fstab_freq: 0
           fstab_passno: 2
       - &default_partition_table_part_boot
-        size: "1 GiB"
+        size: "2 GiB"
         type: *filesystem_data_guid
         uuid: *data_partition_uuid
         payload_type: "filesystem"
@@ -559,7 +565,7 @@
           fstab_freq: 0
           fstab_passno: 2
       - &iot_base_partition_table_part_boot
-        size: "1 GiB"
+        size: "2 GiB"
         type: *filesystem_data_guid
         uuid: *data_partition_uuid
         payload_type: "filesystem"
@@ -632,7 +638,7 @@
             bootable: true
             type: *prep_partition_dosid
           - &default_partition_table_part_boot_ppc64le
-            size: "1 GiB"
+            size: "2 GiB"
             payload_type: "filesystem"
             payload:
               type: "ext4"
@@ -712,7 +718,7 @@
         type: "gpt"
         partitions:
           - *iot_base_partition_table_part_efi
-          - size: "1 GiB"
+          - size: "2 GiB"
             type: *xboot_ldr_partition_guid
             uuid: *data_partition_uuid
             payload_type: "filesystem"
@@ -1298,7 +1304,7 @@ image_types:
     filename: "image.raw.xz"
     compression: "xz"
     mime_type: "application/xz"
-    default_size: 5_368_709_120  # 5 * datasizes.GibiByte
+    default_size: 6_442_450_944  # 6 * datasizes.GibiByte
     bootable: true
     image_func: "iot"
     ostree:

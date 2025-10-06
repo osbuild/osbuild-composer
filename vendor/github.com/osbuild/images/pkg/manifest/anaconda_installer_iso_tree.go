@@ -237,6 +237,10 @@ var installerBootExcludePaths = []string{
 	"boot/loader/.*",
 	"boot/symvers-.*",
 	"boot/System.map-.*",
+	"usr/lib/sysimage/rpm/.*",
+	"var/lib/rpm/.*",
+	"var/lib/yum/.*",
+	"var/lib/dnf/.*",
 }
 
 // NewSquashfsStage returns an osbuild stage configured to build

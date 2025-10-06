@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 	"path/filepath"
+	"sort"
 
 	"github.com/google/uuid"
 
@@ -528,6 +529,8 @@ func (pt *PartitionTable) relayout(size uint64) uint64 {
 	// to leave space for the footer, e.g. the secondary GPT header.
 	root.Size -= footer
 
+	// Sort partitions by start sector
+	pt.sortPartitions()
 	return start
 }
 
@@ -1396,6 +1399,15 @@ func NewCustomPartitionTable(customizations *blueprint.DiskCustomization, option
 	}
 
 	return pt, nil
+}
+
+// sortPartitions reorders the partitions in the table based on their start
+// sector.
+func (pt *PartitionTable) sortPartitions() {
+	sort.Slice(pt.Partitions, func(i, j int) bool {
+		return pt.Partitions[i].Start < pt.Partitions[j].Start
+	})
+
 }
 
 func addPlainPartition(pt *PartitionTable, partition blueprint.PartitionCustomization, options *CustomPartitionTableOptions) error {
