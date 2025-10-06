@@ -40,6 +40,10 @@ import (
 // How long to wait for a depsolve job to finish
 const depsolveTimeoutMin = 5
 
+// serializeManifestFunc is used to serialize the manifest
+// it can be overridden for testing
+var serializeManifestFunc = serializeManifest
+
 // Server represents the state of the cloud Server
 type Server struct {
 	workers *worker.Server
@@ -270,7 +274,7 @@ func (s *Server) enqueueCompose(irs []imageRequest, channel string) (uuid.UUID, 
 
 	s.goroutinesGroup.Add(1)
 	go func() {
-		serializeManifest(s.goroutinesCtx, manifestSource, s.workers, depsolveJobID, containerResolveJobID, ostreeResolveJobID, manifestJobID, ir.manifestSeed)
+		serializeManifestFunc(s.goroutinesCtx, manifestSource, s.workers, depsolveJobID, containerResolveJobID, ostreeResolveJobID, manifestJobID, ir.manifestSeed)
 		defer s.goroutinesGroup.Done()
 	}()
 
@@ -433,7 +437,7 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 		// copy the image request while passing it into the goroutine to prevent data races
 		s.goroutinesGroup.Add(1)
 		go func(ir imageRequest) {
-			serializeManifest(s.goroutinesCtx, manifestSource, s.workers, depsolveJobID, containerResolveJobID, ostreeResolveJobID, manifestJobID, ir.manifestSeed)
+			serializeManifestFunc(s.goroutinesCtx, manifestSource, s.workers, depsolveJobID, containerResolveJobID, ostreeResolveJobID, manifestJobID, ir.manifestSeed)
 			defer s.goroutinesGroup.Done()
 		}(ir)
 	}

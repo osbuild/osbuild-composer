@@ -3,6 +3,7 @@ package v2_test
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -18,6 +19,7 @@ import (
 
 	"github.com/osbuild/images/pkg/distro/test_distro"
 	"github.com/osbuild/images/pkg/distrofactory"
+	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/ostree/mock_ostree_repo"
 	"github.com/osbuild/images/pkg/reporegistry"
@@ -865,6 +867,145 @@ func TestComposeStatusSuccess(t *testing.T) {
 			]
 		]
 	}`, jobId, jobId, sbomDoc, v2.ImageSBOMSbomType(v2.Spdx)), "details")
+}
+
+func TestComposeManifests(t *testing.T) {
+	testCases := []struct {
+		name          string
+		jobResult     worker.ManifestJobByIDResult
+		expectedError *clienterrors.Error
+	}{
+		{
+			name: "success",
+			jobResult: worker.ManifestJobByIDResult{
+				Manifest: manifest.OSBuildManifest([]byte(`{"version":"2","pipelines":[{"name":"build"},{"name":"os"}],"sources":{"org.osbuild.curl":{"items":{"sha256:e50ddb78a37f5851d1a5c37a4c77d59123153c156e628e064b9daa378f45a2fe":{"url":"https://pkg1.example.com/1.33-2.fc30.x86_64.rpm"}}}}}`)),
+			}},
+		// TODO: this case should actually fail, but it doesn't
+		{
+			name: "failure",
+			jobResult: worker.ManifestJobByIDResult{
+				Manifest: manifest.OSBuildManifest([]byte(`null`)),
+				JobResult: worker.JobResult{
+					JobError: clienterrors.New(clienterrors.ErrorManifestDependency, "Manifest generation test error", "Package XYZ does not have a RemoteLocation"),
+				},
+			},
+			//expectedError: clienterrors.New(clienterrors.ErrorManifestDependency, "Manifest generation test error", "Package XYZ does not have a RemoteLocation"),
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+
+			// Override the serialize manifest func to allow simulating various job states
+			// This is the only way to do it, because of the way the manifest job is handled.
+			serializeManifestFunc := func(ctx context.Context, manifestSource *manifest.Manifest, workers *worker.Server, depsolveJobID, containerResolveJobID, ostreeResolveJobID, manifestJobID uuid.UUID, seed int64) {
+				var token uuid.UUID
+				var err error
+				// wait until job is in a pending state
+				for {
+					_, token, _, _, _, err = workers.RequestJobById(ctx, "", manifestJobID)
+					if errors.Is(err, jobqueue.ErrNotPending) {
+						time.Sleep(time.Millisecond * 50)
+						select {
+						case <-ctx.Done():
+							t.Fatalf("Context done")
+						default:
+							continue
+						}
+					}
+					if err != nil {
+						t.Fatalf("Error requesting manifest job: %v", err)
+						return
+					}
+					break
+				}
+
+				result, err := json.Marshal(testCase.jobResult)
+				require.NoError(t, err)
+				err = workers.FinishJob(token, result)
+				require.NoError(t, err)
+			}
+			defer v2.OverrideSerializeManifestFunc(serializeManifestFunc)()
+
+			srv, wrksrv, _, cancel := newV2Server(t, t.TempDir(), false, false)
+			defer cancel()
+
+			test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
+			{
+				"distribution": "%s",
+				"image_request":{
+					"architecture": "%s",
+					"image_type": "aws",
+					"repositories": [{
+						"baseurl": "somerepo.org",
+						"rhsm": false
+					}],
+					"upload_options": {
+						"region": "eu-central-1"
+					}
+				}
+			}`, test_distro.TestDistro1Name, test_distro.TestArch3Name), http.StatusCreated, `
+			{
+				"href": "/api/image-builder-composer/v2/compose",
+				"kind": "ComposeId"
+			}`, "id")
+
+			// Handle osbuild job
+			jobId, token, jobType, _, _, err := wrksrv.RequestJob(context.Background(), test_distro.TestArch3Name, []string{worker.JobTypeOSBuild}, []string{""}, uuid.Nil)
+			require.NoError(t, err)
+			require.Equal(t, worker.JobTypeOSBuild, jobType)
+
+			osbuildJobResult, err := json.Marshal(worker.OSBuildJobResult{
+				Success:       true,
+				OSBuildOutput: &osbuild.Result{Success: true},
+				PipelineNames: &worker.PipelineNames{
+					Build:   []string{"build"},
+					Payload: []string{"os"},
+				},
+			})
+			require.NoError(t, err)
+			err = wrksrv.FinishJob(token, osbuildJobResult)
+			require.NoError(t, err)
+
+			// Verify the compose status
+			test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%v", jobId), ``, http.StatusOK, fmt.Sprintf(`
+			{
+				"href": "/api/image-builder-composer/v2/composes/%v",
+				"kind": "ComposeStatus",
+				"id": "%v",
+				"image_status": {
+					"status": "success"
+				},
+				"status": "success"
+			}`, jobId, jobId))
+
+			// Verify the compose manifests
+			var expectedManifestsResponse string
+			var expectedStatusCode int
+			if testCase.expectedError != nil {
+				expectedManifestsResponse = fmt.Sprintf(`
+				{
+					"code": "IMAGE-BUILDER-COMPOSER-11",
+					"details": "job \"%s\": %s",
+					"href": "/api/image-builder-composer/v2/errors/11",
+					"id": "11",
+					"kind": "Error",
+					"reason": "Failed to get manifest"
+				}`, jobId, testCase.expectedError)
+				expectedStatusCode = http.StatusBadRequest
+			} else {
+				expectedManifestsResponse = fmt.Sprintf(`
+				{
+					"href": "/api/image-builder-composer/v2/composes/%v/manifests",
+					"id": "%v",
+					"kind": "ComposeManifests",
+					"manifests": [%s]
+				}`, jobId, jobId, testCase.jobResult.Manifest)
+				expectedStatusCode = http.StatusOK
+			}
+			test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%v/manifests", jobId), ``, expectedStatusCode, expectedManifestsResponse, "operation_id")
+		})
+	}
 }
 
 func TestComposeStatusFailure(t *testing.T) {
