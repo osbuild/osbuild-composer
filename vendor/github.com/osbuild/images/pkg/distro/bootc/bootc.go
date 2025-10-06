@@ -246,6 +246,13 @@ func (t *BootcImageType) BasePartitionTable() (*disk.PartitionTable, error) {
 }
 
 func (t *BootcImageType) BootMode() platform.BootMode {
+	// We really never want HYBRID or LEGACY on aarch64 platforms. In the future
+	// it might be much nicer to take the same apporach as `Bootmode()` in the
+	// generic distro but that's a bit more involved. Let's start here.
+	if t.arch.arch == arch.ARCH_AARCH64 {
+		return platform.BOOT_UEFI
+	}
+
 	return platform.BOOT_HYBRID
 }
 
