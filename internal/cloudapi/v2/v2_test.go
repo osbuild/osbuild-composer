@@ -880,16 +880,14 @@ func TestComposeManifests(t *testing.T) {
 			jobResult: worker.ManifestJobByIDResult{
 				Manifest: manifest.OSBuildManifest([]byte(`{"version":"2","pipelines":[{"name":"build"},{"name":"os"}],"sources":{"org.osbuild.curl":{"items":{"sha256:e50ddb78a37f5851d1a5c37a4c77d59123153c156e628e064b9daa378f45a2fe":{"url":"https://pkg1.example.com/1.33-2.fc30.x86_64.rpm"}}}}}`)),
 			}},
-		// TODO: this case should actually fail, but it doesn't
 		{
 			name: "failure",
 			jobResult: worker.ManifestJobByIDResult{
-				Manifest: manifest.OSBuildManifest([]byte(`null`)),
 				JobResult: worker.JobResult{
 					JobError: clienterrors.New(clienterrors.ErrorManifestDependency, "Manifest generation test error", "Package XYZ does not have a RemoteLocation"),
 				},
 			},
-			//expectedError: clienterrors.New(clienterrors.ErrorManifestDependency, "Manifest generation test error", "Package XYZ does not have a RemoteLocation"),
+			expectedError: clienterrors.New(clienterrors.ErrorManifestDependency, "Manifest generation test error", "Package XYZ does not have a RemoteLocation"),
 		},
 	}
 

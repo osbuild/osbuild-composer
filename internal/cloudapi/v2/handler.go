@@ -880,6 +880,9 @@ func (h *apiHandlers) getComposeManifestsImpl(ctx echo.Context, jobId uuid.UUID)
 					if err != nil {
 						return HTTPErrorWithInternal(ErrorComposeNotFound, fmt.Errorf("job %q: %v", jobId, err))
 					}
+					if manifestResult.JobError != nil {
+						return HTTPErrorWithInternal(ErrorFailedToMakeManifest, fmt.Errorf("job %q: %v", jobId, manifestResult.JobError))
+					}
 					mf = manifestResult.Manifest
 				}
 
@@ -908,6 +911,9 @@ func (h *apiHandlers) getComposeManifestsImpl(ctx echo.Context, jobId uuid.UUID)
 			_, manifestResult, err := manifestJobResultsFromJobDeps(h.server.workers, buildInfo.Deps)
 			if err != nil {
 				return HTTPErrorWithInternal(ErrorComposeNotFound, fmt.Errorf("job %q: %v", jobId, err))
+			}
+			if manifestResult.JobError != nil {
+				return HTTPErrorWithInternal(ErrorFailedToMakeManifest, fmt.Errorf("job %q: %v", jobId, manifestResult.JobError))
 			}
 			mf = manifestResult.Manifest
 		}
