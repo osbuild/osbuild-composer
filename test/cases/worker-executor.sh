@@ -17,9 +17,11 @@ BLUEPRINT_FILE=${TEMPDIR}/blueprint.toml
 COMPOSE_START=${TEMPDIR}/compose-start.json
 COMPOSE_INFO=${TEMPDIR}/compose-info.json
 DESCR_INST=${TEMPDIR}/descr-inst.json
+AUTH_SG=${TEMPDIR}/auth-sgrule.json
 DESCR_SGRULE=${TEMPDIR}/descr-sgrule.json
 KEYPAIR=${TEMPDIR}/keypair.pem
 INSTANCE_ID=$(curl -Ls http://169.254.169.254/latest/meta-data/instance-id)
+WORKER_HOST=$(curl -Ls http://169.254.169.254/latest/meta-data/local-ipv4)
 
 # Check available container runtime
 if type -p podman 2>/dev/null >&2; then
@@ -122,10 +124,19 @@ fi
 
 greenprint "Setting up executor"
 
-# allow the executor to access the internet for the setup
+# the executor should be created with exactly one egress rule (allowing traffic to the worker host)
 SGID=$(jq -r .Reservations[0].Instances[0].SecurityGroups[0].GroupId "$DESCR_INST")
-$AWS_CMD ec2 authorize-security-group-egress --group-id "$SGID" --protocol tcp --cidr 0.0.0.0/0 --port 1-65535 > "$DESCR_SGRULE"
-SGRULEID=$(jq -r .SecurityGroupRules[0].SecurityGroupRuleId "$DESCR_SGRULE")
+$AWS_CMD ec2 describe-security-group-rules --filters "Name=group-id,Values=$SGID" > "$DESCR_SGRULE"
+
+EGRESS_TARGET=$(jq -r '.SecurityGroupRules[] | select(.IsEgress).CidrIpv4' "$DESCR_SGRULE")
+if [ "$EGRESS_TARGET" != "$WORKER_HOST/32" ]; then
+    echo executors "$EGRESS_TARGET" is not the expected "$WORKER_HOST/32"
+    exit 1
+fi
+
+# allow the executor to access the internet for the setup:
+$AWS_CMD ec2 authorize-security-group-egress --group-id "$SGID" --protocol tcp --cidr 0.0.0.0/0 --port 1-65535 > "$AUTH_SG"
+SGRULEID=$(jq -r .SecurityGroupRules[0].SecurityGroupRuleId "$AUTH_SG")
 
 GIT_COMMIT="${GIT_COMMIT:-${CI_COMMIT_SHA}}"
 OSBUILD_GIT_COMMIT=$(cat Schutzfile | jq -r '.["'"${ID}-${VERSION_ID}"'"].dependencies.osbuild.commit')
@@ -150,9 +161,15 @@ subprocessPIDs+=( $! )
 
 ssh -oStrictHostKeyChecking=no -i "$KEYPAIR" "fedora@$EXECUTOR_IP" sudo dnf install -y osbuild-composer osbuild
 
-# no internet access during the build
-# TODO [thozza]: while debugging the test case, it turned out that the worker executor instance in fact has Internet access!
+# revoke internet access again during the build
 $AWS_CMD ec2 revoke-security-group-egress --group-id "$SGID" --security-group-rule-ids "$SGRULEID"
+$AWS_CMD ec2 describe-security-group-rules --filters "Name=group-id,Values=$SGID" > "$DESCR_SGRULE"
+
+SGRULES_LENGTH=$(jq -r '.SecurityGroupRules | length' "$DESCR_SGRULE")
+if [ "$SGRULES_LENGTH" != 2 ]; then
+    echo "Expected exactly 2 security group rules (got $SGRULES_LENGTH)"
+    exit 1
+fi
 
 greenprint "🔥 opening worker-executor port on firewall"
 ssh -oStrictHostKeyChecking=no -i "$KEYPAIR" "fedora@$EXECUTOR_IP" sudo firewall-cmd --zone=public --add-port=8001/tcp --permanent || true
