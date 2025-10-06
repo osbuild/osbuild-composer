@@ -75,7 +75,7 @@ func (a APICall) Do(t *testing.T) APICallResult {
 	require.NoErrorf(t, err, "%s: could not read response body", a.Path)
 
 	if a.ExpectedStatus != 0 {
-		assert.Equalf(t, a.ExpectedStatus, resp.StatusCode, "%s: SendHTTP failed for path", a.Path)
+		assert.Equalf(t, a.ExpectedStatus, resp.StatusCode, "%s: SendHTTP failed for path; body: %s", a.Path, string(body))
 	}
 	if a.ExpectedBody != nil {
 		err = a.ExpectedBody.Validate(body)
