@@ -377,6 +377,70 @@ func (a *AWS) createOrReplaceSG(hostInstanceID, hostIP, vpcID string) (string, e
 	}
 	sgID := *cSGOutput.GroupId
 
+	describeSGROutput, err := a.ec2.DescribeSecurityGroupRules(
+		context.Background(),
+		&ec2.DescribeSecurityGroupRulesInput{
+			Filters: []ec2types.Filter{
+				{
+					Name: aws.String("group-id"),
+					Values: []string{
+						sgID,
+					},
+				},
+			},
+		},
+	)
+	if err != nil {
+		return sgID, err
+	}
+
+	var egressRules []string
+	for _, rule := range describeSGROutput.SecurityGroupRules {
+		if *rule.IsEgress {
+			egressRules = append(egressRules, *rule.SecurityGroupRuleId)
+		}
+	}
+	if len(egressRules) > 0 {
+		revokeOutput, err := a.ec2.RevokeSecurityGroupEgress(
+			context.Background(),
+			&ec2.RevokeSecurityGroupEgressInput{
+				GroupId:              aws.String(sgID),
+				SecurityGroupRuleIds: egressRules,
+			},
+		)
+		if err != nil {
+			return sgID, err
+		}
+		if !*revokeOutput.Return {
+			return sgID, fmt.Errorf("Failed to revoke security group (%s) egress rules (%s)", sgID, egressRules)
+		}
+	}
+
+	sgAuthEgressOutput, err := a.ec2.AuthorizeSecurityGroupEgress(
+		context.Background(),
+		&ec2.AuthorizeSecurityGroupEgressInput{
+			GroupId: aws.String(sgID),
+			IpPermissions: []ec2types.IpPermission{
+				{
+					IpProtocol: aws.String(string(ec2types.ProtocolTcp)),
+					FromPort:   aws.Int32(1),
+					ToPort:     aws.Int32(65535),
+					IpRanges: []ec2types.IpRange{
+						{
+							CidrIp: aws.String(fmt.Sprintf("%s/32", hostIP)),
+						},
+					},
+				},
+			},
+		},
+	)
+	if err != nil {
+		return sgID, err
+	}
+	if !*sgAuthEgressOutput.Return {
+		return sgID, fmt.Errorf("Unable to attach egress rules to SG (%s)", sgID)
+	}
+
 	sgIngressOutput, err := a.ec2.AuthorizeSecurityGroupIngress(
 		context.Background(),
 		&ec2.AuthorizeSecurityGroupIngressInput{
