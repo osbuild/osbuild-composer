@@ -90,24 +90,19 @@ func mockDepsolve(t *testing.T, workerServer *worker.Server, wg *sync.WaitGroup,
 			if err != nil {
 				continue
 			}
+			dummyPackage := rpmmd.PackageSpec{
+				Name:           "pkg1",
+				Version:        "1.33",
+				Release:        "2.fc30",
+				Arch:           "x86_64",
+				Checksum:       "sha256:e50ddb78a37f5851d1a5c37a4c77d59123153c156e628e064b9daa378f45a2fe",
+				RemoteLocation: "https://pkg1.example.com/1.33-2.fc30.x86_64.rpm",
+			}
 			dJR := &worker.DepsolveJobResult{
 				PackageSpecs: map[string][]rpmmd.PackageSpec{
 					// Used when depsolving a manifest
-					"build": {
-						{
-							Name:     "pkg1",
-							Checksum: "sha256:e50ddb78a37f5851d1a5c37a4c77d59123153c156e628e064b9daa378f45a2fe",
-						},
-					},
-					"os": {
-						{
-							Name:     "pkg1",
-							Version:  "1.33",
-							Release:  "2.fc30",
-							Arch:     "x86_64",
-							Checksum: "sha256:e50ddb78a37f5851d1a5c37a4c77d59123153c156e628e064b9daa378f45a2fe",
-						},
-					},
+					"build": {dummyPackage},
+					"os":    {dummyPackage},
 				},
 				SbomDocs: map[string]worker.SbomDoc{
 					"build": {
@@ -837,7 +832,7 @@ func TestComposeStatusSuccess(t *testing.T) {
 		]
 	}`, jobId, jobId))
 
-	emptyManifest := `{"version":"2","pipelines":[{"name":"build"},{"name":"os"}],"sources":{"org.osbuild.curl":{"items":{"sha256:e50ddb78a37f5851d1a5c37a4c77d59123153c156e628e064b9daa378f45a2fe":{"url":""}}}}}`
+	emptyManifest := `{"version":"2","pipelines":[{"name":"build"},{"name":"os"}],"sources":{"org.osbuild.curl":{"items":{"sha256:e50ddb78a37f5851d1a5c37a4c77d59123153c156e628e064b9daa378f45a2fe":{"url":"https://pkg1.example.com/1.33-2.fc30.x86_64.rpm"}}}}}`
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%v/manifests", jobId), ``, http.StatusOK, fmt.Sprintf(`
 	{
 		"href": "/api/image-builder-composer/v2/composes/%v/manifests",
