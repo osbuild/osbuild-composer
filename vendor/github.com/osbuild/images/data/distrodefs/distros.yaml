@@ -214,6 +214,7 @@ distros:
       - "xccdf_org.ssgproject.content_profile_anssi_bp28_high"
       - "xccdf_org.ssgproject.content_profile_anssi_bp28_intermediary"
       - "xccdf_org.ssgproject.content_profile_anssi_bp28_minimal"
+      - "xccdf_org.ssgproject.content_profile_bsi"
       - "xccdf_org.ssgproject.content_profile_ccn_advanced"
       - "xccdf_org.ssgproject.content_profile_ccn_basic"
       - "xccdf_org.ssgproject.content_profile_ccn_intermediate"
