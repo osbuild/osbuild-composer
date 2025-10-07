@@ -923,7 +923,7 @@ func TestComposeManifests(t *testing.T) {
 				err = workers.FinishJob(token, result)
 				require.NoError(t, err)
 			}
-			defer v2.OverrideSerializeManifestFunc(serializeManifestFunc)()
+			defer v2.MockSerializeManifestFunc(serializeManifestFunc)()
 
 			srv, wrksrv, _, cancel := newV2Server(t, t.TempDir(), false, false)
 			defer cancel()
