@@ -66,6 +66,10 @@ function createReqFile() {
       {
         "mountpoint": "/var",
         "min_size": 262144000
+      },
+      {
+        "mountpoint": "/",
+        "min_size": 4294967296
       }
     ],
     "payload_repositories": [
