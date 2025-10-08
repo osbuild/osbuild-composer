@@ -621,10 +621,12 @@ function waitForState() {
             # default undesired state
             "failure")
                 echo "Image compose failed"
+                echo "API output: $OUTPUT"
                 exit 1
                 ;;
             *)
                 echo "API returned unexpected image_status.status value: '$COMPOSE_STATUS'"
+                echo "API output: $OUTPUT"
                 exit 1
                 ;;
         esac
