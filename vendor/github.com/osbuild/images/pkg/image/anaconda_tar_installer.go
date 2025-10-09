@@ -19,7 +19,7 @@ import (
 )
 
 func efiBootPartitionTable(rng *rand.Rand) *disk.PartitionTable {
-	var efibootImageSize uint64 = 20 * datasizes.MebiByte
+	efibootImageSize := datasizes.Size(20 * datasizes.MebiByte)
 	return &disk.PartitionTable{
 		Size: efibootImageSize,
 		Partitions: []disk.Partition{
@@ -125,8 +125,7 @@ func (img *AnacondaTarInstaller) InstantiateManifest(m *manifest.Manifest,
 	if img.OSCustomizations.FIPS {
 		kernelOpts = append(kernelOpts, "fips=1")
 	}
-	kernelOpts = append(kernelOpts, img.InstallerCustomizations.AdditionalKernelOpts...)
-	kernelOpts = append(kernelOpts, img.OSCustomizations.KernelOptionsAppend...)
+	kernelOpts = append(kernelOpts, img.InstallerCustomizations.KernelOptionsAppend...)
 	bootTreePipeline.KernelOpts = kernelOpts
 
 	osPipeline := manifest.NewOS(buildPipeline, img.platform, repos)
@@ -145,8 +144,7 @@ func (img *AnacondaTarInstaller) InstantiateManifest(m *manifest.Manifest,
 	isoTreePipeline.RootfsType = img.InstallerCustomizations.ISORootfsType
 
 	isoTreePipeline.OSPipeline = osPipeline
-	isoTreePipeline.KernelOpts = img.InstallerCustomizations.AdditionalKernelOpts
-	isoTreePipeline.KernelOpts = append(isoTreePipeline.KernelOpts, img.OSCustomizations.KernelOptionsAppend...)
+	isoTreePipeline.KernelOpts = img.InstallerCustomizations.KernelOptionsAppend
 	if img.OSCustomizations.FIPS {
 		isoTreePipeline.KernelOpts = append(isoTreePipeline.KernelOpts, "fips=1")
 	}

@@ -100,10 +100,12 @@ func (img *AnacondaContainerInstaller) InstantiateManifest(m *manifest.Manifest,
 		img.Kickstart.Path = osbuild.KickstartPathOSBuild
 	}
 
-	bootTreePipeline.KernelOpts = []string{fmt.Sprintf("inst.stage2=hd:LABEL=%s", img.InstallerCustomizations.ISOLabel), fmt.Sprintf("inst.ks=hd:LABEL=%s:%s", img.InstallerCustomizations.ISOLabel, img.Kickstart.Path)}
+	kernelOpts := []string{fmt.Sprintf("inst.stage2=hd:LABEL=%s", img.InstallerCustomizations.ISOLabel), fmt.Sprintf("inst.ks=hd:LABEL=%s:%s", img.InstallerCustomizations.ISOLabel, img.Kickstart.Path)}
 	if anacondaPipeline.InstallerCustomizations.FIPS {
-		bootTreePipeline.KernelOpts = append(bootTreePipeline.KernelOpts, "fips=1")
+		kernelOpts = append(kernelOpts, "fips=1")
 	}
+	kernelOpts = append(kernelOpts, img.InstallerCustomizations.KernelOptionsAppend...)
+	bootTreePipeline.KernelOpts = kernelOpts
 
 	isoTreePipeline := manifest.NewAnacondaInstallerISOTree(buildPipeline, anacondaPipeline, rootfsImagePipeline, bootTreePipeline)
 	isoTreePipeline.PartitionTable = efiBootPartitionTable(rng)

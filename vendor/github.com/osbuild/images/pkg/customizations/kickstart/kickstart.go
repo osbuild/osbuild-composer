@@ -2,6 +2,7 @@ package kickstart
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
 	"github.com/osbuild/images/pkg/customizations/users"
@@ -89,5 +90,40 @@ func (options Options) Validate() error {
 			return fmt.Errorf("kickstart users and/or groups are not compatible with user-supplied kickstart content")
 		}
 	}
+
+	// This check repeats the same checks that are made in the kickstart stage
+	// constructor. Repeating it here catches it earlier in the pipeline
+	// generation, before serialization starts.
+	for _, user := range options.Users {
+		if user.Name == "root" {
+			// return an error if any other field is set (except SSH)
+			unsupportedOptionsSet := make([]string, 0, 7)
+			if user.ExpireDate != nil {
+				unsupportedOptionsSet = append(unsupportedOptionsSet, "expiredate")
+			}
+			if user.ForcePasswordReset != nil {
+				unsupportedOptionsSet = append(unsupportedOptionsSet, "force_password_reset")
+			}
+			if user.GID != nil {
+				unsupportedOptionsSet = append(unsupportedOptionsSet, "gid")
+			}
+			if user.Groups != nil {
+				unsupportedOptionsSet = append(unsupportedOptionsSet, "groups")
+			}
+			if user.Home != nil {
+				unsupportedOptionsSet = append(unsupportedOptionsSet, "home")
+			}
+			if user.Shell != nil {
+				unsupportedOptionsSet = append(unsupportedOptionsSet, "shell")
+			}
+			if user.UID != nil {
+				unsupportedOptionsSet = append(unsupportedOptionsSet, "uid")
+			}
+			if len(unsupportedOptionsSet) > 0 {
+				return fmt.Errorf("unsupported kickstart options for user \"root\": %s", strings.Join(unsupportedOptionsSet, ", "))
+			}
+		}
+	}
+
 	return nil
 }

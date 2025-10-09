@@ -100,10 +100,12 @@ func (img *AnacondaOSTreeInstaller) InstantiateManifest(m *manifest.Manifest,
 	if img.Kickstart.Path == "" {
 		img.Kickstart.Path = osbuild.KickstartPathOSBuild
 	}
-	bootTreePipeline.KernelOpts = []string{fmt.Sprintf("inst.stage2=hd:LABEL=%s", img.InstallerCustomizations.ISOLabel), fmt.Sprintf("inst.ks=hd:LABEL=%s:%s", img.InstallerCustomizations.ISOLabel, img.Kickstart.Path)}
+	kernelOpts := []string{fmt.Sprintf("inst.stage2=hd:LABEL=%s", img.InstallerCustomizations.ISOLabel), fmt.Sprintf("inst.ks=hd:LABEL=%s:%s", img.InstallerCustomizations.ISOLabel, img.Kickstart.Path)}
 	if anacondaPipeline.InstallerCustomizations.FIPS {
-		bootTreePipeline.KernelOpts = append(bootTreePipeline.KernelOpts, "fips=1")
+		kernelOpts = append(kernelOpts, "fips=1")
 	}
+	kernelOpts = append(kernelOpts, img.InstallerCustomizations.KernelOptionsAppend...)
+	bootTreePipeline.KernelOpts = kernelOpts
 
 	var subscriptionPipeline *manifest.Subscription
 	if img.Subscription != nil {

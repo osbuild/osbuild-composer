@@ -21,24 +21,14 @@ type OSTreeSimplifiedInstaller struct {
 	// Raw image that will be created and embedded
 	rawImage *OSTreeDiskImage
 
-	OSCustomizations manifest.OSCustomizations
-	Environment      environment.Environment
+	OSCustomizations        manifest.OSCustomizations
+	Environment             environment.Environment
+	InstallerCustomizations manifest.InstallerCustomizations
 
 	ExtraBasePackages rpmmd.PackageSet
 
-	ISOLabel string
-
 	// ISO label template (architecture-free)
 	ISOLabelTmpl string
-
-	// Product string for ISO buildstamp
-	Product string
-
-	// OSVersion string for ISO buildstamp
-	OSVersion string
-
-	// Variant string for ISO buildstamp
-	Variant string
 
 	// OSName for ostree deployment
 	OSName string
@@ -52,9 +42,6 @@ type OSTreeSimplifiedInstaller struct {
 
 	// Ignition embedded configuration options
 	IgnitionEmbedded *ignition.EmbeddedOptions
-
-	AdditionalDracutModules []string
-	AdditionalDrivers       []string
 }
 
 func NewOSTreeSimplifiedInstaller(platform platform.Platform, filename string, rawImage *OSTreeDiskImage, installDevice string) *OSTreeSimplifiedInstaller {
@@ -83,8 +70,8 @@ func (img *OSTreeSimplifiedInstaller) InstantiateManifest(m *manifest.Manifest,
 		img.platform,
 		repos,
 		"kernel",
-		img.Product,
-		img.OSVersion,
+		img.InstallerCustomizations.Product,
+		img.InstallerCustomizations.OSVersion,
 	)
 	coiPipeline.ExtraPackages = img.ExtraBasePackages.Include
 	coiPipeline.ExcludePackages = img.ExtraBasePackages.Exclude
@@ -92,20 +79,20 @@ func (img *OSTreeSimplifiedInstaller) InstantiateManifest(m *manifest.Manifest,
 	coiPipeline.FDO = img.FDO
 	coiPipeline.Ignition = img.IgnitionEmbedded
 	coiPipeline.Biosdevname = (img.platform.GetArch() == arch.ARCH_X86_64)
-	coiPipeline.Variant = img.Variant
-	coiPipeline.AdditionalDracutModules = img.AdditionalDracutModules
-	coiPipeline.AdditionalDrivers = img.AdditionalDrivers
+	coiPipeline.Variant = img.InstallerCustomizations.Variant
+	coiPipeline.AdditionalDracutModules = img.InstallerCustomizations.AdditionalDracutModules
+	coiPipeline.AdditionalDrivers = img.InstallerCustomizations.AdditionalDrivers
 
 	var isoLabel string
 
-	if len(img.ISOLabel) > 0 {
-		isoLabel = img.ISOLabel
+	if len(img.InstallerCustomizations.ISOLabel) > 0 {
+		isoLabel = img.InstallerCustomizations.ISOLabel
 	} else {
 		// TODO: replace isoLabelTmpl with more high-level properties
 		isoLabel = fmt.Sprintf(img.ISOLabelTmpl, img.platform.GetArch())
 	}
 
-	bootTreePipeline := manifest.NewEFIBootTree(buildPipeline, img.Product, img.OSVersion)
+	bootTreePipeline := manifest.NewEFIBootTree(buildPipeline, img.InstallerCustomizations.Product, img.InstallerCustomizations.OSVersion)
 	bootTreePipeline.Platform = img.platform
 	bootTreePipeline.UEFIVendor = img.platform.GetUEFIVendor()
 	bootTreePipeline.ISOLabel = isoLabel
@@ -136,7 +123,16 @@ func (img *OSTreeSimplifiedInstaller) InstantiateManifest(m *manifest.Manifest,
 			kernelOpts = append(kernelOpts, "fdo.di_mfg_string_type_mac_iface="+img.FDO.DiMfgStringTypeMacIface)
 		}
 	}
-
+	// Note that we do not use the
+	// InstallerCustomizations.KernelOptionsAppend here because
+	// InstallerCustomizations.KernelOptionsAppend also picks up
+	// the kernel options from the imageConfig but we only set
+	// those in the rawImage.OSTreeDeploymentCustomizations and
+	// not in the bootTreePipeline. Its unclear if we should change
+	// this or not. Its inconsistent with the other installers but
+	// then simplifiedInstaler is special.
+	//
+	// kernelOpts = append(kernelOpts, img.InstallerCustomizations.KernelOptionsAppend...)
 	bootTreePipeline.KernelOpts = kernelOpts
 
 	// enable ISOLinux on x86_64 only

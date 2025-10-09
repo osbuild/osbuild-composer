@@ -75,7 +75,7 @@ func (vg *LVMVolumeGroup) GetChild(n uint) Entity {
 	return &vg.LogicalVolumes[n]
 }
 
-func (vg *LVMVolumeGroup) CreateMountpoint(mountpoint, defaultFs string, size uint64) (Entity, error) {
+func (vg *LVMVolumeGroup) CreateMountpoint(mountpoint, defaultFs string, size datasizes.Size) (Entity, error) {
 	if defaultFs == "btrfs" {
 		return nil, fmt.Errorf("btrfs under lvm is not supported")
 	}
@@ -110,7 +110,7 @@ func (vg *LVMVolumeGroup) genLVName(base string) (string, error) {
 // CreateLogicalVolume creates a new logical volume on the volume group. If a
 // name is not provided, a valid one is generated based on the payload
 // mountpoint. If a name is provided, it is used directly without validating.
-func (vg *LVMVolumeGroup) CreateLogicalVolume(lvName string, size uint64, payload Entity) (*LVMLogicalVolume, error) {
+func (vg *LVMVolumeGroup) CreateLogicalVolume(lvName string, size datasizes.Size, payload Entity) (*LVMLogicalVolume, error) {
 	if vg == nil {
 		panic("LVMVolumeGroup.CreateLogicalVolume: nil entity")
 	}
@@ -143,7 +143,7 @@ func (vg *LVMVolumeGroup) CreateLogicalVolume(lvName string, size uint64, payloa
 	return &vg.LogicalVolumes[len(vg.LogicalVolumes)-1], nil
 }
 
-func alignUp(size uint64) uint64 {
+func alignUp(size datasizes.Size) datasizes.Size {
 	if size%LVMDefaultExtentSize != 0 {
 		size += LVMDefaultExtentSize - size%LVMDefaultExtentSize
 	}
@@ -151,11 +151,11 @@ func alignUp(size uint64) uint64 {
 	return size
 }
 
-func (vg *LVMVolumeGroup) AlignUp(size uint64) uint64 {
+func (vg *LVMVolumeGroup) AlignUp(size datasizes.Size) datasizes.Size {
 	return alignUp(size)
 }
 
-func (vg *LVMVolumeGroup) MetadataSize() uint64 {
+func (vg *LVMVolumeGroup) MetadataSize() datasizes.Size {
 	if vg == nil {
 		return 0
 	}
@@ -167,8 +167,8 @@ func (vg *LVMVolumeGroup) MetadataSize() uint64 {
 	return 1 * datasizes.MiB
 }
 
-func (vg *LVMVolumeGroup) minSize(size uint64) uint64 {
-	var lvsum uint64
+func (vg *LVMVolumeGroup) minSize(size datasizes.Size) datasizes.Size {
+	var lvsum datasizes.Size
 	for _, lv := range vg.LogicalVolumes {
 		lvsum += lv.Size
 	}
@@ -192,9 +192,9 @@ func (vg *LVMVolumeGroup) UnmarshalJSON(data []byte) error {
 }
 
 type LVMLogicalVolume struct {
-	Name    string `json:"name,omitempty" yaml:"name,omitempty"`
-	Size    uint64 `json:"size,omitempty" yaml:"size,omitempty"`
-	Payload Entity `json:"payload,omitempty" yaml:"payload,omitempty"`
+	Name    string         `json:"name,omitempty" yaml:"name,omitempty"`
+	Size    datasizes.Size `json:"size,omitempty" yaml:"size,omitempty"`
+	Payload Entity         `json:"payload,omitempty" yaml:"payload,omitempty"`
 }
 
 func (lv *LVMLogicalVolume) Clone() Entity {
@@ -222,14 +222,14 @@ func (lv *LVMLogicalVolume) GetChild(n uint) Entity {
 	return lv.Payload
 }
 
-func (lv *LVMLogicalVolume) GetSize() uint64 {
+func (lv *LVMLogicalVolume) GetSize() datasizes.Size {
 	if lv == nil {
 		return 0
 	}
 	return lv.Size
 }
 
-func (lv *LVMLogicalVolume) EnsureSize(s uint64) bool {
+func (lv *LVMLogicalVolume) EnsureSize(s datasizes.Size) bool {
 	if lv == nil {
 		panic("LVMLogicalVolume.EnsureSize: nil entity")
 	}
@@ -251,11 +251,6 @@ func lvname(path string) string {
 }
 
 func (lv *LVMLogicalVolume) UnmarshalJSON(data []byte) (err error) {
-	data, err = datasizes.ParseSizeInJSONMapping("size", data)
-	if err != nil {
-		return fmt.Errorf("error parsing size in LVM LV: %w", err)
-	}
-
 	// keep in sync with lvm.go,partition.go,luks.go
 	type alias LVMLogicalVolume
 	var withoutPayload struct {

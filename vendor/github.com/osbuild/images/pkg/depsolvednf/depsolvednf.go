@@ -167,7 +167,7 @@ type Solver struct {
 
 // DepsolveResult contains the results of a depsolve operation.
 type DepsolveResult struct {
-	Packages []rpmmd.PackageSpec
+	Packages rpmmd.PackageList
 	Modules  []rpmmd.ModuleSpec
 	Repos    []rpmmd.RepoConfig
 	SBOM     *sbom.Document
@@ -277,7 +277,7 @@ func (s *Solver) FetchMetadata(repos []rpmmd.RepoConfig) (rpmmd.PackageList, err
 		return pkgs, nil
 	}
 
-	result, err := run(s.depsolveDNFCmd, req, s.Stderr)
+	rawRes, err := run(s.depsolveDNFCmd, req, s.Stderr)
 	if err != nil {
 		return nil, err
 	}
@@ -290,10 +290,12 @@ func (s *Solver) FetchMetadata(repos []rpmmd.RepoConfig) (rpmmd.PackageList, err
 	}
 	s.cache.updateInfo()
 
-	var pkgs rpmmd.PackageList
-	if err := json.Unmarshal(result, &pkgs); err != nil {
+	var res dumpResult
+	if err := json.Unmarshal(rawRes, &res); err != nil {
 		return nil, err
 	}
+
+	pkgs := res.toRPMMD()
 
 	sortID := func(pkg rpmmd.Package) string {
 		return fmt.Sprintf("%s-%s-%s", pkg.Name, pkg.Version, pkg.Release)
@@ -323,7 +325,7 @@ func (s *Solver) SearchMetadata(repos []rpmmd.RepoConfig, packages []string) (rp
 		return pkgs, nil
 	}
 
-	result, err := run(s.depsolveDNFCmd, req, s.Stderr)
+	rawRes, err := run(s.depsolveDNFCmd, req, s.Stderr)
 	if err != nil {
 		return nil, err
 	}
@@ -336,10 +338,12 @@ func (s *Solver) SearchMetadata(repos []rpmmd.RepoConfig, packages []string) (rp
 	}
 	s.cache.updateInfo()
 
-	var pkgs rpmmd.PackageList
-	if err := json.Unmarshal(result, &pkgs); err != nil {
+	var res searchResult
+	if err := json.Unmarshal(rawRes, &res); err != nil {
 		return nil, err
 	}
+
+	pkgs := res.toRPMMD()
 
 	sortID := func(pkg rpmmd.Package) string {
 		return fmt.Sprintf("%s-%s-%s", pkg.Name, pkg.Version, pkg.Release)
@@ -580,10 +584,10 @@ func (s *Solver) makeSearchRequest(repos []rpmmd.RepoConfig, packages []string) 
 // convert internal a list of PackageSpecs and map of repoConfig to the rpmmd
 // equivalents and attach key and subscription information based on the
 // repository configs.
-func (result depsolveResult) toRPMMD(rhsm map[string]bool) ([]rpmmd.PackageSpec, []rpmmd.ModuleSpec, []rpmmd.RepoConfig) {
+func (result depsolveResult) toRPMMD(rhsm map[string]bool) (rpmmd.PackageList, []rpmmd.ModuleSpec, []rpmmd.RepoConfig) {
 	pkgs := result.Packages
 	repos := result.Repos
-	rpmDependencies := make([]rpmmd.PackageSpec, len(pkgs))
+	rpmDependencies := make(rpmmd.PackageList, len(pkgs))
 	for i, dep := range pkgs {
 		repo, ok := repos[dep.RepoID]
 		if !ok {
@@ -595,11 +599,19 @@ func (result depsolveResult) toRPMMD(rhsm map[string]bool) ([]rpmmd.PackageSpec,
 		rpmDependencies[i].Version = dep.Version
 		rpmDependencies[i].Release = dep.Release
 		rpmDependencies[i].Arch = dep.Arch
-		rpmDependencies[i].RemoteLocation = dep.RemoteLocation
-		rpmDependencies[i].Checksum = dep.Checksum
+		rpmDependencies[i].RemoteLocations = []string{dep.RemoteLocation}
+
+		depChecksum := strings.Split(dep.Checksum, ":")
+		if len(depChecksum) != 2 {
+			panic(fmt.Sprintf("invalid checksum format for package %s: %s", dep.Name, dep.Checksum))
+		}
+		rpmDependencies[i].Checksum = rpmmd.Checksum{
+			Type:  depChecksum[0],
+			Value: depChecksum[1],
+		}
 		rpmDependencies[i].CheckGPG = repo.GPGCheck
 		rpmDependencies[i].RepoID = dep.RepoID
-		rpmDependencies[i].Path = dep.Path
+		rpmDependencies[i].Location = dep.Path
 		if verify := repo.SSLVerify; verify != nil {
 			rpmDependencies[i].IgnoreSSL = !*verify
 		}
@@ -752,8 +764,8 @@ type transactionArgs struct {
 	InstallWeakDeps bool `json:"install_weak_deps"`
 }
 
-type packageSpecs []PackageSpec
-type moduleSpecs map[string]ModuleSpec
+type packageSpecs []packageSpec
+type moduleSpecs map[string]moduleSpec
 
 type depsolveResult struct {
 	Packages packageSpecs          `json:"packages"`
@@ -767,8 +779,46 @@ type depsolveResult struct {
 	SBOM json.RawMessage `json:"sbom,omitempty"`
 }
 
+// legacyPackageList represents the old 'PackageList' structure, which
+// was used for both dump and search results. It is kept here for unmarshaling
+// the results.
+type legacyPackageList []struct {
+	Name        string    `json:"name"`
+	Summary     string    `json:"summary"`
+	Description string    `json:"description"`
+	URL         string    `json:"url"`
+	Epoch       uint      `json:"epoch"`
+	Version     string    `json:"version"`
+	Release     string    `json:"release"`
+	Arch        string    `json:"arch"`
+	BuildTime   time.Time `json:"build_time"`
+	License     string    `json:"license"`
+}
+
+type dumpResult = legacyPackageList
+type searchResult = legacyPackageList
+
+func (pl legacyPackageList) toRPMMD() rpmmd.PackageList {
+	rpmPkgs := make(rpmmd.PackageList, len(pl))
+	for i, p := range pl {
+		rpmPkgs[i] = rpmmd.Package{
+			Name:        p.Name,
+			Summary:     p.Summary,
+			Description: p.Description,
+			URL:         p.URL,
+			Epoch:       p.Epoch,
+			Version:     p.Version,
+			Release:     p.Release,
+			Arch:        p.Arch,
+			BuildTime:   p.BuildTime,
+			License:     p.License,
+		}
+	}
+	return rpmPkgs
+}
+
 // Package specification
-type PackageSpec struct {
+type packageSpec struct {
 	Name           string `json:"name"`
 	Epoch          uint   `json:"epoch"`
 	Version        string `json:"version,omitempty"`
@@ -778,28 +828,27 @@ type PackageSpec struct {
 	Path           string `json:"path,omitempty"`
 	RemoteLocation string `json:"remote_location,omitempty"`
 	Checksum       string `json:"checksum,omitempty"`
-	Secrets        string `json:"secrets,omitempty"`
 }
 
 // Module specification
-type ModuleSpec struct {
-	ModuleConfigFile ModuleConfigFile   `json:"module-file"`
-	FailsafeFile     ModuleFailsafeFile `json:"failsafe-file"`
+type moduleSpec struct {
+	ModuleConfigFile moduleConfigFile   `json:"module-file"`
+	FailsafeFile     moduleFailsafeFile `json:"failsafe-file"`
 }
 
-type ModuleConfigFile struct {
+type moduleConfigFile struct {
 	Path string           `json:"path"`
-	Data ModuleConfigData `json:"data"`
+	Data moduleConfigData `json:"data"`
 }
 
-type ModuleConfigData struct {
+type moduleConfigData struct {
 	Name     string   `json:"name"`
 	Stream   string   `json:"stream"`
 	Profiles []string `json:"profiles"`
 	State    string   `json:"state"`
 }
 
-type ModuleFailsafeFile struct {
+type moduleFailsafeFile struct {
 	Path string `json:"path"`
 	Data string `json:"data"`
 }

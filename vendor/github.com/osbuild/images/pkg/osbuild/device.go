@@ -198,7 +198,7 @@ func getDevices(path []disk.Entity, filename string, lockLoopback bool) (map[str
 			lbopt := LoopbackDeviceOptions{
 				Filename:   filename,
 				Start:      pt.BytesToSectors(e.Start),
-				Size:       pt.BytesToSectors(e.Size),
+				Size:       pt.BytesToSectors(e.Size.Uint64()),
 				SectorSize: nil,
 				Lock:       lockLoopback,
 			}
