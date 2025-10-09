@@ -144,9 +144,6 @@ func (request *DepsolveRequest) Depsolve(df *distrofactory.Factory, rr *reporegi
 		}
 	}
 
-	packages, err := result.PackageSpecs["os"].ToRPMMDList()
-	if err != nil {
-		return nil, HTTPErrorWithInternal(ErrorFailedToDepsolve, err)
-	}
+	packages := result.PackageSpecs["os"].ToRPMMDList()
 	return packages, nil
 }
