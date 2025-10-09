@@ -2732,7 +2732,7 @@ func TestExpandBlueprintNoGlob(t *testing.T) {
 		{Name: "grub2", Version: "*"},
 	}
 	// Sorted list of dependencies
-	dependencies := []rpmmd.PackageSpec{
+	dependencies := []weldrtypes.DepsolvedPackageInfo{
 		{
 			Name:    "grub2",
 			Epoch:   1,
@@ -2773,7 +2773,7 @@ func TestExpandBlueprintError(t *testing.T) {
 		{Name: "dep-package0", Version: "*"},
 	}
 	// Sorted list of dependencies
-	dependencies := []rpmmd.PackageSpec{
+	dependencies := []weldrtypes.DepsolvedPackageInfo{
 		{
 			Name:    "openssh-server",
 			Epoch:   0,
@@ -2802,7 +2802,7 @@ func TestExpandBlueprintGlobs(t *testing.T) {
 		{Name: "test-*", Version: "*"},
 	}
 	// Sorted list of dependencies
-	dependencies := []rpmmd.PackageSpec{
+	dependencies := []weldrtypes.DepsolvedPackageInfo{
 		{
 			Name:    "openssh-clients",
 			Epoch:   0,
