@@ -13,7 +13,7 @@ type Partition struct {
 	// Start of the partition in bytes
 	Start uint64 `json:"start,omitempty" yaml:"start,omitempty"`
 	// Size of the partition in bytes
-	Size uint64 `json:"size" yaml:"size"`
+	Size datasizes.Size `json:"size" yaml:"size"`
 	// Partition type, e.g. 0x83 for MBR or a UUID for gpt
 	Type string `json:"type,omitempty" yaml:"type,omitempty"`
 	// `Legacy BIOS bootable` (GPT) or `active` (DOS) flag
@@ -72,7 +72,7 @@ func (p *Partition) GetChild(n uint) Entity {
 // fitTo resizes a partition to be either the given the size or the size of its
 // payload if that is larger. The payload can be larger if it is a container
 // with sized children.
-func (p *Partition) fitTo(size uint64) {
+func (p *Partition) fitTo(size datasizes.Size) {
 	payload, isVC := p.Payload.(VolumeContainer)
 	if isVC {
 		if payloadMinSize := payload.minSize(size); payloadMinSize > size {
@@ -82,13 +82,13 @@ func (p *Partition) fitTo(size uint64) {
 	p.Size = size
 }
 
-func (p *Partition) GetSize() uint64 {
+func (p *Partition) GetSize() datasizes.Size {
 	return p.Size
 }
 
 // Ensure the partition has at least the given size. Will do nothing
 // if the partition is already larger. Returns if the size changed.
-func (p *Partition) EnsureSize(s uint64) bool {
+func (p *Partition) EnsureSize(s datasizes.Size) bool {
 	if s > p.Size {
 		p.Size = s
 		return true
@@ -132,11 +132,6 @@ func (p *Partition) MarshalJSON() ([]byte, error) {
 }
 
 func (p *Partition) UnmarshalJSON(data []byte) (err error) {
-	data, err = datasizes.ParseSizeInJSONMapping("size", data)
-	if err != nil {
-		return fmt.Errorf("error parsing size in partition: %w", err)
-	}
-
 	// keep in sync with lvm.go,partition.go,luks.go
 	type alias Partition
 	var withoutPayload struct {

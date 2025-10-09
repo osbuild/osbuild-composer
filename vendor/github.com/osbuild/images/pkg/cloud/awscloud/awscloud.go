@@ -233,7 +233,7 @@ func ec2BootMode(bootMode *platform.BootMode) (ec2types.BootModeValues, error) {
 // The caller can optionally specify the boot mode of the AMI. If the boot
 // mode is not specified, then the instances launched from this AMI use the
 // default boot mode value of the instance type.
-func (a *AWS) Register(name, bucket, key string, tags [][2]string, shareWith []string, architecture arch.Arch, bootMode *platform.BootMode, importRole *string) (string, string, error) {
+func (a *AWS) Register(name, bucket, key string, tags []AWSTag, shareWith []string, architecture arch.Arch, bootMode *platform.BootMode, importRole *string) (string, string, error) {
 	rpmArchToEC2Arch := map[arch.Arch]ec2types.ArchitectureValues{
 		arch.ARCH_X86_64:  ec2types.ArchitectureValuesX8664,
 		arch.ARCH_AARCH64: ec2types.ArchitectureValuesArm64,
@@ -304,8 +304,8 @@ func (a *AWS) Register(name, bucket, key string, tags [][2]string, shareWith []s
 	}
 	for _, tag := range tags {
 		ec2Tags = append(ec2Tags, ec2types.Tag{
-			Key:   aws.String(tag[0]),
-			Value: aws.String(tag[1]),
+			Key:   aws.String(tag.Name),
+			Value: aws.String(tag.Value),
 		})
 	}
 

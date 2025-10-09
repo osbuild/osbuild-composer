@@ -31,6 +31,7 @@ import (
 
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/arch"
+	"github.com/osbuild/images/pkg/datasizes"
 )
 
 const (
@@ -40,7 +41,7 @@ const (
 	// Default grain size in bytes. The grain controls how sizes of certain
 	// entities are rounded. For example, by default, partition sizes are
 	// rounded to the next MiB.
-	DefaultGrainBytes = uint64(1048576) // 1 MiB
+	DefaultGrainBytes = datasizes.Size(1048576) // 1 MiB
 
 	// GUIDs (partition types) for partitions on GPT disks
 	// The SD_GPT name next to each constant is the partition type shown in
@@ -341,10 +342,10 @@ type Container interface {
 type Sizeable interface {
 	// EnsureSize will resize the entity to the given size in case
 	// it is currently smaller. Returns if the size was changed.
-	EnsureSize(size uint64) bool
+	EnsureSize(size datasizes.Size) bool
 
 	// GetSize returns the size of the entity in bytes.
-	GetSize() uint64
+	GetSize() datasizes.Size
 }
 
 // A Mountable entity is an entity that can be mounted.
@@ -378,11 +379,11 @@ type FSTabEntity interface {
 // mountpoint. The defaultFs is only a hint and can be ignored by
 // e.g. btrfs subvolumes.
 type MountpointCreator interface {
-	CreateMountpoint(mountpoint, defaultFs string, size uint64) (Entity, error)
+	CreateMountpoint(mountpoint, defaultFs string, size datasizes.Size) (Entity, error)
 
 	// AlignUp will align the given bytes according to the
 	// requirements of the container type.
-	AlignUp(size uint64) uint64
+	AlignUp(size datasizes.Size) datasizes.Size
 }
 
 // A UniqueEntity is an entity that can be uniquely identified via a UUID.
@@ -399,7 +400,7 @@ type VolumeContainer interface {
 	// MetadataSize returns the size of the container's metadata (in
 	// bytes), i.e. the storage space that needs to be reserved for
 	// the container itself, in contrast to the data it contains.
-	MetadataSize() uint64
+	MetadataSize() datasizes.Size
 
 	// minSize returns the size for the VolumeContainer that is either the
 	// provided desired size value or the sum of all children if that is
@@ -409,7 +410,7 @@ type VolumeContainer interface {
 	// VolumeContainer's size, or its parent size, will be able to hold the
 	// VolumeContainer if it is created with the exact size returned by the
 	// function.
-	minSize(size uint64) uint64
+	minSize(size datasizes.Size) datasizes.Size
 }
 
 // FSSpec for a filesystem (UUID and Label); the first field of fstab(5)

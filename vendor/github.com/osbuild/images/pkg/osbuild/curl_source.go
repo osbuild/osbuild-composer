@@ -31,12 +31,15 @@ func NewCurlSource() *CurlSource {
 	}
 }
 
-func NewCurlPackageItem(pkg rpmmd.PackageSpec) (CurlSourceItem, error) {
-	if !curlDigestPattern.MatchString(pkg.Checksum) {
+func NewCurlPackageItem(pkg rpmmd.Package) (CurlSourceItem, error) {
+	if !curlDigestPattern.MatchString(pkg.Checksum.String()) {
 		return nil, fmt.Errorf("curl package source item with name %q has invalid digest %q", pkg.Name, pkg.Checksum)
 	}
+	if len(pkg.RemoteLocations) == 0 {
+		return nil, fmt.Errorf("curl source: package %q has no remote locations", pkg.Name)
+	}
 	item := new(CurlSourceOptions)
-	item.URL = pkg.RemoteLocation
+	item.URL = pkg.RemoteLocations[0]
 	switch pkg.Secrets {
 	case "org.osbuild.rhsm":
 		item.Secrets = &URLSecrets{
@@ -53,12 +56,12 @@ func NewCurlPackageItem(pkg rpmmd.PackageSpec) (CurlSourceItem, error) {
 
 // AddPackage adds a pkg to the curl source to download. Will return an error
 // if any of the supplied options are invalid or missing.
-func (source *CurlSource) AddPackage(pkg rpmmd.PackageSpec) error {
+func (source *CurlSource) AddPackage(pkg rpmmd.Package) error {
 	item, err := NewCurlPackageItem(pkg)
 	if err != nil {
 		return err
 	}
-	source.Items[pkg.Checksum] = item
+	source.Items[pkg.Checksum.String()] = item
 	return nil
 }
 

@@ -5,7 +5,7 @@ package manifest
 type InstallerCustomizations struct {
 	FIPS bool
 
-	AdditionalKernelOpts []string
+	KernelOptionsAppend []string
 
 	EnabledAnacondaModules  []string
 	DisabledAnacondaModules []string

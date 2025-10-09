@@ -112,7 +112,7 @@ func (lc *LUKSContainer) GenUUID(rng *rand.Rand) {
 	}
 }
 
-func (lc *LUKSContainer) MetadataSize() uint64 {
+func (lc *LUKSContainer) MetadataSize() datasizes.Size {
 	if lc == nil {
 		return 0
 	}
@@ -121,7 +121,7 @@ func (lc *LUKSContainer) MetadataSize() uint64 {
 	return 16 * datasizes.MiB
 }
 
-func (lc *LUKSContainer) minSize(size uint64) uint64 {
+func (lc *LUKSContainer) minSize(size datasizes.Size) datasizes.Size {
 	// since a LUKS container can contain pretty much any payload, but we only
 	// care about the ones that have a size, or contain children with sizes
 	minSize := lc.MetadataSize()
