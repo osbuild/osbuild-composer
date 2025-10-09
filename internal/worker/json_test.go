@@ -1,10 +1,12 @@
 package worker
 
 import (
+	"encoding/json"
 	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
@@ -399,6 +401,91 @@ func TestOSBuildJobExports(t *testing.T) {
 	for idx, testCase := range testCases {
 		t.Run(fmt.Sprintf("case #%d", idx), func(t *testing.T) {
 			assert.EqualValues(t, testCase.expectedExports, testCase.job.OsbuildExports())
+		})
+	}
+}
+
+func TestDepsolvedPackageUnmarshalJSON(t *testing.T) {
+	testCases := []struct {
+		name             string
+		json             string
+		depsolvedPackage DepsolvedPackage
+	}{
+		{
+			name: "minimal",
+			json: `{"name":"test"}`,
+			depsolvedPackage: DepsolvedPackage{
+				Name: "test",
+			},
+		},
+		{
+			name: "basic",
+			json: `{"name":"test","epoch":1,"version":"1.0.0","release":"1","arch":"x86_64","remote_location":"https://example.com/rpms/test.rpm","checksum":"sha256:17e682f060b5f8e47ea04c5c4855908b0a5ad612022260fe50e11ecb0cc0ab76","secrets":"org.osbuild.rhsm","check_gpg":true,"ignore_ssl":true,"path":"rpms/test.rpm","repo_id":"test-repo-id"}`,
+			depsolvedPackage: DepsolvedPackage{
+				Name:           "test",
+				Epoch:          1,
+				Version:        "1.0.0",
+				Release:        "1",
+				Arch:           "x86_64",
+				RemoteLocation: "https://example.com/rpms/test.rpm",
+				Checksum:       "sha256:17e682f060b5f8e47ea04c5c4855908b0a5ad612022260fe50e11ecb0cc0ab76",
+				Secrets:        "org.osbuild.rhsm",
+				CheckGPG:       true,
+				IgnoreSSL:      true,
+				Path:           "rpms/test.rpm",
+				RepoID:         "test-repo-id",
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			var depsolvedPackage DepsolvedPackage
+			err := json.Unmarshal([]byte(testCase.json), &depsolvedPackage)
+			require.NoError(t, err)
+			assert.EqualValues(t, testCase.depsolvedPackage, depsolvedPackage)
+		})
+	}
+}
+
+func TestDepsolvedPackageMarshalJSON(t *testing.T) {
+	testCases := []struct {
+		name             string
+		depsolvedPackage DepsolvedPackage
+		json             string
+	}{
+		{
+			name: "minimal",
+			depsolvedPackage: DepsolvedPackage{
+				Name: "test",
+			},
+			json: `{"name":"test","epoch":0}`,
+		},
+		{
+			name: "basic",
+			depsolvedPackage: DepsolvedPackage{
+				Name:           "test",
+				Epoch:          1,
+				Version:        "1.0.0",
+				Release:        "1",
+				Arch:           "x86_64",
+				RemoteLocation: "https://example.com/rpms/test.rpm",
+				Checksum:       "sha256:17e682f060b5f8e47ea04c5c4855908b0a5ad612022260fe50e11ecb0cc0ab76",
+				Secrets:        "org.osbuild.rhsm",
+				CheckGPG:       true,
+				IgnoreSSL:      true,
+				Path:           "rpms/test.rpm",
+				RepoID:         "test-repo-id",
+			},
+			json: `{"name":"test","epoch":1,"version":"1.0.0","release":"1","arch":"x86_64","remote_location":"https://example.com/rpms/test.rpm","checksum":"sha256:17e682f060b5f8e47ea04c5c4855908b0a5ad612022260fe50e11ecb0cc0ab76","secrets":"org.osbuild.rhsm","check_gpg":true,"ignore_ssl":true,"path":"rpms/test.rpm","repo_id":"test-repo-id"}`,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			json, err := json.Marshal(testCase.depsolvedPackage)
+			require.NoError(t, err)
+			assert.EqualValues(t, testCase.json, string(json))
 		})
 	}
 }
