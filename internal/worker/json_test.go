@@ -5,10 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
 )
@@ -660,6 +662,129 @@ func TestDepsolvedPackageUnmarshalJSON(t *testing.T) {
 				Name: "test",
 			},
 		},
+		{
+			name: "full",
+			json: `{"name":"test","epoch":1,"version":"1.0.0","release":"1","arch":"x86_64","group":"test-group","download_size":100,"install_size":100,"license":"test-license","source_rpm":"test-source-rpm","build_time":"2021-01-01T00:00:00Z","packager":"test-packager","vendor":"test-vendor","url":"https://example.com/test_project","summary":"test-summary","description":"test-description","provides":[{"name":"test-provide","relationship":"\u003e=","version":"1.0.0"},{"name":"test-provide2"}],"requires":[{"name":"test-require","relationship":"\u003e=","version":"1.0.0"}],"requires_pre":[{"name":"test-require-pre","relationship":"\u003e=","version":"1.0.0"}],"conflicts":[{"name":"test-conflict","relationship":"\u003e=","version":"1.0.0"}],"obsoletes":[{"name":"test-obsolete","relationship":"\u003e=","version":"1.0.0"}],"regular_requires":[{"name":"test-regular-require","relationship":"\u003e=","version":"1.0.0"}],"recommends":[{"name":"test-recommend","relationship":"\u003e=","version":"1.0.0"}],"suggests":[{"name":"test-suggest","relationship":"\u003e=","version":"1.0.0"}],"enhances":[{"name":"test-enhance","relationship":"\u003e=","version":"1.0.0"}],"supplements":[{"name":"test-supplement","relationship":"\u003e=","version":"1.0.0"}],"files":["/usr/bin/test","/usr/lib/test","/usr/share/test","/usr/share/man/test","/usr/share/doc/test","/usr/share/doc/test.gz","/usr/share/doc/test.gz.sig"],"base_url":"https://example.com/test_project/repository","location":"rpms/test.rpm","remote_locations":["https://example.com/test_project/repository/rpms/test.rpm","http://example.com/test_project/repository/rpms/test.rpm"],"checksum":"sha256:17e682f060b5f8e47ea04c5c4855908b0a5ad612022260fe50e11ecb0cc0ab76","header_checksum":"sha256:17e682f060b5f8e47ea04c5c4855908b0a5ad612022260fe50e11ecb0cc0ab76","repo_id":"test-repo-id","reason":"test-reason","secrets":"org.osbuild.rhsm","check_gpg":true,"ignore_ssl":true}`,
+			depsolvedPackage: DepsolvedPackage{
+				Name:         "test",
+				Epoch:        1,
+				Version:      "1.0.0",
+				Release:      "1",
+				Arch:         "x86_64",
+				Group:        "test-group",
+				DownloadSize: 100,
+				InstallSize:  100,
+				License:      "test-license",
+				SourceRpm:    "test-source-rpm",
+				BuildTime:    common.ToPtr(time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC)),
+				Packager:     "test-packager",
+				Vendor:       "test-vendor",
+				URL:          "https://example.com/test_project",
+				Summary:      "test-summary",
+				Description:  "test-description",
+				Provides: []DepsolvedPackageRelDep{
+					{
+						Name:         "test-provide",
+						Relationship: ">=",
+						Version:      "1.0.0",
+					},
+					{
+						Name: "test-provide2",
+					},
+				},
+				Requires: []DepsolvedPackageRelDep{
+					{
+						Name:         "test-require",
+						Relationship: ">=",
+						Version:      "1.0.0",
+					},
+				},
+				RequiresPre: []DepsolvedPackageRelDep{
+					{
+						Name:         "test-require-pre",
+						Relationship: ">=",
+						Version:      "1.0.0",
+					},
+				},
+				Conflicts: []DepsolvedPackageRelDep{
+					{
+						Name:         "test-conflict",
+						Relationship: ">=",
+						Version:      "1.0.0",
+					},
+				},
+				Obsoletes: []DepsolvedPackageRelDep{
+					{
+						Name:         "test-obsolete",
+						Relationship: ">=",
+						Version:      "1.0.0",
+					},
+				},
+				RegularRequires: []DepsolvedPackageRelDep{
+					{
+						Name:         "test-regular-require",
+						Relationship: ">=",
+						Version:      "1.0.0",
+					},
+				},
+				Recommends: []DepsolvedPackageRelDep{
+					{
+						Name:         "test-recommend",
+						Relationship: ">=",
+						Version:      "1.0.0",
+					},
+				},
+				Suggests: []DepsolvedPackageRelDep{
+					{
+						Name:         "test-suggest",
+						Relationship: ">=",
+						Version:      "1.0.0",
+					},
+				},
+				Enhances: []DepsolvedPackageRelDep{
+					{
+						Name:         "test-enhance",
+						Relationship: ">=",
+						Version:      "1.0.0",
+					},
+				},
+				Supplements: []DepsolvedPackageRelDep{
+					{
+						Name:         "test-supplement",
+						Relationship: ">=",
+						Version:      "1.0.0",
+					},
+				},
+				Files: []string{
+					"/usr/bin/test",
+					"/usr/lib/test",
+					"/usr/share/test",
+					"/usr/share/man/test",
+					"/usr/share/doc/test",
+					"/usr/share/doc/test.gz",
+					"/usr/share/doc/test.gz.sig",
+				},
+				BaseURL:  "https://example.com/test_project/repository",
+				Location: "rpms/test.rpm",
+				RemoteLocations: []string{
+					"https://example.com/test_project/repository/rpms/test.rpm",
+					"http://example.com/test_project/repository/rpms/test.rpm",
+				},
+				Checksum: &DepsolvedPackageChecksum{
+					Type:  "sha256",
+					Value: "17e682f060b5f8e47ea04c5c4855908b0a5ad612022260fe50e11ecb0cc0ab76",
+				},
+				HeaderChecksum: &DepsolvedPackageChecksum{
+					Type:  "sha256",
+					Value: "17e682f060b5f8e47ea04c5c4855908b0a5ad612022260fe50e11ecb0cc0ab76",
+				},
+				RepoID:    "test-repo-id",
+				Reason:    "test-reason",
+				Secrets:   "org.osbuild.rhsm",
+				CheckGPG:  true,
+				IgnoreSSL: true,
+			},
+		},
 	}
 
 	for _, testCase := range testCases {
@@ -704,7 +829,7 @@ func TestDepsolvedPackageMarshalJSON(t *testing.T) {
 				Location:  "rpms/test.rpm",
 				RepoID:    "test-repo-id",
 			},
-			json: `{"name":"test","epoch":1,"version":"1.0.0","release":"1","arch":"x86_64","remote_locations":["https://example.com/rpms/test.rpm"],"checksum":"sha256:17e682f060b5f8e47ea04c5c4855908b0a5ad612022260fe50e11ecb0cc0ab76","secrets":"org.osbuild.rhsm","check_gpg":true,"ignore_ssl":true,"location":"rpms/test.rpm","repo_id":"test-repo-id","path":"rpms/test.rpm","remote_location":"https://example.com/rpms/test.rpm"}`,
+			json: `{"name":"test","epoch":1,"version":"1.0.0","release":"1","arch":"x86_64","location":"rpms/test.rpm","remote_locations":["https://example.com/rpms/test.rpm"],"checksum":"sha256:17e682f060b5f8e47ea04c5c4855908b0a5ad612022260fe50e11ecb0cc0ab76","repo_id":"test-repo-id","secrets":"org.osbuild.rhsm","check_gpg":true,"ignore_ssl":true,"path":"rpms/test.rpm","remote_location":"https://example.com/rpms/test.rpm"}`,
 		},
 		{
 			name: "basic with multiple remote locations",
@@ -725,7 +850,7 @@ func TestDepsolvedPackageMarshalJSON(t *testing.T) {
 				Location:  "rpms/test.rpm",
 				RepoID:    "test-repo-id",
 			},
-			json: `{"name":"test","epoch":1,"version":"1.0.0","release":"1","arch":"x86_64","remote_locations":["https://example.com/rpms/test.rpm","http://example.com/rpms/test.rpm"],"checksum":"sha256:17e682f060b5f8e47ea04c5c4855908b0a5ad612022260fe50e11ecb0cc0ab76","secrets":"org.osbuild.rhsm","check_gpg":true,"ignore_ssl":true,"location":"rpms/test.rpm","repo_id":"test-repo-id","path":"rpms/test.rpm","remote_location":"https://example.com/rpms/test.rpm"}`,
+			json: `{"name":"test","epoch":1,"version":"1.0.0","release":"1","arch":"x86_64","location":"rpms/test.rpm","remote_locations":["https://example.com/rpms/test.rpm","http://example.com/rpms/test.rpm"],"checksum":"sha256:17e682f060b5f8e47ea04c5c4855908b0a5ad612022260fe50e11ecb0cc0ab76","repo_id":"test-repo-id","secrets":"org.osbuild.rhsm","check_gpg":true,"ignore_ssl":true,"path":"rpms/test.rpm","remote_location":"https://example.com/rpms/test.rpm"}`,
 		},
 	}
 

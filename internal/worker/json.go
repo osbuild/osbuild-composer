@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"runtime/debug"
 	"strings"
+	"time"
 
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/osbuild"
@@ -252,21 +253,83 @@ func (c *DepsolvedPackageChecksum) MarshalJSON() ([]byte, error) {
 	return json.Marshal(fmt.Sprintf("%s:%s", c.Type, c.Value))
 }
 
+type DepsolvedPackageRelDep struct {
+	Name         string `json:"name"`
+	Relationship string `json:"relationship,omitempty"`
+	Version      string `json:"version,omitempty"`
+}
+
+type DepsolvedPackageRelDepList []DepsolvedPackageRelDep
+
+func (d DepsolvedPackageRelDepList) ToRPMMDList() rpmmd.RelDepList {
+	results := make(rpmmd.RelDepList, len(d))
+	for i, relDep := range d {
+		results[i] = rpmmd.RelDep(relDep)
+	}
+	return results
+}
+
+func DepsolvedPackageRelDepListFromRPMMDList(relDeps rpmmd.RelDepList) DepsolvedPackageRelDepList {
+	results := make(DepsolvedPackageRelDepList, len(relDeps))
+	for i, relDep := range relDeps {
+		results[i] = DepsolvedPackageRelDep(relDep)
+	}
+	return results
+}
+
 // DepsolvedPackage is the DTO for rpmmd.Package.
 type DepsolvedPackage struct {
-	Name            string                    `json:"name"`
-	Epoch           uint                      `json:"epoch"`
-	Version         string                    `json:"version,omitempty"`
-	Release         string                    `json:"release,omitempty"`
-	Arch            string                    `json:"arch,omitempty"`
-	RemoteLocations []string                  `json:"remote_locations,omitempty"`
-	Checksum        *DepsolvedPackageChecksum `json:"checksum,omitempty"`
-	Secrets         string                    `json:"secrets,omitempty"`
-	CheckGPG        bool                      `json:"check_gpg,omitempty"`
-	IgnoreSSL       bool                      `json:"ignore_ssl,omitempty"`
+	Name    string `json:"name"`
+	Epoch   uint   `json:"epoch"`
+	Version string `json:"version,omitempty"`
+	Release string `json:"release,omitempty"`
+	Arch    string `json:"arch,omitempty"`
 
-	Location string `json:"location,omitempty"`
-	RepoID   string `json:"repo_id,omitempty"`
+	Group string `json:"group,omitempty"`
+
+	DownloadSize uint64 `json:"download_size,omitempty"`
+	InstallSize  uint64 `json:"install_size,omitempty"`
+
+	License   string `json:"license,omitempty"`
+	SourceRpm string `json:"source_rpm,omitempty"`
+
+	BuildTime *time.Time `json:"build_time,omitempty"`
+	Packager  string     `json:"packager,omitempty"`
+	Vendor    string     `json:"vendor,omitempty"`
+
+	URL string `json:"url,omitempty"`
+
+	Summary     string `json:"summary,omitempty"`
+	Description string `json:"description,omitempty"`
+
+	Provides        DepsolvedPackageRelDepList `json:"provides,omitempty"`
+	Requires        DepsolvedPackageRelDepList `json:"requires,omitempty"`
+	RequiresPre     DepsolvedPackageRelDepList `json:"requires_pre,omitempty"`
+	Conflicts       DepsolvedPackageRelDepList `json:"conflicts,omitempty"`
+	Obsoletes       DepsolvedPackageRelDepList `json:"obsoletes,omitempty"`
+	RegularRequires DepsolvedPackageRelDepList `json:"regular_requires,omitempty"`
+
+	Recommends  DepsolvedPackageRelDepList `json:"recommends,omitempty"`
+	Suggests    DepsolvedPackageRelDepList `json:"suggests,omitempty"`
+	Enhances    DepsolvedPackageRelDepList `json:"enhances,omitempty"`
+	Supplements DepsolvedPackageRelDepList `json:"supplements,omitempty"`
+
+	Files []string `json:"files,omitempty"`
+
+	BaseURL         string   `json:"base_url,omitempty"`
+	Location        string   `json:"location,omitempty"`
+	RemoteLocations []string `json:"remote_locations,omitempty"`
+
+	Checksum       *DepsolvedPackageChecksum `json:"checksum,omitempty"`
+	HeaderChecksum *DepsolvedPackageChecksum `json:"header_checksum,omitempty"`
+
+	RepoID string `json:"repo_id,omitempty"`
+
+	Reason string `json:"reason,omitempty"`
+
+	Secrets   string `json:"secrets,omitempty"`
+	CheckGPG  bool   `json:"check_gpg,omitempty"`
+	IgnoreSSL bool   `json:"ignore_ssl,omitempty"`
 }
 
 // UnmarshalJSON is used to unmarshal the DepsolvedPackage from JSON.
@@ -373,56 +436,137 @@ func (d DepsolvedPackage) MarshalJSON() ([]byte, error) {
 	return json.Marshal(compat)
 }
 
-func (d DepsolvedPackage) ToRPMMD() (rpmmd.Package, error) {
+func (d DepsolvedPackage) ToRPMMD() rpmmd.Package {
 	p := rpmmd.Package{
-		Name:            d.Name,
-		Epoch:           d.Epoch,
-		Version:         d.Version,
-		Release:         d.Release,
-		Arch:            d.Arch,
-		RemoteLocations: d.RemoteLocations,
-		Secrets:         d.Secrets,
-		CheckGPG:        d.CheckGPG,
-		IgnoreSSL:       d.IgnoreSSL,
+		Name:    d.Name,
+		Epoch:   d.Epoch,
+		Version: d.Version,
+		Release: d.Release,
+		Arch:    d.Arch,
+
+		Group: d.Group,
+
+		DownloadSize: d.DownloadSize,
+		InstallSize:  d.InstallSize,
+
+		License: d.License,
+
+		SourceRpm: d.SourceRpm,
+
+		Packager: d.Packager,
+		Vendor:   d.Vendor,
+
+		URL: d.URL,
+
+		Summary:     d.Summary,
+		Description: d.Description,
+
+		Provides:        d.Provides.ToRPMMDList(),
+		Requires:        d.Requires.ToRPMMDList(),
+		RequiresPre:     d.RequiresPre.ToRPMMDList(),
+		Conflicts:       d.Conflicts.ToRPMMDList(),
+		Obsoletes:       d.Obsoletes.ToRPMMDList(),
+		RegularRequires: d.RegularRequires.ToRPMMDList(),
+
+		Recommends:  d.Recommends.ToRPMMDList(),
+		Suggests:    d.Suggests.ToRPMMDList(),
+		Enhances:    d.Enhances.ToRPMMDList(),
+		Supplements: d.Supplements.ToRPMMDList(),
+
+		Files: d.Files,
+
+		BaseURL:         d.BaseURL,
 		Location:        d.Location,
-		RepoID:          d.RepoID,
+		RemoteLocations: d.RemoteLocations,
+
+		RepoID: d.RepoID,
+
+		Reason: d.Reason,
+
+		Secrets:   d.Secrets,
+		CheckGPG:  d.CheckGPG,
+		IgnoreSSL: d.IgnoreSSL,
+	}
+
+	if d.BuildTime != nil {
+		p.BuildTime = *d.BuildTime
 	}
 
 	if d.Checksum != nil {
 		p.Checksum = rpmmd.Checksum(*d.Checksum)
 	}
 
-	return p, nil
+	if d.HeaderChecksum != nil {
+		p.HeaderChecksum = rpmmd.Checksum(*d.HeaderChecksum)
+	}
+
+	return p
 }
 
 type DepsolvedPackageList []DepsolvedPackage
 
-func (d DepsolvedPackageList) ToRPMMDList() (rpmmd.PackageList, error) {
+func (d DepsolvedPackageList) ToRPMMDList() rpmmd.PackageList {
 	results := make(rpmmd.PackageList, len(d))
 	for i, pkg := range d {
-		var err error
-		results[i], err = pkg.ToRPMMD()
-		if err != nil {
-			return nil, err
-		}
+		results[i] = pkg.ToRPMMD()
 	}
-	return results, nil
+	return results
 }
 
 func DepsolvedPackageFromRPMMD(pkg rpmmd.Package) DepsolvedPackage {
 	return DepsolvedPackage{
-		Name:            pkg.Name,
-		Epoch:           pkg.Epoch,
-		Version:         pkg.Version,
-		Release:         pkg.Release,
-		Arch:            pkg.Arch,
-		RemoteLocations: pkg.RemoteLocations,
-		Checksum:        common.ToPtr(DepsolvedPackageChecksum(pkg.Checksum)),
-		Secrets:         pkg.Secrets,
-		CheckGPG:        pkg.CheckGPG,
-		IgnoreSSL:       pkg.IgnoreSSL,
+		Name:    pkg.Name,
+		Epoch:   pkg.Epoch,
+		Version: pkg.Version,
+		Release: pkg.Release,
+		Arch:    pkg.Arch,
+
+		Group: pkg.Group,
+
+		DownloadSize: pkg.DownloadSize,
+		InstallSize:  pkg.InstallSize,
+
+		License: pkg.License,
+
+		SourceRpm: pkg.SourceRpm,
+
+		BuildTime: &pkg.BuildTime,
+		Packager:  pkg.Packager,
+		Vendor:    pkg.Vendor,
+
+		URL: pkg.URL,
+
+		Summary:     pkg.Summary,
+		Description: pkg.Description,
+
+		Provides:        DepsolvedPackageRelDepListFromRPMMDList(pkg.Provides),
+		Requires:        DepsolvedPackageRelDepListFromRPMMDList(pkg.Requires),
+		RequiresPre:     DepsolvedPackageRelDepListFromRPMMDList(pkg.RequiresPre),
+		Conflicts:       DepsolvedPackageRelDepListFromRPMMDList(pkg.Conflicts),
+		Obsoletes:       DepsolvedPackageRelDepListFromRPMMDList(pkg.Obsoletes),
+		RegularRequires: DepsolvedPackageRelDepListFromRPMMDList(pkg.RegularRequires),
+
+		Recommends:  DepsolvedPackageRelDepListFromRPMMDList(pkg.Recommends),
+		Suggests:    DepsolvedPackageRelDepListFromRPMMDList(pkg.Suggests),
+		Enhances:    DepsolvedPackageRelDepListFromRPMMDList(pkg.Enhances),
+		Supplements: DepsolvedPackageRelDepListFromRPMMDList(pkg.Supplements),
+
+		Files: pkg.Files,
+
+		BaseURL:         pkg.BaseURL,
 		Location:        pkg.Location,
-		RepoID:          pkg.RepoID,
+		RemoteLocations: pkg.RemoteLocations,
+
+		Checksum:       common.ToPtr(DepsolvedPackageChecksum(pkg.Checksum)),
+		HeaderChecksum: common.ToPtr(DepsolvedPackageChecksum(pkg.HeaderChecksum)),
+
+		RepoID: pkg.RepoID,
+
+		Reason: pkg.Reason,
+
+		Secrets:   pkg.Secrets,
+		CheckGPG:  pkg.CheckGPG,
+		IgnoreSSL: pkg.IgnoreSSL,
 	}
 }
 
