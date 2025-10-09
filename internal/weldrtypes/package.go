@@ -39,27 +39,30 @@ func (d DepsolvedPackageInfo) NEVRA() string {
 	return fmt.Sprintf("%s-%s", d.Name, d.EVRA())
 }
 
-func RPMMDPackageSpecToDepsolvedPackageInfo(pkg rpmmd.PackageSpec) DepsolvedPackageInfo {
-	return DepsolvedPackageInfo{
-		Name:           pkg.Name,
-		Epoch:          pkg.Epoch,
-		Version:        pkg.Version,
-		Release:        pkg.Release,
-		Arch:           pkg.Arch,
-		RemoteLocation: pkg.RemoteLocation,
-		Checksum:       pkg.Checksum,
-		Secrets:        pkg.Secrets,
-		CheckGPG:       pkg.CheckGPG,
-		IgnoreSSL:      pkg.IgnoreSSL,
-		Path:           pkg.Path,
-		RepoID:         pkg.RepoID,
+func RPMMDPackageToDepsolvedPackageInfo(pkg rpmmd.Package) DepsolvedPackageInfo {
+	p := DepsolvedPackageInfo{
+		Name:      pkg.Name,
+		Epoch:     pkg.Epoch,
+		Version:   pkg.Version,
+		Release:   pkg.Release,
+		Arch:      pkg.Arch,
+		Checksum:  pkg.Checksum.String(),
+		Secrets:   pkg.Secrets,
+		CheckGPG:  pkg.CheckGPG,
+		IgnoreSSL: pkg.IgnoreSSL,
+		Path:      pkg.Location,
+		RepoID:    pkg.RepoID,
 	}
+	if len(pkg.RemoteLocations) > 0 {
+		p.RemoteLocation = pkg.RemoteLocations[0]
+	}
+	return p
 }
 
-func RPMMDPackageSpecListToDepsolvedPackageInfoList(pkgs []rpmmd.PackageSpec) []DepsolvedPackageInfo {
+func RPMMDPackageListToDepsolvedPackageInfoList(pkgs rpmmd.PackageList) []DepsolvedPackageInfo {
 	results := make([]DepsolvedPackageInfo, len(pkgs))
 	for i, pkg := range pkgs {
-		results[i] = RPMMDPackageSpecToDepsolvedPackageInfo(pkg)
+		results[i] = RPMMDPackageToDepsolvedPackageInfo(pkg)
 	}
 	return results
 }

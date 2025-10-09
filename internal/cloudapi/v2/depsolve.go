@@ -17,7 +17,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/worker"
 )
 
-func (request *DepsolveRequest) Depsolve(df *distrofactory.Factory, rr *reporegistry.RepoRegistry, workers *worker.Server) ([]rpmmd.PackageSpec, error) {
+func (request *DepsolveRequest) Depsolve(df *distrofactory.Factory, rr *reporegistry.RepoRegistry, workers *worker.Server) (rpmmd.PackageList, error) {
 	// Convert the requested blueprint to a composer blueprint
 	bp, err := ConvertRequestBP(request.Blueprint)
 	if err != nil {
@@ -144,5 +144,9 @@ func (request *DepsolveRequest) Depsolve(df *distrofactory.Factory, rr *reporegi
 		}
 	}
 
-	return result.PackageSpecs["os"].ToRPMMDList(), nil
+	packages, err := result.PackageSpecs["os"].ToRPMMDList()
+	if err != nil {
+		return nil, HTTPErrorWithInternal(ErrorFailedToDepsolve, err)
+	}
+	return packages, nil
 }

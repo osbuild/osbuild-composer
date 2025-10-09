@@ -2,7 +2,9 @@ package worker
 
 import (
 	"encoding/json"
+	"fmt"
 	"runtime/debug"
+	"strings"
 
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/osbuild"
@@ -180,7 +182,7 @@ func (pn *PipelineNames) All() []string {
 // DepsolveJob defines the parameters of one or more depsolve jobs.  Each named
 // list of package sets defines a separate job.  Lists with multiple package
 // sets are depsolved in a chain, combining the results of sequential depsolves
-// into a single PackageSpec list in the result.  Each PackageSet defines the
+// into a single PackageList in the result.  Each PackageSet defines the
 // repositories it will be depsolved against.
 type DepsolveJob struct {
 	PackageSets      map[string][]rpmmd.PackageSet `json:"grouped_package_sets"`
@@ -199,7 +201,7 @@ type SbomDoc struct {
 	Document json.RawMessage   `json:"document"`
 }
 
-// DepsolvedPackage is the DTO for rpmmd.PackageSpec.
+// DepsolvedPackage is the DTO for rpmmd.Package.
 type DepsolvedPackage struct {
 	Name           string `json:"name"`
 	Epoch          uint   `json:"epoch"`
@@ -216,25 +218,68 @@ type DepsolvedPackage struct {
 	RepoID string `json:"repo_id,omitempty"`
 }
 
-func (d DepsolvedPackage) ToRPMMD() rpmmd.PackageSpec {
-	return rpmmd.PackageSpec(d)
+func (d DepsolvedPackage) ToRPMMD() (rpmmd.Package, error) {
+	p := rpmmd.Package{
+		Name:      d.Name,
+		Epoch:     d.Epoch,
+		Version:   d.Version,
+		Release:   d.Release,
+		Arch:      d.Arch,
+		Secrets:   d.Secrets,
+		CheckGPG:  d.CheckGPG,
+		IgnoreSSL: d.IgnoreSSL,
+		Location:  d.Path,
+		RepoID:    d.RepoID,
+	}
+
+	if d.RemoteLocation != "" {
+		p.RemoteLocations = []string{d.RemoteLocation}
+	}
+
+	checksumParts := strings.SplitN(d.Checksum, ":", 2)
+	if len(checksumParts) != 2 {
+		return rpmmd.Package{}, fmt.Errorf("invalid checksum format for package %s: %s", d.Name, d.Checksum)
+	}
+	p.Checksum = rpmmd.Checksum{Type: checksumParts[0], Value: checksumParts[1]}
+
+	return p, nil
 }
 
 type DepsolvedPackageList []DepsolvedPackage
 
-func (d DepsolvedPackageList) ToRPMMDList() []rpmmd.PackageSpec {
-	results := make([]rpmmd.PackageSpec, len(d))
+func (d DepsolvedPackageList) ToRPMMDList() (rpmmd.PackageList, error) {
+	results := make(rpmmd.PackageList, len(d))
 	for i, pkg := range d {
-		results[i] = pkg.ToRPMMD()
+		var err error
+		results[i], err = pkg.ToRPMMD()
+		if err != nil {
+			return nil, err
+		}
 	}
-	return results
+	return results, nil
 }
 
-func DepsolvedPackageFromRPMMD(pkg rpmmd.PackageSpec) DepsolvedPackage {
-	return DepsolvedPackage(pkg)
+func DepsolvedPackageFromRPMMD(pkg rpmmd.Package) DepsolvedPackage {
+	p := DepsolvedPackage{
+		Name:      pkg.Name,
+		Epoch:     pkg.Epoch,
+		Version:   pkg.Version,
+		Release:   pkg.Release,
+		Arch:      pkg.Arch,
+		Checksum:  pkg.Checksum.String(),
+		Secrets:   pkg.Secrets,
+		CheckGPG:  pkg.CheckGPG,
+		IgnoreSSL: pkg.IgnoreSSL,
+		Path:      pkg.Location,
+		RepoID:    pkg.RepoID,
+	}
+	if len(pkg.RemoteLocations) > 0 {
+		p.RemoteLocation = pkg.RemoteLocations[0]
+	}
+	return p
 }
 
-func DepsolvedPackageListFromRPMMDList(pkgs []rpmmd.PackageSpec) DepsolvedPackageList {
+func DepsolvedPackageListFromRPMMDList(pkgs rpmmd.PackageList) DepsolvedPackageList {
 	results := make(DepsolvedPackageList, len(pkgs))
 	for i, pkg := range pkgs {
 		results[i] = DepsolvedPackageFromRPMMD(pkg)
