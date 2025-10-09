@@ -1548,8 +1548,8 @@ func (api *API) blueprintsDepsolveHandler(writer http.ResponseWriter, request *h
 	}
 
 	type entry struct {
-		Blueprint    blueprint.Blueprint `json:"blueprint"`
-		Dependencies []rpmmd.PackageSpec `json:"dependencies"`
+		Blueprint    blueprint.Blueprint               `json:"blueprint"`
+		Dependencies []weldrtypes.DepsolvedPackageInfo `json:"dependencies"`
 	}
 	type reply struct {
 		Blueprints []entry         `json:"blueprints"`
@@ -1593,7 +1593,7 @@ func (api *API) blueprintsDepsolveHandler(writer http.ResponseWriter, request *h
 				ID:  "BlueprintsError",
 				Msg: fmt.Sprintf("%s: %s", name, err.Error()),
 			})
-			dependencies = []rpmmd.PackageSpec{}
+			dependencies = []weldrtypes.DepsolvedPackageInfo{}
 		}
 
 		blueprints = append(blueprints, entry{*blueprint, dependencies})
@@ -1609,7 +1609,7 @@ func (api *API) blueprintsDepsolveHandler(writer http.ResponseWriter, request *h
 // expandBlueprintGlobs will expand package name globs and versions using the depsolve results
 // The result is a sorted list of Package structs with the full package name and version
 // It will return an error if it cannot find a non-glob package name in the dependency list
-func expandBlueprintGlobs(dependencies []rpmmd.PackageSpec, packages []blueprint.Package) ([]blueprint.Package, error) {
+func expandBlueprintGlobs(dependencies []weldrtypes.DepsolvedPackageInfo, packages []blueprint.Package) ([]blueprint.Package, error) {
 	newPackages := make(map[string]blueprint.Package)
 
 	for _, pkg := range packages {
@@ -1622,9 +1622,9 @@ func expandBlueprintGlobs(dependencies []rpmmd.PackageSpec, packages []blueprint
 				// Packages should not be missing from the depsolve results
 				return nil, fmt.Errorf("%s missing from depsolve results", pkg.Name)
 			}
-			newPackages[dependencies[i].GetNEVRA()] = blueprint.Package{
+			newPackages[dependencies[i].NEVRA()] = blueprint.Package{
 				Name:    dependencies[i].Name,
-				Version: dependencies[i].GetEVRA(),
+				Version: dependencies[i].EVRA(),
 			}
 		} else {
 			// Add all the packages matching the glob
@@ -1635,9 +1635,9 @@ func expandBlueprintGlobs(dependencies []rpmmd.PackageSpec, packages []blueprint
 
 			for _, d := range dependencies {
 				if g.Match(d.Name) {
-					newPackages[d.GetNEVRA()] = blueprint.Package{
+					newPackages[d.NEVRA()] = blueprint.Package{
 						Name:    d.Name,
-						Version: d.GetEVRA(),
+						Version: d.EVRA(),
 					}
 				}
 			}
@@ -3612,7 +3612,7 @@ func (api *API) allRepositories(distroName, arch string) ([]rpmmd.RepoConfig, er
 	return repos, nil
 }
 
-func (api *API) depsolveBlueprint(bp blueprint.Blueprint) ([]rpmmd.PackageSpec, error) {
+func (api *API) depsolveBlueprint(bp blueprint.Blueprint) ([]weldrtypes.DepsolvedPackageInfo, error) {
 	// Depsolve using the host distro if none has been specified
 	if bp.Distro == "" {
 		bp.Distro = api.hostDistroName
@@ -3642,7 +3642,7 @@ func (api *API) depsolveBlueprint(bp blueprint.Blueprint) ([]rpmmd.PackageSpec, 
 		// log and ignore
 		log.Printf("Error during rpm repo cache cleanup: %s", err.Error())
 	}
-	return res.Packages, nil
+	return weldrtypes.RPMMDPackageSpecListToDepsolvedPackageInfoList(res.Packages), nil
 }
 
 func (api *API) uploadsScheduleHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
