@@ -1113,7 +1113,7 @@ func (api *API) modulesListHandler(writer http.ResponseWriter, request *http.Req
 		return
 	}
 
-	packageInfos := packages.ToPackageInfos()
+	packageInfos := RPMMDPackageListToPackageInfos(packages)
 
 	total := uint(len(packageInfos))
 	start := min(offset, total)
@@ -1313,7 +1313,7 @@ func (api *API) modulesInfoHandler(writer http.ResponseWriter, request *http.Req
 				statusResponseError(writer, http.StatusBadRequest, errors)
 				return
 			}
-			packageInfos[i].Dependencies = weldrtypes.RPMMDPackageSpecListToDepsolvedPackageInfoList(res.Packages)
+			packageInfos[i].Dependencies = weldrtypes.RPMMDPackageListToDepsolvedPackageInfoList(res.Packages)
 		}
 		if err := solver.CleanCache(); err != nil {
 			// log and ignore
@@ -1404,7 +1404,7 @@ func (api *API) projectsDepsolveHandler(writer http.ResponseWriter, request *htt
 		// log and ignore
 		log.Printf("Error during rpm repo cache cleanup: %s", err.Error())
 	}
-	err = json.NewEncoder(writer).Encode(reply{Projects: weldrtypes.RPMMDPackageSpecListToDepsolvedPackageInfoList(res.Packages)})
+	err = json.NewEncoder(writer).Encode(reply{Projects: weldrtypes.RPMMDPackageListToDepsolvedPackageInfoList(res.Packages)})
 	common.PanicOnError(err)
 }
 
@@ -2637,7 +2637,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		return
 	}
 
-	var packages []rpmmd.PackageSpec
+	var packages rpmmd.PackageList
 	// TODO: introduce a way to query these from the manifest / image type
 	// BUG: installer/container image types will have empty package sets
 	if packages = depsolved["packages"].Packages; len(packages) == 0 {
@@ -2665,7 +2665,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		return
 	}
 
-	weldrPackages := weldrtypes.RPMMDPackageSpecListToDepsolvedPackageInfoList(packages)
+	weldrPackages := weldrtypes.RPMMDPackageListToDepsolvedPackageInfoList(packages)
 	if testMode == "1" {
 		// Create a failed compose
 		err = api.store.PushTestCompose(composeID, mf, imageType, bp, size, targets, false, weldrPackages)
@@ -3642,7 +3642,7 @@ func (api *API) depsolveBlueprint(bp blueprint.Blueprint) ([]weldrtypes.Depsolve
 		// log and ignore
 		log.Printf("Error during rpm repo cache cleanup: %s", err.Error())
 	}
-	return weldrtypes.RPMMDPackageSpecListToDepsolvedPackageInfoList(res.Packages), nil
+	return weldrtypes.RPMMDPackageListToDepsolvedPackageInfoList(res.Packages), nil
 }
 
 func (api *API) uploadsScheduleHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
