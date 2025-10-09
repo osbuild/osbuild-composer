@@ -1,6 +1,10 @@
 package weldrtypes
 
-import "github.com/osbuild/images/pkg/rpmmd"
+import (
+	"fmt"
+
+	"github.com/osbuild/images/pkg/rpmmd"
+)
 
 // DepsolvedPackageInfo is the API representation of a package that has been depsolved.
 type DepsolvedPackageInfo struct {
@@ -22,6 +26,17 @@ type DepsolvedPackageInfo struct {
 	IgnoreSSL bool   `json:"ignore_ssl,omitempty"`
 	Path      string `json:"path,omitempty"`
 	RepoID    string `json:"repo_id,omitempty"`
+}
+
+func (d DepsolvedPackageInfo) EVRA() string {
+	if d.Epoch == 0 {
+		return fmt.Sprintf("%s-%s.%s", d.Version, d.Release, d.Arch)
+	}
+	return fmt.Sprintf("%d:%s-%s.%s", d.Epoch, d.Version, d.Release, d.Arch)
+}
+
+func (d DepsolvedPackageInfo) NEVRA() string {
+	return fmt.Sprintf("%s-%s", d.Name, d.EVRA())
 }
 
 func RPMMDPackageSpecToDepsolvedPackageInfo(pkg rpmmd.PackageSpec) DepsolvedPackageInfo {
