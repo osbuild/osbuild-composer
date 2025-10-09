@@ -16,7 +16,6 @@ import (
 	"github.com/osbuild/osbuild-composer/pkg/jobqueue"
 
 	"github.com/osbuild/images/pkg/distro/test_distro"
-	"github.com/osbuild/images/pkg/rpmmd"
 	v2 "github.com/osbuild/osbuild-composer/internal/cloudapi/v2"
 	"github.com/osbuild/osbuild-composer/internal/test"
 	"github.com/osbuild/osbuild-composer/internal/worker"
@@ -180,7 +179,7 @@ func runNextJob(t *testing.T, jobs []uuid.UUID, workerServer *worker.Server, org
 	// the manifest generation job would fail on empty depsolved package list.
 	// This would make the ComposeManifests endpoint return an error.
 	case worker.JobTypeDepsolve:
-		dummyPackage := rpmmd.PackageSpec{
+		dummyPackage := worker.DepsolvedPackage{
 			Name:           "pkg1",
 			Version:        "1.33",
 			Release:        "2.fc30",
@@ -189,7 +188,7 @@ func runNextJob(t *testing.T, jobs []uuid.UUID, workerServer *worker.Server, org
 			RemoteLocation: "https://pkg1.example.com/1.33-2.fc30.x86_64.rpm",
 		}
 		depsolveJobResult := &worker.DepsolveJobResult{
-			PackageSpecs: map[string][]rpmmd.PackageSpec{
+			PackageSpecs: map[string]worker.DepsolvedPackageList{
 				// Used when depsolving a manifest
 				"build": {dummyPackage},
 				"os":    {dummyPackage},

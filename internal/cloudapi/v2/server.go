@@ -683,7 +683,7 @@ func serializeManifest(ctx context.Context, manifestSource *manifest.Manifest, w
 	depsolveResultsInTheRightFormat := map[string]depsolvednf.DepsolveResult{}
 	for plName, res := range depsolveResults.PackageSpecs {
 		r := depsolveResultsInTheRightFormat[plName]
-		r.Packages = res
+		r.Packages = res.ToRPMMDList()
 		depsolveResultsInTheRightFormat[plName] = r
 	}
 	for plName, res := range depsolveResults.RepoConfigs {

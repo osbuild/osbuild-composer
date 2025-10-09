@@ -199,10 +199,53 @@ type SbomDoc struct {
 	Document json.RawMessage   `json:"document"`
 }
 
+// DepsolvedPackage is the DTO for rpmmd.PackageSpec.
+type DepsolvedPackage struct {
+	Name           string `json:"name"`
+	Epoch          uint   `json:"epoch"`
+	Version        string `json:"version,omitempty"`
+	Release        string `json:"release,omitempty"`
+	Arch           string `json:"arch,omitempty"`
+	RemoteLocation string `json:"remote_location,omitempty"`
+	Checksum       string `json:"checksum,omitempty"`
+	Secrets        string `json:"secrets,omitempty"`
+	CheckGPG       bool   `json:"check_gpg,omitempty"`
+	IgnoreSSL      bool   `json:"ignore_ssl,omitempty"`
+
+	Path   string `json:"path,omitempty"`
+	RepoID string `json:"repo_id,omitempty"`
+}
+
+func (d DepsolvedPackage) ToRPMMD() rpmmd.PackageSpec {
+	return rpmmd.PackageSpec(d)
+}
+
+type DepsolvedPackageList []DepsolvedPackage
+
+func (d DepsolvedPackageList) ToRPMMDList() []rpmmd.PackageSpec {
+	results := make([]rpmmd.PackageSpec, len(d))
+	for i, pkg := range d {
+		results[i] = pkg.ToRPMMD()
+	}
+	return results
+}
+
+func DepsolvedPackageFromRPMMD(pkg rpmmd.PackageSpec) DepsolvedPackage {
+	return DepsolvedPackage(pkg)
+}
+
+func DepsolvedPackageListFromRPMMDList(pkgs []rpmmd.PackageSpec) DepsolvedPackageList {
+	results := make(DepsolvedPackageList, len(pkgs))
+	for i, pkg := range pkgs {
+		results[i] = DepsolvedPackageFromRPMMD(pkg)
+	}
+	return results
+}
+
 type DepsolveJobResult struct {
-	PackageSpecs map[string][]rpmmd.PackageSpec `json:"package_specs"`
-	SbomDocs     map[string]SbomDoc             `json:"sbom_docs,omitempty"`
-	RepoConfigs  map[string][]rpmmd.RepoConfig  `json:"repo_configs"`
+	PackageSpecs map[string]DepsolvedPackageList `json:"package_specs"`
+	SbomDocs     map[string]SbomDoc              `json:"sbom_docs,omitempty"`
+	RepoConfigs  map[string][]rpmmd.RepoConfig   `json:"repo_configs"`
 	JobResult
 }
 
