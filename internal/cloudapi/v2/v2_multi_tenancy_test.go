@@ -180,12 +180,15 @@ func runNextJob(t *testing.T, jobs []uuid.UUID, workerServer *worker.Server, org
 	// This would make the ComposeManifests endpoint return an error.
 	case worker.JobTypeDepsolve:
 		dummyPackage := worker.DepsolvedPackage{
-			Name:           "pkg1",
-			Version:        "1.33",
-			Release:        "2.fc30",
-			Arch:           "x86_64",
-			Checksum:       "sha256:e50ddb78a37f5851d1a5c37a4c77d59123153c156e628e064b9daa378f45a2fe",
-			RemoteLocation: "https://pkg1.example.com/1.33-2.fc30.x86_64.rpm",
+			Name:    "pkg1",
+			Version: "1.33",
+			Release: "2.fc30",
+			Arch:    "x86_64",
+			Checksum: &worker.DepsolvedPackageChecksum{
+				Type:  "sha256",
+				Value: "e50ddb78a37f5851d1a5c37a4c77d59123153c156e628e064b9daa378f45a2fe",
+			},
+			RemoteLocations: []string{"https://pkg1.example.com/1.33-2.fc30.x86_64.rpm"},
 		}
 		depsolveJobResult := &worker.DepsolveJobResult{
 			PackageSpecs: map[string]worker.DepsolvedPackageList{

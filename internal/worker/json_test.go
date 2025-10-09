@@ -2,6 +2,7 @@ package worker
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"testing"
 
@@ -405,6 +406,113 @@ func TestOSBuildJobExports(t *testing.T) {
 	}
 }
 
+func TestDepsolvedPackageChecksumUnmarshalJSON(t *testing.T) {
+	testCases := []struct {
+		name                     string
+		json                     string
+		depsolvedPackageChecksum DepsolvedPackageChecksum
+		expectedError            error
+	}{
+		{
+			name: "struct",
+			json: `{"type":"sha256","value":"17e682f060b5f8e47ea04c5c4855908b0a5ad612022260fe50e11ecb0cc0ab76"}`,
+			depsolvedPackageChecksum: DepsolvedPackageChecksum{
+				Type:  "sha256",
+				Value: "17e682f060b5f8e47ea04c5c4855908b0a5ad612022260fe50e11ecb0cc0ab76",
+			},
+			expectedError: nil,
+		},
+		{
+			name: "string",
+			json: `"sha256:17e682f060b5f8e47ea04c5c4855908b0a5ad612022260fe50e11ecb0cc0ab76"`,
+			depsolvedPackageChecksum: DepsolvedPackageChecksum{
+				Type:  "sha256",
+				Value: "17e682f060b5f8e47ea04c5c4855908b0a5ad612022260fe50e11ecb0cc0ab76",
+			},
+			expectedError: nil,
+		},
+		{
+			name:                     "null",
+			json:                     `null`,
+			depsolvedPackageChecksum: DepsolvedPackageChecksum{},
+		},
+		{
+			name:                     "empty",
+			json:                     `":"`,
+			depsolvedPackageChecksum: DepsolvedPackageChecksum{},
+		},
+		{
+			name:          "invalid string",
+			json:          `"17e682f060b5f8e47ea04c5c4855908b0a5ad612022260fe50e11ecb0cc0ab76"`,
+			expectedError: errors.New("invalid checksum format: \"17e682f060b5f8e47ea04c5c4855908b0a5ad612022260fe50e11ecb0cc0ab76\""),
+		},
+		{
+			name:          "invalid type",
+			json:          `[{"type":"sha256","value":"17e682f060b5f8e47ea04c5c4855908b0a5ad612022260fe50e11ecb0cc0ab76"}]`,
+			expectedError: errors.New("unsupported checksum type: []interface {}"),
+		},
+		{
+			name:          "invalid struct type",
+			json:          `{"typo":"sha256","value":"17e682f060b5f8e47ea04c5c4855908b0a5ad612022260fe50e11ecb0cc0ab76"}`,
+			expectedError: errors.New("checksum type is required, got map[typo:sha256 value:17e682f060b5f8e47ea04c5c4855908b0a5ad612022260fe50e11ecb0cc0ab76]"),
+		},
+		{
+			name:          "invalid struct value",
+			json:          `{"type":"sha256","typo":"17e682f060b5f8e47ea04c5c4855908b0a5ad612022260fe50e11ecb0cc0ab76"}`,
+			expectedError: errors.New("checksum value is required, got map[type:sha256 typo:17e682f060b5f8e47ea04c5c4855908b0a5ad612022260fe50e11ecb0cc0ab76]"),
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			var depsolvedPackageChecksum DepsolvedPackageChecksum
+			err := json.Unmarshal([]byte(testCase.json), &depsolvedPackageChecksum)
+			if testCase.expectedError != nil {
+				require.Error(t, err)
+				assert.EqualValues(t, testCase.expectedError, err)
+			} else {
+				require.NoError(t, err)
+				assert.EqualValues(t, testCase.depsolvedPackageChecksum, depsolvedPackageChecksum)
+			}
+		})
+	}
+}
+
+func TestDepsolvedPackageChecksumMarshalJSON(t *testing.T) {
+	testCases := []struct {
+		name                     string
+		depsolvedPackageChecksum *DepsolvedPackageChecksum
+		json                     string
+	}{
+		{
+			name:                     "nil",
+			depsolvedPackageChecksum: nil,
+			json:                     `null`,
+		},
+		{
+			name:                     "empty",
+			depsolvedPackageChecksum: &DepsolvedPackageChecksum{},
+			json:                     `":"`,
+		},
+		{
+			name: "basic",
+			depsolvedPackageChecksum: &DepsolvedPackageChecksum{
+				Type:  "sha256",
+				Value: "17e682f060b5f8e47ea04c5c4855908b0a5ad612022260fe50e11ecb0cc0ab76",
+			},
+			json: `"sha256:17e682f060b5f8e47ea04c5c4855908b0a5ad612022260fe50e11ecb0cc0ab76"`,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			json, err := json.Marshal(testCase.depsolvedPackageChecksum)
+			require.NoError(t, err)
+			assert.EqualValues(t, testCase.json, string(json))
+		})
+	}
+}
+
 func TestDepsolvedPackageUnmarshalJSON(t *testing.T) {
 	testCases := []struct {
 		name             string
@@ -418,22 +526,138 @@ func TestDepsolvedPackageUnmarshalJSON(t *testing.T) {
 				Name: "test",
 			},
 		},
+		// Test old worker response
 		{
-			name: "basic",
+			name: "legacy-rpmmd-packagespec",
 			json: `{"name":"test","epoch":1,"version":"1.0.0","release":"1","arch":"x86_64","remote_location":"https://example.com/rpms/test.rpm","checksum":"sha256:17e682f060b5f8e47ea04c5c4855908b0a5ad612022260fe50e11ecb0cc0ab76","secrets":"org.osbuild.rhsm","check_gpg":true,"ignore_ssl":true,"path":"rpms/test.rpm","repo_id":"test-repo-id"}`,
 			depsolvedPackage: DepsolvedPackage{
-				Name:           "test",
-				Epoch:          1,
-				Version:        "1.0.0",
-				Release:        "1",
-				Arch:           "x86_64",
-				RemoteLocation: "https://example.com/rpms/test.rpm",
-				Checksum:       "sha256:17e682f060b5f8e47ea04c5c4855908b0a5ad612022260fe50e11ecb0cc0ab76",
-				Secrets:        "org.osbuild.rhsm",
-				CheckGPG:       true,
-				IgnoreSSL:      true,
-				Path:           "rpms/test.rpm",
-				RepoID:         "test-repo-id",
+				Name:            "test",
+				Epoch:           1,
+				Version:         "1.0.0",
+				Release:         "1",
+				Arch:            "x86_64",
+				RemoteLocations: []string{"https://example.com/rpms/test.rpm"},
+				Checksum: &DepsolvedPackageChecksum{
+					Type:  "sha256",
+					Value: "17e682f060b5f8e47ea04c5c4855908b0a5ad612022260fe50e11ecb0cc0ab76",
+				},
+				Secrets:   "org.osbuild.rhsm",
+				CheckGPG:  true,
+				IgnoreSSL: true,
+				Location:  "rpms/test.rpm",
+				RepoID:    "test-repo-id",
+			},
+		},
+		{
+			name: "basic from new worker with single remote location",
+			json: `{"name":"test","epoch":1,"version":"1.0.0","release":"1","arch":"x86_64","remote_location":"https://example.com/rpms/test.rpm","remote_locations":["https://example.com/rpms/test.rpm"],"checksum":"sha256:17e682f060b5f8e47ea04c5c4855908b0a5ad612022260fe50e11ecb0cc0ab76","secrets":"org.osbuild.rhsm","check_gpg":true,"ignore_ssl":true,"location":"rpms/test.rpm","path":"rpms/test.rpm","repo_id":"test-repo-id"}`,
+			depsolvedPackage: DepsolvedPackage{
+				Name:            "test",
+				Epoch:           1,
+				Version:         "1.0.0",
+				Release:         "1",
+				Arch:            "x86_64",
+				RemoteLocations: []string{"https://example.com/rpms/test.rpm"},
+				Checksum: &DepsolvedPackageChecksum{
+					Type:  "sha256",
+					Value: "17e682f060b5f8e47ea04c5c4855908b0a5ad612022260fe50e11ecb0cc0ab76",
+				},
+				Secrets:   "org.osbuild.rhsm",
+				CheckGPG:  true,
+				IgnoreSSL: true,
+				Location:  "rpms/test.rpm",
+				RepoID:    "test-repo-id",
+			},
+		},
+		{
+			name: "basic from new worker with multiple remote locations",
+			json: `{"name":"test","epoch":1,"version":"1.0.0","release":"1","arch":"x86_64","remote_location":"https://example.com/rpms/test.rpm","remote_locations":["https://example.com/rpms/test.rpm","http://example.com/rpms/test.rpm"],"checksum":"sha256:17e682f060b5f8e47ea04c5c4855908b0a5ad612022260fe50e11ecb0cc0ab76","secrets":"org.osbuild.rhsm","check_gpg":true,"ignore_ssl":true,"location":"rpms/test.rpm","path":"rpms/test.rpm","repo_id":"test-repo-id"}`,
+			depsolvedPackage: DepsolvedPackage{
+				Name:            "test",
+				Epoch:           1,
+				Version:         "1.0.0",
+				Release:         "1",
+				Arch:            "x86_64",
+				RemoteLocations: []string{"https://example.com/rpms/test.rpm", "http://example.com/rpms/test.rpm"},
+				Checksum: &DepsolvedPackageChecksum{
+					Type:  "sha256",
+					Value: "17e682f060b5f8e47ea04c5c4855908b0a5ad612022260fe50e11ecb0cc0ab76",
+				},
+				Secrets:   "org.osbuild.rhsm",
+				CheckGPG:  true,
+				IgnoreSSL: true,
+				Location:  "rpms/test.rpm",
+				RepoID:    "test-repo-id",
+			},
+		},
+		{
+			name: "basic from new worker - new properties not overwritten by old properties",
+			json: `{"name":"test","epoch":1,"version":"1.0.0","release":"1","arch":"x86_64","remote_location":"should-not-override","remote_locations":["https://example.com/rpms/test.rpm","http://example.com/rpms/test.rpm"],"checksum":"sha256:17e682f060b5f8e47ea04c5c4855908b0a5ad612022260fe50e11ecb0cc0ab76","secrets":"org.osbuild.rhsm","check_gpg":true,"ignore_ssl":true,"location":"rpms/test.rpm","path":"should-not-override","repo_id":"test-repo-id"}`,
+			depsolvedPackage: DepsolvedPackage{
+				Name:            "test",
+				Epoch:           1,
+				Version:         "1.0.0",
+				Release:         "1",
+				Arch:            "x86_64",
+				RemoteLocations: []string{"https://example.com/rpms/test.rpm", "http://example.com/rpms/test.rpm"},
+				Checksum: &DepsolvedPackageChecksum{
+					Type:  "sha256",
+					Value: "17e682f060b5f8e47ea04c5c4855908b0a5ad612022260fe50e11ecb0cc0ab76",
+				},
+				Secrets:   "org.osbuild.rhsm",
+				CheckGPG:  true,
+				IgnoreSSL: true,
+				Location:  "rpms/test.rpm",
+				RepoID:    "test-repo-id",
+			},
+		},
+		{
+			name: "basic new, without backward compatibility",
+			json: `{"name":"test","epoch":1,"version":"1.0.0","release":"1","arch":"x86_64","remote_locations":["https://example.com/rpms/test.rpm"],"checksum":"sha256:17e682f060b5f8e47ea04c5c4855908b0a5ad612022260fe50e11ecb0cc0ab76","secrets":"org.osbuild.rhsm","check_gpg":true,"ignore_ssl":true,"location":"rpms/test.rpm","repo_id":"test-repo-id"}`,
+			depsolvedPackage: DepsolvedPackage{
+				Name:            "test",
+				Epoch:           1,
+				Version:         "1.0.0",
+				Release:         "1",
+				Arch:            "x86_64",
+				RemoteLocations: []string{"https://example.com/rpms/test.rpm"},
+				Checksum: &DepsolvedPackageChecksum{
+					Type:  "sha256",
+					Value: "17e682f060b5f8e47ea04c5c4855908b0a5ad612022260fe50e11ecb0cc0ab76",
+				},
+				Secrets:   "org.osbuild.rhsm",
+				CheckGPG:  true,
+				IgnoreSSL: true,
+				Location:  "rpms/test.rpm",
+				RepoID:    "test-repo-id",
+			},
+		},
+		{
+			name: "basic after the checksum change to struct",
+			json: `{"name":"test","epoch":1,"version":"1.0.0","release":"1","arch":"x86_64","remote_locations":["https://example.com/rpms/test.rpm"],"checksum":{"type":"sha256","value":"17e682f060b5f8e47ea04c5c4855908b0a5ad612022260fe50e11ecb0cc0ab76"},"secrets":"org.osbuild.rhsm","check_gpg":true,"ignore_ssl":true,"location":"rpms/test.rpm","repo_id":"test-repo-id"}`,
+			depsolvedPackage: DepsolvedPackage{
+				Name:            "test",
+				Epoch:           1,
+				Version:         "1.0.0",
+				Release:         "1",
+				Arch:            "x86_64",
+				RemoteLocations: []string{"https://example.com/rpms/test.rpm"},
+				Checksum: &DepsolvedPackageChecksum{
+					Type:  "sha256",
+					Value: "17e682f060b5f8e47ea04c5c4855908b0a5ad612022260fe50e11ecb0cc0ab76",
+				},
+				Secrets:   "org.osbuild.rhsm",
+				CheckGPG:  true,
+				IgnoreSSL: true,
+				Location:  "rpms/test.rpm",
+				RepoID:    "test-repo-id",
+			},
+		},
+		{
+			name: "checksum-null",
+			json: `{"name": "test","checksum": null}`,
+			depsolvedPackage: DepsolvedPackage{
+				Name: "test",
 			},
 		},
 	}
@@ -464,20 +688,44 @@ func TestDepsolvedPackageMarshalJSON(t *testing.T) {
 		{
 			name: "basic",
 			depsolvedPackage: DepsolvedPackage{
-				Name:           "test",
-				Epoch:          1,
-				Version:        "1.0.0",
-				Release:        "1",
-				Arch:           "x86_64",
-				RemoteLocation: "https://example.com/rpms/test.rpm",
-				Checksum:       "sha256:17e682f060b5f8e47ea04c5c4855908b0a5ad612022260fe50e11ecb0cc0ab76",
-				Secrets:        "org.osbuild.rhsm",
-				CheckGPG:       true,
-				IgnoreSSL:      true,
-				Path:           "rpms/test.rpm",
-				RepoID:         "test-repo-id",
+				Name:            "test",
+				Epoch:           1,
+				Version:         "1.0.0",
+				Release:         "1",
+				Arch:            "x86_64",
+				RemoteLocations: []string{"https://example.com/rpms/test.rpm"},
+				Checksum: &DepsolvedPackageChecksum{
+					Type:  "sha256",
+					Value: "17e682f060b5f8e47ea04c5c4855908b0a5ad612022260fe50e11ecb0cc0ab76",
+				},
+				Secrets:   "org.osbuild.rhsm",
+				CheckGPG:  true,
+				IgnoreSSL: true,
+				Location:  "rpms/test.rpm",
+				RepoID:    "test-repo-id",
 			},
-			json: `{"name":"test","epoch":1,"version":"1.0.0","release":"1","arch":"x86_64","remote_location":"https://example.com/rpms/test.rpm","checksum":"sha256:17e682f060b5f8e47ea04c5c4855908b0a5ad612022260fe50e11ecb0cc0ab76","secrets":"org.osbuild.rhsm","check_gpg":true,"ignore_ssl":true,"path":"rpms/test.rpm","repo_id":"test-repo-id"}`,
+			json: `{"name":"test","epoch":1,"version":"1.0.0","release":"1","arch":"x86_64","remote_locations":["https://example.com/rpms/test.rpm"],"checksum":"sha256:17e682f060b5f8e47ea04c5c4855908b0a5ad612022260fe50e11ecb0cc0ab76","secrets":"org.osbuild.rhsm","check_gpg":true,"ignore_ssl":true,"location":"rpms/test.rpm","repo_id":"test-repo-id","path":"rpms/test.rpm","remote_location":"https://example.com/rpms/test.rpm"}`,
+		},
+		{
+			name: "basic with multiple remote locations",
+			depsolvedPackage: DepsolvedPackage{
+				Name:            "test",
+				Epoch:           1,
+				Version:         "1.0.0",
+				Release:         "1",
+				Arch:            "x86_64",
+				RemoteLocations: []string{"https://example.com/rpms/test.rpm", "http://example.com/rpms/test.rpm"},
+				Checksum: &DepsolvedPackageChecksum{
+					Type:  "sha256",
+					Value: "17e682f060b5f8e47ea04c5c4855908b0a5ad612022260fe50e11ecb0cc0ab76",
+				},
+				Secrets:   "org.osbuild.rhsm",
+				CheckGPG:  true,
+				IgnoreSSL: true,
+				Location:  "rpms/test.rpm",
+				RepoID:    "test-repo-id",
+			},
+			json: `{"name":"test","epoch":1,"version":"1.0.0","release":"1","arch":"x86_64","remote_locations":["https://example.com/rpms/test.rpm","http://example.com/rpms/test.rpm"],"checksum":"sha256:17e682f060b5f8e47ea04c5c4855908b0a5ad612022260fe50e11ecb0cc0ab76","secrets":"org.osbuild.rhsm","check_gpg":true,"ignore_ssl":true,"location":"rpms/test.rpm","repo_id":"test-repo-id","path":"rpms/test.rpm","remote_location":"https://example.com/rpms/test.rpm"}`,
 		},
 	}
 
