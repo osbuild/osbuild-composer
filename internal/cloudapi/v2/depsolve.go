@@ -144,5 +144,5 @@ func (request *DepsolveRequest) Depsolve(df *distrofactory.Factory, rr *reporegi
 		}
 	}
 
-	return result.PackageSpecs["os"], nil
+	return result.PackageSpecs["os"].ToRPMMDList(), nil
 }

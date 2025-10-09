@@ -92,7 +92,7 @@ func mockDepsolve(t *testing.T, workerServer *worker.Server, wg *sync.WaitGroup,
 			if err != nil {
 				continue
 			}
-			dummyPackage := rpmmd.PackageSpec{
+			dummyPackage := worker.DepsolvedPackage{
 				Name:           "pkg1",
 				Version:        "1.33",
 				Release:        "2.fc30",
@@ -101,7 +101,7 @@ func mockDepsolve(t *testing.T, workerServer *worker.Server, wg *sync.WaitGroup,
 				RemoteLocation: "https://pkg1.example.com/1.33-2.fc30.x86_64.rpm",
 			}
 			dJR := &worker.DepsolveJobResult{
-				PackageSpecs: map[string][]rpmmd.PackageSpec{
+				PackageSpecs: map[string]worker.DepsolvedPackageList{
 					// Used when depsolving a manifest
 					"build": {dummyPackage},
 					"os":    {dummyPackage},
