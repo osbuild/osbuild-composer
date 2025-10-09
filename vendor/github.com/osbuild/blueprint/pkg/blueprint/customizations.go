@@ -36,6 +36,8 @@ type Customizations struct {
 	RHSM               *RHSMCustomization             `json:"rhsm,omitempty" toml:"rhsm,omitempty"`
 	CACerts            *CACustomization               `json:"cacerts,omitempty" toml:"cacerts,omitempty"`
 	ContainersStorage  *ContainerStorageCustomization `json:"containers-storage,omitempty" toml:"containers-storage,omitempty"`
+	Firstboot          *FirstbootCustomization        `json:"firstboot,omitempty" toml:"firstboot,omitempty"`
+	DNF                *DNFCustomization              `json:"dnf,omitempty" toml:"dnf,omitempty"`
 }
 
 type IgnitionCustomization struct {
@@ -149,6 +151,14 @@ type CACustomization struct {
 type ContainerStorageCustomization struct {
 	// destination is always `containers-storage`, so we won't expose this
 	StoragePath *string `json:"destination-path,omitempty" toml:"destination-path,omitempty"`
+}
+
+type DNFCustomization struct {
+	Config *DNFConfigCustomization `json:"config,omitempty" toml:"config,omitempty"`
+}
+
+type DNFConfigCustomization struct {
+	SetReleaseVer bool `json:"set_releasever,omitempty" toml:"set_releasever,omitempty"`
 }
 
 type CustomizationError struct {
@@ -484,4 +494,11 @@ func (c *Customizations) GetCACerts() (*CACustomization, error) {
 	}
 
 	return c.CACerts, nil
+}
+
+func (c *Customizations) GetDNF() *DNFCustomization {
+	if c == nil {
+		return nil
+	}
+	return c.DNF
 }
