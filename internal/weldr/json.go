@@ -73,8 +73,8 @@ type BlueprintsDepsolveV0 struct {
 	Errors     []ResponseError `json:"errors"`
 }
 type depsolveEntry struct {
-	Blueprint    blueprint.Blueprint `json:"blueprint"`
-	Dependencies []rpmmd.PackageSpec `json:"dependencies"`
+	Blueprint    blueprint.Blueprint               `json:"blueprint"`
+	Dependencies []weldrtypes.DepsolvedPackageInfo `json:"dependencies"`
 }
 
 // BlueprintsFreezeV0 is the response to /blueprints/freeze/ request

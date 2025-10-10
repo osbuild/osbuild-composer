@@ -1389,7 +1389,7 @@ func uploadStatusFromJobStatus(js *worker.JobStatus, je *clienterrors.Error) Upl
 }
 
 // PostDepsolveBlueprint depsolves the packages in a blueprint and returns
-// the results as a list of rpmmd.PackageSpecs
+// the results as a list of rpmmd.PackageList
 func (h *apiHandlers) PostDepsolveBlueprint(ctx echo.Context) error {
 	var request DepsolveRequest
 	err := ctx.Bind(&request)
@@ -1406,14 +1406,14 @@ func (h *apiHandlers) PostDepsolveBlueprint(ctx echo.Context) error {
 
 	return ctx.JSON(http.StatusOK,
 		DepsolveResponse{
-			Packages: packageSpecToPackageMetadata(deps),
+			Packages: rpmmdPackageToPackageMetadata(deps),
 		})
 }
 
-// packageSpecToPackageMetadata converts the rpmmd.PackageSpec to PackageMetadata
+// rpmmdPackageToPackageMetadata converts the rpmmd.PackageList to PackageMetadata
 // This is used to return package information from the blueprint depsolve request
 // using the common PackageMetadata format from the openapi schema.
-func packageSpecToPackageMetadata(pkgspecs []rpmmd.PackageSpec) []PackageMetadataCommon {
+func rpmmdPackageToPackageMetadata(pkgspecs rpmmd.PackageList) []PackageMetadataCommon {
 	packages := make([]PackageMetadataCommon, 0)
 	for _, rpm := range pkgspecs {
 		// Set epoch if it is not 0
@@ -1430,7 +1430,7 @@ func packageSpecToPackageMetadata(pkgspecs []rpmmd.PackageSpec) []PackageMetadat
 				Release:  rpm.Release,
 				Epoch:    epoch,
 				Arch:     rpm.Arch,
-				Checksum: common.ToPtr(rpm.Checksum),
+				Checksum: common.ToPtr(rpm.Checksum.String()),
 			},
 		)
 	}

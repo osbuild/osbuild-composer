@@ -353,7 +353,7 @@
           - key: "vm.max_map_count"
             value: "2147483647"
     dnf_config:
-      set_release_ver_var: false
+      set_releasever_var: false
     conditions: &conditions_sap_image_config
       "rhel-8.9 and below needs to set the release ver in dnf config":
         when:
@@ -361,7 +361,7 @@
         shallow_merge:
           dnf_config:
             # E4S/EUS
-            set_release_ver_var: true
+            set_releasever_var: true
 
   sap_pkgset: &sap_pkgset
     include:
@@ -767,8 +767,8 @@
 
   disk_sizes:
     default_required_partition_sizes: &default_required_dir_sizes
-      "/": 1_073_741_824     # 1 * datasizes.GiB
-      "/usr": 2_147_483_648  # 2 * datasizes.GiB
+      "/": "1 GiB"
+      "/usr": "2 GiB"
 
   platforms:
     x86_64_uefi_platform: &x86_64_uefi_platform
@@ -959,33 +959,18 @@
       - &filesystem_data_guid "0FC63DAF-8483-4772-8E79-3D69D8477DE4"
       - &xboot_ldr_partition_guid "BC13C2FF-59E6-4262-A352-B275FD6F7172"
       - &lvm_partition_guid "E6D6D379-F507-44C2-A23C-238F2A3DF928"
-    # static UUIDs for partitions and filesystems
-    # NOTE(akoutsou): These are unnecessary and have stuck around since the
-    # beginning where (I believe) the goal was to have predictable,
-    # reproducible partition tables. They might be removed soon in favour of
-    # proper, random UUIDs, with reproducibility being controlled by fixing
-    # rng seeds.
-    uuids:
-      - &bios_boot_partition_uuid "FAC7F1FB-3E8D-4137-A512-961DE09A5549"
-      - &root_partition_uuid "6264D520-3FB9-423F-8AB8-7A0A8E3D3562"
-      - &data_partition_uuid "CB07C243-BC44-4717-853E-28852021225B"
-      - &efi_system_partition_uuid "68B2905B-DF3E-4FB3-80FA-49D1E773AA33"
-      - &efi_filesystem_uuid "7B77-95E7"
 
     partitions:
       - &default_partition_table_part_bios
         size: "1 MiB"
         bootable: true
         type: *bios_boot_partition_guid
-        uuid: *bios_boot_partition_uuid
       - &default_partition_table_part_efi
         size: "100 MiB"
         type: *efi_system_partition_guid
-        uuid: *efi_system_partition_uuid
         payload_type: "filesystem"
         payload:
           type: vfat
-          uuid: *efi_filesystem_uuid
           mountpoint: "/boot/efi"
           label: "ESP"
           fstab_options: "defaults,uid=0,gid=0,umask=077,shortname=winnt"
@@ -994,7 +979,6 @@
       - &default_partition_table_part_root
         size: "2 GiB"
         type: *filesystem_data_guid
-        uuid: *root_partition_uuid
         payload_type: "filesystem"
         payload: &default_partition_table_part_root_payload
           type: "xfs"
@@ -1007,7 +991,6 @@
       - &ec2_partition_table_part_boot
         size: "1 GiB"
         type: *filesystem_data_guid
-        uuid: *data_partition_uuid
         payload_type: "filesystem"
         payload:
           type: "xfs"
@@ -1062,11 +1045,9 @@
           - &edge_base_partition_table_part_efi
             size: "127 MiB"
             type: *efi_system_partition_guid
-            uuid: *efi_system_partition_uuid
             payload_type: "filesystem"
             payload:
               type: vfat
-              uuid: *efi_filesystem_uuid
               mountpoint: "/boot/efi"
               label: "ESP"
               fstab_options: "defaults,uid=0,gid=0,umask=077,shortname=winnt"
@@ -1075,7 +1056,6 @@
           - &edge_base_partition_table_part_boot
             size: "384 MiB"
             type: *filesystem_data_guid
-            uuid: *data_partition_uuid
             payload_type: "filesystem"
             payload:
               type: "xfs"
@@ -1087,7 +1067,6 @@
           - &edge_base_partition_table_part_root
             size: "2 GiB"
             type: *filesystem_data_guid
-            uuid: *root_partition_uuid
             payload_type: "luks"
             payload:
               label: "crypt_root"
@@ -1115,7 +1094,6 @@
         partitions:
           - <<: *edge_base_partition_table_part_efi
             type: *efi_system_partition_guid
-            uuid: *efi_system_partition_uuid
           - *edge_base_partition_table_part_boot
           - *edge_base_partition_table_part_root
 
@@ -1128,11 +1106,9 @@
           - &ec2_partition_table_part_efi
             size: "200 MiB"
             type: *efi_system_partition_guid
-            uuid: *efi_system_partition_uuid
             payload_type: "filesystem"
             payload:
               type: vfat
-              uuid: *efi_filesystem_uuid
               mountpoint: "/boot/efi"
               label: "ESP"
               fstab_options: "defaults,uid=0,gid=0,umask=077,shortname=winnt"
@@ -1141,7 +1117,6 @@
           - &ec2_partition_table_part_root
             size: "2 GiB"
             type: *filesystem_data_guid
-            uuid: *root_partition_uuid
             payload_type: "filesystem"
             payload:
               type: "xfs"
@@ -1192,11 +1167,9 @@
         - &azure_rhui_part_boot_efi
           size: 524_288_000   # 500 * datasizes.MebiByte
           type: *efi_system_partition_guid
-          UUID: *efi_system_partition_uuid
           payload_type: "filesystem"
           payload:
             type: "vfat"
-            uuid: *efi_filesystem_uuid
             mountpoint: "/boot/efi"
             fstab_options: "defaults,uid=0,gid=0,umask=077,shortname=winnt"
             fstab_freq: 0
@@ -1204,7 +1177,6 @@
         - &azure_rhui_part_boot
           size: 524_288_000   # 500 * datasizes.MebiByte
           type: *filesystem_data_guid
-          uuid: *data_partition_uuid
           payload_type: "filesystem"
           payload:
             type: "xfs"
@@ -1215,10 +1187,8 @@
         - size: 2_097_152  # 2 * datasizes.MebiByte
           bootable: true
           type: *bios_boot_partition_guid
-          uuid: *bios_boot_partition_uuid
         - &azure_rhui_part_lvm
           type: *lvm_partition_guid
-          uuid: *root_partition_uuid
           payload_type: "lvm"
           payload:
             name: "rootvg"
@@ -1289,6 +1259,7 @@
       - "customizations.cacerts"
       - "customizations.directories"
       - "customizations.disk"
+      - "customizations.dnf"
       - "customizations.files"
       - "customizations.filesystem"
       - "customizations.partitioning_mode"
@@ -1316,6 +1287,7 @@
       - "enabled_modules"
       - "minimal"
       - "containers"
+      - "customizations.dnf"
       - "customizations.directories"
       - "customizations.files"
       - "customizations.fips"
@@ -1337,6 +1309,7 @@
       - "customizations.files"
       - "customizations.directories"
       - "customizations.disk"
+      - "customizations.dnf"
       - "customizations.filesystem"
       - "customizations.partitioning_mode"
       - "customizations.fips"
@@ -1428,7 +1401,7 @@ image_types:
     image_func: "disk"
     exports: ["image"]
     bootable: true
-    default_size: 10_737_418_240  # 10 * datasizes.GibiByte
+    default_size: "10 GiB"
     required_partition_sizes: *default_required_dir_sizes
     platforms:
       - <<: *x86_64_bios_platform
@@ -1578,7 +1551,7 @@ image_types:
     # note that unlike fedora rhel does not use the environment.KVM
     # for unknown reasons
     bootable: true
-    default_size: 10_737_418_240  # 10 * datasizes.GibiByte
+    default_size: "10 GiB"
     image_func: "disk"
     exports: ["qcow2"]
     required_partition_sizes: *default_required_dir_sizes
@@ -1626,7 +1599,7 @@ image_types:
     filename: "disk.vhd"
     mime_type: "application/x-vhd"
     image_func: "disk"
-    default_size: 4_294_967_296  # 4 * datasizes.GibiByte
+    default_size: "4 GiB"
     exports: ["vpc"]
     bootable: true
     # note that unlike fedora no "environment.Azure" is used here for
@@ -1786,7 +1759,7 @@ image_types:
     filename: "disk.vhd.xz"
     mime_type: "application/xz"
     image_func: "disk"
-    default_size: 68_719_476_736  # 64 * datasizes.GibiByte
+    default_size: "64 GiB"
     exports: ["xz"]
     compression: "xz"
     bootable: true
@@ -1987,6 +1960,7 @@ image_types:
       - "minimal"
       - "customizations.installer"
       - "customizations.cacerts"
+      - "customizations.dnf"
       - "customizations.directories"
       - "customizations.files"
       - "customizations.firewall"
@@ -2033,6 +2007,7 @@ image_types:
       - "containers"
       - "enabled_modules"
       - "minimal"
+      - "customizations.dnf"
       - "customizations.cacerts"
       - "customizations.directories"
       - "customizations.files"
@@ -2278,7 +2253,7 @@ image_types:
     filename: "image.raw.xz"
     compression: "xz"
     mime_type: "application/xz"
-    default_size: 10_737_418_240  # 10 * datasizes.GibiByte
+    default_size: "10 GiB"
     rpm_ostree: true
     bootable: true
     image_func: "iot"
@@ -2315,7 +2290,7 @@ image_types:
     use_syslinux: true
     # NOTE: RHEL 8 only supports the older Anaconda configs
     use_legacy_anaconda_config: true
-    default_size: 10_737_418_240  # 10 * datasizes.GibiByte
+    default_size: "10 GiB"
     image_func: "iot_simplified_installer"
     iso_label: "edge"
     variant: "edge"
@@ -2419,6 +2394,7 @@ image_types:
       - "customizations.fips"
       - "customizations.files"
       - "customizations.directories"
+      - "customizations.dnf"
     required_blueprint_options:
       - "customizations.installation_device"
 
@@ -2445,7 +2421,7 @@ image_types:
     filename: "disk.vmdk"
     mime_type: "application/x-vmdk"
     bootable: true
-    default_size: 4_294_967_296  # 4 * datasizes.GibiByte
+    default_size: "4 GiB"
     image_func: "disk"
     exports: ["vmdk"]
     required_partition_sizes: *default_required_dir_sizes
@@ -2493,7 +2469,7 @@ image_types:
     image_func: "disk"
     exports: ["archive"]
     bootable: true
-    default_size: 21_474_836_480  # 20 * datasizes.GibiByte
+    default_size: "20 GiB"
     # The configuration for non-RHUI images does not touch the RHSM configuration at all.
     # https://issues.redhat.com/browse/COMPOSER-2157
     image_config: &gce_image_config
@@ -2516,9 +2492,9 @@ image_types:
         keymap: "us"
       dnf_config:
         options:
-          - config:
-              main:
-                ipresolve: "4"
+          config:
+            main:
+              ipresolve: "4"
       dnf_automatic_config:
         config:
           commands:
@@ -2630,7 +2606,7 @@ image_types:
     # we have to reset the aliases otherwise this type
     # will inherit the name aliases causing a conflict
     name_aliases: []
-    default_size: 4_294_967_296  # 4 * datasizes.GibiByte
+    default_size: "4 GiB"
     image_config:
       kernel_options:
         - "ro"
@@ -2785,6 +2761,7 @@ image_types:
       - "enabled_modules"
       - "minimal"
       - "containers"
+      - "customizations.dnf"
       - "customizations.directories"
       - "customizations.files"
       - "customizations.firewall"
@@ -2803,7 +2780,7 @@ image_types:
     mime_type: "application/xz"
     compression: "xz"
     bootable: true
-    default_size: 2_147_483_648  # 2 * datasizes.GibiByte
+    default_size: "2 GiB"
     image_func: "disk"
     exports: ["xz"]
     required_partition_sizes: *default_required_dir_sizes

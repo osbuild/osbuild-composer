@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+
+	"github.com/osbuild/images/internal/common"
 )
 
 // Size is a wrapper around uint64 with support for reading from string
@@ -43,6 +45,10 @@ func (si *Size) UnmarshalJSON(data []byte) error {
 	}
 	*si = Size(i)
 	return nil
+}
+
+func (si *Size) UnmarshalYAML(unmarshal func(any) error) error {
+	return common.UnmarshalYAMLviaJSON(si, unmarshal)
 }
 
 // decodeSize takes an integer or string representing a data size (with a data

@@ -1,6 +1,10 @@
 package weldrtypes
 
-import "github.com/osbuild/images/pkg/rpmmd"
+import (
+	"fmt"
+
+	"github.com/osbuild/images/pkg/rpmmd"
+)
 
 // DepsolvedPackageInfo is the API representation of a package that has been depsolved.
 type DepsolvedPackageInfo struct {
@@ -24,27 +28,41 @@ type DepsolvedPackageInfo struct {
 	RepoID    string `json:"repo_id,omitempty"`
 }
 
-func RPMMDPackageSpecToDepsolvedPackageInfo(pkg rpmmd.PackageSpec) DepsolvedPackageInfo {
-	return DepsolvedPackageInfo{
-		Name:           pkg.Name,
-		Epoch:          pkg.Epoch,
-		Version:        pkg.Version,
-		Release:        pkg.Release,
-		Arch:           pkg.Arch,
-		RemoteLocation: pkg.RemoteLocation,
-		Checksum:       pkg.Checksum,
-		Secrets:        pkg.Secrets,
-		CheckGPG:       pkg.CheckGPG,
-		IgnoreSSL:      pkg.IgnoreSSL,
-		Path:           pkg.Path,
-		RepoID:         pkg.RepoID,
+func (d DepsolvedPackageInfo) EVRA() string {
+	if d.Epoch == 0 {
+		return fmt.Sprintf("%s-%s.%s", d.Version, d.Release, d.Arch)
 	}
+	return fmt.Sprintf("%d:%s-%s.%s", d.Epoch, d.Version, d.Release, d.Arch)
 }
 
-func RPMMDPackageSpecListToDepsolvedPackageInfoList(pkgs []rpmmd.PackageSpec) []DepsolvedPackageInfo {
+func (d DepsolvedPackageInfo) NEVRA() string {
+	return fmt.Sprintf("%s-%s", d.Name, d.EVRA())
+}
+
+func RPMMDPackageToDepsolvedPackageInfo(pkg rpmmd.Package) DepsolvedPackageInfo {
+	p := DepsolvedPackageInfo{
+		Name:      pkg.Name,
+		Epoch:     pkg.Epoch,
+		Version:   pkg.Version,
+		Release:   pkg.Release,
+		Arch:      pkg.Arch,
+		Checksum:  pkg.Checksum.String(),
+		Secrets:   pkg.Secrets,
+		CheckGPG:  pkg.CheckGPG,
+		IgnoreSSL: pkg.IgnoreSSL,
+		Path:      pkg.Location,
+		RepoID:    pkg.RepoID,
+	}
+	if len(pkg.RemoteLocations) > 0 {
+		p.RemoteLocation = pkg.RemoteLocations[0]
+	}
+	return p
+}
+
+func RPMMDPackageListToDepsolvedPackageInfoList(pkgs rpmmd.PackageList) []DepsolvedPackageInfo {
 	results := make([]DepsolvedPackageInfo, len(pkgs))
 	for i, pkg := range pkgs {
-		results[i] = RPMMDPackageSpecToDepsolvedPackageInfo(pkg)
+		results[i] = RPMMDPackageToDepsolvedPackageInfo(pkg)
 	}
 	return results
 }

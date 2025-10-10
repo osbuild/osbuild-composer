@@ -66,3 +66,26 @@ type DNFConfig struct {
 type DNFConfigMain struct {
 	IPResolve string `json:"ip_resolve,omitempty"`
 }
+
+// UpdateVar inserts or updates a dnf variable. If a variable with the same
+// name already exists, it is updated to the new value. Otherwise, it is
+// appended to the existing list.
+func (options *DNFConfigStageOptions) UpdateVar(name, value string) {
+	if options == nil {
+		panic(fmt.Errorf("UpdateVar() call on nil DNFConfigStageOptions"))
+	}
+
+	newVar := DNFVariable{
+		Name:  name,
+		Value: value,
+	}
+
+	for idx, v := range options.Variables {
+		if v.Name == name {
+			options.Variables[idx] = newVar
+			return
+		}
+	}
+
+	options.Variables = append(options.Variables, newVar)
+}

@@ -7,14 +7,14 @@ import (
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
 
+	"github.com/osbuild/images/pkg/datasizes"
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/disk/partition"
 	"github.com/osbuild/images/pkg/pathpolicy"
-	"github.com/osbuild/images/pkg/platform"
 )
 
 const (
-	DEFAULT_SIZE = uint64(10 * GibiByte)
+	DEFAULT_SIZE = datasizes.Size(10 * GibiByte)
 
 	// As a baseline heuristic we double the size of
 	// the input container to support in-place updates.
@@ -147,7 +147,7 @@ func (t *BootcImageType) genPartitionTableDiskCust(basept *disk.PartitionTable, 
 	partOptions := &disk.CustomPartitionTableOptions{
 		PartitionTableType: basept.Type,
 		// XXX: not setting/defaults will fail to boot with btrfs/lvm
-		BootMode:         platform.BOOT_HYBRID,
+		BootMode:         t.BootMode(),
 		DefaultFSType:    defaultFSType,
 		RequiredMinSizes: requiredMinSizes,
 		Architecture:     t.arch.arch,
@@ -208,7 +208,7 @@ func checkMountpoints(filesystems []blueprint.FilesystemCustomization, policy *p
 //
 // Note that a custom "/usr" is not supported in image mode so splitting
 // rootfsMinSize between / and /usr is not a concern.
-func calcRequiredDirectorySizes(distCust *blueprint.DiskCustomization, rootfsMinSize uint64) (map[string]uint64, error) {
+func calcRequiredDirectorySizes(distCust *blueprint.DiskCustomization, rootfsMinSize uint64) (map[string]datasizes.Size, error) {
 	// XXX: this has *way* too much low-level knowledge about the
 	// inner workings of blueprint.DiskCustomizations plus when
 	// a new type it needs to get added here too, think about
@@ -231,8 +231,8 @@ func calcRequiredDirectorySizes(distCust *blueprint.DiskCustomization, rootfsMin
 		}
 	}
 	// ensure rootfsMinSize is respected
-	return map[string]uint64{
-		"/": max(rootfsMinSize, mounts["/"]),
+	return map[string]datasizes.Size{
+		"/": datasizes.Size(max(rootfsMinSize, mounts["/"])),
 	}, nil
 }
 

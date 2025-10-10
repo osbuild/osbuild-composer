@@ -3,6 +3,7 @@ package osbuild
 import (
 	"fmt"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/osbuild/images/pkg/customizations/fsnode"
@@ -10,6 +11,7 @@ import (
 )
 
 const (
+	kickstartStageType               = "org.osbuild.kickstart"
 	KickstartPathInteractiveDefaults = "/usr/share/anaconda/interactive-defaults.ks"
 	KickstartPathOSBuild             = "/osbuild.ks"
 )
@@ -132,7 +134,7 @@ func (KickstartStageOptions) isStageOptions() {}
 // Creates an Anaconda kickstart file
 func NewKickstartStage(options *KickstartStageOptions) *Stage {
 	return &Stage{
-		Type:    "org.osbuild.kickstart",
+		Type:    kickstartStageType,
 		Options: options,
 	}
 }
@@ -214,6 +216,11 @@ func NewKickstartStageOptions(
 	userCustomizations []users.User,
 	groupCustomizations []users.Group) (*KickstartStageOptions, error) {
 
+	invalidPathRegex := regexp.MustCompile(invalidPathRegex)
+	if invalidPathRegex.FindAllString(path, -1) != nil {
+		return nil, fmt.Errorf("%s: kickstart path %q is invalid", kickstartStageType, path)
+	}
+
 	var users map[string]UsersStageOptionsUser
 	if usersOptions, err := NewUsersStageOptions(userCustomizations, false); err != nil {
 		return nil, err
@@ -228,7 +235,7 @@ func NewKickstartStageOptions(
 
 	rootpw, err := adjustRootUserOptions(users)
 	if err != nil {
-		return nil, fmt.Errorf("org.osbuild.kickstart: %w", err)
+		return nil, fmt.Errorf("%s: %w", kickstartStageType, err)
 	}
 
 	return &KickstartStageOptions{

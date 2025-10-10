@@ -81,7 +81,7 @@ func (sources *Sources) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (sources Sources) addPackagesCurl(packages []rpmmd.PackageSpec) error {
+func (sources Sources) addPackagesCurl(packages rpmmd.PackageList) error {
 	curl := NewCurlSource()
 	for _, pkg := range packages {
 		err := curl.AddPackage(pkg)
@@ -93,7 +93,7 @@ func (sources Sources) addPackagesCurl(packages []rpmmd.PackageSpec) error {
 	return nil
 }
 
-func (sources Sources) addPackagesLibrepo(packages []rpmmd.PackageSpec, rpmRepos []rpmmd.RepoConfig) error {
+func (sources Sources) addPackagesLibrepo(packages rpmmd.PackageList, rpmRepos []rpmmd.RepoConfig) error {
 	librepo := NewLibrepoSource()
 	for _, pkg := range packages {
 		err := librepo.AddPackage(pkg, rpmRepos)

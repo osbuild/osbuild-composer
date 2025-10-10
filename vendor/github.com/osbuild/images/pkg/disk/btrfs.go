@@ -60,7 +60,7 @@ func (b *Btrfs) GetItemCount() uint {
 func (b *Btrfs) GetChild(n uint) Entity {
 	return &b.Subvolumes[n]
 }
-func (b *Btrfs) CreateMountpoint(mountpoint, defaultFs string, size uint64) (Entity, error) {
+func (b *Btrfs) CreateMountpoint(mountpoint, defaultFs string, size datasizes.Size) (Entity, error) {
 	if defaultFs != "btrfs" {
 		return nil, fmt.Errorf("only btrfs mountpoints are supported with btrfs subvolumes not %q", defaultFs)
 	}
@@ -82,7 +82,7 @@ func (b *Btrfs) CreateMountpoint(mountpoint, defaultFs string, size uint64) (Ent
 	return &b.Subvolumes[len(b.Subvolumes)-1], nil
 }
 
-func (b *Btrfs) AlignUp(size uint64) uint64 {
+func (b *Btrfs) AlignUp(size datasizes.Size) datasizes.Size {
 	return size // No extra alignment necessary for subvolumes
 }
 
@@ -96,12 +96,12 @@ func (b *Btrfs) GenUUID(rng *rand.Rand) {
 	}
 }
 
-func (b *Btrfs) MetadataSize() uint64 {
+func (b *Btrfs) MetadataSize() datasizes.Size {
 	return 0
 }
 
-func (b *Btrfs) minSize(size uint64) uint64 {
-	var subvolsum uint64
+func (b *Btrfs) minSize(size datasizes.Size) datasizes.Size {
+	var subvolsum datasizes.Size
 	for _, sv := range b.Subvolumes {
 		subvolsum += sv.Size
 	}
@@ -115,23 +115,18 @@ func (b *Btrfs) minSize(size uint64) uint64 {
 }
 
 type BtrfsSubvolume struct {
-	Name       string `json:"name" yaml:"name"`
-	Size       uint64 `json:"size" yaml:"size"`
-	Mountpoint string `json:"mountpoint,omitempty" yaml:"mountpoint,omitempty"`
-	GroupID    uint64 `json:"group_id,omitempty" yaml:"group_id,omitempty"`
-	Compress   string `json:"compress,omitempty" yaml:"compress,omitempty"`
-	ReadOnly   bool   `json:"read_only,omitempty" yaml:"read_only,omitempty"`
+	Name       string         `json:"name" yaml:"name"`
+	Size       datasizes.Size `json:"size" yaml:"size"`
+	Mountpoint string         `json:"mountpoint,omitempty" yaml:"mountpoint,omitempty"`
+	GroupID    uint64         `json:"group_id,omitempty" yaml:"group_id,omitempty"`
+	Compress   string         `json:"compress,omitempty" yaml:"compress,omitempty"`
+	ReadOnly   bool           `json:"read_only,omitempty" yaml:"read_only,omitempty"`
 
 	// UUID of the parent volume
 	UUID string `json:"uuid,omitempty" yaml:"uuid,omitempty"`
 }
 
 func (sv *BtrfsSubvolume) UnmarshalJSON(data []byte) (err error) {
-	data, err = datasizes.ParseSizeInJSONMapping("size", data)
-	if err != nil {
-		return fmt.Errorf("error parsing size in btrfs subvolume: %w", err)
-	}
-
 	type aliasStruct BtrfsSubvolume
 	var alias aliasStruct
 	if err := jsonUnmarshalStrict(data, &alias); err != nil {
@@ -160,14 +155,14 @@ func (bs *BtrfsSubvolume) Clone() Entity {
 	}
 }
 
-func (bs *BtrfsSubvolume) GetSize() uint64 {
+func (bs *BtrfsSubvolume) GetSize() datasizes.Size {
 	if bs == nil {
 		return 0
 	}
 	return bs.Size
 }
 
-func (bs *BtrfsSubvolume) EnsureSize(s uint64) bool {
+func (bs *BtrfsSubvolume) EnsureSize(s datasizes.Size) bool {
 	if s > bs.Size {
 		bs.Size = s
 		return true

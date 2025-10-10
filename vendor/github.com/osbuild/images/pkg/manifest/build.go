@@ -35,7 +35,7 @@ type BuildrootFromPackages struct {
 	runner       runner.Runner
 	dependents   []Pipeline
 	repos        []rpmmd.RepoConfig
-	packageSpecs []rpmmd.PackageSpec
+	packageSpecs rpmmd.PackageList
 
 	containerBuildable bool
 
@@ -150,7 +150,7 @@ func (p *BuildrootFromPackages) getPackageSetChain(distro Distro) ([]rpmmd.Packa
 	}, nil
 }
 
-func (p *BuildrootFromPackages) getPackageSpecs() []rpmmd.PackageSpec {
+func (p *BuildrootFromPackages) getPackageSpecs() rpmmd.PackageList {
 	return p.packageSpecs
 }
 

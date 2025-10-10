@@ -2,12 +2,16 @@ package worker
 
 import (
 	"encoding/json"
+	"fmt"
 	"runtime/debug"
+	"strings"
+	"time"
 
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/images/pkg/sbom"
+	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
 	"golang.org/x/exp/slices"
@@ -180,7 +184,7 @@ func (pn *PipelineNames) All() []string {
 // DepsolveJob defines the parameters of one or more depsolve jobs.  Each named
 // list of package sets defines a separate job.  Lists with multiple package
 // sets are depsolved in a chain, combining the results of sequential depsolves
-// into a single PackageSpec list in the result.  Each PackageSet defines the
+// into a single PackageList in the result.  Each PackageSet defines the
 // repositories it will be depsolved against.
 type DepsolveJob struct {
 	PackageSets      map[string][]rpmmd.PackageSet `json:"grouped_package_sets"`
@@ -199,10 +203,385 @@ type SbomDoc struct {
 	Document json.RawMessage   `json:"document"`
 }
 
+type DepsolvedPackageChecksum struct {
+	Type  string `json:"type"`
+	Value string `json:"value"`
+}
+
+func (c *DepsolvedPackageChecksum) UnmarshalJSON(data []byte) error {
+	var rawChecksum interface{}
+	err := json.Unmarshal(data, &rawChecksum)
+	if err != nil {
+		return err
+	}
+	switch rawChecksum := rawChecksum.(type) {
+	case nil:
+		// explicit "checksum": null, leave it as nil. This should not happen, but it is better to be safe.
+	case string:
+		checksumParts := strings.Split(rawChecksum, ":")
+		if len(checksumParts) != 2 {
+			return fmt.Errorf("invalid checksum format: %q", rawChecksum)
+		}
+		*c = DepsolvedPackageChecksum{
+			Type:  checksumParts[0],
+			Value: checksumParts[1],
+		}
+	case map[string]interface{}:
+		if _, ok := rawChecksum["type"]; !ok {
+			return fmt.Errorf("checksum type is required, got %+v", rawChecksum)
+		}
+		if _, ok := rawChecksum["value"]; !ok {
+			return fmt.Errorf("checksum value is required, got %+v", rawChecksum)
+		}
+		*c = DepsolvedPackageChecksum{
+			Type:  rawChecksum["type"].(string),
+			Value: rawChecksum["value"].(string),
+		}
+	default:
+		return fmt.Errorf("unsupported checksum type: %T", rawChecksum)
+	}
+
+	return nil
+}
+
+func (c *DepsolvedPackageChecksum) MarshalJSON() ([]byte, error) {
+	if c == nil {
+		return json.Marshal(nil)
+	}
+	// For backward compatibility reason, keep the string representation of the checksum.
+	// TODO: switch to the struct after a few releases. (added on 2025-10-08)
+	return json.Marshal(fmt.Sprintf("%s:%s", c.Type, c.Value))
+}
+
+type DepsolvedPackageRelDep struct {
+	Name         string `json:"name"`
+	Relationship string `json:"relationship,omitempty"`
+	Version      string `json:"version,omitempty"`
+}
+
+type DepsolvedPackageRelDepList []DepsolvedPackageRelDep
+
+func (d DepsolvedPackageRelDepList) ToRPMMDList() rpmmd.RelDepList {
+	results := make(rpmmd.RelDepList, len(d))
+	for i, relDep := range d {
+		results[i] = rpmmd.RelDep(relDep)
+	}
+	return results
+}
+
+func DepsolvedPackageRelDepListFromRPMMDList(relDeps rpmmd.RelDepList) DepsolvedPackageRelDepList {
+	results := make(DepsolvedPackageRelDepList, len(relDeps))
+	for i, relDep := range relDeps {
+		results[i] = DepsolvedPackageRelDep(relDep)
+	}
+	return results
+}
+
+// DepsolvedPackage is the DTO for rpmmd.Package.
+type DepsolvedPackage struct {
+	Name    string `json:"name"`
+	Epoch   uint   `json:"epoch"`
+	Version string `json:"version,omitempty"`
+	Release string `json:"release,omitempty"`
+	Arch    string `json:"arch,omitempty"`
+
+	Group string `json:"group,omitempty"`
+
+	DownloadSize uint64 `json:"download_size,omitempty"`
+	InstallSize  uint64 `json:"install_size,omitempty"`
+
+	License   string `json:"license,omitempty"`
+	SourceRpm string `json:"source_rpm,omitempty"`
+
+	BuildTime *time.Time `json:"build_time,omitempty"`
+	Packager  string     `json:"packager,omitempty"`
+	Vendor    string     `json:"vendor,omitempty"`
+
+	URL string `json:"url,omitempty"`
+
+	Summary     string `json:"summary,omitempty"`
+	Description string `json:"description,omitempty"`
+
+	Provides        DepsolvedPackageRelDepList `json:"provides,omitempty"`
+	Requires        DepsolvedPackageRelDepList `json:"requires,omitempty"`
+	RequiresPre     DepsolvedPackageRelDepList `json:"requires_pre,omitempty"`
+	Conflicts       DepsolvedPackageRelDepList `json:"conflicts,omitempty"`
+	Obsoletes       DepsolvedPackageRelDepList `json:"obsoletes,omitempty"`
+	RegularRequires DepsolvedPackageRelDepList `json:"regular_requires,omitempty"`
+
+	Recommends  DepsolvedPackageRelDepList `json:"recommends,omitempty"`
+	Suggests    DepsolvedPackageRelDepList `json:"suggests,omitempty"`
+	Enhances    DepsolvedPackageRelDepList `json:"enhances,omitempty"`
+	Supplements DepsolvedPackageRelDepList `json:"supplements,omitempty"`
+
+	Files []string `json:"files,omitempty"`
+
+	BaseURL         string   `json:"base_url,omitempty"`
+	Location        string   `json:"location,omitempty"`
+	RemoteLocations []string `json:"remote_locations,omitempty"`
+
+	Checksum       *DepsolvedPackageChecksum `json:"checksum,omitempty"`
+	HeaderChecksum *DepsolvedPackageChecksum `json:"header_checksum,omitempty"`
+
+	RepoID string `json:"repo_id,omitempty"`
+
+	Reason string `json:"reason,omitempty"`
+
+	Secrets   string `json:"secrets,omitempty"`
+	CheckGPG  bool   `json:"check_gpg,omitempty"`
+	IgnoreSSL bool   `json:"ignore_ssl,omitempty"`
+}
+
+// UnmarshalJSON is used to unmarshal the DepsolvedPackage from JSON.
+// This handles the case when old composer-worker and new composer-worker-server
+// are used.
+func (d *DepsolvedPackage) UnmarshalJSON(data []byte) error {
+	type aliasType DepsolvedPackage
+	type compatType struct {
+		aliasType
+
+		// TODO: remove this after a few releases (added on 2025-10-08)
+		// The type was changed to rpmmd.Package, but the fields were kept for backwards compatibility.
+		/* Legacy type before the rpmmd RPM package consolidation
+
+		type DepsolvedPackage struct {
+			Name           string `json:"name"`
+			Epoch          uint   `json:"epoch"`
+			Version        string `json:"version,omitempty"`
+			Release        string `json:"release,omitempty"`
+			Arch           string `json:"arch,omitempty"`
+			RemoteLocation string `json:"remote_location,omitempty"`
+			Checksum       string `json:"checksum,omitempty"`
+			Secrets        string `json:"secrets,omitempty"`
+			CheckGPG       bool   `json:"check_gpg,omitempty"`
+			IgnoreSSL      bool   `json:"ignore_ssl,omitempty"`
+
+			Path   string `json:"path,omitempty"`
+			RepoID string `json:"repo_id,omitempty"`
+		}
+
+		*/
+		// Path is now called Location in rpmmd.Package.
+		Path string `json:"path,omitempty"` // obsolete
+		// RemoteLocation is now called RemoteLocations in rpmmd.Package and is a slice.
+		RemoteLocation string `json:"remote_location,omitempty"` // obsolete
+	}
+
+	var compat compatType
+	err := json.Unmarshal(data, &compat)
+	if err != nil {
+		return err
+	}
+
+	// Handle Path vs. Location.
+	if compat.aliasType.Location == "" && compat.Path != "" {
+		compat.aliasType.Location = compat.Path
+	}
+	// Handle RemoteLocation vs. RemoteLocations.
+	if compat.aliasType.RemoteLocations == nil && compat.RemoteLocation != "" {
+		compat.aliasType.RemoteLocations = []string{compat.RemoteLocation}
+	}
+
+	*d = DepsolvedPackage(compat.aliasType)
+
+	return nil
+}
+
+// MarshalJSON is used to marshal the DepsolvedPackage to JSON.
+// This handles the case when old composer-worker-server and new composer-worker
+// are used.
+func (d DepsolvedPackage) MarshalJSON() ([]byte, error) {
+	type aliasType DepsolvedPackage
+	type compatType struct {
+		aliasType
+
+		// TODO: remove this after a few releases (added on 2025-10-08)
+		// The type was changed to rpmmd.Package, but the fields were kept for backwards compatibility.
+		/* Legacy type before the rpmmd RPM package consolidation
+
+		type DepsolvedPackage struct {
+			Name           string `json:"name"`
+			Epoch          uint   `json:"epoch"`
+			Version        string `json:"version,omitempty"`
+			Release        string `json:"release,omitempty"`
+			Arch           string `json:"arch,omitempty"`
+			RemoteLocation string `json:"remote_location,omitempty"`
+			Checksum       string `json:"checksum,omitempty"`
+			Secrets        string `json:"secrets,omitempty"`
+			CheckGPG       bool   `json:"check_gpg,omitempty"`
+			IgnoreSSL      bool   `json:"ignore_ssl,omitempty"`
+
+			Path   string `json:"path,omitempty"`
+			RepoID string `json:"repo_id,omitempty"`
+		}
+
+		*/
+		// Path is now called Location in rpmmd.Package.
+		Path string `json:"path,omitempty"` // obsolete
+		// RemoteLocation is now called RemoteLocations in rpmmd.Package and is a slice.
+		RemoteLocation string `json:"remote_location,omitempty"` // obsolete
+	}
+
+	var compat compatType
+	compat.aliasType = aliasType(d)
+
+	// Handle Path vs. Location.
+	compat.Path = compat.aliasType.Location
+
+	// Handle RemoteLocation vs. RemoteLocations.
+	if len(compat.aliasType.RemoteLocations) > 0 {
+		compat.RemoteLocation = compat.aliasType.RemoteLocations[0]
+	}
+
+	return json.Marshal(compat)
+}
+
+func (d DepsolvedPackage) ToRPMMD() rpmmd.Package {
+	p := rpmmd.Package{
+		Name:    d.Name,
+		Epoch:   d.Epoch,
+		Version: d.Version,
+		Release: d.Release,
+		Arch:    d.Arch,
+
+		Group: d.Group,
+
+		DownloadSize: d.DownloadSize,
+		InstallSize:  d.InstallSize,
+
+		License: d.License,
+
+		SourceRpm: d.SourceRpm,
+
+		Packager: d.Packager,
+		Vendor:   d.Vendor,
+
+		URL: d.URL,
+
+		Summary:     d.Summary,
+		Description: d.Description,
+
+		Provides:        d.Provides.ToRPMMDList(),
+		Requires:        d.Requires.ToRPMMDList(),
+		RequiresPre:     d.RequiresPre.ToRPMMDList(),
+		Conflicts:       d.Conflicts.ToRPMMDList(),
+		Obsoletes:       d.Obsoletes.ToRPMMDList(),
+		RegularRequires: d.RegularRequires.ToRPMMDList(),
+
+		Recommends:  d.Recommends.ToRPMMDList(),
+		Suggests:    d.Suggests.ToRPMMDList(),
+		Enhances:    d.Enhances.ToRPMMDList(),
+		Supplements: d.Supplements.ToRPMMDList(),
+
+		Files: d.Files,
+
+		BaseURL:         d.BaseURL,
+		Location:        d.Location,
+		RemoteLocations: d.RemoteLocations,
+
+		RepoID: d.RepoID,
+
+		Reason: d.Reason,
+
+		Secrets:   d.Secrets,
+		CheckGPG:  d.CheckGPG,
+		IgnoreSSL: d.IgnoreSSL,
+	}
+
+	if d.BuildTime != nil {
+		p.BuildTime = *d.BuildTime
+	}
+
+	if d.Checksum != nil {
+		p.Checksum = rpmmd.Checksum(*d.Checksum)
+	}
+
+	if d.HeaderChecksum != nil {
+		p.HeaderChecksum = rpmmd.Checksum(*d.HeaderChecksum)
+	}
+
+	return p
+}
+
+type DepsolvedPackageList []DepsolvedPackage
+
+func (d DepsolvedPackageList) ToRPMMDList() rpmmd.PackageList {
+	results := make(rpmmd.PackageList, len(d))
+	for i, pkg := range d {
+		results[i] = pkg.ToRPMMD()
+	}
+	return results
+}
+
+func DepsolvedPackageFromRPMMD(pkg rpmmd.Package) DepsolvedPackage {
+	return DepsolvedPackage{
+		Name:    pkg.Name,
+		Epoch:   pkg.Epoch,
+		Version: pkg.Version,
+		Release: pkg.Release,
+		Arch:    pkg.Arch,
+
+		Group: pkg.Group,
+
+		DownloadSize: pkg.DownloadSize,
+		InstallSize:  pkg.InstallSize,
+
+		License: pkg.License,
+
+		SourceRpm: pkg.SourceRpm,
+
+		BuildTime: &pkg.BuildTime,
+		Packager:  pkg.Packager,
+		Vendor:    pkg.Vendor,
+
+		URL: pkg.URL,
+
+		Summary:     pkg.Summary,
+		Description: pkg.Description,
+
+		Provides:        DepsolvedPackageRelDepListFromRPMMDList(pkg.Provides),
+		Requires:        DepsolvedPackageRelDepListFromRPMMDList(pkg.Requires),
+		RequiresPre:     DepsolvedPackageRelDepListFromRPMMDList(pkg.RequiresPre),
+		Conflicts:       DepsolvedPackageRelDepListFromRPMMDList(pkg.Conflicts),
+		Obsoletes:       DepsolvedPackageRelDepListFromRPMMDList(pkg.Obsoletes),
+		RegularRequires: DepsolvedPackageRelDepListFromRPMMDList(pkg.RegularRequires),
+
+		Recommends:  DepsolvedPackageRelDepListFromRPMMDList(pkg.Recommends),
+		Suggests:    DepsolvedPackageRelDepListFromRPMMDList(pkg.Suggests),
+		Enhances:    DepsolvedPackageRelDepListFromRPMMDList(pkg.Enhances),
+		Supplements: DepsolvedPackageRelDepListFromRPMMDList(pkg.Supplements),
+
+		Files: pkg.Files,
+
+		BaseURL:         pkg.BaseURL,
+		Location:        pkg.Location,
+		RemoteLocations: pkg.RemoteLocations,
+
+		Checksum:       common.ToPtr(DepsolvedPackageChecksum(pkg.Checksum)),
+		HeaderChecksum: common.ToPtr(DepsolvedPackageChecksum(pkg.HeaderChecksum)),
+
+		RepoID: pkg.RepoID,
+
+		Reason: pkg.Reason,
+
+		Secrets:   pkg.Secrets,
+		CheckGPG:  pkg.CheckGPG,
+		IgnoreSSL: pkg.IgnoreSSL,
+	}
+}
+
+func DepsolvedPackageListFromRPMMDList(pkgs rpmmd.PackageList) DepsolvedPackageList {
+	results := make(DepsolvedPackageList, len(pkgs))
+	for i, pkg := range pkgs {
+		results[i] = DepsolvedPackageFromRPMMD(pkg)
+	}
+	return results
+}
+
 type DepsolveJobResult struct {
-	PackageSpecs map[string][]rpmmd.PackageSpec `json:"package_specs"`
-	SbomDocs     map[string]SbomDoc             `json:"sbom_docs,omitempty"`
-	RepoConfigs  map[string][]rpmmd.RepoConfig  `json:"repo_configs"`
+	PackageSpecs map[string]DepsolvedPackageList `json:"package_specs"`
+	SbomDocs     map[string]SbomDoc              `json:"sbom_docs,omitempty"`
+	RepoConfigs  map[string][]rpmmd.RepoConfig   `json:"repo_configs"`
 	JobResult
 }
 

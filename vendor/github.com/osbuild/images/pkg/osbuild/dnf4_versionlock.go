@@ -40,23 +40,23 @@ func NewDNF4VersionlockStage(options *DNF4VersionlockOptions) *Stage {
 //   - dnf4 is not in the package specs: we only support the feature in dnf4 for now.
 //   - The python3-dnf-plugin-versionlock package is not in the package specs:
 //     the plugin is required for the lock to be effective.
-func GenDNF4VersionlockStageOptions(lockPackageNames []string, packageSpecs []rpmmd.PackageSpec) (*DNF4VersionlockOptions, error) {
+func GenDNF4VersionlockStageOptions(lockPackageNames []string, packageSpecs rpmmd.PackageList) (*DNF4VersionlockOptions, error) {
 
 	// check that dnf4 and the plugin are included in the package specs
-	dnf, err := rpmmd.GetPackage(packageSpecs, "dnf")
+	dnf, err := packageSpecs.Package("dnf")
 	if err != nil {
 		return nil, fmt.Errorf("%s: dnf version locking enabled for an image that does not contain dnf: %w", dnf4VersionlockType, err)
 	}
 	if common.VersionGreaterThanOrEqual(dnf.Version, "5") {
 		return nil, fmt.Errorf("%s: dnf version locking enabled for an image that includes dnf version %s: the feature requires dnf4", dnf4VersionlockType, dnf.Version)
 	}
-	if _, err := rpmmd.GetPackage(packageSpecs, "python3-dnf-plugin-versionlock"); err != nil {
+	if _, err := packageSpecs.Package("python3-dnf-plugin-versionlock"); err != nil {
 		return nil, fmt.Errorf("%s: dnf version locking enabled for an image that does not contain the versionlock plugin: %w", dnf4VersionlockType, err)
 	}
 
 	pkgNEVRs := make([]string, len(lockPackageNames))
 	for idx, pkgName := range lockPackageNames {
-		pkg, err := rpmmd.GetPackage(packageSpecs, pkgName)
+		pkg, err := packageSpecs.Package(pkgName)
 		if err != nil {
 			return nil, fmt.Errorf("%s: package %q not found in package list", dnf4VersionlockType, pkgName)
 		}

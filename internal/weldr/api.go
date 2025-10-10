@@ -1113,7 +1113,7 @@ func (api *API) modulesListHandler(writer http.ResponseWriter, request *http.Req
 		return
 	}
 
-	packageInfos := packages.ToPackageInfos()
+	packageInfos := RPMMDPackageListToPackageInfos(packages)
 
 	total := uint(len(packageInfos))
 	start := min(offset, total)
@@ -1313,7 +1313,7 @@ func (api *API) modulesInfoHandler(writer http.ResponseWriter, request *http.Req
 				statusResponseError(writer, http.StatusBadRequest, errors)
 				return
 			}
-			packageInfos[i].Dependencies = weldrtypes.RPMMDPackageSpecListToDepsolvedPackageInfoList(res.Packages)
+			packageInfos[i].Dependencies = weldrtypes.RPMMDPackageListToDepsolvedPackageInfoList(res.Packages)
 		}
 		if err := solver.CleanCache(); err != nil {
 			// log and ignore
@@ -1404,7 +1404,7 @@ func (api *API) projectsDepsolveHandler(writer http.ResponseWriter, request *htt
 		// log and ignore
 		log.Printf("Error during rpm repo cache cleanup: %s", err.Error())
 	}
-	err = json.NewEncoder(writer).Encode(reply{Projects: weldrtypes.RPMMDPackageSpecListToDepsolvedPackageInfoList(res.Packages)})
+	err = json.NewEncoder(writer).Encode(reply{Projects: weldrtypes.RPMMDPackageListToDepsolvedPackageInfoList(res.Packages)})
 	common.PanicOnError(err)
 }
 
@@ -1548,8 +1548,8 @@ func (api *API) blueprintsDepsolveHandler(writer http.ResponseWriter, request *h
 	}
 
 	type entry struct {
-		Blueprint    blueprint.Blueprint `json:"blueprint"`
-		Dependencies []rpmmd.PackageSpec `json:"dependencies"`
+		Blueprint    blueprint.Blueprint               `json:"blueprint"`
+		Dependencies []weldrtypes.DepsolvedPackageInfo `json:"dependencies"`
 	}
 	type reply struct {
 		Blueprints []entry         `json:"blueprints"`
@@ -1593,7 +1593,7 @@ func (api *API) blueprintsDepsolveHandler(writer http.ResponseWriter, request *h
 				ID:  "BlueprintsError",
 				Msg: fmt.Sprintf("%s: %s", name, err.Error()),
 			})
-			dependencies = []rpmmd.PackageSpec{}
+			dependencies = []weldrtypes.DepsolvedPackageInfo{}
 		}
 
 		blueprints = append(blueprints, entry{*blueprint, dependencies})
@@ -1609,7 +1609,7 @@ func (api *API) blueprintsDepsolveHandler(writer http.ResponseWriter, request *h
 // expandBlueprintGlobs will expand package name globs and versions using the depsolve results
 // The result is a sorted list of Package structs with the full package name and version
 // It will return an error if it cannot find a non-glob package name in the dependency list
-func expandBlueprintGlobs(dependencies []rpmmd.PackageSpec, packages []blueprint.Package) ([]blueprint.Package, error) {
+func expandBlueprintGlobs(dependencies []weldrtypes.DepsolvedPackageInfo, packages []blueprint.Package) ([]blueprint.Package, error) {
 	newPackages := make(map[string]blueprint.Package)
 
 	for _, pkg := range packages {
@@ -1622,9 +1622,9 @@ func expandBlueprintGlobs(dependencies []rpmmd.PackageSpec, packages []blueprint
 				// Packages should not be missing from the depsolve results
 				return nil, fmt.Errorf("%s missing from depsolve results", pkg.Name)
 			}
-			newPackages[dependencies[i].GetNEVRA()] = blueprint.Package{
+			newPackages[dependencies[i].NEVRA()] = blueprint.Package{
 				Name:    dependencies[i].Name,
-				Version: dependencies[i].GetEVRA(),
+				Version: dependencies[i].EVRA(),
 			}
 		} else {
 			// Add all the packages matching the glob
@@ -1635,9 +1635,9 @@ func expandBlueprintGlobs(dependencies []rpmmd.PackageSpec, packages []blueprint
 
 			for _, d := range dependencies {
 				if g.Match(d.Name) {
-					newPackages[d.GetNEVRA()] = blueprint.Package{
+					newPackages[d.NEVRA()] = blueprint.Package{
 						Name:    d.Name,
-						Version: d.GetEVRA(),
+						Version: d.EVRA(),
 					}
 				}
 			}
@@ -2637,7 +2637,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		return
 	}
 
-	var packages []rpmmd.PackageSpec
+	var packages rpmmd.PackageList
 	// TODO: introduce a way to query these from the manifest / image type
 	// BUG: installer/container image types will have empty package sets
 	if packages = depsolved["packages"].Packages; len(packages) == 0 {
@@ -2665,7 +2665,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		return
 	}
 
-	weldrPackages := weldrtypes.RPMMDPackageSpecListToDepsolvedPackageInfoList(packages)
+	weldrPackages := weldrtypes.RPMMDPackageListToDepsolvedPackageInfoList(packages)
 	if testMode == "1" {
 		// Create a failed compose
 		err = api.store.PushTestCompose(composeID, mf, imageType, bp, size, targets, false, weldrPackages)
@@ -3612,7 +3612,7 @@ func (api *API) allRepositories(distroName, arch string) ([]rpmmd.RepoConfig, er
 	return repos, nil
 }
 
-func (api *API) depsolveBlueprint(bp blueprint.Blueprint) ([]rpmmd.PackageSpec, error) {
+func (api *API) depsolveBlueprint(bp blueprint.Blueprint) ([]weldrtypes.DepsolvedPackageInfo, error) {
 	// Depsolve using the host distro if none has been specified
 	if bp.Distro == "" {
 		bp.Distro = api.hostDistroName
@@ -3642,7 +3642,7 @@ func (api *API) depsolveBlueprint(bp blueprint.Blueprint) ([]rpmmd.PackageSpec, 
 		// log and ignore
 		log.Printf("Error during rpm repo cache cleanup: %s", err.Error())
 	}
-	return res.Packages, nil
+	return weldrtypes.RPMMDPackageListToDepsolvedPackageInfoList(res.Packages), nil
 }
 
 func (api *API) uploadsScheduleHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {

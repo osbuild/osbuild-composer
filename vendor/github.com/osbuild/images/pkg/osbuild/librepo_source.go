@@ -26,7 +26,7 @@ func NewLibrepoSource() *LibrepoSource {
 // AddPackage adds the given *depsolved* pkg to the downloading. It
 // needs the *depsovled* repoConfig so that the repoID of the two can
 // be matched up
-func (source *LibrepoSource) AddPackage(pkg rpmmd.PackageSpec, repos []rpmmd.RepoConfig) error {
+func (source *LibrepoSource) AddPackage(pkg rpmmd.Package, repos []rpmmd.RepoConfig) error {
 	pkgRepo, err := findRepoById(repos, pkg.RepoID)
 	if err != nil {
 		return fmt.Errorf("cannot find repo-id for pkg %v: %v", pkg.Name, err)
@@ -59,10 +59,10 @@ func (source *LibrepoSource) AddPackage(pkg rpmmd.PackageSpec, repos []rpmmd.Rep
 	}
 
 	item := &LibrepoSourceItem{
-		Path:     pkg.Path,
+		Path:     pkg.Location,
 		MirrorID: pkgRepo.Id,
 	}
-	source.Items[pkg.Checksum] = item
+	source.Items[pkg.Checksum.String()] = item
 	return nil
 }
 

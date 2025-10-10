@@ -543,7 +543,7 @@ func (p *AnacondaInstallerISOTree) serialize() (osbuild.Pipeline, error) {
 		case p.OSPipeline != nil:
 			tarPayloadStages, err := p.tarPayloadStages()
 			if err != nil {
-				return osbuild.Pipeline{}, fmt.Errorf("cannot create ostree container stages: %w", err)
+				return osbuild.Pipeline{}, fmt.Errorf("cannot create tar payload stages: %w", err)
 			}
 			pipeline.AddStages(tarPayloadStages...)
 		default:

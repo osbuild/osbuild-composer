@@ -24,6 +24,16 @@ import (
 	"github.com/osbuild/images/pkg/rpmmd"
 )
 
+func kernelOptions(t *imageType, c *blueprint.Customizations) []string {
+	imageConfig := t.getDefaultImageConfig()
+
+	kernelOptions := imageConfig.KernelOptions
+	if bpKernel := c.GetKernel(); bpKernel.Append != "" {
+		kernelOptions = append(kernelOptions, bpKernel.Append)
+	}
+	return kernelOptions
+}
+
 func osCustomizations(t *imageType, osPackageSet rpmmd.PackageSet, options distro.ImageOptions, containers []container.SourceSpec, bp *blueprint.Blueprint) (manifest.OSCustomizations, error) {
 	c := bp.Customizations
 	osc := manifest.OSCustomizations{}
@@ -40,13 +50,7 @@ func osCustomizations(t *imageType, osPackageSet rpmmd.PackageSet, options distr
 		if imageConfig.DefaultKernelName != nil {
 			osc.KernelName = *imageConfig.DefaultKernelName
 		}
-
-		// XXX: keep in sync with the identical copy in rhel/images.go
-		kernelOptions := imageConfig.KernelOptions
-		if bpKernel := c.GetKernel(); bpKernel.Append != "" {
-			kernelOptions = append(kernelOptions, bpKernel.Append)
-		}
-		osc.KernelOptionsAppend = kernelOptions
+		osc.KernelOptionsAppend = kernelOptions(t, c)
 		if imageConfig.KernelOptionsBootloader != nil {
 			osc.KernelOptionsBootloader = *imageConfig.KernelOptionsBootloader
 		}
@@ -265,6 +269,25 @@ func osCustomizations(t *imageType, osPackageSet rpmmd.PackageSet, options distr
 		osc.RHSMConfig = osc.RHSMConfig.Update(bpRhsmConfig)
 	}
 
+	dnfConfig, err := imageConfig.DNFConfigOptions(t.arch.distro.OsVersion())
+	if err != nil {
+		panic(fmt.Errorf("error creating dnf configs: %w", err))
+	}
+	if bpDnf := c.GetDNF(); bpDnf != nil && bpDnf.Config != nil {
+		if dnfConfig == nil {
+			dnfConfig = &osbuild.DNFConfigStageOptions{}
+		}
+		if bpDnf.Config.SetReleaseVer {
+			// NOTE: currently this is either a no-op or an append (i.e. it
+			// will never change the value of an existing releasever), but will
+			// become useful if we ever support adding custom variables through
+			// the blueprint
+			dnfConfig.UpdateVar("releasever", t.arch.distro.OsVersion())
+		}
+	}
+
+	osc.DNFConfig = dnfConfig
+
 	osc.ShellInit = imageConfig.ShellInit
 	osc.Grub2Config = imageConfig.Grub2Config
 	osc.Sysconfig = imageConfig.SysconfigStageOptions()
@@ -280,7 +303,6 @@ func osCustomizations(t *imageType, osPackageSet rpmmd.PackageSet, options distr
 	osc.Tmpfilesd = imageConfig.Tmpfilesd
 	osc.PamLimitsConf = imageConfig.PamLimitsConf
 	osc.Sysctld = imageConfig.Sysctld
-	osc.DNFConfig = imageConfig.DNFConfigOptions(t.arch.distro.OsVersion())
 	osc.DNFAutomaticConfig = imageConfig.DNFAutomaticConfig
 	osc.YUMConfig = imageConfig.YumConfig
 	osc.SshdConfig = imageConfig.SshdConfig
@@ -390,6 +412,7 @@ func installerCustomizations(t *imageType, c *blueprint.Customizations) (manifes
 		isc.EnabledAnacondaModules = append(isc.EnabledAnacondaModules, installerCust.Modules.Enable...)
 		isc.DisabledAnacondaModules = append(isc.DisabledAnacondaModules, installerCust.Modules.Disable...)
 	}
+	isc.KernelOptionsAppend = kernelOptions(t, c)
 
 	return isc, nil
 }
@@ -625,7 +648,7 @@ func imageInstallerImage(t *imageType,
 	img.InstallerCustomizations.EnabledAnacondaModules = append(img.InstallerCustomizations.EnabledAnacondaModules, anaconda.ModuleUsers)
 
 	if img.Kickstart.Unattended {
-		img.InstallerCustomizations.AdditionalKernelOpts = append(img.InstallerCustomizations.AdditionalKernelOpts, installerConfig.KickstartUnattendedExtraKernelOpts...)
+		img.InstallerCustomizations.KernelOptionsAppend = append(installerConfig.KickstartUnattendedExtraKernelOpts, img.InstallerCustomizations.KernelOptionsAppend...)
 	}
 
 	img.RootfsCompression = "xz" // This also triggers using the bcj filter
@@ -769,7 +792,6 @@ func iotInstallerImage(t *imageType,
 	img.Kickstart.Timezone, _ = customizations.GetTimezoneSettings()
 
 	img.InstallerCustomizations, err = installerCustomizations(t, bp.Customizations)
-
 	if err != nil {
 		return nil, err
 	}
@@ -889,28 +911,11 @@ func iotSimplifiedInstallerImage(t *imageType,
 			}
 		}
 	}
-
-	installerConfig, err := t.getDefaultInstallerConfig()
+	img.InstallerCustomizations, err = installerCustomizations(t, bp.Customizations)
 	if err != nil {
 		return nil, err
 	}
-
-	if installerConfig != nil {
-		img.AdditionalDracutModules = append(img.AdditionalDracutModules, installerConfig.AdditionalDracutModules...)
-		img.AdditionalDrivers = append(img.AdditionalDrivers, installerConfig.AdditionalDrivers...)
-	}
-
-	// XXX: move to use InstallerCustomizations too
-	d := t.arch.distro
-	img.Product = d.Product()
-	img.Variant = t.ImageTypeYAML.Variant
 	img.OSName = t.OSTree.Name
-	img.OSVersion = d.OsVersion()
-
-	img.ISOLabel, err = t.ISOLabel()
-	if err != nil {
-		return nil, err
-	}
 
 	return img, nil
 }

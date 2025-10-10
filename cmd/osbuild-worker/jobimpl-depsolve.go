@@ -59,7 +59,7 @@ type DepsolveJobImpl struct {
 // in repos are used for all package sets, whereas the repositories in
 // packageSetsRepos are only used for the package set with the same name
 // (matching map keys).
-func (impl *DepsolveJobImpl) depsolve(packageSets map[string][]rpmmd.PackageSet, modulePlatformID, arch, releasever string, sbomType sbom.StandardType) (map[string][]rpmmd.PackageSpec, map[string][]rpmmd.RepoConfig, map[string]worker.SbomDoc, error) {
+func (impl *DepsolveJobImpl) depsolve(packageSets map[string][]rpmmd.PackageSet, modulePlatformID, arch, releasever string, sbomType sbom.StandardType) (map[string]worker.DepsolvedPackageList, map[string][]rpmmd.RepoConfig, map[string]worker.SbomDoc, error) {
 	solver := impl.Solver.NewWithConfig(modulePlatformID, releasever, arch, "")
 	if impl.RepositoryMTLSConfig != nil && impl.RepositoryMTLSConfig.Proxy != nil {
 		err := solver.SetProxy(impl.RepositoryMTLSConfig.Proxy.String())
@@ -68,7 +68,7 @@ func (impl *DepsolveJobImpl) depsolve(packageSets map[string][]rpmmd.PackageSet,
 		}
 	}
 
-	depsolvedSets := make(map[string][]rpmmd.PackageSpec)
+	depsolvedSets := make(map[string]worker.DepsolvedPackageList)
 	repoConfigs := make(map[string][]rpmmd.RepoConfig)
 	var sbomDocs map[string]worker.SbomDoc
 	if sbomType != sbom.StandardTypeNone {
@@ -79,7 +79,7 @@ func (impl *DepsolveJobImpl) depsolve(packageSets map[string][]rpmmd.PackageSet,
 		if err != nil {
 			return nil, nil, nil, err
 		}
-		depsolvedSets[name] = res.Packages
+		depsolvedSets[name] = worker.DepsolvedPackageListFromRPMMDList(res.Packages)
 		repoConfigs[name] = res.Repos
 		if sbomType != sbom.StandardTypeNone {
 			sbomDocs[name] = worker.SbomDoc(*res.SBOM)

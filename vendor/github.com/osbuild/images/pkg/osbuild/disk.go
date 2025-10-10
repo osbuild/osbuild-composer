@@ -71,7 +71,7 @@ func sfdiskStageOptions(pt *disk.PartitionTable) *SfdiskStageOptions {
 		partitions[idx] = SfdiskPartition{
 			Bootable: p.Bootable,
 			Start:    pt.BytesToSectors(p.Start),
-			Size:     pt.BytesToSectors(p.Size),
+			Size:     pt.BytesToSectors(p.Size.Uint64()),
 			Type:     p.Type,
 			UUID:     p.UUID,
 			Name:     p.Label,
@@ -95,7 +95,7 @@ func sgdiskStageOptions(pt *disk.PartitionTable) *SgdiskStageOptions {
 		partitions[idx] = SgdiskPartition{
 			Bootable: p.Bootable,
 			Start:    pt.BytesToSectors(p.Start),
-			Size:     pt.BytesToSectors(p.Size),
+			Size:     pt.BytesToSectors(p.Size.Uint64()),
 			Type:     p.Type,
 			Name:     p.Label,
 			Attrs:    p.Attrs,

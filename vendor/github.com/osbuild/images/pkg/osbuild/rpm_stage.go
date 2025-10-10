@@ -108,21 +108,21 @@ func (pkgmd RPMPackageMetadata) Signature() *string {
 
 func (RPMStageMetadata) isStageMetadata() {}
 
-func NewRpmStageSourceFilesInputs(specs []rpmmd.PackageSpec) *RPMStageInputs {
-	input := NewFilesInput(pkgRefs(specs))
+func NewRpmStageSourceFilesInputs(pkgs rpmmd.PackageList) *RPMStageInputs {
+	input := NewFilesInput(pkgRefs(pkgs))
 	return &RPMStageInputs{Packages: input}
 }
 
-func pkgRefs(specs []rpmmd.PackageSpec) FilesInputRef {
-	refs := make([]FilesInputSourceArrayRefEntry, len(specs))
-	for idx, pkg := range specs {
+func pkgRefs(pkgs rpmmd.PackageList) FilesInputRef {
+	refs := make([]FilesInputSourceArrayRefEntry, len(pkgs))
+	for idx, pkg := range pkgs {
 		var pkgMetadata FilesInputRefMetadata
 		if pkg.CheckGPG {
 			pkgMetadata = &RPMStageReferenceMetadata{
 				CheckGPG: pkg.CheckGPG,
 			}
 		}
-		refs[idx] = NewFilesInputSourceArrayRefEntry(pkg.Checksum, pkgMetadata)
+		refs[idx] = NewFilesInputSourceArrayRefEntry(pkg.Checksum.String(), pkgMetadata)
 	}
 	return NewFilesInputSourceArrayRef(refs)
 }

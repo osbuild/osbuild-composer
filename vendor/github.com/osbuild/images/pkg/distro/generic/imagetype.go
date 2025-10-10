@@ -123,7 +123,7 @@ func (t *imageType) Size(size uint64) uint64 {
 		size = (size/datasizes.MebiByte + 1) * datasizes.MebiByte
 	}
 	if size == 0 {
-		size = t.ImageTypeYAML.DefaultSize
+		size = t.ImageTypeYAML.DefaultSize.Uint64()
 	}
 	return size
 }
@@ -187,7 +187,7 @@ func (t *imageType) getPartitionTable(customizations *blueprint.Customizations, 
 	}
 
 	mountpoints := customizations.GetFilesystems()
-	return disk.NewPartitionTable(basePartitionTable, mountpoints, imageSize, options.PartitioningMode, t.platform.GetArch(), t.ImageTypeYAML.RequiredPartitionSizes, defaultFsType.String(), rng)
+	return disk.NewPartitionTable(basePartitionTable, mountpoints, datasizes.Size(imageSize), options.PartitioningMode, t.platform.GetArch(), t.ImageTypeYAML.RequiredPartitionSizes, defaultFsType.String(), rng)
 }
 
 func (t *imageType) getDefaultImageConfig() *distro.ImageConfig {

@@ -1072,7 +1072,7 @@ func TestCompose(t *testing.T) {
 				},
 			},
 		},
-		Packages: weldrtypes.RPMMDPackageSpecListToDepsolvedPackageInfoList(depsolvednf_mock.BaseDepsolveResult(testRepoID)),
+		Packages: weldrtypes.RPMMDPackageListToDepsolvedPackageInfoList(depsolvednf_mock.BaseDepsolveResult(testRepoID)),
 	}
 
 	expectedComposeLocalAndAws := &weldrtypes.Compose{
@@ -1119,7 +1119,7 @@ func TestCompose(t *testing.T) {
 				},
 			},
 		},
-		Packages: weldrtypes.RPMMDPackageSpecListToDepsolvedPackageInfoList(depsolvednf_mock.BaseDepsolveResult(testRepoID)),
+		Packages: weldrtypes.RPMMDPackageListToDepsolvedPackageInfoList(depsolvednf_mock.BaseDepsolveResult(testRepoID)),
 	}
 
 	expectedComposeOSTree := &weldrtypes.Compose{
@@ -1149,7 +1149,7 @@ func TestCompose(t *testing.T) {
 				},
 			},
 		},
-		Packages: weldrtypes.RPMMDPackageSpecListToDepsolvedPackageInfoList(depsolvednf_mock.BaseDepsolveResult(testRepoID)),
+		Packages: weldrtypes.RPMMDPackageListToDepsolvedPackageInfoList(depsolvednf_mock.BaseDepsolveResult(testRepoID)),
 	}
 
 	ostreeOptionsOther := ostree.ImageOptions{ImageRef: otherRef, URL: ostreeRepoOther.Server.URL}
@@ -1187,7 +1187,7 @@ func TestCompose(t *testing.T) {
 				},
 			},
 		},
-		Packages: weldrtypes.RPMMDPackageSpecListToDepsolvedPackageInfoList(depsolvednf_mock.BaseDepsolveResult(testRepoID)),
+		Packages: weldrtypes.RPMMDPackageListToDepsolvedPackageInfoList(depsolvednf_mock.BaseDepsolveResult(testRepoID)),
 	}
 
 	// For 2nd distribution
@@ -1232,7 +1232,7 @@ func TestCompose(t *testing.T) {
 				},
 			},
 		},
-		Packages: weldrtypes.RPMMDPackageSpecListToDepsolvedPackageInfoList(depsolvednf_mock.BaseDepsolveResult(testRepoID2)),
+		Packages: weldrtypes.RPMMDPackageListToDepsolvedPackageInfoList(depsolvednf_mock.BaseDepsolveResult(testRepoID2)),
 	}
 
 	getSolverFn := getBaseMockDepsolveDNFSolverFn(testRepoID)
@@ -2065,14 +2065,14 @@ func TestProjectsDepsolve(t *testing.T) {
 			getBaseMockDepsolveDNFSolverFn(testRepoID),
 			"/api/v0/projects/depsolve/fish",
 			http.StatusOK,
-			fmt.Sprintf(`{"projects":[{"name":"dep-package3","epoch":7,"version":"3.0.3","release":"1.fc30","arch":"x86_64","checksum":"sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720","check_gpg":true,"repo_id":"%[1]s"},{"name":"dep-package1","epoch":0,"version":"1.33","release":"2.fc30","arch":"x86_64","checksum":"sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893","check_gpg":true,"repo_id":"%[1]s"},{"name":"dep-package2","epoch":0,"version":"2.9","release":"1.fc30","arch":"x86_64","checksum":"sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2","check_gpg":true,"repo_id":"%[1]s"}]}`, testRepoID),
+			fmt.Sprintf(`{"projects":[{"name":"dep-package3","epoch":7,"version":"3.0.3","release":"1.fc30","arch":"x86_64","checksum":"sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720","check_gpg":true,"remote_location":"https://pkg3.example.com/3.0.3-1.fc30.x86_64.rpm","repo_id":"%[1]s"},{"name":"dep-package1","epoch":0,"version":"1.33","release":"2.fc30","arch":"x86_64","checksum":"sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893","check_gpg":true,"remote_location":"https://pkg1.example.com/1.33-2.fc30.x86_64.rpm","repo_id":"%[1]s"},{"name":"dep-package2","epoch":0,"version":"2.9","release":"1.fc30","arch":"x86_64","checksum":"sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2","check_gpg":true,"remote_location":"https://pkg2.example.com/2.9-1.fc30.x86_64.rpm","repo_id":"%[1]s"}]}`, testRepoID),
 		},
 		{
 			rpmmd_mock.BaseFixture,
 			getBaseMockDepsolveDNFSolverFn(testRepoID2),
 			"/api/v0/projects/depsolve/fish?distro=test-distro-2",
 			http.StatusOK,
-			fmt.Sprintf(`{"projects":[{"name":"dep-package3","epoch":7,"version":"3.0.3","release":"1.fc30","arch":"x86_64","checksum":"sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720","check_gpg":true,"repo_id":"%[1]s"},{"name":"dep-package1","epoch":0,"version":"1.33","release":"2.fc30","arch":"x86_64","checksum":"sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893","check_gpg":true,"repo_id":"%[1]s"},{"name":"dep-package2","epoch":0,"version":"2.9","release":"1.fc30","arch":"x86_64","checksum":"sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2","check_gpg":true,"repo_id":"%[1]s"}]}`, testRepoID2),
+			fmt.Sprintf(`{"projects":[{"name":"dep-package3","epoch":7,"version":"3.0.3","release":"1.fc30","arch":"x86_64","checksum":"sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720","check_gpg":true,"remote_location":"https://pkg3.example.com/3.0.3-1.fc30.x86_64.rpm","repo_id":"%[1]s"},{"name":"dep-package1","epoch":0,"version":"1.33","release":"2.fc30","arch":"x86_64","checksum":"sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893","check_gpg":true,"remote_location":"https://pkg1.example.com/1.33-2.fc30.x86_64.rpm","repo_id":"%[1]s"},{"name":"dep-package2","epoch":0,"version":"2.9","release":"1.fc30","arch":"x86_64","checksum":"sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2","check_gpg":true,"remote_location":"https://pkg2.example.com/2.9-1.fc30.x86_64.rpm","repo_id":"%[1]s"}]}`, testRepoID2),
 		},
 		{
 			rpmmd_mock.BadDepsolve,
@@ -2544,7 +2544,7 @@ func TestComposePOST_ImageTypeDenylist(t *testing.T) {
 				},
 			},
 		},
-		Packages: weldrtypes.RPMMDPackageSpecListToDepsolvedPackageInfoList(depsolvednf_mock.BaseDepsolveResult(testRepoID)),
+		Packages: weldrtypes.RPMMDPackageListToDepsolvedPackageInfoList(depsolvednf_mock.BaseDepsolveResult(testRepoID)),
 	}
 
 	expectedComposeLocal2 := &weldrtypes.Compose{
@@ -2574,7 +2574,7 @@ func TestComposePOST_ImageTypeDenylist(t *testing.T) {
 				},
 			},
 		},
-		Packages: weldrtypes.RPMMDPackageSpecListToDepsolvedPackageInfoList(depsolvednf_mock.BaseDepsolveResult(testRepoID)),
+		Packages: weldrtypes.RPMMDPackageListToDepsolvedPackageInfoList(depsolvednf_mock.BaseDepsolveResult(testRepoID)),
 	}
 
 	var cases = []struct {
@@ -2732,7 +2732,7 @@ func TestExpandBlueprintNoGlob(t *testing.T) {
 		{Name: "grub2", Version: "*"},
 	}
 	// Sorted list of dependencies
-	dependencies := []rpmmd.PackageSpec{
+	dependencies := []weldrtypes.DepsolvedPackageInfo{
 		{
 			Name:    "grub2",
 			Epoch:   1,
@@ -2773,7 +2773,7 @@ func TestExpandBlueprintError(t *testing.T) {
 		{Name: "dep-package0", Version: "*"},
 	}
 	// Sorted list of dependencies
-	dependencies := []rpmmd.PackageSpec{
+	dependencies := []weldrtypes.DepsolvedPackageInfo{
 		{
 			Name:    "openssh-server",
 			Epoch:   0,
@@ -2802,7 +2802,7 @@ func TestExpandBlueprintGlobs(t *testing.T) {
 		{Name: "test-*", Version: "*"},
 	}
 	// Sorted list of dependencies
-	dependencies := []rpmmd.PackageSpec{
+	dependencies := []weldrtypes.DepsolvedPackageInfo{
 		{
 			Name:    "openssh-clients",
 			Epoch:   0,

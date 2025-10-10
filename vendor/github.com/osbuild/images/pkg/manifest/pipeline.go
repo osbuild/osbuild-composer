@@ -56,7 +56,7 @@ type Pipeline interface {
 
 	// getPackageSpecs returns the list of specifications for packages that
 	// will be installed to the pipeline tree.
-	getPackageSpecs() []rpmmd.PackageSpec
+	getPackageSpecs() rpmmd.PackageList
 	// getContainerSpecs returns the list of specifications for the containers
 	// that will be installed to the pipeline tree.
 	getContainerSpecs() []container.Spec
@@ -136,8 +136,8 @@ func (p Base) getOSTreeCommitSources() []ostree.SourceSpec {
 	return nil
 }
 
-func (p Base) getPackageSpecs() []rpmmd.PackageSpec {
-	return []rpmmd.PackageSpec{}
+func (p Base) getPackageSpecs() rpmmd.PackageList {
+	return nil
 }
 
 func (p Base) getOSTreeCommits() []ostree.CommitSpec {

@@ -25,7 +25,7 @@ type OSTreeCommitServer struct {
 
 	platform        platform.Platform
 	repos           []rpmmd.RepoConfig
-	packageSpecs    []rpmmd.PackageSpec
+	packageSpecs    rpmmd.PackageList
 	commitPipeline  *OSTreeCommit
 	nginxConfigPath string
 	listenPort      string
@@ -76,7 +76,7 @@ func (p *OSTreeCommitServer) getBuildPackages(Distro) ([]string, error) {
 	return packages, nil
 }
 
-func (p *OSTreeCommitServer) getPackageSpecs() []rpmmd.PackageSpec {
+func (p *OSTreeCommitServer) getPackageSpecs() rpmmd.PackageList {
 	return p.packageSpecs
 }
 

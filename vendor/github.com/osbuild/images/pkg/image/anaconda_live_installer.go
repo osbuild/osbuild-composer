@@ -85,7 +85,7 @@ func (img *AnacondaLiveInstaller) InstantiateManifest(m *manifest.Manifest,
 		"rhgb",
 	}
 
-	kernelOpts = append(kernelOpts, img.InstallerCustomizations.AdditionalKernelOpts...)
+	kernelOpts = append(kernelOpts, img.InstallerCustomizations.KernelOptionsAppend...)
 
 	bootTreePipeline.KernelOpts = kernelOpts
 

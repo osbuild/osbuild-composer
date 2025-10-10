@@ -25,7 +25,7 @@ type CoreOSInstaller struct {
 
 	platform     platform.Platform
 	repos        []rpmmd.RepoConfig
-	packageSpecs []rpmmd.PackageSpec
+	packageSpecs rpmmd.PackageList
 	kernelName   string
 	kernelVer    string
 	product      string
@@ -138,7 +138,7 @@ func (p *CoreOSInstaller) getPackageSetChain(Distro) ([]rpmmd.PackageSet, error)
 	}, nil
 }
 
-func (p *CoreOSInstaller) getPackageSpecs() []rpmmd.PackageSpec {
+func (p *CoreOSInstaller) getPackageSpecs() rpmmd.PackageList {
 	return p.packageSpecs
 }
 
@@ -148,11 +148,11 @@ func (p *CoreOSInstaller) serializeStart(inputs Inputs) error {
 	}
 	p.packageSpecs = inputs.Depsolved.Packages
 	if p.kernelName != "" {
-		kernelPkg, err := rpmmd.GetPackage(p.packageSpecs, p.kernelName)
+		kernelPkg, err := p.packageSpecs.Package(p.kernelName)
 		if err != nil {
 			return fmt.Errorf("CoreOSInstaller: %w", err)
 		}
-		p.kernelVer = kernelPkg.GetEVRA()
+		p.kernelVer = kernelPkg.EVRA()
 	}
 	p.repos = append(p.repos, inputs.Depsolved.Repos...)
 	return nil
