@@ -24,6 +24,7 @@ import (
 
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/depsolvednf"
+	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distrofactory"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/ostree"
@@ -156,26 +157,39 @@ func (s *Server) Shutdown() {
 	s.goroutinesGroup.Wait()
 }
 
-func (s *Server) enqueueCompose(irs []imageRequest, channel string) (uuid.UUID, error) {
-	var id uuid.UUID
-	if len(irs) != 1 {
-		return id, HTTPError(ErrorInvalidNumberOfImageBuilds)
-	}
-	ir := irs[0]
+type manifestJobDependencies struct {
+	depsolveJobID         uuid.UUID
+	containerResolveJobID uuid.UUID
+	ostreeResolveJobID    uuid.UUID
+}
 
-	// shortcuts
-	arch := ir.imageType.Arch()
+// IDs returns a slice of the non-nil job IDs.
+func (mjd manifestJobDependencies) IDs() []uuid.UUID {
+	var ids []uuid.UUID
+	if mjd.depsolveJobID != uuid.Nil {
+		ids = append(ids, mjd.depsolveJobID)
+	}
+	if mjd.containerResolveJobID != uuid.Nil {
+		ids = append(ids, mjd.containerResolveJobID)
+	}
+	if mjd.ostreeResolveJobID != uuid.Nil {
+		ids = append(ids, mjd.ostreeResolveJobID)
+	}
+	return ids
+}
+
+// enqueueResolveJobs adds all the necessary content resolve jobs for the
+// manifest to the queue and returns a [manifestJobDependencies] that holds
+// resolve job IDs by type.
+func (s *Server) enqueueResolveJobs(manifestSource *manifest.Manifest, it distro.ImageType, channel string) (manifestJobDependencies, error) {
+	var jobDependencies manifestJobDependencies
+
+	arch := it.Arch()
 	distribution := arch.Distro()
-
-	manifestSource, _, err := ir.imageType.Manifest(&ir.blueprint, ir.imageOptions, ir.repositories, &ir.manifestSeed)
-	if err != nil {
-		logrus.Warningf("ErrorEnqueueingJob, failed generating manifest: %v", err)
-		return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
-	}
 
 	pkgSetChains, err := manifestSource.GetPackageSetChains()
 	if err != nil {
-		return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
+		return jobDependencies, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
 	}
 	depsolveJobID, err := s.workers.EnqueueDepsolve(&worker.DepsolveJob{
 		PackageSets:      pkgSetChains,
@@ -185,11 +199,10 @@ func (s *Server) enqueueCompose(irs []imageRequest, channel string) (uuid.UUID, 
 		SbomType:         sbom.StandardTypeSpdx,
 	}, channel)
 	if err != nil {
-		return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
+		return jobDependencies, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
 	}
-	dependencies := []uuid.UUID{depsolveJobID}
+	jobDependencies.depsolveJobID = depsolveJobID
 
-	var containerResolveJobID uuid.UUID
 	containerSources := manifestSource.GetContainerSourceSpecs()
 	if len(containerSources) > 1 {
 		// only one pipeline can embed containers
@@ -197,7 +210,7 @@ func (s *Server) enqueueCompose(irs []imageRequest, channel string) (uuid.UUID, 
 		for name := range containerSources {
 			pipelines = append(pipelines, name)
 		}
-		return id, HTTPErrorWithInternal(ErrorEnqueueingJob, fmt.Errorf("manifest returned %d pipelines with containers (at most 1 is supported): %s", len(containerSources), strings.Join(pipelines, ", ")))
+		return jobDependencies, HTTPErrorWithInternal(ErrorEnqueueingJob, fmt.Errorf("manifest returned %d pipelines with containers (at most 1 is supported): %s", len(containerSources), strings.Join(pipelines, ", ")))
 	}
 
 	for _, sources := range containerSources {
@@ -215,17 +228,15 @@ func (s *Server) enqueueCompose(irs []imageRequest, channel string) (uuid.UUID, 
 			Specs: workerResolveSpecs,
 		}
 
-		jobId, err := s.workers.EnqueueContainerResolveJob(&job, channel)
+		containerResolveJobID, err := s.workers.EnqueueContainerResolveJob(&job, channel)
 		if err != nil {
-			return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
+			return jobDependencies, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
 		}
 
-		containerResolveJobID = jobId
-		dependencies = append(dependencies, containerResolveJobID)
+		jobDependencies.containerResolveJobID = containerResolveJobID
 		break // there can be only one
 	}
 
-	var ostreeResolveJobID uuid.UUID
 	commitSources := manifestSource.GetOSTreeSourceSpecs()
 	if len(commitSources) > 1 {
 		// only one pipeline can specify an ostree commit for content
@@ -233,7 +244,7 @@ func (s *Server) enqueueCompose(irs []imageRequest, channel string) (uuid.UUID, 
 		for name := range commitSources {
 			pipelines = append(pipelines, name)
 		}
-		return id, HTTPErrorWithInternal(ErrorEnqueueingJob, fmt.Errorf("manifest returned %d pipelines with ostree commits (at most 1 is supported): %s", len(commitSources), strings.Join(pipelines, ", ")))
+		return jobDependencies, HTTPErrorWithInternal(ErrorEnqueueingJob, fmt.Errorf("manifest returned %d pipelines with ostree commits (at most 1 is supported): %s", len(commitSources), strings.Join(pipelines, ", ")))
 	}
 	for _, sources := range commitSources {
 		workerResolveSpecs := make([]worker.OSTreeResolveSpec, len(sources))
@@ -246,22 +257,44 @@ func (s *Server) enqueueCompose(irs []imageRequest, channel string) (uuid.UUID, 
 			}
 
 		}
-		jobID, err := s.workers.EnqueueOSTreeResolveJob(&worker.OSTreeResolveJob{Specs: workerResolveSpecs}, channel)
+		ostreeResolveJobID, err := s.workers.EnqueueOSTreeResolveJob(&worker.OSTreeResolveJob{Specs: workerResolveSpecs}, channel)
 		if err != nil {
-			return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
+			return jobDependencies, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
 		}
 
-		ostreeResolveJobID = jobID
-		dependencies = append(dependencies, ostreeResolveJobID)
+		jobDependencies.ostreeResolveJobID = ostreeResolveJobID
 		break // there can be only one
 	}
 
-	manifestJobID, err := s.workers.EnqueueManifestJobByID(&worker.ManifestJobByID{}, dependencies, channel)
+	return jobDependencies, nil
+}
+
+func (s *Server) enqueueCompose(irs []imageRequest, channel string) (uuid.UUID, error) {
+	var id uuid.UUID
+	if len(irs) != 1 {
+		return id, HTTPError(ErrorInvalidNumberOfImageBuilds)
+	}
+	ir := irs[0]
+
+	manifestSource, _, err := ir.imageType.Manifest(&ir.blueprint, ir.imageOptions, ir.repositories, &ir.manifestSeed)
 	if err != nil {
+		logrus.Warningf("ErrorEnqueueingJob, failed generating manifest: %v", err)
 		return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
 	}
 
-	id, err = s.workers.EnqueueOSBuildAsDependency(arch.Name(), &worker.OSBuildJob{
+	dependencies, err := s.enqueueResolveJobs(manifestSource, ir.imageType, channel)
+	if err != nil {
+		logrus.Warningf("ErrorEnqueueingJob, failed creating resolve jobs: %v", err)
+		return id, err
+	}
+
+	manifestJobID, err := s.workers.EnqueueManifestJobByID(&worker.ManifestJobByID{}, dependencies.IDs(), channel)
+	if err != nil {
+		logrus.Warningf("ErrorEnqueueingJob, failed creating manifest job (ByID): %v", err)
+		return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
+	}
+
+	id, err = s.workers.EnqueueOSBuildAsDependency(ir.imageType.Arch().Name(), &worker.OSBuildJob{
 		Targets: ir.targets,
 		PipelineNames: &worker.PipelineNames{
 			Build:   manifestSource.BuildPipelines(),
@@ -269,12 +302,13 @@ func (s *Server) enqueueCompose(irs []imageRequest, channel string) (uuid.UUID, 
 		},
 	}, []uuid.UUID{manifestJobID}, channel)
 	if err != nil {
+		logrus.Warningf("ErrorEnqueueingJob, failed creating osbuild job: %v", err)
 		return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
 	}
 
 	s.goroutinesGroup.Add(1)
 	go func() {
-		serializeManifestFunc(s.goroutinesCtx, manifestSource, s.workers, depsolveJobID, containerResolveJobID, ostreeResolveJobID, manifestJobID, ir.manifestSeed)
+		serializeManifestFunc(s.goroutinesCtx, manifestSource, s.workers, dependencies, manifestJobID, ir.manifestSeed)
 		defer s.goroutinesGroup.Done()
 	}()
 
@@ -282,6 +316,7 @@ func (s *Server) enqueueCompose(irs []imageRequest, channel string) (uuid.UUID, 
 }
 
 func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, release string, irs []imageRequest, channel string) (uuid.UUID, error) {
+	var jobDependencies manifestJobDependencies
 	var id uuid.UUID
 	kojiDirectory := "osbuild-cg/osbuild-composer-koji-" + uuid.New().String()
 
@@ -323,7 +358,7 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 		if err != nil {
 			return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
 		}
-		dependencies := []uuid.UUID{depsolveJobID}
+		jobDependencies.depsolveJobID = depsolveJobID
 
 		var containerResolveJobID uuid.UUID
 		containerSources := manifestSource.GetContainerSourceSpecs()
@@ -357,7 +392,7 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 			}
 
 			containerResolveJobID = jobId
-			dependencies = append(dependencies, containerResolveJobID)
+			jobDependencies.containerResolveJobID = containerResolveJobID
 			break // there can be only one
 		}
 
@@ -387,11 +422,11 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 			}
 
 			ostreeResolveJobID = jobID
-			dependencies = append(dependencies, ostreeResolveJobID)
+			jobDependencies.ostreeResolveJobID = ostreeResolveJobID
 			break // there can be only one
 		}
 
-		manifestJobID, err := s.workers.EnqueueManifestJobByID(&worker.ManifestJobByID{}, dependencies, channel)
+		manifestJobID, err := s.workers.EnqueueManifestJobByID(&worker.ManifestJobByID{}, jobDependencies.IDs(), channel)
 		if err != nil {
 			return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
 		}
@@ -437,7 +472,7 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 		// copy the image request while passing it into the goroutine to prevent data races
 		s.goroutinesGroup.Add(1)
 		go func(ir imageRequest) {
-			serializeManifestFunc(s.goroutinesCtx, manifestSource, s.workers, depsolveJobID, containerResolveJobID, ostreeResolveJobID, manifestJobID, ir.manifestSeed)
+			serializeManifestFunc(s.goroutinesCtx, manifestSource, s.workers, jobDependencies, manifestJobID, ir.manifestSeed)
 			defer s.goroutinesGroup.Done()
 		}(ir)
 	}
@@ -458,7 +493,7 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 	return id, nil
 }
 
-func serializeManifest(ctx context.Context, manifestSource *manifest.Manifest, workers *worker.Server, depsolveJobID, containerResolveJobID, ostreeResolveJobID, manifestJobID uuid.UUID, seed int64) {
+func serializeManifest(ctx context.Context, manifestSource *manifest.Manifest, workers *worker.Server, dependencies manifestJobDependencies, manifestJobID uuid.UUID, seed int64) {
 	// prepared to become a config variable
 	ctx, cancel := context.WithTimeout(ctx, time.Minute*depsolveTimeoutMin)
 	defer cancel()
@@ -490,9 +525,9 @@ func serializeManifest(ctx context.Context, manifestSource *manifest.Manifest, w
 					Name string
 					ID   uuid.UUID
 				}{
-					{"depsolve", depsolveJobID},
-					{"containerResolve", containerResolveJobID},
-					{"ostreeResolve", ostreeResolveJobID},
+					{"depsolve", dependencies.depsolveJobID},
+					{"containerResolve", dependencies.containerResolveJobID},
+					{"ostreeResolve", dependencies.ostreeResolveJobID},
 					{"manifest", manifestJobID},
 				}
 
@@ -575,7 +610,7 @@ func serializeManifest(ctx context.Context, manifestSource *manifest.Manifest, w
 		return
 	}
 
-	_, err = workers.DepsolveJobInfo(depsolveJobID, &depsolveResults)
+	_, err = workers.DepsolveJobInfo(dependencies.depsolveJobID, &depsolveResults)
 	if err != nil {
 		reason := "Error reading depsolve status"
 		jobResult.JobError = clienterrors.New(clienterrors.ErrorReadingJobStatus, reason, nil)
@@ -597,10 +632,10 @@ func serializeManifest(ctx context.Context, manifestSource *manifest.Manifest, w
 	}
 
 	var containerSpecs map[string][]container.Spec
-	if containerResolveJobID != uuid.Nil {
+	if dependencies.containerResolveJobID != uuid.Nil {
 		// Container resolve job
 		var result worker.ContainerResolveJobResult
-		_, err := workers.ContainerResolveJobInfo(containerResolveJobID, &result)
+		_, err := workers.ContainerResolveJobInfo(dependencies.containerResolveJobID, &result)
 
 		if err != nil {
 			reason := "Error reading container resolve job status"
@@ -640,9 +675,9 @@ func serializeManifest(ctx context.Context, manifestSource *manifest.Manifest, w
 	}
 
 	var ostreeCommitSpecs map[string][]ostree.CommitSpec
-	if ostreeResolveJobID != uuid.Nil {
+	if dependencies.ostreeResolveJobID != uuid.Nil {
 		var result worker.OSTreeResolveJobResult
-		_, err := workers.OSTreeResolveJobInfo(ostreeResolveJobID, &result)
+		_, err := workers.OSTreeResolveJobInfo(dependencies.ostreeResolveJobID, &result)
 
 		if err != nil {
 			reason := "Error reading ostree resolve job status"
