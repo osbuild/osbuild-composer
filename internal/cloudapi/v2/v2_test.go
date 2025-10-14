@@ -899,7 +899,7 @@ func TestComposeManifests(t *testing.T) {
 
 			// Override the serialize manifest func to allow simulating various job states
 			// This is the only way to do it, because of the way the manifest job is handled.
-			serializeManifestFunc := func(ctx context.Context, manifestSource *manifest.Manifest, workers *worker.Server, depsolveJobID, containerResolveJobID, ostreeResolveJobID, manifestJobID uuid.UUID, seed int64) {
+			serializeManifestFunc := func(ctx context.Context, manifestSource *manifest.Manifest, workers *worker.Server, dependencies v2.ManifestJobDependencies, manifestJobID uuid.UUID, seed int64) {
 				var token uuid.UUID
 				var err error
 				// wait until job is in a pending state
