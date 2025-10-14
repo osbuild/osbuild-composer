@@ -326,6 +326,13 @@ func (s *Server) JobDependencyChainErrors(id uuid.UUID) (*clienterrors.Error, er
 			return nil, err
 		}
 		jobResult = &ostreeResolveJR.JobResult
+	case JobTypeImageBuilderManifest:
+		var ibManifestJR ImageBuilderManifestJobResult
+		jobInfo, err = s.ImageBuilderManifestJobInfo(id, &ibManifestJR)
+		if err != nil {
+			return nil, err
+		}
+		jobResult = &ibManifestJR.JobResult
 
 	default:
 		return nil, fmt.Errorf("unexpected job type: %s", jobType)
@@ -570,6 +577,19 @@ func (s *Server) AWSEC2ShareJobInfo(id uuid.UUID, result *AWSEC2ShareJobResult) 
 
 	if jobInfo.JobType != JobTypeAWSEC2Share {
 		return nil, fmt.Errorf("expected %q, found %q job instead", JobTypeAWSEC2Share, jobInfo.JobType)
+	}
+
+	return jobInfo, nil
+}
+
+func (s *Server) ImageBuilderManifestJobInfo(id uuid.UUID, result *ImageBuilderManifestJobResult) (*JobInfo, error) {
+	jobInfo, err := s.jobInfo(id, result)
+	if err != nil {
+		return nil, err
+	}
+
+	if jobInfo.JobType != JobTypeImageBuilderManifest {
+		return nil, fmt.Errorf("expected %q, found %q job instead", JobTypeImageBuilderManifest, jobInfo.JobType)
 	}
 
 	return jobInfo, nil
@@ -972,6 +992,13 @@ func (s *Server) RequeueOrFinishJob(token uuid.UUID, maxRetries uint64, result j
 			return err
 		}
 		jobResult = &ostreeResolveJR.JobResult
+	case JobTypeImageBuilderManifest:
+		var ibManifestJR ImageBuilderManifestJobResult
+		jobInfo, err = s.ImageBuilderManifestJobInfo(jobId, &ibManifestJR)
+		if err != nil {
+			return err
+		}
+		jobResult = &ibManifestJR.JobResult
 
 	default:
 		return fmt.Errorf("unexpected job type: %s", jobType)
