@@ -46,7 +46,7 @@ cat <<EOF | tee "${EXTRA_COMPOSER_CONF}"
 # overrides the default rhel-8 alias
 [distro_aliases]
 rhel-8 = "rhel-8.8"
-rhel-9 = "rhel-9.7"
+rhel-9 = "rhel-9.8"
 EOF
 
 # Provision the software under test.
