@@ -316,7 +316,6 @@ func (s *Server) enqueueCompose(irs []imageRequest, channel string) (uuid.UUID, 
 }
 
 func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, release string, irs []imageRequest, channel string) (uuid.UUID, error) {
-	var jobDependencies manifestJobDependencies
 	var id uuid.UUID
 	kojiDirectory := "osbuild-cg/osbuild-composer-koji-" + uuid.New().String()
 
@@ -334,108 +333,30 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 	var buildIDs []uuid.UUID
 	for idx, ir := range irs {
 
-		// shortcuts
-		arch := ir.imageType.Arch()
-		distribution := arch.Distro()
-
 		manifestSource, _, err := ir.imageType.Manifest(&ir.blueprint, ir.imageOptions, ir.repositories, &irs[idx].manifestSeed)
 		if err != nil {
 			logrus.Errorf("ErrorEnqueueingJob, failed generating manifest: %v", err)
 			return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
 		}
 
-		pkgSetChains, err := manifestSource.GetPackageSetChains()
+		dependencies, err := s.enqueueResolveJobs(manifestSource, ir.imageType, channel)
+		if err != nil {
+			logrus.Warningf("ErrorEnqueueingJob, failed creating resolve jobs: %v", err)
+			return id, err
+		}
+
+		manifestJobID, err := s.workers.EnqueueManifestJobByID(&worker.ManifestJobByID{}, dependencies.IDs(), channel)
 		if err != nil {
 			return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
 		}
-		depsolveJobID, err := s.workers.EnqueueDepsolve(&worker.DepsolveJob{
-			PackageSets:      pkgSetChains,
-			ModulePlatformID: distribution.ModulePlatformID(),
-			Arch:             arch.Name(),
-			Releasever:       distribution.Releasever(),
-			SbomType:         sbom.StandardTypeSpdx,
-		}, channel)
-		if err != nil {
-			return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
-		}
-		jobDependencies.depsolveJobID = depsolveJobID
 
-		var containerResolveJobID uuid.UUID
-		containerSources := manifestSource.GetContainerSourceSpecs()
-		if len(containerSources) > 1 {
-			// only one pipeline can embed containers
-			pipelines := make([]string, 0, len(containerSources))
-			for name := range containerSources {
-				pipelines = append(pipelines, name)
-			}
-			return id, HTTPErrorWithInternal(ErrorEnqueueingJob, fmt.Errorf("manifest returned %d pipelines with containers (at most 1 is supported): %s", len(containerSources), strings.Join(pipelines, ", ")))
-		}
-
-		for _, sources := range containerSources {
-			workerResolveSpecs := make([]worker.ContainerSpec, len(sources))
-			for idx, source := range sources {
-				workerResolveSpecs[idx] = worker.ContainerSpec{
-					Source:    source.Source,
-					Name:      source.Name,
-					TLSVerify: source.TLSVerify,
-				}
-			}
-
-			job := worker.ContainerResolveJob{
-				Arch:  arch.Name(),
-				Specs: workerResolveSpecs,
-			}
-
-			jobId, err := s.workers.EnqueueContainerResolveJob(&job, channel)
-			if err != nil {
-				return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
-			}
-
-			containerResolveJobID = jobId
-			jobDependencies.containerResolveJobID = containerResolveJobID
-			break // there can be only one
-		}
-
-		var ostreeResolveJobID uuid.UUID
-		commitSources := manifestSource.GetOSTreeSourceSpecs()
-		if len(commitSources) > 1 {
-			// only one pipeline can specify an ostree commit for content
-			pipelines := make([]string, 0, len(commitSources))
-			for name := range commitSources {
-				pipelines = append(pipelines, name)
-			}
-			return id, HTTPErrorWithInternal(ErrorEnqueueingJob, fmt.Errorf("manifest returned %d pipelines with ostree commits (at most 1 is supported): %s", len(commitSources), strings.Join(pipelines, ", ")))
-		}
-		for _, sources := range commitSources {
-			workerResolveSpecs := make([]worker.OSTreeResolveSpec, len(sources))
-			for idx, source := range sources {
-				// ostree.SourceSpec is directly convertible to worker.OSTreeResolveSpec
-				workerResolveSpecs[idx] = worker.OSTreeResolveSpec{
-					URL:  source.URL,
-					Ref:  source.Ref,
-					RHSM: source.RHSM,
-				}
-			}
-			jobID, err := s.workers.EnqueueOSTreeResolveJob(&worker.OSTreeResolveJob{Specs: workerResolveSpecs}, channel)
-			if err != nil {
-				return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
-			}
-
-			ostreeResolveJobID = jobID
-			jobDependencies.ostreeResolveJobID = ostreeResolveJobID
-			break // there can be only one
-		}
-
-		manifestJobID, err := s.workers.EnqueueManifestJobByID(&worker.ManifestJobByID{}, jobDependencies.IDs(), channel)
-		if err != nil {
-			return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
-		}
+		archName := ir.imageType.Arch().Name()
 		kojiFilename := fmt.Sprintf(
 			"%s-%s-%s.%s%s",
 			name,
 			version,
 			release,
-			arch.Name(),
+			archName,
 			splitExtension(ir.imageType.Filename()),
 		)
 
@@ -453,7 +374,7 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 			targets = append(targets, ir.targets...)
 		}
 
-		buildID, err := s.workers.EnqueueOSBuildAsDependency(arch.Name(), &worker.OSBuildJob{
+		buildID, err := s.workers.EnqueueOSBuildAsDependency(archName, &worker.OSBuildJob{
 			PipelineNames: &worker.PipelineNames{
 				Build:   manifestSource.BuildPipelines(),
 				Payload: manifestSource.PayloadPipelines(),
@@ -462,7 +383,7 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 			ManifestDynArgsIdx: common.ToPtr(1),
 			DepsolveDynArgsIdx: common.ToPtr(2),
 			ImageBootMode:      ir.imageType.BootMode().String(),
-		}, []uuid.UUID{initID, manifestJobID, depsolveJobID}, channel)
+		}, []uuid.UUID{initID, manifestJobID, dependencies.depsolveJobID}, channel)
 		if err != nil {
 			return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
 		}
@@ -472,7 +393,7 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 		// copy the image request while passing it into the goroutine to prevent data races
 		s.goroutinesGroup.Add(1)
 		go func(ir imageRequest) {
-			serializeManifestFunc(s.goroutinesCtx, manifestSource, s.workers, jobDependencies, manifestJobID, ir.manifestSeed)
+			serializeManifestFunc(s.goroutinesCtx, manifestSource, s.workers, dependencies, manifestJobID, ir.manifestSeed)
 			defer s.goroutinesGroup.Done()
 		}(ir)
 	}
