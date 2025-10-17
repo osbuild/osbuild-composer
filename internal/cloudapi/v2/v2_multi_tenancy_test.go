@@ -199,7 +199,7 @@ func runNextJob(t *testing.T, jobs []uuid.UUID, workerServer *worker.Server, org
 		}
 		rawDepsolveJobResult, err := json.Marshal(depsolveJobResult)
 		require.NoError(t, err)
-		result := api.UpdateJobRequest{
+		result := api.UpdateJobResult{
 			Result: json.RawMessage(rawDepsolveJobResult),
 		}
 		requestBody, err = json.Marshal(result)

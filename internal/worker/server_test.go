@@ -253,6 +253,19 @@ func TestUpdate(t *testing.T) {
 	require.Equal(t, float64(0), promtest.ToFloat64(prometheus.PendingJobs))
 	require.Equal(t, float64(1), promtest.ToFloat64(prometheus.RunningJobs))
 
+	// jobs can be updated multiple times...
+	test.TestRoute(t, handler, false, "PATCH", fmt.Sprintf("/api/worker/v1/jobs/%s", token), `{"partial":{"upload_status":""}}`, http.StatusOK,
+		fmt.Sprintf(`{"href":"/api/worker/v1/jobs/%s","id":"%s","kind":"UpdateJobResponse"}`, token, token))
+	test.TestRoute(t, handler, false, "PATCH", fmt.Sprintf("/api/worker/v1/jobs/%s", token), `{"partial":{"upload_status":"partial"}}`, http.StatusOK,
+		fmt.Sprintf(`{"href":"/api/worker/v1/jobs/%s","id":"%s","kind":"UpdateJobResponse"}`, token, token))
+
+	var jobRes worker.OSBuildJobResult
+	jobInfo, err := server.OSBuildJobInfo(j, &jobRes)
+	require.NoError(t, err)
+	require.True(t, jobInfo.JobStatus.Finished.IsZero())
+	require.Equal(t, "partial", jobRes.UploadStatus)
+
+	// ...but only finished once
 	test.TestRoute(t, handler, false, "PATCH", fmt.Sprintf("/api/worker/v1/jobs/%s", token), `{}`, http.StatusOK,
 		fmt.Sprintf(`{"href":"/api/worker/v1/jobs/%s","id":"%s","kind":"UpdateJobResponse"}`, token, token))
 	require.Equal(t, float64(0), promtest.ToFloat64(prometheus.PendingJobs))
