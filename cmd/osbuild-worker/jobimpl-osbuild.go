@@ -458,6 +458,13 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 
 	// copy pipeline info to the result
 	osbuildJobResult.PipelineNames = jobArgs.PipelineNames
+	if osbuildJobResult.PipelineNames == nil {
+		// jobArgs doesn't provide the pipeline names when the manifest was
+		// generated using image-builder-cli. In this case, the manifest job
+		// result itself should have the pipeline names (under ManifestInfo)
+		// parsed from the manifest itself.
+		osbuildJobResult.PipelineNames = manifestInfo.PipelineNames
+	}
 
 	// copy the image boot mode to the result
 	osbuildJobResult.ImageBootMode = jobArgs.ImageBootMode
@@ -542,7 +549,6 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			// no pipeline output
 			continue
 		}
-		logWithId.Infof("%s pipeline results:\n", pipelineName)
 		for _, stageResult := range pipelineLog {
 			if stageResult.Success {
 				logWithId.Infof("  %s success", stageResult.Type)

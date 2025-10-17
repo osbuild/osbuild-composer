@@ -648,6 +648,12 @@ type ManifestInfo struct {
 	// List of relevant modules used by osbuild-composer which
 	// could affect the manifest content.
 	OSBuildComposerDeps []*OSBuildComposerDepModule `json:"osbuild_composer_deps,omitempty"`
+
+	// Ordered list of pipeline names in the manifest, separated into build and
+	// payload pipelines. These are parsed from the manifest itself and copied
+	// to the osbuild job result so it can properly order the osbuild job log
+	// by pipeline execution order.
+	PipelineNames *PipelineNames `json:"pipeline_names,omitempty"`
 }
 
 type ManifestJobByIDResult struct {
