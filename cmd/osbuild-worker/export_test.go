@@ -4,6 +4,7 @@ var (
 	WorkerClientErrorFrom         = workerClientErrorFrom
 	MakeJobErrorFromOsbuildOutput = makeJobErrorFromOsbuildOutput
 	Main                          = main
+	ParseManifestPipelines        = parseManifestPipelines
 )
 
 func MockRun(new func()) (restore func()) {
