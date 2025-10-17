@@ -49,6 +49,11 @@ type JobQueue interface {
 	// can be unmarshaled to the type given in Enqueue().
 	DequeueByID(ctx context.Context, id, workerID uuid.UUID) (uuid.UUID, []uuid.UUID, string, json.RawMessage, error)
 
+	// Updates the result of a job without finishing it
+	//
+	// This allows partial results to be set on a running job.
+	UpdateJobResult(id uuid.UUID, result interface{}) error
+
 	// Tries to requeue a running job by its ID
 	//
 	// If the job has reached the maxRetries number of retries already, finish the job instead.

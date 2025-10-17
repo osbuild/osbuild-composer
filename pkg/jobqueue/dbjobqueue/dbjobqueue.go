@@ -93,6 +93,10 @@ const (
                 SELECT id
                 FROM jobs
                 WHERE token = $1 AND finished_at IS NULL AND canceled = FALSE`
+	sqlUpdateJob = `
+		UPDATE jobs
+		SET result = $1
+		WHERE id = $2 AND finished_at IS NULL`
 	sqlFinishJob = `
 		UPDATE jobs
 		SET finished_at = now(), result = $1
@@ -509,6 +513,56 @@ func (q *DBJobQueue) DequeueByID(ctx context.Context, id, workerID uuid.UUID) (u
 	q.logger.Info("Dequeued job", "job_type", jobType, "job_id", id.String(), "job_dependencies", fmt.Sprintf("%+v", dependencies))
 
 	return token, dependencies, jobType, args, nil
+}
+
+func (q *DBJobQueue) UpdateJobResult(id uuid.UUID, result interface{}) error {
+	conn, err := q.pool.Acquire(context.Background())
+	if err != nil {
+		return fmt.Errorf("error connecting to database: %w", err)
+	}
+	defer conn.Release()
+
+	tx, err := conn.Begin(context.Background())
+	if err != nil {
+		return fmt.Errorf("error starting database transaction: %w", err)
+	}
+	defer func() {
+		err = tx.Rollback(context.Background())
+		if err != nil && !errors.Is(err, pgx.ErrTxClosed) {
+			q.logger.Error(err, "Error rolling back update job result transaction", "job_id", id.String())
+		}
+
+	}()
+
+	// Use double pointers for timestamps because they might be NULL, which would result in *time.Time == nil
+	var jobType string
+	var started, finished *time.Time
+	var retries uint64
+	canceled := false
+	err = tx.QueryRow(context.Background(), sqlQueryJob, id).Scan(&jobType, nil, nil, &started, &finished, &retries, &canceled)
+	if err == pgx.ErrNoRows {
+		return jobqueue.ErrNotExist
+	}
+	if canceled {
+		return jobqueue.ErrCanceled
+	}
+	if started == nil || finished != nil {
+		return jobqueue.ErrNotRunning
+	}
+
+	tag, err := tx.Exec(context.Background(), sqlUpdateJob, result, id)
+	if err == pgx.ErrNoRows || tag.RowsAffected() == 0 {
+		return jobqueue.ErrNotExist
+	}
+	if err != nil {
+		return fmt.Errorf("error finishing job %s: %w", id, err)
+	}
+
+	err = tx.Commit(context.Background())
+	if err != nil {
+		return fmt.Errorf("unable to commit database transaction: %w", err)
+	}
+	return nil
 }
 
 func (q *DBJobQueue) RequeueOrFinishJob(id uuid.UUID, maxRetries uint64, result interface{}) (bool, error) {

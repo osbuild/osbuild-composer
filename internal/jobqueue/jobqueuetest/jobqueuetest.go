@@ -51,6 +51,7 @@ func TestJobQueue(t *testing.T, makeJobQueue MakeJobQueue) {
 	t.Run("cancel", wrap(testCancel))
 	t.Run("requeue", wrap(testRequeue))
 	t.Run("requeue-limit", wrap(testRequeueLimit))
+	t.Run("update-job-result", wrap(testUpdateJobResult))
 	t.Run("escaped-null-bytes", wrap(testEscapedNullBytes))
 	t.Run("job-types", wrap(testJobTypes))
 	t.Run("dependencies", wrap(testDependencies))
@@ -505,6 +506,45 @@ func testRequeueLimit(t *testing.T, q jobqueue.JobQueue) {
 	require.NoError(t, err)
 	require.False(t, finished.IsZero())
 	require.NotNil(t, result)
+}
+
+func testUpdateJobResult(t *testing.T, q jobqueue.JobQueue) {
+	require.ErrorIs(t, q.UpdateJobResult(uuid.Nil, nil), jobqueue.ErrNotExist)
+
+	id := pushTestJob(t, q, "clownfish", nil, nil, "")
+	require.NotEmpty(t, id)
+
+	res := TestResult{
+		Logs: json.RawMessage(`{"result":"hello"}`),
+	}
+	require.ErrorIs(t, q.UpdateJobResult(id, res), jobqueue.ErrNotRunning)
+
+	_, _, _, _, _, err := q.Dequeue(context.Background(), uuid.Nil, []string{"clownfish"}, []string{""})
+	require.NoError(t, err)
+
+	require.NoError(t, q.UpdateJobResult(id, res))
+	_, _, result, _, _, finished, _, _, _, err := q.JobStatus(id)
+	require.NoError(t, err)
+	require.True(t, finished.IsZero())
+	var jsRes TestResult
+	require.NoError(t, json.Unmarshal(result, &jsRes))
+	require.Equal(t, res, jsRes)
+
+	res.Logs = json.RawMessage(`{"result":"goodbye"}`)
+	require.NoError(t, q.UpdateJobResult(id, res))
+	_, _, result, _, _, finished, _, _, _, err = q.JobStatus(id)
+	require.NoError(t, err)
+	require.True(t, finished.IsZero())
+	require.NoError(t, json.Unmarshal(result, &jsRes))
+	require.Equal(t, res, jsRes)
+
+	res.Logs = json.RawMessage(`{"result":"finished"}`)
+	requeued, err := q.RequeueOrFinishJob(id, 0, res)
+	require.NoError(t, err)
+	require.False(t, requeued)
+
+	res.Logs = json.RawMessage(`{"result":"cheeky"}`)
+	require.ErrorIs(t, q.UpdateJobResult(id, res), jobqueue.ErrNotRunning)
 }
 
 func testEscapedNullBytes(t *testing.T, q jobqueue.JobQueue) {

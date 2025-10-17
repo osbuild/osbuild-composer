@@ -297,6 +297,36 @@ func (q *fsJobQueue) DequeueByID(ctx context.Context, id, wID uuid.UUID) (uuid.U
 	return j.Token, j.Dependencies, j.Type, j.Args, nil
 }
 
+func (q *fsJobQueue) UpdateJobResult(id uuid.UUID, result interface{}) error {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+
+	j, err := q.readJob(id)
+	if err != nil {
+		return err
+	}
+
+	if j.Canceled {
+		return jobqueue.ErrCanceled
+	}
+
+	if j.StartedAt.IsZero() || !j.FinishedAt.IsZero() {
+		return jobqueue.ErrNotRunning
+	}
+
+	j.Result, err = json.Marshal(result)
+	if err != nil {
+		return fmt.Errorf("error marshaling result: %w", err)
+	}
+
+	err = q.db.Write(id.String(), j)
+	if err != nil {
+		return fmt.Errorf("error writing job %s: %w", id, err)
+	}
+
+	return nil
+}
+
 func (q *fsJobQueue) RequeueOrFinishJob(id uuid.UUID, maxRetries uint64, result interface{}) (bool, error) {
 	q.mu.Lock()
 	defer q.mu.Unlock()
