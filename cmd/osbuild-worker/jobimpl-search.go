@@ -33,7 +33,7 @@ func (impl *SearchPackagesJobImpl) Run(job worker.Job) error {
 	var result worker.SearchPackagesJobResult
 	// ALWAYS return a result
 	defer func() {
-		err := job.Update(&result)
+		err := job.Finish(&result)
 		if err != nil {
 			logWithId.Errorf("Error reporting job result: %v", err)
 		}

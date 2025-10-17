@@ -121,7 +121,7 @@ func (impl *OSTreeResolveJobImpl) Run(job worker.Job) error {
 		}
 	}
 
-	err = job.Update(&result)
+	err = job.Finish(&result)
 	if err != nil {
 		return fmt.Errorf("Error reporting job result: %v", err)
 	}

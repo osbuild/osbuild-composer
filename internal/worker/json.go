@@ -736,11 +736,3 @@ type AWSEC2CopyJobResult struct {
 	Ami    string `json:"ami"`
 	Region string `json:"region"`
 }
-
-//
-// JSON-serializable types for the client
-//
-
-type updateJobRequest struct {
-	Result interface{} `json:"result"`
-}

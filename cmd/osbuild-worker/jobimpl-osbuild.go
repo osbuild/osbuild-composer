@@ -373,7 +373,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 		}
 		validateResult(osbuildJobResult, job.Id().String())
 
-		err := job.Update(osbuildJobResult)
+		err := job.Finish(osbuildJobResult)
 		if err != nil {
 			logWithId.Errorf("Error reporting job result: %v", err)
 		}
