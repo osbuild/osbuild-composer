@@ -576,7 +576,8 @@ func (s *Server) jobInfo(id uuid.UUID, result interface{}) (*JobInfo, error) {
 		return nil, err
 	}
 
-	if result != nil && !finished.IsZero() && !canceled {
+	// rawResult is allowed to be empty for unfinished jobs
+	if result != nil && !canceled && (!finished.IsZero() || len(rawResult) > 0) {
 		err = json.Unmarshal(rawResult, result)
 		if err != nil {
 			return nil, fmt.Errorf("error unmarshaling result for job '%s': %v", id, err)
@@ -815,6 +816,30 @@ func (s *Server) requestJob(ctx context.Context, arch string, jobTypes []string,
 	prometheus.DequeueJobMetrics(pending, jobInfo.JobStatus.Started, jobInfo.JobType, jobInfo.Channel, archPromLabel)
 
 	return
+}
+
+func (s *Server) UpdateJobResult(token uuid.UUID, partial json.RawMessage) error {
+	jobId, err := s.jobs.IdFromToken(token)
+	if err != nil {
+		switch err {
+		case jobqueue.ErrNotExist:
+			return ErrInvalidToken
+		default:
+			return err
+		}
+	}
+
+	err = s.jobs.UpdateJobResult(jobId, partial)
+	if err != nil {
+		switch err {
+		case jobqueue.ErrNotRunning:
+			return ErrJobNotRunning
+		default:
+			return fmt.Errorf("error updating job: %w", err)
+		}
+	}
+
+	return nil
 }
 
 func (s *Server) FinishJob(token uuid.UUID, result json.RawMessage) error {
@@ -1139,7 +1164,22 @@ func (h *apiHandlers) UpdateJob(ctx echo.Context, idstr string) error {
 		return err
 	}
 
-	err = h.server.FinishJob(token, body.Result)
+	result, err := body.AsUpdateJobResult()
+	if err != nil {
+		return err
+	}
+
+	partial, err := body.AsUpdateJobPartial()
+	if err != nil {
+		return err
+	}
+
+	// finishing a job without results are allowed for backwards compatibility
+	if len(partial.Partial) > 0 {
+		err = h.server.UpdateJobResult(token, partial.Partial)
+	} else {
+		err = h.server.FinishJob(token, result.Result)
+	}
 	if err != nil {
 		switch err {
 		case ErrInvalidToken:
@@ -1147,6 +1187,9 @@ func (h *apiHandlers) UpdateJob(ctx echo.Context, idstr string) error {
 		case ErrJobNotRunning:
 			return api.HTTPError(api.ErrorJobNotRunning)
 		default:
+			if len(partial.Partial) > 0 {
+				return api.HTTPErrorWithInternal(api.ErrorUpdatingJob, err)
+			}
 			return api.HTTPErrorWithInternal(api.ErrorFinishingJob, err)
 		}
 	}

@@ -92,13 +92,23 @@ type StatusResponse struct {
 	Status string `json:"status"`
 }
 
+// UpdateJobPartial defines model for UpdateJobPartial.
+type UpdateJobPartial struct {
+	Partial json.RawMessage `json:"partial"`
+}
+
 // UpdateJobRequest defines model for UpdateJobRequest.
 type UpdateJobRequest struct {
-	Result json.RawMessage `json:"result"`
+	union json.RawMessage
 }
 
 // UpdateJobResponse defines model for UpdateJobResponse.
 type UpdateJobResponse = ObjectReference
+
+// UpdateJobResult defines model for UpdateJobResult.
+type UpdateJobResult struct {
+	Result json.RawMessage `json:"result"`
+}
 
 // RequestJobJSONRequestBody defines body for RequestJob for application/json ContentType.
 type RequestJobJSONRequestBody = RequestJobRequest
@@ -108,6 +118,68 @@ type UpdateJobJSONRequestBody = UpdateJobRequest
 
 // PostWorkersJSONRequestBody defines body for PostWorkers for application/json ContentType.
 type PostWorkersJSONRequestBody = PostWorkersRequest
+
+// AsUpdateJobResult returns the union data inside the UpdateJobRequest as a UpdateJobResult
+func (t UpdateJobRequest) AsUpdateJobResult() (UpdateJobResult, error) {
+	var body UpdateJobResult
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromUpdateJobResult overwrites any union data inside the UpdateJobRequest as the provided UpdateJobResult
+func (t *UpdateJobRequest) FromUpdateJobResult(v UpdateJobResult) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeUpdateJobResult performs a merge with any union data inside the UpdateJobRequest, using the provided UpdateJobResult
+func (t *UpdateJobRequest) MergeUpdateJobResult(v UpdateJobResult) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsUpdateJobPartial returns the union data inside the UpdateJobRequest as a UpdateJobPartial
+func (t UpdateJobRequest) AsUpdateJobPartial() (UpdateJobPartial, error) {
+	var body UpdateJobPartial
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromUpdateJobPartial overwrites any union data inside the UpdateJobRequest as the provided UpdateJobPartial
+func (t *UpdateJobRequest) FromUpdateJobPartial(v UpdateJobPartial) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeUpdateJobPartial performs a merge with any union data inside the UpdateJobRequest, using the provided UpdateJobPartial
+func (t *UpdateJobRequest) MergeUpdateJobPartial(v UpdateJobPartial) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t UpdateJobRequest) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *UpdateJobRequest) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
@@ -314,31 +386,32 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
+	"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",
+	"LcEcn2kkanmO2NaH2/XfAQAA///1vRKCORwAAA==",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

@@ -333,11 +333,22 @@ components:
           canceled:
             type: boolean
     UpdateJobRequest:
+      oneOf:
+      - $ref: '#/components/schemas/UpdateJobResult'
+      - $ref: '#/components/schemas/UpdateJobPartial'
+    UpdateJobResult:
       type: object
       required:
         - result
       properties:
         result:
+          x-go-type: json.RawMessage
+    UpdateJobPartial:
+      type: object
+      required:
+        - partial
+      properties:
+        partial:
           x-go-type: json.RawMessage
     UpdateJobResponse:
       $ref: '#/components/schemas/ObjectReference'

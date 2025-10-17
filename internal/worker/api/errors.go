@@ -25,6 +25,7 @@ const (
 	ErrorTenantNotFound       ServiceErrorCode = 16
 	ErrorMalformedWorkerId    ServiceErrorCode = 17
 	ErrorWorkerIdNotFound     ServiceErrorCode = 18
+	ErrorInvalidContent       ServiceErrorCode = 19
 
 	// internal errors
 	ErrorDiscardingArtifact       ServiceErrorCode = 1000
@@ -37,6 +38,7 @@ const (
 	ErrorFailedLoadingOpenAPISpec ServiceErrorCode = 1007
 	ErrorInsertingWorker          ServiceErrorCode = 1008
 	ErrorUpdatingWorkerStatus     ServiceErrorCode = 1009
+	ErrorUpdatingJob              ServiceErrorCode = 1010
 
 	// Errors contained within this file
 	ErrorUnspecified          ServiceErrorCode = 10000
@@ -72,6 +74,7 @@ func getServiceErrors() serviceErrors {
 		serviceError{ErrorTenantNotFound, http.StatusBadRequest, "Tenant not found in JWT claims"},
 		serviceError{ErrorMalformedWorkerId, http.StatusBadRequest, "Given worker id is not a uuidv4"},
 		serviceError{ErrorWorkerIdNotFound, http.StatusBadRequest, "Given worker id doesn't exist"},
+		serviceError{ErrorInvalidContent, http.StatusBadRequest, "Content of body is not valid"},
 
 		serviceError{ErrorDiscardingArtifact, http.StatusInternalServerError, "Error discarding artifact"},
 		serviceError{ErrorCreatingArtifact, http.StatusInternalServerError, "Error creating artifact"},
@@ -83,6 +86,7 @@ func getServiceErrors() serviceErrors {
 		serviceError{ErrorFailedLoadingOpenAPISpec, http.StatusInternalServerError, "Unable to load openapi spec"},
 		serviceError{ErrorInsertingWorker, http.StatusInternalServerError, "Unable to register the worker"},
 		serviceError{ErrorUpdatingWorkerStatus, http.StatusInternalServerError, "Unable update worker status"},
+		serviceError{ErrorUpdatingJob, http.StatusInternalServerError, "Error updating job"},
 
 		serviceError{ErrorUnspecified, http.StatusInternalServerError, "Unspecified internal error "},
 		serviceError{ErrorNotHTTPError, http.StatusInternalServerError, "Error is not an instance of HTTPError"},
