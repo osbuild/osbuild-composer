@@ -360,7 +360,7 @@ func (s *Server) enqueueComposeIBCLI(irs []imageRequest, channel string) (uuid.U
 	osbuildJobID, err = s.workers.EnqueueOSBuildAsDependency(arch.Name(),
 		&worker.OSBuildJob{
 			Targets:       ir.targets,
-			PipelineNames: nil,
+			PipelineNames: nil, // NOTE: the manifest job result provides these when they're not available from the osbuild job args
 		}, []uuid.UUID{manifestJobID}, channel)
 	if err != nil {
 		return osbuildJobID, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
