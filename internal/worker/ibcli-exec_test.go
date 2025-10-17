@@ -1,6 +1,8 @@
 package worker_test
 
 import (
+	"encoding/json"
+	"io"
 	"os"
 	"os/exec"
 	"slices"
@@ -85,10 +87,32 @@ func TestRunImageBuilderManifestCall(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			assert := assert.New(t)
 
+			expCall := tc.expCall
+
 			var actualCall []string
 			var cmd *exec.Cmd
 			worker.MockExecCommand(func(name string, arg ...string) *exec.Cmd {
 				actualCall = append([]string{name}, arg...)
+
+				// The blueprint path is a random temporary directory, so let's
+				// search for it and replace the path in the expected args.
+				// Also, load the blueprint contents to compare them with the
+				// original from the test case.
+				var onDiskBP *blueprint.Blueprint
+				bpPathIdx := slices.Index(actualCall, "--blueprint") + 1
+				if bpPathIdx > 0 {
+					bpPath := actualCall[bpPathIdx]
+					expCall[bpPathIdx] = bpPath
+
+					bpFile, err := os.Open(bpPath)
+					assert.NoError(err)
+					defer bpFile.Close()
+
+					bpFileContents, err := io.ReadAll(bpFile)
+					assert.NoError(err)
+					assert.NoError(json.Unmarshal(bpFileContents, &onDiskBP))
+				}
+				assert.Equal(tc.args.Blueprint, onDiskBP)
 
 				// return a real exec.Command() result so that the output
 				// buffer reading doesn't fail
@@ -97,15 +121,6 @@ func TestRunImageBuilderManifestCall(t *testing.T) {
 			})
 
 			_, _ = worker.RunImageBuilderManifest(tc.args, tc.extraEnv, os.Stderr)
-
-			expCall := tc.expCall
-			// The blueprint path is a random temporary directory, so let's
-			// search for it and use it in the expected args
-			bpPathIdx := slices.Index(actualCall, "--blueprint") + 1
-			if bpPathIdx > 0 {
-				bpPath := actualCall[bpPathIdx]
-				expCall[bpPathIdx] = bpPath
-			}
 
 			assert.Equal(expCall, actualCall)
 			assert.Subset(cmd.Env, tc.extraEnv)
