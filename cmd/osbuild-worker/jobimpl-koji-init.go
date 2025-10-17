@@ -63,7 +63,7 @@ func (impl *KojiInitJobImpl) Run(job worker.Job) error {
 		result.JobError = clienterrors.New(clienterrors.ErrorKojiInit, err.Error(), nil)
 	}
 
-	err = job.Update(&result)
+	err = job.Finish(&result)
 	if err != nil {
 		return fmt.Errorf("Error reporting job result: %v", err)
 	}

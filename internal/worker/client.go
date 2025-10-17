@@ -54,6 +54,7 @@ type Job interface {
 	DynamicArgs(i int, args interface{}) error
 	NDynamicArgs() int
 	Update(result interface{}) error
+	Finish(result interface{}) error
 	Canceled() (bool, error)
 	UploadArtifact(name string, readSeeker io.ReadSeeker) error
 }
@@ -437,17 +438,47 @@ func (j *job) DynamicArgs(i int, args interface{}) error {
 }
 
 func (j *job) Update(result interface{}) error {
-	var buf bytes.Buffer
-	err := json.NewEncoder(&buf).Encode(updateJobRequest{
-		Result: result,
+	data, err := json.Marshal(result)
+	if err != nil {
+		return fmt.Errorf("Unable to marshal partial result: %w", err)
+	}
+	if len(data) == 0 {
+		return fmt.Errorf("Updating a job with empty results will finish the job")
+	}
+	var req api.UpdateJobRequest
+	err = req.FromUpdateJobPartial(api.UpdateJobPartial{
+		Partial: data,
 	})
 	if err != nil {
-		panic(err)
+		return fmt.Errorf("Unable to create partial job result: %w", err)
+	}
+	return j.patchJob(req)
+}
+
+func (j *job) Finish(result interface{}) error {
+	data, err := json.Marshal(result)
+	if err != nil {
+		return fmt.Errorf("Unable to marshal result: %w", err)
+	}
+	var req api.UpdateJobRequest
+	err = req.FromUpdateJobResult(api.UpdateJobResult{
+		Result: data,
+	})
+	if err != nil {
+		return fmt.Errorf("Unable to create job result: %w", err)
+	}
+	return j.patchJob(req)
+}
+
+func (j *job) patchJob(req api.UpdateJobRequest) error {
+	body, err := json.Marshal(req)
+	if err != nil {
+		return fmt.Errorf("Unable to marshal update job request: %w", err)
 	}
 
-	response, err := j.client.NewRequest("PATCH", j.location, map[string]string{"Content-Type": "application/json"}, bytes.NewReader(buf.Bytes()))
+	response, err := j.client.NewRequest(http.MethodPatch, j.location, map[string]string{"Content-Type": "application/json"}, bytes.NewReader(body))
 	if err != nil {
-		return fmt.Errorf("error fetching job info: %v", err)
+		return fmt.Errorf("error fetching job info: %w", err)
 	}
 	defer response.Body.Close()
 

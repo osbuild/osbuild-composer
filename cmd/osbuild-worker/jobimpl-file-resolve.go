@@ -37,7 +37,7 @@ func (impl *FileResolveJobImpl) Run(job worker.Job) error {
 			)
 		}
 
-		err := job.Update(result)
+		err := job.Finish(result)
 		if err != nil {
 			logWithId.Errorf("Error reporting job result: %v", err)
 		}

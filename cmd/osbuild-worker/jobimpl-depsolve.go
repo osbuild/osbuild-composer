@@ -131,7 +131,7 @@ func (impl *DepsolveJobImpl) Run(job worker.Job) error {
 	var result worker.DepsolveJobResult
 	// ALWAYS return a result
 	defer func() {
-		err := job.Update(&result)
+		err := job.Finish(&result)
 		if err != nil {
 			logWithId.Errorf("Error reporting job result: %v", err)
 		}

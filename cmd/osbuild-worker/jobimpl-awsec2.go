@@ -28,7 +28,7 @@ func (impl *AWSEC2CopyJobImpl) Run(job worker.Job) error {
 	result := worker.AWSEC2CopyJobResult{}
 
 	defer func() {
-		err := job.Update(&result)
+		err := job.Finish(&result)
 		if err != nil {
 			logWithId.Errorf("Error reporting job result: %v", err)
 		}
@@ -86,7 +86,7 @@ func (impl *AWSEC2ShareJobImpl) Run(job worker.Job) error {
 	result := worker.AWSEC2ShareJobResult{}
 
 	defer func() {
-		err := job.Update(&result)
+		err := job.Finish(&result)
 		if err != nil {
 			logWithId.Errorf("Error reporting job result: %v", err)
 		}

@@ -93,7 +93,7 @@ func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
 
 	// In all cases it is necessary to report result back to osbuild-composer worker API.
 	defer func() {
-		err := job.Update(kojiFinalizeJobResult)
+		err := job.Finish(kojiFinalizeJobResult)
 		if err != nil {
 			logWithId.Errorf("Error reporting job result: %v", err)
 		}
