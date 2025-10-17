@@ -72,13 +72,13 @@ init:
 
 .nightly_rules_all:
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9.7-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-10.1-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "10"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9.\d+-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-10.\d+-[^ga][\S]+/ && $NIGHTLY == "true" && $RHEL_MAJOR == "10"'
 
 .nightly_rules_x86_64:
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9.7-[^ga][\S]+/ && $RUNNER =~ "/^.*(x86_64).*$/" && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-10.1-[^ga][\S]+/ && $RUNNER =~ "/^.*(x86_64).*$/" && $NIGHTLY == "true" && $RHEL_MAJOR == "10"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-9.\d+-[^ga][\S]+/ && $RUNNER =~ "/^.*(x86_64).*$/" && $NIGHTLY == "true" && $RHEL_MAJOR == "9"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-10.\d+-[^ga][\S]+/ && $RUNNER =~ "/^.*(x86_64).*$/" && $NIGHTLY == "true" && $RHEL_MAJOR == "10"'
 
 .ga_rules_all:
   rules:
@@ -93,9 +93,12 @@ init:
   RUNNER:
     - aws/rhel-9.7-nightly-x86_64
     - aws/rhel-9.7-nightly-aarch64
+    - aws/rhel-9.8-nightly-x86_64
+    - aws/rhel-9.8-nightly-aarch64
     - aws/rhel-10.1-nightly-x86_64
     - aws/rhel-10.1-nightly-aarch64
-
+    - aws/rhel-10.2-nightly-x86_64
+    - aws/rhel-10.2-nightly-aarch64
   INTERNAL_NETWORK: ["true"]
 
 RPM:
@@ -181,7 +184,9 @@ Prepare-rhel-internal:
           # NOTE: 1 runner prepares for all arches b/c subsequent jobs download
           # artifacts from all previous jobs and the last one wins
           - aws/rhel-9.7-nightly-x86_64
+          - aws/rhel-9.8-nightly-x86_64
           - aws/rhel-10.1-nightly-x86_64
+          - aws/rhel-10.2-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
 
 Base:
@@ -205,16 +210,11 @@ Base:
           - aws/rhel-9.6-ga-aarch64
           - aws/rhel-10.0-ga-x86_64
           - aws/rhel-10.0-ga-aarch64
-      - RUNNER:
-          - aws/rhel-9.7-nightly-x86_64
-          - aws/rhel-9.7-nightly-aarch64
-          - aws/rhel-10.1-nightly-x86_64
-          - aws/rhel-10.1-nightly-aarch64
           - aws/centos-stream-9-x86_64
           - aws/centos-stream-9-aarch64
           - aws/centos-stream-10-x86_64
           - aws/centos-stream-10-aarch64
-        INTERNAL_NETWORK: ["true"]
+      - <<: *RPM_RUNNERS_RHEL
 
 .regression:
   stage: test
@@ -238,15 +238,11 @@ Base:
           - aws/rhel-9.6-ga-aarch64
           - aws/rhel-10.0-ga-x86_64
           - aws/rhel-10.0-ga-aarch64
-          - aws/rhel-9.7-nightly-x86_64
-          - aws/rhel-9.7-nightly-aarch64
-          - aws/rhel-10.1-nightly-x86_64
-          - aws/rhel-10.1-nightly-aarch64
           - aws/centos-stream-9-x86_64
           - aws/centos-stream-9-aarch64
           - aws/centos-stream-10-x86_64
           - aws/centos-stream-10-aarch64
-        INTERNAL_NETWORK: ["true"]
+      - <<: *RPM_RUNNERS_RHEL
 
 regression-composer-works-behind-satellite-fallback:
   extends: .regression
@@ -350,7 +346,9 @@ regression-no-explicit-rootfs-definition:
       - aws/rhel-9.6-ga-x86_64
       - aws/rhel-10.0-ga-x86_64
       - aws/rhel-9.7-nightly-x86_64
+      - aws/rhel-9.8-nightly-x86_64
       - aws/rhel-10.1-nightly-x86_64
+      - aws/rhel-10.2-nightly-x86_64
       - aws/centos-stream-9-x86_64
       - aws/centos-stream-10-x86_64
     INTERNAL_NETWORK: ["true"]
@@ -448,7 +446,9 @@ OpenShift_Virtualization:
     matrix:
       - RUNNER:
           - aws/rhel-9.7-nightly-x86_64
+          - aws/rhel-9.8-nightly-x86_64
           - aws/rhel-10.1-nightly-x86_64
+          - aws/rhel-10.2-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
 
 azure.sh:
@@ -526,10 +526,12 @@ filesystem.sh:
           - aws/rhel-9.6-ga-x86_64
           - aws/rhel-10.0-ga-x86_64
           - aws/rhel-10.1-nightly-x86_64
+          - aws/rhel-10.2-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
       - CUSTOMIZATION_TYPE: "disk-lvm"
         RUNNER:
           - aws/rhel-9.7-nightly-x86_64
+          - aws/rhel-9.8-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
       - CUSTOMIZATION_TYPE: "disk-lvm"
         RUNNER:
@@ -574,6 +576,7 @@ API:
           - aws/rhel-8.10-ga-x86_64
           - aws/rhel-9.6-ga-x86_64
           - aws/rhel-9.7-nightly-x86_64
+          - aws/rhel-9.8-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
       # el10 supports only a subset of image types
       # Edge is not supported anymore for RHEL 10 (no edge-commit, edge-commit generic.s3, edge-container)
@@ -587,6 +590,7 @@ API:
           # Add all RHEL 10 runners here to exclude Edge for them
           - aws/rhel-10.0-ga-x86_64
           - aws/rhel-10.1-nightly-x86_64
+          - aws/rhel-10.2-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
       - IMAGE_TYPE: ["iot-commit"]
         RUNNER:
@@ -648,9 +652,9 @@ API-module-hotfixes:
           - gcp/rhel-9.6-ga-x86_64
           - gcp/rhel-10.0-ga-x86_64
           - gcp/rhel-9.7-nightly-x86_64
-          # TODO: replace the rhos-01 runner with this gcp runner once it's available
-          # - gcp/rhel-10.0-nightly-x86_64
-          - rhos-01/rhel-10.1-nightly-x86_64
+          - gcp/rhel-9.8-nightly-x86_64
+          - gcp/rhel-10.1-nightly-x86_64
+          - gcp/rhel-10.2-nightly-x86_64
           - gcp/centos-stream-9-x86_64
         INTERNAL_NETWORK: ["true"]
 
@@ -676,6 +680,7 @@ ubi-wsl.sh:
           - aws/rhel-9.6-ga-x86_64
           - aws/rhel-10.0-ga-x86_64
           - aws/rhel-10.1-nightly-x86_64
+          - aws/rhel-10.2-nightly-x86_64
         INTERNAL_NETWORK: "true"
 
 weldr-distro-dot-notation+aliases:
@@ -692,7 +697,7 @@ weldr-distro-dot-notation+aliases:
     matrix:
       - RUNNER:
           - aws/rhel-8.8-ga-x86_64
-          - aws/rhel-9.7-nightly-x86_64
+          - aws/rhel-9.8-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
 
 .generic_s3:
@@ -775,7 +780,9 @@ Upgrade:
     matrix:
       - RUNNER:
           - rhos-01/rhel-9.7-nightly-x86_64-large
+          - rhos-01/rhel-9.8-nightly-x86_64-large
           - rhos-01/rhel-10.1-nightly-x86_64-large
+          - rhos-01/rhel-10.2-nightly-x86_64-large
 
 NIGHTLY_FAIL:
   stage: finish
@@ -829,12 +836,11 @@ Installer:
     matrix:
       - RUNNER:
           - rhos-01/rhel-9.7-nightly-x86_64
+          - rhos-01/rhel-9.8-nightly-x86_64
           - rhos-01/centos-stream-9-x86_64
-          # NB (thozza): The test is disabled for RHEL 10.1 due to https://issues.redhat.com/browse/RHEL-96222
-          # Re-enable it once kernel-6.12.0-97.el10 lands in the repositories.
-          # See https://issues.redhat.com/browse/HMS-8718
-          # - rhos-01/rhel-10.1-nightly-x86_64
-          # - rhos-01/centos-stream-10-x86_64
+          - rhos-01/rhel-10.1-nightly-x86_64
+          - rhos-01/rhel-10.2-nightly-x86_64
+          - rhos-01/centos-stream-10-x86_64
 
 ContainerUpload:
   stage: test
@@ -867,7 +873,9 @@ ContainerEmbedding:
         - aws/centos-stream-9-x86_64
         - aws/centos-stream-10-x86_64
         - aws/rhel-9.7-nightly-x86_64
+        - aws/rhel-9.8-nightly-x86_64
         - aws/rhel-10.1-nightly-x86_64
+        - aws/rhel-10.2-nightly-x86_64
 
 WorkerExecutor:
   stage: test
