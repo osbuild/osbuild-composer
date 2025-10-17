@@ -23,6 +23,9 @@ type ImageBuilderArgs struct {
 	//  - repositories
 }
 
+// var alias for exec.Command() that can be mocked for testing
+var execCommand = exec.Command
+
 func RunImageBuilderManifest(args ImageBuilderArgs, extraEnv []string, errorWriter io.Writer) ([]byte, error) {
 	var stdoutBuffer bytes.Buffer
 
@@ -49,7 +52,7 @@ func RunImageBuilderManifest(args ImageBuilderArgs, extraEnv []string, errorWrit
 	}
 
 	clArgs = append(clArgs, "--", args.ImageType)
-	cmd := exec.Command("image-builder", clArgs...)
+	cmd := execCommand("image-builder", clArgs...)
 	if len(extraEnv) > 0 {
 		cmd.Env = append(os.Environ(), extraEnv...)
 	}
