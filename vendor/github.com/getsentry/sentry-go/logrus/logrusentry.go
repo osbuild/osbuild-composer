@@ -13,6 +13,7 @@ import (
 
 	"github.com/getsentry/sentry-go"
 	"github.com/getsentry/sentry-go/attribute"
+	"github.com/getsentry/sentry-go/internal/debuglog"
 	"github.com/sirupsen/logrus"
 )
 
@@ -21,6 +22,8 @@ const (
 	sdkIdentifier = "sentry.go.logrus"
 	// the name of the logger.
 	name = "logrus"
+
+	maxErrorDepth = 100
 )
 
 // These default log field keys are used to pass specific metadata in a way that
@@ -182,7 +185,14 @@ func (h *eventHook) entryToEvent(l *logrus.Entry) *sentry.Event {
 
 	if err, ok := s.Extra[logrus.ErrorKey].(error); ok {
 		delete(s.Extra, logrus.ErrorKey)
-		s.SetException(err, -1)
+
+		errorDepth := maxErrorDepth
+		if hub := h.hubProvider(); hub != nil {
+			if client := hub.Client(); client != nil {
+				errorDepth = client.Options().MaxErrorDepth
+			}
+		}
+		s.SetException(err, errorDepth)
 	}
 
 	key = h.key(FieldUser)
@@ -353,7 +363,7 @@ func (h *logHook) Fire(entry *logrus.Entry) error {
 	case logrus.PanicLevel:
 		logEntry = h.logger.Panic().WithCtx(ctx)
 	default:
-		sentry.DebugLogger.Printf("Invalid logrus logging level: %v. Dropping log.", entry.Level)
+		debuglog.Printf("Invalid logrus logging level: %v. Dropping log.", entry.Level)
 		if h.fallback != nil {
 			return h.fallback(entry)
 		}
