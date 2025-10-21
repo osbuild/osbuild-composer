@@ -1274,3 +1274,53 @@ func TestDecodeMinsize(t *testing.T) {
 		})
 	}
 }
+
+func TestConvertDNFCustomizations(t *testing.T) {
+	type testCase struct {
+		in     *DNF
+		expOut *blueprint.DNFCustomization
+	}
+
+	testCases := map[string]testCase{
+		"empty": {},
+		"set_releasever:false": {
+			in: &DNF{
+				Config: &DNFConfig{
+					SetReleasever: common.ToPtr(false),
+				},
+			},
+			expOut: &blueprint.DNFCustomization{
+				Config: &blueprint.DNFConfigCustomization{
+					SetReleaseVer: false,
+				},
+			},
+		},
+		"set_releasever:true": {
+			in: &DNF{
+				Config: &DNFConfig{
+					SetReleasever: common.ToPtr(true),
+				},
+			},
+			expOut: &blueprint.DNFCustomization{
+				Config: &blueprint.DNFConfigCustomization{
+					SetReleaseVer: true,
+				},
+			},
+		},
+		"empty-config": {
+			in: &DNF{
+				Config: &DNFConfig{},
+			},
+			expOut: &blueprint.DNFCustomization{
+				Config: &blueprint.DNFConfigCustomization{},
+			},
+		},
+	}
+
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			assert.Equal(t, tc.expOut, convertDNFCustomizations(tc.in))
+		})
+	}
+
+}
