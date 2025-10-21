@@ -17,10 +17,10 @@ type InstallerCustomizations struct {
 	// Only for RHEL 8.
 	UseLegacyAnacondaConfig bool
 
-	LoraxTemplates       []string // Templates to run with org.osbuild.lorax
-	LoraxTemplatePackage string   // Package containing lorax templates, added to build pipeline
-	LoraxLogosPackage    string   // eg. fedora-logos, fedora-eln-logos, redhat-logos
-	LoraxReleasePackage  string   // eg. fedora-release, fedora-release-eln, redhat-release
+	LoraxTemplates       []InstallerLoraxTemplate // Templates to run with org.osbuild.lorax
+	LoraxTemplatePackage string                   // Package containing lorax templates, added to build pipeline
+	LoraxLogosPackage    string                   // eg. fedora-logos, fedora-eln-logos, redhat-logos
+	LoraxReleasePackage  string                   // eg. fedora-release, fedora-release-eln, redhat-release
 
 	ISORootfsType ISORootfsType
 	ISOBoot       ISOBootType
@@ -33,4 +33,9 @@ type InstallerCustomizations struct {
 	OSVersion string
 	Release   string
 	Preview   bool
+}
+
+type InstallerLoraxTemplate struct {
+	Path        string
+	AfterDracut bool // Should this template be executed after dracut? Defaults to not.
 }

@@ -391,7 +391,13 @@ func installerCustomizations(t *imageType, c *blueprint.Customizations) (manifes
 			isc.ISOBoot = *isoboot
 		}
 
-		isc.LoraxTemplates = installerConfig.LoraxTemplates
+		for _, tmpl := range installerConfig.LoraxTemplates {
+			isc.LoraxTemplates = append(isc.LoraxTemplates, manifest.InstallerLoraxTemplate{
+				Path:        tmpl.Path,
+				AfterDracut: tmpl.AfterDracut,
+			})
+		}
+
 		if pkg := installerConfig.LoraxTemplatePackage; pkg != nil {
 			isc.LoraxTemplatePackage = *pkg
 		}

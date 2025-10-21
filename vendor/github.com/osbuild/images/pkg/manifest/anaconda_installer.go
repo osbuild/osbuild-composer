@@ -318,6 +318,29 @@ func (p *AnacondaInstaller) payloadStages() ([]*osbuild.Stage, error) {
 		stages = append(stages, osbuild.NewAnacondaStage(anacondaStageOptions))
 	}
 
+	// Some lorax templates have to run before initramfs re-generation and some of
+	// them afterwards
+	deferredTemplates := []InstallerLoraxTemplate{}
+
+	// Run lorax scripts to setup booting the iso and removing unneeded files
+	for _, tmpl := range p.InstallerCustomizations.LoraxTemplates {
+		// If a template is marked to run after dracut generation we put it in our
+		// deferreds and continue
+		if tmpl.AfterDracut {
+			deferredTemplates = append(deferredTemplates, tmpl)
+			continue
+		}
+
+		stages = append(stages, osbuild.NewLoraxScriptStage(&osbuild.LoraxScriptStageOptions{
+			Path: tmpl.Path,
+			Branding: osbuild.Branding{
+				Release: p.InstallerCustomizations.LoraxReleasePackage,
+				Logos:   p.InstallerCustomizations.LoraxLogosPackage,
+			},
+			BaseArch: p.platform.GetArch().String(),
+		}))
+	}
+
 	// Create a generic initrd suitable for booting Anaconda and activating supported hardware
 	dracutOptions, err := p.dracutStageOptions()
 	if err != nil {
@@ -325,11 +348,10 @@ func (p *AnacondaInstaller) payloadStages() ([]*osbuild.Stage, error) {
 	}
 	stages = append(stages, osbuild.NewDracutStage(dracutOptions))
 
-	// Run lorax scripts to setup booting the iso and removing unneeded files
-	// NOTE: MUST run after dracut stage, it removes some of the dracut files from the rootfs
-	for _, tmpl := range p.InstallerCustomizations.LoraxTemplates {
+	// Run lorax scripts that were deferred to after initramfs
+	for _, tmpl := range deferredTemplates {
 		stages = append(stages, osbuild.NewLoraxScriptStage(&osbuild.LoraxScriptStageOptions{
-			Path: tmpl,
+			Path: tmpl.Path,
 			Branding: osbuild.Branding{
 				Release: p.InstallerCustomizations.LoraxReleasePackage,
 				Logos:   p.InstallerCustomizations.LoraxLogosPackage,

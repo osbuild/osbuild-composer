@@ -134,13 +134,12 @@ func (img *BootcDiskImage) InstantiateManifestFromContainers(m *manifest.Manifes
 	ovfPipeline := manifest.NewOVF(hostPipeline, vmdkPipeline)
 	tarPipeline := manifest.NewTar(hostPipeline, ovfPipeline, "archive")
 	tarPipeline.Format = osbuild.TarArchiveFormatUstar
-	tarPipeline.SetFilename(fmt.Sprintf("%s.tar", fileBasename))
+	tarPipeline.SetFilename(fmt.Sprintf("%s.ova", fileBasename))
 	// The .ovf descriptor needs to be the first file in the archive
 	tarPipeline.Paths = []string{
 		fmt.Sprintf("%s.ovf", fileBasename),
 		fmt.Sprintf("%s.mf", fileBasename),
 		fmt.Sprintf("%s.vmdk", fileBasename),
-		fmt.Sprintf("%s.vhd", fileBasename),
 	}
 
 	gcePipeline := newGCETarPipelineForImg(buildPipeline, rawImage, "gce")

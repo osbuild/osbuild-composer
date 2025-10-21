@@ -28,10 +28,15 @@ type InstallerConfig struct {
 	ISOBootType *manifest.ISOBootType `yaml:"iso_boot_type,omitempty"`
 
 	// Lorax template settings for org.osbuild.lorax stage
-	LoraxTemplates       []string `yaml:"lorax_templates,omitempty"`
-	LoraxTemplatePackage *string  `yaml:"lorax_template_package"`
-	LoraxLogosPackage    *string  `yaml:"lorax_logos_package"`
-	LoraxReleasePackage  *string  `yaml:"lorax_release_package"`
+	LoraxTemplates       []InstallerLoraxTemplate `yaml:"lorax_templates,omitempty"`
+	LoraxTemplatePackage *string                  `yaml:"lorax_template_package"`
+	LoraxLogosPackage    *string                  `yaml:"lorax_logos_package"`
+	LoraxReleasePackage  *string                  `yaml:"lorax_release_package"`
+}
+
+type InstallerLoraxTemplate struct {
+	Path        string `yaml:"path"`
+	AfterDracut bool   `yaml:"after_dracut,omitempty"`
 }
 
 // InheritFrom inherits unset values from the provided parent configuration and
