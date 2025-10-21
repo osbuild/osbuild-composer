@@ -512,6 +512,8 @@ func (rbp *Blueprint) GetCustomizationsFromBlueprintRequest() (*blueprint.Custom
 	}
 	c.Disk = bpDisk
 
+	c.DNF = convertDNFCustomizations(rbpc.DNF)
+
 	return c, nil
 }
 
@@ -1089,6 +1091,8 @@ func (request *ComposeRequest) GetBlueprintFromCustomizations() (blueprint.Bluep
 		}
 	}
 
+	bp.Customizations.DNF = convertDNFCustomizations(request.Customizations.DNF)
+
 	// Did bp.Customizations get set at all? If not, set it back to nil
 	if reflect.DeepEqual(*bp.Customizations, blueprint.Customizations{}) {
 		bp.Customizations = nil
@@ -1439,6 +1443,22 @@ func convertDiskCustomizations(disk *Disk) (*blueprint.DiskCustomization, error)
 		bpDisk.Partitions = append(bpDisk.Partitions, bpPartition)
 	}
 	return bpDisk, bpDisk.Validate()
+}
+
+func convertDNFCustomizations(dnf *DNF) *blueprint.DNFCustomization {
+	if dnf == nil {
+		return nil
+	}
+
+	bpDnf := &blueprint.DNFCustomization{}
+	if dnf.Config != nil {
+		bpDnf.Config = &blueprint.DNFConfigCustomization{}
+		if dnf.Config.SetReleasever != nil {
+			bpDnf.Config.SetReleaseVer = *dnf.Config.SetReleasever
+		}
+	}
+
+	return bpDnf
 }
 
 func decodeMinsize(size *Minsize) (uint64, error) {

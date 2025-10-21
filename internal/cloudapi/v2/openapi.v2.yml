@@ -1793,6 +1793,8 @@ components:
             $ref: '#/components/schemas/BlueprintFilesystem'
         disk:
           $ref: '#/components/schemas/Disk'
+        dnf:
+          $ref: '#/components/schemas/DNF'
         installation_device:
           type: string
           description: |
@@ -2017,6 +2019,8 @@ components:
           $ref: '#/components/schemas/CACertsCustomization'
         disk:
           $ref: '#/components/schemas/Disk'
+        dnf:
+          $ref: '#/components/schemas/DNF'
     Container:
       type: object
       required:
@@ -2799,6 +2803,20 @@ components:
             - swap
           description: |
             The filesystem type for the logical volume. Swap LVs must have an empty mountpoint.
+    DNF:
+      type: object
+      x-go-name: "DNF"
+      properties:
+        config:
+          $ref: '#/components/schemas/DNFConfig'
+    DNFConfig:
+      type: object
+      properties:
+        set_releasever:
+          type: boolean
+          default: false
+          description: |
+            Set the releasever DNF variable, tying the system to a specific release of RHEL
     minsize:
       type: string
       example: "2 GiB"
