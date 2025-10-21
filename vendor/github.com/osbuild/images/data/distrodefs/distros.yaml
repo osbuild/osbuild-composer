@@ -1,19 +1,19 @@
 ---
 distros:
   - &fedora_rawhide
-    name: fedora-43
+    name: fedora-44
     distro_like: fedora
     preview: true
-    os_version: 43
-    release_version: 43
-    module_platform_id: platform:f43
+    os_version: 44
+    release_version: 44
+    module_platform_id: platform:f44
     product: "Fedora"
-    ostree_ref_tmpl: "fedora/43/%s/iot"
+    ostree_ref_tmpl: "fedora/44/%s/iot"
     iso_label_tmpl: "{{.Product}}-{{.Distro.MajorVersion}}-{{.ISOLabel}}-{{.Arch}}"
     default_fs_type: "ext4"
     defs_path: fedora
     runner: &fedora_runner
-      name: org.osbuild.fedora43
+      name: org.osbuild.fedora44
       build_packages:
         - "glibc"  # ldconfig
         - "systemd"  # systemd-tmpfiles and systemd-sysusers
@@ -23,13 +23,13 @@ distros:
       - "xccdf_org.ssgproject.content_profile_pci-dss"
       - "xccdf_org.ssgproject.content_profile_standard"
     bootstrap_containers:
-      x86_64: "registry.fedoraproject.org/fedora-toolbox:43"
-      aarch64: "registry.fedoraproject.org/fedora-toolbox:43"
-      ppc64le: "registry.fedoraproject.org/fedora-toolbox:43"
-      s390x: "registry.fedoraproject.org/fedora-toolbox:43"
+      x86_64: "registry.fedoraproject.org/fedora-toolbox:44"
+      aarch64: "registry.fedoraproject.org/fedora-toolbox:44"
+      ppc64le: "registry.fedoraproject.org/fedora-toolbox:44"
+      s390x: "registry.fedoraproject.org/fedora-toolbox:44"
       # XXX: remove once fedora containers are part of the upstream
       # fedora registry (and can be validated via tls)
-      riscv64: "ghcr.io/mvo5/fedora-buildroot:43"
+      riscv64: "ghcr.io/mvo5/fedora-buildroot:44"
 
       # XXX: add repos here too, that requires some churn, see
       # https://github.com/osbuild/images/compare/main...mvo5:yaml-distroconfig?expand=1

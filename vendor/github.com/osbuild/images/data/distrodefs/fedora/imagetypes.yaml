@@ -121,8 +121,6 @@
       - "systemd"
       - "tar"
       - "thai-scalable-waree-fonts"
-      - "tigervnc-server-minimal"
-      - "tigervnc-server-module"
       - "udisks2"
       - "udisks2-iscsi"
       - "usbutils"
@@ -139,6 +137,13 @@
       - "xrdb"
       - "xz"
     conditions:
+      "f41 and below use tigervnc":
+        when:
+          version_less_than: "42"
+        append:
+          include:
+            - "tigervnc-server-minimal"
+            - "tigervnc-server-module"
       "x86_64 specific anaconda pkgs":
         when:
           arch: "x86_64"
@@ -171,10 +176,11 @@
     default_kernel_optons:
       - "ro"
     cloud_kernel_options: &cloud_kernel_options
-      - "ro"
+      - "no_timer_check"
+      - "console=tty1"
       - "console=ttyS0,115200n8"
-      - "biosdevname=0"
-      - "net.ifnames=0"
+      - "earlyprintk=ttyS0"
+      - "systemd.firstboot=off"
     ostree_deployment_kernel_options: &ostree_deployment_kernel_options
       - "modprobe.blacklist=vc4"
       - "rw"
@@ -406,8 +412,9 @@
     default_menu: 1
     lorax_template_package: lorax-templates-generic
     lorax_templates:
-      - 99-generic/runtime-postinstall.tmpl
-      - 99-generic/runtime-cleanup.tmpl
+      - path: 99-generic/runtime-postinstall.tmpl
+      - path: 99-generic/runtime-cleanup.tmpl
+        after_dracut: true
     lorax_logos_package: fedora-logos
     lorax_release_package: fedora-release
     conditions: &default_installer_config_conditions
@@ -646,7 +653,6 @@
 
     minimal_raw_partition_tables: &minimal_raw_partition_tables
       x86_64:
-        uuid: "D209C89E-EA5E-4FBD-B161-B461CCE297E0"
         type: "gpt"
         partitions:
           - *default_partition_table_part_efi
@@ -656,20 +662,16 @@
           - &minimal_raw_partition_table_part_root
             <<: *default_partition_table_part_root
       aarch64: &minimal_raw_partition_table_aarch64
-        uuid: "0xc1748067"
         type: "dos"
         start_offset: "16 MiB"
         partitions:
           - <<: *default_partition_table_part_efi
             bootable: true
             type: *fat16_bdosid
-            uuid: ""
           - <<: *minimal_raw_partition_table_part_boot
             type: *filesystem_linux_dosid
-            uuid: ""
           - <<: *default_partition_table_part_root
             type: *filesystem_linux_dosid
-            uuid: ""
       riscv64: *minimal_raw_partition_table_aarch64
 
     iot_base_partition_tables: &iot_base_partition_tables
@@ -1555,8 +1557,11 @@ image_types:
         bootloader: "grub2"
       - *riscv64_uefi_platform
     image_config:
-      # NOTE: temporary workaround for a bug in initial-setup that
-      # requires a kickstart file in the root directory.
+      # NOTE: initial-setup doesn't allow a system to be reconfigured
+      # NOTE: if certain files are already configured (locale, users,
+      # NOTE: that sort of stuff). With this kickstart we enable reconfig
+      # NOTE: of those values since we have already written them in the
+      # NOTE: disk image but they might not be what the user wants.
       files:
         - path: "/root/anaconda-ks.cfg"
           user: "root"
@@ -2198,8 +2203,6 @@ image_types:
             - openssh-server
             - nfs-utils
             - openssh-clients
-            - tigervnc-server-minimal
-            - tigervnc-server-module
             - net-tools
             - bridge-utils
             - nmap-ncat
@@ -2239,6 +2242,13 @@ image_types:
             - hexedit
             - sg3_utils
           conditions:
+            "f41 and below use tigervnc":
+              when:
+                version_less_than: "42"
+              append:
+                include:
+                  - "tigervnc-server-minimal"
+                  - "tigervnc-server-module"
             "x86_64 specific anaconda pkgs":
               when:
                 arch: "x86_64"

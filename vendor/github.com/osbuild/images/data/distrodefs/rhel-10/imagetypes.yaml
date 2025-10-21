@@ -167,8 +167,9 @@
     iso_rootfs_type: "squashfs"
     lorax_template_package: lorax-templates-rhel
     lorax_templates:
-      - 80-rhel/runtime-postinstall.tmpl
-      - 80-rhel/runtime-cleanup.tmpl
+      - path: 80-rhel/runtime-postinstall.tmpl
+      - path: 80-rhel/runtime-cleanup.tmpl
+        after_dracut: true
     lorax_logos_package: redhat-logos
     lorax_release_package: redhat-release
     conditions:

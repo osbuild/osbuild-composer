@@ -1126,10 +1126,10 @@ func addPartitionsForBootMode(pt *PartitionTable, disk *blueprint.DiskCustomizat
 		return nil
 	}
 
-	// UEFI is not supported for PPC CPUs so we don't need to
-	// add an ESP partition there
 	switch architecture {
 	case arch.ARCH_PPC64LE:
+		// UEFI is not supported for PPC CPUs so we don't need to
+		// add an ESP partition there
 		part, err := mkPPCPrepBoot(pt.Type)
 		if err != nil {
 			return err
@@ -1139,19 +1139,8 @@ func addPartitionsForBootMode(pt *PartitionTable, disk *blueprint.DiskCustomizat
 	case arch.ARCH_S390X:
 		// s390x does not need any special boot partition
 		return nil
-	}
-
-	switch bootMode {
-	case platform.BOOT_LEGACY:
-		// add BIOS boot partition
-		part, err := mkBIOSBoot(pt.Type)
-		if err != nil {
-			return err
-		}
-		pt.Partitions = append(pt.Partitions, part)
-		return nil
-	case platform.BOOT_UEFI:
-		// add ESP if needed
+	case arch.ARCH_AARCH64, arch.ARCH_RISCV64:
+		// (our) aarch64/riscv64 only supports UEFI right now
 		if !hasESP(disk) {
 			part, err := mkESP(200*datasizes.MiB, pt.Type)
 			if err != nil {
@@ -1160,23 +1149,46 @@ func addPartitionsForBootMode(pt *PartitionTable, disk *blueprint.DiskCustomizat
 			pt.Partitions = append(pt.Partitions, part)
 		}
 		return nil
-	case platform.BOOT_HYBRID:
-		// add both
-		bios, err := mkBIOSBoot(pt.Type)
-		if err != nil {
-			return err
-		}
-		pt.Partitions = append(pt.Partitions, bios)
-		if !hasESP(disk) {
-			esp, err := mkESP(200*datasizes.MiB, pt.Type)
+	case arch.ARCH_X86_64:
+		switch bootMode {
+		case platform.BOOT_LEGACY:
+			// add BIOS boot partition
+			part, err := mkBIOSBoot(pt.Type)
 			if err != nil {
 				return err
 			}
-			pt.Partitions = append(pt.Partitions, esp)
+			pt.Partitions = append(pt.Partitions, part)
+			return nil
+		case platform.BOOT_UEFI:
+			// add ESP if needed
+			if !hasESP(disk) {
+				part, err := mkESP(200*datasizes.MiB, pt.Type)
+				if err != nil {
+					return err
+				}
+				pt.Partitions = append(pt.Partitions, part)
+			}
+			return nil
+		case platform.BOOT_HYBRID:
+			// add both
+			bios, err := mkBIOSBoot(pt.Type)
+			if err != nil {
+				return err
+			}
+			pt.Partitions = append(pt.Partitions, bios)
+			if !hasESP(disk) {
+				esp, err := mkESP(200*datasizes.MiB, pt.Type)
+				if err != nil {
+					return err
+				}
+				pt.Partitions = append(pt.Partitions, esp)
+			}
+			return nil
+		default:
+			return fmt.Errorf("unknown or unsupported boot mode type with enum value %d", bootMode)
 		}
-		return nil
 	default:
-		return fmt.Errorf("unknown or unsupported boot mode type with enum value %d", bootMode)
+		return fmt.Errorf("unknown or unsupported architecture %v", architecture)
 	}
 }
 
