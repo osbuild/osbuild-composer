@@ -235,6 +235,11 @@ func GetTestBlueprint() blueprint.Blueprint {
 				},
 			},
 		},
+		DNF: &blueprint.DNFCustomization{
+			Config: &blueprint.DNFConfigCustomization{
+				SetReleaseVer: true,
+			},
+		},
 	}
 
 	return expected
@@ -467,6 +472,11 @@ func TestGetBlueprintFromCustomizations(t *testing.T) {
 				plainPart,
 				btrfsPart,
 				vgPart,
+			},
+		},
+		DNF: &DNF{
+			Config: &DNFConfig{
+				SetReleasever: common.ToPtr(true),
 			},
 		},
 	}}
@@ -725,6 +735,11 @@ func TestGetBlueprintFromCompose(t *testing.T) {
 					plainPart,
 					btrfsPart,
 					vgPart,
+				},
+			},
+			DNF: &DNF{
+				Config: &DNFConfig{
+					SetReleasever: common.ToPtr(true),
 				},
 			},
 		},
