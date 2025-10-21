@@ -15,7 +15,6 @@ stages:
   after_script:
     - schutzbot/ci_details.sh > /tmp/artifacts/ci-details-after-run.txt || true
     - schutzbot/unregister.sh || true
-    - schutzbot/update_github_status.sh update || true
     - schutzbot/save_journal.sh || true
     - schutzbot/upload_artifacts.sh
   interruptible: true
@@ -897,3 +896,13 @@ finish:
     - shell
   script:
     - schutzbot/update_github_status.sh finish
+
+# runs only when a stage fails and reports failure to github
+fail:
+  stage: finish
+  tags:
+    - shell
+  script:
+    - schutzbot/update_github_status.sh fail
+    - exit 1  # make the pipeline fail so it doesn't look like success
+  when: on_failure
