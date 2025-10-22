@@ -1,6 +1,5 @@
 ---
 - name: Build osbuild rpms
-  become: yes
   remote_user: ec2-user
   hosts: rpmbuilder
   gather_facts: no
@@ -15,6 +14,7 @@
     ansible.builtin.setup:
 
   - name: Add EPEL
+    become: yes
     dnf:
       state: present
       name: https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
@@ -35,6 +35,7 @@
 
   # RHEL mock templates don't work on RHUI, they use the CDN repos
   - name: Subscribe
+    become: yes
     register: result
     retries: 5
     until: result is success
@@ -43,6 +44,7 @@
       org_id: "{{ RH_ORG_ID }}"
 
   - name: Upgrade all packages
+    become: yes
     package:
       name: "*"
       state: latest
@@ -96,6 +98,7 @@
       dest: /home/ec2-user/osbuild.spec
 
   - name: Install build tools
+    become: yes
     retries: 5
     delay: 20
     register: result
@@ -106,6 +109,17 @@
         - mock
         - createrepo_c
       state: present
+
+  - name: Add ec2-user to mock group
+    become: yes
+    ansible.builtin.user:
+      name: "{{ ansible_user }}"
+      groups:
+        - mock
+      append: yes
+
+  - name: Reset connection to ensure the user is in the mock group
+    ansible.builtin.meta: reset_connection
 
   - name: Make osbuild srpm
     retries: 5
@@ -178,6 +192,7 @@
       dest: /osbuild-composer/templates/packer/ansible/roles/common/files/rpmbuild/{{ ansible_architecture }}
 
   - name: Unregister
+    become: yes
     retries: 5
     delay: 20
     register: result
