@@ -119,7 +119,7 @@ def create_ec2_instances(cleanup_actions, args, keypair):
                     "Ebs": {
                         "VolumeSize": 20,
                         "DeleteOnTermination": True,
-                        "VolumeType": "gp2",
+                        "VolumeType": "gp3",
                     },
                 },
             ],
