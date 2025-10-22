@@ -114,6 +114,8 @@ distros:
       - "xccdf_org.ssgproject.content_profile_e8"
       - "xccdf_org.ssgproject.content_profile_hipaa"
       - "xccdf_org.ssgproject.content_profile_ism_o"
+      - "xccdf_org.ssgproject.content_profile_ism_o_secret"
+      - "xccdf_org.ssgproject.content_profile_ism_o_top_secret"
       - "xccdf_org.ssgproject.content_profile_ospp"
       - "xccdf_org.ssgproject.content_profile_pci-dss"
       - "xccdf_org.ssgproject.content_profile_stig"
