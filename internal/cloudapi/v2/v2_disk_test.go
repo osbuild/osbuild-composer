@@ -10,7 +10,7 @@ import (
 )
 
 func TestComposeDiskCustomizationsValidation(t *testing.T) {
-	srv, _, _, cancel := newV2Server(t, t.TempDir(), false, false)
+	srv, _, _, cancel := newV2Server(t, t.TempDir(), false, false, false)
 	defer cancel()
 
 	testCases := map[string]string{
@@ -262,7 +262,7 @@ func TestComposeDiskCustomizationsValidation(t *testing.T) {
 }
 
 func TestComposeDiskCustomizationsErrors(t *testing.T) {
-	srv, _, _, cancel := newV2Server(t, t.TempDir(), false, false)
+	srv, _, _, cancel := newV2Server(t, t.TempDir(), false, false, false)
 	defer cancel()
 
 	type testCase struct {
