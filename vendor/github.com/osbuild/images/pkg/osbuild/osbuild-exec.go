@@ -9,29 +9,48 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/osbuild/images/data/dependencies"
-	"github.com/osbuild/images/pkg/datasizes"
-
 	"github.com/hashicorp/go-version"
+
+	"github.com/osbuild/images/data/dependencies"
+	"github.com/osbuild/images/internal/common"
+	"github.com/osbuild/images/pkg/datasizes"
 )
 
-// Run an instance of osbuild, returning a parsed osbuild.Result.
-//
-// Note that osbuild returns non-zero when the pipeline fails. This function
-// does not return an error in this case. Instead, the failure is communicated
-// with its corresponding logs through osbuild.Result.
-func RunOSBuild(manifest []byte, store, outputDirectory string, exports, checkpoints, extraEnv []string, result bool, errorWriter io.Writer) (*Result, error) {
-	if err := CheckMinimumOSBuildVersion(); err != nil {
-		return nil, err
+type MonitorType string
+
+const (
+	MonitorJSONSeq = "JSONSeqMonitor"
+	MonitorNull    = "NullMonitor"
+	MonitorLog     = "LogMonitor"
+)
+
+type OSBuildOptions struct {
+	StoreDir  string
+	OutputDir string
+	ExtraEnv  []string
+
+	Monitor   MonitorType
+	MonitorFD uintptr
+
+	JSONOutput bool
+
+	CacheMaxSize int64
+}
+
+func NewOSBuildCmd(manifest []byte, exports, checkpoints []string, optsPtr *OSBuildOptions) *exec.Cmd {
+	opts := common.ValueOrEmpty(optsPtr)
+
+	cacheMaxSize := int64(20 * datasizes.GiB)
+	if opts.CacheMaxSize != 0 {
+		cacheMaxSize = opts.CacheMaxSize
 	}
 
-	var stdoutBuffer bytes.Buffer
-	var res Result
-
+	// nolint: gosec
 	cmd := exec.Command(
 		"osbuild",
-		"--store", store,
-		"--output-directory", outputDirectory,
+		"--store", opts.StoreDir,
+		"--output-directory", opts.OutputDir,
+		fmt.Sprintf("--cache-max-size=%v", cacheMaxSize),
 		"-",
 	)
 
@@ -43,46 +62,49 @@ func RunOSBuild(manifest []byte, store, outputDirectory string, exports, checkpo
 		cmd.Args = append(cmd.Args, "--checkpoint", checkpoint)
 	}
 
-	if len(checkpoints) > 0 {
-		// set the cache-max-size to a reasonable size that the checkpoints actually get stored
-		cmd.Args = append(cmd.Args, "--cache-max-size", fmt.Sprint(20*datasizes.GiB))
+	if opts.Monitor != "" {
+		cmd.Args = append(cmd.Args, fmt.Sprintf("--monitor=%s", opts.Monitor))
+	}
+	if opts.MonitorFD != 0 {
+		cmd.Args = append(cmd.Args, fmt.Sprintf("--monitor-fd=%d", opts.MonitorFD))
+	}
+	if opts.JSONOutput {
+		cmd.Args = append(cmd.Args, "--json")
 	}
 
-	if result {
-		cmd.Args = append(cmd.Args, "--json")
+	cmd.Env = append(os.Environ(), opts.ExtraEnv...)
+	cmd.Stdin = bytes.NewBuffer(manifest)
+	return cmd
+}
+
+// Run an instance of osbuild, returning a parsed osbuild.Result.
+//
+// Note that osbuild returns non-zero when the pipeline fails. This function
+// does not return an error in this case. Instead, the failure is communicated
+// with its corresponding logs through osbuild.Result.
+func RunOSBuild(manifest []byte, exports, checkpoints []string, errorWriter io.Writer, opts *OSBuildOptions) (*Result, error) {
+	if err := CheckMinimumOSBuildVersion(); err != nil {
+		return nil, err
+	}
+
+	var stdoutBuffer bytes.Buffer
+	var res Result
+	cmd := NewOSBuildCmd(manifest, exports, checkpoints, opts)
+
+	if opts.JSONOutput {
 		cmd.Stdout = &stdoutBuffer
 	} else {
 		cmd.Stdout = os.Stdout
 	}
-
-	if len(extraEnv) > 0 {
-		cmd.Env = append(os.Environ(), extraEnv...)
-	}
-
 	cmd.Stderr = errorWriter
-	stdin, err := cmd.StdinPipe()
-	if err != nil {
-		return nil, fmt.Errorf("error setting up stdin for osbuild: %v", err)
-	}
 
-	err = cmd.Start()
+	err := cmd.Start()
 	if err != nil {
 		return nil, fmt.Errorf("error starting osbuild: %v", err)
 	}
 
-	_, err = stdin.Write(manifest)
-	if err != nil {
-		return nil, fmt.Errorf("error writing osbuild manifest: %v", err)
-	}
-
-	err = stdin.Close()
-	if err != nil {
-		return nil, fmt.Errorf("error closing osbuild's stdin: %v", err)
-	}
-
 	err = cmd.Wait()
-
-	if result {
+	if opts.JSONOutput {
 		// try to decode the output even though the job could have failed
 		if stdoutBuffer.Len() == 0 {
 			return nil, fmt.Errorf("osbuild did not return any output")
@@ -95,7 +117,7 @@ func RunOSBuild(manifest []byte, store, outputDirectory string, exports, checkpo
 
 	if err != nil {
 		// ignore ExitError if output could be decoded correctly (only if running with --json)
-		if _, isExitError := err.(*exec.ExitError); !isExitError || !result {
+		if _, isExitError := err.(*exec.ExitError); !isExitError || !opts.JSONOutput {
 			return nil, fmt.Errorf("running osbuild failed: %v", err)
 		}
 	}

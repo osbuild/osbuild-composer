@@ -28,14 +28,9 @@ type awsEC2Executor struct {
 	tmpDir     string
 }
 
-func prepareSources(manifest []byte, store string, extraEnv []string, result bool, errorWriter io.Writer) error {
+func prepareSources(manifest []byte, errorWriter io.Writer, opts *osbuild.OSBuildOptions) error {
 	hostExecutor := NewHostExecutor()
-	opts := &OsbuildOpts{
-		StoreDir: store,
-		ExtraEnv: extraEnv,
-		Result:   result,
-	}
-	_, err := hostExecutor.RunOSBuild(manifest, opts, errorWriter)
+	_, err := hostExecutor.RunOSBuild(manifest, nil, nil, errorWriter, opts)
 	return err
 }
 
@@ -248,12 +243,8 @@ func extractOutputArchive(outputDirectory, outputTar string) error {
 
 }
 
-func (ec2e *awsEC2Executor) RunOSBuild(manifest []byte, opts *OsbuildOpts, errorWriter io.Writer) (*osbuild.Result, error) {
-	if opts == nil {
-		opts = &OsbuildOpts{}
-	}
-
-	err := prepareSources(manifest, opts.StoreDir, opts.ExtraEnv, opts.Result, errorWriter)
+func (ec2e *awsEC2Executor) RunOSBuild(manifest []byte, exports, checkpoints []string, errorWriter io.Writer, opts *osbuild.OSBuildOptions) (*osbuild.Result, error) {
+	err := prepareSources(manifest, errorWriter, opts)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to prepare sources: %w", err)
 	}
@@ -287,7 +278,7 @@ func (ec2e *awsEC2Executor) RunOSBuild(manifest []byte, opts *OsbuildOpts, error
 		return nil, fmt.Errorf("Timeout waiting for executor to come online")
 	}
 
-	inputArchive, err := writeInputArchive(ec2e.tmpDir, opts.StoreDir, opts.Exports, manifest)
+	inputArchive, err := writeInputArchive(ec2e.tmpDir, opts.StoreDir, exports, manifest)
 	if err != nil {
 		logrus.Errorf("Unable to write input archive: %v", err)
 		return nil, err
