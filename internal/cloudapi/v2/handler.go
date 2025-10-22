@@ -147,6 +147,11 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		if err != nil {
 			return err
 		}
+	} else if h.server.config.ImageBuilderManifestGeneration {
+		id, err = h.server.enqueueComposeIBCLI(irs, channel)
+		if err != nil {
+			return err
+		}
 	} else {
 		id, err = h.server.enqueueCompose(irs, channel)
 		if err != nil {

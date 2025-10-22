@@ -23,6 +23,7 @@ import (
 
 	"github.com/osbuild/images/pkg/depsolvednf"
 	"github.com/osbuild/images/pkg/distrofactory"
+	"github.com/osbuild/images/pkg/experimentalflags"
 	"github.com/osbuild/images/pkg/reporegistry"
 	"github.com/osbuild/osbuild-composer/internal/auth"
 	"github.com/osbuild/osbuild-composer/internal/cloudapi"
@@ -171,6 +172,12 @@ func (c *Composer) InitAPI(cert, key string, enableTLS bool, enableMTLS bool, en
 	config := v2.ServerConfig{
 		JWTEnabled:           c.config.Koji.EnableJWT,
 		TenantProviderFields: c.config.Koji.JWTTenantProviderFields,
+	}
+
+	// handle experimental image-builder manifest generation option using the
+	// experimentalflags pkg from osbuild/images.
+	if experimentalflags.Bool("image-builder-manifest-generation") {
+		config.ImageBuilderManifestGeneration = true
 	}
 
 	c.api = cloudapi.NewServer(c.workers, c.distros, c.repos, config)

@@ -61,6 +61,12 @@ type Server struct {
 type ServerConfig struct {
 	TenantProviderFields []string
 	JWTEnabled           bool
+
+	// Experimental configuration option. Can only be set through the
+	// IMAGE_BUILDER_EXPERIMENTAL environment variable using:
+	//
+	//     IMAGE_BUILDER_EXPERIMENTAL="image-builder-manifest-generation"
+	ImageBuilderManifestGeneration bool
 }
 
 func NewServer(workers *worker.Server, distros *distrofactory.Factory, repos *reporegistry.RepoRegistry, config ServerConfig) *Server {
