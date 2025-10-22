@@ -61,6 +61,12 @@ type Server struct {
 type ServerConfig struct {
 	TenantProviderFields []string
 	JWTEnabled           bool
+
+	// Experimental configuration option. Can only be set through the
+	// IMAGE_BUILDER_EXPERIMENTAL environment variable using:
+	//
+	//     IMAGE_BUILDER_EXPERIMENTAL="image-builder-manifest-generation"
+	ImageBuilderManifestGeneration bool
 }
 
 func NewServer(workers *worker.Server, distros *distrofactory.Factory, repos *reporegistry.RepoRegistry, config ServerConfig) *Server {
@@ -313,6 +319,53 @@ func (s *Server) enqueueCompose(irs []imageRequest, channel string) (uuid.UUID, 
 	}()
 
 	return id, nil
+}
+
+func (s *Server) enqueueComposeIBCLI(irs []imageRequest, channel string) (uuid.UUID, error) {
+	var osbuildJobID uuid.UUID
+	if len(irs) != 1 {
+		return osbuildJobID, HTTPError(ErrorInvalidNumberOfImageBuilds)
+	}
+	ir := irs[0]
+
+	arch := ir.imageType.Arch()
+	distribution := arch.Distro()
+	imageType := ir.imageType
+
+	args := worker.ImageBuilderArgs{
+		Distro:    distribution.Name(),
+		Arch:      arch.Name(),
+		ImageType: imageType.Name(),
+		Blueprint: &ir.blueprint,
+	}
+
+	manifestJob := worker.ImageBuilderManifestJob{
+		Args: args,
+
+		// NOTE: image-builder doesn't support setting the rpmmd cache and tries to
+		// read XDG_CACHE_HOME, which fails when running as _osbuild-composer
+		// TODO: make sure we use the same rpmmd cache that's used by the depsolve
+		// job for consistency
+		ExtraEnv: []string{"XDG_CACHE_HOME=/var/cache/osbuild-composer/rpmmd"},
+	}
+
+	manifestJobID, err := s.workers.EnqueueImageBuilderManifestJob(&manifestJob, channel)
+	if err != nil {
+		return osbuildJobID, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
+	}
+	logrus.Debugf("manifest job enqueued: %v", manifestJobID)
+
+	osbuildJobID, err = s.workers.EnqueueOSBuildAsDependency(arch.Name(),
+		&worker.OSBuildJob{
+			Targets:       ir.targets,
+			PipelineNames: nil, // NOTE: the manifest job result provides these when they're not available from the osbuild job args
+		}, []uuid.UUID{manifestJobID}, channel)
+	if err != nil {
+		return osbuildJobID, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
+	}
+	logrus.Debugf("osbuild job enqueued: %v (with dep %v)", osbuildJobID, manifestJobID)
+
+	return osbuildJobID, nil
 }
 
 func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, release string, irs []imageRequest, channel string) (uuid.UUID, error) {
