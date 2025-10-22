@@ -13,13 +13,16 @@ import (
 	"strings"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"golang.org/x/exp/slices"
 
 	"github.com/osbuild/images/pkg/osbuild"
-	"github.com/sirupsen/logrus"
 
 	"github.com/osbuild/osbuild-composer/internal/cloud/awscloud"
+	"github.com/osbuild/osbuild-composer/internal/worker"
 )
+
+const OSBuildResultFilename = "osbuild-result.json"
 
 type awsEC2Executor struct {
 	iamProfile string
@@ -28,9 +31,9 @@ type awsEC2Executor struct {
 	tmpDir     string
 }
 
-func prepareSources(manifest []byte, opts *osbuild.OSBuildOptions) error {
+func prepareSources(manifest []byte, logger logrus.FieldLogger, opts *osbuild.OSBuildOptions) error {
 	hostExecutor := NewHostExecutor()
-	_, err := hostExecutor.RunOSBuild(manifest, &osbuild.OSBuildOptions{
+	_, err := hostExecutor.RunOSBuild(manifest, logger, nil, &osbuild.OSBuildOptions{
 		StoreDir:   opts.StoreDir,
 		ExtraEnv:   opts.ExtraEnv,
 		Stderr:     opts.Stderr,
@@ -123,42 +126,31 @@ func writeInputArchive(cacheDir, store string, exports []string, manifestData []
 	return archive, nil
 }
 
-func handleBuild(inputArchive, host string) (*osbuild.Result, error) {
+func handleBuild(inputArchive, host string, logger logrus.FieldLogger, job worker.Job) error {
 	client := http.Client{
 		Timeout: time.Minute * 60,
 	}
 	inputFile, err := os.Open(inputArchive)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to open inputArchive (%s): %w", inputArchive, err)
+		return fmt.Errorf("unable to open inputArchive (%s): %w", inputArchive, err)
 	}
 	defer inputFile.Close()
 
 	resp, err := client.Post(fmt.Sprintf("%s/api/v1/build", host), "application/x-tar", inputFile)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to request build from executor instance: %w", err)
+		return fmt.Errorf("unable to request build from executor instance: %w", err)
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != 201 {
 		body, err := io.ReadAll(resp.Body)
 		if err != nil {
-			return nil, fmt.Errorf("Unable to read body waiting for build to run: %w,  http status: %d", err, resp.StatusCode)
+			return fmt.Errorf("unable to read body waiting for build to run: %w,  http status: %d", err, resp.StatusCode)
 		}
-		return nil, fmt.Errorf("Something went wrong during executor build: http status: %v, %d, %s", err, resp.StatusCode, body)
+		return fmt.Errorf("something went wrong during executor build: http status: %v, %d, %s", err, resp.StatusCode, body)
 	}
 
-	var osbuildResult osbuild.Result
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("Unable to read response body: %w", err)
-	}
-
-	err = json.Unmarshal(body, &osbuildResult)
-	if err != nil {
-		return nil, fmt.Errorf("Unable to decode response body %q into osbuild result: %w", body, err)
-	}
-
-	return &osbuildResult, nil
+	osbuildStatus := osbuild.NewStatusScanner(resp.Body)
+	return handleProgress(osbuildStatus, logger, job)
 }
 
 func fetchOutputArchive(cacheDir, host string) (string, error) {
@@ -248,8 +240,8 @@ func extractOutputArchive(outputDirectory, outputTar string) error {
 
 }
 
-func (ec2e *awsEC2Executor) RunOSBuild(manifest []byte, opts *osbuild.OSBuildOptions) (*osbuild.Result, error) {
-	err := prepareSources(manifest, opts)
+func (ec2e *awsEC2Executor) RunOSBuild(manifest []byte, logger logrus.FieldLogger, job worker.Job, opts *osbuild.OSBuildOptions) (*osbuild.Result, error) {
+	err := prepareSources(manifest, logger, opts)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to prepare sources: %w", err)
 	}
@@ -289,13 +281,9 @@ func (ec2e *awsEC2Executor) RunOSBuild(manifest []byte, opts *osbuild.OSBuildOpt
 		return nil, err
 	}
 
-	osbuildResult, err := handleBuild(inputArchive, executorHost)
-	if err != nil {
-		logrus.Errorf("Something went wrong handling the executor's build: %v", err)
+	if err := handleBuild(inputArchive, executorHost, logger, job); err != nil {
+		logrus.Errorf("something went wrong handling the executor's build: %v", err)
 		return nil, err
-	}
-	if !osbuildResult.Success {
-		return osbuildResult, nil
 	}
 
 	outputArchive, err := fetchOutputArchive(ec2e.tmpDir, executorHost)
@@ -310,7 +298,17 @@ func (ec2e *awsEC2Executor) RunOSBuild(manifest []byte, opts *osbuild.OSBuildOpt
 		return nil, err
 	}
 
-	return osbuildResult, nil
+	resultData, err := os.ReadFile(filepath.Join(opts.OutputDir, OSBuildResultFilename))
+	if err != nil {
+		logrus.Errorf("Unable to find and read osbuild result: %v", err)
+		return nil, err
+	}
+	var result osbuild.Result
+	if err := json.Unmarshal(resultData, &result); err != nil {
+		logrus.Errorf("Unable to unmarshal json result: %v\nraw output:\n%s", err, resultData)
+		return nil, fmt.Errorf("error decoding osbuild output: %w\nraw output:\n%s", err, resultData)
+	}
+	return &result, nil
 }
 
 func NewAWSEC2Executor(iamProfile, keyName, hostname, tmpDir string) Executor {
