@@ -13,10 +13,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"golang.org/x/exp/slices"
 
 	"github.com/osbuild/images/pkg/osbuild"
-	"github.com/sirupsen/logrus"
 
 	"github.com/osbuild/osbuild-composer/internal/cloud/awscloud"
 )
@@ -28,9 +28,9 @@ type awsEC2Executor struct {
 	tmpDir     string
 }
 
-func prepareSources(manifest []byte, errorWriter io.Writer, opts *osbuild.OSBuildOptions) error {
+func prepareSources(manifest []byte, errorWriter io.Writer, logger *logrus.Entry, opts *osbuild.OSBuildOptions) error {
 	hostExecutor := NewHostExecutor()
-	_, err := hostExecutor.RunOSBuild(manifest, nil, nil, errorWriter, opts)
+	_, err := hostExecutor.RunOSBuild(manifest, nil, nil, errorWriter, logger, opts)
 	return err
 }
 
@@ -243,8 +243,8 @@ func extractOutputArchive(outputDirectory, outputTar string) error {
 
 }
 
-func (ec2e *awsEC2Executor) RunOSBuild(manifest []byte, exports, checkpoints []string, errorWriter io.Writer, opts *osbuild.OSBuildOptions) (*osbuild.Result, error) {
-	err := prepareSources(manifest, errorWriter, opts)
+func (ec2e *awsEC2Executor) RunOSBuild(manifest []byte, exports, checkpoints []string, errorWriter io.Writer, logger *logrus.Entry, opts *osbuild.OSBuildOptions) (*osbuild.Result, error) {
+	err := prepareSources(manifest, errorWriter, logger, opts)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to prepare sources: %w", err)
 	}

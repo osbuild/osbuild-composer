@@ -961,7 +961,7 @@ github.com/oracle/oci-go-sdk/v54/workrequests
 ## explicit; go 1.23.9
 github.com/osbuild/blueprint/internal/common
 github.com/osbuild/blueprint/pkg/blueprint
-# github.com/osbuild/images v0.209.0
+# github.com/osbuild/images v0.209.0 => github.com/croissanne/images v0.0.0-20251027100746-72ef9ec548c0
 ## explicit; go 1.23.9
 github.com/osbuild/images/data/dependencies
 github.com/osbuild/images/data/distrodefs
@@ -1645,3 +1645,4 @@ gopkg.in/yaml.v2
 # gopkg.in/yaml.v3 v3.0.1
 ## explicit
 gopkg.in/yaml.v3
+# github.com/osbuild/images => github.com/croissanne/images v0.0.0-20251027100746-72ef9ec548c0

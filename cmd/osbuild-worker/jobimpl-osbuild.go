@@ -525,7 +525,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 		ExtraEnv:   extraEnv,
 		JSONOutput: true,
 	}
-	osbuildJobResult.OSBuildOutput, err = executor.RunOSBuild(jobArgs.Manifest, exports, nil, os.Stderr, opts)
+	osbuildJobResult.OSBuildOutput, err = executor.RunOSBuild(jobArgs.Manifest, exports, nil, os.Stderr, logWithId, opts)
 	// First handle the case when "running" osbuild failed
 	if err != nil {
 		osbuildJobResult.JobError = clienterrors.New(clienterrors.ErrorBuildJob, "osbuild build failed", err.Error())

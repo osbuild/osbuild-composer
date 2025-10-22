@@ -74,8 +74,8 @@ func NewStatusScanner(r io.Reader) *StatusScanner {
 	// 64kb is too small for e.g. the dracut stage (see also
 	// https://github.com/osbuild/osbuild/issues/1976). Increase for
 	// but to unblock us.
-	buf := make([]byte, 0, 512_000)
-	scanner.Buffer(buf, 512_000)
+	buf := make([]byte, 0, 512_000 * 8)
+	scanner.Buffer(buf, 512_000 * 8)
 	return &StatusScanner{
 		scanner:         scanner,
 		contextMap:      make(map[string]*contextJSON),

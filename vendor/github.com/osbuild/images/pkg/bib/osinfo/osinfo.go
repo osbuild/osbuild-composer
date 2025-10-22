@@ -40,7 +40,7 @@ type Info struct {
 	UEFIVendor         string    `yaml:"uefi_vendor"`
 	SELinuxPolicy      string    `yaml:"selinux_policy"`
 	ImageCustomization *blueprint.Customizations
-	KernelInfo         *KernelInfo
+	KernelInfo         *KernelInfo `yaml:"kernel_info"`
 
 	MountConfiguration *osbuild.MountConfiguration
 	PartitionTable     *disk.PartitionTable

@@ -312,20 +312,7 @@ func (t *BootcImageType) Manifest(bp *blueprint.Blueprint, options distro.ImageO
 	//nolint:gosec
 	rng := rand.New(rand.NewSource(seed))
 
-	archi := common.Must(arch.FromString(t.arch.Name()))
-	platform := &platform.Data{
-		Arch:        archi,
-		UEFIVendor:  t.arch.distro.sourceInfo.UEFIVendor,
-		QCOW2Compat: "1.1",
-	}
-	switch archi {
-	case arch.ARCH_X86_64:
-		platform.BIOSPlatform = "i386-pc"
-	case arch.ARCH_PPC64LE:
-		platform.BIOSPlatform = "powerpc-ieee1275"
-	case arch.ARCH_S390X:
-		platform.ZiplSupport = true
-	}
+	platform := PlatformFor(t.arch.Name(), t.arch.distro.sourceInfo.UEFIVendor)
 	// For the bootc-disk image, the filename is the basename and
 	// the extension is added automatically for each disk format
 	filename := strings.Split(t.filename, ".")[0]
@@ -487,6 +474,12 @@ func newBootcDistroAfterIntrospect(archStr string, info *osinfo.Info, imgref, de
 			filename: "image.ova",
 		},
 	)
+	ba.imageTypes["bootc-installer"] = &BootcAnacondaInstaller{
+		arch:   ba,
+		name:   "bootc-installer",
+		export: "bootiso",
+	}
+
 	bd.addArches(ba)
 
 	return bd, nil
