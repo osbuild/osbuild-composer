@@ -1,3 +1,11 @@
+# v1.60.1 (2025-10-23)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.60.0 (2025-10-22)
+
+* **Feature**: Update endpoint ruleset parameters casing
+
 # v1.59.4 (2025-10-16)
 
 * **Dependency Update**: Bump minimum Go version to 1.23.
