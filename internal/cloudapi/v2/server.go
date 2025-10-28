@@ -322,6 +322,7 @@ func (s *Server) enqueueCompose(irs []imageRequest, channel string) (uuid.UUID, 
 }
 
 func (s *Server) enqueueComposeIBCLI(irs []imageRequest, channel string) (uuid.UUID, error) {
+	logrus.Warnf("using experimental job type: %s", worker.JobTypeImageBuilderManifest)
 	var osbuildJobID uuid.UUID
 	if len(irs) != 1 {
 		return osbuildJobID, HTTPErrorWithInternal(ErrorInvalidNumberOfImageBuilds, fmt.Errorf("expected 1 image request, got %d", len(irs)))
