@@ -136,6 +136,28 @@ retry sudo dnf -y install osbuild-tools
 # Save osbuild-composer NVR to a file to be used as CI artifact
 rpm -q osbuild-composer > COMPOSER_NVR
 
+IMAGE_BUILDER_EXPERIMENTAL="${IMAGE_BUILDER_EXPERIMENTAL:-}"
+if [[ "${IMAGE_BUILDER_EXPERIMENTAL}" != "" ]]; then
+    greenprint "Adding experimental options to osbuild-composer.service"
+    # Pass any experimental options into the systemd unit
+    cat > experimental-override.conf << EOF
+[Service]
+Environment=IMAGE_BUILDER_EXPERIMENTAL="${IMAGE_BUILDER_EXPERIMENTAL}"
+EOF
+
+    cat experimental-override.conf | sudo systemctl edit --stdin osbuild-composer.service
+    sudo systemctl daemon-reload
+    sudo systemctl cat osbuild-composer.service
+
+    if echo "${IMAGE_BUILDER_EXPERIMENTAL}" | grep -q "image-builder-manifest-generation=1"; then
+        # TODO: configure dependency pinning for image-builder like we do for osbuild
+        # https://issues.redhat.com/browse/HMS-9647
+        greenprint "Installing image-builder for experimental manifest generation"
+        sudo dnf -y install image-builder
+    fi
+fi
+
+
 if [ "${NIGHTLY:=false}" == "true" ]; then
     # check if we've installed the osbuild-composer RPM from the nightly tree
     # under test or happen to install a newer version from one of the S3 repositories
