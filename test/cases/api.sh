@@ -903,5 +903,14 @@ TOKEN="$(curl --request POST \
 sudo systemctl restart osbuild-remote-worker@localhost:8700.service
 sudo systemctl is-active --quiet osbuild-remote-worker@localhost:8700.service
 
+IMAGE_BUILDER_EXPERIMENTAL="${IMAGE_BUILDER_EXPERIMENTAL:-}"
+if [[ "${IMAGE_BUILDER_EXPERIMENTAL}" != "" ]]; then
+    if echo "${IMAGE_BUILDER_EXPERIMENTAL}" | grep -q "image-builder-manifest-generation=1"; then
+        greenprint "Verifying usage of experimental job type"
+        # verify using log message
+        journalctl -g "using experimental job type: image-builder-manifest"
+    fi
+fi
+
 greenprint  "DONE"
 exit 0
