@@ -338,10 +338,11 @@ func (s *Server) enqueueComposeIBCLI(irs []imageRequest, channel string) (uuid.U
 	}
 
 	args := worker.ImageBuilderArgs{
-		Distro:    distribution.Name(),
-		Arch:      arch.Name(),
-		ImageType: imageType.Name(),
-		Blueprint: rawBlueprint,
+		Distro:       distribution.Name(),
+		Arch:         arch.Name(),
+		ImageType:    imageType.Name(),
+		Blueprint:    rawBlueprint,
+		Repositories: ir.repositories,
 	}
 
 	manifestJob := worker.ImageBuilderManifestJob{
