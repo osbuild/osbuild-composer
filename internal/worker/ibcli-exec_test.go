@@ -2,13 +2,16 @@ package worker_test
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"slices"
 	"testing"
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
+	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 	"github.com/stretchr/testify/assert"
@@ -51,7 +54,7 @@ func TestRunImageBuilderManifestCall(t *testing.T) {
 					},
 				},
 			},
-			expCall: []string{"image-builder", "manifest", "--distro", "centos-10", "--arch", "x86_64", "--blueprint", "<BLUEPRINTPATH>", "--", "qcow2"},
+			expCall: []string{"image-builder", "manifest", "--distro", "centos-10", "--arch", "x86_64", "--blueprint", "<TMPDIR>/blueprint.json", "--", "qcow2"},
 		},
 
 		"with-env": {
@@ -79,7 +82,63 @@ func TestRunImageBuilderManifestCall(t *testing.T) {
 				},
 			},
 			extraEnv: []string{"OSBUILD_EXPERIMENTAL_WHATEVER=1"},
-			expCall:  []string{"image-builder", "manifest", "--distro", "rhel-9.10", "--arch", "aarch64", "--blueprint", "<BLUEPRINTPATH>", "--", "azure-rhui"},
+			expCall:  []string{"image-builder", "manifest", "--distro", "rhel-9.10", "--arch", "aarch64", "--blueprint", "<TMPDIR>/blueprint.json", "--", "azure-rhui"},
+		},
+
+		"with-repos": {
+			args: worker.ImageBuilderArgs{
+				Distro:    "rhel-10.10",
+				Arch:      "aarch64",
+				ImageType: "azure-rhui",
+				Repositories: []rpmmd.RepoConfig{
+					{
+						Id:       "baseos",
+						Name:     "baseos",
+						BaseURLs: []string{"https://example.org/baseos"},
+					},
+				},
+			},
+			expCall: []string{
+				"image-builder",
+				"manifest",
+				"--distro", "rhel-10.10",
+				"--arch", "aarch64",
+				"--data-dir", "<TMPDIR>",
+				"--",
+				"azure-rhui",
+			},
+		},
+		"with-blueprint-and-repos": {
+			args: worker.ImageBuilderArgs{
+				Distro:    "rhel-9.10",
+				Arch:      "aarch64",
+				ImageType: "azure-rhui",
+				Blueprint: &blueprint.Blueprint{
+					Customizations: &blueprint.Customizations{
+						Hostname: common.ToPtr("image-builder"),
+						Timezone: &blueprint.TimezoneCustomization{
+							Timezone: common.ToPtr("Europe/Berlin"),
+						},
+					},
+				},
+				Repositories: []rpmmd.RepoConfig{
+					{
+						Id:       "baseos",
+						Name:     "baseos",
+						BaseURLs: []string{"https://example.org/baseos"},
+					},
+				},
+			},
+			expCall: []string{
+				"image-builder",
+				"manifest",
+				"--distro", "rhel-9.10",
+				"--arch", "aarch64",
+				"--blueprint", "<TMPDIR>/blueprint.json",
+				"--data-dir", "<TMPDIR>",
+				"--",
+				"azure-rhui",
+			},
 		},
 	}
 
@@ -94,10 +153,10 @@ func TestRunImageBuilderManifestCall(t *testing.T) {
 			worker.MockExecCommand(func(name string, arg ...string) *exec.Cmd {
 				actualCall = append([]string{name}, arg...)
 
-				// The blueprint path is a random temporary directory, so let's
-				// search for it and replace the path in the expected args.
-				// Also, load the blueprint contents to compare them with the
-				// original from the test case.
+				// The blueprint path is under a random temporary directory, so
+				// let's search for it and replace the path in the expected
+				// args. Also, load the blueprint contents to compare them with
+				// the original from the test case.
 				var onDiskBP *blueprint.Blueprint
 				bpPathIdx := slices.Index(actualCall, "--blueprint") + 1
 				if bpPathIdx > 0 {
@@ -114,13 +173,35 @@ func TestRunImageBuilderManifestCall(t *testing.T) {
 				}
 				assert.Equal(tc.args.Blueprint, onDiskBP)
 
+				// The repos path is under a random temporary directory (the
+				// datadir), so let's search for it and replace the path in the
+				// expected args. Also, load the repos file contents to compare
+				// them with the original from the test case.
+				var onDiskRepos []rpmmd.RepoConfig
+				dataDirIdx := slices.Index(actualCall, "--data-dir") + 1
+				if dataDirIdx > 0 {
+					dataDir := actualCall[dataDirIdx]
+					expCall[dataDirIdx] = dataDir
+
+					reposPath := filepath.Join(dataDir, "repositories", fmt.Sprintf("%s.json", tc.args.Distro))
+					reposFile, err := os.Open(reposPath)
+					assert.NoError(err)
+					defer reposFile.Close()
+
+					reposFileContents, err := io.ReadAll(reposFile)
+					assert.NoError(err)
+					assert.NoError(json.Unmarshal(reposFileContents, &onDiskRepos))
+				}
+				assert.Equal(tc.args.Repositories, onDiskRepos)
+
 				// return a real exec.Command() result so that the output
 				// buffer reading doesn't fail
 				cmd = exec.Command("/usr/bin/true")
 				return cmd
 			})
 
-			_, _ = worker.RunImageBuilderManifest(tc.args, tc.extraEnv, os.Stderr)
+			_, err := worker.RunImageBuilderManifest(tc.args, tc.extraEnv, os.Stderr)
+			assert.NoError(err)
 
 			assert.Equal(expCall, actualCall)
 			assert.Subset(cmd.Env, tc.extraEnv)
