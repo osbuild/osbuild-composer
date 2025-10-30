@@ -133,7 +133,7 @@ func (api *API) validDistros(arch string) []string {
 			continue
 		}
 
-		_, err := api.repoRegistry.DistroHasRepos(distroName, arch)
+		_, err := api.repoRegistry.ReposByArchName(distroName, arch, false)
 		if err == nil {
 			distros = append(distros, distroName)
 		} else {
