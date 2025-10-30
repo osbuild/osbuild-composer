@@ -67,7 +67,12 @@ func (request *DepsolveRequest) Depsolve(df *distrofactory.Factory, rr *reporegi
 		if err != nil {
 			return nil, HTTPError(ErrorUnsupportedImageType)
 		}
-
+		// image type may have "tagged" repos that are only available for this
+		// image type so we need to re-read
+		repos, err = rr.ReposByImageTypeName(imageType.Arch().Distro().Name(), imageType.Arch().Name(), imageType.Name())
+		if err != nil {
+			return nil, HTTPError(ErrorUnsupportedImageType)
+		}
 		// use the same seed for all images so we get the same IDs
 		bigSeed, err := rand.Int(rand.Reader, big.NewInt(math.MaxInt64))
 		if err != nil {
