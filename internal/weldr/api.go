@@ -38,6 +38,7 @@ import (
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distrofactory"
 	"github.com/osbuild/images/pkg/distroidparser"
+	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/ostree"
 	"github.com/osbuild/images/pkg/reporegistry"
@@ -2576,7 +2577,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		return
 	}
 
-	manifest, warnings, err := imageType.Manifest(bp, options, imageRepos, &seed)
+	mani, warnings, err := imageType.Manifest(bp, options, imageRepos, &seed)
 	if err != nil {
 		errors := responseError{
 			ID:  "ManifestCreationFailed",
@@ -2586,7 +2587,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		return
 	}
 
-	pkgSetChains, err := manifest.GetPackageSetChains()
+	pkgSetChains, err := mani.GetPackageSetChains()
 	if err != nil {
 		errors := responseError{
 			ID:  "DepsolveError",
@@ -2605,7 +2606,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		return
 	}
 
-	containerSpecs, err := api.resolveContainers(manifest.GetContainerSourceSpecs(), archName)
+	containerSpecs, err := api.resolveContainers(mani.GetContainerSourceSpecs(), archName)
 	if err != nil {
 		errors := responseError{
 			ID:  "ContainerResolveError",
@@ -2617,7 +2618,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 
 	testMode := q.Get("test")
 
-	ostreeCommitSpecs, err := api.resolveOSTreeCommits(manifest.GetOSTreeSourceSpecs(), testMode == "1" || testMode == "2")
+	ostreeCommitSpecs, err := api.resolveOSTreeCommits(mani.GetOSTreeSourceSpecs(), testMode == "1" || testMode == "2")
 	if err != nil {
 		errors := responseError{
 			ID:  "OSTreeOptionsError",
@@ -2627,7 +2628,10 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		return
 	}
 
-	mf, err := manifest.Serialize(depsolved, containerSpecs, ostreeCommitSpecs, nil)
+	opts := &manifest.SerializeOptions{
+		RpmDownloader: osbuild.RpmDownloaderLibrepo,
+	}
+	mf, err := mani.Serialize(depsolved, containerSpecs, ostreeCommitSpecs, opts)
 	if err != nil {
 		errors := responseError{
 			ID:  "ManifestCreationFailed",
@@ -2678,8 +2682,8 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 			Manifest: mf,
 			Targets:  targets,
 			PipelineNames: &worker.PipelineNames{
-				Build:   manifest.BuildPipelines(),
-				Payload: manifest.PayloadPipelines(),
+				Build:   mani.BuildPipelines(),
+				Payload: mani.PayloadPipelines(),
 			},
 			ImageBootMode: imageType.BootMode().String(),
 		}, "")
