@@ -76,6 +76,46 @@ var sbomDoc = json.RawMessage(`{
   ]
 }`)
 
+func makeFakeWorkerDepsolveResult() *worker.DepsolveJobResult {
+	dummyPackage := worker.DepsolvedPackage{
+		Name:    "pkg1",
+		Version: "1.33",
+		Release: "2.fc30",
+		Arch:    "x86_64",
+		Checksum: &worker.DepsolvedPackageChecksum{
+			Type:  "sha256",
+			Value: "e50ddb78a37f5851d1a5c37a4c77d59123153c156e628e064b9daa378f45a2fe",
+		},
+		RemoteLocations: []string{"https://pkg1.example.com/1.33-2.fc30.x86_64.rpm"},
+		RepoID:          "pkg1-repoid",
+	}
+	dummyRepo := rpmmd.RepoConfig{
+		Id:       "pkg1-repoid",
+		BaseURLs: []string{"https://pkg1.example.com/"},
+	}
+	return &worker.DepsolveJobResult{
+		PackageSpecs: map[string]worker.DepsolvedPackageList{
+			// Used when depsolving a manifest
+			"build": {dummyPackage},
+			"os":    {dummyPackage},
+		},
+		RepoConfigs: map[string][]rpmmd.RepoConfig{
+			"build": {dummyRepo},
+			"os":    {dummyRepo},
+		},
+		SbomDocs: map[string]worker.SbomDoc{
+			"build": {
+				DocType:  sbom.StandardTypeSpdx,
+				Document: sbomDoc,
+			},
+			"os": {
+				DocType:  sbom.StandardTypeSpdx,
+				Document: sbomDoc,
+			},
+		},
+	}
+}
+
 // mockDepsolve starts a routine which just completes depsolve jobs
 // It requires some of the test framework to operate
 // And the optional fail parameter will cause it to return an error as if the depsolve failed
@@ -94,35 +134,7 @@ func mockDepsolve(t *testing.T, workerServer *worker.Server, wg *sync.WaitGroup,
 			if err != nil {
 				continue
 			}
-			dummyPackage := worker.DepsolvedPackage{
-				Name:    "pkg1",
-				Version: "1.33",
-				Release: "2.fc30",
-				Arch:    "x86_64",
-				Checksum: &worker.DepsolvedPackageChecksum{
-					Type:  "sha256",
-					Value: "e50ddb78a37f5851d1a5c37a4c77d59123153c156e628e064b9daa378f45a2fe",
-				},
-				RemoteLocations: []string{"https://pkg1.example.com/1.33-2.fc30.x86_64.rpm"},
-			}
-			dJR := &worker.DepsolveJobResult{
-				PackageSpecs: map[string]worker.DepsolvedPackageList{
-					// Used when depsolving a manifest
-					"build": {dummyPackage},
-					"os":    {dummyPackage},
-				},
-				SbomDocs: map[string]worker.SbomDoc{
-					"build": {
-						DocType:  sbom.StandardTypeSpdx,
-						Document: sbomDoc,
-					},
-					"os": {
-						DocType:  sbom.StandardTypeSpdx,
-						Document: sbomDoc,
-					},
-				},
-			}
-
+			dJR := makeFakeWorkerDepsolveResult()
 			if fail {
 				dJR.JobResult.JobError = clienterrors.New(clienterrors.ErrorDNFOtherError, "DNF Error", nil)
 			}
@@ -925,7 +937,7 @@ func TestComposeStatusSuccess(t *testing.T) {
 		]
 	}`, jobId, jobId))
 
-	emptyManifest := `{"version":"2","pipelines":[{"name":"build"},{"name":"os"}],"sources":{"org.osbuild.curl":{"items":{"sha256:e50ddb78a37f5851d1a5c37a4c77d59123153c156e628e064b9daa378f45a2fe":{"url":"https://pkg1.example.com/1.33-2.fc30.x86_64.rpm"}}}}}`
+	emptyManifest := `{"version":"2","pipelines":[{"name":"build"},{"name":"os"}],"sources":{"org.osbuild.librepo":{"items":{"sha256:e50ddb78a37f5851d1a5c37a4c77d59123153c156e628e064b9daa378f45a2fe":{"path":"","mirror":"pkg1-repoid"}},"options":{"mirrors":{"pkg1-repoid":{"url":"https://pkg1.example.com/","type":"baseurl"}}}}}}`
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%v/manifests", jobId), ``, http.StatusOK, fmt.Sprintf(`
 	{
 		"href": "/api/image-builder-composer/v2/composes/%v/manifests",
@@ -971,7 +983,7 @@ func TestComposeManifests(t *testing.T) {
 		{
 			name: "success",
 			jobResult: worker.ManifestJobByIDResult{
-				Manifest: manifest.OSBuildManifest([]byte(`{"version":"2","pipelines":[{"name":"build"},{"name":"os"}],"sources":{"org.osbuild.curl":{"items":{"sha256:e50ddb78a37f5851d1a5c37a4c77d59123153c156e628e064b9daa378f45a2fe":{"url":"https://pkg1.example.com/1.33-2.fc30.x86_64.rpm"}}}}}`)),
+				Manifest: manifest.OSBuildManifest([]byte(`{"version":"2","pipelines":[{"name":"build"},{"name":"os"}],"sources":{"org.osbuild.librepo":{"items":{"sha256:e50ddb78a37f5851d1a5c37a4c77d59123153c156e628e064b9daa378f45a2fe":{"url":"https://pkg1.example.com/1.33-2.fc30.x86_64.rpm"}}}}}`)),
 			},
 		},
 		{
