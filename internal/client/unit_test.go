@@ -69,9 +69,14 @@ func executeTests(m *testing.M) int {
 	logger := log.New(os.Stdout, "", 0)
 
 	getSolverFn := func(modulePlatformID, releaseVer, arch, distro string) weldr.Solver {
+		dummyRepo := rpmmd.RepoConfig{
+			Id:       "test-repo",
+			BaseURLs: []string{"https://pkg1.example.com/"},
+		}
 		return &depsolvednf_mock.MockDepsolveDNF{
 			DepsolveRes: &depsolvednf.DepsolveResult{
-				Packages: depsolvednf_mock.BaseDepsolveResult(""),
+				Packages: depsolvednf_mock.BaseDepsolveResult("test-repo"),
+				Repos:    []rpmmd.RepoConfig{dummyRepo},
 			},
 			FetchRes:     depsolvednf_mock.BaseFetchResult(),
 			SearchResMap: depsolvednf_mock.BaseSearchResultsMap(),
