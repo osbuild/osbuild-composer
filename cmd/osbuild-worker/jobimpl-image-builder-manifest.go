@@ -8,10 +8,12 @@ import (
 
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/worker"
+	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
 	"github.com/sirupsen/logrus"
 )
 
 type ImageBuilderManifestJobImpl struct {
+	RepositoryMTLSConfig *RepositoryMTLSConfig
 }
 
 func (impl *ImageBuilderManifestJobImpl) Run(job worker.Job) error {
@@ -37,6 +39,21 @@ func (impl *ImageBuilderManifestJobImpl) Run(job worker.Job) error {
 	err := job.Args(&args)
 	if err != nil {
 		return err
+	}
+
+	if impl.RepositoryMTLSConfig != nil {
+		for repoi, repo := range args.Args.Repositories {
+			for _, baseurlstr := range repo.BaseURLs {
+				match, err := impl.RepositoryMTLSConfig.CompareBaseURL(baseurlstr)
+				if err != nil {
+					result.JobError = clienterrors.New(clienterrors.ErrorInvalidRepositoryURL, "Repository URL is malformed", err.Error())
+					return err
+				}
+				if match {
+					impl.RepositoryMTLSConfig.SetupRepoSSL(&args.Args.Repositories[repoi])
+				}
+			}
+		}
 	}
 
 	manifest, err := worker.RunImageBuilderManifest(args.Args, args.ExtraEnv, os.Stderr)
