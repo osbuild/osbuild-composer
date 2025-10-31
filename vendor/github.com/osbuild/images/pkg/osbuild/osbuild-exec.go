@@ -24,6 +24,8 @@ const (
 	MonitorLog     = "LogMonitor"
 )
 
+var OSBuildCmd = "osbuild"
+
 type OSBuildOptions struct {
 	StoreDir  string
 	OutputDir string
@@ -47,7 +49,7 @@ func NewOSBuildCmd(manifest []byte, exports, checkpoints []string, optsPtr *OSBu
 
 	// nolint: gosec
 	cmd := exec.Command(
-		"osbuild",
+		OSBuildCmd,
 		"--store", opts.StoreDir,
 		"--output-directory", opts.OutputDir,
 		fmt.Sprintf("--cache-max-size=%v", cacheMaxSize),
@@ -82,14 +84,16 @@ func NewOSBuildCmd(manifest []byte, exports, checkpoints []string, optsPtr *OSBu
 // Note that osbuild returns non-zero when the pipeline fails. This function
 // does not return an error in this case. Instead, the failure is communicated
 // with its corresponding logs through osbuild.Result.
-func RunOSBuild(manifest []byte, exports, checkpoints []string, errorWriter io.Writer, opts *OSBuildOptions) (*Result, error) {
+func RunOSBuild(manifest []byte, exports, checkpoints []string, errorWriter io.Writer, optsPtr *OSBuildOptions) (*Result, error) {
+	opts := common.ValueOrEmpty(optsPtr)
+
 	if err := CheckMinimumOSBuildVersion(); err != nil {
 		return nil, err
 	}
 
 	var stdoutBuffer bytes.Buffer
 	var res Result
-	cmd := NewOSBuildCmd(manifest, exports, checkpoints, opts)
+	cmd := NewOSBuildCmd(manifest, exports, checkpoints, &opts)
 
 	if opts.JSONOutput {
 		cmd.Stdout = &stdoutBuffer
@@ -152,7 +156,7 @@ func CheckMinimumOSBuildVersion() error {
 // OSBuildVersion returns the version of osbuild.
 func OSBuildVersion() (string, error) {
 	var stdoutBuffer bytes.Buffer
-	cmd := exec.Command("osbuild", "--version")
+	cmd := exec.Command(OSBuildCmd, "--version")
 	cmd.Stdout = &stdoutBuffer
 
 	err := cmd.Run()
@@ -169,7 +173,7 @@ func OSBuildVersion() (string, error) {
 
 // OSBuildInspect converts a manifest to an inspected manifest.
 func OSBuildInspect(manifest []byte) ([]byte, error) {
-	cmd := exec.Command("osbuild", "--inspect")
+	cmd := exec.Command(OSBuildCmd, "--inspect")
 	cmd.Stdin = bytes.NewBuffer(manifest)
 
 	out, err := cmd.Output()
