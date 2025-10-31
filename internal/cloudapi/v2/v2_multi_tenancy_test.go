@@ -235,7 +235,7 @@ func runNextJob(t *testing.T, jobs []uuid.UUID, workerServer *worker.Server, org
 // that all jobs are assigned to the correct channel, therefore we need also
 // this test.
 func TestMultitenancy(t *testing.T) {
-	apiServer, workerServer, q, cancel := newV2Server(t, t.TempDir(), true, false, false)
+	apiServer, workerServer, q, cancel := newV2Server(t, t.TempDir(), &v2ServerOpts{enableJWT: true})
 	handler := apiServer.Handler("/api/image-builder-composer/v2")
 	defer cancel()
 
