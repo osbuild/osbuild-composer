@@ -25,7 +25,7 @@ type jobResult struct {
 }
 
 func TestKojiCompose(t *testing.T) {
-	kojiServer, workerServer, _, cancel := newV2Server(t, t.TempDir(), false, false, false)
+	kojiServer, workerServer, _, cancel := newV2Server(t, t.TempDir(), nil)
 	handler := kojiServer.Handler("/api/image-builder-composer/v2")
 	workerHandler := workerServer.Handler()
 	defer cancel()
@@ -587,7 +587,7 @@ func TestKojiCompose(t *testing.T) {
 }
 
 func TestKojiJobTypeValidation(t *testing.T) {
-	server, workers, _, cancel := newV2Server(t, t.TempDir(), false, false, false)
+	server, workers, _, cancel := newV2Server(t, t.TempDir(), nil)
 	handler := server.Handler("/api/image-builder-composer/v2")
 	defer cancel()
 
