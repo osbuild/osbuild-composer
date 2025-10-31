@@ -605,6 +605,12 @@ API:
           - aws/rhel-10.0-ga-aarch64
         INTERNAL_NETWORK: ["true"]
 
+      # single test config for experimental feature
+      - IMAGE_TYPE: ["aws"]
+        RUNNER:
+          - aws/fedora-42-x86_64
+        IMAGE_BUILDER_EXPERIMENTAL: "image-builder-manifest-generation=1"
+
 API-module-hotfixes:
   stage: test
   extends: .terraform
