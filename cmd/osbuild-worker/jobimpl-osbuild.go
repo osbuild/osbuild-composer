@@ -410,7 +410,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 		if job.NDynamicArgs() > 0 {
 			var manifestJR worker.ManifestJobByIDResult
 			if job.NDynamicArgs() == 1 {
-				// Classic case of a compose request with the ManifestJobByID job as the single dependency
+				// Classic case of a compose request with the ManifestJobByID or ImageBuilderManifestJob as the single dependency
 				err = job.DynamicArgs(0, &manifestJR)
 			} else if job.NDynamicArgs() > 1 && jobArgs.ManifestDynArgsIdx != nil {
 				// Case when the job has multiple dependencies, but the manifest is not part of the static job arguments,
