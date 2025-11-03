@@ -45,7 +45,7 @@ func NewFromDistrosRepoConfigs(distrosRepoConfigs rpmmd.DistrosRepoConfigs) *Rep
 // Therefore in general, all common distro-arch-specific repositories are returned for any image type name,
 // even for non-existing ones.
 func (r *RepoRegistry) ReposByImageTypeName(distro, arch, imageType string) ([]rpmmd.RepoConfig, error) {
-	repositories := []rpmmd.RepoConfig{}
+	var repositories []rpmmd.RepoConfig
 
 	archRepos, err := r.ReposByArchName(distro, arch, true)
 	if err != nil {
@@ -71,16 +71,18 @@ func (r *RepoRegistry) ReposByImageTypeName(distro, arch, imageType string) ([]r
 	return repositories, nil
 }
 
-// reposByArchName returns a slice of rpmmd.RepoConfig instances, which should be used for building image types for the
+// ReposByArchName returns a slice of rpmmd.RepoConfig instances, which should be used for building image types for the
 // specific architecture and distribution. This includes by default all repositories without any image type tags specified.
 // Depending on the `includeTagged` argument value, repositories with image type tags set will be added to the returned
 // slice or not.
 //
 // The method does not verify if the given architecture name is actually part of the specific distribution definition.
+//
+// Note that using ReposByImageTypeName() is most likely what you want to use.
 func (r *RepoRegistry) ReposByArchName(distro, arch string, includeTagged bool) ([]rpmmd.RepoConfig, error) {
-	repositories := []rpmmd.RepoConfig{}
+	var repositories []rpmmd.RepoConfig
 
-	archRepos, err := r.DistroHasRepos(distro, arch)
+	archRepos, err := r.reposByDistroArch(distro, arch)
 	if err != nil {
 		return nil, err
 	}
@@ -97,8 +99,8 @@ func (r *RepoRegistry) ReposByArchName(distro, arch string, includeTagged bool) 
 	return repositories, nil
 }
 
-// DistroHasRepos returns the repositories for the distro+arch, and a found flag
-func (r *RepoRegistry) DistroHasRepos(distro, arch string) ([]rpmmd.RepoConfig, error) {
+// reposByDistroArch returns the repositories for the distro+arch
+func (r *RepoRegistry) reposByDistroArch(distro, arch string) ([]rpmmd.RepoConfig, error) {
 	// compatibility layer to support old repository definition filenames
 	// without a dot to separate major and minor release versions
 	stdDistroName, err := distroidparser.DefaultParser.Standardize(distro)
@@ -116,6 +118,12 @@ func (r *RepoRegistry) DistroHasRepos(distro, arch string) ([]rpmmd.RepoConfig, 
 	}
 
 	return repos, nil
+}
+
+// (deprecated) DistroHasRepos is just here for compatbility with weldr which could
+// use `ReposByArchName(distro, arch, true)` instead.
+func (r *RepoRegistry) DistroHasRepos(distro, arch string) ([]rpmmd.RepoConfig, error) {
+	return r.reposByDistroArch(distro, arch)
 }
 
 // ListDistros returns a list of all distros which have a repository defined

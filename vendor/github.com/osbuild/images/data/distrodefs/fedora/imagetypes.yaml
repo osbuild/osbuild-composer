@@ -1101,6 +1101,7 @@ image_types:
     required_partition_sizes: *default_required_dir_sizes
     image_config: &image_config_iot_commit
       <<: *image_config_iot_enabled_services
+      bootupd_gen_metadata: true
       install_weak_deps: false
       dracut_conf:
         - filename: "40-fips.conf"

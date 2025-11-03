@@ -520,12 +520,14 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 
 	logWithId.Infof("Extra env: %q", extraEnv)
 	opts := &osbuild.OSBuildOptions{
+		Exports:    exports,
 		StoreDir:   impl.Store,
 		OutputDir:  outputDirectory,
 		ExtraEnv:   extraEnv,
+		Stderr:     os.Stderr,
 		JSONOutput: true,
 	}
-	osbuildJobResult.OSBuildOutput, err = executor.RunOSBuild(jobArgs.Manifest, exports, nil, os.Stderr, opts)
+	osbuildJobResult.OSBuildOutput, err = executor.RunOSBuild(jobArgs.Manifest, opts)
 	// First handle the case when "running" osbuild failed
 	if err != nil {
 		osbuildJobResult.JobError = clienterrors.New(clienterrors.ErrorBuildJob, "osbuild build failed", err.Error())
