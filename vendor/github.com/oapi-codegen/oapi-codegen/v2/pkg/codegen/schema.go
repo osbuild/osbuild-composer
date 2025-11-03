@@ -128,10 +128,27 @@ func (p Property) GoTypeDef() string {
 	return typeDef
 }
 
+// RequiresNilCheck indicates whether the generated property should have a nil check performed on it before other checks.
+// This should be used in templates when performing `nil` checks, but NOT when i.e. determining if there should be an optional pointer given to the type - in that case, use `HasOptionalPointer`
+func (p Property) RequiresNilCheck() bool {
+	return p.ZeroValueIsNil() || p.HasOptionalPointer()
+}
+
 // HasOptionalPointer indicates whether the generated property has an optional pointer associated with it.
 // This takes into account the `x-go-type-skip-optional-pointer` extension, allowing a parameter definition to control whether the pointer should be skipped.
 func (p Property) HasOptionalPointer() bool {
 	return p.Required == false && p.Schema.SkipOptionalPointer == false //nolint:staticcheck
+}
+
+// ZeroValueIsNil is a helper function to determine if the given Go type used for this property
+// Will return true if the OpenAPI `type` is:
+// - `array`
+func (p Property) ZeroValueIsNil() bool {
+	if p.Schema.OAPISchema == nil {
+		return false
+	}
+
+	return p.Schema.OAPISchema.Type.Is("array")
 }
 
 // EnumDefinition holds type information for enum
@@ -260,6 +277,18 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 
 	schema := sref.Value
 
+	// Check x-go-type-skip-optional-pointer, which will override if the type
+	// should be a pointer or not when the field is optional.
+	// NOTE skipOptionalPointer will be defaulted to the global value, but can be overridden on a per-type/-field basis
+	skipOptionalPointer := globalState.options.OutputOptions.PreferSkipOptionalPointer
+	if extension, ok := schema.Extensions[extPropGoTypeSkipOptionalPointer]; ok {
+		var err error
+		skipOptionalPointer, err = extParsePropGoTypeSkipOptionalPointer(extension)
+		if err != nil {
+			return Schema{}, fmt.Errorf("invalid value for %q: %w", extPropGoTypeSkipOptionalPointer, err)
+		}
+	}
+
 	// If Ref is set on the SchemaRef, it means that this type is actually a reference to
 	// another type. We're not de-referencing, so simply use the referenced type.
 	if IsGoTypeReference(sref.Ref) {
@@ -274,15 +303,14 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 			Description:         schema.Description,
 			DefineViaAlias:      true,
 			OAPISchema:          schema,
-			SkipOptionalPointer: globalState.options.OutputOptions.PreferSkipOptionalPointer,
+			SkipOptionalPointer: skipOptionalPointer,
 		}, nil
 	}
 
 	outSchema := Schema{
-		Description: schema.Description,
-		OAPISchema:  schema,
-		// NOTE that SkipOptionalPointer will be defaulted to the global value, but can be overridden on a per-type/-field basis
-		SkipOptionalPointer: globalState.options.OutputOptions.PreferSkipOptionalPointer,
+		Description:         schema.Description,
+		OAPISchema:          schema,
+		SkipOptionalPointer: skipOptionalPointer,
 	}
 
 	// AllOf is interesting, and useful. It's the union of a number of other
@@ -296,16 +324,6 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 		}
 		mergedSchema.OAPISchema = schema
 		return mergedSchema, nil
-	}
-
-	// Check x-go-type-skip-optional-pointer, which will override if the type
-	// should be a pointer or not when the field is optional.
-	if extension, ok := schema.Extensions[extPropGoTypeSkipOptionalPointer]; ok {
-		skipOptionalPointer, err := extParsePropGoTypeSkipOptionalPointer(extension)
-		if err != nil {
-			return outSchema, fmt.Errorf("invalid value for %q: %w", extPropGoTypeSkipOptionalPointer, err)
-		}
-		outSchema.SkipOptionalPointer = skipOptionalPointer
 	}
 
 	// Check x-go-type, which will completely override the definition of this
