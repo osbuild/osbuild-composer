@@ -237,6 +237,8 @@ func getDefaultTarget(imageType ImageTypes) (UploadTypes, error) {
 		fallthrough
 	case ImageTypesPxeTarXz:
 		fallthrough
+	case ImageTypesNetworkInstaller:
+		fallthrough
 	case ImageTypesVsphere:
 		fallthrough
 	case ImageTypesVsphereOva:

@@ -224,6 +224,8 @@ func imageTypeFromApiImageType(it ImageTypes, arch distro.Arch) string {
 		return "live-installer"
 	case ImageTypesMinimalRaw:
 		return "minimal-raw"
+	case ImageTypesNetworkInstaller:
+		return "network-installer"
 	case ImageTypesOci:
 		return "oci"
 	case ImageTypesPxeTarXz:
