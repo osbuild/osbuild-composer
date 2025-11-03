@@ -87,55 +87,63 @@ func BaseSearchResultsMap() map[string]rpmmd.PackageList {
 }
 
 // BaseDepsolveResult is the expected list of dependencies (as rpmmd.PackageList) from
-func BaseDepsolveResult(repoID string) rpmmd.PackageList {
-	return rpmmd.PackageList{
-		{
-			Name:     "dep-package3",
-			Epoch:    7,
-			Version:  "3.0.3",
-			Release:  "1.fc30",
-			Arch:     "x86_64",
-			CheckGPG: true,
-			Checksum: rpmmd.Checksum{
-				Type:  "sha256",
-				Value: "62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720",
+func BaseDepsolveResult(repoID string) *depsolvednf.DepsolveResult {
+	return &depsolvednf.DepsolveResult{
+		Packages: rpmmd.PackageList{
+			{
+				Name:     "dep-package3",
+				Epoch:    7,
+				Version:  "3.0.3",
+				Release:  "1.fc30",
+				Arch:     "x86_64",
+				CheckGPG: true,
+				Checksum: rpmmd.Checksum{
+					Type:  "sha256",
+					Value: "62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720",
+				},
+				RemoteLocations: []string{
+					"https://pkg3.example.com/3.0.3-1.fc30.x86_64.rpm",
+				},
+				RepoID: repoID,
 			},
-			RemoteLocations: []string{
-				"https://pkg3.example.com/3.0.3-1.fc30.x86_64.rpm",
+			{
+				Name:     "dep-package1",
+				Epoch:    0,
+				Version:  "1.33",
+				Release:  "2.fc30",
+				Arch:     "x86_64",
+				CheckGPG: true,
+				Checksum: rpmmd.Checksum{
+					Type:  "sha256",
+					Value: "fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893",
+				},
+				RemoteLocations: []string{
+					"https://pkg1.example.com/1.33-2.fc30.x86_64.rpm",
+				},
+				RepoID: repoID,
 			},
-			RepoID: repoID,
+			{
+				Name:     "dep-package2",
+				Epoch:    0,
+				Version:  "2.9",
+				Release:  "1.fc30",
+				Arch:     "x86_64",
+				CheckGPG: true,
+				Checksum: rpmmd.Checksum{
+					Type:  "sha256",
+					Value: "5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2",
+				},
+				RemoteLocations: []string{
+					"https://pkg2.example.com/2.9-1.fc30.x86_64.rpm",
+				},
+				RepoID: repoID,
+			},
 		},
-		{
-			Name:     "dep-package1",
-			Epoch:    0,
-			Version:  "1.33",
-			Release:  "2.fc30",
-			Arch:     "x86_64",
-			CheckGPG: true,
-			Checksum: rpmmd.Checksum{
-				Type:  "sha256",
-				Value: "fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893",
+		Repos: []rpmmd.RepoConfig{
+			{
+				Id:       repoID,
+				BaseURLs: []string{"https://pkgs.example.com/"},
 			},
-			RemoteLocations: []string{
-				"https://pkg1.example.com/1.33-2.fc30.x86_64.rpm",
-			},
-			RepoID: repoID,
-		},
-		{
-			Name:     "dep-package2",
-			Epoch:    0,
-			Version:  "2.9",
-			Release:  "1.fc30",
-			Arch:     "x86_64",
-			CheckGPG: true,
-			Checksum: rpmmd.Checksum{
-				Type:  "sha256",
-				Value: "5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2",
-			},
-			RemoteLocations: []string{
-				"https://pkg2.example.com/2.9-1.fc30.x86_64.rpm",
-			},
-			RepoID: repoID,
 		},
 	}
 }

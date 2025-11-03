@@ -128,15 +128,8 @@ func getMockDepsolveDNFSolverFn(m *depsolvednf_mock.MockDepsolveDNF) GetSolverFn
 // getBaseMockDepsolveDNFSolverFn returns a SolverFn that uses the MockDepsolveDNF
 // with base test data. No errors are returned by the solver.
 func getBaseMockDepsolveDNFSolverFn(deosolveRepoID string) GetSolverFn {
-	dummyRepo := rpmmd.RepoConfig{
-		Id:       deosolveRepoID,
-		BaseURLs: []string{"https://pkg1.example.com/"},
-	}
 	return getMockDepsolveDNFSolverFn(&depsolvednf_mock.MockDepsolveDNF{
-		DepsolveRes: &depsolvednf.DepsolveResult{
-			Packages: depsolvednf_mock.BaseDepsolveResult(deosolveRepoID),
-			Repos:    []rpmmd.RepoConfig{dummyRepo},
-		},
+		DepsolveRes:  depsolvednf_mock.BaseDepsolveResult(deosolveRepoID),
 		FetchRes:     depsolvednf_mock.BaseFetchResult(),
 		SearchResMap: depsolvednf_mock.BaseSearchResultsMap(),
 	})
@@ -150,15 +143,8 @@ func ResolveContent(pkgs map[string][]rpmmd.PackageSet, containers map[string][]
 
 	depsolved := make(map[string]depsolvednf.DepsolveResult, len(pkgs))
 
-	dummyRepo := rpmmd.RepoConfig{
-		Id:       repoID,
-		BaseURLs: []string{"https://pkg1.example.com/"},
-	}
 	for name := range pkgs {
-		depsolved[name] = depsolvednf.DepsolveResult{
-			Packages: depsolvednf_mock.BaseDepsolveResult(repoID),
-			Repos:    []rpmmd.RepoConfig{dummyRepo},
-		}
+		depsolved[name] = *depsolvednf_mock.BaseDepsolveResult(repoID)
 	}
 
 	containerSpecs := make(map[string][]container.Spec, len(containers))
@@ -1088,7 +1074,7 @@ func TestCompose(t *testing.T) {
 				},
 			},
 		},
-		Packages: weldrtypes.RPMMDPackageListToDepsolvedPackageInfoList(depsolvednf_mock.BaseDepsolveResult(testRepoID)),
+		Packages: weldrtypes.RPMMDPackageListToDepsolvedPackageInfoList(depsolvednf_mock.BaseDepsolveResult(testRepoID).Packages),
 	}
 
 	expectedComposeLocalAndAws := &weldrtypes.Compose{
@@ -1135,7 +1121,7 @@ func TestCompose(t *testing.T) {
 				},
 			},
 		},
-		Packages: weldrtypes.RPMMDPackageListToDepsolvedPackageInfoList(depsolvednf_mock.BaseDepsolveResult(testRepoID)),
+		Packages: weldrtypes.RPMMDPackageListToDepsolvedPackageInfoList(depsolvednf_mock.BaseDepsolveResult(testRepoID).Packages),
 	}
 
 	expectedComposeOSTree := &weldrtypes.Compose{
@@ -1165,7 +1151,7 @@ func TestCompose(t *testing.T) {
 				},
 			},
 		},
-		Packages: weldrtypes.RPMMDPackageListToDepsolvedPackageInfoList(depsolvednf_mock.BaseDepsolveResult(testRepoID)),
+		Packages: weldrtypes.RPMMDPackageListToDepsolvedPackageInfoList(depsolvednf_mock.BaseDepsolveResult(testRepoID).Packages),
 	}
 
 	ostreeOptionsOther := ostree.ImageOptions{ImageRef: otherRef, URL: ostreeRepoOther.Server.URL}
@@ -1203,7 +1189,7 @@ func TestCompose(t *testing.T) {
 				},
 			},
 		},
-		Packages: weldrtypes.RPMMDPackageListToDepsolvedPackageInfoList(depsolvednf_mock.BaseDepsolveResult(testRepoID)),
+		Packages: weldrtypes.RPMMDPackageListToDepsolvedPackageInfoList(depsolvednf_mock.BaseDepsolveResult(testRepoID).Packages),
 	}
 
 	// For 2nd distribution
@@ -1248,7 +1234,7 @@ func TestCompose(t *testing.T) {
 				},
 			},
 		},
-		Packages: weldrtypes.RPMMDPackageListToDepsolvedPackageInfoList(depsolvednf_mock.BaseDepsolveResult(testRepoID2)),
+		Packages: weldrtypes.RPMMDPackageListToDepsolvedPackageInfoList(depsolvednf_mock.BaseDepsolveResult(testRepoID2).Packages),
 	}
 
 	getSolverFn := getBaseMockDepsolveDNFSolverFn(testRepoID)
@@ -1307,15 +1293,7 @@ func TestCompose(t *testing.T) {
 			expectedComposeGoodDistro,
 			[]string{"build_id", "warnings"},
 			getMockDepsolveDNFSolverFn(&depsolvednf_mock.MockDepsolveDNF{
-				DepsolveRes: &depsolvednf.DepsolveResult{
-					Packages: depsolvednf_mock.BaseDepsolveResult(testRepoID2),
-					Repos: []rpmmd.RepoConfig{
-						{
-							Id:       testRepoID2,
-							BaseURLs: []string{"https://pkg1.example.com/"},
-						},
-					},
-				},
+				DepsolveRes: depsolvednf_mock.BaseDepsolveResult(testRepoID2),
 			}),
 		},
 		"unknown-distro": {
@@ -2570,7 +2548,7 @@ func TestComposePOST_ImageTypeDenylist(t *testing.T) {
 				},
 			},
 		},
-		Packages: weldrtypes.RPMMDPackageListToDepsolvedPackageInfoList(depsolvednf_mock.BaseDepsolveResult(testRepoID)),
+		Packages: weldrtypes.RPMMDPackageListToDepsolvedPackageInfoList(depsolvednf_mock.BaseDepsolveResult(testRepoID).Packages),
 	}
 
 	expectedComposeLocal2 := &weldrtypes.Compose{
@@ -2600,7 +2578,7 @@ func TestComposePOST_ImageTypeDenylist(t *testing.T) {
 				},
 			},
 		},
-		Packages: weldrtypes.RPMMDPackageListToDepsolvedPackageInfoList(depsolvednf_mock.BaseDepsolveResult(testRepoID)),
+		Packages: weldrtypes.RPMMDPackageListToDepsolvedPackageInfoList(depsolvednf_mock.BaseDepsolveResult(testRepoID).Packages),
 	}
 
 	var cases = []struct {
