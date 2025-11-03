@@ -17,11 +17,15 @@ import (
 	bibcontainer "github.com/osbuild/images/pkg/bib/container"
 	"github.com/osbuild/images/pkg/bib/osinfo"
 	"github.com/osbuild/images/pkg/container"
+	"github.com/osbuild/images/pkg/customizations/anaconda"
+	"github.com/osbuild/images/pkg/customizations/kickstart"
 	"github.com/osbuild/images/pkg/customizations/users"
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/distro"
+	"github.com/osbuild/images/pkg/distro/defs"
 	"github.com/osbuild/images/pkg/image"
 	"github.com/osbuild/images/pkg/manifest"
+	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/platform"
 	"github.com/osbuild/images/pkg/policies"
 	"github.com/osbuild/images/pkg/rpmmd"
@@ -36,7 +40,7 @@ type BootcDistro struct {
 	sourceInfo      *osinfo.Info
 	buildSourceInfo *osinfo.Info
 
-	name          string
+	id            distro.ID
 	defaultFs     string
 	releasever    string
 	rootfsMinSize uint64
@@ -51,16 +55,6 @@ type BootcArch struct {
 	arch   arch.Arch
 
 	imageTypes map[string]distro.ImageType
-}
-
-var _ = distro.ImageType(&BootcImageType{})
-
-type BootcImageType struct {
-	arch *BootcArch
-
-	name     string
-	export   string
-	filename string
 }
 
 func (d *BootcDistro) SetBuildContainer(imgref string) (err error) {
@@ -109,7 +103,7 @@ func (d *BootcDistro) DefaultFs() string {
 }
 
 func (d *BootcDistro) Name() string {
-	return d.name
+	return d.id.String()
 }
 
 func (d *BootcDistro) Codename() string {
@@ -125,7 +119,7 @@ func (d *BootcDistro) OsVersion() string {
 }
 
 func (d *BootcDistro) Product() string {
-	return d.name
+	return d.id.String()
 }
 
 func (d *BootcDistro) ModulePlatformID() string {
@@ -201,12 +195,20 @@ func (a *BootcArch) addImageTypes(imageTypes ...BootcImageType) {
 	}
 }
 
+var _ = distro.ImageType(&BootcImageType{})
+
+type BootcImageType struct {
+	defs.ImageTypeYAML
+
+	arch *BootcArch
+}
+
 func (t *BootcImageType) Name() string {
-	return t.name
+	return t.ImageTypeYAML.Name()
 }
 
 func (t *BootcImageType) Aliases() []string {
-	return nil
+	return t.ImageTypeYAML.NameAliases
 }
 
 func (t *BootcImageType) Arch() distro.Arch {
@@ -214,11 +216,11 @@ func (t *BootcImageType) Arch() distro.Arch {
 }
 
 func (t *BootcImageType) Filename() string {
-	return t.filename
+	return t.ImageTypeYAML.Filename
 }
 
 func (t *BootcImageType) MIMEType() string {
-	return "application/x-test"
+	return t.ImageTypeYAML.MimeType
 }
 
 func (t *BootcImageType) OSTreeRef() string {
@@ -237,11 +239,20 @@ func (t *BootcImageType) Size(size uint64) uint64 {
 }
 
 func (t *BootcImageType) PartitionType() disk.PartitionTableType {
-	return disk.PT_NONE
+	// XXX: duplicated from generic/imagetype.go
+	basePartitionTable, err := t.BasePartitionTable()
+	if errors.Is(err, defs.ErrNoPartitionTableForImgType) {
+		return disk.PT_NONE
+	}
+	if err != nil {
+		panic(err)
+	}
+
+	return basePartitionTable.Type
 }
 
 func (t *BootcImageType) BasePartitionTable() (*disk.PartitionTable, error) {
-	return nil, nil
+	return t.ImageTypeYAML.PartitionTable(t.arch.distro.id, t.arch.arch.String())
 }
 
 func (t *BootcImageType) BootMode() platform.BootMode {
@@ -255,23 +266,26 @@ func (t *BootcImageType) BootMode() platform.BootMode {
 	return platform.BOOT_HYBRID
 }
 
-func (t *BootcImageType) BuildPipelines() []string {
-	return []string{"build"}
-}
-
-func (t *BootcImageType) PayloadPipelines() []string {
-	return []string{""}
-}
-
 func (t *BootcImageType) PayloadPackageSets() []string {
 	return nil
 }
 
 func (t *BootcImageType) Exports() []string {
-	return []string{t.export}
+	return t.ImageTypeYAML.Exports
 }
 
 func (t *BootcImageType) SupportedBlueprintOptions() []string {
+	if t.BootISO {
+		// XXX: this is probably too minimal but lets start small
+		// and expand
+		return []string{
+			"customizations.fips",
+			"customizations.group",
+			"customizations.installer",
+			"customizations.kernel.append",
+			"customizations.user",
+		}
+	}
 	return []string{
 		"customizations.directories",
 		"customizations.disk",
@@ -287,6 +301,13 @@ func (t *BootcImageType) RequiredBlueprintOptions() []string {
 }
 
 func (t *BootcImageType) Manifest(bp *blueprint.Blueprint, options distro.ImageOptions, repos []rpmmd.RepoConfig, seedp *int64) (*manifest.Manifest, []string, error) {
+	if t.BootISO {
+		return t.manifestForISO(bp, options, repos, seedp)
+	}
+	return t.manifestForDisk(bp, options, repos, seedp)
+}
+
+func (t *BootcImageType) manifestForDisk(bp *blueprint.Blueprint, options distro.ImageOptions, repos []rpmmd.RepoConfig, seedp *int64) (*manifest.Manifest, []string, error) {
 	if t.arch.distro.imgref == "" {
 		return nil, nil, fmt.Errorf("internal error: no base image defined")
 	}
@@ -312,23 +333,10 @@ func (t *BootcImageType) Manifest(bp *blueprint.Blueprint, options distro.ImageO
 	//nolint:gosec
 	rng := rand.New(rand.NewSource(seed))
 
-	archi := common.Must(arch.FromString(t.arch.Name()))
-	platform := &platform.Data{
-		Arch:        archi,
-		UEFIVendor:  t.arch.distro.sourceInfo.UEFIVendor,
-		QCOW2Compat: "1.1",
-	}
-	switch archi {
-	case arch.ARCH_X86_64:
-		platform.BIOSPlatform = "i386-pc"
-	case arch.ARCH_PPC64LE:
-		platform.BIOSPlatform = "powerpc-ieee1275"
-	case arch.ARCH_S390X:
-		platform.ZiplSupport = true
-	}
+	platform := PlatformFor(t.arch.Name(), t.arch.distro.sourceInfo.UEFIVendor)
 	// For the bootc-disk image, the filename is the basename and
 	// the extension is added automatically for each disk format
-	filename := strings.Split(t.filename, ".")[0]
+	filename := strings.Split(t.Filename(), ".")[0]
 
 	img := image.NewBootcDiskImage(platform, filename, containerSource, buildContainerSource)
 	img.OSCustomizations.Users = users.UsersFromBP(customizations.GetUsers())
@@ -342,14 +350,10 @@ func (t *BootcImageType) Manifest(bp *blueprint.Blueprint, options distro.ImageO
 		img.OSCustomizations.MountConfiguration = *t.arch.distro.sourceInfo.MountConfiguration
 	}
 
-	img.OSCustomizations.KernelOptionsAppend = []string{
-		"rw",
-		// TODO: Drop this as we expect kargs to come from the container image,
-		// xref https://github.com/CentOS/centos-bootc-layered/blob/main/cloud/usr/lib/bootc/install/05-cloud-kargs.toml
-		"console=tty0",
-		"console=ttyS0",
+	imageConfig := t.ImageTypeYAML.ImageConfig(t.arch.distro.id, t.arch.Name())
+	if imageConfig != nil {
+		img.OSCustomizations.KernelOptionsAppend = imageConfig.KernelOptions
 	}
-
 	if kopts := customizations.GetKernel(); kopts != nil && kopts.Append != "" {
 		img.OSCustomizations.KernelOptionsAppend = append(img.OSCustomizations.KernelOptionsAppend, kopts.Append)
 	}
@@ -394,6 +398,131 @@ func (t *BootcImageType) Manifest(bp *blueprint.Blueprint, options distro.ImageO
 	return &mf, nil, nil
 }
 
+func (t *BootcImageType) manifestForISO(bp *blueprint.Blueprint, options distro.ImageOptions, repos []rpmmd.RepoConfig, seedp *int64) (*manifest.Manifest, []string, error) {
+	if t.arch.distro.imgref == "" {
+		return nil, nil, fmt.Errorf("internal error: no base image defined")
+	}
+	if options.Bootc == nil || options.Bootc.InstallerPayloadRef == "" {
+		return nil, nil, fmt.Errorf("no installer payload bootc ref set")
+	}
+	payloadRef := options.Bootc.InstallerPayloadRef
+
+	containerSource := container.SourceSpec{
+		Source: t.arch.distro.imgref,
+		Name:   t.arch.distro.imgref,
+		Local:  true,
+	}
+	// XXX: keep it simple for now, we may allow this in the future
+	if t.arch.distro.buildImgref != t.arch.distro.imgref {
+		return nil, nil, fmt.Errorf("cannot use build-containers with anaconda installer images")
+	}
+
+	var customizations *blueprint.Customizations
+	if bp != nil {
+		customizations = bp.Customizations
+	}
+	seed, err := cmdutil.SeedArgFor(nil, t.Name(), t.arch.Name(), t.arch.distro.Name())
+	if err != nil {
+		return nil, nil, err
+	}
+	//nolint:gosec
+	rng := rand.New(rand.NewSource(seed))
+
+	platformi := PlatformFor(t.arch.Name(), t.arch.distro.sourceInfo.UEFIVendor)
+	platformi.ImageFormat = platform.FORMAT_ISO
+
+	// XXX: tons of copied code from
+	// bootc-image-builder:‎bib/cmd/bootc-image-builder/legacy_iso.go
+	// but sharing is hard because AnacondaContainerInstaller and
+	// AnacondaContainerInstallerLegacy are different types so
+	// a shared helper to set the fields won't work (unless
+	// reflection urgh).
+
+	// The ref is not needed and will be removed from the ctor later
+	// in time
+	img := image.NewAnacondaContainerInstaller(platformi, t.Filename(), containerSource, "")
+	img.ContainerRemoveSignatures = true
+	img.RootfsCompression = "zstd"
+	// kernelVer is used by dracut
+	img.KernelVer = t.arch.distro.sourceInfo.KernelInfo.Version
+	img.KernelPath = fmt.Sprintf("lib/modules/%s/vmlinuz", t.arch.distro.sourceInfo.KernelInfo.Version)
+	img.InitramfsPath = fmt.Sprintf("lib/modules/%s/initramfs.img", t.arch.distro.sourceInfo.KernelInfo.Version)
+	img.InstallerHome = "/var/roothome"
+	payloadSource := container.SourceSpec{
+		Source: payloadRef,
+		Name:   payloadRef,
+		Local:  true,
+	}
+	img.InstallerPayload = payloadSource
+
+	if t.arch.Name() == arch.ARCH_X86_64.String() {
+		img.InstallerCustomizations.ISOBoot = manifest.Grub2ISOBoot
+	}
+
+	img.InstallerCustomizations.Product = t.arch.distro.sourceInfo.OSRelease.Name
+	img.InstallerCustomizations.OSVersion = t.arch.distro.sourceInfo.OSRelease.VersionID
+	img.InstallerCustomizations.ISOLabel = LabelForISO(&t.arch.distro.sourceInfo.OSRelease, t.arch.Name())
+
+	img.InstallerCustomizations.FIPS = customizations.GetFIPS()
+	img.Kickstart, err = kickstart.New(customizations)
+	if err != nil {
+		return nil, nil, err
+	}
+	img.Kickstart.Path = osbuild.KickstartPathOSBuild
+	if kopts := customizations.GetKernel(); kopts != nil && kopts.Append != "" {
+		img.Kickstart.KernelOptionsAppend = append(img.Kickstart.KernelOptionsAppend, kopts.Append)
+	}
+	img.Kickstart.NetworkOnBoot = true
+
+	instCust, err := customizations.GetInstaller()
+	if err != nil {
+		return nil, nil, err
+	}
+	if instCust != nil && instCust.Modules != nil {
+		img.InstallerCustomizations.EnabledAnacondaModules = append(img.InstallerCustomizations.EnabledAnacondaModules, instCust.Modules.Enable...)
+		img.InstallerCustomizations.DisabledAnacondaModules = append(img.InstallerCustomizations.DisabledAnacondaModules, instCust.Modules.Disable...)
+	}
+	img.InstallerCustomizations.EnabledAnacondaModules = append(img.InstallerCustomizations.EnabledAnacondaModules,
+		anaconda.ModuleUsers,
+		anaconda.ModuleServices,
+		anaconda.ModuleSecurity,
+		// XXX: get from the imagedefs
+		anaconda.ModuleNetwork,
+		anaconda.ModulePayloads,
+		anaconda.ModuleRuntime,
+		anaconda.ModuleStorage,
+	)
+	if bpKernel := customizations.GetKernel(); bpKernel.Append != "" {
+		img.InstallerCustomizations.KernelOptionsAppend = append(img.InstallerCustomizations.KernelOptionsAppend, bpKernel.Append)
+	}
+
+	img.Kickstart.OSTree = &kickstart.OSTree{
+		OSName: "default",
+	}
+	img.InstallerCustomizations.LoraxTemplates = LoraxTemplates(t.arch.distro.sourceInfo.OSRelease)
+	img.InstallerCustomizations.LoraxTemplatePackage = LoraxTemplatePackage(t.arch.distro.sourceInfo.OSRelease)
+
+	// see https://github.com/osbuild/bootc-image-builder/issues/733
+	img.InstallerCustomizations.ISORootfsType = manifest.SquashfsRootfs
+
+	installRootfsType, err := disk.NewFSType(t.arch.distro.defaultFs)
+	if err != nil {
+		return nil, nil, err
+	}
+	img.InstallRootfsType = installRootfsType
+
+	mf := manifest.New()
+
+	foundDistro, foundRunner, err := GetDistroAndRunner(t.arch.distro.sourceInfo.OSRelease)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to infer distro and runner: %w", err)
+	}
+	mf.Distro = foundDistro
+
+	_, err = img.InstantiateManifestFromContainer(&mf, []container.SourceSpec{containerSource}, foundRunner, rng)
+	return &mf, nil, err
+}
+
 // newBootcDistro returns a new instance of BootcDistro
 // from the given url
 func NewBootcDistro(imgref string) (*BootcDistro, error) {
@@ -421,12 +550,16 @@ func NewBootcDistro(imgref string) (*BootcDistro, error) {
 	return newBootcDistroAfterIntrospect(cnt.Arch(), info, imgref, defaultFs, cntSize)
 }
 
-func newBootcDistroAfterIntrospect(archStr string, info *osinfo.Info, imgref, defaultFs string, cntSize uint64) (*BootcDistro, error) {
+func newBootcDistroAfterIntrospect(archStr string, info *osinfo.Info, imgref, defaultFsStr string, cntSize uint64) (*BootcDistro, error) {
 	nameVer := fmt.Sprintf("bootc-%s-%s", info.OSRelease.ID, info.OSRelease.VersionID)
+	id, err := distro.ParseID(nameVer)
+	if err != nil {
+		return nil, err
+	}
 	bd := &BootcDistro{
-		name:          nameVer,
+		id:            *id,
 		releasever:    info.OSRelease.VersionID,
-		defaultFs:     defaultFs,
+		defaultFs:     defaultFsStr,
 		rootfsMinSize: cntSize * containerSizeToDiskSizeMultiplier,
 
 		imgref:     imgref,
@@ -444,49 +577,24 @@ func newBootcDistroAfterIntrospect(archStr string, info *osinfo.Info, imgref, de
 	ba := &BootcArch{
 		arch: archi,
 	}
-	// TODO: add iso image types, see bootc-image-builder
-	//
-	// Note that the file extension is hardcoded in
-	// pkg/image/bootc_disk.go, we have no way to access
-	// it here so we need to duplicate it
-	// XXX: find a way to avoid this duplication
-	ba.addImageTypes(
-		BootcImageType{
-			name:     "ami",
-			export:   "image",
-			filename: "disk.raw",
-		},
-		BootcImageType{
-			name:     "qcow2",
-			export:   "qcow2",
-			filename: "disk.qcow2",
-		},
-		BootcImageType{
-			name:     "raw",
-			export:   "image",
-			filename: "disk.raw",
-		},
-		BootcImageType{
-			name:     "vmdk",
-			export:   "vmdk",
-			filename: "disk.vmdk",
-		},
-		BootcImageType{
-			name:     "vhd",
-			export:   "bpc",
-			filename: "disk.vhd",
-		},
-		BootcImageType{
-			name:     "gce",
-			export:   "gce",
-			filename: "image.tar.gz",
-		},
-		BootcImageType{
-			name:     "ova",
-			export:   "archive",
-			filename: "image.ova",
-		},
-	)
+
+	distroYAML, err := defs.LoadDistroWithoutImageTypes("bootc-generic-1")
+	if err != nil {
+		return nil, err
+	}
+	defaultFs, err := disk.NewFSType(defaultFsStr)
+	if err != nil {
+		return nil, err
+	}
+	distroYAML.DefaultFSType = defaultFs
+	if err := distroYAML.LoadImageTypes(); err != nil {
+		return nil, err
+	}
+	for _, imgTypeYaml := range distroYAML.ImageTypes() {
+		ba.addImageTypes(BootcImageType{
+			ImageTypeYAML: imgTypeYaml,
+		})
+	}
 	bd.addArches(ba)
 
 	return bd, nil

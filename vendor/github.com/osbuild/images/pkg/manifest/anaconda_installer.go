@@ -7,6 +7,7 @@ import (
 
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/arch"
+	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/customizations/fsnode"
 	"github.com/osbuild/images/pkg/customizations/kickstart"
 	"github.com/osbuild/images/pkg/customizations/users"
@@ -54,6 +55,19 @@ type AnacondaInstaller struct {
 	packageSpecs rpmmd.PackageList
 	kernelName   string
 	kernelVer    string
+
+	// some images (like bootc installers) know their path in
+	// advance
+	KernelPath    string
+	InitramfsPath string
+	// bootc installer cannot use /root as installer home
+	InstallerHome string
+
+	// BootcLivefsContainer is the container to use to
+	// as the base live filesystem. This is mutally exclusive
+	// with using RPMs.
+	BootcLivefsContainer      *container.SourceSpec
+	bootcLivefsContainerSpecs []container.Spec
 
 	// Interactive defaults is a kickstart stage that can be provided, it
 	// will be written to /usr/share/anaconda/interactive-defaults
@@ -130,7 +144,20 @@ func (p *AnacondaInstaller) anacondaBootPackageSet() ([]string, error) {
 	return packages, nil
 }
 
+func (p *AnacondaInstaller) getContainerSources() []container.SourceSpec {
+	if p.BootcLivefsContainer == nil {
+		return nil
+	}
+	return []container.SourceSpec{*p.BootcLivefsContainer}
+}
+
 func (p *AnacondaInstaller) getBuildPackages(Distro) ([]string, error) {
+	// when using a bootc container for the livefs there is no
+	// need to get packages
+	if p.BootcLivefsContainer != nil {
+		return nil, nil
+	}
+
 	packages, err := p.anacondaBootPackageSet()
 	if err != nil {
 		return nil, fmt.Errorf("cannot get anaconda boot packages: %w", err)
@@ -153,9 +180,19 @@ func (p *AnacondaInstaller) getBuildPackages(Distro) ([]string, error) {
 	return packages, nil
 }
 
+func (p *AnacondaInstaller) SetKernelVer(kVer string) {
+	p.kernelVer = kVer
+}
+
 // getPackageSetChain returns the packages to install
 // It will also include weak deps for the Live installer type
 func (p *AnacondaInstaller) getPackageSetChain(Distro) ([]rpmmd.PackageSet, error) {
+	// when using a bootc container for the livefs there is no
+	// need to get packages
+	if p.BootcLivefsContainer != nil {
+		return nil, nil
+	}
+
 	packages, err := p.anacondaBootPackageSet()
 	if err != nil {
 		return nil, fmt.Errorf("cannot get anaconda boot packages: %w", err)
@@ -187,11 +224,12 @@ func (p *AnacondaInstaller) getPackageSpecs() rpmmd.PackageList {
 }
 
 func (p *AnacondaInstaller) serializeStart(inputs Inputs) error {
-	if len(p.packageSpecs) > 0 {
+	if len(p.packageSpecs) > 0 && len(p.bootcLivefsContainerSpecs) > 0 {
 		return errors.New("AnacondaInstaller: double call to serializeStart()")
 	}
 	p.packageSpecs = inputs.Depsolved.Packages
-	if p.kernelName != "" {
+	// bootc-installers will get the kernelVer via introspection
+	if len(p.packageSpecs) > 0 && p.kernelName != "" {
 		kernelPkg, err := p.packageSpecs.Package(p.kernelName)
 		if err != nil {
 			return fmt.Errorf("AnacondaInstaller: %w", err)
@@ -199,15 +237,17 @@ func (p *AnacondaInstaller) serializeStart(inputs Inputs) error {
 		p.kernelVer = kernelPkg.EVRA()
 	}
 	p.repos = append(p.repos, inputs.Depsolved.Repos...)
+	p.bootcLivefsContainerSpecs = inputs.Containers
 	return nil
 }
 
 func (p *AnacondaInstaller) serializeEnd() {
-	if len(p.packageSpecs) == 0 {
+	if len(p.packageSpecs) == 0 && len(p.bootcLivefsContainerSpecs) == 0 {
 		panic("serializeEnd() call when serialization not in progress")
 	}
 	p.kernelVer = ""
 	p.packageSpecs = nil
+	p.bootcLivefsContainerSpecs = nil
 }
 
 func installerRootUser() osbuild.UsersStageOptionsUser {
@@ -217,8 +257,11 @@ func installerRootUser() osbuild.UsersStageOptionsUser {
 }
 
 func (p *AnacondaInstaller) serialize() (osbuild.Pipeline, error) {
-	if len(p.packageSpecs) == 0 {
+	if len(p.packageSpecs) == 0 && len(p.bootcLivefsContainerSpecs) == 0 {
 		return osbuild.Pipeline{}, fmt.Errorf("AnacondaInstaller: serialization not started")
+	}
+	if len(p.packageSpecs) > 0 && len(p.bootcLivefsContainerSpecs) > 0 {
+		return osbuild.Pipeline{}, fmt.Errorf("AnacondaInstaller: using packages and containers at the same time is n")
 	}
 
 	pipeline, err := p.Base.serialize()
@@ -226,13 +269,23 @@ func (p *AnacondaInstaller) serialize() (osbuild.Pipeline, error) {
 		return osbuild.Pipeline{}, err
 	}
 
-	options := osbuild.NewRPMStageOptions(p.repos)
-	// Documentation is only installed on live installer images
-	if p.Type != AnacondaInstallerTypeLive {
-		options.Exclude = &osbuild.Exclude{Docs: true}
+	if len(p.packageSpecs) > 0 {
+		options := osbuild.NewRPMStageOptions(p.repos)
+		// Documentation is only installed on live installer images
+		if p.Type != AnacondaInstallerTypeLive {
+			options.Exclude = &osbuild.Exclude{Docs: true}
+		}
+
+		pipeline.AddStage(osbuild.NewRPMStage(options, osbuild.NewRpmStageSourceFilesInputs(p.packageSpecs)))
+	} else {
+		image := osbuild.NewContainersInputForSingleSource(p.bootcLivefsContainerSpecs[0])
+		stage, err := osbuild.NewContainerDeployStage(image, &osbuild.ContainerDeployOptions{RemoveSignatures: true})
+		if err != nil {
+			return pipeline, err
+		}
+		pipeline.AddStage(stage)
 	}
 
-	pipeline.AddStage(osbuild.NewRPMStage(options, osbuild.NewRpmStageSourceFilesInputs(p.packageSpecs)))
 	pipeline.AddStage(osbuild.NewBuildstampStage(&osbuild.BuildstampStageOptions{
 		Arch:    p.platform.GetArch().String(),
 		Product: p.InstallerCustomizations.Product,
@@ -288,7 +341,11 @@ func (p *AnacondaInstaller) payloadStages() ([]*osbuild.Stage, error) {
 
 	installUID := 0
 	installGID := 0
-	installHome := "/root"
+	// bootc systems needs to be able to override this to /var/roothome
+	installHome := p.InstallerHome
+	if installHome == "" {
+		installHome = "/root"
+	}
 	installShell := "/usr/libexec/anaconda/run-anaconda"
 	installPassword := ""
 	installUser := osbuild.UsersStageOptionsUser{
@@ -463,6 +520,12 @@ func (p *AnacondaInstaller) dracutStageOptions() (*osbuild.DracutStageOptions, e
 		Extra:          []string{"--xz"},
 		AddDrivers:     p.InstallerCustomizations.AdditionalDrivers,
 	}
+	if p.InitramfsPath != "" {
+		// dracut will by default write to /boot/initrmfs-$ver
+		// so we need to override if we have explicit paths
+		options.Extra = append(options.Extra, p.InitramfsPath)
+	}
+
 	options.AddModules = append(options.AddModules, p.InstallerCustomizations.AdditionalDracutModules...)
 
 	if p.Biosdevname {

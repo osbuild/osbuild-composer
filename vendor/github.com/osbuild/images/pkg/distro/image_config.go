@@ -146,6 +146,12 @@ type ImageConfig struct {
 	// This is only supported for distributions that use dnf4, because osbuild
 	// only has a stage for dnf4 version locking.
 	VersionlockPackages []string `yaml:"versionlock_packages,omitempty"`
+
+	// BootupdGenMetadata enables bootupd metadata generation for ostree commits.
+	// When enabled, runs bootupctl backend generate-update-metadata to transform
+	// /usr/lib/ostree-boot into bootupd-compatible update metadata.
+	// Only set this to true if the bootupd package is available in the image.
+	BootupdGenMetadata *bool `yaml:"bootupd_gen_metadata,omitempty"`
 }
 
 // shallowMerge creates a new struct by merging a child and a parent.

@@ -6,8 +6,9 @@ disk or installer images for rpm based distributions.
 
 ## Overview
 
-The definitions start with a "distros.yaml" file that contains details
-about the supported distributions and distribution releases.
+The definitions start with ".yaml" files that contain details
+about the supported distributions and distribution releases. Each
+".yaml" file's entries are appended to the previous in sorted order.
 
 Note that in order to be available a distribution needs an auxiliary
 repository JSON file under `./data/repositories` (or in a system
@@ -58,10 +59,14 @@ to make a complete new distro.
 
 ### distros.yaml
 
-The existing `distros.yaml` contains:
+The existing `fedora.yaml` contains:
 - fedora
+
+The existing `rhel.yaml` contains:
 - rhel-{7,8,9,10}
 - centos-{8,9,10}
+- almalinux-{9,10}
+- almalinux_kitten-10
 
 #### Example of a real distros.yaml snippet
 

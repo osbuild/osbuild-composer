@@ -1,0 +1,144 @@
+---
+# This file contains the image definitions for the bootc
+# "distro". bootc is special in the sense that a lot of what would
+# normally be in the YAML is introspected from the bootc container. So
+# the definitions are a lot smaller. They are used by
+# pkg/distro/bootc.
+#
+# Note that we want to explore to use the "generic" distro for
+# bootc as well but that is still some way off.
+
+.common:
+  kernel_options:
+    bootc_kernel_options: &bootc_kernel_options
+      # TODO: Drop this as we expect kargs to come from the container image,
+      # xref https://github.com/CentOS/centos-bootc-layered/blob/main/cloud/usr/lib/bootc/install/05-cloud-kargs.toml
+      - rw
+      - console=tty0
+      - console=ttyS0
+
+  disk_sizes:
+    default_required_partition_sizes: &default_required_dir_sizes
+      "/": "1 GiB"
+      "/usr": "2 GiB"
+  partitioning:
+    ids:
+      - &prep_partition_dosid "41"
+      - &filesystem_linux_dosid "83"
+      - &fat16_bdosid "06"
+    guids:
+      - &bios_boot_partition_guid "21686148-6449-6E6F-744E-656564454649"
+      - &efi_system_partition_guid "C12A7328-F81F-11D2-BA4B-00A0C93EC93B"
+      - &filesystem_data_guid "0FC63DAF-8483-4772-8E79-3D69D8477DE4"
+      - &xboot_ldr_partition_guid "BC13C2FF-59E6-4262-A352-B275FD6F7172"
+      - &prep_partition_guid "9E1A2D38-C612-4316-AA26-8B49521E5A8B"
+
+  partition_tables:
+    default_bootc_partition_table: &default_bootc_partition_table
+      x86_64:
+        type: "gpt"
+        partitions:
+          - &default_partition_table_part_bios
+            size: "1 MiB"
+            bootable: true
+            type: *bios_boot_partition_guid
+          - &default_partition_table_part_efi
+            size: "501 MiB"
+            type: *efi_system_partition_guid
+            payload_type: "filesystem"
+            payload:
+              type: vfat
+              mountpoint: "/boot/efi"
+              label: "EFI-SYSTEM"
+              fstab_options: "umask=0077,shortname=winnt"
+              fstab_freq: 0
+              fstab_passno: 2
+          - &default_partition_table_part_boot
+            size: "1 GiB"
+            type: *filesystem_data_guid
+            payload_type: "filesystem"
+            payload:
+              mountpoint: "/boot"
+              label: "boot"
+              fstab_options: "ro"
+          - &default_partition_table_part_root
+            size: "2 GiB"
+            type: *filesystem_data_guid
+            payload_type: "filesystem"
+            payload: &default_partition_table_part_root_payload
+              label: "root"
+              mountpoint: "/"
+              fstab_options: "ro"
+      aarch64: &default_partition_table_aarch64
+        type: "gpt"
+        partitions:
+          - *default_partition_table_part_efi
+          - *default_partition_table_part_boot
+          - *default_partition_table_part_root
+      ppc64le:
+        type: "gpt"
+        partitions:
+          - size: "4 MiB"
+            bootable: true
+            type: *prep_partition_guid
+          - *default_partition_table_part_boot
+          - *default_partition_table_part_root
+      s390x:
+        type: "gpt"
+        partitions:
+          - *default_partition_table_part_boot
+          - *default_partition_table_part_root
+
+image_types:
+  "raw": &raw_image_type
+    filename: "disk.raw"
+    image_func: "bootc_disk"
+    mime_type: "application/octet-stream"
+    bootable: true
+    default_size: "10 GiB"
+    exports: ["image"]
+    required_partition_sizes: *default_required_dir_sizes
+    partition_table: *default_bootc_partition_table
+    image_config:
+      kernel_options: *bootc_kernel_options
+
+  "ami":
+    <<: *raw_image_type
+    filename: "disk.raw"
+
+  "qcow2":
+    <<: *raw_image_type
+    filename: "disk.qcow2"
+    mime_type: "application/x-qemu-disk"
+    exports: ["qcow2"]
+
+  "vmdk":
+    <<: *raw_image_type
+    filename: "disk.vmdk"
+    mime_type: "application/x-vmdk"
+    exports: ["vmdk"]
+
+  "vhd":
+    <<: *raw_image_type
+    filename: "disk.vhd"
+    mime_type: "application/x-vhd"
+    exports: ["vpc"]
+
+  "gce":
+    <<: *raw_image_type
+    filename: "image.tar.gz"
+    mime_type: "application/gzip"
+    exports: ["gce"]
+
+  ova:
+    <<: *raw_image_type
+    name_aliases: ["vsphere-ova"]
+    filename: "image.ova"
+    mime_type: "application/ovf"
+    exports: ["archive"]
+
+  bootc-installer:
+    mime_type: "application/x-iso9660-image"
+    exports: ["bootiso"]
+    filename: "install.iso"
+    boot_iso: true

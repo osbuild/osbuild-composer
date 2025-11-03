@@ -135,10 +135,15 @@ type ImageType interface {
 	Manifest(bp *blueprint.Blueprint, options ImageOptions, repos []rpmmd.RepoConfig, seed *int64) (*manifest.Manifest, []string, error)
 }
 
+type BootcImageOptions struct {
+	InstallerPayloadRef string `json:"installer_payload_ref,omitempty"`
+}
+
 // The ImageOptions specify options for a specific image build
 type ImageOptions struct {
 	Size             uint64                     `json:"size"`
 	OSTree           *ostree.ImageOptions       `json:"ostree,omitempty"`
+	Bootc            *BootcImageOptions         `json:"bootc,omitempty"`
 	Subscription     *subscription.ImageOptions `json:"subscription,omitempty"`
 	Facts            *facts.ImageOptions        `json:"facts,omitempty"`
 	PartitioningMode partition.PartitioningMode `json:"partitioning-mode,omitempty"`
