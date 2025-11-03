@@ -9,6 +9,7 @@ import (
 	"strings"
 )
 
+// repository is the presentation of a on-disk repository json file
 type repository struct {
 	Name           string   `json:"name"`
 	BaseURL        string   `json:"baseurl,omitempty"`

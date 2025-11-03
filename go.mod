@@ -34,7 +34,7 @@ require (
 	github.com/oapi-codegen/runtime v1.1.2
 	github.com/openshift-online/ocm-sdk-go v0.1.480
 	github.com/osbuild/blueprint v1.16.0
-	github.com/osbuild/images v0.209.0
+	github.com/osbuild/images v0.213.0
 	github.com/osbuild/osbuild-composer/pkg/splunk_logger v0.0.0-20240814102216-0239db53236d
 	github.com/prometheus/client_golang v1.23.2
 	github.com/segmentio/ksuid v1.0.4
@@ -219,6 +219,7 @@ require (
 	go.opentelemetry.io/otel/sdk/metric v1.36.0 // indirect
 	go.opentelemetry.io/otel/trace v1.36.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.2 // indirect
+	go.yaml.in/yaml/v3 v3.0.3 // indirect
 	golang.org/x/crypto v0.41.0 // indirect
 	golang.org/x/mod v0.27.0 // indirect
 	golang.org/x/net v0.43.0 // indirect
