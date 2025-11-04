@@ -15,11 +15,13 @@ import (
 	"golang.org/x/exp/slices"
 
 	"github.com/sirupsen/logrus"
+
+	"github.com/osbuild/images/pkg/osbuild"
+	"github.com/osbuild/osbuild-composer/internal/osbuildexecutor"
 )
 
 var (
 	supportedBuildContentTypes = []string{"application/x-tar"}
-	osbuildBinary              = "osbuild"
 )
 
 var (
@@ -39,63 +41,94 @@ func (wf *writeFlusher) Write(p []byte) (n int, err error) {
 	return n, err
 }
 
-func runOsbuild(logger *logrus.Logger, buildDir string, control *controlJSON, output io.Writer) (string, error) {
-	flusher, ok := output.(http.Flusher)
-	if !ok {
-		return "", fmt.Errorf("cannot stream the output")
-	}
-	// stream output over http
-	wf := writeFlusher{w: output, flusher: flusher}
-	// note that the "filepath.Clean()" is here for gosec:G304
-	logfPath := filepath.Clean(filepath.Join(buildDir, "build.log"))
-	// and also write to our internal log
-	logf, err := os.Create(logfPath)
+func runOSBuild(logger *logrus.Logger, buildDir string, control *controlJSON, output io.Writer) (string, error) {
+	manifest, err := os.ReadFile(filepath.Join(buildDir, "manifest.json"))
 	if err != nil {
-		return "", fmt.Errorf("cannot create log file: %v", err)
+		return "", fmt.Errorf("cannot read manifest file: %w", err)
 	}
-	defer logf.Close()
 
 	// use multi writer to get same output for stream and log
-	mw := io.MultiWriter(&wf, logf)
 	outputDir := filepath.Join(buildDir, "output")
 	storeDir := filepath.Join(buildDir, "osbuild-store")
-	cmd := exec.Command(osbuildBinary)
-	cmd.Stdout = mw
-	cmd.Stderr = mw
-	for _, exp := range control.Exports {
-		cmd.Args = append(cmd.Args, []string{"--export", exp}...)
+
+	// MonitorFile needs an *os.File:
+	// MonitorFile -> pipe -> bufio reader -> writeFlusher
+	rPipe, wPipe, err := os.Pipe()
+	if err != nil {
+		return "", fmt.Errorf("cannot create pipe for monitor file: %w", err)
 	}
-	cmd.Env = append(cmd.Env, control.Environments...)
-	cmd.Args = append(cmd.Args, []string{"--output-dir", outputDir}...)
-	cmd.Args = append(cmd.Args, []string{"--store", storeDir}...)
-	cmd.Args = append(cmd.Args, "--json")
-	cmd.Args = append(cmd.Args, filepath.Join(buildDir, "manifest.json"))
+	defer rPipe.Close()
+	defer wPipe.Close()
+
+	outfPath := filepath.Join(buildDir, osbuildexecutor.OSBuildResultFilename)
+	outf, err := os.Create(outfPath)
+	if err != nil {
+		return "", fmt.Errorf("cannot create file to capture osbuild stdout: %w", err)
+	}
+	defer outf.Close()
+
+	cmd := osbuild.NewOSBuildCmd(manifest, &osbuild.OSBuildOptions{
+		StoreDir:    storeDir,
+		OutputDir:   outputDir,
+		Exports:     control.Exports,
+		ExtraEnv:    control.Environments,
+		JSONOutput:  true,
+		Stdout:      outf,
+		Monitor:     osbuild.MonitorJSONSeq,
+		MonitorFile: wPipe,
+	})
 	if err := cmd.Start(); err != nil {
+		return "", err
+	}
+	wPipe.Close()
+
+	flusher, ok := output.(http.Flusher)
+	if !ok {
+		return "", fmt.Errorf("cannot stream the output, output needs to be http.Flusher")
+	}
+	wf := writeFlusher{w: output, flusher: flusher}
+	if _, err := io.Copy(&wf, rPipe); err != nil && err != io.EOF {
 		return "", err
 	}
 
 	if err := cmd.Wait(); err != nil {
 		// we cannot use "http.Error()" here because the http
 		// header was already set to "201" when we started streaming
-		_, _ = mw.Write([]byte(fmt.Sprintf("cannot run osbuild: %v", err)))
+		_, _ = wf.Write([]byte(fmt.Sprintf("cannot run osbuild: %v", err)))
+		return "", err
+	}
+
+	if err := outf.Close(); err != nil {
+		return "", fmt.Errorf("unable to close osbuild output file: %w", err)
+	}
+
+	if err := os.Rename(outfPath, filepath.Join(outputDir, osbuildexecutor.OSBuildResultFilename)); err != nil {
+		err = fmt.Errorf("unable to move result file to output directory: %w", err)
+		logger.Errorf("%v", err)
+		_, _ = wf.Write([]byte(fmt.Sprintf("%s\n", err.Error())))
+		outData, err := os.ReadFile(outfPath)
+		if err != nil {
+			logger.Errorf("unable to read result file after failing to rename it: %v", err)
+		}
+		_, _ = wf.Write([]byte(fmt.Sprintf("osbuild output: %s\n", outData)))
 		return "", err
 	}
 
 	// the result is put into a tar because we get sparse file support for free this way
 	// #nosec G204
-	cmd = exec.Command(
+	tarCmd := exec.Command(
 		"tar",
 		"--exclude=output/output.tar",
 		"-Scf",
 		filepath.Join(outputDir, "output.tar"),
 		"output",
 	)
-	cmd.Dir = buildDir
-	out, err := cmd.CombinedOutput()
+	tarCmd.Dir = buildDir
+	out, err := tarCmd.CombinedOutput()
 	if err != nil {
 		err = fmt.Errorf("cannot tar output directory: %w, output:\n%s", err, out)
 		logger.Errorf("%v", err)
-		_, _ = mw.Write([]byte(err.Error()))
+		_, _ = wf.Write([]byte(err.Error()))
 		return "", err
 	}
 	if len(out) > 0 {
@@ -291,12 +324,12 @@ func handleBuild(logger *logrus.Logger, config *Config) http.Handler {
 
 			// run osbuild and stream the output to the client
 			buildResult := newBuildResult(config)
-			_, err = runOsbuild(logger, buildDir, control, w)
+			_, err = runOSBuild(logger, buildDir, control, w)
 			if werr := buildResult.Mark(err); werr != nil {
 				logger.Errorf("cannot write result file %v", werr)
 			}
 			if err != nil {
-				logger.Errorf("canot run osbuild: %v", err)
+				logger.Errorf("cannot run osbuild: %v", err)
 				return
 			}
 		},
