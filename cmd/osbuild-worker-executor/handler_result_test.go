@@ -23,15 +23,7 @@ func TestResultBad(t *testing.T) {
 	baseURL, buildBaseDir, _ := runTestServer(t)
 	endpoint := baseURL + "api/v1/result/disk.img"
 
-	// simulate build failure
-	// todo: make a nice helper method
-	err := os.MkdirAll(filepath.Join(buildBaseDir, "build"), 0755)
-	assert.NoError(t, err)
-	err = os.WriteFile(filepath.Join(buildBaseDir, "result.bad"), nil, 0644)
-	assert.NoError(t, err)
-	err = os.WriteFile(filepath.Join(buildBaseDir, "build/build.log"), []byte("failure log"), 0644)
-	assert.NoError(t, err)
-
+	simulateBuildResult(t, buildBaseDir, "result.bad", "failure log")
 	rsp, err := http.Get(endpoint)
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusBadRequest, rsp.StatusCode)
@@ -44,13 +36,8 @@ func TestResultGood(t *testing.T) {
 	baseURL, buildBaseDir, _ := runTestServer(t)
 	endpoint := baseURL + "api/v1/result/disk.img"
 
-	// simulate build failure
-	// todo: make a nice helper method
-	err := os.MkdirAll(filepath.Join(buildBaseDir, "build/output"), 0755)
-	assert.NoError(t, err)
-	err = os.WriteFile(filepath.Join(buildBaseDir, "result.good"), nil, 0644)
-	assert.NoError(t, err)
-	err = os.WriteFile(filepath.Join(buildBaseDir, "build/output/disk.img"), []byte("fake-build-result"), 0644)
+	simulateBuildResult(t, buildBaseDir, "result.good", "fake-build-log")
+	err := os.WriteFile(filepath.Join(buildBaseDir, "build/output/disk.img"), []byte("fake-build-result"), 0644)
 	assert.NoError(t, err)
 
 	rsp, err := http.Get(endpoint)
