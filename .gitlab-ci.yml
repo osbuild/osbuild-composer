@@ -865,6 +865,19 @@ WorkerExecutor:
     RUNNER: aws/fedora-41-x86_64
     IAM_INSTANCE_PROFILE: worker-executor
 
+WorkerExecutorFailure:
+  stage: test
+  extends: .terraform
+  rules:
+    - !reference [.upstream_rules_all, rules]
+    - !reference [.ga_rules_all, rules]
+  script:
+    - schutzbot/deploy.sh
+    - /usr/libexec/tests/osbuild-composer/worker-executor-crash.sh
+  variables:
+    RUNNER: aws/fedora-41-x86_64
+    IAM_INSTANCE_PROFILE: worker-executor
+
 finish:
   stage: finish
   dependencies: []
