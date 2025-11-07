@@ -153,6 +153,30 @@ func handleBuild(inputArchive, host string, logger logrus.FieldLogger, job worke
 	return handleProgress(osbuildStatus, logger, job)
 }
 
+func fetchLog(host string) (string, error) {
+	client := http.Client{
+		Timeout: time.Minute,
+	}
+	resp, err := client.Get(fmt.Sprintf("%s/api/v1/log", host))
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != 200 {
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return "", fmt.Errorf("cannot fetch output archive: %w, http status: %d", err, resp.StatusCode)
+		}
+		return "", fmt.Errorf("cannot fetch output archive: %w, http status: %d, body: %s", err, resp.StatusCode, body)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("cannot read log response: %w, http status: %d", err, resp.StatusCode)
+	}
+	return string(body), nil
+}
+
 func fetchOutputArchive(cacheDir, host string) (string, error) {
 	client := http.Client{
 		Timeout: time.Minute * 30,
@@ -282,8 +306,13 @@ func (ec2e *awsEC2Executor) RunOSBuild(manifest []byte, logger logrus.FieldLogge
 	}
 
 	if err := handleBuild(inputArchive, executorHost, logger, job); err != nil {
-		logrus.Errorf("something went wrong handling the executor's build: %v", err)
-		return nil, err
+		log, logErr := fetchLog(executorHost)
+		if logErr != nil {
+			logrus.Errorf("something went wrong during the executor's build: %v, unable to fetch log: %v", err, logErr)
+			return nil, fmt.Errorf("something went wrong during the executor's build: %w, unable to fetch log: %w", err, logErr)
+		}
+		logrus.Errorf("something went wrong handling the executor's build: %v\nosbuild log: %v", err, log)
+		return nil, fmt.Errorf("osbuild failed: %s", log)
 	}
 
 	outputArchive, err := fetchOutputArchive(ec2e.tmpDir, executorHost)
