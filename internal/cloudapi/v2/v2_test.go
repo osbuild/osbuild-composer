@@ -27,6 +27,7 @@ import (
 	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/images/pkg/sbom"
 	v2 "github.com/osbuild/osbuild-composer/internal/cloudapi/v2"
+	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue/fsjobqueue"
 	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/test"
@@ -127,6 +128,57 @@ func mockDepsolve(t *testing.T, workerServer *worker.Server, wg *sync.WaitGroup,
 			}
 
 			rawMsg, err := json.Marshal(dJR)
+			require.NoError(t, err)
+			err = workerServer.FinishJob(token, rawMsg)
+			if err != nil {
+				return
+			}
+
+		}
+	}()
+	return cancel
+}
+
+// mockIBManifest starts a routine which just completes image-builder-manifest jobs.
+// It requires some of the test framework to operate.
+// And the optional fail parameter will cause it to return an error as if the job failed.
+func mockIBManifest(t *testing.T, workerServer *worker.Server, wg *sync.WaitGroup, fail bool) func() {
+	ctx, cancel := context.WithCancel(context.Background())
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for {
+			_, token, _, _, _, err := workerServer.RequestJob(ctx, test_distro.TestArchName, []string{worker.JobTypeImageBuilderManifest}, []string{""}, uuid.Nil)
+			select {
+			case <-ctx.Done():
+				return
+			default:
+			}
+			if err != nil {
+				continue
+			}
+			r := &worker.ManifestJobByIDResult{}
+
+			if !fail {
+				r.Manifest = manifest.OSBuildManifest([]byte(`{"version":"2","pipelines":[{"name":"build"},{"name":"os"}],"sources":{"org.osbuild.curl":{"items":{"sha256:e50ddb78a37f5851d1a5c37a4c77d59123153c156e628e064b9daa378f45a2fe":{"url":"https://pkg1.example.com/1.33-2.fc30.x86_64.rpm"}}}}}`))
+				r.ManifestInfo = worker.ManifestInfo{
+					OSBuildComposerVersion: common.BuildVersion(),
+					PipelineNames: &worker.PipelineNames{
+						Build:   []string{"build"},
+						Payload: []string{"os", "image"},
+					},
+				}
+			} else {
+				// the error that gets returned from
+				// ImageBuilderManifestJobImpl.Run() is handled by the
+				// workerClientErrorFrom() function, which falls back to
+				// returning an ErrorRPMMDError when it doesn't know the error
+				// type
+				r.JobResult.JobError = clienterrors.New(clienterrors.ErrorRPMMDError, "test wanted to fail", "mock ImageBuilderManifest job is failing")
+
+			}
+
+			rawMsg, err := json.Marshal(r)
 			require.NoError(t, err)
 			err = workerServer.FinishJob(token, rawMsg)
 			if err != nil {
@@ -280,14 +332,16 @@ func newV2Server(t *testing.T, dir string, opts *v2ServerOpts) (*v2.Server, *wor
 	require.NotNil(t, v2Server)
 	t.Cleanup(v2Server.Shutdown)
 
-	// Setup the depsolve and ostree resolve job handlers
-	// These are mocked functions that return a static set of results for testing
+	// Setup the content resolve job handlers (depsolver, search, ostree commit
+	// resolver, and image-builder manifest).
+	// These are mocked functions that return a static set of results for testing.
 	var wg sync.WaitGroup
 	var cancelFuncs []context.CancelFunc
 
 	cancelFuncs = append(cancelFuncs, mockDepsolve(t, workerServer, &wg, opts.fail))
 	cancelFuncs = append(cancelFuncs, mockOSTreeResolve(t, workerServer, &wg, opts.fail))
 	cancelFuncs = append(cancelFuncs, mockSearch(t, workerServer, &wg, opts.fail))
+	cancelFuncs = append(cancelFuncs, mockIBManifest(t, workerServer, &wg, opts.fail))
 
 	cancelWithWait := func() {
 		for _, cancel := range cancelFuncs {
@@ -909,6 +963,8 @@ func TestComposeStatusSuccess(t *testing.T) {
 func TestComposeManifests(t *testing.T) {
 	testCases := []struct {
 		name          string
+		ibManifest    bool // use image-builder-manifest job instead of manifest-id-only
+		fail          bool
 		jobResult     worker.ManifestJobByIDResult
 		expectedError *clienterrors.Error
 	}{
@@ -916,7 +972,15 @@ func TestComposeManifests(t *testing.T) {
 			name: "success",
 			jobResult: worker.ManifestJobByIDResult{
 				Manifest: manifest.OSBuildManifest([]byte(`{"version":"2","pipelines":[{"name":"build"},{"name":"os"}],"sources":{"org.osbuild.curl":{"items":{"sha256:e50ddb78a37f5851d1a5c37a4c77d59123153c156e628e064b9daa378f45a2fe":{"url":"https://pkg1.example.com/1.33-2.fc30.x86_64.rpm"}}}}}`)),
-			}},
+			},
+		},
+		{
+			name:       "success-ib",
+			ibManifest: true,
+			jobResult: worker.ManifestJobByIDResult{
+				Manifest: manifest.OSBuildManifest([]byte(`{"version":"2","pipelines":[{"name":"build"},{"name":"os"}],"sources":{"org.osbuild.curl":{"items":{"sha256:e50ddb78a37f5851d1a5c37a4c77d59123153c156e628e064b9daa378f45a2fe":{"url":"https://pkg1.example.com/1.33-2.fc30.x86_64.rpm"}}}}}`)),
+			},
+		},
 		{
 			name: "failure",
 			jobResult: worker.ManifestJobByIDResult{
@@ -926,43 +990,56 @@ func TestComposeManifests(t *testing.T) {
 			},
 			expectedError: clienterrors.New(clienterrors.ErrorManifestDependency, "Manifest generation test error", "Package XYZ does not have a RemoteLocation"),
 		},
+		{
+			name:          "failure-ib",
+			ibManifest:    true,
+			fail:          true,
+			expectedError: clienterrors.New(clienterrors.ErrorRPMMDError, "test wanted to fail", "mock ImageBuilderManifest job is failing"),
+		},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 
-			// Override the serialize manifest func to allow simulating various job states
-			// This is the only way to do it, because of the way the manifest job is handled.
-			serializeManifestFunc := func(ctx context.Context, manifestSource *manifest.Manifest, workers *worker.Server, dependencies v2.ManifestJobDependencies, manifestJobID uuid.UUID, seed int64) {
-				var token uuid.UUID
-				var err error
-				// wait until job is in a pending state
-				for {
-					_, token, _, _, _, err = workers.RequestJobById(ctx, "", manifestJobID)
-					if errors.Is(err, jobqueue.ErrNotPending) {
-						time.Sleep(time.Millisecond * 50)
-						select {
-						case <-ctx.Done():
-							t.Fatalf("Context done")
-						default:
-							continue
+			if !testCase.ibManifest {
+				// Override the serialize manifest func to allow simulating various job states
+				// This is the only way to do it, because of the way the manifest job is handled.
+				// This is not used when ibManifest is enabled.
+				serializeManifestFunc := func(ctx context.Context, manifestSource *manifest.Manifest, workers *worker.Server, dependencies v2.ManifestJobDependencies, manifestJobID uuid.UUID, seed int64) {
+					var token uuid.UUID
+					var err error
+					// wait until job is in a pending state
+					for {
+						_, token, _, _, _, err = workers.RequestJobById(ctx, "", manifestJobID)
+						if errors.Is(err, jobqueue.ErrNotPending) {
+							time.Sleep(time.Millisecond * 50)
+							select {
+							case <-ctx.Done():
+								t.Fatalf("Context done")
+							default:
+								continue
+							}
 						}
+						if err != nil {
+							t.Fatalf("Error requesting manifest job: %v", err)
+							return
+						}
+						break
 					}
-					if err != nil {
-						t.Fatalf("Error requesting manifest job: %v", err)
-						return
-					}
-					break
+
+					result, err := json.Marshal(testCase.jobResult)
+					require.NoError(t, err)
+					err = workers.FinishJob(token, result)
+					require.NoError(t, err)
 				}
-
-				result, err := json.Marshal(testCase.jobResult)
-				require.NoError(t, err)
-				err = workers.FinishJob(token, result)
-				require.NoError(t, err)
+				defer v2.MockSerializeManifestFunc(serializeManifestFunc)()
 			}
-			defer v2.MockSerializeManifestFunc(serializeManifestFunc)()
 
-			srv, wrksrv, _, cancel := newV2Server(t, t.TempDir(), nil)
+			opts := v2ServerOpts{
+				ibManifest: testCase.ibManifest,
+				fail:       testCase.fail,
+			}
+			srv, wrksrv, _, cancel := newV2Server(t, t.TempDir(), &opts)
 			defer cancel()
 
 			test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
