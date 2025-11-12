@@ -147,6 +147,21 @@ func RunImageBuilderManifest(args ImageBuilderArgs, extraEnv []string, errorWrit
 			return nil, fmt.Errorf("image-builder manifest: failed to write repositories: %w", err)
 		}
 
+		// Prior to v41, image-builder looked for repositories in the root of
+		// the data-dir. With v41, it now looks under the repositories/
+		// subdirectory. Link the file from one location to the other to cover
+		// both cases.
+		// https://github.com/osbuild/image-builder-cli/releases/tag/v41
+
+		// TODO: add a condition once we have a convenient way to get the
+		// version
+		// NOTE: See also the ImageBuilderManifestJobResult fields in in
+		// jobimpl-image-builder-manifest
+		oldReposFileLocation := filepath.Join(datadir, fmt.Sprintf("%s.json", args.Distro))
+		if err := os.Symlink(reposFilePath, oldReposFileLocation); err != nil {
+			return nil, fmt.Errorf("image-builder manifest: failed to symlink repos file in data-dir [%s -> %s]: %w", reposFilePath, oldReposFileLocation, err)
+		}
+
 		clArgs = append(clArgs, "--data-dir", datadir)
 	}
 
