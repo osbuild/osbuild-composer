@@ -118,7 +118,7 @@ func TestRunImageBuilderManifestCall(t *testing.T) {
 				"manifest",
 				"--distro", "rhel-10.10",
 				"--arch", "aarch64",
-				"--data-dir", "*",
+				"--data-dir", "*/datadir",
 				"--",
 				"azure-rhui",
 			},
@@ -143,7 +143,7 @@ func TestRunImageBuilderManifestCall(t *testing.T) {
 				"--distro", "rhel-9.10",
 				"--arch", "aarch64",
 				"--blueprint", "*/blueprint.json",
-				"--data-dir", "*",
+				"--data-dir", "*/datadir",
 				"--",
 				"azure-rhui",
 			},
@@ -197,9 +197,14 @@ func TestRunImageBuilderManifestCall(t *testing.T) {
 				datadirIdx := slices.Index(actualCall, "--data-dir") + 1
 				if datadirIdx > 0 {
 					datadir := actualCall[datadirIdx]
+					expPath := expCall[datadirIdx]
 
-					// the datadir in the expected call is just a * glob, so
-					// there's no point checking it for now
+					// we can't predict the temporary directory name, but we
+					// can make sure it matches the glob
+					g, err := glob.Compile(expPath)
+					assert.NoError(err)
+					assert.True(g.Match(datadir))
+
 					expCall[datadirIdx] = datadir
 
 					reposPath := filepath.Join(datadir, "repositories", fmt.Sprintf("%s.json", tc.args.Distro))
@@ -210,6 +215,13 @@ func TestRunImageBuilderManifestCall(t *testing.T) {
 					reposFileContents, err := io.ReadAll(reposFile)
 					assert.NoError(err)
 					assert.NoError(json.Unmarshal(reposFileContents, &onDiskRepos))
+
+					// check for the symlink as well
+					symlinkPath := filepath.Join(datadir, fmt.Sprintf("%s.json", tc.args.Distro))
+					target, err := os.Readlink(symlinkPath)
+					assert.NoError(err)
+					assert.Equal(target, reposPath)
+
 					expectedRepos = worker.RPMMDRepoConfigsToDiskArchMap(tc.args.Repositories, tc.args.Arch)
 				}
 				assert.Equal(expectedRepos, onDiskRepos)
