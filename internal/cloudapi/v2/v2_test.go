@@ -2364,10 +2364,26 @@ func TestDownloadUnknown(t *testing.T) {
 // TestComposeRequestMetadata tests that the original ComposeRequest is included with the
 // metadata response.
 func TestComposeRequestMetadata(t *testing.T) {
-	srv, wrksrv, _, cancel := newV2Server(t, t.TempDir(), nil)
-	defer cancel()
+	// test with both manifest generation methods
+	testCases := []struct {
+		name    string
+		options *v2ServerOpts
+	}{
+		{
+			name: "traditional-manifest-generation",
+		},
+		{
+			name:    "image-builder-manifest-generation",
+			options: &v2ServerOpts{ibManifest: true},
+		},
+	}
 
-	request := fmt.Sprintf(`
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			srv, wrksrv, _, cancel := newV2Server(t, t.TempDir(), tc.options)
+			defer cancel()
+
+			request := fmt.Sprintf(`
 	{
 		"distribution": "%s",
 		"image_requests":[{
@@ -2386,23 +2402,23 @@ func TestComposeRequestMetadata(t *testing.T) {
 			}
 		}]
 	}`, test_distro.TestDistro1Name, test_distro.TestArch3Name)
-	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", request, http.StatusCreated, `
+			test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", request, http.StatusCreated, `
 	{
 		"href": "/api/image-builder-composer/v2/compose",
 		"kind": "ComposeId"
 	}`, "id")
 
-	jobId, _, jobType, args, dynArgs, err := wrksrv.RequestJob(context.Background(), test_distro.TestArch3Name, []string{worker.JobTypeOSBuild}, []string{""}, uuid.Nil)
-	require.NoError(t, err)
-	require.Equal(t, worker.JobTypeOSBuild, jobType)
+			jobId, _, jobType, args, dynArgs, err := wrksrv.RequestJob(context.Background(), test_distro.TestArch3Name, []string{worker.JobTypeOSBuild}, []string{""}, uuid.Nil)
+			require.NoError(t, err)
+			require.Equal(t, worker.JobTypeOSBuild, jobType)
 
-	var osbuildJob worker.OSBuildJob
-	err = json.Unmarshal(args, &osbuildJob)
-	require.NoError(t, err)
-	require.Equal(t, 0, len(osbuildJob.Manifest))
-	require.NotEqual(t, 0, len(dynArgs[0]))
+			var osbuildJob worker.OSBuildJob
+			err = json.Unmarshal(args, &osbuildJob)
+			require.NoError(t, err)
+			require.Equal(t, 0, len(osbuildJob.Manifest))
+			require.NotEqual(t, 0, len(dynArgs[0]))
 
-	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%v", jobId), ``, http.StatusOK, fmt.Sprintf(`
+			test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%v", jobId), ``, http.StatusOK, fmt.Sprintf(`
 	{
 		"href": "/api/image-builder-composer/v2/composes/%v",
 		"kind": "ComposeStatus",
@@ -2411,14 +2427,16 @@ func TestComposeRequestMetadata(t *testing.T) {
 		"status": "pending"
 	}`, jobId, jobId))
 
-	// metadata response should include the ComposeRequest even when build is not done
-	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%v/metadata", jobId), ``, http.StatusOK,
-		fmt.Sprintf(`{
+			// metadata response should include the ComposeRequest even when build is not done
+			test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%v/metadata", jobId), ``, http.StatusOK,
+				fmt.Sprintf(`{
 		"href": "/api/image-builder-composer/v2/composes/%[1]v/metadata",
 		"id": "%[1]v",
 		"kind": "ComposeMetadata",
 		"request": %s
 	}`, jobId, request))
+		})
+	}
 }
 
 func TestComposesDeleteRoute(t *testing.T) {
