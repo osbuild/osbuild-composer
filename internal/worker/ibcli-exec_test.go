@@ -168,6 +168,12 @@ func TestRunImageBuilderManifestCall(t *testing.T) {
 					reposFileContents, err := io.ReadAll(reposFile)
 					assert.NoError(err)
 					assert.NoError(json.Unmarshal(reposFileContents, &onDiskRepos))
+
+					// check for the symlink as well
+					symlinkPath := filepath.Join(dataDir, fmt.Sprintf("%s.json", tc.args.Distro))
+					target, err := os.Readlink(symlinkPath)
+					assert.NoError(err)
+					assert.Equal(target, reposPath)
 				}
 				assert.Equal(tc.args.Repositories, onDiskRepos)
 
