@@ -90,8 +90,6 @@ init:
 
 .RPM_RUNNERS_RHEL: &RPM_RUNNERS_RHEL
   RUNNER:
-    - aws/rhel-9.7-nightly-x86_64
-    - aws/rhel-9.7-nightly-aarch64
     - aws/rhel-9.8-nightly-x86_64
     - aws/rhel-9.8-nightly-aarch64
     - aws/rhel-10.2-nightly-x86_64
@@ -180,7 +178,6 @@ Prepare-rhel-internal:
       - RUNNER:
           # NOTE: 1 runner prepares for all arches b/c subsequent jobs download
           # artifacts from all previous jobs and the last one wins
-          - aws/rhel-9.7-nightly-x86_64
           - aws/rhel-9.8-nightly-x86_64
           - aws/rhel-10.2-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
@@ -341,8 +338,6 @@ regression-no-explicit-rootfs-definition:
       - aws/rhel-8.10-ga-x86_64
       - aws/rhel-9.6-ga-x86_64
       - aws/rhel-10.1-ga-x86_64
-      - aws/rhel-9.7-nightly-x86_64
-      - aws/rhel-9.8-nightly-x86_64
       - aws/rhel-10.2-nightly-x86_64
       - aws/centos-stream-9-x86_64
       - aws/centos-stream-10-x86_64
@@ -440,7 +435,6 @@ OpenShift_Virtualization:
   parallel:
     matrix:
       - RUNNER:
-          - aws/rhel-9.7-nightly-x86_64
           - aws/rhel-9.8-nightly-x86_64
           - aws/rhel-10.2-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
@@ -523,7 +517,6 @@ filesystem.sh:
         INTERNAL_NETWORK: ["true"]
       - CUSTOMIZATION_TYPE: "disk-lvm"
         RUNNER:
-          - aws/rhel-9.7-nightly-x86_64
           - aws/rhel-9.8-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
       - CUSTOMIZATION_TYPE: "disk-lvm"
@@ -568,7 +561,6 @@ API:
         RUNNER:
           - aws/rhel-8.10-ga-x86_64
           - aws/rhel-9.6-ga-x86_64
-          - aws/rhel-9.7-nightly-x86_64
           - aws/rhel-9.8-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
       # el10 supports only a subset of image types
@@ -643,7 +635,6 @@ API-module-hotfixes:
           - gcp/rhel-8.10-ga-x86_64
           - gcp/rhel-9.6-ga-x86_64
           - gcp/rhel-10.1-ga-x86_64
-          - gcp/rhel-9.7-nightly-x86_64
           - gcp/rhel-9.8-nightly-x86_64
           - gcp/rhel-10.2-nightly-x86_64
           - gcp/centos-stream-9-x86_64
@@ -769,7 +760,6 @@ Upgrade:
   parallel:
     matrix:
       - RUNNER:
-          - rhos-01/rhel-9.7-nightly-x86_64-large
           - rhos-01/rhel-9.8-nightly-x86_64-large
           - rhos-01/rhel-10.2-nightly-x86_64-large
 
@@ -824,7 +814,6 @@ Installer:
   parallel:
     matrix:
       - RUNNER:
-          - rhos-01/rhel-9.7-nightly-x86_64
           - rhos-01/rhel-9.8-nightly-x86_64
           - rhos-01/centos-stream-9-x86_64
           - rhos-01/rhel-10.2-nightly-x86_64
@@ -860,7 +849,6 @@ ContainerEmbedding:
         RUNNER:
         - aws/centos-stream-9-x86_64
         - aws/centos-stream-10-x86_64
-        - aws/rhel-9.7-nightly-x86_64
         - aws/rhel-9.8-nightly-x86_64
         - aws/rhel-10.2-nightly-x86_64
 
