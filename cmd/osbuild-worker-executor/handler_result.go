@@ -21,7 +21,7 @@ func handleResult(logger *logrus.Logger, config *Config) http.Handler {
 			switch {
 			case buildResult.Bad():
 				http.Error(w, "build failed", http.StatusBadRequest)
-				f, err := os.Open(filepath.Join(config.BuildDirBase, "build/build.log"))
+				f, err := os.Open(filepath.Join(config.BuildDirBase, "build/osbuild-result.json"))
 				if err != nil {
 					logger.Errorf("cannot open log: %v", err)
 					return

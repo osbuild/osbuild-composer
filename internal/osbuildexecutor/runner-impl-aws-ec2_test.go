@@ -3,7 +3,6 @@ package osbuildexecutor_test
 import (
 	"archive/tar"
 	"context"
-	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -14,12 +13,20 @@ import (
 	"testing"
 	"time"
 
-	"github.com/osbuild/images/pkg/osbuild"
+	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/osbuild/osbuild-composer/internal/osbuildexecutor"
+	"github.com/osbuild/osbuild-composer/internal/worker"
 )
+
+func makeMockEntry() (*logrus.Entry, *test.Hook) {
+	logger, hook := test.NewNullLogger()
+	return logger.WithFields(nil), hook
+}
 
 func TestWaitForSI(t *testing.T) {
 	server := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -66,6 +73,47 @@ func TestWriteInputArchive(t *testing.T) {
 	}, strings.Split(string(out), "\n"))
 }
 
+type testJob struct {
+	PartialUpdates []interface{}
+}
+
+func (j *testJob) Id() uuid.UUID {
+	return uuid.Nil
+}
+
+func (j *testJob) Type() string {
+	return "test-job"
+}
+
+func (j *testJob) Args(args interface{}) error {
+	return nil
+}
+
+func (j *testJob) DynamicArgs(i int, args interface{}) error {
+	return nil
+}
+
+func (j *testJob) NDynamicArgs() int {
+	return 0
+}
+
+func (j *testJob) Update(result interface{}) error {
+	j.PartialUpdates = append(j.PartialUpdates, result)
+	return nil
+}
+
+func (j *testJob) Finish(result interface{}) error {
+	return nil
+}
+
+func (j *testJob) Canceled() (bool, error) {
+	return false, nil
+}
+
+func (j *testJob) UploadArtifact(name string, readSeeker io.ReadSeeker) error {
+	return nil
+}
+
 func TestHandleBuild(t *testing.T) {
 	buildServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		input, err := io.ReadAll(r.Body)
@@ -73,12 +121,9 @@ func TestHandleBuild(t *testing.T) {
 		require.Equal(t, []byte("test"), input)
 
 		w.WriteHeader(http.StatusCreated)
-		osbuildResult := osbuild.Result{
-			Success: true,
-		}
-		data, err := json.Marshal(osbuildResult)
-		require.NoError(t, err)
-		_, err = w.Write(data)
+		_, err = w.Write([]byte(`{"message": "starting pipeline", "context": {"origin": "osbuild.monitor", "pipeline": {"name": "source", "id": "pipeline-id", "stage": {}}, "id": "context-id"}, "progress": {"name": "pipelines/sources", "total": 1, "done": 0}}
+{"message": "stage in pipeline", "context": {"id": "context-id"}, "progress": {"name": "source", "total": 1, "done": 0, "progress": {"name": "source/stage", "total": 2, "done": 0}}}
+{"message": "finishing pipeline", "result": {"name": "source", "id": "pipeline-id", "success": true}, "context": {"id": "context-id"}, "progress": {"name": "source", "total": 1, "done": 1}}`))
 		require.NoError(t, err)
 	}))
 
@@ -86,9 +131,74 @@ func TestHandleBuild(t *testing.T) {
 	inputArchive := filepath.Join(cacheDir, "test.tar")
 	require.NoError(t, os.WriteFile(inputArchive, []byte("test"), 0600))
 
-	osbuildResult, err := osbuildexecutor.HandleBuild(inputArchive, buildServer.URL)
+	entry, hook := makeMockEntry()
+	job := testJob{}
+	err := osbuildexecutor.HandleBuild(inputArchive, buildServer.URL, entry, &job)
 	require.NoError(t, err)
-	require.True(t, osbuildResult.Success)
+	require.Len(t, hook.Entries, 3)
+	require.Equal(t, "OSBuild status: starting pipeline", hook.Entries[0].Message)
+	require.Equal(t, logrus.Fields{
+		"progress-done":  0,
+		"progress-total": 1,
+	}, hook.Entries[0].Data)
+	require.Equal(t, "OSBuild status: stage in pipeline", hook.Entries[1].Message)
+	require.Equal(t, logrus.Fields{
+		"progress-done":     0,
+		"progress-total":    1,
+		"subprogress-done":  0,
+		"subprogress-total": 2,
+	}, hook.Entries[1].Data)
+	require.Equal(t, "OSBuild status: finishing pipeline", hook.Entries[2].Message)
+	require.Equal(t, logrus.Fields{
+		"progress-done":  1,
+		"progress-total": 1,
+	}, hook.Entries[2].Data)
+
+	// only 1 update every 30 seconds, so in a testing scenario only the first status should have been received
+	require.Eventually(t, func() bool { return len(job.PartialUpdates) == 1 }, time.Second, time.Millisecond*10)
+	partial, ok := job.PartialUpdates[0].(worker.JobResult)
+	require.True(t, ok)
+	require.Equal(t, worker.JobResult{
+		Progress: &worker.JobProgress{
+			Done:    0,
+			Total:   1,
+			Message: "starting pipeline",
+		},
+	}, partial)
+	require.Len(t, job.PartialUpdates, 1)
+}
+
+func TestHandleBuildTraceDebug(t *testing.T) {
+	buildServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		input, err := io.ReadAll(r.Body)
+		require.NoError(t, err)
+		require.Equal(t, []byte("test"), input)
+
+		w.WriteHeader(http.StatusCreated)
+		_, err = w.Write([]byte(`{"message": "starting pipeline", "context": {"origin": "osbuild.monitor", "pipeline": {"name": "source", "id": "pipeline-id", "stage": {}}, "id": "context-id"}, "progress": {"name": "pipelines/sources", "total": 1, "done": 0}}
+{"message": "no context, thus trace"}
+{"message": "failed pipeline", "result": {"name": "source", "id": "pipeline-id", "success": false}, "context": {"id": "context-id"}, "progress": {"name": "source", "total": 1, "done": 1}}`))
+		require.NoError(t, err)
+	}))
+
+	cacheDir := t.TempDir()
+	inputArchive := filepath.Join(cacheDir, "test.tar")
+	require.NoError(t, os.WriteFile(inputArchive, []byte("test"), 0600))
+
+	entry, hook := makeMockEntry()
+	err := osbuildexecutor.HandleBuild(inputArchive, buildServer.URL, entry, nil)
+	require.NoError(t, err)
+	require.Len(t, hook.Entries, 2)
+	require.Equal(t, "OSBuild status: starting pipeline", hook.Entries[0].Message)
+	require.Equal(t, logrus.Fields{
+		"progress-done":  0,
+		"progress-total": 1,
+	}, hook.Entries[0].Data)
+	require.Equal(t, "OSBuild status: failed pipeline", hook.Entries[1].Message)
+	require.Equal(t, logrus.Fields{
+		"progress-done":  1,
+		"progress-total": 1,
+	}, hook.Entries[1].Data)
 }
 
 func TestHandleBuildNoJSON(t *testing.T) {
@@ -105,8 +215,9 @@ func TestHandleBuildNoJSON(t *testing.T) {
 	inputArchive := filepath.Join(cacheDir, "test.tar")
 	require.NoError(t, os.WriteFile(inputArchive, []byte("test"), 0600))
 
-	_, err := osbuildexecutor.HandleBuild(inputArchive, buildServer.URL)
-	require.ErrorContains(t, err, `Unable to decode response body "bad non-json text" into osbuild result:`)
+	entry, _ := makeMockEntry()
+	err := osbuildexecutor.HandleBuild(inputArchive, buildServer.URL, entry, nil)
+	require.ErrorContains(t, err, `error parsing osbuild status, please report a bug: cannot scan line "bad non-json text": invalid character 'b' looking for beginning of value`)
 }
 
 func TestHandleOutputArchive(t *testing.T) {

@@ -391,13 +391,7 @@ func installerCustomizations(t *imageType, c *blueprint.Customizations) (manifes
 			isc.ISOBoot = *isoboot
 		}
 
-		for _, tmpl := range installerConfig.LoraxTemplates {
-			isc.LoraxTemplates = append(isc.LoraxTemplates, manifest.InstallerLoraxTemplate{
-				Path:        tmpl.Path,
-				AfterDracut: tmpl.AfterDracut,
-			})
-		}
-
+		isc.LoraxTemplates = installerConfig.LoraxTemplates
 		if pkg := installerConfig.LoraxTemplatePackage; pkg != nil {
 			isc.LoraxTemplatePackage = *pkg
 		}
@@ -691,6 +685,11 @@ func iotCommitImage(t *imageType,
 	img.Environment = &t.ImageTypeYAML.Environment
 	img.OSTreeParent = parentCommit
 	img.OSVersion = d.OsVersion()
+
+	// Enable bootupd metadata generation if configured
+	if imgConfig.BootupdGenMetadata != nil && *imgConfig.BootupdGenMetadata {
+		img.Bootupd = true
+	}
 
 	return img, nil
 }

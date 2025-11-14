@@ -193,7 +193,6 @@ func (t *imageType) getPartitionTable(customizations *blueprint.Customizations, 
 func (t *imageType) getDefaultImageConfig() *distro.ImageConfig {
 	imageConfig := t.ImageConfig(t.arch.distro.ID, t.arch.arch.String())
 	return imageConfig.InheritFrom(t.arch.distro.ImageConfig())
-
 }
 
 func (t *imageType) getDefaultInstallerConfig() (*distro.InstallerConfig, error) {

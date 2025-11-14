@@ -35,6 +35,11 @@ type OSTreeArchive struct {
 	// kernel arguments for bootable containers.
 	// This is ignored if BootContainer = false.
 	BootcConfig *bootc.Config
+
+	// Bootupd enables bootupd metadata generation for ostree commits.
+	// When true, runs bootupctl backend generate-update-metadata to
+	// transform /usr/lib/ostree-boot into bootupd-compatible update metadata.
+	Bootupd bool
 }
 
 func NewOSTreeArchive(platform platform.Platform, filename string, ref string) *OSTreeArchive {
@@ -61,6 +66,11 @@ func (img *OSTreeArchive) InstantiateManifest(m *manifest.Manifest,
 
 	ostreeCommitPipeline := manifest.NewOSTreeCommit(buildPipeline, osPipeline, img.OSTreeRef)
 	ostreeCommitPipeline.OSVersion = img.OSVersion
+
+	// Enable bootupd metadata generation if requested
+	if img.Bootupd {
+		osPipeline.Bootupd = true
+	}
 
 	var artifact *artifact.Artifact
 	if img.BootContainer {

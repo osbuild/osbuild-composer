@@ -195,6 +195,10 @@ func (p *AnacondaInstallerISOTree) getInline() []string {
 	return inlineData
 }
 func (p *AnacondaInstallerISOTree) getBuildPackages(_ Distro) ([]string, error) {
+	if p.anacondaPipeline.BootcLivefsContainer != nil {
+		return nil, nil
+	}
+
 	var packages []string
 	switch p.RootfsType {
 	case SquashfsExt4Rootfs, SquashfsRootfs:
@@ -419,15 +423,23 @@ func (p *AnacondaInstallerISOTree) serialize() (osbuild.Pipeline, error) {
 		}))
 	}
 
+	// XXX: too indirect, ugly
+	if p.anacondaPipeline.KernelPath == "" {
+		p.anacondaPipeline.KernelPath = fmt.Sprintf("boot/vmlinuz-%s", p.anacondaPipeline.kernelVer)
+	}
+	if p.anacondaPipeline.InitramfsPath == "" {
+		p.anacondaPipeline.InitramfsPath = fmt.Sprintf("boot/initramfs-%s.img", p.anacondaPipeline.kernelVer)
+	}
+
 	inputName := "tree"
 	copyStageOptions := &osbuild.CopyStageOptions{
 		Paths: []osbuild.CopyStagePath{
 			{
-				From: fmt.Sprintf("input://%s/boot/vmlinuz-%s", inputName, p.anacondaPipeline.kernelVer),
+				From: fmt.Sprintf("input://%s/%s", inputName, p.anacondaPipeline.KernelPath),
 				To:   "tree:///images/pxeboot/vmlinuz",
 			},
 			{
-				From: fmt.Sprintf("input://%s/boot/initramfs-%s.img", inputName, p.anacondaPipeline.kernelVer),
+				From: fmt.Sprintf("input://%s/%s", inputName, p.anacondaPipeline.InitramfsPath),
 				To:   "tree:///images/pxeboot/initrd.img",
 			},
 		},

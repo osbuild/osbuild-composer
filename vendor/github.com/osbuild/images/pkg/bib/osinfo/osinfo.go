@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v3"
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
 	"github.com/osbuild/images/pkg/bib/blueprintload"
@@ -40,7 +40,7 @@ type Info struct {
 	UEFIVendor         string    `yaml:"uefi_vendor"`
 	SELinuxPolicy      string    `yaml:"selinux_policy"`
 	ImageCustomization *blueprint.Customizations
-	KernelInfo         *KernelInfo
+	KernelInfo         *KernelInfo `yaml:"kernel_info"`
 
 	MountConfiguration *osbuild.MountConfiguration
 	PartitionTable     *disk.PartitionTable

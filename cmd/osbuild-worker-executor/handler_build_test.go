@@ -84,12 +84,18 @@ func TestBuildIntegration(t *testing.T) {
 	baseURL, baseBuildDir, loggerHook := runTestServer(t)
 	endpoint := baseURL + "api/v1/build"
 
-	// osbuild is called with --export tree and then the manifest.json
 	restore := main.MockOsbuildBinary(t, fmt.Sprintf(`#!/bin/sh -e
+# make sure the monitor is setup correctly
+>&3 echo '^^{"message": "osbuild-stage-message 1"}'
+>&3 echo '^^{"message": "osbuild-stage-message 2"}'
+>&3 echo '^^{"message": "osbuild-stage-message 3"}'
+
 # echo our inputs for the test to validate
-echo fake-osbuild "$1" "$2" "$3" "$4" "$5" "$6" "$7"
+echo osbuild $@
 echo ---
-cat "$8"
+# stdin
+cat -
+echo
 
 test "$MY" = "env"
 
@@ -104,19 +110,24 @@ echo "fake-build-result" > %[1]s/build/output/image/disk.img
 	assert.NoError(t, err)
 	defer func() { _, _ = io.ReadAll(rsp.Body) }()
 	defer rsp.Body.Close()
-
 	assert.Equal(t, http.StatusCreated, rsp.StatusCode)
-	reader := bufio.NewReader(rsp.Body)
 
-	// check that we get the output of osbuild streamed to us
-	expectedContent := fmt.Sprintf(`fake-osbuild --export tree --output-dir %[1]s/build/output --store %[1]s/build/osbuild-store --json
----
-{"fake": "manifest"}`, baseBuildDir)
+	// check that we get the monitor output of osbuild streamed to us
+	expectedMonitorContent := `^^{"message": "osbuild-stage-message 1"}
+^^{"message": "osbuild-stage-message 2"}
+^^{"message": "osbuild-stage-message 3"}
+`
+	reader := bufio.NewReader(rsp.Body)
 	content, err := io.ReadAll(reader)
 	assert.NoError(t, err)
-	assert.Equal(t, expectedContent, string(content))
+	assert.Equal(t, expectedMonitorContent, string(content))
+
 	// check log too
-	logFileContent, err := os.ReadFile(filepath.Join(baseBuildDir, "build/build.log"))
+	expectedContent := fmt.Sprintf(`osbuild --store %[1]s/build/osbuild-store --output-directory %[1]s/build/output --cache-max-size=21474836480 - --export tree --monitor=JSONSeqMonitor --monitor-fd=3 --json
+---
+{"fake": "manifest"}
+`, baseBuildDir)
+	logFileContent, err := os.ReadFile(filepath.Join(baseBuildDir, "build/output/osbuild-result.json"))
 	assert.NoError(t, err)
 	assert.Equal(t, expectedContent, string(logFileContent))
 	// check that the "store" dir got created
@@ -152,7 +163,7 @@ echo "fake-build-result" > %[1]s/build/output/image/disk.img
 	cmd := exec.Command("tar", "-tf", tarPath)
 	out, err := cmd.Output()
 	assert.NoError(t, err)
-	assert.Equal(t, "output/\noutput/image/\noutput/image/disk.img\n", string(out))
+	assert.Equal(t, "output/\noutput/image/\noutput/image/disk.img\noutput/osbuild-result.json\n", string(out))
 }
 
 func TestBuildErrorsForMultipleBuilds(t *testing.T) {
@@ -245,10 +256,7 @@ exit 23
 	reader := bufio.NewReader(rsp.Body)
 	content, err := io.ReadAll(reader)
 	assert.NoError(t, err)
-	expectedContent := `err on stdout
-err on stderr
-cannot run osbuild: exit status 23`
-	assert.Equal(t, expectedContent, string(content))
+	assert.Equal(t, "cannot run osbuild: exit status 23", string(content))
 
 	// check that the result is an error and we get the log
 	endpoint = baseURL + "api/v1/result/image/disk.img"
@@ -259,7 +267,9 @@ cannot run osbuild: exit status 23`
 	reader = bufio.NewReader(rsp.Body)
 	content, err = io.ReadAll(reader)
 	assert.NoError(t, err)
-	assert.Equal(t, "build failed\n"+expectedContent, string(content))
+	assert.Equal(t, `build failed
+err on stdout
+`, string(content))
 }
 
 func TestBuildStreamsOutput(t *testing.T) {
@@ -269,7 +279,7 @@ func TestBuildStreamsOutput(t *testing.T) {
 	restore := main.MockOsbuildBinary(t, fmt.Sprintf(`#!/bin/sh -e
 for i in $(seq 3); do
    # generate the exact timestamp of the output line
-   echo "line-$i: $(date  +'%%s.%%N')"
+   >&3 echo "line-$i: $(date  +'%%s.%%N')"
    sleep 0.2
 done
 
@@ -302,11 +312,12 @@ echo "fake-build-result" > %[1]s/build/output/image/disk.img
 	}
 }
 
-func TestBuildErrorHandlingTar(t *testing.T) {
+func TestBuildErrorHandlingResult(t *testing.T) {
 	restore := main.MockOsbuildBinary(t, `#!/bin/sh
 
 # not creating an output dir, this will lead to errors from the "tar"
 # step
+echo osbuild failure on stdout
 `)
 	defer restore()
 
@@ -321,6 +332,7 @@ func TestBuildErrorHandlingTar(t *testing.T) {
 
 	body, err := io.ReadAll(rsp.Body)
 	assert.NoError(t, err)
-	assert.Contains(t, string(body), "cannot tar output directory:")
-	assert.Contains(t, loggerHook.LastEntry().Message, "cannot tar output directory:")
+	assert.Contains(t, string(body), "unable to move result file to output directory:")
+	assert.Contains(t, string(body), "osbuild failure on stdout")
+	assert.Contains(t, loggerHook.LastEntry().Message, "unable to move result file to output directory:")
 }
