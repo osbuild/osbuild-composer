@@ -147,6 +147,11 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		if err != nil {
 			return err
 		}
+	} else if h.server.config.ImageBuilderManifestGeneration {
+		id, err = h.server.enqueueComposeIBCLI(irs, channel)
+		if err != nil {
+			return err
+		}
 	} else {
 		id, err = h.server.enqueueCompose(irs, channel)
 		if err != nil {
@@ -822,7 +827,9 @@ func manifestJobResultsFromJobDeps(w *worker.Server, deps []uuid.UUID) (*worker.
 		if err != nil {
 			return nil, nil, err
 		}
-		if depType == worker.JobTypeManifestIDOnly {
+
+		switch depType {
+		case worker.JobTypeManifestIDOnly, worker.JobTypeImageBuilderManifest:
 			manifestJobInfo, err := w.ManifestJobInfo(deps[i], &manifestResult)
 			if err != nil {
 				return nil, nil, err
@@ -831,7 +838,7 @@ func manifestJobResultsFromJobDeps(w *worker.Server, deps []uuid.UUID) (*worker.
 		}
 	}
 
-	return nil, nil, fmt.Errorf("no %q job found in the dependencies", worker.JobTypeManifestIDOnly)
+	return nil, nil, fmt.Errorf("no %q or %q job found in the dependencies", worker.JobTypeManifestIDOnly, worker.JobTypeImageBuilderManifest)
 }
 
 // GetComposeIdManifests returns the Manifests for a given Compose (one for each image).
