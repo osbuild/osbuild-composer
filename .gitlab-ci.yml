@@ -90,12 +90,8 @@ init:
 
 .RPM_RUNNERS_RHEL: &RPM_RUNNERS_RHEL
   RUNNER:
-    - aws/rhel-9.7-nightly-x86_64
-    - aws/rhel-9.7-nightly-aarch64
     - aws/rhel-9.8-nightly-x86_64
     - aws/rhel-9.8-nightly-aarch64
-    - aws/rhel-10.1-nightly-x86_64
-    - aws/rhel-10.1-nightly-aarch64
     - aws/rhel-10.2-nightly-x86_64
     - aws/rhel-10.2-nightly-aarch64
   INTERNAL_NETWORK: ["true"]
@@ -119,8 +115,8 @@ RPM:
           - aws/rhel-8.10-ga-aarch64
           - aws/rhel-9.6-ga-x86_64
           - aws/rhel-9.6-ga-aarch64
-          - aws/rhel-10.0-ga-x86_64
-          - aws/rhel-10.0-ga-aarch64
+          - aws/rhel-10.1-ga-x86_64
+          - aws/rhel-10.1-ga-aarch64
           - aws/centos-stream-9-x86_64
           - aws/centos-stream-9-aarch64
           - aws/centos-stream-10-x86_64
@@ -182,9 +178,7 @@ Prepare-rhel-internal:
       - RUNNER:
           # NOTE: 1 runner prepares for all arches b/c subsequent jobs download
           # artifacts from all previous jobs and the last one wins
-          - aws/rhel-9.7-nightly-x86_64
           - aws/rhel-9.8-nightly-x86_64
-          - aws/rhel-10.1-nightly-x86_64
           - aws/rhel-10.2-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
 
@@ -207,8 +201,8 @@ Base:
           - aws/rhel-8.10-ga-aarch64
           - aws/rhel-9.6-ga-x86_64
           - aws/rhel-9.6-ga-aarch64
-          - aws/rhel-10.0-ga-x86_64
-          - aws/rhel-10.0-ga-aarch64
+          - aws/rhel-10.1-ga-x86_64
+          - aws/rhel-10.1-ga-aarch64
           - aws/centos-stream-9-x86_64
           - aws/centos-stream-9-aarch64
           - aws/centos-stream-10-x86_64
@@ -235,8 +229,8 @@ Base:
           - aws/rhel-8.10-ga-aarch64
           - aws/rhel-9.6-ga-x86_64
           - aws/rhel-9.6-ga-aarch64
-          - aws/rhel-10.0-ga-x86_64
-          - aws/rhel-10.0-ga-aarch64
+          - aws/rhel-10.1-ga-x86_64
+          - aws/rhel-10.1-ga-aarch64
           - aws/centos-stream-9-x86_64
           - aws/centos-stream-9-aarch64
           - aws/centos-stream-10-x86_64
@@ -288,7 +282,7 @@ regression-old-worker-new-composer:
       - RUNNER:
           - aws/rhel-8.10-ga-x86_64
           - aws/rhel-9.6-ga-x86_64
-          - aws/rhel-10.0-ga-x86_64
+          - aws/rhel-10.1-ga-x86_64
         INTERNAL_NETWORK: ["true"]
   extends: .regression
   variables:
@@ -343,10 +337,7 @@ regression-no-explicit-rootfs-definition:
     RUNNER:
       - aws/rhel-8.10-ga-x86_64
       - aws/rhel-9.6-ga-x86_64
-      - aws/rhel-10.0-ga-x86_64
-      - aws/rhel-9.7-nightly-x86_64
-      - aws/rhel-9.8-nightly-x86_64
-      - aws/rhel-10.1-nightly-x86_64
+      - aws/rhel-10.1-ga-x86_64
       - aws/rhel-10.2-nightly-x86_64
       - aws/centos-stream-9-x86_64
       - aws/centos-stream-10-x86_64
@@ -444,9 +435,7 @@ OpenShift_Virtualization:
   parallel:
     matrix:
       - RUNNER:
-          - aws/rhel-9.7-nightly-x86_64
           - aws/rhel-9.8-nightly-x86_64
-          - aws/rhel-10.1-nightly-x86_64
           - aws/rhel-10.2-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
 
@@ -523,13 +512,11 @@ filesystem.sh:
       - CUSTOMIZATION_TYPE: "disk-plain"
         RUNNER:
           - aws/rhel-9.6-ga-x86_64
-          - aws/rhel-10.0-ga-x86_64
-          - aws/rhel-10.1-nightly-x86_64
+          - aws/rhel-10.1-ga-x86_64
           - aws/rhel-10.2-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
       - CUSTOMIZATION_TYPE: "disk-lvm"
         RUNNER:
-          - aws/rhel-9.7-nightly-x86_64
           - aws/rhel-9.8-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
       - CUSTOMIZATION_TYPE: "disk-lvm"
@@ -574,7 +561,6 @@ API:
         RUNNER:
           - aws/rhel-8.10-ga-x86_64
           - aws/rhel-9.6-ga-x86_64
-          - aws/rhel-9.7-nightly-x86_64
           - aws/rhel-9.8-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
       # el10 supports only a subset of image types
@@ -587,8 +573,7 @@ API:
           - vsphere
         RUNNER:
           # Add all RHEL 10 runners here to exclude Edge for them
-          - aws/rhel-10.0-ga-x86_64
-          - aws/rhel-10.1-nightly-x86_64
+          - aws/rhel-10.1-ga-x86_64
           - aws/rhel-10.2-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
       - IMAGE_TYPE: ["iot-commit"]
@@ -602,7 +587,7 @@ API:
         RUNNER:
           - aws/rhel-8.10-ga-aarch64
           - aws/rhel-9.6-ga-aarch64
-          - aws/rhel-10.0-ga-aarch64
+          - aws/rhel-10.1-ga-aarch64
         INTERNAL_NETWORK: ["true"]
 
 API-module-hotfixes:
@@ -649,10 +634,8 @@ API-module-hotfixes:
       - RUNNER:
           - gcp/rhel-8.10-ga-x86_64
           - gcp/rhel-9.6-ga-x86_64
-          - gcp/rhel-10.0-ga-x86_64
-          - gcp/rhel-9.7-nightly-x86_64
+          - gcp/rhel-10.1-ga-x86_64
           - gcp/rhel-9.8-nightly-x86_64
-          - gcp/rhel-10.1-nightly-x86_64
           - gcp/rhel-10.2-nightly-x86_64
           - gcp/centos-stream-9-x86_64
         INTERNAL_NETWORK: ["true"]
@@ -677,8 +660,7 @@ ubi-wsl.sh:
       - RUNNER:
           - aws/rhel-8.10-ga-x86_64
           - aws/rhel-9.6-ga-x86_64
-          - aws/rhel-10.0-ga-x86_64
-          - aws/rhel-10.1-nightly-x86_64
+          - aws/rhel-10.1-ga-x86_64
           - aws/rhel-10.2-nightly-x86_64
         INTERNAL_NETWORK: "true"
 
@@ -778,9 +760,7 @@ Upgrade:
   parallel:
     matrix:
       - RUNNER:
-          - rhos-01/rhel-9.7-nightly-x86_64-large
           - rhos-01/rhel-9.8-nightly-x86_64-large
-          - rhos-01/rhel-10.1-nightly-x86_64-large
           - rhos-01/rhel-10.2-nightly-x86_64-large
 
 NIGHTLY_FAIL:
@@ -834,10 +814,8 @@ Installer:
   parallel:
     matrix:
       - RUNNER:
-          - rhos-01/rhel-9.7-nightly-x86_64
           - rhos-01/rhel-9.8-nightly-x86_64
           - rhos-01/centos-stream-9-x86_64
-          - rhos-01/rhel-10.1-nightly-x86_64
           - rhos-01/rhel-10.2-nightly-x86_64
           - rhos-01/centos-stream-10-x86_64
 
@@ -871,9 +849,7 @@ ContainerEmbedding:
         RUNNER:
         - aws/centos-stream-9-x86_64
         - aws/centos-stream-10-x86_64
-        - aws/rhel-9.7-nightly-x86_64
         - aws/rhel-9.8-nightly-x86_64
-        - aws/rhel-10.1-nightly-x86_64
         - aws/rhel-10.2-nightly-x86_64
 
 WorkerExecutor:

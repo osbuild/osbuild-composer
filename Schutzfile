@@ -252,46 +252,7 @@
       "osbuild": {
         "commit": "a52e256c481c00e61f785f3ad68e29e1ac8a09fb"
       }
-    },
-    "repos": [
-      {
-        "file": "/etc/yum.repos.d/rhel10internal.repo",
-        "x86_64": [
-          {
-            "title": "RHEL-10-RPMREPO-NIGHTLY-BaseOS",
-            "name": "baseos",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el10/el10-x86_64-baseos-n10.1-20251023"
-          },
-          {
-            "title": "RHEL-10-RPMREPO-NIGHTLY-AppStream",
-            "name": "appstream",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el10/el10-x86_64-appstream-n10.1-20251023"
-          },
-          {
-            "title": "RHEL-10-RPMREPO-NIGHTLY-CRB",
-            "name": "crb",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el10/el10-x86_64-crb-n10.1-20251023"
-          }
-        ],
-        "aarch64": [
-          {
-            "title": "RHEL-10-RPMREPO-NIGHTLY-BaseOS",
-            "name": "baseos",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el10/el10-aarch64-baseos-n10.1-20251023"
-          },
-          {
-            "title": "RHEL-10-RPMREPO-NIGHTLY-AppStream",
-            "name": "appstream",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el10/el10-aarch64-appstream-n10.1-20251023"
-          },
-          {
-            "title": "RHEL-10-RPMREPO-NIGHTLY-CRB",
-            "name": "crb",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el10/el10-aarch64-crb-n10.1-20251023"
-          }
-        ]
-      }
-    ]
+    }
   },
   "rhel-10.2": {
     "dependencies": {
