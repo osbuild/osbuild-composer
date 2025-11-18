@@ -707,7 +707,7 @@ func (h *apiHandlers) getComposeMetadataImpl(ctx echo.Context, jobId uuid.UUID) 
 
 	var ostreeCommitMetadata *osbuild.OSTreeCommitStageMetadata
 	var rpmStagesMd []osbuild.RPMStageMetadata // collect rpm stage metadata from payload pipelines
-	for _, plName := range job.PipelineNames.Payload {
+	for _, plName := range result.PipelineNames.Payload {
 		plMd, hasMd := result.OSBuildOutput.Metadata[plName]
 		if !hasMd {
 			continue
