@@ -27,7 +27,7 @@ func TestRunImageBuilderManifestCall(t *testing.T) {
 
 	testCases := map[string]testCase{
 		"empty": {
-			expCall: []string{"image-builder", "manifest", "--distro", "", "--arch", "", "--", ""}, // TODO: make this an error
+			expCall: []string{"image-builder", "manifest", "--use-librepo=false", "--distro", "", "--arch", "", "--", ""}, // TODO: make this an error
 		},
 
 		"simple": {
@@ -39,6 +39,7 @@ func TestRunImageBuilderManifestCall(t *testing.T) {
 			expCall: []string{
 				"image-builder",
 				"manifest",
+				"--use-librepo=false",
 				"--distro", "centos-9",
 				"--arch", "x86_64",
 				"--",
@@ -56,6 +57,7 @@ func TestRunImageBuilderManifestCall(t *testing.T) {
 			expCall: []string{
 				"image-builder",
 				"manifest",
+				"--use-librepo=false",
 				"--distro", "centos-10",
 				"--arch", "x86_64",
 				"--blueprint", "*/blueprint.json",
@@ -74,6 +76,7 @@ func TestRunImageBuilderManifestCall(t *testing.T) {
 			expCall: []string{
 				"image-builder",
 				"manifest",
+				"--use-librepo=false",
 				"--distro", "rhel-10.1",
 				"--arch", "aarch64",
 				"--",
@@ -92,6 +95,7 @@ func TestRunImageBuilderManifestCall(t *testing.T) {
 			expCall: []string{
 				"image-builder",
 				"manifest",
+				"--use-librepo=false",
 				"--distro", "rhel-9.10",
 				"--arch", "aarch64",
 				"--blueprint", "*/blueprint.json",
@@ -116,6 +120,7 @@ func TestRunImageBuilderManifestCall(t *testing.T) {
 			expCall: []string{
 				"image-builder",
 				"manifest",
+				"--use-librepo=false",
 				"--distro", "rhel-10.10",
 				"--arch", "aarch64",
 				"--data-dir", "*/datadir",
@@ -140,6 +145,7 @@ func TestRunImageBuilderManifestCall(t *testing.T) {
 			expCall: []string{
 				"image-builder",
 				"manifest",
+				"--use-librepo=false",
 				"--distro", "rhel-9.10",
 				"--arch", "aarch64",
 				"--blueprint", "*/blueprint.json",
