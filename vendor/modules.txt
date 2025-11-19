@@ -584,8 +584,8 @@ github.com/docker/go-units
 # github.com/dougm/pretty v0.0.0-20160325215624-add1dbc86daf
 ## explicit
 github.com/dougm/pretty
-# github.com/dprotaso/go-yit v0.0.0-20220510233725-9ba8df137936
-## explicit; go 1.13
+# github.com/dprotaso/go-yit v0.0.0-20251117151522-da16f3077589
+## explicit; go 1.23.0
 github.com/dprotaso/go-yit
 # github.com/envoyproxy/go-control-plane/envoy v1.32.4
 ## explicit; go 1.22
@@ -1298,6 +1298,10 @@ go.opentelemetry.io/otel/trace/noop
 # go.yaml.in/yaml/v2 v2.4.2
 ## explicit; go 1.15
 go.yaml.in/yaml/v2
+# go.yaml.in/yaml/v4 v4.0.0-rc.3
+## explicit; go 1.18
+go.yaml.in/yaml/v4
+go.yaml.in/yaml/v4/internal/libyaml
 # golang.org/x/crypto v0.41.0
 ## explicit; go 1.23.0
 golang.org/x/crypto/acme
