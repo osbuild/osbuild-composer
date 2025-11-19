@@ -93,6 +93,7 @@ func RunImageBuilderManifest(args ImageBuilderArgs, extraEnv []string, errorWrit
 
 	clArgs := []string{
 		"manifest",
+		"--use-librepo=false", // TODO: remove once https://github.com/osbuild/osbuild/pull/2253 arrives
 		"--distro", args.Distro,
 		"--arch", args.Arch,
 	}
