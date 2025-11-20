@@ -35,7 +35,7 @@ require (
 	github.com/openshift-online/ocm-sdk-go v0.1.480
 	github.com/osbuild/blueprint v1.16.0
 	github.com/osbuild/images v0.209.0
-	github.com/osbuild/osbuild-composer/pkg/splunk_logger v0.0.0-20240814102216-0239db53236d
+	github.com/osbuild/osbuild-composer/pkg/splunk_logger v0.0.0-20251119132706-8f6ecc42637f
 	github.com/prometheus/client_golang v1.23.2
 	github.com/segmentio/ksuid v1.0.4
 	github.com/sirupsen/logrus v1.9.3

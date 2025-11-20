@@ -1029,8 +1029,8 @@ github.com/osbuild/images/pkg/shutil
 github.com/osbuild/images/pkg/upload/koji
 github.com/osbuild/images/pkg/upload/oci
 github.com/osbuild/images/pkg/upload/vmware
-# github.com/osbuild/osbuild-composer/pkg/splunk_logger v0.0.0-20240814102216-0239db53236d
-## explicit; go 1.21
+# github.com/osbuild/osbuild-composer/pkg/splunk_logger v0.0.0-20251119132706-8f6ecc42637f
+## explicit; go 1.22
 github.com/osbuild/osbuild-composer/pkg/splunk_logger
 # github.com/perimeterx/marshmallow v1.1.5
 ## explicit; go 1.17
