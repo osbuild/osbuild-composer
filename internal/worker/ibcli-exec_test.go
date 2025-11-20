@@ -11,7 +11,9 @@ import (
 	"testing"
 
 	"github.com/gobwas/glob"
+	"github.com/osbuild/images/pkg/customizations/subscription"
 	"github.com/osbuild/images/pkg/rpmmd"
+	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 	"github.com/stretchr/testify/assert"
 )
@@ -128,6 +130,27 @@ func TestRunImageBuilderManifestCall(t *testing.T) {
 				"azure-rhui",
 			},
 		},
+		"with-sub": {
+			args: worker.ImageBuilderArgs{
+				Distro:    "rhel-9.10",
+				Arch:      "aarch64",
+				ImageType: "azure-rhui",
+				Subscription: &subscription.ImageOptions{
+					Organization:  "4242424242",
+					ActivationKey: "i-am-an-activation-key",
+				},
+			},
+			expCall: []string{
+				"image-builder",
+				"manifest",
+				"--use-librepo=false",
+				"--distro", "rhel-9.10",
+				"--arch", "aarch64",
+				"--registrations", "*/subscription.json",
+				"--",
+				"azure-rhui",
+			},
+		},
 		"with-blueprint-and-repos": {
 			args: worker.ImageBuilderArgs{
 				Distro:    "rhel-9.10",
@@ -150,6 +173,39 @@ func TestRunImageBuilderManifestCall(t *testing.T) {
 				"--arch", "aarch64",
 				"--blueprint", "*/blueprint.json",
 				"--data-dir", "*/datadir",
+				"--",
+				"azure-rhui",
+			},
+		},
+		"with-blueprint-and-repos-and-sub": {
+			args: worker.ImageBuilderArgs{
+				Distro:    "rhel-9.10",
+				Arch:      "aarch64",
+				ImageType: "azure-rhui",
+				Blueprint: json.RawMessage(`{"customizations":{"hostname":"image-builder","timezone":{"timezone":"Europe/Berlin"}}}`),
+				Repositories: []rpmmd.RepoConfig{
+					{
+						Id:       "baseos",
+						Name:     "baseos",
+						BaseURLs: []string{"https://example.org/baseos"},
+						CheckGPG: common.ToPtr(true),
+						RHSM:     true,
+					},
+				},
+				Subscription: &subscription.ImageOptions{
+					Organization:  "4242424242",
+					ActivationKey: "i-am-an-activation-key",
+				},
+			},
+			expCall: []string{
+				"image-builder",
+				"manifest",
+				"--use-librepo=false",
+				"--distro", "rhel-9.10",
+				"--arch", "aarch64",
+				"--blueprint", "*/blueprint.json",
+				"--data-dir", "*/datadir",
+				"--registrations", "*/subscription.json",
 				"--",
 				"azure-rhui",
 			},
@@ -231,6 +287,34 @@ func TestRunImageBuilderManifestCall(t *testing.T) {
 					expectedRepos = worker.RPMMDRepoConfigsToDiskArchMap(tc.args.Repositories, tc.args.Arch)
 				}
 				assert.Equal(expectedRepos, onDiskRepos)
+
+				// The subscription options path is under a random temporary
+				// directory, so let's search for it and replace the path in
+				// the expected args. Also, load the file contents to compare
+				// them with the original from the test case.
+				var onDiskSub map[string]map[string]*subscription.ImageOptions
+				subPathIdx := slices.Index(actualCall, "--registrations") + 1
+				if subPathIdx > 0 {
+					subPath := actualCall[subPathIdx]
+					expPath := expCall[subPathIdx]
+
+					// we can't predict the temporary directory name, but we
+					// can make sure it matches the glob
+					g, err := glob.Compile(expPath)
+					assert.NoError(err)
+					assert.True(g.Match(subPath))
+
+					expCall[subPathIdx] = subPath
+
+					subFile, err := os.Open(subPath)
+					assert.NoError(err)
+					defer subFile.Close()
+
+					subFileContents, err := io.ReadAll(subFile)
+					assert.NoError(err)
+					assert.NoError(json.Unmarshal(subFileContents, &onDiskSub))
+				}
+				assert.Equal(tc.args.Subscription, onDiskSub["redhat"]["subscription"])
 
 				// return a real exec.Command() result so that the output
 				// buffer reading doesn't fail

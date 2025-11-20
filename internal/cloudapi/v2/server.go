@@ -344,6 +344,7 @@ func (s *Server) enqueueComposeIBCLI(irs []imageRequest, channel string) (uuid.U
 		ImageType:    imageType.Name(),
 		Blueprint:    rawBlueprint,
 		Repositories: ir.repositories,
+		Subscription: ir.imageOptions.Subscription,
 	}
 
 	manifestJob := worker.ImageBuilderManifestJob{
