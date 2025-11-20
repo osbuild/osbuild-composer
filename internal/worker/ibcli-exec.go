@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"path/filepath"
 
+	"github.com/osbuild/images/pkg/customizations/subscription"
 	"github.com/osbuild/images/pkg/rpmmd"
 )
 
@@ -77,10 +78,10 @@ type ImageBuilderArgs struct {
 	ImageType    string
 	Blueprint    json.RawMessage
 	Repositories []rpmmd.RepoConfig
+	Subscription *subscription.ImageOptions
 
 	// TODO: extend to include all options
 	//  - ostree
-	//  - registration
 	//  - bootc
 	//  - seed
 }
@@ -118,6 +119,12 @@ func RunImageBuilderManifest(args ImageBuilderArgs, extraEnv []string, errorWrit
 		return nil, fmt.Errorf("%s: %w", errPrefix, err)
 	}
 	clArgs = append(clArgs, repoArgs...)
+
+	subArgs, err := handleSubscription(args, tmpdir)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", errPrefix, err)
+	}
+	clArgs = append(clArgs, subArgs...)
 
 	clArgs = append(clArgs, "--", args.ImageType)
 	cmd := execCommand("image-builder", clArgs...)
@@ -205,4 +212,33 @@ func handleRepositories(args ImageBuilderArgs, pardir string) ([]string, error) 
 	}
 
 	return []string{"--data-dir", datadir}, nil
+}
+
+// handleSubscription writes the subscription config to a file under pardir and
+// returns the appropriate command line arguments to append to the
+// image-builder call.
+func handleSubscription(args ImageBuilderArgs, pardir string) ([]string, error) {
+	if args.Subscription == nil {
+		return nil, nil
+	}
+
+	subFile, err := os.Create(filepath.Join(pardir, "subscription.json"))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create subscription file: %w", err)
+	}
+	defer subFile.Close()
+
+	// registration file for image-builder must be a map with 'redhat' as a
+	// top-level key and 'subscription' below it
+	subMap := map[string]map[string]subscription.ImageOptions{"redhat": {"subscription": *args.Subscription}}
+	sub, err := json.Marshal(subMap)
+	if err != nil {
+		return nil, fmt.Errorf("image-builder manifest: failed to serialize subscription options: %w", err)
+	}
+
+	if _, err := subFile.Write(sub); err != nil {
+		return nil, fmt.Errorf("image-builder manifest: failed to write subscription options: %w", err)
+	}
+
+	return []string{"--registrations", subFile.Name()}, nil
 }
