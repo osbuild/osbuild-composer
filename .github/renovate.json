@@ -1,0 +1,10 @@
+{
+  "extends": [
+    "github>konflux-ci/mintmaker//config/renovate/renovate.json",
+    "schedule:earlyMondays"
+  ],
+  "prConcurrentLimit": 3,
+  "gomod": {
+    "enabled": false
+  }
+}
