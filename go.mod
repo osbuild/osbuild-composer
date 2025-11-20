@@ -6,7 +6,7 @@ exclude github.com/mattn/go-sqlite3 v2.0.3+incompatible
 
 require (
 	cloud.google.com/go/compute v1.45.0
-	github.com/BurntSushi/toml v1.5.1-0.20250403130103-3d3abc24416a
+	github.com/BurntSushi/toml v1.5.1-0.20250606162815-011fa2bc64ce
 	github.com/aws/aws-sdk-go-v2 v1.39.5
 	github.com/aws/aws-sdk-go-v2/config v1.31.16
 	github.com/aws/aws-sdk-go-v2/credentials v1.18.20
