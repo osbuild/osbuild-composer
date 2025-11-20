@@ -89,6 +89,7 @@ type ImageBuilderArgs struct {
 var execCommand = exec.Command
 
 func RunImageBuilderManifest(args ImageBuilderArgs, extraEnv []string, errorWriter io.Writer) ([]byte, error) {
+	errPrefix := "image-builder manifest"
 	var stdoutBuffer bytes.Buffer
 
 	clArgs := []string{
@@ -100,71 +101,23 @@ func RunImageBuilderManifest(args ImageBuilderArgs, extraEnv []string, errorWrit
 
 	tmpdir, err := os.MkdirTemp("", "image-builder-manifest-")
 	if err != nil {
-		return nil, fmt.Errorf("image-builder manifest: failed to create temporary directory: %w", err)
+		return nil, fmt.Errorf("%s: failed to create temporary directory: %w", errPrefix, err)
 	}
 
 	// TODO: catch and log remove errors
 	defer os.RemoveAll(tmpdir)
 
-	if args.Blueprint != nil {
-		// image-builder can read blueprints in JSON format and uses the extension to detect
-		bpFile, err := os.Create(filepath.Join(tmpdir, "blueprint.json"))
-		if err != nil {
-			return nil, fmt.Errorf("image-builder manifest: failed to create blueprint file: %w", err)
-		}
-		defer bpFile.Close()
-
-		if _, err := bpFile.Write(args.Blueprint); err != nil {
-			return nil, fmt.Errorf("image-builder manifest: failed to write blueprint: %w", err)
-		}
-
-		clArgs = append(clArgs, "--blueprint", bpFile.Name())
+	bpArgs, err := handleBlueprint(args, tmpdir)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", errPrefix, err)
 	}
+	clArgs = append(clArgs, bpArgs...)
 
-	if len(args.Repositories) > 0 {
-		// use tmpdir/datadir/ as the datadir, which makes image-builder search
-		// for repositories under tmpdir/datadir/repositories/ and matches
-		// filename to distro name
-		datadir := filepath.Join(tmpdir, "datadir")
-		reposDir := filepath.Join(datadir, "repositories")
-		if err := os.MkdirAll(reposDir, 0700); err != nil {
-			return nil, fmt.Errorf("image-builder-manifest: failed to create repositories directory: %w", err)
-		}
-		reposFilePath := filepath.Join(reposDir, fmt.Sprintf("%s.json", args.Distro))
-		reposFile, err := os.Create(reposFilePath)
-		if err != nil {
-			return nil, fmt.Errorf("image-builder-manifest: failed to create repositories file: %w", err)
-		}
-		defer reposFile.Close()
-
-		// repository files for image-builder must be a map from architecture to a repo array
-		reposArchMap := rpmmdRepoConfigsToDiskArchMap(args.Repositories, args.Arch)
-		repos, err := json.Marshal(reposArchMap)
-		if err != nil {
-			return nil, fmt.Errorf("image-builder manifest: failed to serialize repositories: %w", err)
-		}
-
-		if _, err := reposFile.Write(repos); err != nil {
-			return nil, fmt.Errorf("image-builder manifest: failed to write repositories: %w", err)
-		}
-
-		// Prior to v41, image-builder looked for repositories in the root of
-		// the data-dir. With v41, it now looks under the repositories/
-		// subdirectory. Link the file from one location to the other to cover
-		// both cases.
-		// https://github.com/osbuild/image-builder-cli/releases/tag/v41
-
-		// TODO: add a condition once we have a convenient way to get the
-		// version
-		// NOTE: See also the ImageBuilderManifestJobResult fields in in
-		// jobimpl-image-builder-manifest
-		oldReposFileLocation := filepath.Join(datadir, fmt.Sprintf("%s.json", args.Distro))
-		if err := os.Symlink(reposFilePath, oldReposFileLocation); err != nil {
-			return nil, fmt.Errorf("image-builder manifest: failed to symlink repos file in data-dir [%s -> %s]: %w", reposFilePath, oldReposFileLocation, err)
-		}
-
-		clArgs = append(clArgs, "--data-dir", datadir)
+	repoArgs, err := handleRepositories(args, tmpdir)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", errPrefix, err)
 	}
+	clArgs = append(clArgs, repoArgs...)
 
 	clArgs = append(clArgs, "--", args.ImageType)
 	cmd := execCommand("image-builder", clArgs...)
@@ -175,8 +128,81 @@ func RunImageBuilderManifest(args ImageBuilderArgs, extraEnv []string, errorWrit
 	cmd.Stdout = &stdoutBuffer
 	cmd.Stderr = errorWriter
 	if err := cmd.Run(); err != nil {
-		return nil, fmt.Errorf("image-builder manifest: call failed: %w", err)
+		return nil, fmt.Errorf("%s: call failed: %w", errPrefix, err)
 	}
 
 	return stdoutBuffer.Bytes(), nil
+}
+
+// handleBlueprint writes the Blueprint data to a file under pardir and returns
+// the appropriate command line arguments to append to the image-builder call.
+func handleBlueprint(args ImageBuilderArgs, pardir string) ([]string, error) {
+	if args.Blueprint == nil {
+		return nil, nil
+	}
+
+	// image-builder can read blueprints in JSON format and uses the extension to detect
+	bpFile, err := os.Create(filepath.Join(pardir, "blueprint.json"))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create blueprint file: %w", err)
+	}
+	defer bpFile.Close()
+
+	if _, err := bpFile.Write(args.Blueprint); err != nil {
+		return nil, fmt.Errorf("failed to write blueprint: %w", err)
+	}
+
+	return []string{"--blueprint", bpFile.Name()}, nil
+}
+
+// handleRepositories writes the repository configs to a file under a
+// subdirectory of pardir and returns the appropriate command line arguments to
+// append to the image-builder call.
+func handleRepositories(args ImageBuilderArgs, pardir string) ([]string, error) {
+	if len(args.Repositories) == 0 {
+		return nil, nil
+	}
+
+	// use tmpdir/datadir/ as the datadir, which makes image-builder search
+	// for repositories under tmpdir/datadir/repositories/ and matches
+	// filename to distro name
+	datadir := filepath.Join(pardir, "datadir")
+	reposDir := filepath.Join(datadir, "repositories")
+	if err := os.MkdirAll(reposDir, 0700); err != nil {
+		return nil, fmt.Errorf("failed to create repositories directory: %w", err)
+	}
+	reposFilePath := filepath.Join(reposDir, fmt.Sprintf("%s.json", args.Distro))
+	reposFile, err := os.Create(reposFilePath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create repositories file: %w", err)
+	}
+	defer reposFile.Close()
+
+	// repository files for image-builder must be a map from architecture to a repo array
+	reposArchMap := rpmmdRepoConfigsToDiskArchMap(args.Repositories, args.Arch)
+	repos, err := json.Marshal(reposArchMap)
+	if err != nil {
+		return nil, fmt.Errorf("failed to serialize repositories: %w", err)
+	}
+
+	if _, err := reposFile.Write(repos); err != nil {
+		return nil, fmt.Errorf("failed to write repositories: %w", err)
+	}
+
+	// Prior to v41, image-builder looked for repositories in the root of
+	// the data-dir. With v41, it now looks under the repositories/
+	// subdirectory. Link the file from one location to the other to cover
+	// both cases.
+	// https://github.com/osbuild/image-builder-cli/releases/tag/v41
+
+	// TODO: add a condition once we have a convenient way to get the
+	// version
+	// NOTE: See also the ImageBuilderManifestJobResult fields in in
+	// jobimpl-image-builder-manifest
+	oldReposFileLocation := filepath.Join(datadir, fmt.Sprintf("%s.json", args.Distro))
+	if err := os.Symlink(reposFilePath, oldReposFileLocation); err != nil {
+		return nil, fmt.Errorf("failed to symlink repos file in data-dir [%s -> %s]: %w", reposFilePath, oldReposFileLocation, err)
+	}
+
+	return []string{"--data-dir", datadir}, nil
 }
