@@ -29,17 +29,18 @@ import (
 )
 
 const (
-	JobTypeOSBuild          string = "osbuild"
-	JobTypeKojiInit         string = "koji-init"
-	JobTypeKojiFinalize     string = "koji-finalize"
-	JobTypeDepsolve         string = "depsolve"
-	JobTypeSearchPackages   string = "search-packages"
-	JobTypeManifestIDOnly   string = "manifest-id-only"
-	JobTypeContainerResolve string = "container-resolve"
-	JobTypeFileResolve      string = "file-resolve"
-	JobTypeOSTreeResolve    string = "ostree-resolve"
-	JobTypeAWSEC2Copy       string = "aws-ec2-copy"
-	JobTypeAWSEC2Share      string = "aws-ec2-share"
+	JobTypeOSBuild              string = "osbuild"
+	JobTypeKojiInit             string = "koji-init"
+	JobTypeKojiFinalize         string = "koji-finalize"
+	JobTypeDepsolve             string = "depsolve"
+	JobTypeSearchPackages       string = "search-packages"
+	JobTypeManifestIDOnly       string = "manifest-id-only"
+	JobTypeContainerResolve     string = "container-resolve"
+	JobTypeFileResolve          string = "file-resolve"
+	JobTypeOSTreeResolve        string = "ostree-resolve"
+	JobTypeAWSEC2Copy           string = "aws-ec2-copy"
+	JobTypeAWSEC2Share          string = "aws-ec2-share"
+	JobTypeImageBuilderManifest string = "image-builder-manifest"
 )
 
 type Server struct {
@@ -236,6 +237,10 @@ func (s *Server) EnqueueAWSEC2ShareJob(job *AWSEC2ShareJob, parent uuid.UUID, ch
 	return s.enqueue(JobTypeAWSEC2Share, job, []uuid.UUID{parent}, channel)
 }
 
+func (s *Server) EnqueueImageBuilderManifestJob(job *ImageBuilderManifestJob, channel string) (uuid.UUID, error) {
+	return s.enqueue(JobTypeImageBuilderManifest, job, nil, channel)
+}
+
 func (s *Server) enqueue(jobType string, job interface{}, dependencies []uuid.UUID, channel string) (uuid.UUID, error) {
 	prometheus.EnqueueJobMetrics(strings.Split(jobType, ":")[0], channel)
 	return s.jobs.Enqueue(jobType, job, dependencies, channel)
@@ -321,6 +326,13 @@ func (s *Server) JobDependencyChainErrors(id uuid.UUID) (*clienterrors.Error, er
 			return nil, err
 		}
 		jobResult = &ostreeResolveJR.JobResult
+	case JobTypeImageBuilderManifest:
+		var ibManifestJR ImageBuilderManifestJobResult
+		jobInfo, err = s.ImageBuilderManifestJobInfo(id, &ibManifestJR)
+		if err != nil {
+			return nil, err
+		}
+		jobResult = &ibManifestJR.JobResult
 
 	default:
 		return nil, fmt.Errorf("unexpected job type: %s", jobType)
@@ -496,11 +508,12 @@ func (s *Server) ManifestJobInfo(id uuid.UUID, result *ManifestJobByIDResult) (*
 		return nil, err
 	}
 
-	if jobInfo.JobType != JobTypeManifestIDOnly {
-		return nil, fmt.Errorf("expected %q, found %q job instead", JobTypeManifestIDOnly, jobInfo.JobType)
+	switch jobInfo.JobType {
+	case JobTypeManifestIDOnly, JobTypeImageBuilderManifest:
+		return jobInfo, nil
+	default:
+		return nil, fmt.Errorf("expected %q or %q, found %q job instead", JobTypeManifestIDOnly, JobTypeImageBuilderManifest, jobInfo.JobType)
 	}
-
-	return jobInfo, nil
 }
 
 func (s *Server) ContainerResolveJobInfo(id uuid.UUID, result *ContainerResolveJobResult) (*JobInfo, error) {
@@ -565,6 +578,19 @@ func (s *Server) AWSEC2ShareJobInfo(id uuid.UUID, result *AWSEC2ShareJobResult) 
 
 	if jobInfo.JobType != JobTypeAWSEC2Share {
 		return nil, fmt.Errorf("expected %q, found %q job instead", JobTypeAWSEC2Share, jobInfo.JobType)
+	}
+
+	return jobInfo, nil
+}
+
+func (s *Server) ImageBuilderManifestJobInfo(id uuid.UUID, result *ImageBuilderManifestJobResult) (*JobInfo, error) {
+	jobInfo, err := s.jobInfo(id, result)
+	if err != nil {
+		return nil, err
+	}
+
+	if jobInfo.JobType != JobTypeImageBuilderManifest {
+		return nil, fmt.Errorf("expected %q, found %q job instead", JobTypeImageBuilderManifest, jobInfo.JobType)
 	}
 
 	return jobInfo, nil
@@ -967,6 +993,13 @@ func (s *Server) RequeueOrFinishJob(token uuid.UUID, maxRetries uint64, result j
 			return err
 		}
 		jobResult = &ostreeResolveJR.JobResult
+	case JobTypeImageBuilderManifest:
+		var ibManifestJR ImageBuilderManifestJobResult
+		jobInfo, err = s.ImageBuilderManifestJobInfo(jobId, &ibManifestJR)
+		if err != nil {
+			return err
+		}
+		jobResult = &ibManifestJR.JobResult
 
 	default:
 		return fmt.Errorf("unexpected job type: %s", jobType)
