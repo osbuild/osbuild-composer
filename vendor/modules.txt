@@ -964,7 +964,7 @@ github.com/oracle/oci-go-sdk/v54/workrequests
 ## explicit; go 1.23.9
 github.com/osbuild/blueprint/internal/common
 github.com/osbuild/blueprint/pkg/blueprint
-# github.com/osbuild/images v0.209.0
+# github.com/osbuild/images v0.213.0
 ## explicit; go 1.23.9
 github.com/osbuild/images/data/dependencies
 github.com/osbuild/images/data/distrodefs
@@ -1298,6 +1298,9 @@ go.opentelemetry.io/otel/trace/noop
 # go.yaml.in/yaml/v2 v2.4.2
 ## explicit; go 1.15
 go.yaml.in/yaml/v2
+# go.yaml.in/yaml/v3 v3.0.3
+## explicit; go 1.22
+go.yaml.in/yaml/v3
 # golang.org/x/crypto v0.41.0
 ## explicit; go 1.23.0
 golang.org/x/crypto/acme

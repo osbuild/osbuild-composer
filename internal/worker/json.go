@@ -21,6 +21,18 @@ import (
 // JSON-serializable types for the jobqueue
 //
 
+type JobResult struct {
+	JobError *clienterrors.Error `json:"job_error,omitempty"`
+	Progress *JobProgress        `json:"progress,omitempty"`
+}
+
+type JobProgress struct {
+	Message     string       `json:"message"`
+	Done        int          `json:"done"`
+	Total       int          `json:"total"`
+	SubProgress *JobProgress `json:"sub_progress,omitempty"`
+}
+
 type OSBuildJob struct {
 	Manifest manifest.OSBuildManifest `json:"manifest,omitempty"`
 
@@ -55,10 +67,6 @@ func (j OSBuildJob) OsbuildExports() []string {
 		}
 	}
 	return exports
-}
-
-type JobResult struct {
-	JobError *clienterrors.Error `json:"job_error,omitempty"`
 }
 
 type OSBuildJobResult struct {

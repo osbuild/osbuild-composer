@@ -14,8 +14,6 @@ import (
 )
 
 const (
-	DEFAULT_SIZE = datasizes.Size(10 * GibiByte)
-
 	// As a baseline heuristic we double the size of
 	// the input container to support in-place updates.
 	// This is planned to be more configurable in the
@@ -66,14 +64,12 @@ func (t *BootcImageType) basePartitionTable() (*disk.PartitionTable, error) {
 	if t.arch.distro.sourceInfo != nil && t.arch.distro.sourceInfo.PartitionTable != nil {
 		return t.arch.distro.sourceInfo.PartitionTable, nil
 	}
-	// get it from the build-in fallback partition tables
-	if pt, ok := partitionTables[t.arch.Name()]; ok {
-		return &pt, nil
-	}
-	return nil, fmt.Errorf("cannot find a base partition table for %q", t.Name())
+	// otherwise we use our YAML
+	return t.ImageTypeYAML.PartitionTable(t.arch.distro.id, t.arch.Name())
 }
 
 func (t *BootcImageType) genPartitionTable(customizations *blueprint.Customizations, rootfsMinSize uint64, rng *rand.Rand) (*disk.PartitionTable, error) {
+	// XXX: much duplication with generic/imagetype.go:getPartitionTable()
 	fsCust := customizations.GetFilesystems()
 	diskCust, err := customizations.GetPartitioning()
 	if err != nil {
@@ -97,7 +93,6 @@ func (t *BootcImageType) genPartitionTable(customizations *blueprint.Customizati
 
 	var partitionTable *disk.PartitionTable
 	switch {
-	// XXX: move into images library
 	case fsCust != nil && diskCust != nil:
 		return nil, fmt.Errorf("cannot combine disk and filesystem customizations")
 	case diskCust != nil:
@@ -112,6 +107,7 @@ func (t *BootcImageType) genPartitionTable(customizations *blueprint.Customizati
 		}
 	}
 
+	// XXX: make this generic/configurable
 	// Ensure ext4 rootfs has fs-verity enabled
 	rootfs := partitionTable.FindMountable("/")
 	if rootfs != nil {
@@ -169,15 +165,7 @@ func (t *BootcImageType) genPartitionTableFsCust(basept *disk.PartitionTable, fs
 	}
 	fsCustomizations := updateFilesystemSizes(fsCust, rootfsMinSize)
 
-	pt, err := disk.NewPartitionTable(basept, fsCustomizations, DEFAULT_SIZE, partitioningMode, t.arch.arch, nil, t.arch.distro.defaultFs, rng)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := setFSTypes(pt, t.arch.distro.defaultFs); err != nil {
-		return nil, fmt.Errorf("error setting root filesystem type: %w", err)
-	}
-	return pt, nil
+	return disk.NewPartitionTable(basept, fsCustomizations, t.ImageTypeYAML.DefaultSize, partitioningMode, t.arch.arch, nil, t.arch.distro.defaultFs, rng)
 }
 
 func checkMountpoints(filesystems []blueprint.FilesystemCustomization, policy *pathpolicy.PathPolicies) error {
@@ -273,37 +261,4 @@ func updateFilesystemSizes(fsCustomizations []blueprint.FilesystemCustomization,
 		updated = append(updated, blueprint.FilesystemCustomization{Mountpoint: "/", MinSize: minRootSize})
 	}
 	return updated
-}
-
-// setFSTypes sets the filesystem types for all mountable entities to match the
-// selected rootfs type.
-// If rootfs is 'btrfs', the function will keep '/boot' to its default.
-func setFSTypes(pt *disk.PartitionTable, rootfs string) error {
-	if rootfs == "" {
-		return fmt.Errorf("root filesystem type is empty")
-	}
-
-	return pt.ForEachMountable(func(mnt disk.Mountable, _ []disk.Entity) error {
-		switch mnt.GetMountpoint() {
-		case "/boot/efi":
-			// never change the efi partition's type
-			return nil
-		case "/boot":
-			// change only if we're not doing btrfs
-			if rootfs == "btrfs" {
-				return nil
-			}
-			fallthrough
-		default:
-			switch elem := mnt.(type) {
-			case *disk.Filesystem:
-				elem.Type = rootfs
-			case *disk.BtrfsSubvolume:
-				// nothing to do
-			default:
-				return fmt.Errorf("the mountable disk entity for %q of the base partition table is not an ordinary filesystem but %T", mnt.GetMountpoint(), mnt)
-			}
-			return nil
-		}
-	})
 }

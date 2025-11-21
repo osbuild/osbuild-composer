@@ -36,6 +36,7 @@ type InstallerCustomizations struct {
 }
 
 type InstallerLoraxTemplate struct {
-	Path        string
-	AfterDracut bool // Should this template be executed after dracut? Defaults to not.
+	Path string `yaml:"path"`
+	// Should this template be executed after dracut? Defaults to not.
+	AfterDracut bool `yaml:"after_dracut,omitempty"`
 }

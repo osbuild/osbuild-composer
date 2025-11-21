@@ -1,69 +1,5 @@
 ---
 distros:
-  - &fedora_rawhide
-    name: fedora-44
-    distro_like: fedora
-    preview: true
-    os_version: 44
-    release_version: 44
-    module_platform_id: platform:f44
-    product: "Fedora"
-    ostree_ref_tmpl: "fedora/44/%s/iot"
-    iso_label_tmpl: "{{.Product}}-{{.Distro.MajorVersion}}-{{.ISOLabel}}-{{.Arch}}"
-    default_fs_type: "ext4"
-    defs_path: fedora
-    runner: &fedora_runner
-      name: org.osbuild.fedora44
-      build_packages:
-        - "glibc"  # ldconfig
-        - "systemd"  # systemd-tmpfiles and systemd-sysusers
-        - "python3"  # osbuild
-    oscap_profiles_allowlist:
-      - "xccdf_org.ssgproject.content_profile_ospp"
-      - "xccdf_org.ssgproject.content_profile_pci-dss"
-      - "xccdf_org.ssgproject.content_profile_standard"
-    bootstrap_containers:
-      x86_64: "registry.fedoraproject.org/fedora-toolbox:44"
-      aarch64: "registry.fedoraproject.org/fedora-toolbox:44"
-      ppc64le: "registry.fedoraproject.org/fedora-toolbox:44"
-      s390x: "registry.fedoraproject.org/fedora-toolbox:44"
-      # XXX: remove once fedora containers are part of the upstream
-      # fedora registry (and can be validated via tls)
-      riscv64: "ghcr.io/mvo5/fedora-buildroot:44"
-
-      # XXX: add repos here too, that requires some churn, see
-      # https://github.com/osbuild/images/compare/main...mvo5:yaml-distroconfig?expand=1
-      # and we will also need to think about backward compat, as currently
-      # dropping "$distro-$ver.json" files into
-      # /etc/osbuild-composer/repositories will define what distros are
-      # available via images and we will need to provide compatibility for
-      # that.
-      #
-      # Having the repos separated means when a new fedora release is out
-      # we will need to update two places which is clearly a regression from
-      # before.
-
-  - &fedora_stable
-    <<: *fedora_rawhide
-    name: "fedora-{{.MajorVersion}}"
-    match: 'fedora-[1-9][0-9]+'
-    preview: false
-    os_version: "{{.MajorVersion}}"
-    release_version: "{{.MajorVersion}}"
-    module_platform_id: "platform:f{{.MajorVersion}}"
-    ostree_ref_tmpl: "fedora/{{.MajorVersion}}/%s/iot"
-    runner:
-      <<: *fedora_runner
-      name: "org.osbuild.fedora{{.MajorVersion}}"
-    bootstrap_containers:
-      x86_64: "registry.fedoraproject.org/fedora-toolbox:{{.MajorVersion}}"
-      aarch64: "registry.fedoraproject.org/fedora-toolbox:{{.MajorVersion}}"
-      ppc64le: "registry.fedoraproject.org/fedora-toolbox:{{.MajorVersion}}"
-      s390x: "registry.fedoraproject.org/fedora-toolbox:{{.MajorVersion}}"
-      # XXX: remove once fedora containers are part of the upstream
-      # fedora registry (and can be validated via tls)
-      riscv64: "ghcr.io/mvo5/fedora-buildroot:{{.MajorVersion}}"
-
   - &rhel10
     name: "rhel-{{.MajorVersion}}.{{.MinorVersion}}"
     match: 'rhel-10\.[0-9]{1,2}'
@@ -379,3 +315,10 @@ distros:
       x86_64: "registry.access.redhat.com/ubi{{.MajorVersion}}/ubi:latest"
       ppc64le: "registry.access.redhat.com/ubi{{.MajorVersion}}/ubi:latest"
       s390x: "registry.access.redhat.com/ubi{{.MajorVersion}}/ubi:latest"
+
+  # Note that this will not be visible by default because we do not
+  # ship with a reporegistry that contains repositories for it. It
+  # is used by the pkg/distro/bootc distro to externalize image
+  # definitions
+  - name: bootc-generic-1
+    defs_path: bootc-generic
