@@ -43,6 +43,10 @@ build {
       os = "rhel"
       os_version = "9"
       arch = "x86_64"
+      service-phase = "prod"
+      app = "image-builder"
+      managed_by_integration = "app-sre/infra"
+      cost-center = "${var.cost_center}"
     }
 
     # Ensure that the EBS snapshot used for the AMI meets our requirements.
@@ -77,6 +81,10 @@ build {
       os = "rhel"
       os_version = "9"
       arch = "aarch64"
+      service-phase = "prod"
+      app = "image-builder"
+      managed_by_integration = "app-sre/infra"
+      cost-center = "${var.cost_center}"
     }
 
     # Ensure that the EBS snapshot used for the AMI meets our requirements.

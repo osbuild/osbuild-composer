@@ -10,6 +10,7 @@ BUILD_RPMS="${BUILD_RPMS:-true}"
 ANSIBLE_TAGS="${ANSIBLE_TAGS:-rhel}"
 # Build rhel only
 PACKER_ONLY_EXCEPT="${PACKER_ONLY_EXCEPT:---only=amazon-ebs.rhel-9-x86_64,amazon-ebs.rhel-9-aarch64}"
+COST_CENTER="${COST_CENTER:-xxx}"
 
 if [ -n "$GIT_BRANCH" ]; then
     # Use jenkins CI variables if available
@@ -112,5 +113,6 @@ $CONTAINER_RUNTIME run --rm \
                    -e PKR_VAR_skip_create_ami="$SKIP_CREATE_AMI" \
                    -e PKR_VAR_rh_activation_key="$RH_ACTIVATION_KEY" \
                    -e PKR_VAR_rh_org_id="$RH_ORG_ID" \
+                   -e PKR_VAR_cost_center="$COST_CENTER" \
                    -e PYTHONUNBUFFERED=1 \
                    "packer:$COMMIT_SHA" /osbuild-composer/tools/appsre-worker-packer-container.sh

@@ -15,6 +15,12 @@ variable "region" {
   default = "us-east-1"
 }
 
+# cost center will end up in the tags
+variable "cost_center" {
+  type = string
+  default = ""
+}
+
 # Automatically set by environment variables
 variable "composer_commit" { type = string }
 
