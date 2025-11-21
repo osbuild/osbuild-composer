@@ -35998,6 +35998,76 @@ func (m *awsEc2query_serializeOpGetHostReservationPurchasePreview) HandleSeriali
 	return next.HandleSerialize(ctx, in)
 }
 
+type awsEc2query_serializeOpGetImageAncestry struct {
+}
+
+func (*awsEc2query_serializeOpGetImageAncestry) ID() string {
+	return "OperationSerializer"
+}
+
+func (m *awsEc2query_serializeOpGetImageAncestry) HandleSerialize(ctx context.Context, in middleware.SerializeInput, next middleware.SerializeHandler) (
+	out middleware.SerializeOutput, metadata middleware.Metadata, err error,
+) {
+	_, span := tracing.StartSpan(ctx, "OperationSerializer")
+	endTimer := startMetricTimer(ctx, "client.call.serialization_duration")
+	defer endTimer()
+	defer span.End()
+	request, ok := in.Request.(*smithyhttp.Request)
+	if !ok {
+		return out, metadata, &smithy.SerializationError{Err: fmt.Errorf("unknown transport type %T", in.Request)}
+	}
+
+	input, ok := in.Parameters.(*GetImageAncestryInput)
+	_ = input
+	if !ok {
+		return out, metadata, &smithy.SerializationError{Err: fmt.Errorf("unknown input parameters type %T", in.Parameters)}
+	}
+
+	operationPath := "/"
+	if len(request.Request.URL.Path) == 0 {
+		request.Request.URL.Path = operationPath
+	} else {
+		request.Request.URL.Path = path.Join(request.Request.URL.Path, operationPath)
+		if request.Request.URL.Path != "/" && operationPath[len(operationPath)-1] == '/' {
+			request.Request.URL.Path += "/"
+		}
+	}
+	request.Request.Method = "POST"
+	httpBindingEncoder, err := httpbinding.NewEncoder(request.URL.Path, request.URL.RawQuery, request.Header)
+	if err != nil {
+		return out, metadata, &smithy.SerializationError{Err: err}
+	}
+	httpBindingEncoder.SetHeader("Content-Type").String("application/x-www-form-urlencoded")
+
+	bodyWriter := bytes.NewBuffer(nil)
+	bodyEncoder := query.NewEncoder(bodyWriter)
+	body := bodyEncoder.Object()
+	body.Key("Action").String("GetImageAncestry")
+	body.Key("Version").String("2016-11-15")
+
+	if err := awsEc2query_serializeOpDocumentGetImageAncestryInput(input, bodyEncoder.Value); err != nil {
+		return out, metadata, &smithy.SerializationError{Err: err}
+	}
+
+	err = bodyEncoder.Encode()
+	if err != nil {
+		return out, metadata, &smithy.SerializationError{Err: err}
+	}
+
+	if request, err = request.SetStream(bytes.NewReader(bodyWriter.Bytes())); err != nil {
+		return out, metadata, &smithy.SerializationError{Err: err}
+	}
+
+	if request.Request, err = httpBindingEncoder.Encode(request.Request); err != nil {
+		return out, metadata, &smithy.SerializationError{Err: err}
+	}
+	in.Request = request
+
+	endTimer()
+	span.End()
+	return next.HandleSerialize(ctx, in)
+}
+
 type awsEc2query_serializeOpGetImageBlockPublicAccessState struct {
 }
 
@@ -50560,6 +50630,19 @@ func awsEc2query_serializeDocumentAttributeValue(v *types.AttributeValue, value 
 	return nil
 }
 
+func awsEc2query_serializeDocumentAvailabilityZoneIdStringList(v []string, value query.Value) error {
+	if len(v) == 0 {
+		return nil
+	}
+	array := value.Array("AvailabilityZoneId")
+
+	for i := range v {
+		av := array.Value()
+		av.String(v[i])
+	}
+	return nil
+}
+
 func awsEc2query_serializeDocumentAvailabilityZoneStringList(v []string, value query.Value) error {
 	if len(v) == 0 {
 		return nil
@@ -52048,6 +52131,18 @@ func awsEc2query_serializeDocumentDnsOptionsSpecification(v *types.DnsOptionsSpe
 		objectKey.Boolean(*v.PrivateDnsOnlyForInboundResolverEndpoint)
 	}
 
+	if v.PrivateDnsPreference != nil {
+		objectKey := object.Key("PrivateDnsPreference")
+		objectKey.String(*v.PrivateDnsPreference)
+	}
+
+	if v.PrivateDnsSpecifiedDomains != nil {
+		objectKey := object.FlatKey("PrivateDnsSpecifiedDomain")
+		if err := awsEc2query_serializeDocumentPrivateDnsSpecifiedDomainSet(v.PrivateDnsSpecifiedDomains, objectKey); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -52432,6 +52527,23 @@ func awsEc2query_serializeDocumentExportToS3TaskSpecification(v *types.ExportToS
 	if v.S3Prefix != nil {
 		objectKey := object.Key("S3Prefix")
 		objectKey.String(*v.S3Prefix)
+	}
+
+	return nil
+}
+
+func awsEc2query_serializeDocumentExternalAuthorityConfiguration(v *types.ExternalAuthorityConfiguration, value query.Value) error {
+	object := value.Object()
+	_ = object
+
+	if v.ExternalResourceIdentifier != nil {
+		objectKey := object.Key("ExternalResourceIdentifier")
+		objectKey.String(*v.ExternalResourceIdentifier)
+	}
+
+	if len(v.Type) > 0 {
+		objectKey := object.Key("Type")
+		objectKey.String(string(v.Type))
 	}
 
 	return nil
@@ -54121,6 +54233,11 @@ func awsEc2query_serializeDocumentInstanceRequirements(v *types.InstanceRequirem
 		objectKey.Integer(*v.OnDemandMaxPricePercentageOverLowestPrice)
 	}
 
+	if v.RequireEncryptionInTransit != nil {
+		objectKey := object.Key("RequireEncryptionInTransit")
+		objectKey.Boolean(*v.RequireEncryptionInTransit)
+	}
+
 	if v.RequireHibernateSupport != nil {
 		objectKey := object.Key("RequireHibernateSupport")
 		objectKey.Boolean(*v.RequireHibernateSupport)
@@ -54287,6 +54404,11 @@ func awsEc2query_serializeDocumentInstanceRequirementsRequest(v *types.InstanceR
 	if v.OnDemandMaxPricePercentageOverLowestPrice != nil {
 		objectKey := object.Key("OnDemandMaxPricePercentageOverLowestPrice")
 		objectKey.Integer(*v.OnDemandMaxPricePercentageOverLowestPrice)
+	}
+
+	if v.RequireEncryptionInTransit != nil {
+		objectKey := object.Key("RequireEncryptionInTransit")
+		objectKey.Boolean(*v.RequireEncryptionInTransit)
 	}
 
 	if v.RequireHibernateSupport != nil {
@@ -57562,6 +57684,19 @@ func awsEc2query_serializeDocumentPrivateDnsNameOptionsRequest(v *types.PrivateD
 		objectKey.String(string(v.HostnameType))
 	}
 
+	return nil
+}
+
+func awsEc2query_serializeDocumentPrivateDnsSpecifiedDomainSet(v []string, value query.Value) error {
+	if len(v) == 0 {
+		return nil
+	}
+	array := value.Array("Item")
+
+	for i := range v {
+		av := array.Value()
+		av.String(v[i])
+	}
 	return nil
 }
 
@@ -61231,6 +61366,11 @@ func awsEc2query_serializeDocumentVpnConnectionOptionsSpecification(v *types.Vpn
 		objectKey.String(*v.TransportTransitGatewayAttachmentId)
 	}
 
+	if len(v.TunnelBandwidth) > 0 {
+		objectKey := object.Key("TunnelBandwidth")
+		objectKey.String(string(v.TunnelBandwidth))
+	}
+
 	if len(v.TunnelInsideIpVersion) > 0 {
 		objectKey := object.Key("TunnelInsideIpVersion")
 		objectKey.String(string(v.TunnelInsideIpVersion))
@@ -64744,6 +64884,13 @@ func awsEc2query_serializeOpDocumentCreateIpamScopeInput(v *CreateIpamScopeInput
 	if v.DryRun != nil {
 		objectKey := object.Key("DryRun")
 		objectKey.Boolean(*v.DryRun)
+	}
+
+	if v.ExternalAuthorityConfiguration != nil {
+		objectKey := object.Key("ExternalAuthorityConfiguration")
+		if err := awsEc2query_serializeDocumentExternalAuthorityConfiguration(v.ExternalAuthorityConfiguration, objectKey); err != nil {
+			return err
+		}
 	}
 
 	if v.IpamId != nil {
@@ -75851,6 +75998,13 @@ func awsEc2query_serializeOpDocumentDisableFastSnapshotRestoresInput(v *DisableF
 	object := value.Object()
 	_ = object
 
+	if v.AvailabilityZoneIds != nil {
+		objectKey := object.FlatKey("AvailabilityZoneId")
+		if err := awsEc2query_serializeDocumentAvailabilityZoneIdStringList(v.AvailabilityZoneIds, objectKey); err != nil {
+			return err
+		}
+	}
+
 	if v.AvailabilityZones != nil {
 		objectKey := object.FlatKey("AvailabilityZone")
 		if err := awsEc2query_serializeDocumentAvailabilityZoneStringList(v.AvailabilityZones, objectKey); err != nil {
@@ -76598,6 +76752,13 @@ func awsEc2query_serializeOpDocumentEnableFastLaunchInput(v *EnableFastLaunchInp
 func awsEc2query_serializeOpDocumentEnableFastSnapshotRestoresInput(v *EnableFastSnapshotRestoresInput, value query.Value) error {
 	object := value.Object()
 	_ = object
+
+	if v.AvailabilityZoneIds != nil {
+		objectKey := object.FlatKey("AvailabilityZoneId")
+		if err := awsEc2query_serializeDocumentAvailabilityZoneIdStringList(v.AvailabilityZoneIds, objectKey); err != nil {
+			return err
+		}
+	}
 
 	if v.AvailabilityZones != nil {
 		objectKey := object.FlatKey("AvailabilityZone")
@@ -77478,6 +77639,23 @@ func awsEc2query_serializeOpDocumentGetHostReservationPurchasePreviewInput(v *Ge
 	if v.OfferingId != nil {
 		objectKey := object.Key("OfferingId")
 		objectKey.String(*v.OfferingId)
+	}
+
+	return nil
+}
+
+func awsEc2query_serializeOpDocumentGetImageAncestryInput(v *GetImageAncestryInput, value query.Value) error {
+	object := value.Object()
+	_ = object
+
+	if v.DryRun != nil {
+		objectKey := object.Key("DryRun")
+		objectKey.Boolean(*v.DryRun)
+	}
+
+	if v.ImageId != nil {
+		objectKey := object.Key("ImageId")
+		objectKey.String(*v.ImageId)
 	}
 
 	return nil
@@ -80411,9 +80589,21 @@ func awsEc2query_serializeOpDocumentModifyIpamScopeInput(v *ModifyIpamScopeInput
 		objectKey.Boolean(*v.DryRun)
 	}
 
+	if v.ExternalAuthorityConfiguration != nil {
+		objectKey := object.Key("ExternalAuthorityConfiguration")
+		if err := awsEc2query_serializeDocumentExternalAuthorityConfiguration(v.ExternalAuthorityConfiguration, objectKey); err != nil {
+			return err
+		}
+	}
+
 	if v.IpamScopeId != nil {
 		objectKey := object.Key("IpamScopeId")
 		objectKey.String(*v.IpamScopeId)
+	}
+
+	if v.RemoveExternalAuthorityConfiguration != nil {
+		objectKey := object.Key("RemoveExternalAuthorityConfiguration")
+		objectKey.Boolean(*v.RemoveExternalAuthorityConfiguration)
 	}
 
 	return nil
