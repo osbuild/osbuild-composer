@@ -23,7 +23,7 @@ function cleanup() {
     NIC_ID=$(jq -r '.networkProfile.networkInterfaces[0].id' "$WORKDIR"/vm_details.json)
     $AZURE_CMD network nic show --ids "$NIC_ID" > "$WORKDIR"/nic_details.json
     NSG_ID=$(jq -r '.networkSecurityGroup.id' "$WORKDIR"/nic_details.json)
-    PUBLICIP_ID=$(jq -r '.ipConfigurations[0].publicIpAddress.id' "$WORKDIR"/nic_details.json)
+    PUBLICIP_ID=$(jq -r '.ipConfigurations[0].publicIPAddress.id' "$WORKDIR"/nic_details.json)
 
     # Delete resources. Some resources must be removed in order:
     # - Delete VM prior to any other resources
