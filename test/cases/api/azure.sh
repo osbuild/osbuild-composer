@@ -16,12 +16,12 @@ function cleanup() {
   # do not run clean-up if the image name is not yet defined
   if [[ -n "$AZURE_CMD" && -n "$AZURE_IMAGE_NAME" ]]; then
     # Re-get the vm_details in case the VM creation is failed.
-    [ -f "$WORKDIR/vm_details.json" ] || $AZURE_CMD vm show --name "$AZURE_INSTANCE_NAME" --resource-group "$AZURE_RESOURCE_GROUP" --show-details > "$WORKDIR/vm_details.json"
+    [ -f "$WORKDIR/vm_details.json" ] || $AZURE_CMD vm show --name "$AZURE_INSTANCE_NAME" --resource-group "$AZURE_RESOURCE_GROUP" --show-details | tee "$WORKDIR/vm_details.json"
     # Get all the resources ids
     VM_ID=$(jq -r '.id' "$WORKDIR"/vm_details.json)
     OSDISK_ID=$(jq -r '.storageProfile.osDisk.managedDisk.id' "$WORKDIR"/vm_details.json)
     NIC_ID=$(jq -r '.networkProfile.networkInterfaces[0].id' "$WORKDIR"/vm_details.json)
-    $AZURE_CMD network nic show --ids "$NIC_ID" > "$WORKDIR"/nic_details.json
+    $AZURE_CMD network nic show --ids "$NIC_ID" | tee "$WORKDIR"/nic_details.json
     NSG_ID=$(jq -r '.networkSecurityGroup.id' "$WORKDIR"/nic_details.json)
     PUBLICIP_ID=$(jq -r '.ipConfigurations[0].publicIpAddress.id' "$WORKDIR"/nic_details.json)
 
