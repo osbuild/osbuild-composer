@@ -1,4 +1,4 @@
-FROM fedora:40
+FROM fedora:44
 
 RUN dnf -y install \
     openssl

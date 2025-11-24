@@ -1,4 +1,4 @@
-FROM fedora:36
+FROM fedora:44
 
 # Install:
 #  - a few packages for convenient usage
