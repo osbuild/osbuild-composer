@@ -24,12 +24,17 @@ function cleanup() {
     $AZURE_CMD network nic show --ids "$NIC_ID" > "$WORKDIR"/nic_details.json
     NSG_ID=$(jq -r '.networkSecurityGroup.id' "$WORKDIR"/nic_details.json)
     PUBLICIP_ID=$(jq -r '.ipConfigurations[0].publicIPAddress.id' "$WORKDIR"/nic_details.json)
+    SUBNET_ID=$(jq -r '.ipConfigurations[0].subnet.id' "$WORKDIR"/nic_details.json)
+    # Extract VNET ID from subnet ID (subnet ID format: .../virtualNetworks/VNET_NAME/subnets/SUBNET_NAME)
+    # note: shellcheck wants to use ${variable//search/replace}, but I think that sed is more readable
+    # shellcheck disable=SC2001
+    VNET_ID=$(echo "$SUBNET_ID" | sed 's|/subnets/.*||')
 
     # Delete resources. Some resources must be removed in order:
     # - Delete VM prior to any other resources
-    # - Delete NIC prior to NSG, public-ip
-    # Left Virtual Network and Storage Account there because other tests in the same resource group will reuse them
-    for id in "$VM_ID" "$OSDISK_ID" "$NIC_ID" "$NSG_ID" "$PUBLICIP_ID"; do
+    # - Delete NIC prior to NSG, public-ip, VNET
+    # Left Storage Account there because other tests in the same resource group will reuse it
+    for id in "$VM_ID" "$OSDISK_ID" "$NIC_ID" "$NSG_ID" "$PUBLICIP_ID" "$VNET_ID"; do
       echo "Deleting $id..."
       $AZURE_CMD resource delete --ids "$id"
     done
