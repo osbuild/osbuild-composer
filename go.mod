@@ -7,18 +7,18 @@ exclude github.com/mattn/go-sqlite3 v2.0.3+incompatible
 require (
 	cloud.google.com/go/compute v1.45.0
 	github.com/BurntSushi/toml v1.5.1-0.20250403130103-3d3abc24416a
-	github.com/aws/aws-sdk-go-v2 v1.39.5
-	github.com/aws/aws-sdk-go-v2/config v1.31.16
-	github.com/aws/aws-sdk-go-v2/credentials v1.18.20
-	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.18.12
-	github.com/aws/aws-sdk-go-v2/service/autoscaling v1.60.2
-	github.com/aws/aws-sdk-go-v2/service/ec2 v1.260.0
-	github.com/aws/smithy-go v1.23.1
+	github.com/aws/aws-sdk-go-v2 v1.39.6
+	github.com/aws/aws-sdk-go-v2/config v1.31.20
+	github.com/aws/aws-sdk-go-v2/credentials v1.18.24
+	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.18.13
+	github.com/aws/aws-sdk-go-v2/service/autoscaling v1.60.5
+	github.com/aws/aws-sdk-go-v2/service/ec2 v1.269.0
+	github.com/aws/smithy-go v1.23.2
 	github.com/coreos/go-systemd/v22 v22.6.0
 	github.com/getkin/kin-openapi v0.133.0
-	github.com/getsentry/sentry-go v0.36.2
-	github.com/getsentry/sentry-go/echo v0.36.2
-	github.com/getsentry/sentry-go/logrus v0.36.2
+	github.com/getsentry/sentry-go v0.37.0
+	github.com/getsentry/sentry-go/echo v0.37.0
+	github.com/getsentry/sentry-go/logrus v0.37.0
 	github.com/gobwas/glob v0.2.3
 	github.com/golang-jwt/jwt/v4 v4.5.2
 	github.com/google/go-cmp v0.7.0
@@ -32,8 +32,8 @@ require (
 	github.com/labstack/gommon v0.4.2
 	github.com/oapi-codegen/oapi-codegen/v2 v2.5.1
 	github.com/oapi-codegen/runtime v1.1.2
-	github.com/openshift-online/ocm-sdk-go v0.1.480
-	github.com/osbuild/blueprint v1.16.0
+	github.com/openshift-online/ocm-sdk-go v0.1.482
+	github.com/osbuild/blueprint v1.18.0
 	github.com/osbuild/images v0.209.0
 	github.com/osbuild/osbuild-composer/pkg/splunk_logger v0.0.0-20240814102216-0239db53236d
 	github.com/prometheus/client_golang v1.23.2
@@ -74,18 +74,18 @@ require (
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.7.1 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.19.4 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/configsources v1.4.12 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.7.12 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.4.13 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.7.13 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/ini v1.8.4 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/v4a v1.4.6 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.13.2 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.13.3 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.8.6 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.13.12 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.13.13 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.19.6 // indirect
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.87.3 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sso v1.30.0 // indirect
-	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.35.4 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sts v1.39.0 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sso v1.30.3 // indirect
+	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.35.7 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sts v1.40.2 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
