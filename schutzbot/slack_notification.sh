@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -eux
+set -eu
 
 if [ -z "${SLACK_WEBHOOK_URL:-}" ]; then
     echo "INFO: Variable SLACK_WEBHOOK_URL is undefined"
@@ -22,6 +22,8 @@ else
       MESSAGE="\"<$CI_PIPELINE_URL|Nightly pipeline> ($COMPOSE_ID: $COMPOSER_NVR): *$1* $2\""
     fi
 fi
+
+echo "INFO: Sending slack notification: $MESSAGE"
 
 curl \
     -X POST \
