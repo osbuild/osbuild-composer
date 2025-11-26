@@ -22,6 +22,8 @@ import (
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distro/test_distro"
 	"github.com/osbuild/images/pkg/distrofactory"
+	"github.com/osbuild/images/pkg/manifest"
+	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/ostree"
 	"github.com/osbuild/images/pkg/ostree/mock_ostree_repo"
 	"github.com/osbuild/images/pkg/reporegistry"
@@ -127,9 +129,7 @@ func getMockDepsolveDNFSolverFn(m *depsolvednf_mock.MockDepsolveDNF) GetSolverFn
 // with base test data. No errors are returned by the solver.
 func getBaseMockDepsolveDNFSolverFn(deosolveRepoID string) GetSolverFn {
 	return getMockDepsolveDNFSolverFn(&depsolvednf_mock.MockDepsolveDNF{
-		DepsolveRes: &depsolvednf.DepsolveResult{
-			Packages: depsolvednf_mock.BaseDepsolveResult(deosolveRepoID),
-		},
+		DepsolveRes:  depsolvednf_mock.BaseDepsolveResult(deosolveRepoID),
 		FetchRes:     depsolvednf_mock.BaseFetchResult(),
 		SearchResMap: depsolvednf_mock.BaseSearchResultsMap(),
 	})
@@ -139,13 +139,12 @@ func getBaseMockDepsolveDNFSolverFn(deosolveRepoID string) GetSolverFn {
 // For packages, it uses the dnfjson_mock.BaseDeps() every time, but retains
 // the map keys from the input.
 // For ostree commits it hashes the URL+Ref to create a checksum.
-func ResolveContent(pkgs map[string][]rpmmd.PackageSet, containers map[string][]container.SourceSpec, commits map[string][]ostree.SourceSpec) (map[string]depsolvednf.DepsolveResult, map[string][]container.Spec, map[string][]ostree.CommitSpec) {
+func ResolveContent(pkgs map[string][]rpmmd.PackageSet, containers map[string][]container.SourceSpec, commits map[string][]ostree.SourceSpec, repoID string) (map[string]depsolvednf.DepsolveResult, map[string][]container.Spec, map[string][]ostree.CommitSpec) {
 
 	depsolved := make(map[string]depsolvednf.DepsolveResult, len(pkgs))
+
 	for name := range pkgs {
-		depsolved[name] = depsolvednf.DepsolveResult{
-			Packages: depsolvednf_mock.BaseDepsolveResult(testRepoID),
-		}
+		depsolved[name] = *depsolvednf_mock.BaseDepsolveResult(repoID)
 	}
 
 	containerSpecs := make(map[string][]container.Spec, len(containers))
@@ -1026,12 +1025,15 @@ func TestCompose(t *testing.T) {
 	require.NoError(t, err)
 	imgType, err := arch.GetImageType(test_distro.TestImageTypeName)
 	require.NoError(t, err)
-	manifest, _, err := imgType.Manifest(nil, distro.ImageOptions{}, nil, nil)
+	mani, _, err := imgType.Manifest(nil, distro.ImageOptions{}, nil, nil)
 	require.NoError(t, err)
 
-	rPkgs, rContainers, rCommits := ResolveContent(common.Must(manifest.GetPackageSetChains()), manifest.GetContainerSourceSpecs(), manifest.GetOSTreeSourceSpecs())
+	rPkgs, rContainers, rCommits := ResolveContent(common.Must(mani.GetPackageSetChains()), mani.GetContainerSourceSpecs(), mani.GetOSTreeSourceSpecs(), testRepoID)
 
-	mf, err := manifest.Serialize(rPkgs, rContainers, rCommits, nil)
+	opts := &manifest.SerializeOptions{
+		RpmDownloader: osbuild.RpmDownloaderLibrepo,
+	}
+	mf, err := mani.Serialize(rPkgs, rContainers, rCommits, opts)
 	require.NoError(t, err)
 
 	ostreeImgType, err := arch.GetImageType(test_distro.TestImageTypeOSTree)
@@ -1040,9 +1042,9 @@ func TestCompose(t *testing.T) {
 	ostreeManifest, _, err := ostreeImgType.Manifest(nil, distro.ImageOptions{OSTree: &ostreeOptions}, nil, nil)
 	require.NoError(t, err)
 
-	rPkgs, rContainers, rCommits = ResolveContent(common.Must(ostreeManifest.GetPackageSetChains()), ostreeManifest.GetContainerSourceSpecs(), ostreeManifest.GetOSTreeSourceSpecs())
+	rPkgs, rContainers, rCommits = ResolveContent(common.Must(ostreeManifest.GetPackageSetChains()), ostreeManifest.GetContainerSourceSpecs(), ostreeManifest.GetOSTreeSourceSpecs(), testRepoID)
 
-	omf, err := ostreeManifest.Serialize(rPkgs, rContainers, rCommits, nil)
+	omf, err := ostreeManifest.Serialize(rPkgs, rContainers, rCommits, opts)
 	require.NoError(t, err)
 
 	expectedComposeLocal := &weldrtypes.Compose{
@@ -1072,7 +1074,7 @@ func TestCompose(t *testing.T) {
 				},
 			},
 		},
-		Packages: weldrtypes.RPMMDPackageListToDepsolvedPackageInfoList(depsolvednf_mock.BaseDepsolveResult(testRepoID)),
+		Packages: weldrtypes.RPMMDPackageListToDepsolvedPackageInfoList(depsolvednf_mock.BaseDepsolveResult(testRepoID).Packages),
 	}
 
 	expectedComposeLocalAndAws := &weldrtypes.Compose{
@@ -1119,7 +1121,7 @@ func TestCompose(t *testing.T) {
 				},
 			},
 		},
-		Packages: weldrtypes.RPMMDPackageListToDepsolvedPackageInfoList(depsolvednf_mock.BaseDepsolveResult(testRepoID)),
+		Packages: weldrtypes.RPMMDPackageListToDepsolvedPackageInfoList(depsolvednf_mock.BaseDepsolveResult(testRepoID).Packages),
 	}
 
 	expectedComposeOSTree := &weldrtypes.Compose{
@@ -1149,16 +1151,16 @@ func TestCompose(t *testing.T) {
 				},
 			},
 		},
-		Packages: weldrtypes.RPMMDPackageListToDepsolvedPackageInfoList(depsolvednf_mock.BaseDepsolveResult(testRepoID)),
+		Packages: weldrtypes.RPMMDPackageListToDepsolvedPackageInfoList(depsolvednf_mock.BaseDepsolveResult(testRepoID).Packages),
 	}
 
 	ostreeOptionsOther := ostree.ImageOptions{ImageRef: otherRef, URL: ostreeRepoOther.Server.URL}
 	ostreeManifestOther, _, err := ostreeImgType.Manifest(nil, distro.ImageOptions{OSTree: &ostreeOptionsOther}, nil, nil)
 	require.NoError(t, err)
 
-	rPkgs, rContainers, rCommits = ResolveContent(common.Must(ostreeManifestOther.GetPackageSetChains()), ostreeManifestOther.GetContainerSourceSpecs(), ostreeManifestOther.GetOSTreeSourceSpecs())
+	rPkgs, rContainers, rCommits = ResolveContent(common.Must(ostreeManifestOther.GetPackageSetChains()), ostreeManifestOther.GetContainerSourceSpecs(), ostreeManifestOther.GetOSTreeSourceSpecs(), testRepoID)
 
-	omfo, err := ostreeManifest.Serialize(rPkgs, rContainers, rCommits, nil)
+	omfo, err := ostreeManifest.Serialize(rPkgs, rContainers, rCommits, opts)
 	require.NoError(t, err)
 	expectedComposeOSTreeOther := &weldrtypes.Compose{
 		Blueprint: &blueprint.Blueprint{
@@ -1187,7 +1189,7 @@ func TestCompose(t *testing.T) {
 				},
 			},
 		},
-		Packages: weldrtypes.RPMMDPackageListToDepsolvedPackageInfoList(depsolvednf_mock.BaseDepsolveResult(testRepoID)),
+		Packages: weldrtypes.RPMMDPackageListToDepsolvedPackageInfoList(depsolvednf_mock.BaseDepsolveResult(testRepoID).Packages),
 	}
 
 	// For 2nd distribution
@@ -1200,8 +1202,8 @@ func TestCompose(t *testing.T) {
 	manifest2, _, err := imgType.Manifest(nil, distro.ImageOptions{}, nil, nil)
 	require.NoError(t, err)
 
-	rPkgs, rContainers, rCommits = ResolveContent(common.Must(manifest2.GetPackageSetChains()), manifest2.GetContainerSourceSpecs(), manifest2.GetOSTreeSourceSpecs())
-	mf2, err := manifest2.Serialize(rPkgs, rContainers, rCommits, nil)
+	rPkgs, rContainers, rCommits = ResolveContent(common.Must(manifest2.GetPackageSetChains()), manifest2.GetContainerSourceSpecs(), manifest2.GetOSTreeSourceSpecs(), testRepoID2)
+	mf2, err := manifest2.Serialize(rPkgs, rContainers, rCommits, opts)
 	require.NoError(t, err)
 
 	expectedComposeGoodDistro := &weldrtypes.Compose{
@@ -1232,7 +1234,7 @@ func TestCompose(t *testing.T) {
 				},
 			},
 		},
-		Packages: weldrtypes.RPMMDPackageListToDepsolvedPackageInfoList(depsolvednf_mock.BaseDepsolveResult(testRepoID2)),
+		Packages: weldrtypes.RPMMDPackageListToDepsolvedPackageInfoList(depsolvednf_mock.BaseDepsolveResult(testRepoID2).Packages),
 	}
 
 	getSolverFn := getBaseMockDepsolveDNFSolverFn(testRepoID)
@@ -1291,9 +1293,7 @@ func TestCompose(t *testing.T) {
 			expectedComposeGoodDistro,
 			[]string{"build_id", "warnings"},
 			getMockDepsolveDNFSolverFn(&depsolvednf_mock.MockDepsolveDNF{
-				DepsolveRes: &depsolvednf.DepsolveResult{
-					Packages: depsolvednf_mock.BaseDepsolveResult(testRepoID2),
-				},
+				DepsolveRes: depsolvednf_mock.BaseDepsolveResult(testRepoID2),
 			}),
 		},
 		"unknown-distro": {
@@ -2510,11 +2510,15 @@ func TestComposePOST_ImageTypeDenylist(t *testing.T) {
 	require.NoError(t, err)
 	imgType2, err := arch.GetImageType(test_distro.TestImageType2Name)
 	require.NoError(t, err)
-	manifest, _, err := imgType.Manifest(nil, distro.ImageOptions{}, nil, nil)
+	mani, _, err := imgType.Manifest(nil, distro.ImageOptions{}, nil, nil)
 	require.NoError(t, err)
 
-	rPkgs, rContainers, rCommits := ResolveContent(common.Must(manifest.GetPackageSetChains()), manifest.GetContainerSourceSpecs(), manifest.GetOSTreeSourceSpecs())
-	mf, err := manifest.Serialize(rPkgs, rContainers, rCommits, nil)
+	rPkgs, rContainers, rCommits := ResolveContent(common.Must(mani.GetPackageSetChains()), mani.GetContainerSourceSpecs(), mani.GetOSTreeSourceSpecs(), testRepoID)
+
+	opts := &manifest.SerializeOptions{
+		RpmDownloader: osbuild.RpmDownloaderLibrepo,
+	}
+	mf, err := mani.Serialize(rPkgs, rContainers, rCommits, opts)
 	require.NoError(t, err)
 
 	expectedComposeLocal := &weldrtypes.Compose{
@@ -2544,7 +2548,7 @@ func TestComposePOST_ImageTypeDenylist(t *testing.T) {
 				},
 			},
 		},
-		Packages: weldrtypes.RPMMDPackageListToDepsolvedPackageInfoList(depsolvednf_mock.BaseDepsolveResult(testRepoID)),
+		Packages: weldrtypes.RPMMDPackageListToDepsolvedPackageInfoList(depsolvednf_mock.BaseDepsolveResult(testRepoID).Packages),
 	}
 
 	expectedComposeLocal2 := &weldrtypes.Compose{
@@ -2574,7 +2578,7 @@ func TestComposePOST_ImageTypeDenylist(t *testing.T) {
 				},
 			},
 		},
-		Packages: weldrtypes.RPMMDPackageListToDepsolvedPackageInfoList(depsolvednf_mock.BaseDepsolveResult(testRepoID)),
+		Packages: weldrtypes.RPMMDPackageListToDepsolvedPackageInfoList(depsolvednf_mock.BaseDepsolveResult(testRepoID).Packages),
 	}
 
 	var cases = []struct {
