@@ -441,6 +441,9 @@ var run = func() {
 				Solver:               solver,
 				RepositoryMTLSConfig: repositoryMTLSConfig,
 			},
+			worker.JobTypeImageBuilderManifest: &ImageBuilderManifestJobImpl{
+				RepositoryMTLSConfig: repositoryMTLSConfig,
+			},
 		}
 		acceptedJobTypes := []string{}
 		for jt := range jobImpls {

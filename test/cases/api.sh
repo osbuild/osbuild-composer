@@ -200,7 +200,7 @@ checkEnv
 
 function dump_db() {
   # Save the result, including the manifest, for the job, straight from the db
-  sudo "${CONTAINER_RUNTIME}" exec "${DB_CONTAINER_NAME}" psql -U postgres -d osbuildcomposer -c "SELECT result FROM jobs WHERE type='manifest-id-only'" \
+  sudo "${CONTAINER_RUNTIME}" exec "${DB_CONTAINER_NAME}" psql -U postgres -d osbuildcomposer -c "SELECT result FROM jobs WHERE type IN ('manifest-id-only', 'image-builder-manifest')" \
     | sudo tee "${ARTIFACTS}/build-result.txt" > /dev/null
 }
 
@@ -902,6 +902,15 @@ TOKEN="$(curl --request POST \
 
 sudo systemctl restart osbuild-remote-worker@localhost:8700.service
 sudo systemctl is-active --quiet osbuild-remote-worker@localhost:8700.service
+
+IMAGE_BUILDER_EXPERIMENTAL="${IMAGE_BUILDER_EXPERIMENTAL:-}"
+if [[ "${IMAGE_BUILDER_EXPERIMENTAL}" != "" ]]; then
+    if echo "${IMAGE_BUILDER_EXPERIMENTAL}" | grep -q "image-builder-manifest-generation=1"; then
+        greenprint "Verifying usage of experimental job type"
+        # verify using log message
+        journalctl -g "using experimental job type: image-builder-manifest"
+    fi
+fi
 
 greenprint  "DONE"
 exit 0

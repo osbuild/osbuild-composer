@@ -410,7 +410,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 		if job.NDynamicArgs() > 0 {
 			var manifestJR worker.ManifestJobByIDResult
 			if job.NDynamicArgs() == 1 {
-				// Classic case of a compose request with the ManifestJobByID job as the single dependency
+				// Classic case of a compose request with the ManifestJobByID or ImageBuilderManifestJob as the single dependency
 				err = job.DynamicArgs(0, &manifestJR)
 			} else if job.NDynamicArgs() > 1 && jobArgs.ManifestDynArgsIdx != nil {
 				// Case when the job has multiple dependencies, but the manifest is not part of the static job arguments,
@@ -458,6 +458,13 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 
 	// copy pipeline info to the result
 	osbuildJobResult.PipelineNames = jobArgs.PipelineNames
+	if osbuildJobResult.PipelineNames == nil {
+		// jobArgs doesn't provide the pipeline names when the manifest was
+		// generated using image-builder-cli. In this case, the manifest job
+		// result itself should have the pipeline names (under ManifestInfo)
+		// parsed from the manifest itself.
+		osbuildJobResult.PipelineNames = manifestInfo.PipelineNames
+	}
 
 	// copy the image boot mode to the result
 	osbuildJobResult.ImageBootMode = jobArgs.ImageBootMode
@@ -542,7 +549,6 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 			// no pipeline output
 			continue
 		}
-		logWithId.Infof("%s pipeline results:\n", pipelineName)
 		for _, stageResult := range pipelineLog {
 			if stageResult.Success {
 				logWithId.Infof("  %s success", stageResult.Type)
