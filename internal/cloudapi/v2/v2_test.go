@@ -778,6 +778,28 @@ func TestComposeStatusSuccess(t *testing.T) {
 		"status": "pending"
 	}`, jobId, jobId))
 
+	partial, err := json.Marshal(&worker.JobResult{
+		Progress: &worker.JobProgress{
+			Done:  10,
+			Total: 20,
+			SubProgress: &worker.JobProgress{
+				Done:  5,
+				Total: 6,
+			},
+		},
+	})
+	require.NoError(t, err)
+	err = wrksrv.UpdateJobResult(token, partial)
+	require.NoError(t, err)
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%v", jobId), ``, http.StatusOK, fmt.Sprintf(`
+	{
+		"href": "/api/image-builder-composer/v2/composes/%v",
+		"kind": "ComposeStatus",
+		"id": "%v",
+		"image_status": {"status": "building","progress":{"done":10,"total":20,"subprogress":{"done":5,"total":6}}},
+		"status": "pending"
+	}`, jobId, jobId))
+
 	res, err := json.Marshal(&worker.OSBuildJobResult{
 		Success:       true,
 		OSBuildOutput: &osbuild.Result{Success: true},
