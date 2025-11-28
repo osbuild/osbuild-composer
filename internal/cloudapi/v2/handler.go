@@ -426,6 +426,7 @@ func (h *apiHandlers) getJobIDComposeStatus(jobId uuid.UUID) (ComposeStatus, err
 				Error:          composeStatusErrorFromJobError(jobError),
 				UploadStatus:   us0, // add the first upload status to the old top-level field
 				UploadStatuses: uploadStatuses,
+				Progress:       progressFromJobResult(result.Progress),
 			},
 		}, nil
 	} else if jobType == worker.JobTypeKojiFinalize {
@@ -484,6 +485,7 @@ func (h *apiHandlers) getJobIDComposeStatus(jobId uuid.UUID) (ComposeStatus, err
 			buildJobStatuses = append(buildJobStatuses, ImageStatus{
 				Status:         imageStatusFromKojiJobStatus(buildInfo.JobStatus, &initResult, &buildJobResult),
 				Error:          composeStatusErrorFromJobError(buildJobError),
+				Progress:       progressFromJobResult(buildJobResult.Progress),
 				UploadStatus:   us0, // add the first upload status to the old top-level field
 				UploadStatuses: uploadStatuses,
 			})
@@ -511,6 +513,23 @@ func (h *apiHandlers) getJobIDComposeStatus(jobId uuid.UUID) (ComposeStatus, err
 	} else {
 		return ComposeStatus{}, HTTPError(ErrorInvalidJobType)
 	}
+}
+
+func progressFromJobResult(jobProgress *worker.JobProgress) *Progress {
+	var progress *Progress
+	if jobProgress != nil {
+		progress = &Progress{
+			Done:  jobProgress.Done,
+			Total: jobProgress.Total,
+		}
+		if jobProgress.SubProgress != nil {
+			progress.SubProgress = &SubProgress{
+				Done:  jobProgress.SubProgress.Done,
+				Total: jobProgress.SubProgress.Total,
+			}
+		}
+	}
+	return progress
 }
 
 func composeStatusErrorFromJobError(jobError *clienterrors.Error) *ComposeStatusError {

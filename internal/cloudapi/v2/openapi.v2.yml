@@ -953,6 +953,8 @@ components:
       properties:
         status:
           $ref: '#/components/schemas/ImageStatusValue'
+        progress:
+          $ref: '#/components/schemas/Progress'
         upload_status:
           $ref: '#/components/schemas/UploadStatus'
         upload_statuses:
@@ -974,6 +976,26 @@ components:
     ImageStatusValue:
       type: string
       enum: ['success', 'failure', 'pending', 'building', 'uploading', 'registering']
+    Progress:
+      allOf:
+      - $ref: '#/components/schemas/SubProgress'
+      - type: object
+        properties:
+          subprogress:
+            $ref: '#/components/schemas/SubProgress'
+    SubProgress:
+      type: object
+      x-go-name: SubProgress
+      required:
+      - done
+      - total
+      properties:
+        done:
+          type: integer
+          description: Amount of completed steps in the build.
+        total:
+          type: integer
+          description: Total amount of steps in the build.
     UploadStatus:
       required:
         - status
