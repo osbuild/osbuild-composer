@@ -75,16 +75,19 @@ function _instanceCheck() {
         exit 1
     fi
 
-    if [ -n "$OPENSCAP_CUSTOMIZATION_BLOCK" ]; then
-        if ! grep -q "image-builder.insights.compliance-profile-id: pci-dss" <<< "$FACTS"; then
-            echo "System doesn't contain the expected image-builder.insights facts (profile-id)"
-            echo "$FACTS"| grep image-builder
-            exit 1
-        fi
-        if ! grep -q "image-builder.insights.compliance-policy-id: 1af6cced-581c-452c-89cd-33b7bddb816a" <<< "$FACTS"; then
-            echo "System doesn't contain the expected image-builder.insights facts (policy-id)"
-            echo "$FACTS"| grep image-builder
-            exit 1
+    # NOTE: workaround until https://issues.redhat.com/browse/HMS-9822 is resolved (Set OSCAP RHSM facts automatically)
+    if [[ "${IMAGE_BUILDER_EXPERIMENTAL}" == "" ]]; then
+        if [ -n "$OPENSCAP_CUSTOMIZATION_BLOCK" ]; then
+            if ! grep -q "image-builder.insights.compliance-profile-id: pci-dss" <<< "$FACTS"; then
+                echo "System doesn't contain the expected image-builder.insights facts (profile-id)"
+                echo "$FACTS"| grep image-builder
+                exit 1
+            fi
+            if ! grep -q "image-builder.insights.compliance-policy-id: 1af6cced-581c-452c-89cd-33b7bddb816a" <<< "$FACTS"; then
+                echo "System doesn't contain the expected image-builder.insights facts (policy-id)"
+                echo "$FACTS"| grep image-builder
+                exit 1
+            fi
         fi
     fi
 
