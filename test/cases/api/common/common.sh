@@ -61,22 +61,33 @@ function _instanceCheck() {
     [[ "$subscribe_org_id" == "org ID: $API_TEST_SUBSCRIPTION_ORG_ID" ]]
 
     FACTS=$($_ssh sudo subscription-manager facts)
-    if ! grep -q "image-builder.osbuild-composer.api-type: cloudapi-v2" <<< "$FACTS"; then
+    # NOTE: workaround until fact value becomes configurable in image-builder-cli (https://issues.redhat.com/browse/HMS-9819)
+    expected_fact_value="cloudapi-v2"
+    IMAGE_BUILDER_EXPERIMENTAL="${IMAGE_BUILDER_EXPERIMENTAL:-}"
+    if [[ "${IMAGE_BUILDER_EXPERIMENTAL}" != "" ]]; then
+        if echo "${IMAGE_BUILDER_EXPERIMENTAL}" | grep -q "image-builder-manifest-generation=1"; then
+          expected_fact_value="image-builder-cli"
+        fi
+    fi
+    if ! grep -q "image-builder.osbuild-composer.api-type: ${expected_fact_value}" <<< "$FACTS"; then
         echo "System doesn't contain the expected image-builder.osbuild-composer facts"
         echo "$FACTS" | grep image-builder
         exit 1
     fi
 
-    if [ -n "$OPENSCAP_CUSTOMIZATION_BLOCK" ]; then
-        if ! grep -q "image-builder.insights.compliance-profile-id: pci-dss" <<< "$FACTS"; then
-            echo "System doesn't contain the expected image-builder.insights facts (profile-id)"
-            echo "$FACTS"| grep image-builder
-            exit 1
-        fi
-        if ! grep -q "image-builder.insights.compliance-policy-id: 1af6cced-581c-452c-89cd-33b7bddb816a" <<< "$FACTS"; then
-            echo "System doesn't contain the expected image-builder.insights facts (policy-id)"
-            echo "$FACTS"| grep image-builder
-            exit 1
+    # NOTE: workaround until https://issues.redhat.com/browse/HMS-9822 is resolved (Set OSCAP RHSM facts automatically)
+    if [[ "${IMAGE_BUILDER_EXPERIMENTAL}" == "" ]]; then
+        if [ -n "$OPENSCAP_CUSTOMIZATION_BLOCK" ]; then
+            if ! grep -q "image-builder.insights.compliance-profile-id: pci-dss" <<< "$FACTS"; then
+                echo "System doesn't contain the expected image-builder.insights facts (profile-id)"
+                echo "$FACTS"| grep image-builder
+                exit 1
+            fi
+            if ! grep -q "image-builder.insights.compliance-policy-id: 1af6cced-581c-452c-89cd-33b7bddb816a" <<< "$FACTS"; then
+                echo "System doesn't contain the expected image-builder.insights facts (policy-id)"
+                echo "$FACTS"| grep image-builder
+                exit 1
+            fi
         fi
     fi
 

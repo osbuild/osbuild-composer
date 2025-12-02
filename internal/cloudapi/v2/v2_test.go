@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -26,6 +27,7 @@ import (
 	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/images/pkg/sbom"
 	v2 "github.com/osbuild/osbuild-composer/internal/cloudapi/v2"
+	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue/fsjobqueue"
 	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/test"
@@ -137,6 +139,57 @@ func mockDepsolve(t *testing.T, workerServer *worker.Server, wg *sync.WaitGroup,
 	return cancel
 }
 
+// mockIBManifest starts a routine which just completes image-builder-manifest jobs.
+// It requires some of the test framework to operate.
+// And the optional fail parameter will cause it to return an error as if the job failed.
+func mockIBManifest(t *testing.T, workerServer *worker.Server, wg *sync.WaitGroup, fail bool) func() {
+	ctx, cancel := context.WithCancel(context.Background())
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for {
+			_, token, _, _, _, err := workerServer.RequestJob(ctx, test_distro.TestArchName, []string{worker.JobTypeImageBuilderManifest}, []string{""}, uuid.Nil)
+			select {
+			case <-ctx.Done():
+				return
+			default:
+			}
+			if err != nil {
+				continue
+			}
+			r := &worker.ManifestJobByIDResult{}
+
+			if !fail {
+				r.Manifest = manifest.OSBuildManifest([]byte(`{"version":"2","pipelines":[{"name":"build"},{"name":"os"}],"sources":{"org.osbuild.curl":{"items":{"sha256:e50ddb78a37f5851d1a5c37a4c77d59123153c156e628e064b9daa378f45a2fe":{"url":"https://pkg1.example.com/1.33-2.fc30.x86_64.rpm"}}}}}`))
+				r.ManifestInfo = worker.ManifestInfo{
+					OSBuildComposerVersion: common.BuildVersion(),
+					PipelineNames: &worker.PipelineNames{
+						Build:   []string{"build"},
+						Payload: []string{"os", "image"},
+					},
+				}
+			} else {
+				// the error that gets returned from
+				// ImageBuilderManifestJobImpl.Run() is handled by the
+				// workerClientErrorFrom() function, which falls back to
+				// returning an ErrorRPMMDError when it doesn't know the error
+				// type
+				r.JobResult.JobError = clienterrors.New(clienterrors.ErrorRPMMDError, "test wanted to fail", "mock ImageBuilderManifest job is failing")
+
+			}
+
+			rawMsg, err := json.Marshal(r)
+			require.NoError(t, err)
+			err = workerServer.FinishJob(token, rawMsg)
+			if err != nil {
+				return
+			}
+
+		}
+	}()
+	return cancel
+}
+
 // mockOSTreeResolve starts a routine which completes a dummy ostree job
 // It requires some of the test framework to operate
 // And the optional fail parameter will cause it to return an error as if the ostree job failed
@@ -233,7 +286,17 @@ func mockSearch(t *testing.T, workerServer *worker.Server, wg *sync.WaitGroup, f
 	return cancel
 }
 
-func newV2Server(t *testing.T, dir string, enableJWT bool, fail bool) (*v2.Server, *worker.Server, jobqueue.JobQueue, context.CancelFunc) {
+type v2ServerOpts struct {
+	enableJWT  bool
+	fail       bool
+	ibManifest bool // use image-builder-manifest job instead of manifest-id-only
+}
+
+func newV2Server(t *testing.T, dir string, opts *v2ServerOpts) (*v2.Server, *worker.Server, jobqueue.JobQueue, context.CancelFunc) {
+	if opts == nil {
+		opts = &v2ServerOpts{}
+	}
+
 	jobsDir := filepath.Join(dir, "jobs")
 	err := os.Mkdir(jobsDir, 0755)
 	require.NoError(t, err)
@@ -248,7 +311,7 @@ func newV2Server(t *testing.T, dir string, enableJWT bool, fail bool) (*v2.Serve
 		worker.Config{
 			ArtifactsDir:         artifactsDir,
 			BasePath:             "/api/worker/v1",
-			JWTEnabled:           enableJWT,
+			JWTEnabled:           opts.enableJWT,
 			TenantProviderFields: []string{"rh-org-id", "account_id"},
 		})
 
@@ -261,21 +324,24 @@ func newV2Server(t *testing.T, dir string, enableJWT bool, fail bool) (*v2.Serve
 	require.Greater(t, len(repos.ListDistros()), 0)
 
 	config := v2.ServerConfig{
-		JWTEnabled:           enableJWT,
-		TenantProviderFields: []string{"rh-org-id", "account_id"},
+		JWTEnabled:                     opts.enableJWT,
+		TenantProviderFields:           []string{"rh-org-id", "account_id"},
+		ImageBuilderManifestGeneration: opts.ibManifest,
 	}
 	v2Server := v2.NewServer(workerServer, distros, repos, config)
 	require.NotNil(t, v2Server)
 	t.Cleanup(v2Server.Shutdown)
 
-	// Setup the depsolve and ostree resolve job handlers
-	// These are mocked functions that return a static set of results for testing
+	// Setup the content resolve job handlers (depsolver, search, ostree commit
+	// resolver, and image-builder manifest).
+	// These are mocked functions that return a static set of results for testing.
 	var wg sync.WaitGroup
 	var cancelFuncs []context.CancelFunc
 
-	cancelFuncs = append(cancelFuncs, mockDepsolve(t, workerServer, &wg, fail))
-	cancelFuncs = append(cancelFuncs, mockOSTreeResolve(t, workerServer, &wg, fail))
-	cancelFuncs = append(cancelFuncs, mockSearch(t, workerServer, &wg, fail))
+	cancelFuncs = append(cancelFuncs, mockDepsolve(t, workerServer, &wg, opts.fail))
+	cancelFuncs = append(cancelFuncs, mockOSTreeResolve(t, workerServer, &wg, opts.fail))
+	cancelFuncs = append(cancelFuncs, mockSearch(t, workerServer, &wg, opts.fail))
+	cancelFuncs = append(cancelFuncs, mockIBManifest(t, workerServer, &wg, opts.fail))
 
 	cancelWithWait := func() {
 		for _, cancel := range cancelFuncs {
@@ -288,7 +354,7 @@ func newV2Server(t *testing.T, dir string, enableJWT bool, fail bool) (*v2.Serve
 }
 
 func TestUnknownRoute(t *testing.T) {
-	srv, _, _, cancel := newV2Server(t, t.TempDir(), false, false)
+	srv, _, _, cancel := newV2Server(t, t.TempDir(), nil)
 	defer cancel()
 
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", "/api/image-builder-composer/v2/badroute", ``, http.StatusNotFound, `
@@ -302,7 +368,7 @@ func TestUnknownRoute(t *testing.T) {
 }
 
 func TestGetError(t *testing.T) {
-	srv, _, _, cancel := newV2Server(t, t.TempDir(), false, false)
+	srv, _, _, cancel := newV2Server(t, t.TempDir(), nil)
 	defer cancel()
 
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", "/api/image-builder-composer/v2/errors/4", ``, http.StatusOK, `
@@ -325,7 +391,7 @@ func TestGetError(t *testing.T) {
 }
 
 func TestGetErrorList(t *testing.T) {
-	srv, _, _, cancel := newV2Server(t, t.TempDir(), false, false)
+	srv, _, _, cancel := newV2Server(t, t.TempDir(), nil)
 	defer cancel()
 
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", "/api/image-builder-composer/v2/errors?page=3&size=1", ``, http.StatusOK, `
@@ -344,7 +410,7 @@ func TestGetErrorList(t *testing.T) {
 }
 
 func TestGetDistributionList(t *testing.T) {
-	srv, _, _, cancel := newV2Server(t, t.TempDir(), false, false)
+	srv, _, _, cancel := newV2Server(t, t.TempDir(), nil)
 	defer cancel()
 
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET",
@@ -375,7 +441,7 @@ func TestGetDistributionList(t *testing.T) {
 }
 
 func TestCompose(t *testing.T) {
-	srv, _, _, cancel := newV2Server(t, t.TempDir(), false, false)
+	srv, _, _, cancel := newV2Server(t, t.TempDir(), nil)
 	defer cancel()
 
 	testDistro := test_distro.DistroFactory(test_distro.TestDistro1Name)
@@ -736,7 +802,7 @@ func TestCompose(t *testing.T) {
 }
 
 func TestComposeStatusSuccess(t *testing.T) {
-	srv, wrksrv, _, cancel := newV2Server(t, t.TempDir(), false, false)
+	srv, wrksrv, _, cancel := newV2Server(t, t.TempDir(), nil)
 	defer cancel()
 
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
@@ -897,6 +963,8 @@ func TestComposeStatusSuccess(t *testing.T) {
 func TestComposeManifests(t *testing.T) {
 	testCases := []struct {
 		name          string
+		ibManifest    bool // use image-builder-manifest job instead of manifest-id-only
+		fail          bool
 		jobResult     worker.ManifestJobByIDResult
 		expectedError *clienterrors.Error
 	}{
@@ -904,7 +972,15 @@ func TestComposeManifests(t *testing.T) {
 			name: "success",
 			jobResult: worker.ManifestJobByIDResult{
 				Manifest: manifest.OSBuildManifest([]byte(`{"version":"2","pipelines":[{"name":"build"},{"name":"os"}],"sources":{"org.osbuild.curl":{"items":{"sha256:e50ddb78a37f5851d1a5c37a4c77d59123153c156e628e064b9daa378f45a2fe":{"url":"https://pkg1.example.com/1.33-2.fc30.x86_64.rpm"}}}}}`)),
-			}},
+			},
+		},
+		{
+			name:       "success-ib",
+			ibManifest: true,
+			jobResult: worker.ManifestJobByIDResult{
+				Manifest: manifest.OSBuildManifest([]byte(`{"version":"2","pipelines":[{"name":"build"},{"name":"os"}],"sources":{"org.osbuild.curl":{"items":{"sha256:e50ddb78a37f5851d1a5c37a4c77d59123153c156e628e064b9daa378f45a2fe":{"url":"https://pkg1.example.com/1.33-2.fc30.x86_64.rpm"}}}}}`)),
+			},
+		},
 		{
 			name: "failure",
 			jobResult: worker.ManifestJobByIDResult{
@@ -914,43 +990,56 @@ func TestComposeManifests(t *testing.T) {
 			},
 			expectedError: clienterrors.New(clienterrors.ErrorManifestDependency, "Manifest generation test error", "Package XYZ does not have a RemoteLocation"),
 		},
+		{
+			name:          "failure-ib",
+			ibManifest:    true,
+			fail:          true,
+			expectedError: clienterrors.New(clienterrors.ErrorRPMMDError, "test wanted to fail", "mock ImageBuilderManifest job is failing"),
+		},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 
-			// Override the serialize manifest func to allow simulating various job states
-			// This is the only way to do it, because of the way the manifest job is handled.
-			serializeManifestFunc := func(ctx context.Context, manifestSource *manifest.Manifest, workers *worker.Server, dependencies v2.ManifestJobDependencies, manifestJobID uuid.UUID, seed int64) {
-				var token uuid.UUID
-				var err error
-				// wait until job is in a pending state
-				for {
-					_, token, _, _, _, err = workers.RequestJobById(ctx, "", manifestJobID)
-					if errors.Is(err, jobqueue.ErrNotPending) {
-						time.Sleep(time.Millisecond * 50)
-						select {
-						case <-ctx.Done():
-							t.Fatalf("Context done")
-						default:
-							continue
+			if !testCase.ibManifest {
+				// Override the serialize manifest func to allow simulating various job states
+				// This is the only way to do it, because of the way the manifest job is handled.
+				// This is not used when ibManifest is enabled.
+				serializeManifestFunc := func(ctx context.Context, manifestSource *manifest.Manifest, workers *worker.Server, dependencies v2.ManifestJobDependencies, manifestJobID uuid.UUID, seed int64) {
+					var token uuid.UUID
+					var err error
+					// wait until job is in a pending state
+					for {
+						_, token, _, _, _, err = workers.RequestJobById(ctx, "", manifestJobID)
+						if errors.Is(err, jobqueue.ErrNotPending) {
+							time.Sleep(time.Millisecond * 50)
+							select {
+							case <-ctx.Done():
+								t.Fatalf("Context done")
+							default:
+								continue
+							}
 						}
+						if err != nil {
+							t.Fatalf("Error requesting manifest job: %v", err)
+							return
+						}
+						break
 					}
-					if err != nil {
-						t.Fatalf("Error requesting manifest job: %v", err)
-						return
-					}
-					break
+
+					result, err := json.Marshal(testCase.jobResult)
+					require.NoError(t, err)
+					err = workers.FinishJob(token, result)
+					require.NoError(t, err)
 				}
-
-				result, err := json.Marshal(testCase.jobResult)
-				require.NoError(t, err)
-				err = workers.FinishJob(token, result)
-				require.NoError(t, err)
+				defer v2.MockSerializeManifestFunc(serializeManifestFunc)()
 			}
-			defer v2.MockSerializeManifestFunc(serializeManifestFunc)()
 
-			srv, wrksrv, _, cancel := newV2Server(t, t.TempDir(), false, false)
+			opts := v2ServerOpts{
+				ibManifest: testCase.ibManifest,
+				fail:       testCase.fail,
+			}
+			srv, wrksrv, _, cancel := newV2Server(t, t.TempDir(), &opts)
 			defer cancel()
 
 			test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
@@ -1032,7 +1121,7 @@ func TestComposeManifests(t *testing.T) {
 }
 
 func TestComposeStatusFailure(t *testing.T) {
-	srv, wrksrv, _, cancel := newV2Server(t, t.TempDir(), false, false)
+	srv, wrksrv, _, cancel := newV2Server(t, t.TempDir(), nil)
 	defer cancel()
 
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
@@ -1087,7 +1176,7 @@ func TestComposeStatusFailure(t *testing.T) {
 }
 
 func TestComposeStatusInvalidUUID(t *testing.T) {
-	srv, _, _, cancel := newV2Server(t, t.TempDir(), false, false)
+	srv, _, _, cancel := newV2Server(t, t.TempDir(), nil)
 	defer cancel()
 
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", "/api/image-builder-composer/v2/composes/abcdef", ``, http.StatusBadRequest, `
@@ -1103,7 +1192,7 @@ func TestComposeStatusInvalidUUID(t *testing.T) {
 }
 
 func TestComposeJobError(t *testing.T) {
-	srv, wrksrv, _, cancel := newV2Server(t, t.TempDir(), false, false)
+	srv, wrksrv, _, cancel := newV2Server(t, t.TempDir(), nil)
 	defer cancel()
 
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
@@ -1164,7 +1253,7 @@ func TestComposeJobError(t *testing.T) {
 }
 
 func TestComposeDependencyError(t *testing.T) {
-	srv, wrksrv, _, cancel := newV2Server(t, t.TempDir(), false, true)
+	srv, wrksrv, _, cancel := newV2Server(t, t.TempDir(), &v2ServerOpts{fail: true})
 	defer cancel()
 
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
@@ -1241,7 +1330,7 @@ func TestComposeDependencyError(t *testing.T) {
 }
 
 func TestComposeTargetErrors(t *testing.T) {
-	srv, wrksrv, _, cancel := newV2Server(t, t.TempDir(), false, false)
+	srv, wrksrv, _, cancel := newV2Server(t, t.TempDir(), nil)
 	defer cancel()
 
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
@@ -1333,7 +1422,7 @@ func TestComposeTargetErrors(t *testing.T) {
 }
 
 func TestComposeCustomizations(t *testing.T) {
-	srv, _, _, cancel := newV2Server(t, t.TempDir(), false, false)
+	srv, _, _, cancel := newV2Server(t, t.TempDir(), nil)
 	defer cancel()
 
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
@@ -1439,7 +1528,7 @@ func TestComposeCustomizations(t *testing.T) {
 }
 
 func TestComposeRhcSubscription(t *testing.T) {
-	srv, _, _, cancel := newV2Server(t, t.TempDir(), false, false)
+	srv, _, _, cancel := newV2Server(t, t.TempDir(), nil)
 	defer cancel()
 
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
@@ -1479,7 +1568,7 @@ func TestComposeRhcSubscription(t *testing.T) {
 }
 
 func TestImageTypes(t *testing.T) {
-	srv, _, _, cancel := newV2Server(t, t.TempDir(), false, false)
+	srv, _, _, cancel := newV2Server(t, t.TempDir(), nil)
 	defer cancel()
 
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
@@ -1666,7 +1755,7 @@ func TestImageTypes(t *testing.T) {
 }
 
 func TestImageFromCompose(t *testing.T) {
-	srv, wrksrv, _, cancel := newV2Server(t, t.TempDir(), false, false)
+	srv, wrksrv, _, cancel := newV2Server(t, t.TempDir(), nil)
 	defer cancel()
 
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
@@ -1806,7 +1895,7 @@ func TestImageFromCompose(t *testing.T) {
 }
 
 func TestDepsolveBlueprint(t *testing.T) {
-	srv, _, _, cancel := newV2Server(t, t.TempDir(), false, false)
+	srv, _, _, cancel := newV2Server(t, t.TempDir(), nil)
 	defer cancel()
 
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST",
@@ -1839,7 +1928,7 @@ func TestDepsolveBlueprint(t *testing.T) {
 }
 
 func TestDepsolveImageType(t *testing.T) {
-	srv, _, _, cancel := newV2Server(t, t.TempDir(), false, false)
+	srv, _, _, cancel := newV2Server(t, t.TempDir(), nil)
 	defer cancel()
 
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST",
@@ -1873,7 +1962,7 @@ func TestDepsolveImageType(t *testing.T) {
 }
 
 func TestDepsolveImageTypeError(t *testing.T) {
-	srv, _, _, cancel := newV2Server(t, t.TempDir(), false, false)
+	srv, _, _, cancel := newV2Server(t, t.TempDir(), nil)
 	defer cancel()
 
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST",
@@ -1902,7 +1991,7 @@ func TestDepsolveImageTypeError(t *testing.T) {
 }
 
 func TestDepsolveDistroErrors(t *testing.T) {
-	srv, _, _, cancel := newV2Server(t, t.TempDir(), false, false)
+	srv, _, _, cancel := newV2Server(t, t.TempDir(), nil)
 	defer cancel()
 
 	// matching distros, but not supported
@@ -1975,7 +2064,7 @@ func TestDepsolveDistroErrors(t *testing.T) {
 }
 
 func TestDepsolveArchErrors(t *testing.T) {
-	srv, _, _, cancel := newV2Server(t, t.TempDir(), false, false)
+	srv, _, _, cancel := newV2Server(t, t.TempDir(), nil)
 	defer cancel()
 
 	// Unsupported architecture
@@ -2002,7 +2091,7 @@ func TestDepsolveArchErrors(t *testing.T) {
 }
 
 func TestSearchPackages(t *testing.T) {
-	srv, _, _, cancel := newV2Server(t, t.TempDir(), false, false)
+	srv, _, _, cancel := newV2Server(t, t.TempDir(), nil)
 	defer cancel()
 
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST",
@@ -2031,7 +2120,7 @@ func TestSearchPackages(t *testing.T) {
 }
 
 func TestSearchDistroErrors(t *testing.T) {
-	srv, _, _, cancel := newV2Server(t, t.TempDir(), false, false)
+	srv, _, _, cancel := newV2Server(t, t.TempDir(), nil)
 	defer cancel()
 
 	// Bad distro in request
@@ -2053,7 +2142,7 @@ func TestSearchDistroErrors(t *testing.T) {
 }
 
 func TestSearchArchErrors(t *testing.T) {
-	srv, _, _, cancel := newV2Server(t, t.TempDir(), false, false)
+	srv, _, _, cancel := newV2Server(t, t.TempDir(), nil)
 	defer cancel()
 
 	// Unsupported architecture
@@ -2075,7 +2164,7 @@ func TestSearchArchErrors(t *testing.T) {
 }
 
 func TestComposesRoute(t *testing.T) {
-	srv, _, _, cancel := newV2Server(t, t.TempDir(), false, false)
+	srv, _, _, cancel := newV2Server(t, t.TempDir(), nil)
 	defer cancel()
 
 	// List empty root composes
@@ -2117,7 +2206,7 @@ func TestComposesRoute(t *testing.T) {
 }
 
 func TestDownload(t *testing.T) {
-	srv, wrksrv, _, cancel := newV2Server(t, t.TempDir(), false, false)
+	srv, wrksrv, _, cancel := newV2Server(t, t.TempDir(), nil)
 	defer cancel()
 
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
@@ -2197,7 +2286,7 @@ func TestDownload(t *testing.T) {
 }
 
 func TestDownloadNotFinished(t *testing.T) {
-	srv, wrksrv, _, cancel := newV2Server(t, t.TempDir(), false, false)
+	srv, wrksrv, _, cancel := newV2Server(t, t.TempDir(), nil)
 	defer cancel()
 
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
@@ -2255,7 +2344,7 @@ func TestDownloadNotFinished(t *testing.T) {
 }
 
 func TestDownloadUnknown(t *testing.T) {
-	srv, _, _, cancel := newV2Server(t, t.TempDir(), false, false)
+	srv, _, _, cancel := newV2Server(t, t.TempDir(), nil)
 	defer cancel()
 
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET",
@@ -2275,10 +2364,26 @@ func TestDownloadUnknown(t *testing.T) {
 // TestComposeRequestMetadata tests that the original ComposeRequest is included with the
 // metadata response.
 func TestComposeRequestMetadata(t *testing.T) {
-	srv, wrksrv, _, cancel := newV2Server(t, t.TempDir(), false, false)
-	defer cancel()
+	// test with both manifest generation methods
+	testCases := []struct {
+		name    string
+		options *v2ServerOpts
+	}{
+		{
+			name: "traditional-manifest-generation",
+		},
+		{
+			name:    "image-builder-manifest-generation",
+			options: &v2ServerOpts{ibManifest: true},
+		},
+	}
 
-	request := fmt.Sprintf(`
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			srv, wrksrv, _, cancel := newV2Server(t, t.TempDir(), tc.options)
+			defer cancel()
+
+			request := fmt.Sprintf(`
 	{
 		"distribution": "%s",
 		"image_requests":[{
@@ -2297,23 +2402,23 @@ func TestComposeRequestMetadata(t *testing.T) {
 			}
 		}]
 	}`, test_distro.TestDistro1Name, test_distro.TestArch3Name)
-	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", request, http.StatusCreated, `
+			test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", request, http.StatusCreated, `
 	{
 		"href": "/api/image-builder-composer/v2/compose",
 		"kind": "ComposeId"
 	}`, "id")
 
-	jobId, _, jobType, args, dynArgs, err := wrksrv.RequestJob(context.Background(), test_distro.TestArch3Name, []string{worker.JobTypeOSBuild}, []string{""}, uuid.Nil)
-	require.NoError(t, err)
-	require.Equal(t, worker.JobTypeOSBuild, jobType)
+			jobId, _, jobType, args, dynArgs, err := wrksrv.RequestJob(context.Background(), test_distro.TestArch3Name, []string{worker.JobTypeOSBuild}, []string{""}, uuid.Nil)
+			require.NoError(t, err)
+			require.Equal(t, worker.JobTypeOSBuild, jobType)
 
-	var osbuildJob worker.OSBuildJob
-	err = json.Unmarshal(args, &osbuildJob)
-	require.NoError(t, err)
-	require.Equal(t, 0, len(osbuildJob.Manifest))
-	require.NotEqual(t, 0, len(dynArgs[0]))
+			var osbuildJob worker.OSBuildJob
+			err = json.Unmarshal(args, &osbuildJob)
+			require.NoError(t, err)
+			require.Equal(t, 0, len(osbuildJob.Manifest))
+			require.NotEqual(t, 0, len(dynArgs[0]))
 
-	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%v", jobId), ``, http.StatusOK, fmt.Sprintf(`
+			test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%v", jobId), ``, http.StatusOK, fmt.Sprintf(`
 	{
 		"href": "/api/image-builder-composer/v2/composes/%v",
 		"kind": "ComposeStatus",
@@ -2322,18 +2427,20 @@ func TestComposeRequestMetadata(t *testing.T) {
 		"status": "pending"
 	}`, jobId, jobId))
 
-	// metadata response should include the ComposeRequest even when build is not done
-	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%v/metadata", jobId), ``, http.StatusOK,
-		fmt.Sprintf(`{
+			// metadata response should include the ComposeRequest even when build is not done
+			test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%v/metadata", jobId), ``, http.StatusOK,
+				fmt.Sprintf(`{
 		"href": "/api/image-builder-composer/v2/composes/%[1]v/metadata",
 		"id": "%[1]v",
 		"kind": "ComposeMetadata",
 		"request": %s
 	}`, jobId, request))
+		})
+	}
 }
 
 func TestComposesDeleteRoute(t *testing.T) {
-	srv, wrksrv, _, cancel := newV2Server(t, t.TempDir(), false, false)
+	srv, wrksrv, _, cancel := newV2Server(t, t.TempDir(), nil)
 	defer cancel()
 
 	// Make a compose so it has something to list and delete
@@ -2392,4 +2499,86 @@ func TestComposesDeleteRoute(t *testing.T) {
 	// List root composes (should now be none)
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", "/api/image-builder-composer/v2/composes/", ``,
 		http.StatusOK, `[]`)
+}
+
+func TestComposeManifestByID(t *testing.T) {
+	srv, _, queue, cancel := newV2Server(t, t.TempDir(), nil)
+	defer cancel()
+
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
+	{
+		"distribution": "%s",
+		"image_request":{
+			"architecture": "%s",
+			"image_type": "guest-image",
+			"repositories": [{
+				"baseurl": "somerepo.org",
+				"rhsm": false
+			}],
+			"upload_options": {
+				"region": "eu-central-1"
+			}
+		}
+	}`, test_distro.TestDistro1Name, test_distro.TestArch3Name), http.StatusCreated, `
+	{
+		"href": "/api/image-builder-composer/v2/compose",
+		"kind": "ComposeId"
+	}`, "id")
+
+	// get the osbuild job (as root job) and check that its dependency is a ManifestJobByID
+	rootJobs, err := queue.AllRootJobIDs(context.Background())
+	require.NoError(t, err)
+	require.Len(t, rootJobs, 1)
+
+	osbuildJobID := rootJobs[0]
+	osbuildJobType, _, deps, _, err := queue.Job(osbuildJobID)
+	osbuildJobTypeSplit := strings.Split(osbuildJobType, ":") // osbuild jobs get the architecture name appended to their type (osbuild:<arch>)
+	require.NoError(t, err)
+	require.Equal(t, worker.JobTypeOSBuild, osbuildJobTypeSplit[0])
+
+	require.Len(t, deps, 1)
+	manifestIDJobTypeString, _, _, _, err := queue.Job(deps[0])
+	require.NoError(t, err)
+	require.Equal(t, worker.JobTypeManifestIDOnly, manifestIDJobTypeString)
+}
+
+func TestComposeIBManifest(t *testing.T) {
+	srv, _, queue, cancel := newV2Server(t, t.TempDir(), &v2ServerOpts{ibManifest: true})
+	defer cancel()
+
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
+	{
+		"distribution": "%s",
+		"image_request":{
+			"architecture": "%s",
+			"image_type": "guest-image",
+			"repositories": [{
+				"baseurl": "somerepo.org",
+				"rhsm": false
+			}],
+			"upload_options": {
+				"region": "eu-central-1"
+			}
+		}
+	}`, test_distro.TestDistro1Name, test_distro.TestArch3Name), http.StatusCreated, `
+	{
+		"href": "/api/image-builder-composer/v2/compose",
+		"kind": "ComposeId"
+	}`, "id")
+
+	// get the osbuild job (as root job) and check that its dependency is an ImageBuilderManifestJob
+	rootJobs, err := queue.AllRootJobIDs(context.Background())
+	require.NoError(t, err)
+	require.Len(t, rootJobs, 1)
+
+	osbuildJobID := rootJobs[0]
+	osbuildJobType, _, deps, _, err := queue.Job(osbuildJobID)
+	osbuildJobTypeSplit := strings.Split(osbuildJobType, ":") // osbuild jobs get the architecture name appended to their type (osbuild:<arch>)
+	require.NoError(t, err)
+	require.Equal(t, worker.JobTypeOSBuild, osbuildJobTypeSplit[0])
+
+	require.Len(t, deps, 1)
+	ibManifestJobID, _, _, _, err := queue.Job(deps[0])
+	require.NoError(t, err)
+	require.Equal(t, worker.JobTypeImageBuilderManifest, ibManifestJobID)
 }
