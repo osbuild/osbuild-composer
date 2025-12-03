@@ -24,7 +24,7 @@ jobs:
         run: dnf -y install krb5-devel git-core go gpgme-devel btrfs-progs-devel device-mapper-devel
 
       - name: Check out code into the Go module directory
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
@@ -67,7 +67,7 @@ jobs:
       # gpgme-devel is needed for container upload dependencies
     - name: Install test dependencies
       run: sudo apt-get install -y libgpgme-dev libbtrfs-dev
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
     - uses: actions/setup-go@v6
       with:
         go-version: "1.23"
@@ -92,7 +92,7 @@ jobs:
         run: dnf -y install python3-pylint git-core python3-requests
 
       - name: Check out code into the Go module directory
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
@@ -111,7 +111,7 @@ jobs:
         id: go
 
       - name: Check out code into the Go module directory
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
@@ -139,7 +139,7 @@ jobs:
         run: dnf -y install packit
 
       - name: Check out code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
@@ -159,7 +159,7 @@ jobs:
         id: go
 
       - name: Check out code into the Go module directory
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
@@ -180,7 +180,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Check out code into the Go module directory
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.event.pull_request.head.sha }}
       - name: Check for valid snapshot urls
@@ -191,7 +191,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Check out code into the Go module directory
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.event.pull_request.head.sha }}
       - name: Check for missing or unused runner repos
@@ -201,7 +201,7 @@ jobs:
     name: "🐚 Shellcheck"
     runs-on: ubuntu-22.04
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
         ref: ${{ github.event.pull_request.head.sha }}
 
@@ -237,7 +237,7 @@ jobs:
       - name: Install dependencies
         run: sudo dnf install -y rpmlint rpm-build make git-core
 
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
@@ -267,7 +267,7 @@ jobs:
     name: "🎀 kube-linter"
     runs-on: ubuntu-22.04
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
     - uses: redhat-actions/oc-installer@v1
     - name: Process template
       run: |
@@ -301,7 +301,7 @@ jobs:
     container: registry.fedoraproject.org/fedora:latest
     steps:
     - name: Checkout
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
 
     - name: Check dependencies in spec file
       uses: osbuild/images@check-spec-deps-action

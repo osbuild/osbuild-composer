@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Clone repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       # https://scan.coverity.com/projects/osbuild-osbuild-composer
       - name: Run coverity scan script
