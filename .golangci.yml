@@ -1,33 +1,60 @@
-linters-settings:
-  govet:
-    disable:
-      - shadow # default value recommended by golangci
-      - composites
-
-  gomoddirectives:
-    replace-local: false
-    replace-allow-list:
-      - "github.com/osbuild/images"
-
-linters:
-  enable:
-    - gosec
-    - gomoddirectives
-
+version: "2"
 run:
   build-tags:
     - integration
   timeout: 5m
 
+linters:
+  enable:
+    - gomoddirectives
+    - gosec
+  settings:
+    gomoddirectives:
+      replace-local: true
+      # XXX: uncomment this to test osbuild/images changes from your fork,
+      # but never merge this change to main branch
+      # replace-allow-list:
+      #  - github.com/osbuild/images
+    govet:
+      disable:
+        - shadow
+        - composites
+    staticcheck:
+      # Default: ["all", "-ST1000", "-ST1003", "-ST1016", "-ST1020", "-ST1021", "-ST1022"]
+      # See: https://golangci-lint.run/docs/linters/configuration/#staticcheck
+      checks:
+        - all
+        - -ST1000 # https://staticcheck.dev/docs/checks/#ST1000
+        - -ST1003 # https://staticcheck.dev/docs/checks/#ST1003
+        - -ST1016 # https://staticcheck.dev/docs/checks/#ST1016
+        - -ST1020 # https://staticcheck.dev/docs/checks/#ST1020
+        - -ST1021 # https://staticcheck.dev/docs/checks/#ST1021
+        - -ST1022 # https://staticcheck.dev/docs/checks/#ST1022
+        # XXX: remove the exclusions below once we fix the code
+        - -ST1005 # https://staticcheck.dev/docs/checks/#ST1005
+        - -ST1023 # https://staticcheck.dev/docs/checks/#ST1023
+        - -QF1003 # https://staticcheck.dev/docs/checks/#QF1003
+        - -QF1007 # https://staticcheck.dev/docs/checks/#QF1007
+        - -QF1008 # https://staticcheck.dev/docs/checks/#QF1008
+        - -QF1011 # https://staticcheck.dev/docs/checks/#QF1011
+  exclusions:
+    presets:
+      # XXX: we should consider removing these presets in the future and instead fix the code
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - linters:
+          - gosec
+        path: ^(osbuild-composer/)?cmd/osbuild-worker-executor/.*_test\.go$
+    paths:
+      - vendor
+
 issues:
-  exclude-dirs:
-    - vendor
-
-  # Maximum issues count per one linter. Set to 0 to disable. Default is 50.
   max-issues-per-linter: 0
-
-  # Maximum count of issues with the same text. Set to 0 to disable. Default is 3.
   max-same-issues: 0
-  exclude-rules:
-    - path: ^(osbuild-composer/)?cmd/osbuild-worker-executor/.*_test\.go$
-      linters: ["gosec"]
+
+formatters:
+  exclusions:
+    paths:
+      - vendor
