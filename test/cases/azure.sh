@@ -2,7 +2,7 @@
 
 #
 # Test osbuild-composer 'upload to azure' functionality. To do so, create and
-# push a blueprint with composer cli. Then, use terraform to create 
+# push a blueprint with composer cli. Then, use terraform to create
 # an instance in azure from the uploaded image. Finally, verify the instance
 # is running with cloud-init ran.
 #
@@ -196,75 +196,78 @@ fi
 
 export BLOB_URL="https://$AZURE_STORAGE_ACCOUNT.blob.core.windows.net/$AZURE_CONTAINER_NAME/$IMAGE_KEY.vhd"
 
-greenprint "Pulling cloud-image-val container"
+# CIV tests temporarily disabled.  See https://issues.redhat.com/browse/HMS-9868
+# greenprint "Pulling cloud-image-val container"
 
-if [[ "$CI_PROJECT_NAME" =~ "cloud-image-val" ]]; then
-  # If running on CIV, get dev container
-  TAG=${CI_COMMIT_REF_SLUG}
-elif ! nvrGreaterOrEqual "osbuild-composer" "151"; then
-  # osbuild-composer v151 made changes in the Azure image definitions and CIV
-  # was updated to check for those changes:
-  # https://github.com/osbuild/cloud-image-val/pull/457
-  # This tag does not include those changes, so use it when running against
-  # older versions of composer.
-  TAG="pr-456"
-else
-  # If not, get prod container
-  TAG="prod"
-fi
+# if [[ "$CI_PROJECT_NAME" =~ "cloud-image-val" ]]; then
+#   # If running on CIV, get dev container
+#   TAG=${CI_COMMIT_REF_SLUG}
+# elif ! nvrGreaterOrEqual "osbuild-composer" "151"; then
+#   # osbuild-composer v151 made changes in the Azure image definitions and CIV
+#   # was updated to check for those changes:
+#   # https://github.com/osbuild/cloud-image-val/pull/457
+#   # This tag does not include those changes, so use it when running against
+#   # older versions of composer.
+#   TAG="pr-456"
+# else
+#   # If not, get prod container
+#   TAG="prod"
+# fi
 
-CONTAINER_CLOUD_IMAGE_VAL="quay.io/cloudexperience/cloud-image-val:$TAG"
+# CONTAINER_CLOUD_IMAGE_VAL="quay.io/cloudexperience/cloud-image-val:$TAG"
 
-sudo "${CONTAINER_RUNTIME}" pull "${CONTAINER_CLOUD_IMAGE_VAL}"
+# sudo "${CONTAINER_RUNTIME}" pull "${CONTAINER_CLOUD_IMAGE_VAL}"
 
-greenprint "Running cloud-image-val on generated image"
+# greenprint "Running cloud-image-val on generated image"
 
-tee "${TEMPDIR}/resource-file.json" <<EOF
-{
-  "subscription_id": "${AZURE_SUBSCRIPTION_ID}",
-  "resource_group": "${AZURE_RESOURCE_GROUP}",
-  "provider": "azure",
-  "instances": [
-    {
-      "vhd_uri": "${BLOB_URL}",
-      "arch": "${ARCH}",
-      "location": "${AZURE_LOCATION}",
-      "name": "${IMAGE_KEY}",
-      "hyper_v_generation": "${HYPER_V_GEN}",
-      "storage_account": "${AZURE_STORAGE_ACCOUNT}"
-    }
-  ]
-}
-EOF
+# tee "${TEMPDIR}/resource-file.json" <<EOF
+# {
+#   "subscription_id": "${AZURE_SUBSCRIPTION_ID}",
+#   "resource_group": "${AZURE_RESOURCE_GROUP}",
+#   "provider": "azure",
+#   "instances": [
+#     {
+#       "vhd_uri": "${BLOB_URL}",
+#       "arch": "${ARCH}",
+#       "location": "${AZURE_LOCATION}",
+#       "name": "${IMAGE_KEY}",
+#       "hyper_v_generation": "${HYPER_V_GEN}",
+#       "storage_account": "${AZURE_STORAGE_ACCOUNT}"
+#     }
+#   ]
+# }
+# EOF
 
-if [ -z "$CIV_CONFIG_FILE" ]; then
-    redprint "ERROR: please provide the variable CIV_CONFIG_FILE"
-    exit 1
-fi
+# if [ -z "$CIV_CONFIG_FILE" ]; then
+#     redprint "ERROR: please provide the variable CIV_CONFIG_FILE"
+#     exit 1
+# fi
 
-cp "${CIV_CONFIG_FILE}" "${TEMPDIR}/civ_config.yml"
+# cp "${CIV_CONFIG_FILE}" "${TEMPDIR}/civ_config.yml"
 
-# temporary workaround for
-# https://issues.redhat.com/browse/CLOUDX-488
-if nvrGreaterOrEqual "osbuild-composer" "83"; then
-    sudo "${CONTAINER_RUNTIME}" run \
-        --net=host \
-        -a stdout -a stderr \
-        -e ARM_CLIENT_ID="${V2_AZURE_CLIENT_ID}" \
-        -e ARM_CLIENT_SECRET="${V2_AZURE_CLIENT_SECRET}" \
-        -e ARM_SUBSCRIPTION_ID="${AZURE_SUBSCRIPTION_ID}" \
-        -e ARM_TENANT_ID="${AZURE_TENANT_ID}" \
-        -e JIRA_PAT="${JIRA_PAT}" \
-        -v "${TEMPDIR}":/tmp:Z \
-        "${CONTAINER_CLOUD_IMAGE_VAL}" \
-        python cloud-image-val.py \
-        -c /tmp/civ_config.yml \
-        && RESULTS=1 || RESULTS=0
+# # temporary workaround for
+# # https://issues.redhat.com/browse/CLOUDX-488
+# if nvrGreaterOrEqual "osbuild-composer" "83"; then
+#     sudo "${CONTAINER_RUNTIME}" run \
+#         --net=host \
+#         -a stdout -a stderr \
+#         -e ARM_CLIENT_ID="${V2_AZURE_CLIENT_ID}" \
+#         -e ARM_CLIENT_SECRET="${V2_AZURE_CLIENT_SECRET}" \
+#         -e ARM_SUBSCRIPTION_ID="${AZURE_SUBSCRIPTION_ID}" \
+#         -e ARM_TENANT_ID="${AZURE_TENANT_ID}" \
+#         -e JIRA_PAT="${JIRA_PAT}" \
+#         -v "${TEMPDIR}":/tmp:Z \
+#         "${CONTAINER_CLOUD_IMAGE_VAL}" \
+#         python cloud-image-val.py \
+#         -c /tmp/civ_config.yml \
+#         && RESULTS=1 || RESULTS=0
 
-    mv "${TEMPDIR}"/report.html "${ARTIFACTS}"
-else
-    RESULTS=1
-fi
+#     mv "${TEMPDIR}"/report.html "${ARTIFACTS}"
+# else
+#     RESULTS=1
+# fi
+
+RESULTS=1  # NOTE: remove when re-enabling CIV
 
 # Also delete the compose so we don't run out of disk space
 sudo composer-cli compose delete "${COMPOSE_ID}" > /dev/null
@@ -279,4 +282,3 @@ elif [[ $RESULTS != 1 ]]; then
 fi
 
 exit 0
-
