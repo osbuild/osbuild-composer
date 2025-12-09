@@ -23,7 +23,17 @@ sinks:
       - journald
     address: ${HOST_WORKER_ADDRESS}:12005
 EOF
-sudo systemctl enable --now vector
+    # in some cases vector might need a few restarts if the network
+    # isn't fully initialized yet (specifically on the internal network).
+    set +e
+    for i in $(seq 1 8); do
+        if sudo systemctl enable --now vector; then
+            break
+        fi
+        echo "vector failed to start, backing off and retrying (attempt $i)"
+        sleep 5s
+    done
+    set -e
 fi
 
 echo "Starting worker executor"
