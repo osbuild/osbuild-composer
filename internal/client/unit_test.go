@@ -13,7 +13,6 @@ import (
 	"path"
 	"testing"
 
-	"github.com/osbuild/images/pkg/depsolvednf"
 	"github.com/osbuild/images/pkg/distro/test_distro"
 	"github.com/osbuild/images/pkg/reporegistry"
 	"github.com/osbuild/images/pkg/rpmmd"
@@ -70,9 +69,7 @@ func executeTests(m *testing.M) int {
 
 	getSolverFn := func(modulePlatformID, releaseVer, arch, distro string) weldr.Solver {
 		return &depsolvednf_mock.MockDepsolveDNF{
-			DepsolveRes: &depsolvednf.DepsolveResult{
-				Packages: depsolvednf_mock.BaseDepsolveResult(""),
-			},
+			DepsolveRes:  depsolvednf_mock.BaseDepsolveResult("test-repo"),
 			FetchRes:     depsolvednf_mock.BaseFetchResult(),
 			SearchResMap: depsolvednf_mock.BaseSearchResultsMap(),
 		}
