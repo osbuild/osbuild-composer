@@ -63,11 +63,11 @@ type PartitionCustomization struct {
 
 	// Minimum size of the partition that contains the filesystem (for "plain"
 	// filesystem), volume group ("lvm"), or btrfs volume ("btrfs"). The final
-	// size of the partition will be larger than the minsize if the sum of the
+	// size of the partition can be larger than the minsize if the sum of the
 	// contained volumes (logical volumes or subvolumes) is larger. In
 	// addition, certain mountpoints have required minimum sizes. See
 	// https://osbuild.org/docs/user-guide/partitioning for more details.
-	// (optional, defaults depend on payload and mountpoints).
+	// This field is required.
 	MinSize uint64 `json:"minsize,omitempty,omitzero" toml:"minsize,omitempty,omitzero"`
 
 	// The partition type GUID for GPT partitions. For DOS partitions, this
