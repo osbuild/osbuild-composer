@@ -336,9 +336,11 @@ var run = func() {
 	// worker will look in $HOME/.aws/credentials or at the file pointed by
 	// the "AWS_SHARED_CREDENTIALS_FILE" variable.
 	var awsCredentials = ""
+	var awsS3Credentials = ""
 	var awsBucket = ""
 	if config.AWS != nil {
 		awsCredentials = config.AWS.Credentials
+		awsS3Credentials = config.AWS.S3Credentials
 		awsBucket = config.AWS.Bucket
 	}
 
@@ -482,6 +484,7 @@ var run = func() {
 			AzureConfig: azureConfig,
 			OCIConfig:   ociConfig,
 			AWSCreds:    awsCredentials,
+			AWSS3Creds:  awsS3Credentials,
 			AWSBucket:   awsBucket,
 			S3Config: S3Configuration{
 				Creds:               genericS3Credentials,

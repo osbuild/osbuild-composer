@@ -35,8 +35,9 @@ type azureConfig struct {
 }
 
 type awsConfig struct {
-	Credentials string `toml:"credentials"`
-	Bucket      string `toml:"bucket"`
+	Credentials   string `toml:"credentials"`
+	S3Credentials string `toml:"s3_credentials"`
+	Bucket        string `toml:"bucket"`
 }
 
 type ociConfig struct {
