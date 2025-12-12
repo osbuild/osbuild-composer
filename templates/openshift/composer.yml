@@ -274,7 +274,7 @@ objects:
 parameters:
   - description: composer image name
     name: IMAGE_NAME
-    value: quay.io/app-sre/composer
+    value: quay.io/redhat-services-prod/insights-management-tenant/image-builder-composer/osbuild-composer
     required: true
   - description: composer image tag
     name: IMAGE_TAG
