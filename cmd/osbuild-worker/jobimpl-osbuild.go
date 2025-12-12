@@ -93,6 +93,7 @@ type OSBuildJobImpl struct {
 	AzureConfig          AzureConfiguration
 	OCIConfig            OCIConfiguration
 	AWSCreds             string
+	AWSS3Creds           string
 	AWSBucket            string
 	S3Config             S3Configuration
 	ContainersConfig     ContainersConfiguration
@@ -160,7 +161,11 @@ func (impl *OSBuildJobImpl) getAWSForS3Target(options *target.AWSS3TargetOptions
 
 	// Endpoint == "" && Region != "" => AWS (Weldr and Composer)
 	if options.Endpoint == "" && options.Region != "" {
-		aws, err = impl.getAWS(options.Region, options.AccessKeyID, options.SecretAccessKey, options.SessionToken)
+		if impl.AWSS3Creds != "" {
+			aws, err = awscloud.NewFromFile(impl.AWSS3Creds, options.Region)
+		} else {
+			aws, err = impl.getAWS(options.Region, options.AccessKeyID, options.SecretAccessKey, options.SessionToken)
+		}
 		if bucket == "" {
 			bucket = impl.AWSBucket
 			if bucket == "" {

@@ -47,6 +47,7 @@ upload_threads = 8
 
 [aws]
 credentials = "/etc/osbuild-worker/aws-creds"
+s3_credentials = "/etc/osbuild-worker/aws-s3-creds"
 bucket = "buckethead"
 
 [oci]
@@ -106,8 +107,9 @@ key_name = "osbuild-worker"
 					UploadThreads: 8,
 				},
 				AWS: &awsConfig{
-					Credentials: "/etc/osbuild-worker/aws-creds",
-					Bucket:      "buckethead",
+					Credentials:   "/etc/osbuild-worker/aws-creds",
+					S3Credentials: "/etc/osbuild-worker/aws-s3-creds",
+					Bucket:        "buckethead",
 				},
 				OCI: &ociConfig{
 					Credentials: "/etc/osbuild-worker/oci-creds",
