@@ -27,9 +27,6 @@ type Blueprint struct {
 	Customizations *Customizations `json:"customizations,omitempty" toml:"customizations,omitempty"`
 	Distro         string          `json:"distro,omitempty" toml:"distro,omitempty"`
 	Arch           string          `json:"architecture,omitempty" toml:"architecture,omitempty"`
-
-	// EXPERIMENTAL
-	Minimal bool `json:"minimal,omitempty" toml:"minimal,omitempty"`
 }
 
 type Change struct {
