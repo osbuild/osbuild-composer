@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -162,8 +163,14 @@ echo "fake-build-result" > %[1]s/build/output/image/disk.img
 	assert.NoError(t, os.WriteFile(tarPath, body, 0644))
 	cmd := exec.Command("tar", "-tf", tarPath)
 	out, err := cmd.Output()
+	expected := []string{"output/",
+		"output/image/",
+		"output/image/disk.img",
+		"output/osbuild-result.json",
+	}
+	actual := strings.Split(strings.TrimSpace(string(out)), "\n")
 	assert.NoError(t, err)
-	assert.Equal(t, "output/\noutput/image/\noutput/image/disk.img\noutput/osbuild-result.json\n", string(out))
+	assert.ElementsMatch(t, expected, actual)
 }
 
 func TestBuildErrorsForMultipleBuilds(t *testing.T) {
