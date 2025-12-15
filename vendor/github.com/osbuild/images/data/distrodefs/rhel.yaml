@@ -36,6 +36,8 @@ distros:
           distro_name: "rhel"
         ignore_image_types:
           - azure
+          - container
+          - container-minimal
     # rhel & centos share the same list of allowed profiles so a
     # single allow list can be used
     oscap_profiles_allowlist: &oscap_profile_allowlist_rhel_10
@@ -134,6 +136,8 @@ distros:
           distro_name: "rhel"
         ignore_image_types:
           - azure
+          - container
+          - container-minimal
       "CVM is only available starting from 9.6":
         when:
           version_less_than: "9.6"
@@ -174,6 +178,14 @@ distros:
       aarch64: "registry.access.redhat.com/ubi{{.MajorVersion}}/ubi:latest"
       ppc64le: "registry.access.redhat.com/ubi{{.MajorVersion}}/ubi:latest"
       s390x: "registry.access.redhat.com/ubi{{.MajorVersion}}/ubi:latest"
+
+  - <<: *rhel9
+    name: "almalinux-{{.MajorVersion}}.{{.MinorVersion}}"
+    match: 'almalinux-9\.[0-9]{1,2}'
+    product: "AlmaLinux"
+    vendor: "almalinux"
+    ostree_ref_tmpl: "almalinux/9/%%s/edge"
+    iso_label_tmpl: "AlmaLinux-{{.Distro.MajorVersion}}-{{.Distro.MinorVersion}}-{{.Arch}}-dvd"
 
   - &centos9
     <<: *rhel9
@@ -231,6 +243,15 @@ distros:
         ignore_image_types:
           - "azure-rhui"
           - "vhd"
+      "some image types are rhel-only":
+        when:
+          not_distro_name: "rhel"
+        ignore_image_types:
+          - azure-eap7-rhui
+          - azure-rhui
+          - ec2-sap
+          - ec2-ha
+          - gce-rhui
     runner:
       name: "org.osbuild.rhel{{.MajorVersion}}{{.MinorVersion}}"
       build_packages: &rhel8_runner_build_packages
@@ -268,6 +289,14 @@ distros:
       aarch64: "registry.access.redhat.com/ubi{{.MajorVersion}}/ubi:latest"
       ppc64le: "registry.access.redhat.com/ubi{{.MajorVersion}}/ubi:latest"
       s390x: "registry.access.redhat.com/ubi{{.MajorVersion}}/ubi:latest"
+
+  - <<: *rhel8
+    name: "almalinux-{{.MajorVersion}}.{{.MinorVersion}}"
+    match: 'almalinux-8\.[0-9]{1,2}'
+    product: "AlmaLinux"
+    vendor: "almalinux"
+    ostree_ref_tmpl: "almalinux/8/%%s/edge"
+    iso_label_tmpl: "AlmaLinux-{{.Distro.MajorVersion}}-{{.Distro.MinorVersion}}-{{.Arch}}-dvd"
 
   - &centos8
     <<: *rhel8

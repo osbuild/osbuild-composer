@@ -864,7 +864,7 @@ func TestGetImageRequests_ImageTypeConversion(t *testing.T) {
 		{
 			requestedImageType: ImageTypesAws,
 			requestedDistros:   []string{fedora},
-			expectedImageType:  "server-ami",
+			expectedImageType:  "generic-ami",
 			expectedTargetName: target.TargetNameAWS,
 		},
 		{
@@ -894,7 +894,7 @@ func TestGetImageRequests_ImageTypeConversion(t *testing.T) {
 		{
 			requestedImageType: ImageTypesAzure,
 			requestedDistros:   []string{fedora},
-			expectedImageType:  "server-vhd",
+			expectedImageType:  "generic-vhd",
 			expectedTargetName: target.TargetNameAzureImage,
 		},
 		{
@@ -972,7 +972,7 @@ func TestGetImageRequests_ImageTypeConversion(t *testing.T) {
 		{
 			requestedImageType: ImageTypesGuestImage,
 			requestedDistros:   []string{fedora},
-			expectedImageType:  "server-qcow2",
+			expectedImageType:  "generic-qcow2",
 			expectedTargetName: target.TargetNameAWSS3,
 		},
 		{
@@ -1050,7 +1050,7 @@ func TestGetImageRequests_ImageTypeConversion(t *testing.T) {
 		{
 			requestedImageType: ImageTypesOci,
 			requestedDistros:   []string{fedora},
-			expectedImageType:  "server-oci",
+			expectedImageType:  "generic-oci",
 			expectedTargetName: target.TargetNameOCIObjectStorage,
 		},
 		{
@@ -1062,7 +1062,7 @@ func TestGetImageRequests_ImageTypeConversion(t *testing.T) {
 		{
 			requestedImageType: ImageTypesVsphere,
 			requestedDistros:   []string{fedora},
-			expectedImageType:  "server-vmdk",
+			expectedImageType:  "generic-vmdk",
 			expectedTargetName: target.TargetNameAWSS3,
 		},
 		{
@@ -1074,13 +1074,19 @@ func TestGetImageRequests_ImageTypeConversion(t *testing.T) {
 		{
 			requestedImageType: ImageTypesVsphereOva,
 			requestedDistros:   []string{fedora},
-			expectedImageType:  "server-ova",
+			expectedImageType:  "generic-ova",
 			expectedTargetName: target.TargetNameAWSS3,
 		},
 		{
 			requestedImageType: ImageTypesWsl,
-			requestedDistros:   []string{fedora, rhel8, centos8, rhel9, centos9},
+			requestedDistros:   []string{rhel8, centos8, rhel9, centos9},
 			expectedImageType:  "wsl",
+			expectedTargetName: target.TargetNameAWSS3,
+		},
+		{
+			requestedImageType: ImageTypesWsl,
+			requestedDistros:   []string{fedora},
+			expectedImageType:  "generic-wsl",
 			expectedTargetName: target.TargetNameAWSS3,
 		},
 	}

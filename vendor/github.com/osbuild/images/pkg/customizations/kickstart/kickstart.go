@@ -2,9 +2,11 @@ package kickstart
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
+
 	"github.com/osbuild/images/pkg/customizations/users"
 )
 
@@ -53,9 +55,16 @@ type Options struct {
 }
 
 func New(customizations *blueprint.Customizations) (*Options, error) {
-	options := &Options{
-		Users:  users.UsersFromBP(customizations.GetUsers()),
-		Groups: users.GroupsFromBP(customizations.GetGroups()),
+	options := &Options{}
+
+	bpUsers := users.UsersFromBP(customizations.GetUsers())
+	if len(bpUsers) > 0 {
+		options.Users = bpUsers
+	}
+
+	bpGroups := users.GroupsFromBP(customizations.GetGroups())
+	if len(bpGroups) > 0 {
+		options.Groups = users.GroupsFromBP(customizations.GetGroups())
 	}
 
 	instCust, err := customizations.GetInstaller()
@@ -74,6 +83,10 @@ func New(customizations *blueprint.Customizations) (*Options, error) {
 		return nil, err
 	}
 	return options, nil
+}
+
+func (options Options) IsZero() bool {
+	return reflect.ValueOf(options).IsZero()
 }
 
 func (options Options) Validate() error {

@@ -60,6 +60,11 @@ type TarStageOptions struct {
 
 	// Pass --transform=...
 	Transform string `json:"transform,omitempty"`
+
+	// Pass `--numeric-owner` which omits user and group names in metadata
+	// We often want this since name/group mapping can change the ownership
+	// of files during extraction.
+	NumericOwner *bool `json:"numeric-owner,omitempty"`
 }
 
 func (TarStageOptions) isStageOptions() {}

@@ -20,18 +20,12 @@ import (
 
 type AnacondaContainerInstallerLegacy struct {
 	Base
+	AnacondaInstallerBase
 
-	InstallerCustomizations manifest.InstallerCustomizations
-	ExtraBasePackages       rpmmd.PackageSet
-
-	RootfsCompression string
-
-	Ref string
+	ExtraBasePackages rpmmd.PackageSet
 
 	ContainerSource           container.SourceSpec
 	ContainerRemoveSignatures bool
-
-	Kickstart *kickstart.Options
 
 	// Locale for the installer. This should be set to the same locale as the
 	// ISO OS payload, if known.
@@ -41,11 +35,10 @@ type AnacondaContainerInstallerLegacy struct {
 	InstallRootfsType disk.FSType
 }
 
-func NewAnacondaContainerInstallerLegacy(platform platform.Platform, filename string, container container.SourceSpec, ref string) *AnacondaContainerInstallerLegacy {
+func NewAnacondaContainerInstallerLegacy(platform platform.Platform, filename string, container container.SourceSpec) *AnacondaContainerInstallerLegacy {
 	return &AnacondaContainerInstallerLegacy{
 		Base:            NewBase("container-installer", platform, filename),
 		ContainerSource: container,
-		Ref:             ref,
 	}
 }
 
@@ -108,23 +101,11 @@ func (img *AnacondaContainerInstallerLegacy) InstantiateManifest(m *manifest.Man
 	bootTreePipeline.KernelOpts = kernelOpts
 
 	isoTreePipeline := manifest.NewAnacondaInstallerISOTree(buildPipeline, anacondaPipeline, rootfsImagePipeline, bootTreePipeline)
-	isoTreePipeline.PartitionTable = efiBootPartitionTable(rng)
-	isoTreePipeline.Release = img.InstallerCustomizations.Release
-	isoTreePipeline.Kickstart = img.Kickstart
-
-	isoTreePipeline.RootfsCompression = img.RootfsCompression
-	isoTreePipeline.RootfsType = img.InstallerCustomizations.ISORootfsType
-
+	initIsoTreePipeline(isoTreePipeline, &img.AnacondaInstallerBase, rng)
 	// For ostree installers, always put the kickstart file in the root of the ISO
 	isoTreePipeline.PayloadPath = "/container"
 	isoTreePipeline.PayloadRemoveSignatures = img.ContainerRemoveSignatures
-
 	isoTreePipeline.ContainerSource = &img.ContainerSource
-	isoTreePipeline.ISOBoot = img.InstallerCustomizations.ISOBoot
-	if anacondaPipeline.InstallerCustomizations.FIPS {
-		isoTreePipeline.KernelOpts = append(isoTreePipeline.KernelOpts, "fips=1")
-	}
-
 	isoTreePipeline.InstallRootfsType = img.InstallRootfsType
 
 	isoPipeline := manifest.NewISO(buildPipeline, isoTreePipeline, img.InstallerCustomizations.ISOLabel)

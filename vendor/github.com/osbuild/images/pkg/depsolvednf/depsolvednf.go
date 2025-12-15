@@ -27,7 +27,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/rhsm"
 	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/images/pkg/sbom"
@@ -174,6 +173,16 @@ type DepsolveResult struct {
 	Solver   string
 }
 
+// DumpResult contains the results of a dump operation.
+type DumpResult struct {
+	Packages rpmmd.PackageList
+}
+
+// SearchResult contains the results of a search operation.
+type SearchResult struct {
+	Packages rpmmd.PackageList
+}
+
 // Create a new Solver with the given configuration. Initialising a Solver also loads system subscription information.
 func NewSolver(modulePlatformID, releaseVer, arch, distro, cacheDir string) *Solver {
 	s := NewBaseSolver(cacheDir)
@@ -208,62 +217,111 @@ func (s *Solver) SetProxy(proxy string) error {
 	return nil
 }
 
+// solverCfg creates a solverConfig from the Solver's current state.
+func (s *Solver) solverCfg() *solverConfig {
+	return &solverConfig{
+		modulePlatformID: s.modulePlatformID,
+		arch:             s.arch,
+		releaseVer:       s.releaseVer,
+		cacheDir:         s.GetCacheDir(),
+		rootDir:          s.rootDir,
+		proxy:            s.proxy,
+		subscriptions:    s.subscriptions,
+	}
+}
+
+// hashRequest computes a SHA256 hash of the request raw data for caching.
+func hashRequest(data []byte) string {
+	h := sha256.Sum256(data)
+	return fmt.Sprintf("%x", h[:])
+}
+
+// collectRepos extracts unique repos from package sets maintaining order
+func collectRepos(pkgSets []rpmmd.PackageSet) []rpmmd.RepoConfig {
+	seen := make(map[string]bool)
+	repos := make([]rpmmd.RepoConfig, 0)
+	for _, ps := range pkgSets {
+		for _, repo := range ps.Repositories {
+			id := repo.Hash()
+			if !seen[id] {
+				seen[id] = true
+				repos = append(repos, repo)
+			}
+		}
+	}
+	return repos
+}
+
 // Depsolve the list of required package sets with explicit excludes using
 // their associated repositories.  Each package set is depsolved as a separate
 // transactions in a chain.  It returns a list of all packages (with solved
 // dependencies) that will be installed into the system.
 func (s *Solver) Depsolve(pkgSets []rpmmd.PackageSet, sbomType sbom.StandardType) (*DepsolveResult, error) {
-	req, rhsmMap, err := s.makeDepsolveRequest(pkgSets, sbomType)
+	if err := validatePackageSetRepoChain(pkgSets); err != nil {
+		return nil, err
+	}
+
+	// XXX: we should let the depsolver handle subscriptions: https://github.com/osbuild/images/issues/2055
+	if err := validateSubscriptionsForRepos(pkgSets, s.subscriptions != nil, s.subscriptionsErr); err != nil {
+		return nil, err
+	}
+
+	cfg := s.solverCfg()
+	reqData, err := activeHandler.makeDepsolveRequest(cfg, pkgSets, sbomType)
 	if err != nil {
 		return nil, fmt.Errorf("makeDepsolveRequest failed: %w", err)
 	}
+
+	// collect all repos for error reporting
+	allRepos := collectRepos(pkgSets)
 
 	// get non-exclusive read lock
 	s.cache.locker.RLock()
 	defer s.cache.locker.RUnlock()
 
-	output, err := run(s.depsolveDNFCmd, req, s.Stderr)
+	output, err := run(s.depsolveDNFCmd, reqData, s.Stderr)
 	if err != nil {
-		return nil, fmt.Errorf("running osbuild-depsolve-dnf failed:\n%w", err)
+		return nil, parseError(output, allRepos)
 	}
+
 	// touch repos to now
 	now := time.Now().Local()
-	for _, r := range req.Arguments.Repos {
+	for _, r := range allRepos {
 		// ignore errors
 		_ = s.cache.touchRepo(r.Hash(), now)
 	}
 	s.cache.updateInfo()
 
-	var result depsolveResult
-	dec := json.NewDecoder(bytes.NewReader(output))
-	dec.DisallowUnknownFields()
-	if err := dec.Decode(&result); err != nil {
-		return nil, fmt.Errorf("decoding depsolve result failed: %w", err)
+	resultRaw, err := activeHandler.parseDepsolveResult(output)
+	if err != nil {
+		return nil, err
 	}
 
-	packages, modules, repos := result.toRPMMD(rhsmMap)
+	// Apply RHSM secrets to packages from RHSM repos.
+	applyRHSMSecrets(resultRaw.Packages, allRepos)
 
 	var sbomDoc *sbom.Document
 	if sbomType != sbom.StandardTypeNone {
-		sbomDoc, err = sbom.NewDocument(sbomType, result.SBOM)
+		sbomDoc, err = sbom.NewDocument(sbomType, resultRaw.SBOMRaw)
 		if err != nil {
 			return nil, fmt.Errorf("creating SBOM document failed: %w", err)
 		}
 	}
 
 	return &DepsolveResult{
-		Packages: packages,
-		Modules:  modules,
-		Repos:    repos,
+		Packages: resultRaw.Packages,
+		Modules:  resultRaw.Modules,
+		Repos:    resultRaw.Repos,
 		SBOM:     sbomDoc,
-		Solver:   result.Solver,
+		Solver:   resultRaw.Solver,
 	}, nil
 }
 
 // FetchMetadata returns the list of all the available packages in repos and
 // their info.
 func (s *Solver) FetchMetadata(repos []rpmmd.RepoConfig) (rpmmd.PackageList, error) {
-	req, err := s.makeDumpRequest(repos)
+	cfg := s.solverCfg()
+	reqData, err := activeHandler.makeDumpRequest(cfg, repos)
 	if err != nil {
 		return nil, err
 	}
@@ -273,13 +331,14 @@ func (s *Solver) FetchMetadata(repos []rpmmd.RepoConfig) (rpmmd.PackageList, err
 	defer s.cache.locker.RUnlock()
 
 	// Is this cached?
-	if pkgs, ok := s.resultCache.Get(req.Hash()); ok {
+	reqHash := hashRequest(reqData)
+	if pkgs, ok := s.resultCache.Get(reqHash); ok {
 		return pkgs, nil
 	}
 
-	rawRes, err := run(s.depsolveDNFCmd, req, s.Stderr)
+	rawRes, err := run(s.depsolveDNFCmd, reqData, s.Stderr)
 	if err != nil {
-		return nil, err
+		return nil, parseError(rawRes, repos)
 	}
 
 	// touch repos to now
@@ -290,28 +349,25 @@ func (s *Solver) FetchMetadata(repos []rpmmd.RepoConfig) (rpmmd.PackageList, err
 	}
 	s.cache.updateInfo()
 
-	var res dumpResult
-	if err := json.Unmarshal(rawRes, &res); err != nil {
+	res, err := activeHandler.parseDumpResult(rawRes)
+	if err != nil {
 		return nil, err
 	}
 
-	pkgs := res.toRPMMD()
-
-	sortID := func(pkg rpmmd.Package) string {
-		return fmt.Sprintf("%s-%s-%s", pkg.Name, pkg.Version, pkg.Release)
-	}
+	pkgs := res.Packages
 	sort.Slice(pkgs, func(i, j int) bool {
-		return sortID(pkgs[i]) < sortID(pkgs[j])
+		return pkgs[i].NVR() < pkgs[j].NVR()
 	})
 
 	// Cache the results
-	s.resultCache.Store(req.Hash(), pkgs)
+	s.resultCache.Store(reqHash, pkgs)
 	return pkgs, nil
 }
 
 // SearchMetadata searches for packages and returns a list of the info for matches.
 func (s *Solver) SearchMetadata(repos []rpmmd.RepoConfig, packages []string) (rpmmd.PackageList, error) {
-	req, err := s.makeSearchRequest(repos, packages)
+	cfg := s.solverCfg()
+	reqData, err := activeHandler.makeSearchRequest(cfg, repos, packages)
 	if err != nil {
 		return nil, err
 	}
@@ -321,13 +377,14 @@ func (s *Solver) SearchMetadata(repos []rpmmd.RepoConfig, packages []string) (rp
 	defer s.cache.locker.RUnlock()
 
 	// Is this cached?
-	if pkgs, ok := s.resultCache.Get(req.Hash()); ok {
+	reqHash := hashRequest(reqData)
+	if pkgs, ok := s.resultCache.Get(reqHash); ok {
 		return pkgs, nil
 	}
 
-	rawRes, err := run(s.depsolveDNFCmd, req, s.Stderr)
+	rawRes, err := run(s.depsolveDNFCmd, reqData, s.Stderr)
 	if err != nil {
-		return nil, err
+		return nil, parseError(rawRes, repos)
 	}
 
 	// touch repos to now
@@ -338,519 +395,100 @@ func (s *Solver) SearchMetadata(repos []rpmmd.RepoConfig, packages []string) (rp
 	}
 	s.cache.updateInfo()
 
-	var res searchResult
-	if err := json.Unmarshal(rawRes, &res); err != nil {
+	res, err := activeHandler.parseSearchResult(rawRes)
+	if err != nil {
 		return nil, err
 	}
 
-	pkgs := res.toRPMMD()
-
-	sortID := func(pkg rpmmd.Package) string {
-		return fmt.Sprintf("%s-%s-%s", pkg.Name, pkg.Version, pkg.Release)
-	}
+	pkgs := res.Packages
 	sort.Slice(pkgs, func(i, j int) bool {
-		return sortID(pkgs[i]) < sortID(pkgs[j])
+		return pkgs[i].NVR() < pkgs[j].NVR()
 	})
 
 	// Cache the results
-	s.resultCache.Store(req.Hash(), pkgs)
+	s.resultCache.Store(reqHash, pkgs)
 	return pkgs, nil
 }
 
-func (s *Solver) reposFromRPMMD(rpmRepos []rpmmd.RepoConfig) ([]repoConfig, error) {
-	dnfRepos := make([]repoConfig, len(rpmRepos))
-	for idx, rr := range rpmRepos {
-		dr := repoConfig{
-			ID:             rr.Hash(),
-			Name:           rr.Name,
-			BaseURLs:       rr.BaseURLs,
-			Metalink:       rr.Metalink,
-			MirrorList:     rr.MirrorList,
-			GPGKeys:        rr.GPGKeys,
-			MetadataExpire: rr.MetadataExpire,
-			SSLCACert:      rr.SSLCACert,
-			SSLClientKey:   rr.SSLClientKey,
-			SSLClientCert:  rr.SSLClientCert,
-			repoHash:       rr.Hash(),
-		}
-		if rr.ModuleHotfixes != nil {
-			val := *rr.ModuleHotfixes
-			dr.ModuleHotfixes = &val
-		}
-
-		if rr.CheckGPG != nil {
-			dr.GPGCheck = *rr.CheckGPG
-		}
-
-		if rr.CheckRepoGPG != nil {
-			dr.RepoGPGCheck = *rr.CheckRepoGPG
-		}
-
-		if rr.IgnoreSSL != nil {
-			dr.SSLVerify = common.ToPtr(!*rr.IgnoreSSL)
-		}
-
-		if rr.RHSM {
-			if s.subscriptions == nil {
-				return nil, fmt.Errorf("This system does not have any valid subscriptions. Subscribe it before specifying rhsm: true in sources (error details: %w)", s.subscriptionsErr)
-			}
-			secrets, err := s.subscriptions.GetSecretsForBaseurl(rr.BaseURLs, s.arch, s.releaseVer)
-			if err != nil {
-				return nil, fmt.Errorf("RHSM secrets not found on the host for this baseurl: %s", rr.BaseURLs)
-			}
-			dr.SSLCACert = secrets.SSLCACert
-			dr.SSLClientKey = secrets.SSLClientKey
-			dr.SSLClientCert = secrets.SSLClientCert
-		}
-
-		dnfRepos[idx] = dr
+// applyRHSMSecrets overrides the Secrets field on packages from RHSM repos.
+// The activeHandler sets "org.osbuild.mtls" for repos with SSLClientKey,
+// but RHSM repos need "org.osbuild.rhsm" instead.
+func applyRHSMSecrets(pkgs rpmmd.PackageList, repos []rpmmd.RepoConfig) {
+	rhsmRepos := make(map[string]bool)
+	for _, repo := range repos {
+		rhsmRepos[repo.Hash()] = repo.RHSM
 	}
-	return dnfRepos, nil
+	for i := range pkgs {
+		if rhsmRepos[pkgs[i].RepoID] {
+			pkgs[i].Secrets = "org.osbuild.rhsm"
+		}
+	}
 }
 
-// Repository configuration for resolving dependencies for a set of packages. A
-// Solver needs at least one RPM repository configured to be able to depsolve.
-type repoConfig struct {
-	ID             string   `json:"id"`
-	Name           string   `json:"name,omitempty"`
-	BaseURLs       []string `json:"baseurl,omitempty"`
-	Metalink       string   `json:"metalink,omitempty"`
-	MirrorList     string   `json:"mirrorlist,omitempty"`
-	GPGKeys        []string `json:"gpgkeys,omitempty"`
-	GPGCheck       bool     `json:"gpgcheck"`
-	RepoGPGCheck   bool     `json:"repo_gpgcheck"`
-	SSLVerify      *bool    `json:"sslverify,omitempty"`
-	SSLCACert      string   `json:"sslcacert,omitempty"`
-	SSLClientKey   string   `json:"sslclientkey,omitempty"`
-	SSLClientCert  string   `json:"sslclientcert,omitempty"`
-	MetadataExpire string   `json:"metadata_expire,omitempty"`
-	ModuleHotfixes *bool    `json:"module_hotfixes,omitempty"`
-	// set the repo hass from `rpmmd.RepoConfig.Hash()` function
-	// rather than re-calculating it
-	repoHash string
+// validatePackageSetRepoChain validates that the repository chain is valid.
+// It checks that:
+//   - Each package set uses all of the repositories used by its predecessor.
+//     NOTE: Due to implementation limitations of DNF and osbuild-depsolve-dnf,
+//     each package set in the chain must use all of the repositories used by
+//     its predecessor.
+func validatePackageSetRepoChain(pkgSets []rpmmd.PackageSet) error {
+	if len(pkgSets) <= 1 {
+		return nil
+	}
+
+	// XXX: we should also verify that no package set has an empty `Include` list.
+
+	for dsIdx := 1; dsIdx < len(pkgSets); dsIdx++ {
+		prevRepoIDs := make([]string, len(pkgSets[dsIdx-1].Repositories))
+		for i, r := range pkgSets[dsIdx-1].Repositories {
+			prevRepoIDs[i] = r.Hash()
+		}
+
+		currRepoIDs := make([]string, len(pkgSets[dsIdx].Repositories))
+		for i, r := range pkgSets[dsIdx].Repositories {
+			currRepoIDs[i] = r.Hash()
+		}
+
+		if len(currRepoIDs) < len(prevRepoIDs) {
+			return fmt.Errorf("chained packageSet %d does not use all of the repos used by its predecessor", dsIdx)
+		}
+
+		for idx, repoID := range prevRepoIDs {
+			if repoID != currRepoIDs[idx] {
+				return fmt.Errorf("chained packageSet %d does not use all of the repos used by its predecessor", dsIdx)
+			}
+		}
+	}
+	return nil
 }
 
-// use the hash calculated by the `rpmmd.RepoConfig.Hash()`
-// function rather than re-implementing the same code
-func (r *repoConfig) Hash() string {
-	return r.repoHash
-}
-
-// Helper function for creating a depsolve request payload. The request defines
-// a sequence of transactions, each depsolving one of the elements of `pkgSets`
-// in the order they appear. The repositories are collected in the request
-// arguments indexed by their ID, and each transaction lists the repositories
-// it will use for depsolving.
-//
-// The second return value is a map of repository IDs that have RHSM enabled.
-// The RHSM property is not part of the dnf repository configuration so it's
-// returned separately for setting the value on each package that requires it.
-//
-// NOTE: Due to implementation limitations of DNF and osbuild-depsolve-dnf,
-// each package set in the chain must use all of the repositories used by its
-// predecessor. An error is returned if this requirement is not met.
-func (s *Solver) makeDepsolveRequest(pkgSets []rpmmd.PackageSet, sbomType sbom.StandardType) (*Request, map[string]bool, error) {
-	// dedupe repository configurations but maintain order
-	// the order in which repositories are added to the request affects the
-	// order of the dependencies in the result
-	repos := make([]rpmmd.RepoConfig, 0)
-	rhsmMap := make(map[string]bool)
-
+// validateSubscriptionsForRepos checks that RHSM subscriptions are available
+// for any repositories that require them.
+func validateSubscriptionsForRepos(pkgSets []rpmmd.PackageSet, haveSubscriptions bool, subsErr error) error {
 	for _, ps := range pkgSets {
 		for _, repo := range ps.Repositories {
-			id := repo.Hash()
-			if _, ok := rhsmMap[id]; !ok {
-				rhsmMap[id] = repo.RHSM
-				repos = append(repos, repo)
+			if repo.RHSM && !haveSubscriptions {
+				return fmt.Errorf("This system does not have any valid subscriptions. Subscribe it before specifying rhsm: true in sources (error details: %w)", subsErr)
 			}
 		}
 	}
-
-	transactions := make([]transactionArgs, len(pkgSets))
-	for dsIdx, pkgSet := range pkgSets {
-		transactions[dsIdx] = transactionArgs{
-			PackageSpecs:      pkgSet.Include,
-			ExcludeSpecs:      pkgSet.Exclude,
-			ModuleEnableSpecs: pkgSet.EnabledModules,
-			InstallWeakDeps:   pkgSet.InstallWeakDeps,
-		}
-
-		for _, jobRepo := range pkgSet.Repositories {
-			transactions[dsIdx].RepoIDs = append(transactions[dsIdx].RepoIDs, jobRepo.Hash())
-		}
-
-		// If more than one transaction, ensure that the transaction uses
-		// all of the repos from its predecessor
-		if dsIdx > 0 {
-			prevRepoIDs := transactions[dsIdx-1].RepoIDs
-			if len(transactions[dsIdx].RepoIDs) < len(prevRepoIDs) {
-				return nil, nil, fmt.Errorf("chained packageSet %d does not use all of the repos used by its predecessor", dsIdx)
-			}
-
-			for idx, repoID := range prevRepoIDs {
-				if repoID != transactions[dsIdx].RepoIDs[idx] {
-					return nil, nil, fmt.Errorf("chained packageSet %d does not use all of the repos used by its predecessor", dsIdx)
-				}
-			}
-		}
-	}
-
-	dnfRepoMap, err := s.reposFromRPMMD(repos)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	args := arguments{
-		Repos:            dnfRepoMap,
-		RootDir:          s.rootDir,
-		Transactions:     transactions,
-		OptionalMetadata: s.optionalMetadataForDistro(),
-	}
-
-	req := Request{
-		Command:          "depsolve",
-		ModulePlatformID: s.modulePlatformID,
-		Arch:             s.arch,
-		Releasever:       s.releaseVer,
-		CacheDir:         s.GetCacheDir(),
-		Proxy:            s.proxy,
-		Arguments:        args,
-	}
-
-	if sbomType != sbom.StandardTypeNone {
-		req.Arguments.Sbom = &sbomRequest{Type: sbomType.String()}
-	}
-
-	return &req, rhsmMap, nil
+	return nil
 }
 
-func (s *Solver) optionalMetadataForDistro() []string {
+// optionalMetadataForDistro returns optional repository metadata types
+// that should be downloaded for the given distro.
+func optionalMetadataForDistro(modulePlatformID string) []string {
 	// filelist repo metadata is required when using newer versions of libdnf
 	// with old repositories or packages that specify dependencies on files.
 	// EL10+ and Fedora 40+ packaging guidelines prohibit depending on
 	// filepaths so filelist downloads are disabled by default and are not
 	// required when depsolving for those distros. Explicitly enable the option
 	// for older distro versions in case we are using a newer libdnf.
-	switch s.modulePlatformID {
+	switch modulePlatformID {
 	case "platform:f39", "platform:el7", "platform:el8", "platform:el9":
 		return []string{"filelists"}
 	}
 	return nil
-}
-
-// Helper function for creating a dump request payload
-func (s *Solver) makeDumpRequest(repos []rpmmd.RepoConfig) (*Request, error) {
-	dnfRepos, err := s.reposFromRPMMD(repos)
-	if err != nil {
-		return nil, err
-	}
-	req := Request{
-		Command:          "dump",
-		ModulePlatformID: s.modulePlatformID,
-		Arch:             s.arch,
-		Releasever:       s.releaseVer,
-		CacheDir:         s.GetCacheDir(),
-		Proxy:            s.proxy,
-		Arguments: arguments{
-			Repos: dnfRepos,
-		},
-	}
-	return &req, nil
-}
-
-// Helper function for creating a search request payload
-func (s *Solver) makeSearchRequest(repos []rpmmd.RepoConfig, packages []string) (*Request, error) {
-	dnfRepos, err := s.reposFromRPMMD(repos)
-	if err != nil {
-		return nil, err
-	}
-	req := Request{
-		Command:          "search",
-		ModulePlatformID: s.modulePlatformID,
-		Arch:             s.arch,
-		CacheDir:         s.GetCacheDir(),
-		Releasever:       s.releaseVer,
-		Proxy:            s.proxy,
-		Arguments: arguments{
-			Repos: dnfRepos,
-			Search: searchArgs{
-				Packages: packages,
-			},
-		},
-	}
-	return &req, nil
-}
-
-// convert internal a list of PackageSpecs and map of repoConfig to the rpmmd
-// equivalents and attach key and subscription information based on the
-// repository configs.
-func (result depsolveResult) toRPMMD(rhsm map[string]bool) (rpmmd.PackageList, []rpmmd.ModuleSpec, []rpmmd.RepoConfig) {
-	pkgs := result.Packages
-	repos := result.Repos
-	rpmDependencies := make(rpmmd.PackageList, len(pkgs))
-	for i, dep := range pkgs {
-		repo, ok := repos[dep.RepoID]
-		if !ok {
-			panic("dependency repo ID not found in repositories")
-		}
-		dep := pkgs[i]
-		rpmDependencies[i].Name = dep.Name
-		rpmDependencies[i].Epoch = dep.Epoch
-		rpmDependencies[i].Version = dep.Version
-		rpmDependencies[i].Release = dep.Release
-		rpmDependencies[i].Arch = dep.Arch
-		rpmDependencies[i].RemoteLocations = []string{dep.RemoteLocation}
-
-		depChecksum := strings.Split(dep.Checksum, ":")
-		if len(depChecksum) != 2 {
-			panic(fmt.Sprintf("invalid checksum format for package %s: %s", dep.Name, dep.Checksum))
-		}
-		rpmDependencies[i].Checksum = rpmmd.Checksum{
-			Type:  depChecksum[0],
-			Value: depChecksum[1],
-		}
-		rpmDependencies[i].CheckGPG = repo.GPGCheck
-		rpmDependencies[i].RepoID = dep.RepoID
-		rpmDependencies[i].Location = dep.Path
-		if verify := repo.SSLVerify; verify != nil {
-			rpmDependencies[i].IgnoreSSL = !*verify
-		}
-
-		// The ssl secrets will also be set if rhsm is true,
-		// which should take priority.
-		if rhsm[dep.RepoID] {
-			rpmDependencies[i].Secrets = "org.osbuild.rhsm"
-		} else if repo.SSLClientKey != "" {
-			rpmDependencies[i].Secrets = "org.osbuild.mtls"
-		}
-	}
-
-	mods := result.Modules
-	moduleSpecs := make([]rpmmd.ModuleSpec, len(mods))
-
-	i := 0
-	for _, mod := range mods {
-		moduleSpecs[i].ModuleConfigFile.Data.Name = mod.ModuleConfigFile.Data.Name
-		moduleSpecs[i].ModuleConfigFile.Data.Stream = mod.ModuleConfigFile.Data.Stream
-		moduleSpecs[i].ModuleConfigFile.Data.State = mod.ModuleConfigFile.Data.State
-		moduleSpecs[i].ModuleConfigFile.Data.Profiles = mod.ModuleConfigFile.Data.Profiles
-
-		moduleSpecs[i].FailsafeFile.Path = mod.FailsafeFile.Path
-		moduleSpecs[i].FailsafeFile.Data = mod.FailsafeFile.Data
-
-		i++
-	}
-
-	repoConfigs := make([]rpmmd.RepoConfig, 0, len(repos))
-	for repoID := range repos {
-		repo := repos[repoID]
-		var ignoreSSL bool
-		if sslVerify := repo.SSLVerify; sslVerify != nil {
-			ignoreSSL = !*sslVerify
-		}
-		repoConfigs = append(repoConfigs, rpmmd.RepoConfig{
-			Id:             repo.ID,
-			Name:           repo.Name,
-			BaseURLs:       repo.BaseURLs,
-			Metalink:       repo.Metalink,
-			MirrorList:     repo.MirrorList,
-			GPGKeys:        repo.GPGKeys,
-			CheckGPG:       &repo.GPGCheck,
-			CheckRepoGPG:   &repo.RepoGPGCheck,
-			IgnoreSSL:      &ignoreSSL,
-			MetadataExpire: repo.MetadataExpire,
-			ModuleHotfixes: repo.ModuleHotfixes,
-			Enabled:        common.ToPtr(true),
-			SSLCACert:      repo.SSLCACert,
-			SSLClientKey:   repo.SSLClientKey,
-			SSLClientCert:  repo.SSLClientCert,
-		})
-	}
-	return rpmDependencies, moduleSpecs, repoConfigs
-}
-
-// Request command and arguments for osbuild-depsolve-dnf
-type Request struct {
-	// Command should be either "depsolve" or "dump"
-	Command string `json:"command"`
-
-	// Platform ID, e.g., "platform:el8"
-	ModulePlatformID string `json:"module_platform_id"`
-
-	// Distro Releasever, e.e., "8"
-	Releasever string `json:"releasever"`
-
-	// System architecture
-	Arch string `json:"arch"`
-
-	// Cache directory for the DNF metadata
-	CacheDir string `json:"cachedir"`
-
-	// Proxy to use
-	Proxy string `json:"proxy"`
-
-	// Arguments for the action defined by Command
-	Arguments arguments `json:"arguments"`
-}
-
-// Hash returns a hash of the unique aspects of the Request
-//
-//nolint:errcheck
-func (r *Request) Hash() string {
-	h := sha256.New()
-
-	h.Write([]byte(r.Command))
-	h.Write([]byte(r.ModulePlatformID))
-	h.Write([]byte(r.Arch))
-	for _, repo := range r.Arguments.Repos {
-		h.Write([]byte(repo.Hash()))
-	}
-	fmt.Fprintf(h, "%T", r.Arguments.Search.Latest)
-	h.Write([]byte(strings.Join(r.Arguments.Search.Packages, "")))
-
-	return fmt.Sprintf("%x", h.Sum(nil))
-}
-
-type sbomRequest struct {
-	Type string `json:"type"`
-}
-
-// arguments for a osbuild-depsolve-dnf request
-type arguments struct {
-	// Repositories to use for depsolving
-	Repos []repoConfig `json:"repos"`
-
-	// Search terms to use with search command
-	Search searchArgs `json:"search"`
-
-	// Depsolve package sets and repository mappings for this request
-	Transactions []transactionArgs `json:"transactions"`
-
-	// Load repository configurations, gpg keys, and vars from an os-root-like
-	// tree.
-	RootDir string `json:"root_dir"`
-
-	// Optional metadata to download for the repositories
-	OptionalMetadata []string `json:"optional-metadata,omitempty"`
-
-	// Optionally request an SBOM from depsolving
-	Sbom *sbomRequest `json:"sbom,omitempty"`
-}
-
-type searchArgs struct {
-	// Only include latest NEVRA when true
-	Latest bool `json:"latest"`
-
-	// List of package name globs to search for
-	// If it has '*' it is passed to dnf glob search, if it has *name* it is passed
-	// to substr matching, and if it has neither an exact match is expected.
-	Packages []string `json:"packages"`
-}
-
-type transactionArgs struct {
-	// Packages to depsolve
-	PackageSpecs []string `json:"package-specs"`
-
-	// Packages to exclude from results
-	ExcludeSpecs []string `json:"exclude-specs"`
-
-	// Modules to enable during depsolve
-	ModuleEnableSpecs []string `json:"module-enable-specs,omitempty"`
-
-	// IDs of repositories to use for this depsolve
-	RepoIDs []string `json:"repo-ids"`
-
-	// If we want weak deps for this depsolve
-	InstallWeakDeps bool `json:"install_weak_deps"`
-}
-
-type packageSpecs []packageSpec
-type moduleSpecs map[string]moduleSpec
-
-type depsolveResult struct {
-	Packages packageSpecs          `json:"packages"`
-	Repos    map[string]repoConfig `json:"repos"`
-	Modules  moduleSpecs           `json:"modules"`
-
-	// (optional) contains the solver used, e.g. "dnf5"
-	Solver string `json:"solver,omitempty"`
-
-	// (optional) contains the SBOM for the depsolved transaction
-	SBOM json.RawMessage `json:"sbom,omitempty"`
-}
-
-// legacyPackageList represents the old 'PackageList' structure, which
-// was used for both dump and search results. It is kept here for unmarshaling
-// the results.
-type legacyPackageList []struct {
-	Name        string    `json:"name"`
-	Summary     string    `json:"summary"`
-	Description string    `json:"description"`
-	URL         string    `json:"url"`
-	Epoch       uint      `json:"epoch"`
-	Version     string    `json:"version"`
-	Release     string    `json:"release"`
-	Arch        string    `json:"arch"`
-	BuildTime   time.Time `json:"build_time"`
-	License     string    `json:"license"`
-}
-
-type dumpResult = legacyPackageList
-type searchResult = legacyPackageList
-
-func (pl legacyPackageList) toRPMMD() rpmmd.PackageList {
-	rpmPkgs := make(rpmmd.PackageList, len(pl))
-	for i, p := range pl {
-		rpmPkgs[i] = rpmmd.Package{
-			Name:        p.Name,
-			Summary:     p.Summary,
-			Description: p.Description,
-			URL:         p.URL,
-			Epoch:       p.Epoch,
-			Version:     p.Version,
-			Release:     p.Release,
-			Arch:        p.Arch,
-			BuildTime:   p.BuildTime,
-			License:     p.License,
-		}
-	}
-	return rpmPkgs
-}
-
-// Package specification
-type packageSpec struct {
-	Name           string `json:"name"`
-	Epoch          uint   `json:"epoch"`
-	Version        string `json:"version,omitempty"`
-	Release        string `json:"release,omitempty"`
-	Arch           string `json:"arch,omitempty"`
-	RepoID         string `json:"repo_id,omitempty"`
-	Path           string `json:"path,omitempty"`
-	RemoteLocation string `json:"remote_location,omitempty"`
-	Checksum       string `json:"checksum,omitempty"`
-}
-
-// Module specification
-type moduleSpec struct {
-	ModuleConfigFile moduleConfigFile   `json:"module-file"`
-	FailsafeFile     moduleFailsafeFile `json:"failsafe-file"`
-}
-
-type moduleConfigFile struct {
-	Path string           `json:"path"`
-	Data moduleConfigData `json:"data"`
-}
-
-type moduleConfigData struct {
-	Name     string   `json:"name"`
-	Stream   string   `json:"stream"`
-	Profiles []string `json:"profiles"`
-	State    string   `json:"state"`
-}
-
-type moduleFailsafeFile struct {
-	Path string `json:"path"`
-	Data string `json:"data"`
 }
 
 // osbuild-depsolve-dnf error structure
@@ -866,7 +504,7 @@ func (err Error) Error() string {
 // parseError parses the response from osbuild-depsolve-dnf into the Error type and appends
 // the name and URL of a repository to all detected repository IDs in the
 // message.
-func parseError(data []byte, repos []repoConfig) Error {
+func parseError(data []byte, repos []rpmmd.RepoConfig) Error {
 	var e Error
 	if len(data) == 0 {
 		return Error{
@@ -885,7 +523,7 @@ func parseError(data []byte, repos []repoConfig) Error {
 
 	// append to any instance of a repository ID the URL (or metalink, mirrorlist, etc)
 	for _, repo := range repos {
-		idstr := fmt.Sprintf("'%s'", repo.ID)
+		idstr := fmt.Sprintf("'%s'", repo.Hash())
 		var nameURL string
 		if len(repo.BaseURLs) > 0 {
 			nameURL = strings.Join(repo.BaseURLs, ",")
@@ -903,23 +541,12 @@ func parseError(data []byte, repos []repoConfig) Error {
 
 	return e
 }
-func ParseError(data []byte) Error {
-	var e Error
-	if err := json.Unmarshal(data, &e); err != nil {
-		// dumping the error into the Reason can get noisy, but it's good for troubleshooting
-		return Error{
-			Kind:   "InternalError",
-			Reason: fmt.Sprintf("Failed to unmarshal osbuild-depsolve-dnf error output %q: %s", string(data), err.Error()),
-		}
-	}
-	return e
-}
 
-func run(dnfJsonCmd []string, req *Request, stderr io.Writer) ([]byte, error) {
+func run(dnfJsonCmd []string, reqData []byte, stderr io.Writer) ([]byte, error) {
 	if len(dnfJsonCmd) == 0 {
 		dnfJsonCmd = []string{findDepsolveDnf()}
 	}
-	if len(dnfJsonCmd) == 0 {
+	if len(dnfJsonCmd) == 0 || len(dnfJsonCmd[0]) == 0 {
 		return nil, fmt.Errorf("osbuild-depsolve-dnf command undefined")
 	}
 	ex := dnfJsonCmd[0]
@@ -946,16 +573,16 @@ func run(dnfJsonCmd []string, req *Request, stderr io.Writer) ([]byte, error) {
 		return nil, fmt.Errorf("starting %s failed: %w", ex, err)
 	}
 
-	err = json.NewEncoder(stdin).Encode(req)
+	_, err = stdin.Write(reqData)
 	if err != nil {
-		return nil, fmt.Errorf("encoding request for %s failed: %w", ex, err)
+		return nil, fmt.Errorf("writing request data to stdin for %s failed: %w", ex, err)
 	}
 	stdin.Close()
 
 	err = cmd.Wait()
 	output := stdout.Bytes()
 	if runError, ok := err.(*exec.ExitError); ok && runError.ExitCode() != 0 {
-		return nil, parseError(output, req.Arguments.Repos)
+		return output, fmt.Errorf("depsolve failed with exit code %d", runError.ExitCode())
 	}
 	return output, nil
 }

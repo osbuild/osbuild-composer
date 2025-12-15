@@ -1,6 +1,53 @@
 ---
 .common:
-  cloud_base_pkgset: &cloud_base_pkgset
+  server_core_pkgset: &server_core_pkgset
+    include:
+      - "@server-product-environment"
+      - "@domain-client"
+      - "glibc-all-langpacks"
+      - "initial-setup"
+      - "lvm2"
+      - "xfsprogs"
+    exclude:
+      - "initial-setup-gui"
+      - "plymouth"
+
+  server_guest_pkgset: &server_guest_pkgset
+    include:
+      - "@guest-agents"
+    exclude:
+      - "dracut-config-rescue"
+      - "*-firmware"
+      - "smartmontools"
+      - "smartmontools-selinux"
+
+  server_host_pkgset: &server_host_pkgset
+    include:
+      - "@container-management"
+      - "@server-hardware-support"
+      - "dracut-config-rescue"
+      - "kernel"
+      - "linux-firmware"
+
+  cloud_core_pkgset: &cloud_core_pkgset
+    include:
+      - "@cloud-server-environment"
+      - "btrfs-progs"
+      - "python3-dnf-plugin-tracer"
+      - "glibc-langpack-en"
+    exclude:
+      - "dracut-config-rescue"
+      - "firewalld"
+      - "fwupd"
+      - "*-firmware"
+      - "geolite2-city"
+      - "geolite2-country"
+      - "plymouth"
+      # XXX we want to exclude kernel here
+      # XXX so we get kernel-core?
+      # XXX same for server
+
+  generic_base_pkgset: &generic_base_pkgset
     include:
       - "@Fedora Cloud Server"
       - "chrony"  # not mentioned in the kickstart anaconda pulls it when setting the timezone
@@ -137,13 +184,6 @@
       - "xrdb"
       - "xz"
     conditions:
-      "f41 and below use tigervnc":
-        when:
-          version_less_than: "42"
-        append:
-          include:
-            - "tigervnc-server-minimal"
-            - "tigervnc-server-module"
       "x86_64 specific anaconda pkgs":
         when:
           arch: "x86_64"
@@ -175,7 +215,7 @@
   kernel_options:
     default_kernel_optons:
       - "ro"
-    cloud_kernel_options: &cloud_kernel_options
+    generic_kernel_options: &generic_kernel_options
       - "no_timer_check"
       - "console=tty1"
       - "console=ttyS0,115200n8"
@@ -418,13 +458,6 @@
     lorax_logos_package: fedora-logos
     lorax_release_package: fedora-release
     conditions: &default_installer_config_conditions
-      "f41 dracut requires ifcfg, rootfs is squashfs":
-        when:
-          version_equal: "41"
-        shallow_merge:
-          additional_dracut_modules:
-            - "ifcfg"
-            - "dbus-broker"
       "x86_64 uses grub2":
         when:
           arch: "x86_64"
@@ -447,27 +480,6 @@
         - "redboot-task-runner"
       kernel_options: *ostree_deployment_kernel_options
       conditions:
-        "f41 and below used zezere and parsec":
-          when:
-            version_less_than: "42"
-          shallow_merge:
-            enabled_services:
-              - "NetworkManager.service"
-              - "firewalld.service"
-              - "sshd.service"
-              - "greenboot-grub2-set-counter"
-              - "greenboot-grub2-set-success"
-              - "greenboot-healthcheck"
-              - "greenboot-rpm-ostree-grub2-check-fallback"
-              - "greenboot-status"
-              - "greenboot-task-runner"
-              - "redboot-auto-reboot"
-              - "redboot-task-runner"
-              # only in < 42
-              - "zezere_ignition.timer"
-              - "zezere_ignition_banner.service"
-              - "parsec"
-              - "dbus-parsec"
         "f43 uses new greenboot":
           when:
             version_greater_or_equal: "43"
@@ -485,6 +497,10 @@
       ostree_conf_sysroot_readonly: true
       lock_root_user: true
 
+    ostree_server: &ostree_server
+      port: &ostree_server_port "8080"
+      config_path: &ostree_server_config_path "/etc/nginx.conf"
+
   disk_sizes:
     default_required_partition_sizes: &default_required_dir_sizes
       "/": "1 GiB"
@@ -494,12 +510,18 @@
     ids:
       - &prep_partition_dosid "41"
       - &filesystem_linux_dosid "83"
+      - &filesystem_linux_lvm_dosid "8e"
       - &fat16_bdosid "06"
     guids:
       - &bios_boot_partition_guid "21686148-6449-6E6F-744E-656564454649"
+      - &prep_boot_partition_guid "21686148-6449-6E6F-744E-656564454649"
       - &efi_system_partition_guid "C12A7328-F81F-11D2-BA4B-00A0C93EC93B"
       - &filesystem_data_guid "0FC63DAF-8483-4772-8E79-3D69D8477DE4"
       - &xboot_ldr_partition_guid "BC13C2FF-59E6-4262-A352-B275FD6F7172"
+      - &root_partition_guid_x86_64 "4f68bce3-e8cd-4db1-96e7-fbcaf984b709"
+      - &root_partition_guid_aarch64 "b921b045-1df0-41c3-af44-4c6f280d3fae"
+      - &root_partition_guid_ppc64le "c31c45e6-3f39-412e-80fb-4809c4980599"
+      - &root_partition_guid_s390x "5eead9a9-fe09-4a1e-a1d7-520d00531306"
 
     # the invidual partitions for easier composibility
     partitions:
@@ -522,7 +544,7 @@
         size: "2 GiB"
         type: *filesystem_data_guid
         payload_type: "filesystem"
-        payload:
+        payload: &default_partition_table_part_boot_payload
           type: "ext4"
           mountpoint: "/boot"
           label: "boot"
@@ -599,6 +621,124 @@
         payload:
           <<: *iot_base_partition_table_part_root_payload
           fstab_options: "defaults,ro"
+
+      # Fedora Server uses XFS on top of LVM
+      - &server_partition_table_part_bios
+        <<: *default_partition_table_part_bios
+        size: "2 MiB"
+      - &server_partition_table_part_efi
+        <<: *default_partition_table_part_efi
+        size: "500 MiB"
+      - &server_partition_table_part_boot
+        <<: *default_partition_table_part_boot
+        type: *xboot_ldr_partition_guid
+        payload:
+          <<: *default_partition_table_part_boot_payload
+          type: "xfs"
+      - &server_partition_table_part_root
+        payload_type: "lvm"
+        payload:
+          name: "systemVG"
+          description: "built with lvm2"
+          logical_volumes:
+            - size: "3 GiB"
+              name: "LVroot"
+              payload_type: "filesystem"
+              payload:
+                type: "xfs"
+                label: "root"
+                mountpoint: "/"
+                fstab_options: "defaults"
+
+      # Fedora Cloud uses BTRFS and ext4 boot
+      - &cloud_partition_table_part_bios
+        <<: *default_partition_table_part_bios
+        size: "2 MiB"
+      - &cloud_partition_table_part_efi
+        <<: *default_partition_table_part_efi
+        size: "100 MiB"
+      - &cloud_partition_table_part_boot
+        <<: *default_partition_table_part_boot
+        type: *xboot_ldr_partition_guid
+        payload:
+          <<: *default_partition_table_part_boot_payload
+          type: "ext4"
+      - &cloud_partition_table_part_root
+        payload_type: "btrfs"
+        payload:
+          subvolumes:
+            - name: "root"  # @root=root XXX
+              mountpoint: "/"
+            - name: "home"
+              mountpoint: "/home"
+              # XXX we want a parent and no mountpoint
+            - name: "var"
+              mountpoint: "/var"
+              # XXX we want a parent and no mountpoint
+
+    server_partition_tables: &server_partition_tables
+      x86_64:
+        type: "gpt"
+        partitions:
+          - *server_partition_table_part_bios
+          - *server_partition_table_part_efi
+          - *server_partition_table_part_boot
+          - <<: *server_partition_table_part_root
+            type: *root_partition_guid_x86_64
+      aarch64:
+        type: "gpt"
+        partitions:
+          - *server_partition_table_part_efi
+          - *server_partition_table_part_boot
+          - <<: *server_partition_table_part_root
+            type: *root_partition_guid_aarch64
+      ppc64le:
+        type: "gpt"
+        partitions:
+          - size: "8 MiB"
+            type: *prep_boot_partition_guid
+          - *server_partition_table_part_boot
+          - <<: *server_partition_table_part_root
+            type: *root_partition_guid_ppc64le
+      s390x:
+        type: "dos"
+        partitions:
+          - <<: *server_partition_table_part_boot
+            type: *filesystem_linux_dosid
+          - <<: *server_partition_table_part_root
+            type: *filesystem_linux_lvm_dosid
+
+    cloud_partition_tables: &cloud_partition_tables
+      x86_64:
+        type: "gpt"
+        partitions:
+          - *cloud_partition_table_part_bios
+          - *cloud_partition_table_part_efi
+          - *cloud_partition_table_part_boot
+          - <<: *cloud_partition_table_part_root
+            type: *root_partition_guid_x86_64
+      aarch64:
+        type: "gpt"
+        partitions:
+          - *cloud_partition_table_part_efi
+          - *cloud_partition_table_part_boot
+          - <<: *cloud_partition_table_part_root
+            type: *root_partition_guid_aarch64
+      ppc64le:
+        type: "gpt"
+        partitions:
+          - size: "8 MiB"
+            type: *prep_boot_partition_guid
+          - *cloud_partition_table_part_boot
+          - <<: *cloud_partition_table_part_root
+            type: *root_partition_guid_ppc64le
+      s390x:
+        type: "dos"
+        partitions:
+          - <<: *cloud_partition_table_part_boot
+            type: *filesystem_linux_dosid
+          - <<: *cloud_partition_table_part_root
+            type: *filesystem_linux_dosid
 
     default_partition_tables: &default_partition_tables
       x86_64:
@@ -682,7 +822,7 @@
         partitions:
           - *iot_base_partition_table_part_efi
           - *iot_base_partition_table_part_boot
-          - *iot_base_partition_table_part_root
+          - *iot_base_partition_table_part_root_fstab_ro
       aarch64: &iot_base_partition_table_aarch64
         uuid: "0xc1748067"
         type: "dos"
@@ -690,7 +830,7 @@
         partitions:
           - *iot_base_partition_table_part_efi_aarch64
           - *iot_base_partition_table_part_boot_aarch64
-          - *iot_base_partition_table_part_root_aarch64
+          - *iot_base_partition_table_part_root_fstab_ro_aarch64
 
     iot_simplified_installer_partition_tables: &iot_simplified_installer_partition_tables
       x86_64: &iot_simplified_installer_partition_tables_x86
@@ -734,7 +874,7 @@
                       type: "ext4"
                       label: "root"
                       mountpoint: "/"
-                      fstab_options: "defaults"
+                      fstab_options: "defaults,ro"
                       fstab_freq: 0
                       fstab_passno: 0
       aarch64:
@@ -750,7 +890,6 @@
       - "groups"
       - "enabled_modules"
       - "containers"
-      - "minimal"
       - "customizations.cacerts"
       - "customizations.directories"
       - "customizations.disk"
@@ -778,7 +917,6 @@
       - "modules"
       - "groups"
       - "enabled_modules"
-      - "minimal"
       - "containers"
       - "customizations.directories"
       - "customizations.files"
@@ -801,7 +939,6 @@
       - "modules"
       - "groups"
       - "enabled_modules"
-      - "minimal"
       - "containers"
       - "customizations.directories"
       - "customizations.files"
@@ -839,7 +976,6 @@
       - "modules"
       - "groups"
       - "containers"
-      - "minimal"
       - "customizations.cacerts"
       - "customizations.directories"
       - "customizations.files"
@@ -857,6 +993,29 @@
       - "customizations.services"
       - "customizations.timezone"
 
+    image_base:
+      cloud_base: &cloud_base
+        bootable: true
+        default_size: "5 GiB"
+        image_func: "disk"
+        required_partition_sizes: *default_required_dir_sizes
+        partition_table:
+          <<: *cloud_partition_tables
+        image_config: &cloud_base_image_config
+          default_kernel: "kernel-core"
+          kernel_options:
+            - "no_timer-check"
+            - "console=tty1"
+            - "console=ttyS0,115200n8"
+            - "systemd.firstboot=off"
+        blueprint:
+          supported_options: *supported_options_disk
+        platforms:
+          - <<: *x86_64_bios_platform
+            image_format: "raw"
+          - <<: *aarch64_platform
+            image_format: "raw"
+
 image_config:
   default:
     default_oscap_datastream: "/usr/share/xml/scap/ssg/content/ssg-fedora-ds.xml"
@@ -865,9 +1024,11 @@ image_config:
     locale: "C.UTF-8"
     machine_id_uninitialized: true
     timezone: "UTC"
+    default_kernel: "kernel-core"
+    update_default_kernel: true
 
 image_types:
-  "server-vagrant-libvirt": &server_vagrant_libvirt
+  "generic-vagrant-libvirt": &generic_vagrant_libvirt
     filename: "vagrant-libvirt.box"
     mime_type: "application/x-tar"
     environment: *kvm_env
@@ -891,7 +1052,7 @@ image_types:
             enabled_services:
               *cloud_init_services_f43plus
       default_target: "multi-user.target"
-      kernel_options: *cloud_kernel_options
+      kernel_options: *generic_kernel_options
       users:
         - name: "vagrant"
           # yamllint disable rule:line-length
@@ -910,7 +1071,7 @@ image_types:
       <<: *default_partition_tables
     package_sets:
       os:
-        - *cloud_base_pkgset
+        - *generic_base_pkgset
         - include:
             - "qemu-guest-agent"
     platforms:
@@ -918,16 +1079,17 @@ image_types:
         image_format: "vagrant_libvirt"
       - <<: *aarch64_platform
         image_format: "vagrant_libvirt"
-    supported_blueprint_options: *supported_options_disk
+    blueprint:
+      supported_options: *supported_options_disk
 
-  "server-vagrant-virtualbox": &server_vagrant_virtualbox
-    <<: *server_vagrant_libvirt
+  "generic-vagrant-virtualbox": &generic_vagrant_virtualbox
+    <<: *generic_vagrant_libvirt
     filename: "vagrant-virtualbox.box"
     platforms:
       - <<: *x86_64_bios_platform
         image_format: "vagrant_virtualbox"
 
-  "server-qcow2": &server_qcow2
+  "generic-qcow2": &generic_qcow2
     name_aliases: ["qcow2", "guest-image"]
     filename: "disk.qcow2"
     mime_type: "application/x-qemu-disk"
@@ -939,7 +1101,7 @@ image_types:
     required_partition_sizes: *default_required_dir_sizes
     image_config: &image_config_qcow2
       default_target: "multi-user.target"
-      kernel_options: *cloud_kernel_options
+      kernel_options: *generic_kernel_options
       conditions:
         "f42 and below cloud init service names":
           when:
@@ -957,7 +1119,7 @@ image_types:
       <<: *default_partition_tables
     package_sets:
       os:
-        - *cloud_base_pkgset
+        - *generic_base_pkgset
         - include:
             - "qemu-guest-agent"
     platforms:
@@ -969,10 +1131,11 @@ image_types:
         image_format: "qcow2"
       - <<: *s390x_zipl_platform
         image_format: "qcow2"
-    supported_blueprint_options: *supported_options_disk
+    blueprint:
+      supported_options: *supported_options_disk
 
-  "server-ami":
-    <<: *server_qcow2
+  "generic-ami":
+    <<: *generic_qcow2
     name_aliases: ["ami", "aws"]
     filename: "image.raw"
     mime_type: "application/octet-stream"
@@ -984,8 +1147,8 @@ image_types:
       - <<: *aarch64_platform
         image_format: "raw"
 
-  "server-oci":
-    <<: *server_qcow2
+  "generic-oci":
+    <<: *generic_qcow2
     name_aliases: ["oci"]
     platforms:
       - <<: *x86_64_bios_platform
@@ -993,8 +1156,8 @@ image_types:
       - <<: *aarch64_platform
         image_format: "qcow2"
 
-  "server-openstack":
-    <<: *server_qcow2
+  "generic-openstack":
+    <<: *generic_qcow2
     name_aliases: ["openstack"]
     platforms:
       - <<: *x86_64_bios_platform
@@ -1004,8 +1167,8 @@ image_types:
         qcow2_compat: ""
         image_format: "qcow2"
 
-  "server-vhd":
-    <<: *server_qcow2
+  "generic-vhd":
+    <<: *generic_qcow2
     name_aliases: ["vhd", "azure"]
     filename: "disk.vhd"
     mime_type: "application/x-vhd"
@@ -1024,11 +1187,11 @@ image_types:
       <<: *default_partition_tables
     package_sets:
       os:
-        - *cloud_base_pkgset
+        - *generic_base_pkgset
         - include:
             - "WALinuxAgent"
 
-  "server-vmdk": &server_vmdk
+  "generic-vmdk": &generic_vmdk
     name_aliases: ["vmdk", "vsphere"]
     filename: "disk.vmdk"
     mime_type: "application/x-vmdk"
@@ -1055,7 +1218,7 @@ image_types:
           shallow_merge:
             enabled_services:
               *cloud_init_services_f43plus
-      kernel_options: *cloud_kernel_options
+      kernel_options: *generic_kernel_options
     partition_table:
       <<: *default_partition_tables
     package_sets:
@@ -1077,10 +1240,11 @@ image_types:
             - "zram-generator-defaults"
             - "grubby-deprecated"
             - "extlinux-bootloader"
-    supported_blueprint_options: *supported_options_disk
+    blueprint:
+      supported_options: *supported_options_disk
 
-  "server-ova":
-    <<: *server_vmdk
+  "generic-ova":
+    <<: *generic_vmdk
     name_aliases: ["ova", "vsphere-ova"]
     filename: "image.ova"
     mime_type: "application/ovf"
@@ -1140,6 +1304,7 @@ image_types:
             - "authselect"
             - "bash"
             - "bash-completion"
+            - "bootupd"
             - "brcmfmac-firmware"
             - "chrony"
             - "clevis"
@@ -1224,35 +1389,20 @@ image_types:
             - "xz"
             - "zram-generator"
           conditions:
-            "f41 and below uses parsec/zezere":
-              when:
-                version_less_than: "42"
-              append:
-                include:
-                  - "dbus-parsec"
-                  - "kernel-tools"
-                  - "parsec"
-                  - "policycoreutils-python-utils"
-                  - "zezere-ignition"
             "f42 and below uses basesystem":
               when:
                 version_less_than: "43"
               append:
                 include:
                   - "basesystem"
-            "f41 and above need bootupd":
-              when:
-                version_greater_or_equal: "41"
-              append:
-                include:
-                  - "bootupd"
             "f43+ needs the filesystem pkg":
               when:
                 version_greater_or_equal: "43"
               append:
                 include:
                   - "filesystem"
-    supported_blueprint_options: *supported_options_ostree_commit
+    blueprint:
+      supported_options: *supported_options_ostree_commit
 
   "iot-container":
     <<: *iot_commit
@@ -1265,6 +1415,15 @@ image_types:
     image_config:
       <<: *image_config_iot_commit
       install_weak_deps: true
+      ostree_server: *ostree_server
+      oci:
+        archive:
+          cmd:
+            - "nginx"
+            - "-c"
+            - *ostree_server_config_path
+          exposed_ports:
+            - *ostree_server_port
     platforms:
       - *x86_64_installer_platform
       - *aarch64_installer_platform
@@ -1336,25 +1495,8 @@ image_types:
           - ["/usr/lib/ostree-boot/efi/start_x.elf", "/boot/efi/"]
     partition_table:
       <<: *iot_base_partition_tables
-    partition_tables_override:
-      conditions:
-        "conditions for iot-raw-xz":
-          when:
-            version_greater_or_equal: "42"
-          override:
-            x86_64:
-              <<: *iot_base_partition_table_x86_64
-              partitions:
-                - *iot_base_partition_table_part_efi
-                - *iot_base_partition_table_part_boot
-                - *iot_base_partition_table_part_root_fstab_ro
-            aarch64:
-              <<: *iot_base_partition_table_aarch64
-              partitions:
-                - *iot_base_partition_table_part_efi_aarch64
-                - *iot_base_partition_table_part_boot_aarch64
-                - *iot_base_partition_table_part_root_fstab_ro_aarch64
-    supported_blueprint_options: *supported_options_ostree_disk
+    blueprint:
+      supported_options: *supported_options_ostree_disk
 
   "iot-qcow2":
     <<: *rpm_ostree_imgtype_common
@@ -1382,7 +1524,8 @@ image_types:
       - <<: *aarch64_platform
         image_format: "qcow2"
         qcow2_compat: "1.1"
-    supported_blueprint_options: *supported_options_ostree_disk
+    blueprint:
+      supported_options: *supported_options_ostree_disk
 
   "iot-bootable-container":
     <<: *rpm_ostree_imgtype_common
@@ -1529,7 +1672,8 @@ image_types:
                 exclude:
                   - "perl"
                   - "perl-interpreter"
-    supported_blueprint_options: *supported_options_ostree_commit
+    blueprint:
+      supported_options: *supported_options_ostree_commit
 
   "minimal-raw-xz": &minimal_raw_xz
     name_aliases: ["minimal-raw"]
@@ -1616,25 +1760,14 @@ image_types:
           exclude:
             - "dracut-config-rescue"
           conditions:
-            "riscv64 specific pkgs for minimal-raw-xz":
-              when:
-                arch: "riscv64"
-                version_less_than: "42"
-              append:
-                include:
-                  # missing from @core in riscv64 but only
-                  # in Fedora 41, they've been subsequently
-                  # added in 42 and up
-                  - "dnf5"
-                  - "policycoreutils"
-                  - "selinux-policy-targeted"
             "no firewalld on f43+":
               when:
                 version_greater_or_equal: "43"
               append:
                 exclude:
                   - "firewalld"
-    supported_blueprint_options: *supported_options_disk
+    blueprint:
+      supported_options: *supported_options_disk
 
   "minimal-raw-zst":
     <<: *minimal_raw_xz
@@ -1681,15 +1814,16 @@ image_types:
           override:
             - *x86_64_installer_platform_compat
             - *aarch64_installer_platform
-    supported_blueprint_options:
-      - "distro"
-      - "customizations.installer"
-      - "customizations.user"
-      - "customizations.sshkey"
-      - "customizations.group"
-      - "customizations.fips"
-      - "customizations.timezone"
-      - "customizations.locale"
+    blueprint:
+      supported_options:
+        - "distro"
+        - "customizations.installer"
+        - "customizations.user"
+        - "customizations.sshkey"
+        - "customizations.group"
+        - "customizations.fips"
+        - "customizations.timezone"
+        - "customizations.locale"
 
   "workstation-live-installer":
     name_aliases: ["live-installer"]
@@ -1709,13 +1843,6 @@ image_types:
       # them to empty to avoid changing the live-installer definition
       additional_dracut_modules: []
       # also reset the condition that adds dracut modules
-      conditions:
-        <<: *default_installer_config_conditions
-        "f41 dracut requires ifcfg, rootfs is squashfs":
-          when:
-            version_equal: "41"
-          shallow_merge:
-            additional_dracut_modules: []
 
     image_config:
       locale: "en_US.UTF-8"
@@ -1765,9 +1892,10 @@ image_types:
           override:
             - *x86_64_installer_platform_compat
             - *aarch64_installer_platform
-    supported_blueprint_options:
-      - "distro"
-      - "customizations.installer"
+    blueprint:
+      supported_options:
+        - "distro"
+        - "customizations.installer"
 
   "minimal-installer":
     name_aliases: ["image-installer", "fedora-image-installer"]
@@ -1818,34 +1946,35 @@ image_types:
         - *minimal_raw_pkgset
       installer:
         - *anaconda_pkgset
-    supported_blueprint_options:
-      - "distro"
-      - "packages"
-      - "modules"
-      - "groups"
-      - "enabled_modules"
-      - "containers"
-      - "minimal"
-      - "customizations.installer"
-      - "customizations.cacerts"
-      - "customizations.directories"
-      - "customizations.files"
-      - "customizations.firewall"
-      - "customizations.user"
-      - "customizations.sshkey"
-      - "customizations.group"
-      - "customizations.fips"
-      - "customizations.timezone"
-      - "customizations.hostname"
-      - "customizations.kernel.name"
-      - "customizations.locale"
-      - "customizations.openscap"
-      - "customizations.repositories"
-      - "customizations.rpm"
-      - "customizations.services"
-      - "customizations.kernel.append"
+    blueprint:
+      supported_options:
+        - "distro"
+        - "packages"
+        - "modules"
+        - "groups"
+        - "enabled_modules"
+        - "containers"
+        - "customizations.installer"
+        - "customizations.cacerts"
+        - "customizations.directories"
+        - "customizations.files"
+        - "customizations.firewall"
+        - "customizations.user"
+        - "customizations.sshkey"
+        - "customizations.group"
+        - "customizations.fips"
+        - "customizations.timezone"
+        - "customizations.hostname"
+        - "customizations.kernel.name"
+        - "customizations.locale"
+        - "customizations.openscap"
+        - "customizations.repositories"
+        - "customizations.rpm"
+        - "customizations.services"
+        - "customizations.kernel.append"
 
-  container: &container
+  "generic-container": &generic_container
+    name_aliases: ["container"]
     filename: "container.tar"
     mime_type: "application/x-tar"
     image_func: "container"
@@ -1863,6 +1992,22 @@ image_types:
       exclude_docs: true
       locale: "C.UTF-8"
       timezone: "Etc/UTC"
+      oci:
+        archive:
+          env:
+            - "PATH=/usr/local/bin:/usr/bin"
+            - "container=oci"
+          cmd:
+            - "/bin/bash"
+          working_dir: "/"
+          labels:
+            license: "MIT"
+            name: "fedora"
+            vendor: "Fedora Project"
+            org.opencontainers.image.license: "MIT"
+            org.opencontainers.image.name: "fedora"
+            org.opencontainers.image.url: "https://fedoraproject.org/"
+            org.opencontainers.image.vendor: "Fedora Project"
     package_sets:
       os:
         - include:
@@ -1909,12 +2054,11 @@ image_types:
             - "trousers"
             - "whois-nls"
             - "xkeyboard-config"
-    supported_blueprint_options: *supported_options_container
+    blueprint:
+      supported_options: *supported_options_container
 
-  wsl:
-    # this is the eventual name, and `wsl` the alias but we've been
-    # having issues with CI renaming it
-    name_aliases: ["server-wsl"]
+  generic-wsl:
+    name_aliases: ["wsl"]
     # note that other distributions in images differ and use a .tar suffix, however .wsl is the
     # correct suffix, see:
     # https://learn.microsoft.com/en-us/windows/wsl/build-custom-distro#what-are-wsl-root-filesystem-tar-files
@@ -1970,11 +2114,13 @@ image_types:
             - "tar"
             - "util-linux-core"
             - "vim-minimal"
+            - "wsl-setup"
           exclude:
             - "crypto-policies-scripts"
             - "deltarpm"
             - "dosfstools"
             - "elfutils-debuginfod-client"
+            - "fuse-libs"
             - "gawk-all-langpacks"
             - "glibc-gconv-extra"
             - "glibc-langpack-en"
@@ -1996,26 +2142,8 @@ image_types:
             - "trousers"
             - "whois-nls"
             - "xkeyboard-config"
-          conditions:
-            "new f42 use the wsl-setup for setup":
-              when:
-                version_greater_or_equal: "42"
-              append:
-                include:
-                  - "wsl-setup"
-            "only f41 and below need cloud-init":
-              when:
-                version_less_than: "42"
-              append:
-                include:
-                  - "cloud-init"
-            "f41+ drops fuse-libs":
-              when:
-                version_greater_or_equal: "41"
-              append:
-                exclude:
-                  - "fuse-libs"
-    supported_blueprint_options: *supported_options_container
+    blueprint:
+      supported_options: *supported_options_container
 
   "iot-simplified-installer":
     <<: *rpm_ostree_imgtype_common
@@ -2136,27 +2264,28 @@ image_types:
             - "iwlwifi-mvm-firmware"
             - "realtek-firmware"
             - "uboot-images-armv8"
-    supported_blueprint_options:
-      - "distro"
-      - "customizations.installation_device"
-      - "customizations.fdo"
-      - "customizations.ignition"
-      - "customizations.kernel"
-      - "customizations.user"
-      - "customizations.sshkey"
-      - "customizations.group"
-      - "customizations.fips"
-    required_blueprint_options:
-      - "customizations.installation_device"
+    blueprint:
+      supported_options:
+        - "distro"
+        - "customizations.installation_device"
+        - "customizations.fdo"
+        - "customizations.ignition"
+        - "customizations.kernel"
+        - "customizations.user"
+        - "customizations.sshkey"
+        - "customizations.group"
+        - "customizations.fips"
+      required_options:
+        - "customizations.installation_device"
 
   # Based on lorax runtime-install.tmpl
-  "everything-netinst":
+  "everything-network-installer":
     name_aliases: ["netinst"]
     filename: "netinst.iso"
     mime_type: "application/x-iso9660-image"
     bootable: true
     boot_iso: true
-    image_func: "netinst"
+    image_func: "network-installer"
     iso_label: "Everything"
     variant: "Everything"
     exports: ["bootiso"]
@@ -2243,13 +2372,6 @@ image_types:
             - hexedit
             - sg3_utils
           conditions:
-            "f41 and below use tigervnc":
-              when:
-                version_less_than: "42"
-              append:
-                include:
-                  - "tigervnc-server-minimal"
-                  - "tigervnc-server-module"
             "x86_64 specific anaconda pkgs":
               when:
                 arch: "x86_64"
@@ -2273,10 +2395,15 @@ image_types:
           override:
             - *x86_64_installer_platform_compat
             - *aarch64_installer_platform
-    supported_blueprint_options:
-      - "distro"
-      - "customizations.fips"
-      - "customizations.locale"
+    blueprint:
+      supported_options:
+        - "distro"
+        - "customizations.fips"
+        - "customizations.group"
+        - "customizations.installer"
+        - "customizations.kernel.append"
+        - "customizations.locale"
+        - "customizations.user"
 
   "pxe-tar-xz":
     filename: "pxe.tar.xz"
@@ -2296,4 +2423,292 @@ image_types:
     platforms:
       - *x86_64_bios_platform
       - *aarch64_platform
-    supported_blueprint_options: *supported_options_pxe
+    blueprint:
+      supported_options: *supported_options_pxe
+
+  "server-qcow2": &server_qcow2
+    filename: "disk.qcow2"
+    mime_type: "application/x-qemu-disk"
+    bootable: true
+    default_size: "10 GiB"
+    image_func: "disk"
+    exports: ["qcow2"]
+    required_partition_sizes: *default_required_dir_sizes
+    partition_table:
+      <<: *server_partition_tables
+    package_sets:
+      os:
+        - *server_core_pkgset
+        - *server_guest_pkgset
+    platforms:
+      - <<: *x86_64_bios_platform
+        image_format: "qcow2"
+      - <<: *aarch64_platform
+        image_format: "qcow2"
+      - <<: *ppc64le_bios_platform
+        image_format: "qcow2"
+      - <<: *s390x_zipl_platform
+        image_format: "qcow2"
+    image_config:
+      default_kernel: "kernel-core"
+      kernel_options:
+        - "no_timer-check"
+        - "console=tty1"
+        - "console=ttyS0,115200n8"
+      enabled_services:
+        - "initial-setup.service"
+      files:
+        # Triggers Anaconda's initial-setup to reconfigure the system when it
+        # boots the first time.
+        - path: "/etc/reconfigSys"
+          user: "root"
+          group: "root"
+          data: ""
+      lock_root_user: true
+    blueprint:
+      supported_options: *supported_options_disk
+
+  #
+  # Fedora Cloud image types
+  #
+
+  "cloud-qcow2": &cloud_qcow2
+    <<: *cloud_base
+    filename: "disk.qcow2"
+    mime_type: "application/x-qemu-disk"
+    exports: ["qcow2"]
+    image_config:
+      <<: *cloud_base_image_config
+      conditions:
+        "f42 and below cloud init service names":
+          when:
+            version_less_than: "43"
+          shallow_merge:
+            enabled_services:
+              *cloud_init_services
+        "f43 and above new cloud init service names":
+          when:
+            version_greater_or_equal: "43"
+          shallow_merge:
+            enabled_services:
+              *cloud_init_services_f43plus
+    package_sets:
+      os:
+        - *cloud_core_pkgset
+        - include:
+            - "qemu-guest-agent"
+    platforms:
+      - <<: *x86_64_bios_platform
+        image_format: "qcow2"
+      - <<: *aarch64_platform
+        image_format: "qcow2"
+      - <<: *ppc64le_bios_platform
+        image_format: "qcow2"
+      - <<: *s390x_zipl_platform
+        image_format: "qcow2"
+
+  "cloud-ec2": &cloud_ec2
+    <<: *cloud_base
+    filename: "image.raw.xz"
+    compression: "xz"
+    mime_type: "application/xz"
+    exports: ["xz"]
+    image_config:
+      <<: *cloud_base_image_config
+      conditions:
+        "f42 and below cloud init service names":
+          when:
+            version_less_than: "43"
+          shallow_merge:
+            enabled_services:
+              *cloud_init_services
+        "f43 and above new cloud init service names":
+          when:
+            version_greater_or_equal: "43"
+          shallow_merge:
+            enabled_services:
+              *cloud_init_services_f43plus
+    package_sets:
+      os:
+        - *cloud_core_pkgset
+        - include:
+            - "amazon-ec2-utils"
+            - "awscli2"
+            - "ec2-instance-connect"
+
+  "cloud-azure": &cloud_azure
+    <<: *cloud_base
+    filename: "disk.vhd"
+    mime_type: "application/x-vhd"
+    exports: ["vpc"]  # XXX Should be .vhd.xz
+    image_config:
+      <<: *cloud_base_image_config
+      conditions:
+        "f42 and below cloud init service names":
+          when:
+            version_less_than: "43"
+          shallow_merge:
+            enabled_services:
+              *cloud_init_services
+        "f43 and above new cloud init service names":
+          when:
+            version_greater_or_equal: "43"
+          shallow_merge:
+            enabled_services:
+              *cloud_init_services_f43plus
+    package_sets:
+      os:
+        - *cloud_core_pkgset
+        - include:
+            - "WALinuxAgent"
+            - "azure-vm-utils"
+            - "kernel-modules"
+            - "hyperv-daemons"
+    platforms:
+      - <<: *x86_64_bios_platform
+        image_format: "vhd"
+      - <<: *aarch64_platform
+        image_format: "vhd"
+
+  "cloud-gce": &cloud_gce
+    <<: *cloud_base
+    filename: "image.tar.gz"
+    mime_type: "application/gzip"
+    exports: ["archive"]
+    # Note the larger size here, upstream descriptions mention that GCE has bad perf with small disks
+    default_size: "10 GiB"
+    package_sets:
+      os:
+        - *cloud_core_pkgset
+        - include:
+            - "google-compute-engine-guest-configs"
+            - "google-compute-engine-oslogin"
+            - "google-guest-agent"
+          exclude:
+            - "cloud-init"
+    platforms:
+      - <<: *x86_64_bios_platform
+        image_format: "gce"
+      - <<: *aarch64_platform
+        image_format: "gce"
+    image_config: *cloud_base_image_config
+
+  "bootc-rpm-installer":
+    # Note that this image type is partial and only used by
+    # bootc-image-builder not by the "images" library directly. We
+    # still keep the config here so that there is a single place for
+    # all imagetype configs.
+    installer_config: *default_installer_config
+    package_sets:
+      installer:
+        - include:
+            - aajohan-comfortaa-fonts
+            - abattis-cantarell-fonts
+            - alsa-firmware
+            - alsa-tools-firmware
+            - anaconda
+            - anaconda-dracut
+            - anaconda-install-img-deps
+            - anaconda-widgets
+            - atheros-firmware
+            - audit
+            - bind-utils
+            - bitmap-fangsongti-fonts
+            - brcmfmac-firmware
+            - bzip2
+            - cryptsetup
+            - curl
+            - dbus-x11
+            - dejavu-sans-fonts
+            - dejavu-sans-mono-fonts
+            - device-mapper-persistent-data
+            - dmidecode
+            - dnf
+            - dracut-config-generic
+            - dracut-network
+            - efibootmgr
+            - ethtool
+            - fcoe-utils
+            - ftp
+            - gdb-gdbserver
+            - gdisk
+            - glibc-all-langpacks
+            - gnome-kiosk
+            - google-noto-sans-cjk-ttc-fonts
+            - grub2-tools
+            - grub2-tools-extra
+            - grub2-tools-minimal
+            - grubby
+            - gsettings-desktop-schemas
+            - hdparm
+            - hexedit
+            - hostname
+            - initscripts
+            - ipmitool
+            - iwlwifi-dvm-firmware
+            - iwlwifi-mvm-firmware
+            - jomolhari-fonts
+            - kbd
+            - kbd-misc
+            - kdump-anaconda-addon
+            - kernel
+            - khmeros-base-fonts
+            - less
+            - libblockdev-lvm-dbus
+            - libibverbs
+            - libreport-plugin-bugzilla
+            - libreport-plugin-reportuploader
+            - librsvg2
+            - linux-firmware
+            - lldpad
+            - lsof
+            - madan-fonts
+            - mt-st
+            - mtr
+            - net-tools
+            - nfs-utils
+            - nm-connection-editor
+            - nmap-ncat
+            - nss-tools
+            - openssh-clients
+            - openssh-server
+            - ostree
+            - pciutils
+            - perl-interpreter
+            - pigz
+            - plymouth
+            - prefixdevname
+            - python3-pyatspi
+            - rdma-core
+            - realtek-firmware
+            - rit-meera-new-fonts
+            - rng-tools
+            - rpcbind
+            - rpm-ostree
+            - rsync
+            - rsyslog
+            - selinux-policy-targeted
+            - sg3_utils
+            - sil-abyssinica-fonts
+            - sil-padauk-fonts
+            - smartmontools
+            - spice-vdagent
+            - strace
+            - systemd
+            - tar
+            - tigervnc-server-minimal
+            - tigervnc-server-module
+            - udisks2
+            - udisks2-iscsi
+            - usbutils
+            - vim-minimal
+            - volume_key
+            - wget
+            - xfsdump
+            - xfsprogs
+            - xorg-x11-drivers
+            - xorg-x11-fonts-misc
+            - xorg-x11-server-Xorg
+            - xorg-x11-xauth
+            - xrdb
+            - xz

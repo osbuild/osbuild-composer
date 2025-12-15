@@ -565,6 +565,14 @@ func (p *AnacondaInstallerISOTree) serialize() (osbuild.Pipeline, error) {
 		}
 	}
 
+	if p.anacondaPipeline.Type == AnacondaInstallerTypeNetinst {
+		kickstartStages, err := p.netinstKickstartStages()
+		if err != nil {
+			return osbuild.Pipeline{}, fmt.Errorf("cannot create kickstart stages: %w", err)
+		}
+		pipeline.AddStages(kickstartStages...)
+	}
+
 	pipeline.AddStage(osbuild.NewDiscinfoStage(&osbuild.DiscinfoStageOptions{
 		BaseArch: p.anacondaPipeline.platform.GetArch().String(),
 		Release:  p.Release,
@@ -800,6 +808,32 @@ func (p *AnacondaInstallerISOTree) tarPayloadStages() ([]*osbuild.Stage, error) 
 		}
 		stages = append(stages, kickstartStages...)
 	}
+
+	return stages, nil
+}
+
+func (p *AnacondaInstallerISOTree) netinstKickstartStages() ([]*osbuild.Stage, error) {
+	stages := make([]*osbuild.Stage, 0)
+
+	// If the KSPath is set, we need to add the kickstart stage to this (bootiso-tree) pipeline.
+	// If it's not specified here, it should have been added to the InteractiveDefaults in the anaconda-tree.
+	if p.Kickstart != nil && p.Kickstart.Path != "" {
+		kickstartOptions, err := osbuild.NewKickstartStageOptions(
+			p.Kickstart.Path,
+			p.Kickstart.Users,
+			p.Kickstart.Groups)
+
+		if err != nil {
+			return nil, fmt.Errorf("failed to create kickstart stage options: %w", err)
+		}
+
+		kickstartStages, err := p.makeKickstartStages(kickstartOptions)
+		if err != nil {
+			return nil, fmt.Errorf("cannot create kickstart stages: %w", err)
+		}
+		stages = append(stages, kickstartStages...)
+	}
+
 	return stages, nil
 }
 

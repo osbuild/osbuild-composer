@@ -4,7 +4,9 @@ import (
 	"math/rand"
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
+	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/customizations/subscription"
+	"github.com/osbuild/images/pkg/depsolvednf"
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/disk/partition"
 	"github.com/osbuild/images/pkg/manifest"
@@ -54,6 +56,12 @@ type Distro interface {
 	// Returns an object representing the given architecture as support
 	// by this distro.
 	GetArch(arch string) (Arch, error)
+}
+
+type CustomDepsolverDistro interface {
+	Distro
+
+	Depsolver(cacheDir string, archi arch.Arch) (solver *depsolvednf.Solver, cleanup func() error, err error)
 }
 
 // An Arch represents a given distribution's support for a given architecture.

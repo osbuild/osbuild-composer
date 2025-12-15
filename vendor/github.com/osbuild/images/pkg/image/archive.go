@@ -3,6 +3,7 @@ package image
 import (
 	"math/rand"
 
+	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/internal/environment"
 	"github.com/osbuild/images/pkg/artifact"
 	"github.com/osbuild/images/pkg/manifest"
@@ -39,6 +40,7 @@ func (img *Archive) InstantiateManifest(m *manifest.Manifest,
 	osPipeline.OSVersion = img.OSVersion
 
 	tarPipeline := manifest.NewTar(buildPipeline, osPipeline, "archive")
+	tarPipeline.NumericOwner = common.ToPtr(true)
 
 	compressionPipeline := GetCompressionPipeline(img.Compression, buildPipeline, tarPipeline)
 	compressionPipeline.SetFilename(img.filename)

@@ -165,7 +165,12 @@ func (t *BootcImageType) genPartitionTableFsCust(basept *disk.PartitionTable, fs
 	}
 	fsCustomizations := updateFilesystemSizes(fsCust, rootfsMinSize)
 
-	return disk.NewPartitionTable(basept, fsCustomizations, t.ImageTypeYAML.DefaultSize, partitioningMode, t.arch.arch, nil, t.arch.distro.defaultFs, rng)
+	imageSize := t.ImageTypeYAML.DefaultSize
+	if basept.Size != 0 {
+		imageSize = basept.Size
+	}
+
+	return disk.NewPartitionTable(basept, fsCustomizations, imageSize, partitioningMode, t.arch.arch, nil, t.arch.distro.defaultFs, rng)
 }
 
 func checkMountpoints(filesystems []blueprint.FilesystemCustomization, policy *pathpolicy.PathPolicies) error {

@@ -13,12 +13,13 @@ import (
 )
 
 // RpmDownloader specifies what backend to use for rpm downloads
-// Note that the librepo backend requires a newer osbuild.
+// Note that the librepo backend requires osbuild v138 from
+// 2025-01-15.
 type RpmDownloader uint64
 
 const (
-	RpmDownloaderCurl    = iota
-	RpmDownloaderLibrepo = iota
+	RpmDownloaderCurl = iota
+	RpmDownloaderLibrepo
 )
 
 // SourceInputs contains the inputs to generate osbuild.Sources

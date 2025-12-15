@@ -38,15 +38,12 @@ func efiBootPartitionTable(rng *rand.Rand) *disk.PartitionTable {
 
 type AnacondaTarInstaller struct {
 	Base
-	OSCustomizations        manifest.OSCustomizations
-	InstallerCustomizations manifest.InstallerCustomizations
-	Environment             environment.Environment
+	AnacondaInstallerBase
+
+	OSCustomizations manifest.OSCustomizations
+	Environment      environment.Environment
 
 	ExtraBasePackages rpmmd.PackageSet
-
-	Kickstart *kickstart.Options
-
-	RootfsCompression string
 }
 
 func NewAnacondaTarInstaller(platform platform.Platform, filename string) *AnacondaTarInstaller {
@@ -133,23 +130,9 @@ func (img *AnacondaTarInstaller) InstantiateManifest(m *manifest.Manifest,
 	osPipeline.Environment = img.Environment
 
 	isoTreePipeline := manifest.NewAnacondaInstallerISOTree(buildPipeline, anacondaPipeline, rootfsImagePipeline, bootTreePipeline)
-	// TODO: the partition table is required - make it a ctor arg or set a default one in the pipeline
-	isoTreePipeline.PartitionTable = efiBootPartitionTable(rng)
-	isoTreePipeline.Release = img.InstallerCustomizations.Release
-	isoTreePipeline.Kickstart = img.Kickstart
+	initIsoTreePipeline(isoTreePipeline, &img.AnacondaInstallerBase, rng)
 	isoTreePipeline.PayloadPath = tarPath
-	isoTreePipeline.Kickstart.Path = img.Kickstart.Path
-
-	isoTreePipeline.RootfsCompression = img.RootfsCompression
-	isoTreePipeline.RootfsType = img.InstallerCustomizations.ISORootfsType
-
 	isoTreePipeline.OSPipeline = osPipeline
-	isoTreePipeline.KernelOpts = img.InstallerCustomizations.KernelOptionsAppend
-	if img.OSCustomizations.FIPS {
-		isoTreePipeline.KernelOpts = append(isoTreePipeline.KernelOpts, "fips=1")
-	}
-
-	isoTreePipeline.ISOBoot = img.InstallerCustomizations.ISOBoot
 
 	isoPipeline := manifest.NewISO(buildPipeline, isoTreePipeline, img.InstallerCustomizations.ISOLabel)
 	isoPipeline.SetFilename(img.filename)

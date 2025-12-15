@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -57,26 +58,32 @@ func validateOSRelease(osrelease map[string]string) error {
 }
 
 func uefiVendor(root string) (string, error) {
-	bootupdEfiDir := path.Join(root, "usr/lib/bootupd/updates/EFI")
-	l, err := os.ReadDir(bootupdEfiDir)
-	if err != nil {
-		return "", fmt.Errorf("cannot read bootupd EFI directory %s: %w", bootupdEfiDir, err)
+	var searchPath = []string{
+		"usr/lib/bootupd/updates/EFI/*",
+		"usr/lib/efi/shim/*/EFI/*",
+	}
+	for _, baseDir := range searchPath {
+		dents, err := filepath.Glob(filepath.Join(root, baseDir))
+		if err != nil {
+			return "", err
+		}
+		// best-effort search: return the first directory that's not "BOOT"
+		for _, p := range dents {
+			entry, err := os.Stat(p)
+			if err != nil {
+				return "", err
+			}
+			if !entry.IsDir() {
+				continue
+			}
+			if entry.Name() == "BOOT" {
+				continue
+			}
+			return entry.Name(), nil
+		}
 	}
 
-	// best-effort search: return the first directory that's not "BOOT"
-	for _, entry := range l {
-		if !entry.IsDir() {
-			continue
-		}
-
-		if entry.Name() == "BOOT" {
-			continue
-		}
-
-		return entry.Name(), nil
-	}
-
-	return "", fmt.Errorf("cannot find UEFI vendor in %s", bootupdEfiDir)
+	return "", fmt.Errorf("cannot find UEFI vendor in %s", searchPath)
 }
 
 func readSelinuxPolicy(root string) (string, error) {

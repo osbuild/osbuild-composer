@@ -1,6 +1,7 @@
 package image
 
 import (
+	"fmt"
 	"math/rand"
 
 	"github.com/osbuild/images/internal/environment"
@@ -14,8 +15,10 @@ import (
 
 type OSTreeContainer struct {
 	Base
-	OSCustomizations manifest.OSCustomizations
-	Environment      environment.Environment
+	OSCustomizations                 manifest.OSCustomizations
+	OSTreeCommitServerCustomizations manifest.OSTreeCommitServerCustomizations
+	OCIContainerCustomizations       manifest.OCIContainerCustomizations
+	Environment                      environment.Environment
 
 	// OSTreeParent specifies the source for an optional parent commit for the
 	// new commit being built.
@@ -53,22 +56,22 @@ func (img *OSTreeContainer) InstantiateManifest(m *manifest.Manifest,
 	commitPipeline := manifest.NewOSTreeCommit(buildPipeline, osPipeline, img.OSTreeRef)
 	commitPipeline.OSVersion = img.OSVersion
 
-	nginxConfigPath := "/etc/nginx.conf"
-	listenPort := "8080"
+	if img.OSTreeCommitServerCustomizations.OSTreeServer == nil {
+		return nil, fmt.Errorf("missing ostree_server image config")
+	}
 
 	serverPipeline := manifest.NewOSTreeCommitServer(
 		buildPipeline,
 		img.platform,
 		repos,
 		commitPipeline,
-		nginxConfigPath,
-		listenPort,
 	)
+	serverPipeline.OSTreeCommitServerCustomizations = img.OSTreeCommitServerCustomizations
 	serverPipeline.Language = img.ContainerLanguage
 
 	containerPipeline := manifest.NewOCIContainer(buildPipeline, serverPipeline)
-	containerPipeline.Cmd = []string{"nginx", "-c", nginxConfigPath}
-	containerPipeline.ExposedPorts = []string{listenPort}
+	containerPipeline.OCIContainerCustomizations = img.OCIContainerCustomizations
+
 	containerPipeline.SetFilename(img.filename)
 	artifact := containerPipeline.Export()
 

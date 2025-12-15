@@ -66,8 +66,8 @@ func newImageTypeFrom(d *distribution, ar *architecture, imgYAML defs.ImageTypeY
 		it.image = iotSimplifiedInstallerImage
 	case "tar":
 		it.image = tarImage
-	case "netinst":
-		it.image = netinstImage
+	case "network-installer":
+		it.image = networkInstallerImage
 	case "pxe_tar":
 		it.image = pxeTarImage
 	default:
@@ -229,12 +229,9 @@ func (t *imageType) Manifest(bp *blueprint.Blueprint,
 	// of the same name from the distro and arch
 	staticPackageSets := make(map[string]rpmmd.PackageSet)
 
-	// don't add any static packages if Minimal was selected
-	if !bp.Minimal {
-		pkgSets := t.ImageTypeYAML.PackageSets(t.arch.distro.ID, t.arch.arch.String())
-		for name, pkgSet := range pkgSets {
-			staticPackageSets[name] = pkgSet
-		}
+	pkgSets := t.ImageTypeYAML.PackageSets(t.arch.distro.ID, t.arch.arch.String())
+	for name, pkgSet := range pkgSets {
+		staticPackageSets[name] = pkgSet
 	}
 
 	// amend with repository information and collect payload repos
@@ -333,14 +330,14 @@ func (t *imageType) checkOptions(bp *blueprint.Blueprint, options distro.ImageOp
 }
 
 func (t *imageType) RequiredBlueprintOptions() []string {
-	return t.ImageTypeYAML.RequiredBlueprintOptions
+	return t.ImageTypeYAML.Blueprint.RequiredOptions
 }
 
 func (t *imageType) SupportedBlueprintOptions() []string {
 	// The blueprint contains a few fields that are essentially metadata and
 	// not configuration / customizations. These should always be implicitly
 	// supported by all image types.
-	return append(t.ImageTypeYAML.SupportedBlueprintOptions, "name", "version", "description")
+	return append(t.ImageTypeYAML.Blueprint.SupportedOptions, "name", "version", "description")
 }
 
 func bootstrapContainerFor(t *imageType) string {
