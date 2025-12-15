@@ -13,8 +13,9 @@ import (
 
 type BaseContainer struct {
 	Base
-	OSCustomizations manifest.OSCustomizations
-	Environment      environment.Environment
+	OSCustomizations           manifest.OSCustomizations
+	OCIContainerCustomizations manifest.OCIContainerCustomizations
+	Environment                environment.Environment
 }
 
 func NewBaseContainer(platform platform.Platform, filename string) *BaseContainer {
@@ -35,6 +36,8 @@ func (img *BaseContainer) InstantiateManifest(m *manifest.Manifest,
 	osPipeline.Environment = img.Environment
 
 	ociPipeline := manifest.NewOCIContainer(buildPipeline, osPipeline)
+	ociPipeline.OCIContainerCustomizations = img.OCIContainerCustomizations
+
 	ociPipeline.SetFilename(img.filename)
 	artifact := ociPipeline.Export()
 

@@ -5,13 +5,17 @@ import (
 	"github.com/osbuild/images/pkg/osbuild"
 )
 
+type OCIContainerCustomizations struct {
+	OCIArchiveConfig *osbuild.OCIArchiveConfig
+}
+
 // An OCIContainer represents an OCI container, containing a filesystem
 // tree created by another Pipeline.
 type OCIContainer struct {
 	Base
-	filename     string
-	Cmd          []string
-	ExposedPorts []string
+	filename string
+
+	OCIContainerCustomizations OCIContainerCustomizations
 
 	treePipeline TreePipeline
 }
@@ -43,10 +47,7 @@ func (p *OCIContainer) serialize() (osbuild.Pipeline, error) {
 	options := &osbuild.OCIArchiveStageOptions{
 		Architecture: p.treePipeline.Platform().GetArch().String(),
 		Filename:     p.Filename(),
-		Config: &osbuild.OCIArchiveConfig{
-			Cmd:          p.Cmd,
-			ExposedPorts: p.ExposedPorts,
-		},
+		Config:       p.OCIContainerCustomizations.OCIArchiveConfig,
 	}
 	baseInput := osbuild.NewTreeInput("name:" + p.treePipeline.Name())
 	inputs := &osbuild.OCIArchiveStageInputs{Base: baseInput}

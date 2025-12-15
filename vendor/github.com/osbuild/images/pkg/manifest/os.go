@@ -108,8 +108,9 @@ type OSCustomizations struct {
 	// Do not install documentation
 	ExcludeDocs bool
 
-	Groups []users.Group
-	Users  []users.User
+	Groups       []users.Group
+	Users        []users.User
+	LockRootUser bool
 
 	ShellInit []shell.InitFile
 
@@ -298,14 +299,13 @@ func (p *OS) getPackageSetChain(Distro) ([]rpmmd.PackageSet, error) {
 		}
 	}
 
-	if len(p.OSCustomizations.Users)+len(p.OSCustomizations.Groups) > 0 {
+	if len(p.OSCustomizations.Users)+len(p.OSCustomizations.Groups) > 0 || p.OSCustomizations.LockRootUser {
 		// org.osbuild.users runs useradd, usermod, passwd, and
 		// mkhomedir_helper in the os tree using chroot. Most image types
 		// should already have the required packages, but some minimal image
 		// types, like 'tar' don't, so let's add them for the stage to run and
 		// to enable user management in the image.
 		customizationPackages = append(customizationPackages, "shadow-utils", "pam", "passwd")
-
 	}
 
 	if p.OSCustomizations.Firewall != nil {
@@ -445,7 +445,7 @@ func (p *OS) getBuildPackages(distro Distro) ([]string, error) {
 		packages = append(packages, "libkcapi-hmaccalc")
 	}
 
-	if len(p.OSCustomizations.Users)+len(p.OSCustomizations.Groups) > 0 {
+	if len(p.OSCustomizations.Users)+len(p.OSCustomizations.Groups) > 0 || p.OSCustomizations.LockRootUser {
 		packages = append(packages, "shadow-utils")
 	}
 
@@ -610,6 +610,10 @@ func (p *OS) serialize() (osbuild.Pipeline, error) {
 
 	if len(p.OSCustomizations.Groups) > 0 {
 		pipeline.AddStage(osbuild.GenGroupsStage(p.OSCustomizations.Groups))
+	}
+
+	if p.OSCustomizations.LockRootUser {
+		pipeline.AddStage(osbuild.NewUsersStage(osbuild.NewUsersStageOptionsForLockedRoot()))
 	}
 
 	if len(p.OSCustomizations.Users) > 0 {

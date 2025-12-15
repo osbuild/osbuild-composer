@@ -72,7 +72,7 @@ func GenFsStages(pt *disk.PartitionTable, filename string, soucePipeline string)
 
 				stages = append(stages, NewMkfsExt4Stage(options, stageDevices))
 			default:
-				panic(fmt.Sprintf("unknown fs type: %s", e.GetFSType()))
+				panic(fmt.Sprintf("unknown fs type: %s for %s", e.GetFSType(), e.GetMountpoint()))
 			}
 
 			if mkfsOptions.Geometry != nil {

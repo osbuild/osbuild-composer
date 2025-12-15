@@ -128,10 +128,21 @@ func subscriptionService(
 	}
 
 	var commands []string
+	if subscriptionOptions.ServerUrl != "" {
+		commands = append(commands, fmt.Sprintf("/usr/sbin/subscription-manager config --server.hostname %s", shutil.Quote(subscriptionOptions.ServerUrl)))
+	}
+	if subscriptionOptions.Proxy != "" {
+		proxy := strings.Split(subscriptionOptions.Proxy, ":")
+		commands = append(commands, fmt.Sprintf("/usr/sbin/subscription-manager config --server.proxy_hostname %s", shutil.Quote(proxy[0])))
+		if len(proxy) == 2 {
+			commands = append(commands, fmt.Sprintf("/usr/sbin/subscription-manager config --server.proxy_port %s", shutil.Quote(proxy[1])))
+		}
+	}
+
 	if subscriptionOptions.Rhc {
 		var curlToAssociateSystem string
 		// Use rhc for registration instead of subscription manager
-		rhcConnect := fmt.Sprintf(`/usr/bin/rhc connect --organization="${ORG_ID}" --activation-key="${ACTIVATION_KEY}" --server %s`, shutil.Quote(subscriptionOptions.ServerUrl))
+		rhcConnect := `/usr/bin/rhc connect --organization="${ORG_ID}" --activation-key="${ACTIVATION_KEY}"`
 		if subscriptionOptions.TemplateUUID != "" {
 			curlToAssociateSystem = getCurlToAssociateSystem(subscriptionOptions)
 		} else if subscriptionOptions.TemplateName != "" {
@@ -156,7 +167,7 @@ func subscriptionService(
 			files = append(files, icFile)
 		}
 	} else {
-		commands = []string{fmt.Sprintf(`/usr/sbin/subscription-manager register --org="${ORG_ID}" --activationkey="${ACTIVATION_KEY}" --serverurl %s --baseurl %s`, shutil.Quote(subscriptionOptions.ServerUrl), shutil.Quote(subscriptionOptions.BaseUrl))}
+		commands = append(commands, fmt.Sprintf(`/usr/sbin/subscription-manager register --org="${ORG_ID}" --activationkey="${ACTIVATION_KEY}" --baseurl %s`, shutil.Quote(subscriptionOptions.BaseUrl)))
 
 		// Insights is optional when using subscription-manager
 		if subscriptionOptions.Insights {

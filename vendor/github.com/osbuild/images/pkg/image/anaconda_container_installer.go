@@ -19,18 +19,11 @@ import (
 
 type AnacondaContainerInstaller struct {
 	Base
-
-	InstallerCustomizations manifest.InstallerCustomizations
-
-	RootfsCompression string
-
-	Ref string
+	AnacondaInstallerBase
 
 	ContainerSource           container.SourceSpec
 	InstallerPayload          container.SourceSpec
 	ContainerRemoveSignatures bool
-
-	Kickstart *kickstart.Options
 
 	// Locale for the installer. This should be set to the same locale as the
 	// ISO OS payload, if known.
@@ -48,11 +41,10 @@ type AnacondaContainerInstaller struct {
 	InstallerHome string
 }
 
-func NewAnacondaContainerInstaller(platform platform.Platform, filename string, container container.SourceSpec, ref string) *AnacondaContainerInstaller {
+func NewAnacondaContainerInstaller(platform platform.Platform, filename string, container container.SourceSpec) *AnacondaContainerInstaller {
 	return &AnacondaContainerInstaller{
 		Base:            NewBase("bootc-installer", platform, filename),
 		ContainerSource: container,
-		Ref:             ref,
 	}
 }
 
@@ -128,23 +120,12 @@ func (img *AnacondaContainerInstaller) InstantiateManifestFromContainer(m *manif
 	bootTreePipeline.KernelOpts = kernelOpts
 
 	isoTreePipeline := manifest.NewAnacondaInstallerISOTree(buildPipeline, anacondaPipeline, rootfsImagePipeline, bootTreePipeline)
-	isoTreePipeline.PartitionTable = efiBootPartitionTable(rng)
-	isoTreePipeline.Release = img.InstallerCustomizations.Release
-	isoTreePipeline.Kickstart = img.Kickstart
-
-	isoTreePipeline.RootfsCompression = img.RootfsCompression
-	isoTreePipeline.RootfsType = img.InstallerCustomizations.ISORootfsType
+	initIsoTreePipeline(isoTreePipeline, &img.AnacondaInstallerBase, rng)
 
 	// For ostree installers, always put the kickstart file in the root of the ISO
 	isoTreePipeline.PayloadPath = "/container"
 	isoTreePipeline.PayloadRemoveSignatures = img.ContainerRemoveSignatures
-
 	isoTreePipeline.ContainerSource = &img.InstallerPayload
-	isoTreePipeline.ISOBoot = img.InstallerCustomizations.ISOBoot
-	if anacondaPipeline.InstallerCustomizations.FIPS {
-		isoTreePipeline.KernelOpts = append(isoTreePipeline.KernelOpts, "fips=1")
-	}
-
 	isoTreePipeline.InstallRootfsType = img.InstallRootfsType
 
 	isoPipeline := manifest.NewISO(buildPipeline, isoTreePipeline, img.InstallerCustomizations.ISOLabel)

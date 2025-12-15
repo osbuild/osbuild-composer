@@ -102,8 +102,6 @@ type Package struct {
 	Files []string
 
 	// Repodata
-	// RPM package baseurl from repodata
-	BaseURL string
 	// RPM package relative path/location from repodata
 	Location string
 	// RPM package remote location where the package can be download from
@@ -134,6 +132,11 @@ func (p Package) EVRA() string {
 		return fmt.Sprintf("%s-%s.%s", p.Version, p.Release, p.Arch)
 	}
 	return fmt.Sprintf("%d:%s-%s.%s", p.Epoch, p.Version, p.Release, p.Arch)
+}
+
+// NVR returns the package's Name-Version-Release string.
+func (p Package) NVR() string {
+	return fmt.Sprintf("%s-%s-%s", p.Name, p.Version, p.Release)
 }
 
 type PackageList []Package

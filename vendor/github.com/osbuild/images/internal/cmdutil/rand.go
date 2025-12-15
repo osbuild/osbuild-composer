@@ -32,7 +32,7 @@ func newRNGSeed() (int64, error) {
 	return randSeed.Int64(), nil
 }
 
-func SeedArgFor(bc *buildconfig.BuildConfig, imgTypeName, distributionName, archName string) (int64, error) {
+func SeedArgFor(bc *buildconfig.BuildConfig, distributionName, archName string) (int64, error) {
 	rngSeed, err := newRNGSeed()
 	if err != nil {
 		return 0, err
@@ -41,7 +41,6 @@ func SeedArgFor(bc *buildconfig.BuildConfig, imgTypeName, distributionName, arch
 	h := fnv.New64()
 	h.Write([]byte(distributionName))
 	h.Write([]byte(archName))
-	h.Write([]byte(imgTypeName))
 	if bc != nil {
 		h.Write([]byte(bc.Name))
 	}

@@ -10,14 +10,15 @@ type Tar struct {
 	Base
 	filename string
 
-	Format      osbuild.TarArchiveFormat
-	Compression osbuild.TarArchiveCompression
-	RootNode    osbuild.TarRootNode
-	Paths       []string
-	ACLs        *bool
-	SELinux     *bool
-	Xattrs      *bool
-	Transform   string
+	Format       osbuild.TarArchiveFormat
+	Compression  osbuild.TarArchiveCompression
+	RootNode     osbuild.TarRootNode
+	Paths        []string
+	ACLs         *bool
+	SELinux      *bool
+	Xattrs       *bool
+	Transform    string
+	NumericOwner *bool
 
 	inputPipeline Pipeline
 }
@@ -55,15 +56,16 @@ func (p *Tar) serialize() (osbuild.Pipeline, error) {
 	}
 
 	tarOptions := &osbuild.TarStageOptions{
-		Filename:    p.Filename(),
-		Format:      p.Format,
-		Compression: p.Compression,
-		ACLs:        p.ACLs,
-		SELinux:     p.SELinux,
-		Xattrs:      p.Xattrs,
-		RootNode:    p.RootNode,
-		Paths:       p.Paths,
-		Transform:   p.Transform,
+		Filename:     p.Filename(),
+		Format:       p.Format,
+		Compression:  p.Compression,
+		ACLs:         p.ACLs,
+		SELinux:      p.SELinux,
+		Xattrs:       p.Xattrs,
+		RootNode:     p.RootNode,
+		Paths:        p.Paths,
+		Transform:    p.Transform,
+		NumericOwner: p.NumericOwner,
 	}
 	tarStage := osbuild.NewTarStage(tarOptions, p.inputPipeline.Name())
 	pipeline.AddStage(tarStage)

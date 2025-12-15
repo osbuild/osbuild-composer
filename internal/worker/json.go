@@ -483,7 +483,6 @@ func (d DepsolvedPackage) ToRPMMD() rpmmd.Package {
 
 		Files: d.Files,
 
-		BaseURL:         d.BaseURL,
 		Location:        d.Location,
 		RemoteLocations: d.RemoteLocations,
 
@@ -561,7 +560,6 @@ func DepsolvedPackageFromRPMMD(pkg rpmmd.Package) DepsolvedPackage {
 
 		Files: pkg.Files,
 
-		BaseURL:         pkg.BaseURL,
 		Location:        pkg.Location,
 		RemoteLocations: pkg.RemoteLocations,
 

@@ -42,7 +42,7 @@ type OSTreeDeploymentCustomizations struct {
 
 	// Lock the root account in the deployment unless the user defined root
 	// user options in the build configuration.
-	LockRoot bool
+	LockRootUser bool
 
 	// What type of mount configuration should we create, systemd units, fstab
 	// or none
@@ -133,7 +133,7 @@ func (p *OSTreeDeployment) getBuildPackages(Distro) ([]string, error) {
 		"rpm-ostree",
 	}
 
-	if len(p.Users) > 0 || p.LockRoot {
+	if len(p.Users) > 0 || p.LockRootUser {
 		packages = append(packages, "shadow-utils")
 	}
 
@@ -424,15 +424,8 @@ func (p *OSTreeDeployment) serialize() (osbuild.Pipeline, error) {
 		}
 	}
 
-	if p.LockRoot && !hasRoot {
-		userOptions := &osbuild.UsersStageOptions{
-			Users: map[string]osbuild.UsersStageOptionsUser{
-				"root": {
-					Password: common.ToPtr("!locked"), // this is treated as crypted and locks/disables the password
-				},
-			},
-		}
-		rootLockStage := osbuild.NewUsersStage(userOptions)
+	if p.LockRootUser && !hasRoot {
+		rootLockStage := osbuild.NewUsersStage(osbuild.NewUsersStageOptionsForLockedRoot())
 		rootLockStage.MountOSTree(p.osName, ref, 0)
 		pipeline.AddStage(rootLockStage)
 	}

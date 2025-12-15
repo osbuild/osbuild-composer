@@ -83,6 +83,13 @@ func osCustomizations(t *imageType, osPackageSet rpmmd.PackageSet, options distr
 
 		osc.Users = users.UsersFromBP(c.GetUsers())
 		osc.Users = append(osc.Users, imageConfig.Users...)
+
+		// we don't lock the root account on installer ISOs, in the
+		// future we might want to translate this to a kickstart
+		// instead
+		if imageConfig.LockRootUser != nil {
+			osc.LockRootUser = *imageConfig.LockRootUser
+		}
 	}
 
 	osc.EnabledServices = imageConfig.EnabledServices
@@ -351,6 +358,26 @@ func osCustomizations(t *imageType, osPackageSet rpmmd.PackageSet, options distr
 	return osc, nil
 }
 
+func ociContainerCustomizations(t *imageType) manifest.OCIContainerCustomizations {
+	imageConfig := t.getDefaultImageConfig()
+
+	return manifest.OCIContainerCustomizations{
+		OCIArchiveConfig: osbuild.NewOCIArchiveConfig(imageConfig.OCI),
+	}
+}
+
+func ostreeCommitServerCustomizations(t *imageType) manifest.OSTreeCommitServerCustomizations {
+	imageConfig := t.getDefaultImageConfig()
+
+	c := manifest.OSTreeCommitServerCustomizations{}
+
+	if imageConfig.OSTreeServer != nil {
+		c.OSTreeServer = imageConfig.OSTreeServer
+	}
+
+	return c
+}
+
 func installerCustomizations(t *imageType, c *blueprint.Customizations) (manifest.InstallerCustomizations, error) {
 	d := t.arch.distro
 	isoLabel, err := t.ISOLabel()
@@ -476,7 +503,7 @@ func ostreeDeploymentCustomizations(
 	}
 
 	if imageConfig.LockRootUser != nil {
-		deploymentConf.LockRoot = *imageConfig.LockRootUser
+		deploymentConf.LockRootUser = *imageConfig.LockRootUser
 	}
 
 	for _, fs := range c.GetFilesystems() {
@@ -507,10 +534,7 @@ func diskImage(t *imageType,
 
 	img.Environment = &t.ImageTypeYAML.Environment
 	img.Compression = t.ImageTypeYAML.Compression
-	if bp.Minimal {
-		// Disable weak dependencies if the 'minimal' option is enabled
-		img.OSCustomizations.InstallWeakDeps = false
-	}
+
 	// TODO: move generation into LiveImage
 	pt, err := t.getPartitionTable(bp.Customizations, options, rng)
 	if err != nil {
@@ -574,6 +598,8 @@ func containerImage(t *imageType,
 	}
 	img.OSCustomizations.PayloadRepos = payloadRepos
 	img.Environment = &t.ImageTypeYAML.Environment
+
+	img.OCIContainerCustomizations = ociContainerCustomizations(t)
 
 	return img, nil
 }
@@ -762,6 +788,9 @@ func iotContainerImage(t *imageType,
 	img.OSVersion = d.OsVersion()
 	img.ExtraContainerPackages = packageSets[containerPkgsKey]
 
+	img.OCIContainerCustomizations = ociContainerCustomizations(t)
+	img.OSTreeCommitServerCustomizations = ostreeCommitServerCustomizations(t)
+
 	return img, nil
 }
 
@@ -926,7 +955,7 @@ func iotSimplifiedInstallerImage(t *imageType,
 }
 
 // Make an Anaconda installer boot.iso
-func netinstImage(t *imageType,
+func networkInstallerImage(t *imageType,
 	bp *blueprint.Blueprint,
 	options distro.ImageOptions,
 	packageSets map[string]rpmmd.PackageSet,
@@ -937,14 +966,47 @@ func netinstImage(t *imageType,
 	customizations := bp.Customizations
 
 	img := image.NewAnacondaNetInstaller(t.platform, t.Filename())
-	language, _ := customizations.GetPrimaryLocale()
+
+	var err error
+	img.Kickstart, err = kickstart.New(customizations)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// So this is slightly funky. Normally we set these kickstart options based on the
+	// OSCustomizations. I've explicitly chosen not to do that because the values in
+	// OSCustomizations can come either from the image config *or* from the blueprint.
+	// Since OSCustomizations *always* contains values we cannot determine based on it
+	// if we want a kickstart or not.
+
+	// With the duplication below we only add a kickstart if the user actually provided
+	// values through the blueprint instead of always.
+	language, keyboard := customizations.GetPrimaryLocale()
+
 	if language != nil {
 		img.Language = *language
+		img.Kickstart.Language = language
+	}
+
+	if keyboard != nil {
+		img.Kickstart.Keyboard = keyboard
+	}
+
+	timezone, _ := customizations.GetTimezoneSettings()
+	if timezone != nil {
+		img.Kickstart.Timezone = timezone
+	}
+
+	// If we have an empty kickstart options we don't want to put it on
+	// the image at all as an empty kickstart will create an empty kickstart
+	// file. In the netinst case we want *no* kickstart file at all.
+	if img.Kickstart.IsZero() {
+		img.Kickstart = nil
 	}
 
 	img.ExtraBasePackages = packageSets[installerPkgsKey]
 
-	var err error
 	img.InstallerCustomizations, err = installerCustomizations(t, bp.Customizations)
 	if err != nil {
 		return nil, err
