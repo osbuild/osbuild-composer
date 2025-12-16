@@ -2,7 +2,7 @@
   "fedora-41": {
     "dependencies": {
       "osbuild": {
-        "commit": "a52e256c481c00e61f785f3ad68e29e1ac8a09fb"
+        "commit": "b1e74a309d5c2c088959c6e0322739fe20969912"
       }
     },
     "repos": [

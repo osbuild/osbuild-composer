@@ -400,7 +400,7 @@ func TestKojiCompose(t *testing.T) {
 		},
 	}
 
-	emptyManifest := `{"version":"2","pipelines":[{"name":"build"},{"name":"os"}],"sources":{"org.osbuild.curl":{"items":{"sha256:e50ddb78a37f5851d1a5c37a4c77d59123153c156e628e064b9daa378f45a2fe":{"url":"https://pkg1.example.com/1.33-2.fc30.x86_64.rpm"}}}}}`
+	emptyManifest := `{"version":"2","pipelines":[{"name":"build"},{"name":"os"}],"sources":{"org.osbuild.librepo":{"items":{"sha256:e50ddb78a37f5851d1a5c37a4c77d59123153c156e628e064b9daa378f45a2fe":{"path":"","mirror":"pkg1-repoid"}},"options":{"mirrors":{"pkg1-repoid":{"url":"https://pkg1.example.com/","type":"baseurl"}}}}}}`
 	expectedManifests := `{"manifests":[` + emptyManifest + `,` + emptyManifest + `],"kind":"ComposeManifests"}`
 	for idx, c := range cases {
 		name, version, release := "foo", "1", "2"

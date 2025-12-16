@@ -27,6 +27,7 @@ import (
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distrofactory"
 	"github.com/osbuild/images/pkg/manifest"
+	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/ostree"
 	"github.com/osbuild/images/pkg/reporegistry"
 	"github.com/osbuild/images/pkg/sbom"
@@ -711,7 +712,10 @@ func serializeManifest(ctx context.Context, manifestSource *manifest.Manifest, w
 		r.Repos = res
 		depsolveResultsInTheRightFormat[plName] = r
 	}
-	ms, err := manifestSource.Serialize(depsolveResultsInTheRightFormat, containerSpecs, ostreeCommitSpecs, nil)
+	opts := &manifest.SerializeOptions{
+		RpmDownloader: osbuild.RpmDownloaderLibrepo,
+	}
+	ms, err := manifestSource.Serialize(depsolveResultsInTheRightFormat, containerSpecs, ostreeCommitSpecs, opts)
 	if err != nil {
 		reason := "Error serializing manifest"
 		jobResult.JobError = clienterrors.New(clienterrors.ErrorManifestGeneration, reason, err.Error())
