@@ -90,7 +90,9 @@ source /usr/libexec/osbuild-composer-test/set-env-variables.sh
 source /usr/libexec/tests/osbuild-composer/shared_lib.sh
 
 # Container image used for cloud provider CLI tools
-export CONTAINER_IMAGE_CLOUD_TOOLS="quay.io/osbuild/cloud-tools:latest"
+# TODO: Unpin the container once the cloud-tools image has working azure-cli
+# See https://bugzilla.redhat.com/show_bug.cgi?id=2422741
+export CONTAINER_IMAGE_CLOUD_TOOLS="quay.io/osbuild/cloud-tools:latest-202509011147"
 
 #
 # Provision the software under test.
