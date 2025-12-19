@@ -107,8 +107,6 @@ RPM:
   parallel:
     matrix:
       - RUNNER:
-          - aws/fedora-41-x86_64
-          - aws/fedora-41-aarch64
           - aws/fedora-42-x86_64
           - aws/fedora-42-aarch64
           - aws/rhel-8.10-ga-x86_64
@@ -195,8 +193,8 @@ Base:
   parallel:
     matrix:
       - RUNNER:
-          - aws/fedora-41-x86_64
-          - aws/fedora-41-aarch64
+          - aws/fedora-42-x86_64
+          - aws/fedora-42-aarch64
           - aws/rhel-8.10-ga-x86_64
           - aws/rhel-8.10-ga-aarch64
           - aws/rhel-9.6-ga-x86_64
@@ -222,8 +220,8 @@ Base:
   parallel:
     matrix:
       - RUNNER:
-          - aws/fedora-41-x86_64
-          - aws/fedora-41-aarch64
+          - aws/fedora-42-x86_64
+          - aws/fedora-42-aarch64
       - RUNNER:
           - aws/rhel-8.10-ga-x86_64
           - aws/rhel-8.10-ga-aarch64
@@ -351,7 +349,7 @@ regression-no-explicit-rootfs-definition:
 
 .fedora_runners: &fedora_runners
     RUNNER:
-      - aws/fedora-41-x86_64
+      - aws/fedora-42-x86_64
 
 .integration_fedora:
   extends: .integration_base
@@ -578,11 +576,11 @@ API:
         INTERNAL_NETWORK: ["true"]
       - IMAGE_TYPE: ["iot-commit"]
         RUNNER:
-          - aws/fedora-41-x86_64
+          - aws/fedora-42-x86_64
       - IMAGE_TYPE: ["iot-bootable-container"]
         RUNNER:
-          - aws/fedora-41-x86_64
-          - aws/fedora-41-aarch64
+          - aws/fedora-42-x86_64
+          - aws/fedora-42-aarch64
       - IMAGE_TYPE: ["aws"]
         RUNNER:
           - aws/rhel-8.10-ga-aarch64
@@ -838,7 +836,7 @@ ContainerUpload:
   parallel:
     matrix:
       - RUNNER:
-          - aws/fedora-41-x86_64
+          - aws/fedora-42-x86_64
 
 ContainerEmbedding:
   stage: test
@@ -869,7 +867,7 @@ WorkerExecutor:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/worker-executor.sh
   variables:
-    RUNNER: aws/fedora-41-x86_64
+    RUNNER: aws/fedora-42-x86_64
     IAM_INSTANCE_PROFILE: worker-executor
 
 WorkerExecutorFailure:
@@ -882,7 +880,7 @@ WorkerExecutorFailure:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/worker-executor-crash.sh
   variables:
-    RUNNER: aws/fedora-41-x86_64
+    RUNNER: aws/fedora-42-x86_64
     IAM_INSTANCE_PROFILE: worker-executor
 
 finish:
