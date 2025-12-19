@@ -290,7 +290,7 @@ done
 greenprint "🛃 Checking that $VM_NAME is running"
 set +e
 for LOOP_COUNTER in {0..10}; do
-    STATUS=$($VIRTCTL --namespace "$OPENSHIFT_PROJECT" -i "$SSH_KEY" --local-ssh-opts="-o StrictHostKeyChecking=no" ssh admin@"$VM_NAME" --command 'systemctl --wait is-system-running')
+    STATUS=$($VIRTCTL --namespace "$OPENSHIFT_PROJECT" -i "$SSH_KEY" --local-ssh-opts="-o StrictHostKeyChecking=no" ssh admin@vmi/"$VM_NAME" --command 'systemctl --wait is-system-running')
 
     if [[ $STATUS == running || $STATUS == degraded ]]; then
         greenprint "💚 Success"
