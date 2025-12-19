@@ -2,7 +2,7 @@
   "fedora-41": {
     "dependencies": {
       "osbuild": {
-        "commit": "a52e256c481c00e61f785f3ad68e29e1ac8a09fb"
+        "commit": "9c12ef0375313511a63d2ca830c80f2e9ffc7191"
       }
     },
     "repos": [
@@ -45,7 +45,7 @@
   "fedora-42": {
     "dependencies": {
       "osbuild": {
-        "commit": "a52e256c481c00e61f785f3ad68e29e1ac8a09fb"
+        "commit": "22d5a83fa8f727ccb411ce315886cab2f95e8fa5"
       }
     },
     "repos": [
@@ -88,70 +88,70 @@
   "rhel-8.4": {
     "dependencies": {
       "osbuild": {
-        "commit": "a52e256c481c00e61f785f3ad68e29e1ac8a09fb"
+        "commit": "22d5a83fa8f727ccb411ce315886cab2f95e8fa5"
       }
     }
   },
   "rhel-8.8": {
     "dependencies": {
       "osbuild": {
-        "commit": "a52e256c481c00e61f785f3ad68e29e1ac8a09fb"
+        "commit": "22d5a83fa8f727ccb411ce315886cab2f95e8fa5"
       }
     }
   },
   "rhel-8.9": {
     "dependencies": {
       "osbuild": {
-        "commit": "a52e256c481c00e61f785f3ad68e29e1ac8a09fb"
+        "commit": "22d5a83fa8f727ccb411ce315886cab2f95e8fa5"
       }
     }
   },
   "rhel-8.10": {
     "dependencies": {
       "osbuild": {
-        "commit": "a52e256c481c00e61f785f3ad68e29e1ac8a09fb"
+        "commit": "22d5a83fa8f727ccb411ce315886cab2f95e8fa5"
       }
     }
   },
   "rhel-9.2": {
     "dependencies": {
       "osbuild": {
-        "commit": "a52e256c481c00e61f785f3ad68e29e1ac8a09fb"
+        "commit": "22d5a83fa8f727ccb411ce315886cab2f95e8fa5"
       }
     }
   },
   "rhel-9.3": {
     "dependencies": {
       "osbuild": {
-        "commit": "a52e256c481c00e61f785f3ad68e29e1ac8a09fb"
+        "commit": "22d5a83fa8f727ccb411ce315886cab2f95e8fa5"
       }
     }
   },
   "rhel-9.4": {
     "dependencies": {
       "osbuild": {
-        "commit": "a52e256c481c00e61f785f3ad68e29e1ac8a09fb"
+        "commit": "22d5a83fa8f727ccb411ce315886cab2f95e8fa5"
       }
     }
   },
   "rhel-9.5": {
     "dependencies": {
       "osbuild": {
-        "commit": "a52e256c481c00e61f785f3ad68e29e1ac8a09fb"
+        "commit": "22d5a83fa8f727ccb411ce315886cab2f95e8fa5"
       }
     }
   },
   "rhel-9.6": {
     "dependencies": {
       "osbuild": {
-        "commit": "a52e256c481c00e61f785f3ad68e29e1ac8a09fb"
+        "commit": "22d5a83fa8f727ccb411ce315886cab2f95e8fa5"
       }
     }
   },
   "rhel-9.7": {
     "dependencies": {
       "osbuild": {
-        "commit": "a52e256c481c00e61f785f3ad68e29e1ac8a09fb"
+        "commit": "22d5a83fa8f727ccb411ce315886cab2f95e8fa5"
       }
     },
     "repos": [
@@ -197,7 +197,7 @@
   "rhel-9.8": {
     "dependencies": {
       "osbuild": {
-        "commit": "a52e256c481c00e61f785f3ad68e29e1ac8a09fb"
+        "commit": "22d5a83fa8f727ccb411ce315886cab2f95e8fa5"
       }
     },
     "repos": [
@@ -243,21 +243,21 @@
   "rhel-10.0": {
     "dependencies": {
       "osbuild": {
-        "commit": "a52e256c481c00e61f785f3ad68e29e1ac8a09fb"
+        "commit": "22d5a83fa8f727ccb411ce315886cab2f95e8fa5"
       }
     }
   },
   "rhel-10.1": {
     "dependencies": {
       "osbuild": {
-        "commit": "a52e256c481c00e61f785f3ad68e29e1ac8a09fb"
+        "commit": "22d5a83fa8f727ccb411ce315886cab2f95e8fa5"
       }
     }
   },
   "rhel-10.2": {
     "dependencies": {
       "osbuild": {
-        "commit": "a52e256c481c00e61f785f3ad68e29e1ac8a09fb"
+        "commit": "22d5a83fa8f727ccb411ce315886cab2f95e8fa5"
       }
     },
     "repos": [
@@ -303,14 +303,14 @@
   "centos-9": {
     "dependencies": {
       "osbuild": {
-        "commit": "a52e256c481c00e61f785f3ad68e29e1ac8a09fb"
+        "commit": "22d5a83fa8f727ccb411ce315886cab2f95e8fa5"
       }
     }
   },
   "centos-stream-9": {
     "dependencies": {
       "osbuild": {
-        "commit": "a52e256c481c00e61f785f3ad68e29e1ac8a09fb"
+        "commit": "22d5a83fa8f727ccb411ce315886cab2f95e8fa5"
       }
     },
     "repos": [
@@ -356,14 +356,14 @@
   "centos-10": {
     "dependencies": {
       "osbuild": {
-        "commit": "a52e256c481c00e61f785f3ad68e29e1ac8a09fb"
+        "commit": "22d5a83fa8f727ccb411ce315886cab2f95e8fa5"
       }
     }
   },
   "centos-stream-10": {
     "dependencies": {
       "osbuild": {
-        "commit": "a52e256c481c00e61f785f3ad68e29e1ac8a09fb"
+        "commit": "22d5a83fa8f727ccb411ce315886cab2f95e8fa5"
       }
     },
     "repos": [
