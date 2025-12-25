@@ -38,6 +38,7 @@ type Customizations struct {
 	ContainersStorage  *ContainerStorageCustomization `json:"containers-storage,omitempty" toml:"containers-storage,omitempty"`
 	Firstboot          *FirstbootCustomization        `json:"firstboot,omitempty" toml:"firstboot,omitempty"`
 	DNF                *DNFCustomization              `json:"dnf,omitempty" toml:"dnf,omitempty"`
+	ISO                *ISOCustomization              `json:"iso,omitempty" toml:"iso,omitempty"`
 }
 
 type IgnitionCustomization struct {
@@ -453,6 +454,14 @@ func (c *Customizations) GetInstaller() (*InstallerCustomization, error) {
 	}
 
 	return c.Installer, nil
+}
+
+func (c *Customizations) GetISO() *ISOCustomization {
+	if c == nil {
+		return nil
+	}
+
+	return c.ISO
 }
 
 func (c *Customizations) GetRPM() *RPMCustomization {

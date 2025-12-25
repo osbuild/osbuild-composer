@@ -63,11 +63,11 @@ type PartitionCustomization struct {
 
 	// Minimum size of the partition that contains the filesystem (for "plain"
 	// filesystem), volume group ("lvm"), or btrfs volume ("btrfs"). The final
-	// size of the partition will be larger than the minsize if the sum of the
+	// size of the partition can be larger than the minsize if the sum of the
 	// contained volumes (logical volumes or subvolumes) is larger. In
 	// addition, certain mountpoints have required minimum sizes. See
 	// https://osbuild.org/docs/user-guide/partitioning for more details.
-	// (optional, defaults depend on payload and mountpoints).
+	// This field is required.
 	MinSize uint64 `json:"minsize,omitempty,omitzero" toml:"minsize,omitempty,omitzero"`
 
 	// The partition type GUID for GPT partitions. For DOS partitions, this
@@ -517,9 +517,14 @@ func validateFilesystemType(path, fstype string) error {
 	return nil
 }
 
-// These mountpoints must be on a plain partition (i.e. not on LVM or btrfs).
-var plainOnlyMountpoints = []string{
+// These mountpoints must be on a plain partition (i.e. not on LVM).
+var plainOnlyMountpointsForLVM = []string{
 	"/boot",
+	"/boot/efi", // not allowed by our global policies, but that might change
+}
+
+// These mountpoints must be on a plain partition (i.e. not on btrfs).
+var plainOnlyMountpointsForBtrfs = []string{
 	"/boot/efi", // not allowed by our global policies, but that might change
 }
 
@@ -681,7 +686,7 @@ func (p *PartitionCustomization) validateLVM(mountpoints, vgnames map[string]boo
 		}
 		mountpoints[lv.Mountpoint] = true
 
-		if slices.Contains(plainOnlyMountpoints, lv.Mountpoint) {
+		if slices.Contains(plainOnlyMountpointsForLVM, lv.Mountpoint) {
 			return fmt.Errorf("invalid mountpoint %q for logical volume", lv.Mountpoint)
 		}
 
@@ -722,7 +727,7 @@ func (p *PartitionCustomization) validateBtrfs(mountpoints map[string]bool) erro
 		if mountpoints[subvol.Mountpoint] {
 			return fmt.Errorf("duplicate mountpoint %q in partitioning customizations", subvol.Mountpoint)
 		}
-		if slices.Contains(plainOnlyMountpoints, subvol.Mountpoint) {
+		if slices.Contains(plainOnlyMountpointsForBtrfs, subvol.Mountpoint) {
 			return fmt.Errorf("invalid mountpoint %q for btrfs subvolume", subvol.Mountpoint)
 		}
 		mountpoints[subvol.Mountpoint] = true
