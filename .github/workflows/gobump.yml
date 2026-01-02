@@ -20,7 +20,7 @@ jobs:
           go_version: "1.23.9"
           token: ${{ secrets.SCHUTZBOT_GITHUB_ACCESS_TOKEN }}
           exec_pr: ./tools/prepare-source.sh
-          include: "github.com/osbuild/images"
+          include: "github.com/osbuild/images github.com/osbuild/blueprint"
           commit_message: "deps: bump osbuild/images dependency"
 
       - name: Cleaup repository
@@ -32,5 +32,5 @@ jobs:
           go_version: "1.23.9"
           token: ${{ secrets.SCHUTZBOT_GITHUB_ACCESS_TOKEN }}
           exec_pr: ./tools/prepare-source.sh
-          exclude: "github.com/osbuild/images"
+          exclude: "github.com/osbuild/images,github.com/osbuild/blueprint"
           commit_message: "deps: update dependencies (w/o osbuild/images)"
