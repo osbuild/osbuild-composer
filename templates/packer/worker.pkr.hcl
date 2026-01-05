@@ -21,10 +21,11 @@ source "amazon-ebs" "image_builder" {
 
 build {
   source "amazon-ebs.image_builder" {
-    name = "rhel-9-x86_64"
+    name = "rhel-10-x86_64"
 
-    # RHEL-9.6.0_HVM_GA-20250423-x86_64-0-Access2-GP3
-    source_ami = "ami-01a52a1073599b7c8"
+    # For some reason there's no RHEL-10.1, though this one was rebuilt around the same time as the
+    # arm one: RHEL-10.0.0_HVM-20251030-x86_64-0-Access2-GP3
+    source_ami = "ami-0d2cf1078cac15da9"
     ssh_username = "ec2-user"
     instance_type = "c6a.large"
     aws_polling {
@@ -33,7 +34,7 @@ build {
     }
 
     # Set a name for the resulting AMI.
-    ami_name = "${var.image_name}-rhel-9-x86_64"
+    ami_name = "${var.image_name}-rhel-10-x86_64"
 
     # Apply tags to the resulting AMI/EBS snapshot.
     tags = {
@@ -59,10 +60,10 @@ build {
   }
 
   source "amazon-ebs.image_builder" {
-    name = "rhel-9-aarch64"
+    name = "rhel-10-aarch64"
 
-    # RHEL-9.6.0_HVM_GA-20250423-arm64-0-Access2-GP3
-    source_ami = "ami-089b86d2f4d27cd98"
+    # RHEL-10.1.0_HVM_GA-20251031-arm64-0-Access2-GP3
+    source_ami = "ami-03d9eec0fe95df48d"
     ssh_username = "ec2-user"
     instance_type = "c6g.large"
     aws_polling {
@@ -71,7 +72,7 @@ build {
     }
 
     # Set a name for the resulting AMI.
-    ami_name = "${var.image_name}-rhel-9-aarch64"
+    ami_name = "${var.image_name}-rhel-10-aarch64"
 
     # Apply tags to the resulting AMI/EBS snapshot.
     tags = {
