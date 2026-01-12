@@ -2526,6 +2526,13 @@ components:
           type: string
           description: |
             Optional value used to specify the patch host when registering the system with Insights.
+        content_sets:
+          type: array
+          items:
+            type: string
+            example: 'content-label-1'
+          description: |
+            Optional list of repository IDs to enable with subscription-manager on first boot.
     User:
       type: object
       additionalProperties: false
