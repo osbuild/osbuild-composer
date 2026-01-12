@@ -1152,6 +1152,10 @@ func (request *ComposeRequest) GetSubscription() (sub *subscription.ImageOptions
 		if request.Customizations.Subscription.PatchUrl != nil {
 			patchURL = *request.Customizations.Subscription.PatchUrl
 		}
+		var contentSets []string
+		if request.Customizations.Subscription.ContentSets != nil {
+			contentSets = *request.Customizations.Subscription.ContentSets
+		}
 
 		sub = &subscription.ImageOptions{
 			Organization:  request.Customizations.Subscription.Organization,
@@ -1164,6 +1168,7 @@ func (request *ComposeRequest) GetSubscription() (sub *subscription.ImageOptions
 			TemplateName:  templateName,
 			TemplateUUID:  templateUUID,
 			PatchURL:      patchURL,
+			ContentSets:   contentSets,
 		}
 	}
 
