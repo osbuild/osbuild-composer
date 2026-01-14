@@ -1163,16 +1163,15 @@ components:
           properties:
             sigmd5:
               type: string
-
     ComposeRequest:
       additionalProperties: false
-      required:
-        - distribution
       not: {required: ['customizations', 'blueprint']}
       properties:
         distribution:
           type: string
           example: 'rhel-8'
+        bootc:
+          $ref: '#/components/schemas/Bootc'
         image_request:
           $ref: '#/components/schemas/ImageRequest'
         image_requests:
@@ -1185,6 +1184,14 @@ components:
           $ref: '#/components/schemas/Koji'
         blueprint:
           $ref: '#/components/schemas/Blueprint'
+    Bootc:
+      type: object
+      required:
+        - reference
+      properties:
+        reference:
+          type: string
+          example: "quay.io/centos-bootc/centos-bootc:stream9"
     ImageRequest:
       additionalProperties: false
       required:

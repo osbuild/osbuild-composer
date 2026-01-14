@@ -1095,7 +1095,7 @@ func TestGetImageRequests_ImageTypeConversion(t *testing.T) {
 		t.Run(string(tt.requestedImageType), func(t *testing.T) {
 			for _, d := range tt.requestedDistros {
 				request := &ComposeRequest{
-					Distribution: d,
+					Distribution: &d,
 					ImageRequest: &ImageRequest{
 						Architecture:  "x86_64",
 						ImageType:     tt.requestedImageType,
@@ -1122,7 +1122,7 @@ func TestGetImageRequests_ImageTypeConversion(t *testing.T) {
 
 func TestGetImageRequests_NoRepositories(t *testing.T) {
 	request := &ComposeRequest{
-		Distribution: TEST_DISTRO_NAME,
+		Distribution: common.ToPtr(TEST_DISTRO_NAME),
 		ImageRequest: &ImageRequest{
 			Architecture:  "x86_64",
 			ImageType:     ImageTypesAws,
@@ -1142,7 +1142,7 @@ func TestGetImageRequests_NoRepositories(t *testing.T) {
 // TestGetImageRequests_BlueprintDistro test to make sure blueprint distro overrides request distro
 func TestGetImageRequests_BlueprintDistro(t *testing.T) {
 	request := &ComposeRequest{
-		Distribution: TEST_DISTRO_NAME,
+		Distribution: common.ToPtr(TEST_DISTRO_NAME),
 		ImageRequest: &ImageRequest{
 			Architecture:  "x86_64",
 			ImageType:     ImageTypesAws,

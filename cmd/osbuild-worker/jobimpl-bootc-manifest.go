@@ -27,7 +27,6 @@ type BootcManifestJobImpl struct {
 	Store string
 }
 
-
 // This job generates a bootc manifest and produces a result which is compatible with the OSBuild
 // job. The manifest is generated on the worker because instantiating a bootc distro requires
 // running and inspecting the container (this is done within images).

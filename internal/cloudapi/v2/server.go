@@ -478,6 +478,63 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 	return id, nil
 }
 
+func (s *Server) enqueueBootcCompose(request ComposeRequest, channel string) (uuid.UUID, error) {
+	var ir ImageRequest
+	if request.ImageRequest != nil {
+		ir = *request.ImageRequest
+	} else if request.ImageRequests != nil && len(*request.ImageRequests) == 1 {
+		ir = (*request.ImageRequests)[0]
+	} else {
+		return uuid.Nil, HTTPError(ErrorInvalidNumberOfImageBuilds)
+	}
+
+	bp, err := request.GetBlueprint()
+	if err != nil {
+		return uuid.Nil, err
+	}
+
+	mani, err := s.workers.EnqueueBootcManifestJob(&worker.BootcManifestJob{
+		Ref:       request.Bootc.Reference,
+		BuildRef:  request.Bootc.Reference,
+		Arch:      ir.Architecture,
+		ImageType: imageTypeFromApiImageType(ir.ImageType),
+		Blueprint: bp,
+	}, channel)
+	if err != nil {
+		return uuid.Nil, err
+	}
+
+	// Only local targets are supported
+	if ir.UploadTargets != nil {
+		for _, ut := range *ir.UploadTargets {
+			if ut.Type != UploadTypesLocal {
+				return uuid.Nil, HTTPError(ErrorInvalidUploadTarget)
+			}
+		}
+	}
+	tgts := []*target.Target{
+		target.NewWorkerServerTarget(),
+	}
+
+	// TODO: Hardcoding this is obviously a very bad hack, but currently this image type
+	// information isn't retrievable from images without running the bootc container.
+	if imageTypeFromApiImageType(ir.ImageType) == "qcow2" {
+		tgts[0].ImageName = "disk.qcow2"
+		tgts[0].OsbuildArtifact.ExportFilename = "disk.qcow2"
+		tgts[0].OsbuildArtifact.ExportName = "qcow2"
+	} else {
+		return uuid.Nil, HTTPErrorWithDetails(ErrorUnsupportedImageType, nil, "only qcow2 (guest-image) is supported for bootc composes")
+	}
+	id, err := s.workers.EnqueueOSBuildAsDependency(ir.Architecture, &worker.OSBuildJob{
+		Targets: tgts,
+	}, []uuid.UUID{mani}, channel)
+	if err != nil {
+		return uuid.Nil, err
+	}
+
+	return id, nil
+}
+
 func serializeManifest(ctx context.Context, manifestSource *manifest.Manifest, workers *worker.Server, dependencies manifestJobDependencies, manifestJobID uuid.UUID, seed int64) {
 	// prepared to become a config variable
 	ctx, cancel := context.WithTimeout(ctx, time.Minute*depsolveTimeoutMin)

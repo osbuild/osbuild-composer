@@ -1206,7 +1206,7 @@ func (request *ComposeRequest) GetImageRequests(distroFactory *distrofactory.Fac
 
 	// Used when no repositories are included. Must be the original name because it may
 	// be an alias and you cannot map back from the distrofactory to the original string.
-	originalDistroName := request.Distribution
+	originalDistroName := *request.Distribution
 
 	// If there is a distribution in the blueprint it overrides the request's distro
 	if len(bp.Distro) > 0 {
