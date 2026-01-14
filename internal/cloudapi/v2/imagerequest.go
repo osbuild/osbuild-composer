@@ -93,7 +93,11 @@ func newContainerTarget(options UploadOptions, request *ComposeRequest, imageTyp
 		return nil, HTTPError(ErrorJSONUnMarshallingError)
 	}
 
-	var name = request.Distribution
+	if request.Distribution == nil {
+		return nil, HTTPError(ErrorDistroMissing)
+	}
+
+	var name = *request.Distribution
 	var tag = uuid.New().String()
 	if containerUploadOptions.Name != nil {
 		name = *containerUploadOptions.Name

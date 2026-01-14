@@ -64,7 +64,7 @@ func TestGetTargets(t *testing.T) {
 	at.NoError(err)
 
 	cr := &ComposeRequest{
-		Distribution: r9.Name(),
+		Distribution: common.ToPtr(r9.Name()),
 	}
 
 	it, err := arch.GetImageType("qcow2")

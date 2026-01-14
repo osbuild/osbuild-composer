@@ -133,9 +133,19 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		return HTTPErrorWithInternal(ErrorTenantNotFound, err)
 	}
 
-	irs, err := request.GetImageRequests(h.server.distros, h.server.repos)
-	if err != nil {
-		return err
+	if request.Distribution != nil && request.Bootc != nil {
+		return HTTPError(ErrorDistroOrBootcNotBoth)
+	}
+	if request.Distribution == nil && request.Bootc == nil {
+		return HTTPError(ErrorDistroAndBootcMissing)
+	}
+
+	var irs []imageRequest
+	if request.Distribution != nil {
+		irs, err = request.GetImageRequests(h.server.distros, h.server.repos)
+		if err != nil {
+			return err
+		}
 	}
 
 	var id uuid.UUID
@@ -149,6 +159,11 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 		}
 	} else if h.server.config.ImageBuilderManifestGeneration {
 		id, err = h.server.enqueueComposeIBCLI(irs, channel)
+		if err != nil {
+			return err
+		}
+	} else if request.Bootc != nil {
+		id, err = h.server.enqueueBootcCompose(request, channel)
 		if err != nil {
 			return err
 		}

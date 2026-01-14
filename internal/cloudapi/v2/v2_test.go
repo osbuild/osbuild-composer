@@ -2582,3 +2582,46 @@ func TestComposeIBManifest(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, worker.JobTypeImageBuilderManifest, ibManifestJobID)
 }
+
+func TestComposeBootc(t *testing.T) {
+	srv, _, queue, cancel := newV2Server(t, t.TempDir(), nil)
+	defer cancel()
+
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
+	{
+		"bootc": {
+                  "reference": "registry.org/centos-bootc:tag"
+                },
+		"image_request":{
+			"architecture": "%s",
+			"repositories": [],
+			"image_type": "guest-image",
+			"upload_options": {}
+		}
+	}`, test_distro.TestArch3Name), http.StatusCreated, `
+	{
+		"href": "/api/image-builder-composer/v2/compose",
+		"kind": "ComposeId"
+	}`, "id")
+
+	// get the osbuild job (as root job) and check that its dependency is an JobTypeBootcManifest
+	rootJobs, err := queue.AllRootJobIDs(context.Background())
+	require.NoError(t, err)
+	require.Len(t, rootJobs, 1)
+
+	osbuildJobID := rootJobs[0]
+	osbuildJobType, argsJSON, deps, _, err := queue.Job(osbuildJobID)
+	osbuildJobTypeSplit := strings.Split(osbuildJobType, ":")
+	require.NoError(t, err)
+	require.Equal(t, worker.JobTypeOSBuild, osbuildJobTypeSplit[0])
+	require.Equal(t, test_distro.TestArch3Name, osbuildJobTypeSplit[1])
+	// ensure the local target is used
+	var args worker.OSBuildJob
+	require.NoError(t, json.Unmarshal(argsJSON, &args))
+	require.Equal(t, target.TargetNameWorkerServer, args.Targets[0].Name)
+
+	require.Len(t, deps, 1)
+	ibManifestJobID, _, _, _, err := queue.Job(deps[0])
+	require.NoError(t, err)
+	require.Equal(t, worker.JobTypeBootcManifest, ibManifestJobID)
+}
