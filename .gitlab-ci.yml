@@ -149,6 +149,21 @@ Container:
       - RUNNER:
           - aws/rhel-8.10-ga-x86_64
 
+
+API-bootc:
+  stage: test
+  extends: .terraform
+  rules:
+    - !reference [.upstream_and_ga_rules_all, rules]
+    - !reference [.ga_rules_all, rules]
+  script:
+    - schutzbot/deploy.sh
+    - /usr/libexec/tests/osbuild-composer/api-bootc.sh
+  parallel:
+    matrix:
+      - RUNNER:
+          - aws/centos-stream-9-x86_64
+
 Packer:
   stage: test
   extends: .terraform
