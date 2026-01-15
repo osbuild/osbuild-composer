@@ -63,7 +63,7 @@ func (request *DepsolveRequest) Depsolve(df *distrofactory.Factory, rr *reporegi
 
 	// If there is an optional image_type we use manifest to setup the package/repo list
 	if request.ImageType != nil {
-		imageType, err := distroArch.GetImageType(imageTypeFromApiImageType(*request.ImageType, distroArch))
+		imageType, err := distroArch.GetImageType(imageTypeFromApiImageType(*request.ImageType))
 		if err != nil {
 			return nil, HTTPError(ErrorUnsupportedImageType)
 		}

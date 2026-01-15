@@ -173,7 +173,7 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 	})
 }
 
-func imageTypeFromApiImageType(it ImageTypes, arch distro.Arch) string {
+func imageTypeFromApiImageType(it ImageTypes) string {
 	switch it {
 	case ImageTypesAws:
 		return "ami"

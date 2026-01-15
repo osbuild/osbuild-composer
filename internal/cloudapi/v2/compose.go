@@ -1247,7 +1247,7 @@ func (request *ComposeRequest) GetImageRequests(distroFactory *distrofactory.Fac
 		if err != nil {
 			return nil, HTTPError(ErrorUnsupportedArchitecture)
 		}
-		imageType, err := arch.GetImageType(imageTypeFromApiImageType(ir.ImageType, arch))
+		imageType, err := arch.GetImageType(imageTypeFromApiImageType(ir.ImageType))
 		if err != nil {
 			return nil, HTTPError(ErrorUnsupportedImageType)
 		}
