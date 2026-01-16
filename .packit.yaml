@@ -50,6 +50,8 @@ jobs:
     - rhel-8-x86_64
     - rhel-9-aarch64
     - rhel-9-x86_64
+    - rhel-10-x86_64
+    - rhel-10-aarch64
 - job: copr_build
   trigger: commit
   branch: main
