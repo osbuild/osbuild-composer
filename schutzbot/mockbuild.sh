@@ -24,6 +24,9 @@ function template_override {
 
         sudo cp /etc/mock/rhel-{9,10}-"$(uname -m)".cfg
         sudo sed -i "s/rhel-9/rhel-10/" "/etc/mock/rhel-10-$(uname -m).cfg"
+
+        # the distribution-gpg-keys package hasn't been updated yet to include PQC keys
+        sudo sed -i "s/gpgcheck=1/gpgcheck=0/" /etc/mock/templates/"$TEMPLATE"
     fi
 
     if sudo subscription-manager status; then
