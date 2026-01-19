@@ -271,7 +271,7 @@ github.com/aws/aws-sdk-go-v2/internal/v4a/internal/v4
 github.com/aws/aws-sdk-go-v2/service/autoscaling
 github.com/aws/aws-sdk-go-v2/service/autoscaling/internal/endpoints
 github.com/aws/aws-sdk-go-v2/service/autoscaling/types
-# github.com/aws/aws-sdk-go-v2/service/ec2 v1.279.1
+# github.com/aws/aws-sdk-go-v2/service/ec2 v1.279.2
 ## explicit; go 1.23
 github.com/aws/aws-sdk-go-v2/service/ec2
 github.com/aws/aws-sdk-go-v2/service/ec2/internal/endpoints
@@ -646,7 +646,7 @@ github.com/getkin/kin-openapi/openapi3filter
 github.com/getkin/kin-openapi/routers
 github.com/getkin/kin-openapi/routers/legacy
 github.com/getkin/kin-openapi/routers/legacy/pathpattern
-# github.com/getsentry/sentry-go v0.40.0
+# github.com/getsentry/sentry-go v0.41.0
 ## explicit; go 1.23.0
 github.com/getsentry/sentry-go
 github.com/getsentry/sentry-go/attribute
@@ -658,10 +658,10 @@ github.com/getsentry/sentry-go/internal/otel/baggage/internal/baggage
 github.com/getsentry/sentry-go/internal/protocol
 github.com/getsentry/sentry-go/internal/ratelimit
 github.com/getsentry/sentry-go/internal/telemetry
-# github.com/getsentry/sentry-go/echo v0.40.0
+# github.com/getsentry/sentry-go/echo v0.41.0
 ## explicit; go 1.23.0
 github.com/getsentry/sentry-go/echo
-# github.com/getsentry/sentry-go/logrus v0.40.0
+# github.com/getsentry/sentry-go/logrus v0.41.0
 ## explicit; go 1.23.0
 github.com/getsentry/sentry-go/logrus
 # github.com/go-jose/go-jose/v4 v4.0.5
@@ -951,7 +951,7 @@ github.com/opencontainers/runtime-spec/specs-go
 github.com/opencontainers/selinux/go-selinux
 github.com/opencontainers/selinux/go-selinux/label
 github.com/opencontainers/selinux/pkg/pwalkdir
-# github.com/openshift-online/ocm-sdk-go v0.1.486
+# github.com/openshift-online/ocm-sdk-go v0.1.487
 ## explicit; go 1.23.0
 github.com/openshift-online/ocm-sdk-go/authentication
 github.com/openshift-online/ocm-sdk-go/errors
@@ -1110,8 +1110,8 @@ github.com/sigstore/sigstore/pkg/cryptoutils
 github.com/sigstore/sigstore/pkg/signature
 github.com/sigstore/sigstore/pkg/signature/options
 github.com/sigstore/sigstore/pkg/signature/payload
-# github.com/sirupsen/logrus v1.9.3
-## explicit; go 1.13
+# github.com/sirupsen/logrus v1.9.4
+## explicit; go 1.17
 github.com/sirupsen/logrus
 github.com/sirupsen/logrus/hooks/test
 # github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966

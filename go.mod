@@ -12,13 +12,13 @@ require (
 	github.com/aws/aws-sdk-go-v2/credentials v1.19.7
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.18.17
 	github.com/aws/aws-sdk-go-v2/service/autoscaling v1.62.5
-	github.com/aws/aws-sdk-go-v2/service/ec2 v1.279.1
+	github.com/aws/aws-sdk-go-v2/service/ec2 v1.279.2
 	github.com/aws/smithy-go v1.24.0
 	github.com/coreos/go-systemd/v22 v22.6.0
 	github.com/getkin/kin-openapi v0.133.0
-	github.com/getsentry/sentry-go v0.40.0
-	github.com/getsentry/sentry-go/echo v0.40.0
-	github.com/getsentry/sentry-go/logrus v0.40.0
+	github.com/getsentry/sentry-go v0.41.0
+	github.com/getsentry/sentry-go/echo v0.41.0
+	github.com/getsentry/sentry-go/logrus v0.41.0
 	github.com/gobwas/glob v0.2.3
 	github.com/golang-jwt/jwt/v4 v4.5.2
 	github.com/google/go-cmp v0.7.0
@@ -32,13 +32,13 @@ require (
 	github.com/labstack/gommon v0.4.2
 	github.com/oapi-codegen/oapi-codegen/v2 v2.5.1
 	github.com/oapi-codegen/runtime v1.1.2
-	github.com/openshift-online/ocm-sdk-go v0.1.486
+	github.com/openshift-online/ocm-sdk-go v0.1.487
 	github.com/osbuild/blueprint v1.22.0
 	github.com/osbuild/images v0.230.0
 	github.com/osbuild/osbuild-composer/pkg/splunk_logger v0.0.0-20240814102216-0239db53236d
 	github.com/prometheus/client_golang v1.23.2
 	github.com/segmentio/ksuid v1.0.4
-	github.com/sirupsen/logrus v1.9.3
+	github.com/sirupsen/logrus v1.9.4
 	github.com/stretchr/testify v1.11.1
 	golang.org/x/exp v0.0.0-20250103183323-7d7fa50e5329
 	golang.org/x/sync v0.16.0
