@@ -25,6 +25,11 @@ type InstallerCustomizations struct {
 	ISORootfsType ISORootfsType
 	ISOBoot       ISOBootType
 
+	// ISOFiles contains files to copy from the `anaconda-tree` to the ISO root, this is
+	// used to copy (for example) license and legal information into the root of the ISO. An
+	// array of source (in anaconda-tree) and destination (in iso-tree).
+	ISOFiles [][2]string
+
 	DefaultMenu int
 
 	ISOLabel  string

@@ -200,6 +200,97 @@
           include:
             - "dmidecode"
 
+  network_installer_pkgset: &network_installer_pkgset
+    include:
+      - anaconda
+      - anaconda-widgets
+      - anaconda-install-img-deps
+      - ostree
+      - rpm-ostree
+      - pigz
+      - audit
+      - bind-utils
+      - kernel
+      - kernel-modules
+      - kernel-modules-extra
+      - grubby
+      - glibc-all-langpacks
+      - plymouth
+      - anaconda-dracut
+      - dracut-network
+      - dracut-config-generic
+      - initscripts
+      - cryptsetup
+      - rpcbind
+      - kbd
+      - kbd-misc
+      - tar
+      - xz
+      - curl
+      - bzip2
+      - rsyslog
+      - device-mapper-persistent-data
+      - xfsdump
+      - volume_key
+      - nss-tools
+      - selinux-policy-targeted
+      - audit
+      - ethtool
+      - openssh-server
+      - nfs-utils
+      - openssh-clients
+      - net-tools
+      - bridge-utils
+      - nmap-ncat
+      - prefixdevname
+      - pciutils
+      - usbutils
+      - ipmitool
+      - mt-st
+      - smartmontools
+      - hdparm
+      - rdma-core
+      - rng-tools
+      - nvme-cli
+      - default-fonts-core-sans
+      - default-fonts-other-sans
+      - google-noto-sans-cjk-fonts
+      - gdb-gdbserver
+      - libreport-plugin-bugzilla
+      - libreport-plugin-reportuploader
+      - fpaste
+      - python3-pyatspi
+      - nano
+      - nano-default-editor
+      - vim-minimal
+      - strace
+      - lsof
+      - dump
+      - less
+      - wget2-wget
+      - rsync
+      - bind-utils
+      - ftp
+      - mtr
+      - vconfig
+      - spice-vdagent
+      - gdisk
+      - hexedit
+      - sg3_utils
+    conditions:
+      "x86_64 specific anaconda pkgs":
+        when:
+          arch: "x86_64"
+        append:
+          include:
+            - dmidecode
+      "aarch64 specific anaconda pkgs":
+        when:
+          arch: "aarch64"
+        append:
+          include:
+            - dmidecode
+
   cloud_init_services: &cloud_init_services
     - "cloud-init.service"
     - "cloud-config.service"
@@ -675,6 +766,18 @@
             - name: "var"
               mountpoint: "/var"
               # XXX we want a parent and no mountpoint
+      - &cloud_partition_table_part_root_with_boot_on_btrfs
+        payload_type: "btrfs"
+        payload:
+          subvolumes:
+            - name: "root"
+              mountpoint: "/"
+            - name: "boot"
+              mountpoint: "/boot"
+            - name: "home"
+              mountpoint: "/home"
+            - name: "var"
+              mountpoint: "/var"
 
     server_partition_tables: &server_partition_tables
       x86_64:
@@ -731,6 +834,35 @@
             type: *prep_boot_partition_guid
           - *cloud_partition_table_part_boot
           - <<: *cloud_partition_table_part_root
+            type: *root_partition_guid_ppc64le
+      s390x:
+        type: "dos"
+        partitions:
+          - <<: *cloud_partition_table_part_boot
+            type: *filesystem_linux_dosid
+          - <<: *cloud_partition_table_part_root
+            type: *filesystem_linux_dosid
+
+    cloud_partition_tables_with_boot_on_btrfs: &cloud_partition_tables_with_boot_on_btrfs
+      x86_64:
+        type: "gpt"
+        partitions:
+          - *cloud_partition_table_part_bios
+          - *cloud_partition_table_part_efi
+          - <<: *cloud_partition_table_part_root_with_boot_on_btrfs
+            type: *root_partition_guid_x86_64
+      aarch64:
+        type: "gpt"
+        partitions:
+          - *cloud_partition_table_part_efi
+          - <<: *cloud_partition_table_part_root_with_boot_on_btrfs
+            type: *root_partition_guid_aarch64
+      ppc64le:
+        type: "gpt"
+        partitions:
+          - size: "8 MiB"
+            type: *prep_boot_partition_guid
+          - <<: *cloud_partition_table_part_root_with_boot_on_btrfs
             type: *root_partition_guid_ppc64le
       s390x:
         type: "dos"
@@ -1001,6 +1133,12 @@
         required_partition_sizes: *default_required_dir_sizes
         partition_table:
           <<: *cloud_partition_tables
+        partition_tables_override:
+          conditions:
+            "f44 and up have /boot on btrfs":
+              when:
+                version_greater_or_equal: "44"
+              override: *cloud_partition_tables_with_boot_on_btrfs
         image_config: &cloud_base_image_config
           default_kernel: "kernel-core"
           kernel_options:
@@ -2279,7 +2417,7 @@ image_types:
         - "customizations.installation_device"
 
   # Based on lorax runtime-install.tmpl
-  "everything-network-installer":
+  "everything-network-installer": &everything_network_installer
     name_aliases: ["netinst"]
     filename: "netinst.iso"
     mime_type: "application/x-iso9660-image"
@@ -2290,100 +2428,16 @@ image_types:
     variant: "Everything"
     exports: ["bootiso"]
     required_partition_sizes: *default_required_dir_sizes
-    installer_config: *default_installer_config
+    installer_config:
+      <<: *default_installer_config
+      iso_files:
+        - ["/usr/share/licenses/fedora-release-common/Fedora-Legal-README.txt", "/Fedora-Legal-README.txt"]
+        - ["/usr/share/licenses/fedora-release-common/LICENSE", "/LICENSE"]
     image_config:
       locale: "en_US.UTF-8"
     package_sets:
       installer:
-        - include:
-            - anaconda
-            - anaconda-widgets
-            - anaconda-install-img-deps
-            - ostree
-            - rpm-ostree
-            - pigz
-            - audit
-            - bind-utils
-            - kernel
-            - kernel-modules
-            - kernel-modules-extra
-            - grubby
-            - glibc-all-langpacks
-            - plymouth
-            - anaconda-dracut
-            - dracut-network
-            - dracut-config-generic
-            - initscripts
-            - cryptsetup
-            - rpcbind
-            - kbd
-            - kbd-misc
-            - tar
-            - xz
-            - curl
-            - bzip2
-            - rsyslog
-            - device-mapper-persistent-data
-            - xfsdump
-            - volume_key
-            - nss-tools
-            - selinux-policy-targeted
-            - audit
-            - ethtool
-            - openssh-server
-            - nfs-utils
-            - openssh-clients
-            - net-tools
-            - bridge-utils
-            - nmap-ncat
-            - prefixdevname
-            - pciutils
-            - usbutils
-            - ipmitool
-            - mt-st
-            - smartmontools
-            - hdparm
-            - rdma-core
-            - rng-tools
-            - nvme-cli
-            - default-fonts-core-sans
-            - default-fonts-other-sans
-            - google-noto-sans-cjk-fonts
-            - gdb-gdbserver
-            - libreport-plugin-bugzilla
-            - libreport-plugin-reportuploader
-            - fpaste
-            - python3-pyatspi
-            - nano
-            - nano-default-editor
-            - vim-minimal
-            - strace
-            - lsof
-            - dump
-            - less
-            - wget2-wget
-            - rsync
-            - bind-utils
-            - ftp
-            - mtr
-            - vconfig
-            - spice-vdagent
-            - gdisk
-            - hexedit
-            - sg3_utils
-          conditions:
-            "x86_64 specific anaconda pkgs":
-              when:
-                arch: "x86_64"
-              append:
-                include:
-                  - dmidecode
-            "aarch64 specific anaconda pkgs":
-              when:
-                arch: "aarch64"
-              append:
-                include:
-                  - dmidecode
+        - *network_installer_pkgset
     platforms:
       - *x86_64_installer_platform
       - *aarch64_installer_platform
@@ -2404,6 +2458,15 @@ image_types:
         - "customizations.kernel.append"
         - "customizations.locale"
         - "customizations.user"
+
+  "server-network-installer":
+    <<: *everything_network_installer
+    name_aliases: []
+    package_sets:
+      installer:
+        - *network_installer_pkgset
+        - include:
+            - fedora-release-server
 
   "pxe-tar-xz":
     filename: "pxe.tar.xz"

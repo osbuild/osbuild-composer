@@ -3,6 +3,7 @@ package osbuild
 import (
 	"encoding/json"
 	"fmt"
+	"slices"
 
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/disk"
@@ -66,23 +67,14 @@ type grub2instStageOptions Grub2InstStageOptions
 func (options Grub2InstStageOptions) MarshalJSON() ([]byte, error) {
 	g2options := grub2instStageOptions(options)
 
-	valueIn := func(v string, options []string) bool {
-		for _, o := range options {
-			if v == o {
-				return true
-			}
-		}
-		return false
-	}
-
 	// verify enum values
 	if g2options.Core.Type != "mkimage" {
 		return nil, fmt.Errorf("org.osbuild.grub2.inst: invalid value %q for core.type", g2options.Core.Type)
 	}
-	if !valueIn(g2options.Core.PartLabel, []string{"gpt", "dos"}) {
+	if !slices.Contains([]string{"gpt", "dos"}, g2options.Core.PartLabel) {
 		return nil, fmt.Errorf("org.osbuild.grub2.inst: invalid value %q for core.partlabel", g2options.Core.PartLabel)
 	}
-	if !valueIn(g2options.Core.Filesystem, []string{"ext4", "xfs", "btrfs", "iso9660"}) {
+	if !slices.Contains([]string{"ext4", "xfs", "btrfs", "iso9660"}, g2options.Core.Filesystem) {
 		return nil, fmt.Errorf("org.osbuild.grub2.inst: invalid value %q for core.filesystem", g2options.Core.Filesystem)
 	}
 
@@ -91,7 +83,7 @@ func (options Grub2InstStageOptions) MarshalJSON() ([]byte, error) {
 		if g2options.Prefix.Type != "partition" {
 			return nil, fmt.Errorf("org.osbuild.grub2.inst: invalid value %q for prefix.type", g2options.Prefix.Type)
 		}
-		if !valueIn(g2options.Prefix.PartLabel, []string{"gpt", "dos"}) {
+		if !slices.Contains([]string{"gpt", "dos"}, g2options.Prefix.PartLabel) {
 			return nil, fmt.Errorf("org.osbuild.grub2.inst: invalid value %q for core.partlabel", g2options.Core.PartLabel)
 		}
 	}
@@ -104,10 +96,6 @@ func NewGrub2InstStageOption(filename string, pt *disk.PartitionTable, platform 
 	rootIdx := -1
 	coreIdx := -1 // where to put grub2 core image
 	for idx := range pt.Partitions {
-		// NOTE: we only support having /boot at the top level of the partition
-		// table (e.g., not in LUKS or LVM), so we don't need to descend into
-		// VolumeContainer types. If /boot is on the root partition, then the
-		// root partition needs to be at the top level.
 		partition := &pt.Partitions[idx]
 		if partition.IsBIOSBoot() || partition.IsPReP() {
 			coreIdx = idx
@@ -117,6 +105,15 @@ func NewGrub2InstStageOption(filename string, pt *disk.PartitionTable, platform 
 		}
 		mnt, isMountable := partition.Payload.(disk.Mountable)
 		if !isMountable {
+			// If not directly mountable it's still possible for there to be
+			// a btrfs filesystem inside with a subvolume that might be /boot
+			if btrfs, ok := partition.Payload.(*disk.Btrfs); ok {
+				for _, subvol := range btrfs.Subvolumes {
+					if subvol.GetMountpoint() == "/boot" {
+						bootIdx = idx
+					}
+				}
+			}
 			continue
 		}
 		if mnt.GetMountpoint() == "/boot" {
@@ -140,11 +137,25 @@ func NewGrub2InstStageOption(filename string, pt *disk.PartitionTable, platform 
 	coreLocation := pt.BytesToSectors(pt.Partitions[coreIdx].Start)
 
 	bootPart := pt.Partitions[bootIdx]
-	bootPayload := bootPart.Payload.(disk.Mountable) // this is guaranteed by the search loop above
+
 	prefixPath := "/boot/grub2"
-	if bootPayload.GetMountpoint() == "/boot" {
-		prefixPath = "/grub2"
+
+	var bootPayload disk.Mountable
+
+	if btrfs, ok := bootPart.Payload.(*disk.Btrfs); ok {
+		for _, subvol := range btrfs.Subvolumes {
+			if subvol.GetMountpoint() == "/boot" {
+				bootPayload = &subvol
+			}
+		}
+	} else {
+		bootPayload = bootPart.Payload.(disk.Mountable)
+
+		if bootPayload.GetMountpoint() == "/boot" {
+			prefixPath = "/grub2"
+		}
 	}
+
 	core := CoreMkImage{
 		Type:       "mkimage",
 		PartLabel:  pt.Type.String(),

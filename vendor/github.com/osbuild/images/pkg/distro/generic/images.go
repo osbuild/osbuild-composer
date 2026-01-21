@@ -428,6 +428,8 @@ func installerCustomizations(t *imageType, c *blueprint.Customizations) (manifes
 		if pkg := installerConfig.LoraxReleasePackage; pkg != nil {
 			isc.LoraxReleasePackage = *pkg
 		}
+
+		isc.ISOFiles = append(isc.ISOFiles, installerConfig.ISOFiles...)
 	}
 
 	installerCust, err := c.GetInstaller()

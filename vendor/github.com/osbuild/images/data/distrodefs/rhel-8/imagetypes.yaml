@@ -1927,8 +1927,6 @@ image_types:
     mime_type: "application/x-iso9660-image"
     bootable: true
     boot_iso: true
-    # XXX: merge with boot_iso above
-    use_syslinux: true
     # NOTE: RHEL 8 only supports the older Anaconda configs
     use_legacy_anaconda_config: true
     image_func: "image_installer"
@@ -2221,8 +2219,6 @@ image_types:
     mime_type: "application/x-iso9660-image"
     rpm_ostree: true
     boot_iso: true
-    # XXX: merge with boot_iso above
-    use_syslinux: true
     # NOTE: RHEL 8 only supports the older Anaconda configs
     use_legacy_anaconda_config: true
     image_func: "iot_installer"
@@ -2301,8 +2297,6 @@ image_types:
     rpm_ostree: true
     bootable: true
     boot_iso: true
-    # XXX: merge with boot_iso above
-    use_syslinux: true
     # NOTE: RHEL 8 only supports the older Anaconda configs
     use_legacy_anaconda_config: true
     default_size: "10 GiB"
