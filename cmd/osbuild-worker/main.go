@@ -522,6 +522,9 @@ var run = func() {
 		worker.JobTypeAWSEC2Share: &AWSEC2ShareJobImpl{
 			AWSCreds: awsCredentials,
 		},
+		worker.JobTypeBootcManifest: &BootcManifestJobImpl{
+			Store: store,
+		},
 	}
 
 	acceptedJobTypes := []string{}
