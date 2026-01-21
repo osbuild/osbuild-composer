@@ -431,6 +431,7 @@ func (p *AnacondaInstallerISOTree) serialize() (osbuild.Pipeline, error) {
 		p.anacondaPipeline.InitramfsPath = fmt.Sprintf("boot/initramfs-%s.img", p.anacondaPipeline.kernelVer)
 	}
 
+	// Copy the kernel and initramfs from the anaconda tree into the ISO
 	inputName := "tree"
 	copyStageOptions := &osbuild.CopyStageOptions{
 		Paths: []osbuild.CopyStagePath{
@@ -444,6 +445,16 @@ func (p *AnacondaInstallerISOTree) serialize() (osbuild.Pipeline, error) {
 			},
 		},
 	}
+
+	// Potentially copy more files into the ISO depending on our definitions. For example the
+	// legal notice and license files.
+	for _, paths := range p.anacondaPipeline.InstallerCustomizations.ISOFiles {
+		copyStageOptions.Paths = append(copyStageOptions.Paths, osbuild.CopyStagePath{
+			From: fmt.Sprintf("input://%s%s", inputName, paths[0]),
+			To:   fmt.Sprintf("tree://%s", paths[1]),
+		})
+	}
+
 	copyStageInputs := osbuild.NewPipelineTreeInputs(inputName, p.anacondaPipeline.Name())
 	copyStage := osbuild.NewCopyStageSimple(copyStageOptions, copyStageInputs)
 	pipeline.AddStage(copyStage)
@@ -679,6 +690,7 @@ func (p *AnacondaInstallerISOTree) bootcInstallerKickstartStages() ([]*osbuild.S
 	kickstartOptions.Post = append(kickstartOptions.Post, osbuild.PostOptions{
 		ErrorOnFail: true,
 		Commands: []string{
+			"set -e",
 			fmt.Sprintf("bootc switch --mutate-in-place --transport registry %s", p.containerSpec.LocalName),
 			"# used during automatic image testing as finished marker",
 			"if [ -c /dev/ttyS0 ]; then",

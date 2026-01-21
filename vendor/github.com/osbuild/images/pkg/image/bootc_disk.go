@@ -41,9 +41,9 @@ func (img *BootcDiskImage) InstantiateManifestFromContainers(m *manifest.Manifes
 	runner runner.Runner,
 	rng *rand.Rand) error {
 
-	policy := img.OSCustomizations.SELinux
+	buildPolicy := img.OSCustomizations.SELinux
 	if img.OSCustomizations.BuildSELinux != "" {
-		policy = img.OSCustomizations.BuildSELinux
+		buildPolicy = img.OSCustomizations.BuildSELinux
 	}
 
 	var copyFilesFrom map[string][]string
@@ -79,7 +79,7 @@ func (img *BootcDiskImage) InstantiateManifestFromContainers(m *manifest.Manifes
 			&manifest.BuildOptions{
 				PipelineName:       pipelineName,
 				ContainerBuildable: true,
-				SELinuxPolicy:      policy,
+				SELinuxPolicy:      img.OSCustomizations.SELinux,
 				EnsureDirs:         ensureDirs,
 			})
 		targetBuildPipeline.Checkpoint()
@@ -91,7 +91,7 @@ func (img *BootcDiskImage) InstantiateManifestFromContainers(m *manifest.Manifes
 	buildPipeline := manifest.NewBuildFromContainer(m, runner, buildContainers,
 		&manifest.BuildOptions{
 			ContainerBuildable: true,
-			SELinuxPolicy:      policy,
+			SELinuxPolicy:      buildPolicy,
 			CopyFilesFrom:      copyFilesFrom,
 			EnsureDirs:         ensureDirs,
 		})

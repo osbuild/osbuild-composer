@@ -32,6 +32,11 @@ type InstallerConfig struct {
 	LoraxTemplatePackage *string                           `yaml:"lorax_template_package"`
 	LoraxLogosPackage    *string                           `yaml:"lorax_logos_package"`
 	LoraxReleasePackage  *string                           `yaml:"lorax_release_package"`
+
+	// ISOFiles contains files to copy from the `anaconda-tree` to the ISO root, this is
+	// used to copy (for example) license and legal information into the root of the ISO. An
+	// array of source (in anaconda-tree) and destination (in iso-tree).
+	ISOFiles [][2]string `yaml:"iso_files"`
 }
 
 // InheritFrom inherits unset values from the provided parent configuration and

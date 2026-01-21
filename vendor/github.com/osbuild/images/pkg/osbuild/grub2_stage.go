@@ -93,8 +93,7 @@ func NewGrub2StageOptions(pt *disk.PartitionTable,
 		WriteCmdLine:       common.ToPtr(false),
 	}
 
-	bootFs := pt.FindMountable("/boot")
-	if bootFs != nil {
+	if bootFs := pt.FindMountableOnPlain("/boot"); bootFs != nil {
 		bootFsUUID := uuid.MustParse(bootFs.GetFSSpec().UUID)
 		stageOptions.BootFilesystemUUID = &bootFsUUID
 	}

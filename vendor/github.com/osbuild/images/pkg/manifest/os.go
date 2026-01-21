@@ -566,7 +566,7 @@ func (p *OS) serialize() (osbuild.Pipeline, error) {
 
 	if !p.OSCustomizations.NoBLS {
 		// If the /boot is on a separate partition, the prefix for the BLS stage must be ""
-		if p.PartitionTable == nil || p.PartitionTable.FindMountable("/boot") == nil {
+		if p.PartitionTable == nil || p.PartitionTable.FindMountableOnPlain("/boot") == nil {
 			pipeline.AddStage(osbuild.NewFixBLSStage(&osbuild.FixBLSStageOptions{}))
 		} else {
 			pipeline.AddStage(osbuild.NewFixBLSStage(&osbuild.FixBLSStageOptions{Prefix: common.ToPtr("")}))

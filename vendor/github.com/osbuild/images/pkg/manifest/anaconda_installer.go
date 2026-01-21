@@ -128,9 +128,14 @@ func (p *AnacondaInstaller) anacondaBootPackageSet() ([]string, error) {
 			"grub2-pc",
 			"grub2-pc-modules",
 			"shim-x64",
-			"syslinux",
-			"syslinux-nonlinux",
 		)
+
+		if p.InstallerCustomizations.ISOBoot == SyslinuxISOBoot {
+			packages = append(packages,
+				"syslinux",
+				"syslinux-nonlinux",
+			)
+		}
 	case arch.ARCH_AARCH64:
 		packages = append(packages,
 			"grub2-efi-aa64-cdboot",

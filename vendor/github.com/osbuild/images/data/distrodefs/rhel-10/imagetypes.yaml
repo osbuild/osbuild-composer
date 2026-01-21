@@ -1424,6 +1424,10 @@ image_types:
       sshd_config:
         config:
           PasswordAuthentication: false
+      kernel_options:
+        - "console=tty0"
+        - "console=ttyS0,115200n8"
+        - "nvme_core.io_timeout=4294967295"
       conditions: &ami_image_config_cond
         "we need dracut conf with nvme/xen on x86":
           when:
@@ -1435,28 +1439,6 @@ image_types:
                   add_drivers:
                     - "nvme"
                     - "xen-blkfront"
-        "x86_64 specific kopts":
-          when:
-            arch: "x86_64"
-          shallow_merge:
-            # TODO: move these to the EC2 environment
-            kernel_options:
-              # common
-              - "console=tty0"
-              - "console=ttyS0,115200n8"
-              - "nvme_core.io_timeout=4294967295"
-        "aarch64 specific kopts":
-          when:
-            arch: "aarch64"
-          shallow_merge:
-            # TODO: move these to the EC2 environment
-            kernel_options:
-              # XXX: duplicated with above x86_64 kernel defaults
-              - "console=tty0"
-              - "console=ttyS0,115200n8"
-              - "nvme_core.io_timeout=4294967295"
-              # aarch64 specific
-              - "iommu.strict=0"
     partition_table:
       <<: *default_partition_tables
     package_sets:

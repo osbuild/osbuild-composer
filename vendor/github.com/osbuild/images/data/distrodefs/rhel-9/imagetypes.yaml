@@ -2007,8 +2007,6 @@ image_types:
               - "console=tty0"
               - "net.ifnames=0"
               - "nvme_core.io_timeout=4294967295"
-              # aarch64 specific
-              - "iommu.strict=0"
     partition_table:
       <<: *default_partition_tables
     partition_tables_override:
@@ -2252,8 +2250,6 @@ image_types:
     mime_type: "application/x-iso9660-image"
     bootable: true
     boot_iso: true
-    # XXX: merge with boot_iso above
-    use_syslinux: true
     image_func: "image_installer"
     # We don't know the variant of the OS pipeline being installed
     iso_label: "Unknown"
@@ -2886,8 +2882,6 @@ image_types:
     mime_type: "application/x-iso9660-image"
     rpm_ostree: true
     boot_iso: true
-    # XXX: merge with boot_iso above
-    use_syslinux: true
     image_func: "iot_installer"
     iso_label: "edge"
     variant: "edge"
@@ -2926,8 +2920,6 @@ image_types:
     rpm_ostree: true
     bootable: true
     boot_iso: true
-    # XXX: merge with boot_iso above
-    use_syslinux: true
     # NOTE: RHEL 8 only supports the older Anaconda configs
     use_legacy_anaconda_config: true
     default_size: "10 GiB"

@@ -392,9 +392,7 @@ type ImageTypeYAML struct {
 	Environment environment.EnvironmentConf `yaml:"environment"`
 	Bootable    bool                        `yaml:"bootable"`
 
-	BootISO bool `yaml:"boot_iso"`
-	// XXX merge with BootISO above, controls if grub2 or syslinux are used for ISO boots
-	UseSyslinux             bool `yaml:"use_syslinux"`
+	BootISO                 bool `yaml:"boot_iso"`
 	UseLegacyAnacondaConfig bool `yaml:"use_legacy_anaconda_config"`
 
 	ISOLabel string `yaml:"iso_label"`
