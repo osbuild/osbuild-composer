@@ -41,6 +41,7 @@ const (
 	JobTypeAWSEC2Copy           string = "aws-ec2-copy"
 	JobTypeAWSEC2Share          string = "aws-ec2-share"
 	JobTypeImageBuilderManifest string = "image-builder-manifest"
+	JobTypeBootcManifest        string = "bootc-manifest"
 )
 
 type Server struct {
@@ -241,6 +242,10 @@ func (s *Server) EnqueueImageBuilderManifestJob(job *ImageBuilderManifestJob, ch
 	return s.enqueue(JobTypeImageBuilderManifest, job, nil, channel)
 }
 
+func (s *Server) EnqueueBootcManifestJob(job *BootcManifestJob, channel string) (uuid.UUID, error) {
+	return s.enqueue(JobTypeBootcManifest, job, nil, channel)
+}
+
 func (s *Server) enqueue(jobType string, job interface{}, dependencies []uuid.UUID, channel string) (uuid.UUID, error) {
 	prometheus.EnqueueJobMetrics(strings.Split(jobType, ":")[0], channel)
 	return s.jobs.Enqueue(jobType, job, dependencies, channel)
@@ -333,6 +338,13 @@ func (s *Server) JobDependencyChainErrors(id uuid.UUID) (*clienterrors.Error, er
 			return nil, err
 		}
 		jobResult = &ibManifestJR.JobResult
+	case JobTypeBootcManifest:
+		var bootcManifestJR BootcManifestJobResult
+		jobInfo, err = s.ManifestJobInfo(id, &bootcManifestJR)
+		if err != nil {
+			return nil, err
+		}
+		jobResult = &bootcManifestJR.JobResult
 
 	default:
 		return nil, fmt.Errorf("unexpected job type: %s", jobType)
@@ -509,7 +521,7 @@ func (s *Server) ManifestJobInfo(id uuid.UUID, result *ManifestJobByIDResult) (*
 	}
 
 	switch jobInfo.JobType {
-	case JobTypeManifestIDOnly, JobTypeImageBuilderManifest:
+	case JobTypeManifestIDOnly, JobTypeImageBuilderManifest, JobTypeBootcManifest:
 		return jobInfo, nil
 	default:
 		return nil, fmt.Errorf("expected %q or %q, found %q job instead", JobTypeManifestIDOnly, JobTypeImageBuilderManifest, jobInfo.JobType)
@@ -1000,6 +1012,13 @@ func (s *Server) RequeueOrFinishJob(token uuid.UUID, maxRetries uint64, result j
 			return err
 		}
 		jobResult = &ibManifestJR.JobResult
+	case JobTypeBootcManifest:
+		var bootcJR BootcManifestJobResult
+		jobInfo, err = s.ManifestJobInfo(jobId, &bootcJR)
+		if err != nil {
+			return err
+		}
+		jobResult = &bootcJR.JobResult
 
 	default:
 		return fmt.Errorf("unexpected job type: %s", jobType)

@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/osbuild/blueprint/pkg/blueprint"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/rpmmd"
@@ -748,6 +749,19 @@ type AWSEC2CopyJobResult struct {
 	Ami    string `json:"ami"`
 	Region string `json:"region"`
 }
+
+type BootcManifestJob struct {
+	Ref       string              `json:"reference"`
+	BuildRef  string              `json:"build_reference"`
+	Arch      string              `json:"arch"`
+	ImageType string              `json:"image_type"`
+	Repos     []rpmmd.RepoConfig  `json:"repositories"`
+	Blueprint blueprint.Blueprint `json:"blueprint"`
+}
+
+// BootcManifestJobResult == ManifestJobByIDResult to maintain compatibility with the existing
+// osbuild job
+type BootcManifestJobResult = ManifestJobByIDResult
 
 // ImageBuilderManifestJob generates a manifest from a build request using
 // image-builder-cli. Includes resolving all content types.
