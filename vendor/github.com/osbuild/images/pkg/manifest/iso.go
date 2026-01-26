@@ -5,15 +5,26 @@ import (
 	"github.com/osbuild/images/pkg/osbuild"
 )
 
+type ISOCustomizations struct {
+	// ISO metadata fields
+	Label       string
+	Preparer    string
+	Publisher   string
+	Application string
+
+	RootfsType ISORootfsType
+	BootType   ISOBootType
+}
+
 // An ISO represents a bootable ISO file created from an
 // an existing ISOTreePipeline.
 type ISO struct {
 	Base
-	ISOBoot  ISOBootType
 	filename string
 
 	treePipeline Pipeline
-	isoLabel     string
+
+	ISOCustomizations ISOCustomizations
 }
 
 func (p ISO) Filename() string {
@@ -24,12 +35,12 @@ func (p *ISO) SetFilename(filename string) {
 	p.filename = filename
 }
 
-func NewISO(buildPipeline Build, treePipeline Pipeline, isoLabel string) *ISO {
+func NewISO(buildPipeline Build, treePipeline Pipeline, isoCustomizations ISOCustomizations) *ISO {
 	p := &ISO{
-		Base:         NewBase("bootiso", buildPipeline),
-		treePipeline: treePipeline,
-		filename:     "image.iso",
-		isoLabel:     isoLabel,
+		Base:              NewBase("bootiso", buildPipeline),
+		treePipeline:      treePipeline,
+		filename:          "image.iso",
+		ISOCustomizations: isoCustomizations,
 	}
 	buildPipeline.addDependent(p)
 	return p
@@ -48,22 +59,25 @@ func (p *ISO) serialize() (osbuild.Pipeline, error) {
 		return osbuild.Pipeline{}, err
 	}
 
-	pipeline.AddStage(osbuild.NewXorrisofsStage(xorrisofsStageOptions(p.Filename(), p.isoLabel, p.ISOBoot), p.treePipeline.Name()))
+	pipeline.AddStage(osbuild.NewXorrisofsStage(xorrisofsStageOptions(p.Filename(), p.ISOCustomizations), p.treePipeline.Name()))
 	pipeline.AddStage(osbuild.NewImplantisomd5Stage(&osbuild.Implantisomd5StageOptions{Filename: p.Filename()}))
 
 	return pipeline, nil
 }
 
-func xorrisofsStageOptions(filename, isolabel string, isoboot ISOBootType) *osbuild.XorrisofsStageOptions {
+func xorrisofsStageOptions(filename string, isoCustomizations ISOCustomizations) *osbuild.XorrisofsStageOptions {
 	options := &osbuild.XorrisofsStageOptions{
 		Filename: filename,
-		VolID:    isolabel,
+		VolID:    isoCustomizations.Label,
 		SysID:    "LINUX",
 		EFI:      "images/efiboot.img",
 		ISOLevel: 3,
+		Prep:     isoCustomizations.Preparer,
+		Pub:      isoCustomizations.Publisher,
+		AppID:    isoCustomizations.Application,
 	}
 
-	switch isoboot {
+	switch isoCustomizations.BootType {
 	case SyslinuxISOBoot:
 		// Syslinux BIOS ISO creation
 		options.Boot = &osbuild.XorrisofsBoot{

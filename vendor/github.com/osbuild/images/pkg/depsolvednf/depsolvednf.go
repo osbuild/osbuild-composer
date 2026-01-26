@@ -155,6 +155,8 @@ type Solver struct {
 	subscriptions    *rhsm.Subscriptions
 	subscriptionsErr error
 
+	sbomType sbom.StandardType
+
 	// Stderr is the stderr output from osbuild-depsolve-dnf, if unset os.Stderr
 	// will be used.
 	//
@@ -252,6 +254,11 @@ func collectRepos(pkgSets []rpmmd.PackageSet) []rpmmd.RepoConfig {
 	return repos
 }
 
+// Set the SBOM type to generate with the depsolve.
+func (s *Solver) SetSBOMType(sbomType sbom.StandardType) {
+	s.sbomType = sbomType
+}
+
 // Depsolve the list of required package sets with explicit excludes using
 // their associated repositories.  Each package set is depsolved as a separate
 // transactions in a chain.  It returns a list of all packages (with solved
@@ -315,6 +322,20 @@ func (s *Solver) Depsolve(pkgSets []rpmmd.PackageSet, sbomType sbom.StandardType
 		SBOM:     sbomDoc,
 		Solver:   resultRaw.Solver,
 	}, nil
+}
+
+// DepsolveAll calls [Solver.Depsolve] with each package set slice in the map and
+// returns a map of results with the corresponding keys as the input argument.
+func (s *Solver) DepsolveAll(pkgSetsMap map[string][]rpmmd.PackageSet) (map[string]DepsolveResult, error) {
+	results := make(map[string]DepsolveResult, len(pkgSetsMap))
+	for name, pkgSet := range pkgSetsMap {
+		res, err := s.Depsolve(pkgSet, s.sbomType)
+		if err != nil {
+			return nil, fmt.Errorf("error depsolving package sets for %q: %w", name, err)
+		}
+		results[name] = *res
+	}
+	return results, nil
 }
 
 // FetchMetadata returns the list of all the available packages in repos and
@@ -427,16 +448,22 @@ func applyRHSMSecrets(pkgs rpmmd.PackageList, repos []rpmmd.RepoConfig) {
 
 // validatePackageSetRepoChain validates that the repository chain is valid.
 // It checks that:
+//   - No package set has an empty Include list.
 //   - Each package set uses all of the repositories used by its predecessor.
 //     NOTE: Due to implementation limitations of DNF and osbuild-depsolve-dnf,
 //     each package set in the chain must use all of the repositories used by
 //     its predecessor.
 func validatePackageSetRepoChain(pkgSets []rpmmd.PackageSet) error {
+	// Check for empty Include lists
+	for idx, ps := range pkgSets {
+		if len(ps.Include) == 0 {
+			return fmt.Errorf("packageSet %d has empty Include list", idx)
+		}
+	}
+
 	if len(pkgSets) <= 1 {
 		return nil
 	}
-
-	// XXX: we should also verify that no package set has an empty `Include` list.
 
 	for dsIdx := 1; dsIdx < len(pkgSets); dsIdx++ {
 		prevRepoIDs := make([]string, len(pkgSets[dsIdx-1].Repositories))

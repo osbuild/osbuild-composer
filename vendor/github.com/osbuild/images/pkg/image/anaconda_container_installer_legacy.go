@@ -56,6 +56,7 @@ func (img *AnacondaContainerInstallerLegacy) InstantiateManifest(m *manifest.Man
 		repos,
 		"kernel",
 		img.InstallerCustomizations,
+		img.ISOCustomizations,
 	)
 
 	anacondaPipeline.ExtraPackages = img.ExtraBasePackages.Include
@@ -74,7 +75,7 @@ func (img *AnacondaContainerInstallerLegacy) InstantiateManifest(m *manifest.Man
 	anacondaPipeline.Locale = img.Locale
 
 	var rootfsImagePipeline *manifest.ISORootfsImg
-	switch img.InstallerCustomizations.ISORootfsType {
+	switch img.ISOCustomizations.RootfsType {
 	case manifest.SquashfsExt4Rootfs:
 		rootfsImagePipeline = manifest.NewISORootfsImg(buildPipeline, anacondaPipeline)
 		rootfsImagePipeline.Size = 4 * datasizes.GibiByte
@@ -84,7 +85,7 @@ func (img *AnacondaContainerInstallerLegacy) InstantiateManifest(m *manifest.Man
 	bootTreePipeline := manifest.NewEFIBootTree(buildPipeline, img.InstallerCustomizations.Product, img.InstallerCustomizations.OSVersion)
 	bootTreePipeline.Platform = img.platform
 	bootTreePipeline.UEFIVendor = img.platform.GetUEFIVendor()
-	bootTreePipeline.ISOLabel = img.InstallerCustomizations.ISOLabel
+	bootTreePipeline.ISOLabel = img.ISOCustomizations.Label
 
 	if img.Kickstart == nil {
 		img.Kickstart = &kickstart.Options{}
@@ -93,7 +94,7 @@ func (img *AnacondaContainerInstallerLegacy) InstantiateManifest(m *manifest.Man
 		img.Kickstart.Path = osbuild.KickstartPathOSBuild
 	}
 
-	kernelOpts := []string{fmt.Sprintf("inst.stage2=hd:LABEL=%s", img.InstallerCustomizations.ISOLabel), fmt.Sprintf("inst.ks=hd:LABEL=%s:%s", img.InstallerCustomizations.ISOLabel, img.Kickstart.Path)}
+	kernelOpts := []string{fmt.Sprintf("inst.stage2=hd:LABEL=%s", img.ISOCustomizations.Label), fmt.Sprintf("inst.ks=hd:LABEL=%s:%s", img.ISOCustomizations.Label, img.Kickstart.Path)}
 	if anacondaPipeline.InstallerCustomizations.FIPS {
 		kernelOpts = append(kernelOpts, "fips=1")
 	}
@@ -108,9 +109,8 @@ func (img *AnacondaContainerInstallerLegacy) InstantiateManifest(m *manifest.Man
 	isoTreePipeline.ContainerSource = &img.ContainerSource
 	isoTreePipeline.InstallRootfsType = img.InstallRootfsType
 
-	isoPipeline := manifest.NewISO(buildPipeline, isoTreePipeline, img.InstallerCustomizations.ISOLabel)
+	isoPipeline := manifest.NewISO(buildPipeline, isoTreePipeline, img.ISOCustomizations)
 	isoPipeline.SetFilename(img.filename)
-	isoPipeline.ISOBoot = img.InstallerCustomizations.ISOBoot
 	artifact := isoPipeline.Export()
 
 	return artifact, nil

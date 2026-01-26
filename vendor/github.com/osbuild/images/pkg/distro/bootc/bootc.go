@@ -346,8 +346,12 @@ func (t *BootcImageType) manifestWithoutValidation(bp *blueprint.Blueprint, opti
 		return t.manifestForLegacyISO(bp, options, repos, rng)
 	case "bootc_iso":
 		return t.manifestForISO(bp, options, repos, rng)
+	case "bootc_generic_iso":
+		return t.manifestForGenericISO(bp, options, repos, rng)
 	case "bootc_disk":
 		return t.manifestForDisk(bp, options, repos, rng)
+	case "pxe_tar":
+		return t.manifestForPXETar(bp, options, repos, rng)
 	default:
 		err := fmt.Errorf("unknown image func: %v for %v", t.Image, t.Name())
 		panic(err)
@@ -443,12 +447,12 @@ func (t *BootcImageType) initAnacondaInstallerBaseFromSourceInfo(img *image.Anac
 	img.RootfsCompression = "zstd"
 
 	if t.arch.Name() == arch.ARCH_X86_64.String() {
-		img.InstallerCustomizations.ISOBoot = manifest.Grub2ISOBoot
+		img.ISOCustomizations.BootType = manifest.Grub2ISOBoot
 	}
 
 	img.InstallerCustomizations.Product = sourceInfo.OSRelease.Name
 	img.InstallerCustomizations.OSVersion = sourceInfo.OSRelease.VersionID
-	img.InstallerCustomizations.ISOLabel = LabelForISO(&sourceInfo.OSRelease, t.arch.Name())
+	img.ISOCustomizations.Label = LabelForISO(&sourceInfo.OSRelease, t.arch.Name())
 
 	img.InstallerCustomizations.FIPS = customizations.GetFIPS()
 	var err error
@@ -489,7 +493,10 @@ func (t *BootcImageType) initAnacondaInstallerBaseFromSourceInfo(img *image.Anac
 	}
 
 	// see https://github.com/osbuild/bootc-image-builder/issues/733
-	img.InstallerCustomizations.ISORootfsType = manifest.SquashfsRootfs
+	img.ISOCustomizations.RootfsType = manifest.SquashfsRootfs
+
+	// Enabled by default to keep backwards compatibility
+	img.InstallerCustomizations.InstallWeakDeps = true
 
 	return nil
 }
@@ -552,6 +559,42 @@ func (t *BootcImageType) manifestForISO(bp *blueprint.Blueprint, options distro.
 	mf := manifest.New()
 
 	foundDistro, foundRunner, err := GetDistroAndRunner(sourceInfo.OSRelease)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to infer distro and runner: %w", err)
+	}
+	mf.Distro = foundDistro
+
+	_, err = img.InstantiateManifestFromContainer(&mf, []container.SourceSpec{containerSource}, foundRunner, rng)
+	return &mf, nil, err
+}
+
+func (t *BootcImageType) manifestForGenericISO(bp *blueprint.Blueprint, options distro.ImageOptions, repos []rpmmd.RepoConfig, rng *rand.Rand) (*manifest.Manifest, []string, error) {
+	if t.arch.distro.imgref == "" {
+		return nil, nil, fmt.Errorf("internal error: no base image defined")
+	}
+
+	containerSource := container.SourceSpec{
+		Source: t.arch.distro.imgref,
+		Name:   t.arch.distro.imgref,
+		Local:  true,
+	}
+
+	platformi := PlatformFor(t.arch.Name(), t.arch.distro.sourceInfo.UEFIVendor)
+	platformi.ImageFormat = platform.FORMAT_ISO
+
+	img := image.NewContainerBasedIso(platformi, t.Filename(), containerSource)
+	img.RootfsCompression = "zstd"
+	img.RootfsType = manifest.SquashfsRootfs
+	img.KernelPath = fmt.Sprintf("lib/modules/%s/vmlinuz", t.arch.distro.sourceInfo.KernelInfo.Version)
+	img.InitramfsPath = fmt.Sprintf("lib/modules/%s/initramfs.img", t.arch.distro.sourceInfo.KernelInfo.Version)
+	img.Product = t.arch.distro.sourceInfo.OSRelease.Name
+	img.Version = t.arch.distro.sourceInfo.OSRelease.VersionID
+	img.Release = t.arch.distro.sourceInfo.OSRelease.VersionID
+	img.ISOLabel = LabelForISO(&t.arch.distro.sourceInfo.OSRelease, t.arch.Name())
+
+	mf := manifest.New()
+
+	foundDistro, foundRunner, err := GetDistroAndRunner(t.arch.distro.sourceInfo.OSRelease)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to infer distro and runner: %w", err)
 	}
@@ -694,6 +737,95 @@ func (t *BootcImageType) manifestForLegacyISO(bp *blueprint.Blueprint, options d
 
 	_, err = img.InstantiateManifest(&mf, nil, foundRunner, rng)
 	return &mf, nil, err
+}
+
+// manifestForPXETar creates a PXE bootable bootc rootfs
+func (t *BootcImageType) manifestForPXETar(bp *blueprint.Blueprint, options distro.ImageOptions, repos []rpmmd.RepoConfig, rng *rand.Rand) (*manifest.Manifest, []string, error) {
+	if t.arch.distro.imgref == "" {
+		return nil, nil, fmt.Errorf("internal error: no base image defined")
+	}
+	containerSource := container.SourceSpec{
+		Source: t.arch.distro.imgref,
+		Name:   t.arch.distro.imgref,
+		Local:  true,
+	}
+	buildContainerSource := container.SourceSpec{
+		Source: t.arch.distro.buildImgref,
+		Name:   t.arch.distro.buildImgref,
+		Local:  true,
+	}
+
+	var customizations *blueprint.Customizations
+	if bp != nil {
+		customizations = bp.Customizations
+	}
+
+	platform := PlatformFor(t.arch.Name(), t.arch.distro.sourceInfo.UEFIVendor)
+	img := image.NewBootcPXEImage(platform, t.Filename(), containerSource, buildContainerSource)
+	img.Compression = t.ImageTypeYAML.Compression
+	img.OSCustomizations.Users = users.UsersFromBP(customizations.GetUsers())
+	img.OSCustomizations.Groups = users.GroupsFromBP(customizations.GetGroups())
+	img.OSCustomizations.SELinux = t.arch.distro.sourceInfo.SELinuxPolicy
+	img.OSCustomizations.BuildSELinux = img.OSCustomizations.SELinux
+	if t.arch.distro.buildSourceInfo != nil {
+		img.OSCustomizations.BuildSELinux = t.arch.distro.buildSourceInfo.SELinuxPolicy
+	}
+	if t.arch.distro.sourceInfo != nil && t.arch.distro.sourceInfo.MountConfiguration != nil {
+		img.OSCustomizations.MountConfiguration = *t.arch.distro.sourceInfo.MountConfiguration
+	}
+
+	imageConfig := t.ImageTypeYAML.ImageConfig(t.arch.distro.id, t.arch.Name())
+	if imageConfig != nil {
+		img.OSCustomizations.KernelOptionsAppend = imageConfig.KernelOptions
+	}
+	if kopts := customizations.GetKernel(); kopts != nil && kopts.Append != "" {
+		img.OSCustomizations.KernelOptionsAppend = append(img.OSCustomizations.KernelOptionsAppend, kopts.Append)
+	}
+
+	// NOTE: Only the / partition is needed since the final result is compressed
+	//       filesystem. But the intermediate bootc filesystem install needs a size
+	//       and partitions.
+	rootfsMinSize := max(t.arch.distro.rootfsMinSize, options.Size)
+	pt, err := t.genPartitionTable(customizations, rootfsMinSize, rng)
+	if err != nil {
+		return nil, nil, err
+	}
+	img.PartitionTable = pt
+
+	// Check Directory/File Customizations are valid
+	dc := customizations.GetDirectories()
+	fc := customizations.GetFiles()
+	if err := blueprint.ValidateDirFileCustomizations(dc, fc); err != nil {
+		return nil, nil, err
+	}
+	if err := blueprint.CheckDirectoryCustomizationsPolicy(dc, policies.OstreeCustomDirectoriesPolicies); err != nil {
+		return nil, nil, err
+	}
+	if err := blueprint.CheckFileCustomizationsPolicy(fc, policies.OstreeCustomFilesPolicies); err != nil {
+		return nil, nil, err
+	}
+	img.OSCustomizations.Files, err = blueprint.FileCustomizationsToFsNodeFiles(fc)
+	if err != nil {
+		return nil, nil, err
+	}
+	img.OSCustomizations.Directories, err = blueprint.DirectoryCustomizationsToFsNodeDirectories(dc)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Used when dracut rebuilds the initramfs in the bootc pipeline
+	img.KernelVersion = t.arch.distro.sourceInfo.KernelInfo.Version
+
+	mf := manifest.New()
+	mf.Distro = manifest.DISTRO_FEDORA
+	runner := &runner.Linux{}
+
+	if err := img.InstantiateManifestFromContainers(&mf, []container.SourceSpec{containerSource}, runner, rng); err != nil {
+		return nil, nil, err
+	}
+
+	return &mf, nil, nil
+
 }
 
 func newBootcDistroAfterIntrospect(archStr string, info *osinfo.Info, imgref, defaultFsStr string, cntSize uint64) (*BootcDistro, error) {

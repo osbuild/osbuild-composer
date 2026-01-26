@@ -995,10 +995,21 @@
         shallow_merge:
           gpgkey_files:
             - "/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release"
-      "x86_64 specific kernel commandline for rhel-9.7+":
+      "x86_64 specific kernel commandline for rhel-9.8+":
         when:
           arch: "x86_64"
-          version_greater_or_equal: "9.7"
+          version_greater_or_equal: "9.8"
+        shallow_merge:
+          kernel_options:
+            - "ro"
+            - "console=tty1"
+            - "console=ttyS0"
+            - "earlyprintk=ttyS0"
+            - "rootdelay=300"
+      "x86_64 specific kernel commandline for rhel-9.7":
+        when:
+          arch: "x86_64"
+          version_equal: "9.7"
         shallow_merge:
           kernel_options:
             - "ro"
@@ -1030,10 +1041,18 @@
             - "loglevel=3"
             - "console=ttyAMA0"
             - "nvme_core.io_timeout=240"
-      "aarch64 specific kernel options for rhel 9.7+":
+      "aarch64 specific kernel options for rhel 9.8+":
         when:
           arch: "aarch64"
-          version_greater_or_equal: "9.7"
+          version_greater_or_equal: "9.8"
+        shallow_merge:
+          kernel_options:
+            - "ro"
+            - "console=ttyAMA0"
+      "aarch64 specific kernel options for rhel 9.7":
+        when:
+          arch: "aarch64"
+          version_equal: "9.7"
         shallow_merge:
           kernel_options:
             - "ro"
@@ -1229,12 +1248,16 @@
         after_dracut: true
     lorax_logos_package: redhat-logos
     lorax_release_package: redhat-release
+    install_weak_deps: true
+
+  default_iso_config: &default_iso_config
     conditions:
       "x86_64 uses syslinux":
         when:
           arch: "x86_64"
         shallow_merge:
-          iso_boot_type: "syslinux"
+          boot_type: "syslinux"
+
   supported_options_lists:
     # Common options supported by all disk image types.
     # This includes everything that is not specific to installers or
@@ -2139,6 +2162,17 @@ image_types:
                 oobe:
                   <<: *wsl_distribution_oobe_config
                   default_name: AlmaLinux-%s
+        "wsl config for rocky":
+          when:
+            distro_name: "rocky"
+          shallow_merge:
+            wsl: &wsl_distribution_config_rocky
+              <<: *wsl_config
+              distribution_config:
+                <<: *wsl_distribution_config
+                oobe:
+                  <<: *wsl_distribution_oobe_config
+                  default_name: Rocky-%s
         "cloud-init config for non-centos":
           when:
             not_distro_name: "centos"
@@ -2298,6 +2332,7 @@ image_types:
             - <<: *aarch64_platform
               fips_menu: true
     installer_config: *default_installer_config
+    iso_config: *default_iso_config
     image_config:
       locale: "C.UTF-8"
     package_sets:
@@ -2752,8 +2787,17 @@ image_types:
             - "sos"
           exclude:
             - "rng-tools"
-            - "bootupd"
           conditions: &conditions_pkgsets_edge_commit
+            "greenboot in 9.8 and c9s requires bootupd":
+              # we don't want bootupd in edge commits, but greenboot requires
+              # it in 9.8 and c9s, so we can only exclude it for older versions
+              # NOTE: this is temporary
+              # see https://github.com/fedora-iot/greenboot-rs/pull/142
+              when:
+                version_less_than: "9.8"
+              append:
+                exclude:
+                  - "bootupd"
             "x86_64 specific packages for edge-commit":
               when:
                 arch: "x86_64"
@@ -2895,6 +2939,7 @@ image_types:
     installer_config:
       <<: *default_installer_config
       default_menu: 0
+    iso_config: *default_iso_config
     image_config:
       enabled_services: *enabled_services_edge
       locale: "en_US.UTF-8"
@@ -2937,6 +2982,7 @@ image_types:
       additional_dracut_modules:
         - "prefixdevname"
         - "prefixdevname-tools"
+    iso_config: *default_iso_config
     platforms:
       - <<: *x86_64_uefi_platform
       - <<: *aarch64_platform
@@ -3192,6 +3238,13 @@ image_types:
     package_sets:
       os:
         - *azure_base_pkgset
+        - exclude:
+            - "grub2-common"
+            - "grub2-tools"
+            - "grub2-tools-minimal"
+            - "grubby"
+            - "vdo"
+            - "kmod-kvdo"
     blueprint:
       supported_options:
         # same as disk image types, but kernel customizations are not supported
@@ -3234,6 +3287,7 @@ image_types:
     exports: ["bootiso"]
     required_partition_sizes: *default_required_dir_sizes
     installer_config: *default_installer_config
+    iso_config: *default_iso_config
     image_config:
       locale: "en_US.UTF-8"
     platforms:
@@ -3403,6 +3457,7 @@ image_types:
     # still keep the config here so that there is a single place for
     # all imagetype configs.
     installer_config: *default_installer_config
+    iso_config: *default_iso_config
     package_sets:
       installer:
         - include:

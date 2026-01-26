@@ -308,3 +308,21 @@ func Resolve(source SourceSpec) (CommitSpec, error) {
 	}
 	return commit, nil
 }
+
+// ResolveAll calls [Resolve] with each commit slice in the map and returns a
+// map of results with the corresponding keys as the input argument.
+func ResolveAll(commitSources map[string][]SourceSpec) (map[string][]CommitSpec, error) {
+	commits := make(map[string][]CommitSpec, len(commitSources))
+	for name, commitSources := range commitSources {
+		commitSpecs := make([]CommitSpec, len(commitSources))
+		for idx, commitSource := range commitSources {
+			var err error
+			commitSpecs[idx], err = Resolve(commitSource)
+			if err != nil {
+				return nil, fmt.Errorf("error resolving ostree commit for %q: %w", name, err)
+			}
+		}
+		commits[name] = commitSpecs
+	}
+	return commits, nil
+}

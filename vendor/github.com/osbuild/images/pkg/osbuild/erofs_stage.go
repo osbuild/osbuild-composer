@@ -7,6 +7,7 @@ type ErofsCompression struct {
 
 type ErofsStageOptions struct {
 	Filename     string   `json:"filename"`
+	Source       string   `json:"source,omitempty"`
 	ExcludePaths []string `json:"exclude_paths,omitempty"`
 
 	Compression     *ErofsCompression `json:"compression,omitempty"`
@@ -21,5 +22,15 @@ func NewErofsStage(options *ErofsStageOptions, inputPipeline string) *Stage {
 		Type:    "org.osbuild.erofs",
 		Options: options,
 		Inputs:  NewPipelineTreeInputs("tree", inputPipeline),
+	}
+}
+
+func NewErofsWithMountsStage(options *ErofsStageOptions, inputs Inputs, devices map[string]Device, mounts []Mount) *Stage {
+	return &Stage{
+		Type:    "org.osbuild.erofs",
+		Options: options,
+		Inputs:  inputs,
+		Devices: devices,
+		Mounts:  mounts,
 	}
 }

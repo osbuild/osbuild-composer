@@ -202,6 +202,13 @@ func (t *imageType) getDefaultInstallerConfig() (*distro.InstallerConfig, error)
 	return t.InstallerConfig(t.arch.distro.ID, t.arch.arch.String()), nil
 }
 
+func (t *imageType) getDefaultISOConfig() (*distro.ISOConfig, error) {
+	if !t.ImageTypeYAML.BootISO {
+		return nil, fmt.Errorf("image type %q is not an ISO", t.Name())
+	}
+	return t.ISOConfig(t.arch.distro.ID, t.arch.arch.String()), nil
+}
+
 func (t *imageType) PartitionType() disk.PartitionTableType {
 	basePartitionTable, err := t.BasePartitionTable()
 	if errors.Is(err, defs.ErrNoPartitionTableForImgType) {

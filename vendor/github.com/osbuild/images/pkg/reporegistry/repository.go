@@ -50,8 +50,9 @@ func loadAllRepositoriesFromFS(confPaths []fs.FS) (rpmmd.DistrosRepoConfigs, err
 			}
 
 			// distro repositories definition is expected to be named "<distro_name>.json"
-			if strings.HasSuffix(fileEntry.Name(), ".json") {
+			if strings.HasSuffix(fileEntry.Name(), ".json") || strings.HasSuffix(fileEntry.Name(), ".yaml") {
 				distroIDStr := strings.TrimSuffix(fileEntry.Name(), ".json")
+				distroIDStr = strings.TrimSuffix(distroIDStr, ".yaml")
 
 				// compatibility layer to support old repository definition filenames
 				// without a dot to separate major and minor release versions
@@ -92,21 +93,27 @@ func loadAllRepositoriesFromFS(confPaths []fs.FS) (rpmmd.DistrosRepoConfigs, err
 // LoadRepositories loads distribution repositories from the given list of paths.
 // If there are duplicate distro repositories definitions found in multiple paths, the first
 // encounter is preferred. For this reason, the order of paths in the passed list should
-// reflect the desired preference.
+// reflect the desired preference. Both json and yaml repository files can be used to load
+// from. When a json file is encountered it takes precedence over a yaml file under the
+// same distro name.
 //
 // Note that the confPaths must point directly to the directory with
-// the json repo files.
+// the json and yaml repo files.
 func LoadRepositories(confPaths []string, distro string) (map[string][]rpmmd.RepoConfig, error) {
 	var repoConfigs map[string][]rpmmd.RepoConfig
-	path := distro + ".json"
 
 	for _, confPath := range confPaths {
 		var err error
-		repoConfigs, err = rpmmd.LoadRepositoriesFromFile(filepath.Join(confPath, path))
-		if os.IsNotExist(err) {
-			continue
-		} else if err != nil {
-			return nil, err
+		paths := []string{distro + ".json", distro + ".yaml"}
+		for _, path := range paths {
+			repoConfigs, err = rpmmd.LoadRepositoriesFromFile(filepath.Join(confPath, path))
+			if os.IsNotExist(err) {
+				continue
+			} else if err != nil {
+				return nil, err
+			} else {
+				break
+			}
 		}
 
 		// Found the distro repository configs in the current path

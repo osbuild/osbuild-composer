@@ -103,6 +103,12 @@
       - "customizations.installer"
       - "customizations.kernel.append"
       - "customizations.user"
+    supported_options_pxe: &supported_options_pxe
+      - "customizations.directories"
+      - "customizations.files"
+      - "customizations.user"
+      - "customizations.group"
+      - "customizations.kernel.append"
 
 image_types:
   "raw": &raw_image_type
@@ -163,6 +169,21 @@ image_types:
     blueprint:
       supported_options: *supported_options_iso
 
+  # This is meant as a fully generic ISO created from a container image.
+  # The goal is that as much as possible is configurable from the container
+  # image. Additionally, the image type is not tied to anaconda as
+  # bootc-installer is. This allows users to create a very customized ISOs.
+  # TODO: Discuss names of container-based isos: anaconda-iso,
+  # bootc-generic-iso and bootc-installer are all confusing.
+  bootc-generic-iso:
+    mime_type: "application/x-iso9660-image"
+    exports: ["bootiso"]
+    filename: "install.iso"
+    boot_iso: true
+    image_func: "bootc_generic_iso"
+    blueprint:
+      supported_options: *supported_options_iso
+
   # this image type is special (in many ways) and all is a bit ugly:
   # - we want to get rid of it (here for compat with bib)
   # - its "indirect" in the sense that it pulls the RPMs from a
@@ -181,3 +202,13 @@ image_types:
   # XXX: ideally we would use name_aliases but the loader lib
   # does not not fully support this yet
   iso: *anaconda_iso
+
+  "pxe-tar-xz":
+    <<: *raw_image_type
+    filename: "pxe.tar.xz"
+    mime_type: "application/x-tar"
+    compression: "xz"
+    image_func: "pxe_tar"
+    exports: ["xz"]
+    blueprint:
+      supported_options: *supported_options_pxe
