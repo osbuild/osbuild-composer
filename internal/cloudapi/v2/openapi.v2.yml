@@ -657,6 +657,58 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
+  /distributions/{distro}:
+    get:
+      operationId: getDistribution
+      summary: Get details for a specific distribution
+      security:
+        - Bearer: []
+      parameters:
+        - in: path
+          name: distro
+          schema:
+            type: string
+            example: 'rhel-9.6'
+          required: true
+          description: Name of the distribution
+        - in: query
+          name: image_type
+          schema:
+            type: array
+            items:
+              type: string
+            example: ['ami', 'aws']
+          required: false
+          description: Filter by image type. Multiple values can be specified.
+        - in: query
+          name: architecture
+          schema:
+            type: array
+            items:
+              type: string
+            example: ['x86_64', 'aarch64']
+          required: false
+          description: Filter by architecture. Multiple values can be specified.
+      responses:
+        '200':
+          description: Distribution details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DistributionDetails'
+        '404':
+          description: Distribution not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Unexpected error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
   /errors/{id}:
     get:
       operationId: getError
@@ -834,6 +886,144 @@ components:
           items:
             $ref: '#/components/schemas/BlueprintRepository'
 
+    DistributionDetails:
+      allOf:
+      - $ref: '#/components/schemas/ObjectReference'
+      - type: object
+        description: Complete metadata for a specific distribution from images library
+        additionalProperties: false
+        required:
+          - name
+        properties:
+          name:
+            type: string
+            description: Name of the distribution
+            example: 'rhel-9.6'
+          codename:
+            type: string
+            description: Codename of the distribution
+            example: ''
+          releasever:
+            type: string
+            description: Release version used in repo files
+            example: '9'
+          os_version:
+            type: string
+            description: Full OS version including minor version
+            example: '9.6'
+          module_platform_id:
+            type: string
+            description: Module platform ID for DNF modularity
+            example: 'platform:el9'
+          product:
+            type: string
+            description: Product name
+            example: 'Red Hat Enterprise Linux'
+          ostree_ref:
+            type: string
+            description: Default OSTree reference template
+            example: 'rhel/9/%s/edge'
+          architectures:
+            type: object
+            description: Map of architecture names to their details
+            additionalProperties:
+              $ref: '#/components/schemas/ArchitectureInfo'
+
+    ArchitectureInfo:
+      type: object
+      description: Architecture metadata from images library
+      additionalProperties: false
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: Architecture name
+          example: 'x86_64'
+        image_types:
+          type: object
+          description: Map of image type names to their details
+          additionalProperties:
+            $ref: '#/components/schemas/ImageTypeInfo'
+
+    ImageTypeInfo:
+      type: object
+      description: Image type metadata from images library
+      additionalProperties: false
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: Image type name
+          example: 'ami'
+        aliases:
+          type: array
+          description: Alternative names for this image type
+          items:
+            type: string
+            example: 'aws'
+        filename:
+          type: string
+          description: Canonical filename for the image
+          example: 'image.raw'
+        mime_type:
+          type: string
+          description: MIME type of the image
+          example: 'application/octet-stream'
+        ostree_ref:
+          type: string
+          description: Default OSTree ref for this image type
+          example: ''
+        iso_label:
+          type: string
+          nullable: true
+          description: ISO label (only for ISO image types)
+          example: null
+        default_size:
+          type: integer
+          format: uint64
+          description: Default image size in bytes
+          example: 1073741824
+        partition_type:
+          type: string
+          enum:
+            - gpt
+            - dos
+          description: Partition table type
+        base_partition_table:
+          $ref: '#/components/schemas/Disk'
+        boot_mode:
+          type: string
+          enum:
+            - legacy
+            - uefi
+            - hybrid
+            - none
+          description: Boot mode for the image
+        payload_package_sets:
+          type: array
+          description: Package set names safe for custom packages via custom repos
+          items:
+            type: string
+            example: 'blueprint'
+        exports:
+          type: array
+          description: Names of stages that produce the build output
+          items:
+            type: string
+            example: 'image'
+        required_blueprint_options:
+          type: array
+          description: Customization options required by this image type
+          items:
+            type: string
+        supported_blueprint_options:
+          type: array
+          description: Customization options supported by this image type
+          items:
+            type: string
+          example: ['distro', 'packages', 'customizations.cacerts', 'customizations.sshkey']
     ComposeStatus:
       allOf:
       - $ref: '#/components/schemas/ObjectReference'

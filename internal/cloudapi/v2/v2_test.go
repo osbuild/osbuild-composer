@@ -482,6 +482,394 @@ func TestGetDistributionList(t *testing.T) {
 	}`, "gpgkeys", "baseurl")
 }
 
+func TestGetDistribution(t *testing.T) {
+	srv, _, _, cancel := newV2Server(t, t.TempDir(), nil)
+	defer cancel()
+
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET",
+		"/api/image-builder-composer/v2/distributions/test-distro-1?architecture=test_arch", ``, http.StatusOK, `
+	{
+		"id": "test-distro-1",
+		"kind": "DistributionDetails",
+		"href": "/api/image-builder-composer/v2/distributions/test-distro-1",
+		"name": "test-distro-1",
+		"releasever": "1",
+		"os_version": "1",
+		"module_platform_id": "platform:test-distro-1",
+		"product": "test-distro-1",
+		"ostree_ref": "test/1/x86_64/edge",
+		"architectures": {
+			"test_arch": {
+				"name": "test_arch",
+				"image_types": {
+					"test_type": {
+						"name": "test_type",
+						"filename": "test.img",
+						"mime_type": "application/x-test",
+						"ostree_ref": "",
+						"default_size": 1073741824,
+						"boot_mode": "hybrid",
+						"payload_package_sets": ["blueprint"],
+						"exports": ["assembler"]
+					},
+					"test_ostree_type": {
+						"name": "test_ostree_type",
+						"filename": "test.img",
+						"mime_type": "application/x-test",
+						"ostree_ref": "test/1/x86_64/edge",
+						"default_size": 1073741824,
+						"boot_mode": "hybrid",
+						"payload_package_sets": ["blueprint"],
+						"exports": ["assembler"]
+					}
+				}
+			}
+		}
+	}`, "codename", "aliases", "iso_label", "partition_type", "required_blueprint_options", "supported_blueprint_options")
+
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET",
+		"/api/image-builder-composer/v2/distributions/non-existent", ``, http.StatusBadRequest, `
+	{
+		"code": "IMAGE-BUILDER-COMPOSER-4",
+		"reason": "Unsupported distribution"
+	}`, "operation_id", "href", "id", "kind", "details")
+
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET",
+		"/api/image-builder-composer/v2/distributions/test-distro-1?architecture=test_arch&image_type=test_type", ``, http.StatusOK, `
+	{
+		"id": "test-distro-1",
+		"kind": "DistributionDetails",
+		"href": "/api/image-builder-composer/v2/distributions/test-distro-1",
+		"name": "test-distro-1",
+		"releasever": "1",
+		"os_version": "1",
+		"module_platform_id": "platform:test-distro-1",
+		"product": "test-distro-1",
+		"ostree_ref": "test/1/x86_64/edge",
+		"architectures": {
+			"test_arch": {
+				"name": "test_arch",
+				"image_types": {
+					"test_type": {
+						"name": "test_type",
+						"filename": "test.img",
+						"mime_type": "application/x-test",
+						"ostree_ref": "",
+						"default_size": 1073741824,
+						"boot_mode": "hybrid",
+						"payload_package_sets": ["blueprint"],
+						"exports": ["assembler"]
+					}
+				}
+			}
+		}
+	}`, "codename", "aliases", "iso_label", "partition_type", "required_blueprint_options", "supported_blueprint_options")
+
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET",
+		"/api/image-builder-composer/v2/distributions/test-distro-1?image_type=test_type", ``, http.StatusOK, `
+	{
+		"id": "test-distro-1",
+		"kind": "DistributionDetails",
+		"href": "/api/image-builder-composer/v2/distributions/test-distro-1",
+		"name": "test-distro-1",
+		"releasever": "1",
+		"os_version": "1",
+		"module_platform_id": "platform:test-distro-1",
+		"product": "test-distro-1",
+		"ostree_ref": "test/1/x86_64/edge",
+		"architectures": {
+			"test_arch": {
+				"name": "test_arch",
+				"image_types": {
+					"test_type": {
+						"name": "test_type",
+						"filename": "test.img",
+						"mime_type": "application/x-test",
+						"ostree_ref": "",
+						"default_size": 1073741824,
+						"boot_mode": "hybrid",
+						"payload_package_sets": ["blueprint"],
+						"exports": ["assembler"]
+					}
+				}
+			},
+			"test_arch2": {
+				"name": "test_arch2",
+				"image_types": {
+					"test_type": {
+						"name": "test_type",
+						"filename": "test.img",
+						"mime_type": "application/x-test",
+						"ostree_ref": "",
+						"default_size": 1073741824,
+						"boot_mode": "hybrid",
+						"payload_package_sets": ["blueprint"],
+						"exports": ["assembler"]
+					}
+				}
+			}
+		}
+	}`, "codename", "aliases", "iso_label", "partition_type", "required_blueprint_options", "supported_blueprint_options")
+
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET",
+		"/api/image-builder-composer/v2/distributions/test-distro-1?architecture=test_arch&image_type=test_type&image_type=test_ostree_type", ``, http.StatusOK, `
+	{
+		"id": "test-distro-1",
+		"kind": "DistributionDetails",
+		"href": "/api/image-builder-composer/v2/distributions/test-distro-1",
+		"name": "test-distro-1",
+		"releasever": "1",
+		"os_version": "1",
+		"module_platform_id": "platform:test-distro-1",
+		"product": "test-distro-1",
+		"ostree_ref": "test/1/x86_64/edge",
+		"architectures": {
+			"test_arch": {
+				"name": "test_arch",
+				"image_types": {
+					"test_type": {
+						"name": "test_type",
+						"filename": "test.img",
+						"mime_type": "application/x-test",
+						"ostree_ref": "",
+						"default_size": 1073741824,
+						"boot_mode": "hybrid",
+						"payload_package_sets": ["blueprint"],
+						"exports": ["assembler"]
+					},
+					"test_ostree_type": {
+						"name": "test_ostree_type",
+						"filename": "test.img",
+						"mime_type": "application/x-test",
+						"ostree_ref": "test/1/x86_64/edge",
+						"default_size": 1073741824,
+						"boot_mode": "hybrid",
+						"payload_package_sets": ["blueprint"],
+						"exports": ["assembler"]
+					}
+				}
+			}
+		}
+	}`, "codename", "aliases", "iso_label", "partition_type", "required_blueprint_options", "supported_blueprint_options")
+
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET",
+		"/api/image-builder-composer/v2/distributions/test-distro-1?architecture=test_arch&architecture=test_arch2", ``, http.StatusOK, `
+	{
+		"id": "test-distro-1",
+		"kind": "DistributionDetails",
+		"href": "/api/image-builder-composer/v2/distributions/test-distro-1",
+		"name": "test-distro-1",
+		"releasever": "1",
+		"os_version": "1",
+		"module_platform_id": "platform:test-distro-1",
+		"product": "test-distro-1",
+		"ostree_ref": "test/1/x86_64/edge",
+		"architectures": {
+			"test_arch": {
+				"name": "test_arch",
+				"image_types": {
+					"test_type": {
+						"name": "test_type",
+						"filename": "test.img",
+						"mime_type": "application/x-test",
+						"ostree_ref": "",
+						"default_size": 1073741824,
+						"boot_mode": "hybrid",
+						"payload_package_sets": ["blueprint"],
+						"exports": ["assembler"]
+					},
+					"test_ostree_type": {
+						"name": "test_ostree_type",
+						"filename": "test.img",
+						"mime_type": "application/x-test",
+						"ostree_ref": "test/1/x86_64/edge",
+						"default_size": 1073741824,
+						"boot_mode": "hybrid",
+						"payload_package_sets": ["blueprint"],
+						"exports": ["assembler"]
+					}
+				}
+			},
+			"test_arch2": {
+				"name": "test_arch2",
+				"image_types": {
+					"test_type": {
+						"name": "test_type",
+						"filename": "test.img",
+						"mime_type": "application/x-test",
+						"ostree_ref": "",
+						"default_size": 1073741824,
+						"boot_mode": "hybrid",
+						"payload_package_sets": ["blueprint"],
+						"exports": ["assembler"]
+					},
+					"test_type2": {
+						"name": "test_type2",
+						"filename": "test.img",
+						"mime_type": "application/x-test",
+						"ostree_ref": "",
+						"default_size": 1073741824,
+						"boot_mode": "hybrid",
+						"payload_package_sets": ["blueprint"],
+						"exports": ["assembler"]
+					}
+				}
+			}
+		}
+	}`, "codename", "aliases", "iso_label", "partition_type", "required_blueprint_options", "supported_blueprint_options")
+
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET",
+		"/api/image-builder-composer/v2/distributions/test-distro-1", ``, http.StatusOK, `
+	{
+		"id": "test-distro-1",
+		"kind": "DistributionDetails",
+		"href": "/api/image-builder-composer/v2/distributions/test-distro-1",
+		"name": "test-distro-1",
+		"releasever": "1",
+		"os_version": "1",
+		"module_platform_id": "platform:test-distro-1",
+		"product": "test-distro-1",
+		"ostree_ref": "test/1/x86_64/edge",
+		"architectures": {
+			"test_arch": {
+				"name": "test_arch",
+				"image_types": {
+					"test_type": {
+						"name": "test_type",
+						"filename": "test.img",
+						"mime_type": "application/x-test",
+						"ostree_ref": "",
+						"default_size": 1073741824,
+						"boot_mode": "hybrid",
+						"payload_package_sets": ["blueprint"],
+						"exports": ["assembler"]
+					},
+					"test_ostree_type": {
+						"name": "test_ostree_type",
+						"filename": "test.img",
+						"mime_type": "application/x-test",
+						"ostree_ref": "test/1/x86_64/edge",
+						"default_size": 1073741824,
+						"boot_mode": "hybrid",
+						"payload_package_sets": ["blueprint"],
+						"exports": ["assembler"]
+					}
+				}
+			},
+			"test_arch2": {
+				"name": "test_arch2",
+				"image_types": {
+					"test_type": {
+						"name": "test_type",
+						"filename": "test.img",
+						"mime_type": "application/x-test",
+						"ostree_ref": "",
+						"default_size": 1073741824,
+						"boot_mode": "hybrid",
+						"payload_package_sets": ["blueprint"],
+						"exports": ["assembler"]
+					},
+					"test_type2": {
+						"name": "test_type2",
+						"filename": "test.img",
+						"mime_type": "application/x-test",
+						"ostree_ref": "",
+						"default_size": 1073741824,
+						"boot_mode": "hybrid",
+						"payload_package_sets": ["blueprint"],
+						"exports": ["assembler"]
+					}
+				}
+			},
+			"test_arch3": {
+				"name": "test_arch3",
+				"image_types": {
+					"ami": {
+						"name": "ami",
+						"filename": "test.img",
+						"mime_type": "application/x-test",
+						"ostree_ref": "",
+						"default_size": 1073741824,
+						"boot_mode": "hybrid",
+						"payload_package_sets": ["blueprint"],
+						"exports": ["assembler"]
+					},
+					"rhel-edge-commit": {
+						"name": "rhel-edge-commit",
+						"filename": "test.img",
+						"mime_type": "application/x-test",
+						"ostree_ref": "test/1/x86_64/edge",
+						"default_size": 1073741824,
+						"boot_mode": "hybrid",
+						"payload_package_sets": ["blueprint"],
+						"exports": ["assembler"]
+					},
+					"rhel-edge-installer": {
+						"name": "rhel-edge-installer",
+						"filename": "test.img",
+						"mime_type": "application/x-test",
+						"ostree_ref": "test/1/x86_64/edge",
+						"default_size": 1073741824,
+						"boot_mode": "hybrid",
+						"payload_package_sets": ["blueprint"],
+						"exports": ["assembler"]
+					},
+					"gce": {
+						"name": "gce",
+						"filename": "test.img",
+						"mime_type": "application/x-test",
+						"ostree_ref": "",
+						"default_size": 1073741824,
+						"boot_mode": "hybrid",
+						"payload_package_sets": ["blueprint"],
+						"exports": ["assembler"]
+					},
+					"image-installer": {
+						"name": "image-installer",
+						"filename": "test.img",
+						"mime_type": "application/x-test",
+						"ostree_ref": "",
+						"default_size": 1073741824,
+						"boot_mode": "hybrid",
+						"payload_package_sets": ["blueprint"],
+						"exports": ["assembler"]
+					},
+					"qcow2": {
+						"name": "qcow2",
+						"filename": "test.img",
+						"mime_type": "application/x-test",
+						"ostree_ref": "",
+						"default_size": 1073741824,
+						"boot_mode": "hybrid",
+						"payload_package_sets": ["blueprint"],
+						"exports": ["assembler"]
+					},
+					"vhd": {
+						"name": "vhd",
+						"filename": "test.img",
+						"mime_type": "application/x-test",
+						"ostree_ref": "",
+						"default_size": 1073741824,
+						"boot_mode": "hybrid",
+						"payload_package_sets": ["blueprint"],
+						"exports": ["assembler"]
+					},
+					"vmdk": {
+						"name": "vmdk",
+						"filename": "test.img",
+						"mime_type": "application/x-test",
+						"ostree_ref": "",
+						"default_size": 1073741824,
+						"boot_mode": "hybrid",
+						"payload_package_sets": ["blueprint"],
+						"exports": ["assembler"]
+					}
+				}
+			}
+		}
+	}`, "codename", "aliases", "iso_label", "partition_type", "required_blueprint_options", "supported_blueprint_options")
+}
+
 func TestCompose(t *testing.T) {
 	srv, _, _, cancel := newV2Server(t, t.TempDir(), nil)
 	defer cancel()
