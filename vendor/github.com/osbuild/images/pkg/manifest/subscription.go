@@ -2,6 +2,7 @@ package manifest
 
 import (
 	"fmt"
+	"net/url"
 	"path/filepath"
 	"strings"
 
@@ -132,10 +133,14 @@ func subscriptionService(
 		commands = append(commands, fmt.Sprintf("/usr/sbin/subscription-manager config --server.hostname %s", shutil.Quote(subscriptionOptions.ServerUrl)))
 	}
 	if subscriptionOptions.Proxy != "" {
-		proxy := strings.Split(subscriptionOptions.Proxy, ":")
-		commands = append(commands, fmt.Sprintf("/usr/sbin/subscription-manager config --server.proxy_hostname %s", shutil.Quote(proxy[0])))
-		if len(proxy) == 2 {
-			commands = append(commands, fmt.Sprintf("/usr/sbin/subscription-manager config --server.proxy_port %s", shutil.Quote(proxy[1])))
+		scheme, hostname, port, err := parseProxyUrl(subscriptionOptions.Proxy)
+		if err != nil {
+			return nil, nil, nil, nil, fmt.Errorf("invalid proxy url: %v", err)
+		}
+		commands = append(commands, fmt.Sprintf("/usr/sbin/subscription-manager config --server.proxy_scheme %s", shutil.Quote(scheme)))
+		commands = append(commands, fmt.Sprintf("/usr/sbin/subscription-manager config --server.proxy_hostname %s", shutil.Quote(hostname)))
+		if port != "" {
+			commands = append(commands, fmt.Sprintf("/usr/sbin/subscription-manager config --server.proxy_port %s", shutil.Quote(port)))
 		}
 	}
 
@@ -187,6 +192,14 @@ func subscriptionService(
 				files = append(files, icFile)
 			}
 		}
+	}
+	// Enable content sets if specified
+	if len(subscriptionOptions.ContentSets) > 0 {
+		contentSetsCmd := "/usr/sbin/subscription-manager repos"
+		for _, contentSet := range subscriptionOptions.ContentSets {
+			contentSetsCmd += fmt.Sprintf(" --enable=%s", shutil.Quote(contentSet))
+		}
+		commands = append(commands, contentSetsCmd)
 	}
 
 	commands = append(commands, fmt.Sprintf("/usr/bin/rm %s", shutil.Quote(subkeyFilepath)))
@@ -268,6 +281,20 @@ ExecStartPre=
 [Install]
 WantedBy=multi-user.target
 `
+}
+
+// Parses a proxy url in formats  host:port * scheme://host:port
+// Defaults to http if scheme is not specified
+// Port may be blank
+func parseProxyUrl(proxyUrl string) (scheme, hostname, port string, err error) {
+	if !strings.Contains(proxyUrl, "://") {
+		proxyUrl = fmt.Sprintf("http://%s", proxyUrl)
+	}
+	proxyUri, err := url.Parse(proxyUrl)
+	if err != nil {
+		return scheme, hostname, port, fmt.Errorf("invalid proxy URI: %s", proxyUrl)
+	}
+	return proxyUri.Scheme, proxyUri.Hostname(), proxyUri.Port(), nil
 }
 
 func getCurlToAssociateSystem(subscriptionOptions subscription.ImageOptions) string {

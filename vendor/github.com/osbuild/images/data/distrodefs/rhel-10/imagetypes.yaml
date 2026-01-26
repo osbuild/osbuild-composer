@@ -164,7 +164,6 @@
       - "ipmi_devintf"
       - "ipmi_msghandler"
     default_menu: 1
-    iso_rootfs_type: "squashfs"
     lorax_template_package: lorax-templates-rhel
     lorax_templates:
       - path: 80-rhel/runtime-postinstall.tmpl
@@ -172,12 +171,16 @@
         after_dracut: true
     lorax_logos_package: redhat-logos
     lorax_release_package: redhat-release
+    install_weak_deps: true
+
+  default_iso_config: &default_iso_config
+    rootfs_type: "squashfs"
     conditions:
       "x86_64 uses grub2":
         when:
           arch: "x86_64"
         shallow_merge:
-          iso_boot_type: "grub2"
+          boot_type: "grub2"
 
   sapapps_image_config: &sapapps_image_config
     selinux_config:
@@ -605,10 +608,23 @@
         shallow_merge:
           gpgkey_files:
             - "/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release"
-      "x86_64 specific kernel commandline for rhel-10.1+":
+      "x86_64 specific kernel commandline for rhel-10.2+":
         when:
           arch: "x86_64"
-          version_greater_or_equal: "10.1"
+          version_greater_or_equal: "10.2"
+        shallow_merge:
+          kernel_options:
+            # common
+            - "ro"
+            # x86
+            - "console=tty1"
+            - "console=ttyS0"
+            - "earlyprintk=ttyS0"
+            - "rootdelay=300"
+      "x86_64 specific kernel commandline for rhel-10.1":
+        when:
+          arch: "x86_64"
+          version_equal: "10.1"
         shallow_merge:
           kernel_options:
             # common
@@ -634,10 +650,20 @@
             - "console=ttyS0"
             - "earlyprintk=ttyS0"
             - "rootdelay=300"
-      "aarch64 specific kernel commandline for rhel-10.1+":
+      "aarch64 specific kernel commandline for rhel-10.2+":
         when:
           arch: "aarch64"
-          version_greater_or_equal: "10.1"
+          version_greater_or_equal: "10.2"
+        shallow_merge:
+          kernel_options:
+            # common
+            - "ro"
+            # aarch64
+            - "console=ttyAMA0"
+      "aarch64 specific kernel commandline for rhel-10.1":
+        when:
+          arch: "aarch64"
+          version_equal: "10.1"
         shallow_merge:
           kernel_options:
             # common
@@ -1600,6 +1626,17 @@ image_types:
                 oobe:
                   <<: *wsl_distribution_oobe_config
                   default_name: AlmaLinux-%s
+        "wsl config for rocky":
+          when:
+            distro_name: "rocky"
+          shallow_merge:
+            wsl: &wsl_distribution_config_rocky
+              <<: *wsl_config
+              distribution_config:
+                <<: *wsl_distribution_config
+                oobe:
+                  <<: *wsl_distribution_oobe_config
+                  default_name: Rocky-%s
         "wsl config for almalinuxkitten":
           when:
             distro_name: "almalinux_kitten"
@@ -1723,6 +1760,7 @@ image_types:
     exports: ["bootiso"]
     required_partition_sizes: *default_required_dir_sizes
     installer_config: *default_installer_config
+    iso_config: *default_iso_config
     platforms:
       - *x86_64_installer_platform
       - *aarch64_platform
@@ -2125,6 +2163,13 @@ image_types:
     package_sets:
       os:
         - *azure_base_pkgset
+        - exclude:
+            - "grub2-common"
+            - "grub2-tools"
+            - "grub2-tools-minimal"
+            - "grubby"
+            - "vdo"
+            - "kmod-kvdo"
     blueprint:
       supported_options:
         # same as disk image types, but kernel customizations are not supported
@@ -2167,6 +2212,7 @@ image_types:
     exports: ["bootiso"]
     required_partition_sizes: *default_required_dir_sizes
     installer_config: *default_installer_config
+    iso_config: *default_iso_config
     image_config:
       locale: "en_US.UTF-8"
     platforms:
@@ -2298,6 +2344,7 @@ image_types:
     # still keep the config here so that there is a single place for
     # all imagetype configs.
     installer_config: *default_installer_config
+    iso_config: *default_iso_config
     package_sets:
       installer:
         - include:

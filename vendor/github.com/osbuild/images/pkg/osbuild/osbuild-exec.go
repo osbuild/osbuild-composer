@@ -34,6 +34,7 @@ type OSBuildOptions struct {
 	Exports     []string
 	Checkpoints []string
 	ExtraEnv    []string
+	InVm        []string
 
 	// If specified, the mutex is used for the syncwriter so the caller may write to the build
 	// log as well. Also note that in case BuildLog is specified, stderr will be combined into
@@ -72,6 +73,10 @@ func NewOSBuildCmd(manifest []byte, optsPtr *OSBuildOptions) *exec.Cmd {
 
 	for _, export := range opts.Exports {
 		cmd.Args = append(cmd.Args, "--export", export)
+	}
+
+	for _, pipeline := range opts.InVm {
+		cmd.Args = append(cmd.Args, "--in-vm", pipeline)
 	}
 
 	for _, checkpoint := range opts.Checkpoints {

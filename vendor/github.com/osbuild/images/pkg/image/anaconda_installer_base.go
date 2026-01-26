@@ -10,6 +10,7 @@ import (
 // common struct that all anaconda installers share
 type AnacondaInstallerBase struct {
 	InstallerCustomizations manifest.InstallerCustomizations
+	ISOCustomizations       manifest.ISOCustomizations
 	RootfsCompression       string
 	Kickstart               *kickstart.Options
 }
@@ -20,11 +21,11 @@ func initIsoTreePipeline(isoTreePipeline *manifest.AnacondaInstallerISOTree, img
 	isoTreePipeline.Kickstart = img.Kickstart
 
 	isoTreePipeline.RootfsCompression = img.RootfsCompression
-	isoTreePipeline.RootfsType = img.InstallerCustomizations.ISORootfsType
+	isoTreePipeline.RootfsType = img.ISOCustomizations.RootfsType
 
 	isoTreePipeline.KernelOpts = img.InstallerCustomizations.KernelOptionsAppend
 	if img.InstallerCustomizations.FIPS {
 		isoTreePipeline.KernelOpts = append(isoTreePipeline.KernelOpts, "fips=1")
 	}
-	isoTreePipeline.ISOBoot = img.InstallerCustomizations.ISOBoot
+	isoTreePipeline.ISOBoot = img.ISOCustomizations.BootType
 }

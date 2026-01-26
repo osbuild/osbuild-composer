@@ -7,6 +7,10 @@ import (
 	"io"
 	"os"
 	"strings"
+
+	"go.yaml.in/yaml/v3"
+
+	"github.com/osbuild/images/internal/common"
 )
 
 // repository is the presentation of a on-disk repository json file
@@ -56,6 +60,10 @@ func (r *repository) UnmarshalJSON(data []byte) (err error) {
 	}
 
 	return nil
+}
+
+func (r *repository) UnmarshalYAML(unmarshal func(any) error) error {
+	return common.UnmarshalYAMLviaJSON(r, unmarshal)
 }
 
 type RepoConfig struct {
@@ -133,7 +141,7 @@ func LoadRepositoriesFromReader(r io.Reader) (map[string][]RepoConfig, error) {
 	var reposMap map[string][]repository
 	repoConfigs := make(map[string][]RepoConfig)
 
-	err := json.NewDecoder(r).Decode(&reposMap)
+	err := yaml.NewDecoder(r).Decode(&reposMap)
 	if err != nil {
 		return nil, err
 	}

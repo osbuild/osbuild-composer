@@ -385,6 +385,7 @@ type ImageTypeYAML struct {
 
 	ImageConfigYAML     imageConfig     `yaml:"image_config,omitempty"`
 	InstallerConfigYAML installerConfig `yaml:"installer_config,omitempty"`
+	ISOConfigYAML       isoConfig       `yaml:"iso_config,omitempty"`
 
 	Filename    string                      `yaml:"filename"`
 	MimeType    string                      `yaml:"mime_type"`
@@ -574,9 +575,19 @@ type installerConfig struct {
 	Conditions              map[string]*conditionsInstallerConf `yaml:"conditions,omitempty"`
 }
 
+type isoConfig struct {
+	*distro.ISOConfig `yaml:",inline"`
+	Conditions        map[string]*conditionsISOConf `yaml:"conditions,omitempty"`
+}
+
 type conditionsInstallerConf struct {
 	When         whenCondition           `yaml:"when,omitempty"`
 	ShallowMerge *distro.InstallerConfig `yaml:"shallow_merge,omitempty"`
+}
+
+type conditionsISOConf struct {
+	When         whenCondition     `yaml:"when,omitempty"`
+	ShallowMerge *distro.ISOConfig `yaml:"shallow_merge,omitempty"`
 }
 
 type packageSet struct {
@@ -697,4 +708,18 @@ func (imgType *ImageTypeYAML) InstallerConfig(id distro.ID, archName string) *di
 	}
 
 	return installerConfig
+}
+
+// ISOConfig returns the ISOConfig for the given imgType
+// Note that on conditions the ISOConfig is fully replaced, do
+// any merging in YAML
+func (imgType *ImageTypeYAML) ISOConfig(id distro.ID, archName string) *distro.ISOConfig {
+	isoConfig := imgType.ISOConfigYAML.ISOConfig
+	for _, cond := range imgType.ISOConfigYAML.Conditions {
+		if cond.When.Eval(id, archName) {
+			isoConfig = cond.ShallowMerge.InheritFrom(isoConfig)
+		}
+	}
+
+	return isoConfig
 }

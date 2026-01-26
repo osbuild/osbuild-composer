@@ -14,11 +14,12 @@ import (
 // It also contains raw SBOM data (Solver is responsible for creating
 // sbom.Document).
 type depsolveResultRaw struct {
-	Packages rpmmd.PackageList
-	Modules  []rpmmd.ModuleSpec
-	Repos    []rpmmd.RepoConfig
-	Solver   string
-	SBOMRaw  json.RawMessage
+	Packages     rpmmd.PackageList
+	Transactions []rpmmd.PackageList
+	Modules      []rpmmd.ModuleSpec
+	Repos        []rpmmd.RepoConfig
+	Solver       string
+	SBOMRaw      json.RawMessage
 }
 
 // apiHandler defines the interface for API version implementations.
@@ -61,5 +62,5 @@ type solverConfig struct {
 var activeHandler apiHandler
 
 func init() {
-	activeHandler = newV1Handler()
+	activeHandler = newV2Handler()
 }

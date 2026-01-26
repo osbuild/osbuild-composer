@@ -9,16 +9,17 @@ import (
 // ServerUrl denotes the host to register the system with
 // BaseUrl specifies the repository URL for DNF
 type ImageOptions struct {
-	Organization  string `json:"organization"`
-	ActivationKey string `json:"activation_key"`
-	ServerUrl     string `json:"server_url"`
-	BaseUrl       string `json:"base_url"`
-	Insights      bool   `json:"insights"`
-	Rhc           bool   `json:"rhc"`
-	Proxy         string `json:"proxy"`
-	TemplateName  string `json:"template_name"`
-	TemplateUUID  string `json:"template_uuid"`
-	PatchURL      string `json:"patch_url"`
+	Organization  string   `json:"organization"`
+	ActivationKey string   `json:"activation_key"`
+	ServerUrl     string   `json:"server_url"`
+	BaseUrl       string   `json:"base_url"`
+	Insights      bool     `json:"insights"`
+	Rhc           bool     `json:"rhc"`
+	Proxy         string   `json:"proxy"`
+	TemplateName  string   `json:"template_name"`
+	TemplateUUID  string   `json:"template_uuid"`
+	PatchURL      string   `json:"patch_url"`
+	ContentSets   []string `json:"content_sets"` // List of repo IDs to enable using subscription-manager on first boot
 }
 
 type RHSMStatus string
@@ -69,29 +70,15 @@ func (c *RHSMConfig) Clone() *RHSMConfig {
 
 	clone := &RHSMConfig{}
 
-	if c.DnfPlugins.ProductID.Enabled != nil {
-		clone.DnfPlugins.ProductID.Enabled = common.ToPtr(*c.DnfPlugins.ProductID.Enabled)
-	}
-	if c.DnfPlugins.SubscriptionManager.Enabled != nil {
-		clone.DnfPlugins.SubscriptionManager.Enabled = common.ToPtr(*c.DnfPlugins.SubscriptionManager.Enabled)
-	}
+	clone.DnfPlugins.ProductID.Enabled = common.ClonePtr(c.DnfPlugins.ProductID.Enabled)
+	clone.DnfPlugins.SubscriptionManager.Enabled = common.ClonePtr(c.DnfPlugins.SubscriptionManager.Enabled)
 
-	if c.YumPlugins.ProductID.Enabled != nil {
-		clone.YumPlugins.ProductID.Enabled = common.ToPtr(*c.YumPlugins.ProductID.Enabled)
-	}
-	if c.YumPlugins.SubscriptionManager.Enabled != nil {
-		clone.YumPlugins.SubscriptionManager.Enabled = common.ToPtr(*c.YumPlugins.SubscriptionManager.Enabled)
-	}
+	clone.YumPlugins.ProductID.Enabled = common.ClonePtr(c.YumPlugins.ProductID.Enabled)
+	clone.YumPlugins.SubscriptionManager.Enabled = common.ClonePtr(c.YumPlugins.SubscriptionManager.Enabled)
 
-	if c.SubMan.Rhsm.ManageRepos != nil {
-		clone.SubMan.Rhsm.ManageRepos = common.ToPtr(*c.SubMan.Rhsm.ManageRepos)
-	}
-	if c.SubMan.Rhsm.AutoEnableYumPlugins != nil {
-		clone.SubMan.Rhsm.AutoEnableYumPlugins = common.ToPtr(*c.SubMan.Rhsm.AutoEnableYumPlugins)
-	}
-	if c.SubMan.Rhsmcertd.AutoRegistration != nil {
-		clone.SubMan.Rhsmcertd.AutoRegistration = common.ToPtr(*c.SubMan.Rhsmcertd.AutoRegistration)
-	}
+	clone.SubMan.Rhsm.ManageRepos = common.ClonePtr(c.SubMan.Rhsm.ManageRepos)
+	clone.SubMan.Rhsm.AutoEnableYumPlugins = common.ClonePtr(c.SubMan.Rhsm.AutoEnableYumPlugins)
+	clone.SubMan.Rhsmcertd.AutoRegistration = common.ClonePtr(c.SubMan.Rhsmcertd.AutoRegistration)
 
 	return clone
 }
@@ -111,27 +98,27 @@ func (c *RHSMConfig) Update(new *RHSMConfig) *RHSMConfig {
 	}
 
 	if new.DnfPlugins.ProductID.Enabled != nil {
-		c.DnfPlugins.ProductID.Enabled = common.ToPtr(*new.DnfPlugins.ProductID.Enabled)
+		c.DnfPlugins.ProductID.Enabled = common.ClonePtr(new.DnfPlugins.ProductID.Enabled)
 	}
 	if new.DnfPlugins.SubscriptionManager.Enabled != nil {
-		c.DnfPlugins.SubscriptionManager.Enabled = common.ToPtr(*new.DnfPlugins.SubscriptionManager.Enabled)
+		c.DnfPlugins.SubscriptionManager.Enabled = common.ClonePtr(new.DnfPlugins.SubscriptionManager.Enabled)
 	}
 
 	if new.YumPlugins.ProductID.Enabled != nil {
-		c.YumPlugins.ProductID.Enabled = common.ToPtr(*new.YumPlugins.ProductID.Enabled)
+		c.YumPlugins.ProductID.Enabled = common.ClonePtr(new.YumPlugins.ProductID.Enabled)
 	}
 	if new.YumPlugins.SubscriptionManager.Enabled != nil {
-		c.YumPlugins.SubscriptionManager.Enabled = common.ToPtr(*new.YumPlugins.SubscriptionManager.Enabled)
+		c.YumPlugins.SubscriptionManager.Enabled = common.ClonePtr(new.YumPlugins.SubscriptionManager.Enabled)
 	}
 
 	if new.SubMan.Rhsm.ManageRepos != nil {
-		c.SubMan.Rhsm.ManageRepos = common.ToPtr(*new.SubMan.Rhsm.ManageRepos)
+		c.SubMan.Rhsm.ManageRepos = common.ClonePtr(new.SubMan.Rhsm.ManageRepos)
 	}
 	if new.SubMan.Rhsm.AutoEnableYumPlugins != nil {
-		c.SubMan.Rhsm.AutoEnableYumPlugins = common.ToPtr(*new.SubMan.Rhsm.AutoEnableYumPlugins)
+		c.SubMan.Rhsm.AutoEnableYumPlugins = common.ClonePtr(new.SubMan.Rhsm.AutoEnableYumPlugins)
 	}
 	if new.SubMan.Rhsmcertd.AutoRegistration != nil {
-		c.SubMan.Rhsmcertd.AutoRegistration = common.ToPtr(*new.SubMan.Rhsmcertd.AutoRegistration)
+		c.SubMan.Rhsmcertd.AutoRegistration = common.ClonePtr(new.SubMan.Rhsmcertd.AutoRegistration)
 	}
 
 	return c
@@ -146,11 +133,11 @@ func RHSMConfigFromBP(bpRHSM *blueprint.RHSMCustomization) *RHSMConfig {
 	c := &RHSMConfig{}
 
 	if plugins := bpRHSM.Config.DNFPlugins; plugins != nil {
-		if plugins.ProductID != nil && plugins.ProductID.Enabled != nil {
-			c.DnfPlugins.ProductID.Enabled = common.ToPtr(*plugins.ProductID.Enabled)
+		if plugins.ProductID != nil {
+			c.DnfPlugins.ProductID.Enabled = common.ClonePtr(plugins.ProductID.Enabled)
 		}
-		if plugins.SubscriptionManager != nil && plugins.SubscriptionManager.Enabled != nil {
-			c.DnfPlugins.SubscriptionManager.Enabled = common.ToPtr(*plugins.SubscriptionManager.Enabled)
+		if plugins.SubscriptionManager != nil {
+			c.DnfPlugins.SubscriptionManager.Enabled = common.ClonePtr(plugins.SubscriptionManager.Enabled)
 		}
 	}
 
@@ -158,15 +145,11 @@ func RHSMConfigFromBP(bpRHSM *blueprint.RHSMCustomization) *RHSMConfig {
 
 	if subMan := bpRHSM.Config.SubscriptionManager; subMan != nil {
 		if subMan.RHSMConfig != nil {
-			if subMan.RHSMConfig.ManageRepos != nil {
-				c.SubMan.Rhsm.ManageRepos = common.ToPtr(*subMan.RHSMConfig.ManageRepos)
-			}
-			if subMan.RHSMConfig.AutoEnableYumPlugins != nil {
-				c.SubMan.Rhsm.AutoEnableYumPlugins = common.ToPtr(*subMan.RHSMConfig.AutoEnableYumPlugins)
-			}
+			c.SubMan.Rhsm.ManageRepos = common.ClonePtr(subMan.RHSMConfig.ManageRepos)
+			c.SubMan.Rhsm.AutoEnableYumPlugins = common.ClonePtr(subMan.RHSMConfig.AutoEnableYumPlugins)
 		}
-		if subMan.RHSMCertdConfig != nil && subMan.RHSMCertdConfig.AutoRegistration != nil {
-			c.SubMan.Rhsmcertd.AutoRegistration = common.ToPtr(*subMan.RHSMCertdConfig.AutoRegistration)
+		if subMan.RHSMCertdConfig != nil {
+			c.SubMan.Rhsmcertd.AutoRegistration = common.ClonePtr(subMan.RHSMCertdConfig.AutoRegistration)
 		}
 	}
 

@@ -6,6 +6,7 @@ import (
 
 type GroupsStageOptions struct {
 	Groups map[string]GroupsStageOptionsGroup `json:"groups"`
+	Force  bool                               `json:"force"`
 }
 
 func (GroupsStageOptions) isStageOptions() {}
@@ -28,6 +29,13 @@ func NewGroupsStageOptions(groups []users.Group) *GroupsStageOptions {
 
 	options := GroupsStageOptions{
 		Groups: map[string]GroupsStageOptionsGroup{},
+
+		// --force makes possible to run groupadd with a group name or GID that
+		// already exists without failing. Useful for letting users define
+		// groups in their configs without worrying about the group existing in
+		// the base system or being created from a package, which isn't
+		// predictable. Enable it unconditionally for all builds
+		Force: true,
 	}
 
 	for _, group := range groups {

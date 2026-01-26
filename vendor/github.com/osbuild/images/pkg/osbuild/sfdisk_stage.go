@@ -47,6 +47,15 @@ type SfdiskPartition struct {
 
 func (o SfdiskStageOptions) validate() error {
 	if o.Label == disk.PT_DOS.String() && len(o.Partitions) > 4 {
+		// DOS partition tables only support more than 4 partitions if one of the first
+		// 4 (primary) slots is an extended partition. Since the JSON format doesn't
+		// explicitly distinguish between primary and logical partitions, we simply
+		// verify that an extended partition exists within these primary slots.
+		for i := range 4 {
+			if o.Partitions[i].Type == disk.ExtendedPartitionDOSID {
+				return nil
+			}
+		}
 		return fmt.Errorf("sfdisk stage creation failed: \"dos\" partition table only supports up to 4 partitions: got %d", len(o.Partitions))
 	}
 	return nil

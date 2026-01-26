@@ -125,6 +125,12 @@ type Package struct {
 	IgnoreSSL bool
 }
 
+// FullNEVRA returns the package's Name-Epoch:Version-Release.Arch string.
+// Epoch is never omitted.
+func (p Package) FullNEVRA() string {
+	return fmt.Sprintf("%s-%d:%s-%s.%s", p.Name, p.Epoch, p.Version, p.Release, p.Arch)
+}
+
 // EVRA returns the package's Epoch:Version-Release.Arch string.
 // If the package Epoch is 0, it is omitted and only Version-Release.Arch is returned.
 func (p Package) EVRA() string {

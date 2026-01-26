@@ -336,16 +336,19 @@ func (p *OS) getPackageSetChain(Distro) ([]rpmmd.PackageSet, error) {
 			Repositories:    osRepos,
 			InstallWeakDeps: p.OSCustomizations.InstallWeakDeps,
 		},
-		{
-			// Depsolve customization packages separately to avoid conflicts with base
-			// package exclusion.
-			// See https://github.com/osbuild/images/issues/1323
+	}
+
+	// Depsolve customization packages separately to avoid conflicts with base
+	// package exclusion.
+	// See https://github.com/osbuild/images/issues/1323
+	if len(customizationPackages) > 0 {
+		chain = append(chain, rpmmd.PackageSet{
 			Include:      customizationPackages,
 			Repositories: osRepos,
 			// Although 'false' is the default value, set it explicitly to make
 			// it visible that we are not adding weak dependencies.
 			InstallWeakDeps: false,
-		},
+		})
 	}
 
 	bpPackages := p.OSCustomizations.BlueprintPackages

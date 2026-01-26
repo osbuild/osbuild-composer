@@ -37,6 +37,9 @@ type AnacondaInstaller struct {
 	// InstallerCustomizations to apply to the installer pipeline(s)
 	InstallerCustomizations InstallerCustomizations
 
+	// ISOCustomizations to apply to the ISO pipeline(s)
+	ISOCustomizations ISOCustomizations
+
 	// Packages to install and/or exclude in addition to the ones required by the
 	// pipeline.
 	ExtraPackages   []string
@@ -96,6 +99,7 @@ func NewAnacondaInstaller(installerType AnacondaInstallerType,
 	repos []rpmmd.RepoConfig,
 	kernelName string,
 	instCust InstallerCustomizations,
+	isoCust ISOCustomizations,
 ) *AnacondaInstaller {
 	name := "anaconda-tree"
 	p := &AnacondaInstaller{
@@ -105,6 +109,7 @@ func NewAnacondaInstaller(installerType AnacondaInstallerType,
 		repos:                   filterRepos(repos, name),
 		kernelName:              kernelName,
 		InstallerCustomizations: instCust,
+		ISOCustomizations:       isoCust,
 	}
 	buildPipeline.addDependent(p)
 	return p
@@ -130,7 +135,7 @@ func (p *AnacondaInstaller) anacondaBootPackageSet() ([]string, error) {
 			"shim-x64",
 		)
 
-		if p.InstallerCustomizations.ISOBoot == SyslinuxISOBoot {
+		if p.ISOCustomizations.BootType == SyslinuxISOBoot {
 			packages = append(packages,
 				"syslinux",
 				"syslinux-nonlinux",
@@ -219,7 +224,7 @@ func (p *AnacondaInstaller) getPackageSetChain(Distro) ([]rpmmd.PackageSet, erro
 			Include:         append(packages, p.ExtraPackages...),
 			Exclude:         p.ExcludePackages,
 			Repositories:    append(p.repos, p.ExtraRepos...),
-			InstallWeakDeps: true,
+			InstallWeakDeps: p.InstallerCustomizations.InstallWeakDeps,
 		},
 	}, nil
 }
