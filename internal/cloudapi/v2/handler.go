@@ -18,6 +18,7 @@ import (
 	"github.com/labstack/echo/v4"
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
+	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/osbuild"
@@ -1573,6 +1574,190 @@ func (h *apiHandlers) GetDistributionList(ctx echo.Context) error {
 	}
 
 	return ctx.JSON(http.StatusOK, distros)
+}
+
+// GetDistribution returns details for a specific distribution
+// with optional filtering by image type and architecture
+func (h *apiHandlers) GetDistribution(ctx echo.Context, distroName string, params GetDistributionParams) error {
+	d := h.server.distros.GetDistro(distroName)
+	if d == nil {
+		return HTTPError(ErrorDistroNotFound)
+	}
+
+	architectures := make(map[string]ArchitectureInfo)
+
+	for _, archName := range d.ListArches() {
+		if params.Architecture != nil && !slices.Contains(*params.Architecture, archName) {
+			continue
+		}
+
+		imageTypesInfo := make(map[string]ImageTypeInfo)
+
+		a, err := d.GetArch(archName)
+		if err != nil {
+			return err
+		}
+
+		imageTypeNames := a.ListImageTypes()
+		imageTypes := make([]distro.ImageType, len(imageTypeNames))
+		for idx, imageTypeName := range imageTypeNames {
+			it, err := a.GetImageType(imageTypeName)
+			if err != nil {
+				return err
+			}
+			imageTypes[idx] = it
+		}
+
+		for _, imageType := range imageTypes {
+			if params.ImageType != nil && !slices.Contains(*params.ImageType, imageType.Name()) {
+				continue
+			}
+			var isoLabel *string
+			if label, err := imageType.ISOLabel(); err == nil {
+				isoLabel = &label
+			}
+
+			var basePartTable *Disk
+			partitionTable, err := imageType.BasePartitionTable()
+			if err == nil && partitionTable != nil {
+				partitions := make([]Partition, 0)
+				basePartitionTable := partitionTable.Partitions
+				// Map the partition table to the API format
+				for _, partition := range basePartitionTable {
+					switch pt := partition.Payload.(type) {
+					case *disk.Filesystem:
+						if pt != nil {
+							fs := FilesystemTyped{
+								FsType: FilesystemTypedFsType(pt.Type),
+							}
+							if partition.Size > 0 {
+								size := Minsize(fmt.Sprintf("%d", partition.Size))
+								fs.Minsize = &size
+							}
+							if pt.Mountpoint != "" {
+								fs.Mountpoint = &pt.Mountpoint
+							}
+							if pt.Label != "" {
+								fs.Label = &pt.Label
+							}
+							var result Partition
+							_ = result.FromFilesystemTyped(fs)
+							partitions = append(partitions, result)
+						}
+					case *disk.LVMVolumeGroup:
+						if pt != nil {
+							vg := VolumeGroup{
+								Type: VolumeGroupType(Lvm),
+								Name: &pt.Name,
+							}
+							if partition.Size > 0 {
+								size := Minsize(fmt.Sprintf("%d", partition.Size))
+								vg.Minsize = &size
+							}
+							var lvs []LogicalVolume
+							for _, lv := range pt.LogicalVolumes {
+								apiLv := LogicalVolume{
+									Name: &lv.Name,
+								}
+								if lv.Size > 0 {
+									size := Minsize(fmt.Sprintf("%d", partition.Size))
+									apiLv.Minsize = &size
+								}
+								if lv.Payload != nil && lv.Payload.(*disk.Filesystem) != nil {
+									apiLv.FsType = LogicalVolumeFsType(lv.Payload.(*disk.Filesystem).Type)
+									if lv.Payload.(*disk.Filesystem).Mountpoint != "" {
+										apiLv.Mountpoint = &lv.Payload.(*disk.Filesystem).Mountpoint
+									}
+									if lv.Payload.(*disk.Filesystem).Label != "" {
+										apiLv.Label = &lv.Payload.(*disk.Filesystem).Label
+									}
+								}
+								lvs = append(lvs, apiLv)
+							}
+							vg.LogicalVolumes = lvs
+							var result Partition
+							_ = result.FromVolumeGroup(vg)
+							partitions = append(partitions, result)
+						}
+					case *disk.Btrfs:
+						if pt != nil {
+							btrfs := BtrfsVolume{
+								Type: Btrfs,
+							}
+							if partition.Size > 0 {
+								size := Minsize(fmt.Sprintf("%d", partition.Size))
+								btrfs.Minsize = &size
+							}
+							var subvols []BtrfsSubvolume
+							if len(pt.Subvolumes) > 0 {
+								for _, sv := range pt.Subvolumes {
+									subvol := BtrfsSubvolume{
+										Mountpoint: sv.Mountpoint,
+										Name:       sv.Name,
+									}
+									subvols = append(subvols, subvol)
+								}
+							}
+							btrfs.Subvolumes = subvols
+							var result Partition
+							_ = result.FromBtrfsVolume(btrfs)
+							partitions = append(partitions, result)
+						}
+					}
+				}
+				var ptType *DiskType
+				if partitionTable.Type != disk.PT_NONE {
+					t := DiskType(partitionTable.Type.String())
+					ptType = &t
+				}
+				basePartTable = &Disk{
+					Type:       ptType,
+					Partitions: partitions,
+				}
+			}
+
+			var partitionType ImageTypeInfoPartitionType
+			ptType := imageType.PartitionType()
+			if ptType != disk.PT_NONE {
+				partitionType = ImageTypeInfoPartitionType(ptType.String())
+			}
+
+			imageTypesInfo[imageType.Name()] = ImageTypeInfo{
+				Name:                      imageType.Name(),
+				Aliases:                   common.ToPtr(imageType.Aliases()),
+				Filename:                  common.ToPtr(imageType.Filename()),
+				MimeType:                  common.ToPtr(imageType.MIMEType()),
+				OstreeRef:                 common.ToPtr(imageType.OSTreeRef()),
+				IsoLabel:                  isoLabel,
+				DefaultSize:               common.ToPtr(imageType.Size(0)),
+				PartitionType:             common.ToPtr(partitionType),
+				BasePartitionTable:        basePartTable,
+				BootMode:                  common.ToPtr(ImageTypeInfoBootMode(imageType.BootMode().String())),
+				PayloadPackageSets:        common.ToPtr(imageType.PayloadPackageSets()),
+				Exports:                   common.ToPtr(imageType.Exports()),
+				RequiredBlueprintOptions:  common.ToPtr(imageType.RequiredBlueprintOptions()),
+				SupportedBlueprintOptions: common.ToPtr(imageType.SupportedBlueprintOptions()),
+			}
+		}
+
+		if len(imageTypesInfo) > 0 {
+			architectures[archName] = ArchitectureInfo{
+				Name:       archName,
+				ImageTypes: &imageTypesInfo,
+			}
+		}
+	}
+
+	return ctx.JSON(http.StatusOK, DistributionDetails{
+		Name:             d.Name(),
+		Codename:         common.ToPtr(d.Codename()),
+		Releasever:       common.ToPtr(d.Releasever()),
+		OsVersion:        common.ToPtr(d.OsVersion()),
+		ModulePlatformId: common.ToPtr(d.ModulePlatformID()),
+		Product:          common.ToPtr(d.Product()),
+		OstreeRef:        common.ToPtr(d.OSTreeRef()),
+		Architectures:    &architectures,
+	})
 }
 
 // GetComposeDownload downloads a compose artifact
