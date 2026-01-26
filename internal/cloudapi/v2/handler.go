@@ -4,6 +4,7 @@ package v2
 import (
 	"cmp"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -18,7 +19,9 @@ import (
 	"github.com/labstack/echo/v4"
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
+	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/distro"
+	"github.com/osbuild/images/pkg/distro/defs"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/rpmmd"
@@ -1573,6 +1576,217 @@ func (h *apiHandlers) GetDistributionList(ctx echo.Context) error {
 	}
 
 	return ctx.JSON(http.StatusOK, distros)
+}
+
+// GetDistribution returns details for a specific distribution
+// with optional filtering by image type and architecture
+func (h *apiHandlers) GetDistribution(ctx echo.Context, distroName string, params GetDistributionParams) error {
+	d := h.server.distros.GetDistro(distroName)
+	if d == nil {
+		return HTTPError(ErrorUnsupportedDistribution)
+	}
+
+	architectures := make(map[string]ArchitectureInfo)
+
+	for _, archName := range d.ListArches() {
+		if params.Architecture != nil && !slices.Contains(*params.Architecture, archName) {
+			continue
+		}
+
+		imageTypesInfo := make(map[string]ImageTypeInfo)
+
+		imageTypes, err := distro.GetImageTypes(d, archName)
+		if err != nil {
+			return HTTPErrorWithInternal(ErrorGettingImageTypes, err)
+		}
+
+		for _, imageType := range imageTypes {
+			if params.ImageType != nil && !slices.Contains(*params.ImageType, imageType.Name()) {
+				continue
+			}
+
+			var isoLabel *string
+			if label, err := imageType.ISOLabel(); err == nil {
+				isoLabel = &label
+			}
+
+			var basePartTable *Disk
+			partitionTable, err := imageType.BasePartitionTable()
+			if err != nil {
+				// Ignore errors about missing partition tables - still a valid image type
+				if errors.Is(err, defs.ErrNoPartitionTableForImgType) ||
+					errors.Is(err, defs.ErrNoPartitionTableForArch) {
+					continue
+				}
+				return HTTPErrorWithInternal(ErrorGettingImageTypes, err)
+			}
+			if partitionTable != nil {
+				basePartTable, err = partitionTableToDisk(partitionTable)
+				if err != nil {
+					return HTTPErrorWithInternal(ErrorJSONMarshallingError, err)
+				}
+			}
+
+			var partitionType ImageTypeInfoPartitionType
+			ptType := imageType.PartitionType()
+			if ptType != disk.PT_NONE {
+				partitionType = ImageTypeInfoPartitionType(ptType.String())
+			}
+
+			imageTypesInfo[imageType.Name()] = ImageTypeInfo{
+				Name:                      imageType.Name(),
+				Aliases:                   common.ToPtr(imageType.Aliases()),
+				Filename:                  common.ToPtr(imageType.Filename()),
+				MimeType:                  common.ToPtr(imageType.MIMEType()),
+				OstreeRef:                 common.ToPtr(imageType.OSTreeRef()),
+				IsoLabel:                  isoLabel,
+				DefaultSize:               common.ToPtr(imageType.Size(0)),
+				PartitionType:             common.ToPtr(partitionType),
+				BasePartitionTable:        basePartTable,
+				BootMode:                  common.ToPtr(ImageTypeInfoBootMode(imageType.BootMode().String())),
+				PayloadPackageSets:        common.ToPtr(imageType.PayloadPackageSets()),
+				Exports:                   common.ToPtr(imageType.Exports()),
+				RequiredBlueprintOptions:  common.ToPtr(imageType.RequiredBlueprintOptions()),
+				SupportedBlueprintOptions: common.ToPtr(imageType.SupportedBlueprintOptions()),
+			}
+		}
+
+		if len(imageTypesInfo) > 0 {
+			architectures[archName] = ArchitectureInfo{
+				Name:       archName,
+				ImageTypes: &imageTypesInfo,
+			}
+		}
+	}
+
+	return ctx.JSON(http.StatusOK, DistributionDetails{
+		Id:               d.Name(),
+		Kind:             "DistributionDetails",
+		Href:             fmt.Sprintf("/api/image-builder-composer/v2/distributions/%s", d.Name()),
+		Name:             d.Name(),
+		Codename:         common.ToPtr(d.Codename()),
+		Releasever:       common.ToPtr(d.Releasever()),
+		OsVersion:        common.ToPtr(d.OsVersion()),
+		ModulePlatformId: common.ToPtr(d.ModulePlatformID()),
+		Product:          common.ToPtr(d.Product()),
+		OstreeRef:        common.ToPtr(d.OSTreeRef()),
+		Architectures:    &architectures,
+	})
+}
+
+// partitionTableToDisk maps a disk.PartitionTable to a Disk
+func partitionTableToDisk(partitionTable *disk.PartitionTable) (*Disk, error) {
+	var partitions []Partition
+	for _, partition := range partitionTable.Partitions {
+		switch pt := partition.Payload.(type) {
+		case *disk.Filesystem:
+			if pt != nil {
+				fs := FilesystemTyped{
+					FsType: FilesystemTypedFsType(pt.Type),
+				}
+
+				if partition.Size > 0 {
+					fs.Minsize = common.ToPtr(Minsize(strconv.FormatUint(partition.Size.Uint64(), 10)))
+				}
+
+				if pt.Mountpoint != "" {
+					fs.Mountpoint = &pt.Mountpoint
+				}
+
+				if pt.Label != "" {
+					fs.Label = &pt.Label
+				}
+
+				var result Partition
+				if err := result.FromFilesystemTyped(fs); err != nil {
+					return nil, err
+				}
+
+				partitions = append(partitions, result)
+			}
+		case *disk.LVMVolumeGroup:
+			if pt != nil {
+				vg := VolumeGroup{
+					Type: VolumeGroupType(Lvm),
+					Name: &pt.Name,
+				}
+
+				if partition.Size > 0 {
+					vg.Minsize = common.ToPtr(Minsize(strconv.FormatUint(partition.Size.Uint64(), 10)))
+				}
+
+				var lvs []LogicalVolume
+				for _, lv := range pt.LogicalVolumes {
+					apiLv := LogicalVolume{
+						Name: &lv.Name,
+					}
+
+					if lv.Size > 0 {
+						size := Minsize(fmt.Sprintf("%d", lv.Size))
+						apiLv.Minsize = &size
+					}
+
+					if fs, ok := lv.Payload.(*disk.Filesystem); ok && fs != nil {
+						apiLv.FsType = LogicalVolumeFsType(fs.Type)
+						if fs.Mountpoint != "" {
+							apiLv.Mountpoint = &fs.Mountpoint
+						}
+						if fs.Label != "" {
+							apiLv.Label = &fs.Label
+						}
+					}
+
+					lvs = append(lvs, apiLv)
+				}
+
+				vg.LogicalVolumes = lvs
+				var result Partition
+				if err := result.FromVolumeGroup(vg); err != nil {
+					return nil, err
+				}
+
+				partitions = append(partitions, result)
+			}
+		case *disk.Btrfs:
+			if pt != nil {
+				btrfs := BtrfsVolume{
+					Type: Btrfs,
+				}
+
+				if partition.Size > 0 {
+					btrfs.Minsize = common.ToPtr(Minsize(strconv.FormatUint(partition.Size.Uint64(), 10)))
+				}
+
+				var subvols []BtrfsSubvolume
+				for _, sv := range pt.Subvolumes {
+					subvol := BtrfsSubvolume{
+						Mountpoint: sv.Mountpoint,
+						Name:       sv.Name,
+					}
+					subvols = append(subvols, subvol)
+				}
+
+				btrfs.Subvolumes = subvols
+				var result Partition
+				if err := result.FromBtrfsVolume(btrfs); err != nil {
+					return nil, err
+				}
+
+				partitions = append(partitions, result)
+			}
+		}
+	}
+	var ptType *DiskType
+
+	if partitionTable.Type != disk.PT_NONE {
+		t := DiskType(partitionTable.Type.String())
+		ptType = &t
+	}
+
+	return &Disk{
+		Type:       ptType,
+		Partitions: partitions,
+	}, nil
 }
 
 // GetComposeDownload downloads a compose artifact

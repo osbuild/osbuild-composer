@@ -83,6 +83,7 @@ const (
 	ErrorArtifactNotFound                         ServiceErrorCode = 1022
 	ErrorDeletingJob                              ServiceErrorCode = 1023
 	ErrorDeletingArtifacts                        ServiceErrorCode = 1024
+	ErrorGettingImageTypes                        ServiceErrorCode = 1025
 
 	// Errors contained within this file
 	ErrorUnspecified          ServiceErrorCode = 10000
@@ -173,6 +174,7 @@ func getServiceErrors() serviceErrors {
 		serviceError{ErrorGettingComposeList, http.StatusInternalServerError, "Unable to get list of composes"},
 		serviceError{ErrorDeletingJob, http.StatusBadRequest, "Unable to delete job"},
 		serviceError{ErrorDeletingArtifacts, http.StatusInternalServerError, "Unable to delete job artifacts"},
+		serviceError{ErrorGettingImageTypes, http.StatusInternalServerError, "Unable to get list of image types"},
 
 		serviceError{ErrorUnspecified, http.StatusInternalServerError, "Unspecified internal error "},
 		serviceError{ErrorNotHTTPError, http.StatusInternalServerError, "Error is not an instance of HTTPError"},
