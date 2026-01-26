@@ -10,6 +10,15 @@ type XorrisofsStageOptions struct {
 	// System ID to set
 	SysID string `json:"sysid,omitempty"`
 
+	// Publisher to set
+	Pub string `json:"pub,omitempty"`
+
+	// Application ID to set
+	AppID string `json:"appid,omitempty"`
+
+	// Preparer to set
+	Prep string `json:"prep,omitempty"`
+
 	Boot *XorrisofsBoot `json:"boot,omitempty"`
 
 	EFI string `json:"efi,omitempty"`

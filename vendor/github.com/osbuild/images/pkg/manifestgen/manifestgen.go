@@ -128,10 +128,12 @@ func New(reporegistry *reporegistry.RepoRegistry, opts *Options) (*Generator, er
 		mg.depsolve = DefaultDepsolve
 	}
 	if mg.containerResolver == nil {
-		mg.containerResolver = DefaultContainerResolver
+		mg.containerResolver = func(containerSources map[string][]container.SourceSpec, archName string) (map[string][]container.Spec, error) {
+			return container.NewBlockingResolver(archName).ResolveAll(containerSources)
+		}
 	}
 	if mg.commitResolver == nil {
-		mg.commitResolver = DefaultCommitResolver
+		mg.commitResolver = ostree.ResolveAll
 	}
 	if mg.cacheDir == "" {
 		xdgCacheHomeDir, err := xdgCacheHome()
@@ -285,66 +287,13 @@ func DefaultDepsolve(solver *depsolvednf.Solver, cacheDir string, depsolveWarnin
 		solver.Stderr = depsolveWarningsOutput
 	}
 
-	depsolvedSets := make(map[string]depsolvednf.DepsolveResult)
-	for name, pkgSet := range packageSets {
-		// Always generate Spdx SBOMs for now, this makes the
-		// default depsolve slightly slower but it means we
-		// need no extra argument here to select the SBOM
-		// type. Once we have more types than Spdx of course
-		// we need to add a option to select the type.
-		res, err := solver.Depsolve(pkgSet, sbom.StandardTypeSpdx)
-		if err != nil {
-			return nil, fmt.Errorf("error depsolving: %w", err)
-		}
-		depsolvedSets[name] = *res
-	}
-	return depsolvedSets, nil
-}
-
-func resolveContainers(containers []container.SourceSpec, archName string) ([]container.Spec, error) {
-	resolver := container.NewBlockingResolver(archName)
-
-	for _, c := range containers {
-		resolver.Add(c)
-	}
-
-	return resolver.Finish()
-}
-
-// DefaultContainersResolve provides a default implementation for
-// container resolving.
-// It should rarely be necessary to use it directly and will be used
-// by default by manifestgen (unless overriden)
-func DefaultContainerResolver(containerSources map[string][]container.SourceSpec, archName string) (map[string][]container.Spec, error) {
-	containerSpecs := make(map[string][]container.Spec, len(containerSources))
-	for plName, sourceSpecs := range containerSources {
-		specs, err := resolveContainers(sourceSpecs, archName)
-		if err != nil {
-			return nil, fmt.Errorf("error container resolving: %w", err)
-		}
-		containerSpecs[plName] = specs
-	}
-	return containerSpecs, nil
-}
-
-// DefaultCommitResolver provides a default implementation for
-// ostree commit resolving.
-// It should rarely be necessary to use it directly and will be used
-// by default by manifestgen (unless overriden)
-func DefaultCommitResolver(commitSources map[string][]ostree.SourceSpec) (map[string][]ostree.CommitSpec, error) {
-	commits := make(map[string][]ostree.CommitSpec, len(commitSources))
-	for name, commitSources := range commitSources {
-		commitSpecs := make([]ostree.CommitSpec, len(commitSources))
-		for idx, commitSource := range commitSources {
-			var err error
-			commitSpecs[idx], err = ostree.Resolve(commitSource)
-			if err != nil {
-				return nil, fmt.Errorf("error ostree commit resolving: %w", err)
-			}
-		}
-		commits[name] = commitSpecs
-	}
-	return commits, nil
+	// Always generate Spdx SBOMs for now, this makes the
+	// default depsolve slightly slower but it means we
+	// need no extra argument here to select the SBOM
+	// type. Once we have more types than Spdx of course
+	// we need to add a option to select the type.
+	solver.SetSBOMType(sbom.StandardTypeSpdx)
+	return solver.DepsolveAll(packageSets)
 }
 
 type (

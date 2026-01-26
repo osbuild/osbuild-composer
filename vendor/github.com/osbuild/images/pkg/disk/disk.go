@@ -93,6 +93,9 @@ const (
 	// Partition type ID for PRep on dos
 	PRepPartitionDOSID = "41"
 
+	// Partition type ID for extended partition on dos
+	ExtendedPartitionDOSID = "0f"
+
 	// static UUIDs for partitions and filesystems
 	// NOTE(akoutsou): These are unnecessary and have stuck around since the
 	// beginning where (I believe) the goal was to have predictable,

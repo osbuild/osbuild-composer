@@ -72,6 +72,14 @@ distros:
     ostree_ref_tmpl: "almalinux/10/%%s/edge"
     iso_label_tmpl: "AlmaLinux-{{.Distro.MajorVersion}}-{{.Distro.MinorVersion}}-{{.Arch}}-dvd"
 
+  - <<: *rhel10
+    name: "rocky-{{.MajorVersion}}.{{.MinorVersion}}"
+    match: 'rocky-10\.[0-9]{1,2}'
+    product: "Rocky Linux"
+    vendor: "rocky"
+    ostree_ref_tmpl: "rocky/10/%%s/edge"
+    iso_label_tmpl: "Rocky-{{.Distro.MajorVersion}}-{{.Distro.MinorVersion}}-dvd-{{.Arch}}"
+
   - &centos10
     <<: *rhel10
     name: centos-10
@@ -187,6 +195,14 @@ distros:
     ostree_ref_tmpl: "almalinux/9/%%s/edge"
     iso_label_tmpl: "AlmaLinux-{{.Distro.MajorVersion}}-{{.Distro.MinorVersion}}-{{.Arch}}-dvd"
 
+  - <<: *rhel9
+    name: "rocky-{{.MajorVersion}}.{{.MinorVersion}}"
+    match: 'rocky-9\.[0-9]{1,2}'
+    product: "Rocky Linux"
+    vendor: "rocky"
+    ostree_ref_tmpl: "rocky/9/%%s/edge"
+    iso_label_tmpl: "Rocky-{{.Distro.MajorVersion}}-{{.Distro.MinorVersion}}-dvd-{{.Arch}}"
+
   - &centos9
     <<: *rhel9
     name: centos-9
@@ -297,6 +313,14 @@ distros:
     vendor: "almalinux"
     ostree_ref_tmpl: "almalinux/8/%%s/edge"
     iso_label_tmpl: "AlmaLinux-{{.Distro.MajorVersion}}-{{.Distro.MinorVersion}}-{{.Arch}}-dvd"
+
+  - <<: *rhel8
+    name: "rocky-{{.MajorVersion}}.{{.MinorVersion}}"
+    match: 'rocky-8\.[0-9]{1,2}'
+    product: "Rocky Linux"
+    vendor: "rocky"
+    ostree_ref_tmpl: "rocky/8/%%s/edge"
+    iso_label_tmpl: "Rocky-{{.Distro.MajorVersion}}-{{.Distro.MinorVersion}}-dvd-{{.Arch}}"
 
   - &centos8
     <<: *rhel8

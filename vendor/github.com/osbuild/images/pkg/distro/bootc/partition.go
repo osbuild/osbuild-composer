@@ -59,7 +59,7 @@ var (
 	})
 )
 
-func (t *BootcImageType) basePartitionTable() (*disk.PartitionTable, error) {
+func (t *imageType) basePartitionTable() (*disk.PartitionTable, error) {
 	// base partition table can come from the container
 	if t.arch.distro.sourceInfo != nil && t.arch.distro.sourceInfo.PartitionTable != nil {
 		return t.arch.distro.sourceInfo.PartitionTable, nil
@@ -68,7 +68,7 @@ func (t *BootcImageType) basePartitionTable() (*disk.PartitionTable, error) {
 	return t.ImageTypeYAML.PartitionTable(t.arch.distro.id, t.arch.Name())
 }
 
-func (t *BootcImageType) genPartitionTable(customizations *blueprint.Customizations, rootfsMinSize uint64, rng *rand.Rand) (*disk.PartitionTable, error) {
+func (t *imageType) genPartitionTable(customizations *blueprint.Customizations, rootfsMinSize uint64, rng *rand.Rand) (*disk.PartitionTable, error) {
 	// XXX: much duplication with generic/imagetype.go:getPartitionTable()
 	fsCust := customizations.GetFilesystems()
 	diskCust, err := customizations.GetPartitioning()
@@ -122,7 +122,7 @@ func (t *BootcImageType) genPartitionTable(customizations *blueprint.Customizati
 	return partitionTable, nil
 }
 
-func (t *BootcImageType) genPartitionTableDiskCust(basept *disk.PartitionTable, diskCust *blueprint.DiskCustomization, rootfsMinSize uint64, rng *rand.Rand) (*disk.PartitionTable, error) {
+func (t *imageType) genPartitionTableDiskCust(basept *disk.PartitionTable, diskCust *blueprint.DiskCustomization, rootfsMinSize uint64, rng *rand.Rand) (*disk.PartitionTable, error) {
 	if err := diskCust.ValidateLayoutConstraints(); err != nil {
 		return nil, fmt.Errorf("cannot use disk customization: %w", err)
 	}
@@ -151,7 +151,7 @@ func (t *BootcImageType) genPartitionTableDiskCust(basept *disk.PartitionTable, 
 	return disk.NewCustomPartitionTable(diskCust, partOptions, rng)
 }
 
-func (t *BootcImageType) genPartitionTableFsCust(basept *disk.PartitionTable, fsCust []blueprint.FilesystemCustomization, rootfsMinSize uint64, rng *rand.Rand) (*disk.PartitionTable, error) {
+func (t *imageType) genPartitionTableFsCust(basept *disk.PartitionTable, fsCust []blueprint.FilesystemCustomization, rootfsMinSize uint64, rng *rand.Rand) (*disk.PartitionTable, error) {
 	if basept == nil {
 		return nil, fmt.Errorf("pipelines: no partition tables defined for %s", t.arch.Name())
 	}

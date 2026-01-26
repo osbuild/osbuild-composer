@@ -380,10 +380,6 @@ func ostreeCommitServerCustomizations(t *imageType) manifest.OSTreeCommitServerC
 
 func installerCustomizations(t *imageType, c *blueprint.Customizations) (manifest.InstallerCustomizations, error) {
 	d := t.arch.distro
-	isoLabel, err := t.ISOLabel()
-	if err != nil {
-		return manifest.InstallerCustomizations{}, err
-	}
 
 	isc := manifest.InstallerCustomizations{
 		FIPS:                    c.GetFIPS(),
@@ -392,7 +388,6 @@ func installerCustomizations(t *imageType, c *blueprint.Customizations) (manifes
 		OSVersion:               d.OsVersion(),
 		Release:                 fmt.Sprintf("%s %s", d.Product(), d.OsVersion()),
 		Preview:                 d.DistroYAML.Preview,
-		ISOLabel:                isoLabel,
 		Variant:                 t.Variant,
 	}
 
@@ -410,12 +405,8 @@ func installerCustomizations(t *imageType, c *blueprint.Customizations) (manifes
 			isc.DefaultMenu = *menu
 		}
 
-		if isoroot := installerConfig.ISORootfsType; isoroot != nil {
-			isc.ISORootfsType = *isoroot
-		}
-
-		if isoboot := installerConfig.ISOBootType; isoboot != nil {
-			isc.ISOBoot = *isoboot
+		if installWeakDeps := installerConfig.InstallWeakDeps; installWeakDeps != nil {
+			isc.InstallWeakDeps = *installWeakDeps
 		}
 
 		isc.LoraxTemplates = installerConfig.LoraxTemplates
@@ -442,6 +433,61 @@ func installerCustomizations(t *imageType, c *blueprint.Customizations) (manifes
 		isc.DisabledAnacondaModules = append(isc.DisabledAnacondaModules, installerCust.Modules.Disable...)
 	}
 	isc.KernelOptionsAppend = kernelOptions(t, c)
+
+	return isc, nil
+}
+
+func isoCustomizations(t *imageType, c *blueprint.Customizations) (manifest.ISOCustomizations, error) {
+	isoLabel, err := t.ISOLabel()
+	if err != nil {
+		return manifest.ISOCustomizations{}, err
+	}
+
+	isc := manifest.ISOCustomizations{
+		Label: isoLabel,
+	}
+
+	isoConfig, err := t.getDefaultISOConfig()
+	if err != nil {
+		return isc, err
+	}
+
+	if isoConfig != nil {
+		if isoboot := isoConfig.BootType; isoboot != nil {
+			isc.BootType = *isoboot
+		}
+
+		if isoroot := isoConfig.RootfsType; isoroot != nil {
+			isc.RootfsType = *isoroot
+		}
+
+		if preparer := isoConfig.Preparer; preparer != nil {
+			isc.Preparer = *preparer
+		}
+
+		if publisher := isoConfig.Publisher; publisher != nil {
+			isc.Publisher = *publisher
+		}
+
+		if application := isoConfig.Application; application != nil {
+			isc.Application = *application
+		}
+	}
+
+	isoCust := c.GetISO()
+	if isoCust != nil {
+		if isoCust.Publisher != "" {
+			isc.Publisher = isoCust.Publisher
+		}
+
+		if isoCust.VolumeID != "" {
+			isc.Label = isoCust.VolumeID
+		}
+
+		if isoCust.ApplicationID != "" {
+			isc.Application = isoCust.ApplicationID
+		}
+	}
 
 	return isc, nil
 }
@@ -629,6 +675,11 @@ func liveInstallerImage(t *imageType,
 		return nil, err
 	}
 
+	img.ISOCustomizations, err = isoCustomizations(t, bp.Customizations)
+	if err != nil {
+		return nil, err
+	}
+
 	return img, nil
 }
 
@@ -662,6 +713,11 @@ func imageInstallerImage(t *imageType,
 	img.ExtraBasePackages = packageSets[installerPkgsKey]
 
 	img.InstallerCustomizations, err = installerCustomizations(t, bp.Customizations)
+	if err != nil {
+		return nil, err
+	}
+
+	img.ISOCustomizations, err = isoCustomizations(t, bp.Customizations)
 	if err != nil {
 		return nil, err
 	}
@@ -832,6 +888,11 @@ func iotInstallerImage(t *imageType,
 		return nil, err
 	}
 
+	img.ISOCustomizations, err = isoCustomizations(t, bp.Customizations)
+	if err != nil {
+		return nil, err
+	}
+
 	// XXX these bits should move into the `installerCustomization` function
 	// XXX directly
 	if len(img.Kickstart.Users)+len(img.Kickstart.Groups) > 0 {
@@ -951,6 +1012,12 @@ func iotSimplifiedInstallerImage(t *imageType,
 	if err != nil {
 		return nil, err
 	}
+
+	img.ISOCustomizations, err = isoCustomizations(t, bp.Customizations)
+	if err != nil {
+		return nil, err
+	}
+
 	img.OSName = t.OSTree.Name
 
 	return img, nil
@@ -1010,6 +1077,11 @@ func networkInstallerImage(t *imageType,
 	img.ExtraBasePackages = packageSets[installerPkgsKey]
 
 	img.InstallerCustomizations, err = installerCustomizations(t, bp.Customizations)
+	if err != nil {
+		return nil, err
+	}
+
+	img.ISOCustomizations, err = isoCustomizations(t, bp.Customizations)
 	if err != nil {
 		return nil, err
 	}

@@ -183,3 +183,22 @@ func SeedFrom(p *int64) int64 {
 	}
 	return *p
 }
+
+// Helper: Returns all image types supported by the given distro for the specified architecture.
+func GetImageTypes(d Distro, archName string) ([]ImageType, error) {
+	arch, err := d.GetArch(archName)
+	if err != nil {
+		return nil, err
+	}
+
+	imageTypeNames := arch.ListImageTypes()
+	imageTypes := make([]ImageType, len(imageTypeNames))
+	for i, imageTypeName := range imageTypeNames {
+		imageType, err := arch.GetImageType(imageTypeName)
+		if err != nil {
+			return nil, err
+		}
+		imageTypes[i] = imageType
+	}
+	return imageTypes, nil
+}

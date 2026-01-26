@@ -528,7 +528,6 @@
 
 
   installer_config: &default_installer_config
-    iso_rootfs_type: "squashfs"
     enabled_anaconda_modules: &install_config_enabled_anaconda_modules
       - "org.fedoraproject.Anaconda.Modules.Localization"
       - "org.fedoraproject.Anaconda.Modules.Network"
@@ -548,12 +547,18 @@
         after_dracut: true
     lorax_logos_package: fedora-logos
     lorax_release_package: fedora-release
-    conditions: &default_installer_config_conditions
+    install_weak_deps: true
+
+  iso_config: &default_iso_config
+    preparer: "image-builder - https://osbuild.org/"
+    publisher: "Fedora Project"
+    rootfs_type: "squashfs"
+    conditions:
       "x86_64 uses grub2":
         when:
           arch: "x86_64"
         shallow_merge:
-          iso_boot_type: "grub2"
+          boot_type: "grub2"
 
   image_config:
     iot_enabled_services: &image_config_iot_enabled_services
@@ -1931,6 +1936,7 @@ image_types:
     installer_config:
       <<: *default_installer_config
       default_menu: 0
+    iso_config: *default_iso_config
     image_config:
       <<: *image_config_iot_enabled_services
       locale: "en_US.UTF-8"
@@ -1981,7 +1987,7 @@ image_types:
       # them to empty to avoid changing the live-installer definition
       additional_dracut_modules: []
       # also reset the condition that adds dracut modules
-
+    iso_config: *default_iso_config
     image_config:
       locale: "en_US.UTF-8"
     package_sets:
@@ -2066,6 +2072,7 @@ image_types:
         - "org.fedoraproject.Anaconda.Modules.Runtime"
         - "org.fedoraproject.Anaconda.Modules.Storage"
         - "org.fedoraproject.Anaconda.Modules.Users"
+    iso_config: *default_iso_config
     image_config:
       locale: "en_US.UTF-8"
     platforms:
@@ -2301,6 +2308,14 @@ image_types:
     installer_config:
       <<: *default_installer_config
       default_menu: 0
+    iso_config:
+      boot_type: "grub2-uefi"
+      conditions:
+        "x86_64 uses syslinux":
+          when:
+            arch: "x86_64"
+          shallow_merge:
+            boot_type: "syslinux"
     image_config:
       <<: *image_config_iot
       ignition_platform: "metal"
@@ -2433,6 +2448,8 @@ image_types:
       iso_files:
         - ["/usr/share/licenses/fedora-release-common/Fedora-Legal-README.txt", "/Fedora-Legal-README.txt"]
         - ["/usr/share/licenses/fedora-release-common/LICENSE", "/LICENSE"]
+      install_weak_deps: false
+    iso_config: *default_iso_config
     image_config:
       locale: "en_US.UTF-8"
     package_sets:
@@ -2662,6 +2679,7 @@ image_types:
     # still keep the config here so that there is a single place for
     # all imagetype configs.
     installer_config: *default_installer_config
+    iso_config: *default_iso_config
     package_sets:
       installer:
         - include:

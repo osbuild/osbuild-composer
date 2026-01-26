@@ -20,12 +20,9 @@ type InstallerConfig struct {
 	// DefaultMenu will set the grub2 iso menu's default setting
 	DefaultMenu *int `yaml:"default_menu"`
 
-	// RootfsType defines what rootfs (squashfs, erofs,ext4)
-	// is used
-	ISORootfsType *manifest.ISORootfsType `yaml:"iso_rootfs_type,omitempty"`
-
-	// BootType defines what type of bootloader is used for the iso
-	ISOBootType *manifest.ISOBootType `yaml:"iso_boot_type,omitempty"`
+	// InstallWeakDeps determines if weak dependencies are installed in the installer
+	// environment.
+	InstallWeakDeps *bool `yaml:"install_weak_deps,omitempty"`
 
 	// Lorax template settings for org.osbuild.lorax stage
 	LoraxTemplates       []manifest.InstallerLoraxTemplate `yaml:"lorax_templates,omitempty"`

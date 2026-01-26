@@ -116,17 +116,13 @@ func NewRHSMStageOptions(config *subscription.RHSMConfig) *RHSMStageOptions {
 
 		if subManConfRhsmManageRepos != nil || subManConfRhsmAutoEnableYumPlugins != nil {
 			options.SubMan.Rhsm = &SubManConfigRHSMSection{}
-			if subManConfRhsmManageRepos != nil {
-				options.SubMan.Rhsm.ManageRepos = common.ToPtr(*subManConfRhsmManageRepos)
-			}
-			if subManConfRhsmAutoEnableYumPlugins != nil {
-				options.SubMan.Rhsm.AutoEnableYumPlugins = common.ToPtr(*subManConfRhsmAutoEnableYumPlugins)
-			}
+			options.SubMan.Rhsm.ManageRepos = common.ClonePtr(subManConfRhsmManageRepos)
+			options.SubMan.Rhsm.AutoEnableYumPlugins = common.ClonePtr(subManConfRhsmAutoEnableYumPlugins)
 		}
 
 		if subManConfRhsmcertdAutoReg != nil {
 			options.SubMan.Rhsmcertd = &SubManConfigRHSMCERTDSection{
-				AutoRegistration: common.ToPtr(*subManConfRhsmcertdAutoReg),
+				AutoRegistration: common.ClonePtr(subManConfRhsmcertdAutoReg),
 			}
 		}
 	}

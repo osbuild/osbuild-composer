@@ -38,3 +38,66 @@ the initrd and the root filesystem.
 
     echo rootfs.img | cpio -c --quiet -L -o > rootfs.cpio
     cat initrd.img rootfs.cpio > combined.img
+
+# bootc
+
+You can create a bootc based PXE system using the 'pxe-tar-xz' image type with
+the bootc image builder. But there are a few requirement to take into account.
+The container that you use must have the dracut-live, squashfs-tools installed.
+Otherwise ostree (which is what bootc produces) won't know how to boot the
+rootfs.img
+
+## Simple bootc container
+
+This is a simple example using the `image-builder` cmdline tool and a local install of podman.
+
+Save this in `Containerfile`:
+
+```
+FROM quay.io/centos-bootc/centos-bootc:stream10
+RUN dnf -y install dracut-live squashfs-tools && dnf clean all
+RUN bootc container lint
+```
+
+Build this container using podman:
+
+```
+podman build -f ./Containerfile -t bootc-dracut
+```
+
+Run `image-builder` to create the tar:
+
+```
+image-builder build --bootc-ref localhost/bootc-dracut:latest pxe-tar-xz
+```
+
+If your container is on a remote system replace the
+`localhost/bootc-dracut:latest` with the right url.
+
+The resulting tar is the same as for the package based `pxe-tar-xz`, the only
+difference is that the `grub.cfg` also has `ostree=...` added to the kernel
+cmdline. And the rootfs.img is an ostree system instead of package based.
+
+# Troubleshooting
+
+## No grub menu
+
+Make sure the grub.cfg is next to grubx64.efi -- the simplest layout is to put BOOTX64.EFI,
+grubx64.efi, grub.cfg at the root of the directory your tftp server points to.
+
+## Fails to load the rootfs.img
+
+Make sure the rootfs.img is in the location specified by `root=live:...` in grub.cfg, it can be
+helpful check the logs of whatever http server you are using to serve up the files to make sure
+the request matches the expected location.
+
+## Fails to mount the OSTree root
+
+If you get an error like:
+
+ostree-prepare-root[848]: ostree-prepare-root: Couldn't find specified OSTree root
+
+Double check the grub.cfg matches the rootfs.img (ie. came from the same tar
+file).  The `ostree=...` entry in grub.cfg must point to the path in the
+rootfs.img, and the build process sets this uuid from the ostree directory so a
+mismatch is usually because the rootfs.img doesn't match the grub.cfg
