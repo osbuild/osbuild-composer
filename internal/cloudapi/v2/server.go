@@ -522,6 +522,10 @@ func (s *Server) enqueueBootcCompose(request ComposeRequest, channel string) (uu
 		tgts[0].ImageName = "disk.qcow2"
 		tgts[0].OsbuildArtifact.ExportFilename = "disk.qcow2"
 		tgts[0].OsbuildArtifact.ExportName = "qcow2"
+	} else if imageTypeFromApiImageType(ir.ImageType) == "pxe-tar-xz" {
+		tgts[0].ImageName = "pxe.tar.xz"
+		tgts[0].OsbuildArtifact.ExportFilename = "pxe.tar.xz"
+		tgts[0].OsbuildArtifact.ExportName = "xz"
 	} else {
 		return uuid.Nil, HTTPErrorWithDetails(ErrorUnsupportedImageType, nil, "only qcow2 (guest-image) is supported for bootc composes")
 	}
