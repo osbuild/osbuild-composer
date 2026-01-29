@@ -39,7 +39,7 @@ require (
 	github.com/oracle/oci-go-sdk/v54 v54.0.0
 	github.com/prometheus/client_golang v1.13.0
 	github.com/segmentio/ksuid v1.0.4
-	github.com/sirupsen/logrus v1.9.0
+	github.com/sirupsen/logrus v1.9.1
 	github.com/spf13/cobra v1.6.1
 	github.com/stretchr/testify v1.8.1
 	github.com/ubccr/kerby v0.0.0-20170626144437-201a958fc453
