@@ -390,7 +390,7 @@ github.com/prometheus/procfs/internal/util
 # github.com/segmentio/ksuid v1.0.4
 ## explicit
 github.com/segmentio/ksuid
-# github.com/sirupsen/logrus v1.8.1
+# github.com/sirupsen/logrus v1.8.3
 ## explicit
 github.com/sirupsen/logrus
 # github.com/sony/gobreaker v0.4.2-0.20210216022020-dd874f9dd33b
@@ -509,7 +509,7 @@ golang.org/x/oauth2/jwt
 # golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 ## explicit
 golang.org/x/sync/semaphore
-# golang.org/x/sys v0.0.0-20211210111614-af8b64212486
+# golang.org/x/sys v0.0.0-20220715151400-c0bba94af5f8
 ## explicit
 golang.org/x/sys/execabs
 golang.org/x/sys/internal/unsafeheader
