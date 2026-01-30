@@ -1279,6 +1279,9 @@ func (request *ComposeRequest) GetImageRequests(distroFactory *distrofactory.Fac
 			imageOptions.Facts = &facts.ImageOptions{
 				APIType: facts.CLOUDV2_APITYPE,
 			}
+			if request.BlueprintId != nil {
+				imageOptions.Facts.BlueprintID = uuid.UUID(*request.BlueprintId)
+			}
 			oscap := bp.Customizations.GetOpenSCAP()
 			if oscap != nil {
 				if oscap.ProfileID != "" {
