@@ -1,3 +1,11 @@
+# v1.64.0 (2026-01-22)
+
+* **Feature**: This release adds support for Amazon EC2 Auto Scaling group deletion protection
+
+# v1.63.0 (2026-01-20)
+
+* **Feature**: This release adds support for three new filters when describing scaling activities, StartTimeLowerBound, StartTimeUpperBound, and Status.
+
 # v1.62.5 (2026-01-09)
 
 * **Dependency Update**: Updated to the latest SDK module versions
