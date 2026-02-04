@@ -63,8 +63,8 @@ case "${ID}-${VERSION_ID}" in
         VIRT_APPSTREAM_REPO_URL="http://download.devel.redhat.com/rhel-8/nightly/RHEL-8/latest-RHEL-8.10.0/compose/AppStream/x86_64/os/"
         ;;
     rhel-10*)
-        VIRT_BASEOS_REPO_URL="http://download.devel.redhat.com/rhel-9/nightly/RHEL-9/latest-RHEL-9.7.0/compose/BaseOS/x86_64/os/"
-        VIRT_APPSTREAM_REPO_URL="http://download.devel.redhat.com/rhel-9/nightly/RHEL-9/latest-RHEL-9.7.0/compose/AppStream/x86_64/os/"
+        VIRT_BASEOS_REPO_URL="http://download.devel.redhat.com/rhel-9/nightly/RHEL-9/latest-RHEL-9.8.0/compose/BaseOS/x86_64/os/"
+        VIRT_APPSTREAM_REPO_URL="http://download.devel.redhat.com/rhel-9/nightly/RHEL-9/latest-RHEL-9.8.0/compose/AppStream/x86_64/os/"
         ;;
     *)
         redprint "unsupported distro: ${ID}-${VERSION_ID}"
