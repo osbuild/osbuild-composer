@@ -1,4 +1,11 @@
 {
+  "common": {
+    "dependencies": {
+      "image-builder": {
+        "copr-build": "image-builder-0:48-1.20260205163614977774.main.8.g9991cf2"
+      }
+    }
+  },
   "fedora-42": {
     "dependencies": {
       "osbuild": {
