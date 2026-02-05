@@ -153,7 +153,30 @@ EOF
         # TODO: configure dependency pinning for image-builder like we do for osbuild
         # https://issues.redhat.com/browse/HMS-9647
         greenprint "Installing image-builder for experimental manifest generation"
-        sudo dnf -y install image-builder
+        # install dnf-plugins-core to get the COPR plugin
+        sudo dnf -y install dnf-plugins-core
+        sudo dnf copr enable -y @osbuild/image-builder "${ID}-${VERSION_ID%.*}-${ARCH}"
+
+        # Install a specific version of image-builder pinned by the COPR build in Schutzfile
+        # Try in this order of precedence:
+        # 1. Distro-specific: schutzfile_data[distro]["dependencies"]["image-builder"]["copr-build"]
+        # 2. Common fallback: schutzfile_data["common"]["dependencies"]["image-builder"]["copr-build"]
+        IMAGE_BUILDER_COPR_BUILD=$(jq -r ".[\"${ID}-${VERSION_ID}\"].dependencies.\"image-builder\".\"copr-build\"" Schutzfile)
+        if [ "${IMAGE_BUILDER_COPR_BUILD}" == "null" ]; then
+            IMAGE_BUILDER_COPR_BUILD=$(jq -r ".common.dependencies.\"image-builder\".\"copr-build\"" Schutzfile)
+        fi
+
+        if [ "${IMAGE_BUILDER_COPR_BUILD}" != "null" ]; then
+            # The build needs to get the proper distro release suffix, e.g. .el9 for RHEL 9
+            # NOTE: the %{dist} macro contains the leading dot in e.g. ".el9"
+            IMAGE_BUILDER_COPR_BUILD_FULL_NAME="${IMAGE_BUILDER_COPR_BUILD}$(rpm -E '%{dist}')"
+            greenprint "Installing image-builder COPR build ${IMAGE_BUILDER_COPR_BUILD_FULL_NAME}"
+            sudo dnf -y install "${IMAGE_BUILDER_COPR_BUILD_FULL_NAME}"
+        else
+            # No distro-specific or common fallback, install the latest version from the distribution repositories
+            greenprint "Installing image-builder from distribution repositories"
+            sudo dnf -y install image-builder
+        fi
     fi
 fi
 
