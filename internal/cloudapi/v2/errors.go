@@ -56,6 +56,7 @@ const (
 	ErrorDistroOrBootcNotBoth         ServiceErrorCode = 43
 	ErrorDistroAndBootcMissing        ServiceErrorCode = 44
 	ErrorDistroMissing                ServiceErrorCode = 45
+	ErrorDistroNotFound               ServiceErrorCode = 46
 
 	// Internal errors, these are bugs
 	ErrorFailedToInitializeBlueprint              ServiceErrorCode = 1000
@@ -148,6 +149,7 @@ func getServiceErrors() serviceErrors {
 		serviceError{ErrorDistroOrBootcNotBoth, http.StatusBadRequest, "Invalid request, either bootc or distribution needs to be specified, but not both"},
 		serviceError{ErrorDistroAndBootcMissing, http.StatusBadRequest, "Invalid request, either bootc or distribution needs to be specified"},
 		serviceError{ErrorDistroMissing, http.StatusBadRequest, "Invalid request, distribution is required for this compose request"},
+		serviceError{ErrorDistroNotFound, http.StatusNotFound, "Distribution not found"},
 
 		serviceError{ErrorFailedToInitializeBlueprint, http.StatusInternalServerError, "Failed to initialize blueprint"},
 		serviceError{ErrorFailedToGenerateManifestSeed, http.StatusInternalServerError, "Failed to generate manifest seed"},
