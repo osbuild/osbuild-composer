@@ -604,11 +604,12 @@ API:
         INTERNAL_NETWORK: ["true"]
 
       # single test config for experimental feature
-      - IMAGE_TYPE: ["aws"]
-        RUNNER:
-          - aws/rhel-10.1-ga-x86_64
-        IMAGE_BUILDER_EXPERIMENTAL: "image-builder-manifest-generation=1"
-        INTERNAL_NETWORK: ["true"]
+      # TODO: temporarily disabled until https://github.com/osbuild/osbuild-composer/issues/5000 is resolved
+      # - IMAGE_TYPE: ["aws"]
+      #   RUNNER:
+      #     - aws/rhel-10.1-ga-x86_64
+      #   IMAGE_BUILDER_EXPERIMENTAL: "image-builder-manifest-generation=1"
+      #   INTERNAL_NETWORK: ["true"]
 
 API-module-hotfixes:
   stage: test
