@@ -258,7 +258,7 @@ jobs:
       - name: Write PR status
         run: echo "$SKIP_CI" > SKIP_CI.txt
       - name: Upload status
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: PR_STATUS
           path: SKIP_CI.txt
