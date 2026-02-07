@@ -9,7 +9,7 @@ BUILD_RPMS="${BUILD_RPMS:-true}"
 # RHEL workers build their own rpms.
 ANSIBLE_TAGS="${ANSIBLE_TAGS:-rhel}"
 # Build rhel only
-PACKER_ONLY_EXCEPT="${PACKER_ONLY_EXCEPT:---only=amazon-ebs.rhel-9-x86_64,amazon-ebs.rhel-9-aarch64}"
+PACKER_ONLY_EXCEPT="${PACKER_ONLY_EXCEPT:---only=amazon-ebs.rhel-10-x86_64,amazon-ebs.rhel-10-aarch64}"
 COST_CENTER="${COST_CENTER:-xxx}"
 
 if [ -n "$GIT_BRANCH" ]; then
@@ -48,8 +48,8 @@ function write_inventories {
 
         # write rpmrepo_distribution variable
         local rpmrepo_distribution="$distro"
-        if [[ $rpmrepo_distribution == rhel-9 ]]; then
-            rpmrepo_distribution=rhel-9-cdn
+        if [[ $rpmrepo_distribution == rhel-10 ]]; then
+            rpmrepo_distribution=rhel-10-cdn
         fi
         cat >"$item/group_vars/all.yml" <<EOF
 ---
@@ -58,8 +58,8 @@ EOF
 
         # get distro name for schutzfile
         local schutzfile_distro="$distro"
-        if [[ $schutzfile_distro == rhel-9 ]]; then
-            schutzfile_distro=rhel-9.3
+        if [[ $schutzfile_distro == rhel-10 ]]; then
+            schutzfile_distro=rhel-10.0
         fi
 
         # get osbuild_commit from schutzfile
