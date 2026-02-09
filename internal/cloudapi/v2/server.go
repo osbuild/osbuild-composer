@@ -23,7 +23,6 @@ import (
 	"github.com/osbuild/osbuild-composer/pkg/jobqueue"
 
 	"github.com/osbuild/images/pkg/container"
-	"github.com/osbuild/images/pkg/depsolvednf"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distrofactory"
 	"github.com/osbuild/images/pkg/manifest"
@@ -644,22 +643,22 @@ func serializeManifest(ctx context.Context, manifestSource *manifest.Manifest, w
 		return
 	}
 
-	var depsolveResults worker.DepsolveJobResult
-	err = json.Unmarshal(dynArgs[0], &depsolveResults)
+	var depsolveJobResult worker.DepsolveJobResult
+	err = json.Unmarshal(dynArgs[0], &depsolveJobResult)
 	if err != nil {
 		reason := "Error parsing dynamic arguments"
 		jobResult.JobError = clienterrors.New(clienterrors.ErrorParsingDynamicArgs, reason, nil)
 		return
 	}
 
-	_, err = workers.DepsolveJobInfo(dependencies.depsolveJobID, &depsolveResults)
+	_, err = workers.DepsolveJobInfo(dependencies.depsolveJobID, &depsolveJobResult)
 	if err != nil {
 		reason := "Error reading depsolve status"
 		jobResult.JobError = clienterrors.New(clienterrors.ErrorReadingJobStatus, reason, nil)
 		return
 	}
 
-	if jobErr := depsolveResults.JobError; jobErr != nil {
+	if jobErr := depsolveJobResult.JobError; jobErr != nil {
 		if jobErr.ID == clienterrors.ErrorDNFDepsolveError || jobErr.ID == clienterrors.ErrorDNFMarkingErrors {
 			jobResult.JobError = clienterrors.New(clienterrors.ErrorDepsolveDependency, "Error in depsolve job dependency input, bad package set requested", jobErr.Details)
 			return
@@ -668,7 +667,7 @@ func serializeManifest(ctx context.Context, manifestSource *manifest.Manifest, w
 		return
 	}
 
-	if len(depsolveResults.PackageSpecs) == 0 {
+	if len(depsolveJobResult.PackageSpecs) == 0 {
 		jobResult.JobError = clienterrors.New(clienterrors.ErrorEmptyPackageSpecs, "Received empty package specs", nil)
 		return
 	}
@@ -756,19 +755,8 @@ func serializeManifest(ctx context.Context, manifestSource *manifest.Manifest, w
 		}
 	}
 
-	// XXX: fix worker.DepsolveJobResult
-	depsolveResultsInTheRightFormat := map[string]depsolvednf.DepsolveResult{}
-	for plName, res := range depsolveResults.PackageSpecs {
-		r := depsolveResultsInTheRightFormat[plName]
-		r.Packages = res.ToRPMMDList()
-		depsolveResultsInTheRightFormat[plName] = r
-	}
-	for plName, res := range depsolveResults.RepoConfigs {
-		r := depsolveResultsInTheRightFormat[plName]
-		r.Repos = worker.DepsolvedRepoConfigListToRPMMDList(res)
-		depsolveResultsInTheRightFormat[plName] = r
-	}
-	ms, err := manifestSource.Serialize(depsolveResultsInTheRightFormat, containerSpecs, ostreeCommitSpecs, nil)
+	depsolveResult := depsolveJobResult.ToDepsolvednfResult()
+	ms, err := manifestSource.Serialize(depsolveResult, containerSpecs, ostreeCommitSpecs, nil)
 	if err != nil {
 		reason := "Error serializing manifest"
 		jobResult.JobError = clienterrors.New(clienterrors.ErrorManifestGeneration, reason, err.Error())
