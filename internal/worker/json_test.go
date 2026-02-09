@@ -1056,3 +1056,84 @@ func TestDepsolveJobResultToDepsolvednfResult(t *testing.T) {
 		})
 	}
 }
+
+func TestDepsolvedModuleSpecJSONRoundtrip(t *testing.T) {
+	testCases := []struct {
+		name   string
+		module DepsolvedModuleSpec
+	}{
+		{
+			name:   "empty",
+			module: DepsolvedModuleSpec{},
+		},
+		{
+			name: "full",
+			module: DepsolvedModuleSpec{
+				ModuleConfigFile: DepsolvedModuleConfigFile{
+					Path: "/etc/dnf/modules.d/nodejs.module",
+					Data: DepsolvedModuleConfigData{
+						Name:     "nodejs",
+						Stream:   "18",
+						Profiles: []string{"default", "development"},
+						State:    "enabled",
+					},
+				},
+				FailsafeFile: DepsolvedModuleFailsafeFile{
+					Path: "/etc/dnf/modules.d/nodejs.failsafe",
+					Data: "nodejs:18",
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			data, err := json.Marshal(tc.module)
+			require.NoError(t, err)
+
+			var result DepsolvedModuleSpec
+			err = json.Unmarshal(data, &result)
+			require.NoError(t, err)
+
+			assert.EqualValues(t, tc.module, result)
+		})
+	}
+}
+
+func TestDepsolvedModuleSpecRPMMDConversion(t *testing.T) {
+	testCases := []struct {
+		name   string
+		module rpmmd.ModuleSpec
+	}{
+		{
+			name:   "empty",
+			module: rpmmd.ModuleSpec{},
+		},
+		{
+			name: "typical",
+			module: rpmmd.ModuleSpec{
+				ModuleConfigFile: rpmmd.ModuleConfigFile{
+					Path: "/etc/dnf/modules.d/nodejs.module",
+					Data: rpmmd.ModuleConfigData{
+						Name:     "nodejs",
+						Stream:   "18",
+						Profiles: []string{"default"},
+						State:    "enabled",
+					},
+				},
+				FailsafeFile: rpmmd.ModuleFailsafeFile{
+					Path: "/etc/dnf/modules.d/nodejs.failsafe",
+					Data: "nodejs:18",
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			dto := DepsolvedModuleSpecFromRPMMD(tc.module)
+			result := dto.ToRPMMD()
+			assert.EqualValues(t, tc.module, result)
+		})
+	}
+}
