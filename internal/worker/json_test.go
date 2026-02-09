@@ -1025,6 +1025,49 @@ func TestDepsolveJobResultToDepsolvednfResult(t *testing.T) {
 			},
 		},
 		{
+			name: "single-pipeline-with-modules",
+			input: DepsolveJobResult{
+				PackageSpecs: map[string]DepsolvedPackageList{
+					"os": {{Name: "nodejs", Version: "18.0", Arch: "x86_64"}},
+				},
+				RepoConfigs: map[string][]DepsolvedRepoConfig{
+					"os": {{Id: "appstream", BaseURLs: []string{"https://example.com/appstream"}}},
+				},
+				Modules: map[string][]DepsolvedModuleSpec{
+					"os": {
+						{
+							ModuleConfigFile: DepsolvedModuleConfigFile{
+								Path: "/etc/dnf/modules.d/nodejs.module",
+								Data: DepsolvedModuleConfigData{
+									Name:   "nodejs",
+									Stream: "18",
+									State:  "enabled",
+								},
+							},
+						},
+					},
+				},
+			},
+			expected: map[string]depsolvednf.DepsolveResult{
+				"os": {
+					Packages: rpmmd.PackageList{{Name: "nodejs", Version: "18.0", Arch: "x86_64"}},
+					Repos:    []rpmmd.RepoConfig{{Id: "appstream", BaseURLs: []string{"https://example.com/appstream"}}},
+					Modules: []rpmmd.ModuleSpec{
+						{
+							ModuleConfigFile: rpmmd.ModuleConfigFile{
+								Path: "/etc/dnf/modules.d/nodejs.module",
+								Data: rpmmd.ModuleConfigData{
+									Name:   "nodejs",
+									Stream: "18",
+									State:  "enabled",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			name: "multiple-pipelines",
 			input: DepsolveJobResult{
 				PackageSpecs: map[string]DepsolvedPackageList{

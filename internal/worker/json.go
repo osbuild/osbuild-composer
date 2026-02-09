@@ -722,8 +722,9 @@ func DepsolvedModuleSpecListToRPMMDList(modules []DepsolvedModuleSpec) []rpmmd.M
 
 type DepsolveJobResult struct {
 	PackageSpecs map[string]DepsolvedPackageList  `json:"package_specs"`
-	SbomDocs     map[string]SbomDoc               `json:"sbom_docs,omitempty"`
 	RepoConfigs  map[string][]DepsolvedRepoConfig `json:"repo_configs"`
+	Modules      map[string][]DepsolvedModuleSpec `json:"modules,omitempty"`
+	SbomDocs     map[string]SbomDoc               `json:"sbom_docs,omitempty"`
 	JobResult
 }
 
@@ -734,9 +735,9 @@ func (d *DepsolveJobResult) ToDepsolvednfResult() map[string]depsolvednf.Depsolv
 	results := make(map[string]depsolvednf.DepsolveResult, len(d.PackageSpecs))
 
 	// NOTE: PackageSpecs and RepoConfigs are always populated together by the
-	// depsolve job for the same pipeline names. SbomDocs is optional and only
-	// present when SBOM generation was requested. We iterate over PackageSpecs
-	// as the primary map and look up the corresponding entries in the others.
+	// depsolve job for the same pipeline names. SbomDocs and Modules are optional.
+	// We iterate over PackageSpecs as the primary map and look up the
+	// corresponding entries in the others.
 	for name, pkgs := range d.PackageSpecs {
 		result := depsolvednf.DepsolveResult{
 			Packages: pkgs.ToRPMMDList(),
@@ -748,6 +749,10 @@ func (d *DepsolveJobResult) ToDepsolvednfResult() map[string]depsolvednf.Depsolv
 				DocType:  sbomDoc.DocType,
 				Document: sbomDoc.Document,
 			}
+		}
+
+		if modules, ok := d.Modules[name]; ok {
+			result.Modules = DepsolvedModuleSpecListToRPMMDList(modules)
 		}
 
 		results[name] = result
