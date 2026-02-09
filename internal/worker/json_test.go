@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
@@ -859,6 +860,105 @@ func TestDepsolvedPackageMarshalJSON(t *testing.T) {
 			json, err := json.Marshal(testCase.depsolvedPackage)
 			require.NoError(t, err)
 			assert.EqualValues(t, testCase.json, string(json))
+		})
+	}
+}
+
+func TestDepsolvedRepoConfigJSONRoundtrip(t *testing.T) {
+	testCases := []struct {
+		name   string
+		config DepsolvedRepoConfig
+	}{
+		{
+			name:   "empty",
+			config: DepsolvedRepoConfig{},
+		},
+		{
+			name: "minimal",
+			config: DepsolvedRepoConfig{
+				Id:       "test-repo",
+				BaseURLs: []string{"https://example.com/repo"},
+			},
+		},
+		{
+			name: "with-pointer-fields",
+			config: DepsolvedRepoConfig{
+				Id:           "test-repo",
+				BaseURLs:     []string{"https://example.com/repo"},
+				CheckGPG:     common.ToPtr(true),
+				CheckRepoGPG: common.ToPtr(false),
+				Priority:     common.ToPtr(10),
+				IgnoreSSL:    common.ToPtr(false),
+				Enabled:      common.ToPtr(true),
+			},
+		},
+		{
+			name: "full",
+			config: DepsolvedRepoConfig{
+				Id:             "test-repo",
+				Name:           "Test Repository",
+				BaseURLs:       []string{"https://example.com/repo", "http://mirror.example.com/repo"},
+				Metalink:       "https://example.com/metalink",
+				MirrorList:     "https://example.com/mirrorlist",
+				GPGKeys:        []string{"-----BEGIN PGP PUBLIC KEY BLOCK-----"},
+				CheckGPG:       common.ToPtr(true),
+				CheckRepoGPG:   common.ToPtr(false),
+				Priority:       common.ToPtr(10),
+				IgnoreSSL:      common.ToPtr(false),
+				MetadataExpire: "6h",
+				ModuleHotfixes: common.ToPtr(true),
+				RHSM:           true,
+				Enabled:        common.ToPtr(true),
+				ImageTypeTags:  []string{"edge-commit", "edge-container"},
+				PackageSets:    []string{"os", "blueprint"},
+				SSLCACert:      "/etc/pki/ca.crt",
+				SSLClientKey:   "/etc/pki/client.key",
+				SSLClientCert:  "/etc/pki/client.crt",
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			data, err := json.Marshal(tc.config)
+			require.NoError(t, err)
+
+			var result DepsolvedRepoConfig
+			err = json.Unmarshal(data, &result)
+			require.NoError(t, err)
+
+			assert.EqualValues(t, tc.config, result)
+		})
+	}
+}
+
+func TestDepsolvedRepoConfigRPMMDConversion(t *testing.T) {
+	testCases := []struct {
+		name   string
+		config rpmmd.RepoConfig
+	}{
+		{
+			name:   "empty",
+			config: rpmmd.RepoConfig{},
+		},
+		{
+			name: "typical",
+			config: rpmmd.RepoConfig{
+				Id:        "baseos",
+				Name:      "BaseOS",
+				BaseURLs:  []string{"https://example.com/baseos"},
+				CheckGPG:  common.ToPtr(true),
+				IgnoreSSL: common.ToPtr(false),
+				RHSM:      true,
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			dto := DepsolvedRepoConfigFromRPMMD(tc.config)
+			result := dto.ToRPMMD()
+			assert.EqualValues(t, tc.config, result)
 		})
 	}
 }

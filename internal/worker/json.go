@@ -597,10 +597,64 @@ func DepsolvedPackageListFromRPMMDList(pkgs rpmmd.PackageList) DepsolvedPackageL
 	return results
 }
 
+// DepsolvedRepoConfig is the DTO for rpmmd.RepoConfig.
+type DepsolvedRepoConfig struct {
+	Id             string   `json:"id,omitempty"`
+	Name           string   `json:"name,omitempty"`
+	BaseURLs       []string `json:"baseurls,omitempty"`
+	Metalink       string   `json:"metalink,omitempty"`
+	MirrorList     string   `json:"mirrorlist,omitempty"`
+	GPGKeys        []string `json:"gpgkeys,omitempty"`
+	CheckGPG       *bool    `json:"check_gpg,omitempty"`
+	CheckRepoGPG   *bool    `json:"check_repo_gpg,omitempty"`
+	Priority       *int     `json:"priority,omitempty"`
+	IgnoreSSL      *bool    `json:"ignore_ssl,omitempty"`
+	MetadataExpire string   `json:"metadata_expire,omitempty"`
+	ModuleHotfixes *bool    `json:"module_hotfixes,omitempty"`
+	RHSM           bool     `json:"rhsm,omitempty"`
+	Enabled        *bool    `json:"enabled,omitempty"`
+	ImageTypeTags  []string `json:"image_type_tags,omitempty"`
+	PackageSets    []string `json:"package_sets,omitempty"`
+
+	SSLCACert     string `json:"sslcacert,omitempty"`
+	SSLClientKey  string `json:"sslclientkey,omitempty"`
+	SSLClientCert string `json:"sslclientcert,omitempty"`
+}
+
+func (d DepsolvedRepoConfig) ToRPMMD() rpmmd.RepoConfig {
+	return rpmmd.RepoConfig(d)
+}
+
+func DepsolvedRepoConfigFromRPMMD(cfg rpmmd.RepoConfig) DepsolvedRepoConfig {
+	return DepsolvedRepoConfig(cfg)
+}
+
+func DepsolvedRepoConfigListFromRPMMDList(cfgs []rpmmd.RepoConfig) []DepsolvedRepoConfig {
+	if cfgs == nil {
+		return nil
+	}
+	results := make([]DepsolvedRepoConfig, len(cfgs))
+	for i, cfg := range cfgs {
+		results[i] = DepsolvedRepoConfigFromRPMMD(cfg)
+	}
+	return results
+}
+
+func DepsolvedRepoConfigListToRPMMDList(cfgs []DepsolvedRepoConfig) []rpmmd.RepoConfig {
+	if cfgs == nil {
+		return nil
+	}
+	results := make([]rpmmd.RepoConfig, len(cfgs))
+	for i, cfg := range cfgs {
+		results[i] = cfg.ToRPMMD()
+	}
+	return results
+}
+
 type DepsolveJobResult struct {
-	PackageSpecs map[string]DepsolvedPackageList `json:"package_specs"`
-	SbomDocs     map[string]SbomDoc              `json:"sbom_docs,omitempty"`
-	RepoConfigs  map[string][]rpmmd.RepoConfig   `json:"repo_configs"`
+	PackageSpecs map[string]DepsolvedPackageList  `json:"package_specs"`
+	SbomDocs     map[string]SbomDoc               `json:"sbom_docs,omitempty"`
+	RepoConfigs  map[string][]DepsolvedRepoConfig `json:"repo_configs"`
 	JobResult
 }
 

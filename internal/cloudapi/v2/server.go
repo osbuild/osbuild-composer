@@ -765,7 +765,7 @@ func serializeManifest(ctx context.Context, manifestSource *manifest.Manifest, w
 	}
 	for plName, res := range depsolveResults.RepoConfigs {
 		r := depsolveResultsInTheRightFormat[plName]
-		r.Repos = res
+		r.Repos = worker.DepsolvedRepoConfigListToRPMMDList(res)
 		depsolveResultsInTheRightFormat[plName] = r
 	}
 	ms, err := manifestSource.Serialize(depsolveResultsInTheRightFormat, containerSpecs, ostreeCommitSpecs, nil)
