@@ -14,13 +14,13 @@ import boto3
 
 arch_info = {}
 arch_info["x86_64"] = {
-    # RHEL-9.6.0_HVM-20250910-x86_64-0-Access2-GP3
-    "ImageId": "ami-01aaf1c29c7e0f0af",
+    # RHEL-10.0.0_HVM-20251030-x86_64-0-Access2-GP3
+    "ImageId": "ami-0d2cf1078cac15da9",
     "InstanceType": "m7a.large"
 }
 arch_info["aarch64"] = {
-    # RHEL-9.6.0_HVM-20250910-arm64-0-Access2-GP3
-    "ImageId": "ami-06f37afe6d4f43c47",
+    # RHEL-10.1.0_HVM_GA-20251031-arm64-0-Access2-GP3
+    "ImageId": "ami-03d9eec0fe95df48d",
     "InstanceType": "m7g.large"
 }
 
