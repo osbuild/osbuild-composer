@@ -145,6 +145,54 @@ func TestGetTargets(t *testing.T) {
 			expected:  []target.TargetName{""},
 			fail:      true,
 		},
+		"network-installer:default": {
+			imageType:      ImageTypesNetworkInstaller,
+			targets:        nil,
+			includeDefault: true,
+			expected:       []target.TargetName{target.TargetNameAWSS3},
+		},
+		"network-installer:s3": {
+			imageType:      ImageTypesNetworkInstaller,
+			targets:        []UploadTypes{UploadTypesAwsS3},
+			includeDefault: false,
+			expected:       []target.TargetName{target.TargetNameAWSS3},
+		},
+		"network-installer:s3+default": {
+			imageType:      ImageTypesNetworkInstaller,
+			targets:        []UploadTypes{UploadTypesAwsS3},
+			includeDefault: true,
+			expected:       []target.TargetName{target.TargetNameAWSS3, target.TargetNameAWSS3},
+		},
+		"network-installer:local": {
+			imageType:      ImageTypesNetworkInstaller,
+			targets:        []UploadTypes{UploadTypesLocal},
+			includeDefault: false,
+			expected:       []target.TargetName{target.TargetNameWorkerServer},
+		},
+		"pxe:default": {
+			imageType:      ImageTypesPxeTarXz,
+			targets:        nil,
+			includeDefault: true,
+			expected:       []target.TargetName{target.TargetNameAWSS3},
+		},
+		"pxe:s3": {
+			imageType:      ImageTypesPxeTarXz,
+			targets:        []UploadTypes{UploadTypesAwsS3},
+			includeDefault: false,
+			expected:       []target.TargetName{target.TargetNameAWSS3},
+		},
+		"pxe:s3+default": {
+			imageType:      ImageTypesPxeTarXz,
+			targets:        []UploadTypes{UploadTypesAwsS3},
+			includeDefault: true,
+			expected:       []target.TargetName{target.TargetNameAWSS3, target.TargetNameAWSS3},
+		},
+		"pxe:local": {
+			imageType:      ImageTypesPxeTarXz,
+			targets:        []UploadTypes{UploadTypesLocal},
+			includeDefault: false,
+			expected:       []target.TargetName{target.TargetNameWorkerServer},
+		},
 	}
 
 	for name := range testCases {
