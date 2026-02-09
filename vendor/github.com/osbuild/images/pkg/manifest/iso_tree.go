@@ -184,11 +184,30 @@ func (p *ISOTree) serialize() (osbuild.Pipeline, error) {
 	if version == "" {
 		version = p.Release
 	}
+
 	var grub2config *osbuild.Grub2Config
-	if p.bootTreePipeline != nil && p.bootTreePipeline.DefaultMenu > 0 {
-		grub2config = &osbuild.Grub2Config{
-			Default: p.bootTreePipeline.DefaultMenu,
+	var disableTestEntry bool
+	var disableTroubleshootingEntry bool
+
+	if p.bootTreePipeline != nil {
+		if p.bootTreePipeline.DefaultMenu > 0 {
+			grub2config = &osbuild.Grub2Config{
+				Default: p.bootTreePipeline.DefaultMenu,
+			}
 		}
+
+		if p.bootTreePipeline.MenuTimeout != nil {
+			if grub2config == nil {
+				grub2config = &osbuild.Grub2Config{
+					Timeout: *p.bootTreePipeline.MenuTimeout,
+				}
+			} else {
+				grub2config.Timeout = *p.bootTreePipeline.MenuTimeout
+			}
+		}
+
+		disableTestEntry = p.bootTreePipeline.DisableTestEntry
+		disableTroubleshootingEntry = p.bootTreePipeline.DisableTroubleshootingEntry
 	}
 	options := &osbuild.Grub2ISOLegacyStageOptions{
 		Product: osbuild.Product{
@@ -199,10 +218,31 @@ func (p *ISOTree) serialize() (osbuild.Pipeline, error) {
 			Dir:  "/images/pxeboot",
 			Opts: kernelOpts,
 		},
-		ISOLabel: p.isoLabel,
-		FIPS:     false,
-		Config:   grub2config,
+		ISOLabel:        p.isoLabel,
+		FIPS:            false,
+		Install:         true,
+		Test:            !disableTestEntry,
+		Troubleshooting: !disableTroubleshootingEntry,
+		Config:          grub2config,
 	}
+
+	// If any menu entries are defined we turn off all default
+	// entries and instead append our own
+	// entries only
+	if len(p.bootTreePipeline.MenuEntries) > 0 {
+		options.Troubleshooting = false
+		options.Test = false
+		options.Install = false
+
+		for _, entry := range p.bootTreePipeline.MenuEntries {
+			options.Custom = append(options.Custom, osbuild.Grub2ISOLegacyCustomEntryOptions{
+				Name:   entry.Name,
+				Linux:  entry.Linux,
+				Initrd: entry.Initrd,
+			})
+		}
+	}
+
 	if p.bootTreePipeline != nil && p.bootTreePipeline.Platform != nil {
 		options.FIPS = p.bootTreePipeline.Platform.GetFIPSMenu()
 	}

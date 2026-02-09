@@ -44,7 +44,7 @@ func getManifest(bp blueprint.Blueprint, t distro.ImageType, a distro.Arch, d di
 		panic(err)
 	}
 
-	return mf, depsolved["packages"].Packages
+	return mf, depsolved["packages"].Transactions.AllPackages()
 }
 
 func main() {

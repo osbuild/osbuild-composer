@@ -36,7 +36,7 @@ the initrd and the root filesystem.
 
 ## Create a combined image
 
-    echo rootfs.img | cpio -c --quiet -L -o > rootfs.cpio
+    echo rootfs.img | cpio -H newc --quiet -L -o > rootfs.cpio
     cat initrd.img rootfs.cpio > combined.img
 
 # bootc

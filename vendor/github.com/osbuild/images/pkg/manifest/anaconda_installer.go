@@ -11,6 +11,7 @@ import (
 	"github.com/osbuild/images/pkg/customizations/fsnode"
 	"github.com/osbuild/images/pkg/customizations/kickstart"
 	"github.com/osbuild/images/pkg/customizations/users"
+	"github.com/osbuild/images/pkg/depsolvednf"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/platform"
 	"github.com/osbuild/images/pkg/rpmmd"
@@ -53,11 +54,14 @@ type AnacondaInstaller struct {
 	// the naming of network devices on the target system.
 	Biosdevname bool
 
-	platform     platform.Platform
-	repos        []rpmmd.RepoConfig
-	packageSpecs rpmmd.PackageList
-	kernelName   string
-	kernelVer    string
+	platform platform.Platform
+	// depsolveRepos holds the repository configuration used by
+	// getPackageSetChain() for depsolving. After depsolving, use
+	// depsolveResult.Repos which contains only repos that provided packages.
+	depsolveRepos  []rpmmd.RepoConfig
+	depsolveResult *depsolvednf.DepsolveResult
+	kernelName     string
+	kernelVer      string
 
 	// some images (like bootc installers) know their path in
 	// advance
@@ -106,7 +110,7 @@ func NewAnacondaInstaller(installerType AnacondaInstallerType,
 		Base:                    NewBase(name, buildPipeline),
 		Type:                    installerType,
 		platform:                platform,
-		repos:                   filterRepos(repos, name),
+		depsolveRepos:           filterRepos(repos, name),
 		kernelName:              kernelName,
 		InstallerCustomizations: instCust,
 		ISOCustomizations:       isoCust,
@@ -223,40 +227,42 @@ func (p *AnacondaInstaller) getPackageSetChain(Distro) ([]rpmmd.PackageSet, erro
 		{
 			Include:         append(packages, p.ExtraPackages...),
 			Exclude:         p.ExcludePackages,
-			Repositories:    append(p.repos, p.ExtraRepos...),
+			Repositories:    append(p.depsolveRepos, p.ExtraRepos...),
 			InstallWeakDeps: p.InstallerCustomizations.InstallWeakDeps,
 		},
 	}, nil
 }
 
 func (p *AnacondaInstaller) getPackageSpecs() rpmmd.PackageList {
-	return p.packageSpecs
+	if p.depsolveResult == nil {
+		return nil
+	}
+	return p.depsolveResult.Transactions.AllPackages()
 }
 
 func (p *AnacondaInstaller) serializeStart(inputs Inputs) error {
-	if len(p.packageSpecs) > 0 && len(p.bootcLivefsContainerSpecs) > 0 {
+	if p.depsolveResult != nil && len(p.bootcLivefsContainerSpecs) > 0 {
 		return errors.New("AnacondaInstaller: double call to serializeStart()")
 	}
-	p.packageSpecs = inputs.Depsolved.Packages
+	p.depsolveResult = &inputs.Depsolved
 	// bootc-installers will get the kernelVer via introspection
-	if len(p.packageSpecs) > 0 && p.kernelName != "" {
-		kernelPkg, err := p.packageSpecs.Package(p.kernelName)
+	if len(p.depsolveResult.Transactions) > 0 && p.kernelName != "" {
+		kernelPkg, err := p.depsolveResult.Transactions.FindPackage(p.kernelName)
 		if err != nil {
 			return fmt.Errorf("AnacondaInstaller: %w", err)
 		}
 		p.kernelVer = kernelPkg.EVRA()
 	}
-	p.repos = append(p.repos, inputs.Depsolved.Repos...)
 	p.bootcLivefsContainerSpecs = inputs.Containers
 	return nil
 }
 
 func (p *AnacondaInstaller) serializeEnd() {
-	if len(p.packageSpecs) == 0 && len(p.bootcLivefsContainerSpecs) == 0 {
+	if p.depsolveResult == nil && len(p.bootcLivefsContainerSpecs) == 0 {
 		panic("serializeEnd() call when serialization not in progress")
 	}
 	p.kernelVer = ""
-	p.packageSpecs = nil
+	p.depsolveResult = nil
 	p.bootcLivefsContainerSpecs = nil
 }
 
@@ -267,11 +273,11 @@ func installerRootUser() osbuild.UsersStageOptionsUser {
 }
 
 func (p *AnacondaInstaller) serialize() (osbuild.Pipeline, error) {
-	if len(p.packageSpecs) == 0 && len(p.bootcLivefsContainerSpecs) == 0 {
+	if p.depsolveResult == nil && len(p.bootcLivefsContainerSpecs) == 0 {
 		return osbuild.Pipeline{}, fmt.Errorf("AnacondaInstaller: serialization not started")
 	}
-	if len(p.packageSpecs) > 0 && len(p.bootcLivefsContainerSpecs) > 0 {
-		return osbuild.Pipeline{}, fmt.Errorf("AnacondaInstaller: using packages and containers at the same time is n")
+	if len(p.depsolveResult.Transactions) > 0 && len(p.bootcLivefsContainerSpecs) > 0 {
+		return osbuild.Pipeline{}, fmt.Errorf("AnacondaInstaller: using packages and containers at the same time is not allowed")
 	}
 
 	pipeline, err := p.Base.serialize()
@@ -279,14 +285,17 @@ func (p *AnacondaInstaller) serialize() (osbuild.Pipeline, error) {
 		return osbuild.Pipeline{}, err
 	}
 
-	if len(p.packageSpecs) > 0 {
-		options := osbuild.NewRPMStageOptions(p.repos)
+	if len(p.depsolveResult.Transactions) > 0 {
+		baseOptions := osbuild.RPMStageOptions{}
 		// Documentation is only installed on live installer images
 		if p.Type != AnacondaInstallerTypeLive {
-			options.Exclude = &osbuild.Exclude{Docs: true}
+			baseOptions.Exclude = &osbuild.Exclude{Docs: true}
 		}
-
-		pipeline.AddStage(osbuild.NewRPMStage(options, osbuild.NewRpmStageSourceFilesInputs(p.packageSpecs)))
+		rpmStages, err := osbuild.GenRPMStagesFromTransactions(p.depsolveResult.Transactions, &baseOptions)
+		if err != nil {
+			return osbuild.Pipeline{}, err
+		}
+		pipeline.AddStages(rpmStages...)
 	} else {
 		image := osbuild.NewContainersInputForSingleSource(p.bootcLivefsContainerSpecs[0])
 		stage, err := osbuild.NewContainerDeployStage(image, &osbuild.ContainerDeployOptions{RemoveSignatures: true})

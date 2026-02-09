@@ -7,6 +7,7 @@ import (
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
 	"github.com/osbuild/images/pkg/distro"
+	"github.com/osbuild/images/pkg/rpmmd"
 )
 
 type BuildConfig struct {
@@ -14,6 +15,20 @@ type BuildConfig struct {
 	Blueprint *blueprint.Blueprint `json:"blueprint,omitempty"`
 	Options   distro.ImageOptions  `json:"options"`
 	Depends   interface{}          `json:"depends,omitempty"` // ignored
+	Solver    *SolverConfig        `json:"solver,omitempty"`
+
+	// CustomRepos is a list of additional repositories that will be used for
+	// depsolving the image package sets.
+	CustomRepos []rpmmd.RepoConfig `json:"custom_repos,omitempty"`
+}
+
+// SolverConfig is a configuration for the depsolver used by gen-manifests.
+// This is added specifically to workaround how bib depsolves package sets
+// for the "legacy anaconda ISO" image type, where it sets the root directory
+// to point to the root of a mounted bootc container image, instead of
+// setting the Repositories in the package sets.
+type SolverConfig struct {
+	UseRootDir bool `json:"use_root_dir,omitempty"`
 }
 
 type Options struct {

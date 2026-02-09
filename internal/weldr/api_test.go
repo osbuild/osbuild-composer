@@ -128,7 +128,7 @@ func getMockDepsolveDNFSolverFn(m *depsolvednf_mock.MockDepsolveDNF) GetSolverFn
 func getBaseMockDepsolveDNFSolverFn(deosolveRepoID string) GetSolverFn {
 	return getMockDepsolveDNFSolverFn(&depsolvednf_mock.MockDepsolveDNF{
 		DepsolveRes: &depsolvednf.DepsolveResult{
-			Packages: depsolvednf_mock.BaseDepsolveResult(deosolveRepoID),
+			Transactions: depsolvednf.TransactionList{depsolvednf_mock.BaseDepsolveResult(deosolveRepoID)},
 		},
 		FetchRes:     depsolvednf_mock.BaseFetchResult(),
 		SearchResMap: depsolvednf_mock.BaseSearchResultsMap(),
@@ -144,7 +144,7 @@ func ResolveContent(pkgs map[string][]rpmmd.PackageSet, containers map[string][]
 	depsolved := make(map[string]depsolvednf.DepsolveResult, len(pkgs))
 	for name := range pkgs {
 		depsolved[name] = depsolvednf.DepsolveResult{
-			Packages: depsolvednf_mock.BaseDepsolveResult(testRepoID),
+			Transactions: depsolvednf.TransactionList{depsolvednf_mock.BaseDepsolveResult(testRepoID)},
 		}
 	}
 
@@ -1292,7 +1292,7 @@ func TestCompose(t *testing.T) {
 			[]string{"build_id", "warnings"},
 			getMockDepsolveDNFSolverFn(&depsolvednf_mock.MockDepsolveDNF{
 				DepsolveRes: &depsolvednf.DepsolveResult{
-					Packages: depsolvednf_mock.BaseDepsolveResult(testRepoID2),
+					Transactions: depsolvednf.TransactionList{depsolvednf_mock.BaseDepsolveResult(testRepoID2)},
 				},
 			}),
 		},
@@ -2065,14 +2065,14 @@ func TestProjectsDepsolve(t *testing.T) {
 			getBaseMockDepsolveDNFSolverFn(testRepoID),
 			"/api/v0/projects/depsolve/fish",
 			http.StatusOK,
-			fmt.Sprintf(`{"projects":[{"name":"dep-package3","epoch":7,"version":"3.0.3","release":"1.fc30","arch":"x86_64","checksum":"sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720","check_gpg":true,"remote_location":"https://pkg3.example.com/3.0.3-1.fc30.x86_64.rpm","repo_id":"%[1]s"},{"name":"dep-package1","epoch":0,"version":"1.33","release":"2.fc30","arch":"x86_64","checksum":"sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893","check_gpg":true,"remote_location":"https://pkg1.example.com/1.33-2.fc30.x86_64.rpm","repo_id":"%[1]s"},{"name":"dep-package2","epoch":0,"version":"2.9","release":"1.fc30","arch":"x86_64","checksum":"sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2","check_gpg":true,"remote_location":"https://pkg2.example.com/2.9-1.fc30.x86_64.rpm","repo_id":"%[1]s"}]}`, testRepoID),
+			fmt.Sprintf(`{"projects":[{"name":"dep-package1","epoch":0,"version":"1.33","release":"2.fc30","arch":"x86_64","checksum":"sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893","check_gpg":true,"remote_location":"https://pkg1.example.com/1.33-2.fc30.x86_64.rpm","repo_id":"%[1]s"},{"name":"dep-package2","epoch":0,"version":"2.9","release":"1.fc30","arch":"x86_64","checksum":"sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2","check_gpg":true,"remote_location":"https://pkg2.example.com/2.9-1.fc30.x86_64.rpm","repo_id":"%[1]s"},{"name":"dep-package3","epoch":7,"version":"3.0.3","release":"1.fc30","arch":"x86_64","checksum":"sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720","check_gpg":true,"remote_location":"https://pkg3.example.com/3.0.3-1.fc30.x86_64.rpm","repo_id":"%[1]s"}]}`, testRepoID),
 		},
 		{
 			rpmmd_mock.BaseFixture,
 			getBaseMockDepsolveDNFSolverFn(testRepoID2),
 			"/api/v0/projects/depsolve/fish?distro=test-distro-2",
 			http.StatusOK,
-			fmt.Sprintf(`{"projects":[{"name":"dep-package3","epoch":7,"version":"3.0.3","release":"1.fc30","arch":"x86_64","checksum":"sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720","check_gpg":true,"remote_location":"https://pkg3.example.com/3.0.3-1.fc30.x86_64.rpm","repo_id":"%[1]s"},{"name":"dep-package1","epoch":0,"version":"1.33","release":"2.fc30","arch":"x86_64","checksum":"sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893","check_gpg":true,"remote_location":"https://pkg1.example.com/1.33-2.fc30.x86_64.rpm","repo_id":"%[1]s"},{"name":"dep-package2","epoch":0,"version":"2.9","release":"1.fc30","arch":"x86_64","checksum":"sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2","check_gpg":true,"remote_location":"https://pkg2.example.com/2.9-1.fc30.x86_64.rpm","repo_id":"%[1]s"}]}`, testRepoID2),
+			fmt.Sprintf(`{"projects":[{"name":"dep-package1","epoch":0,"version":"1.33","release":"2.fc30","arch":"x86_64","checksum":"sha256:fe3951d112c3b1c84dc8eac57afe0830df72df1ca0096b842f4db5d781189893","check_gpg":true,"remote_location":"https://pkg1.example.com/1.33-2.fc30.x86_64.rpm","repo_id":"%[1]s"},{"name":"dep-package2","epoch":0,"version":"2.9","release":"1.fc30","arch":"x86_64","checksum":"sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2","check_gpg":true,"remote_location":"https://pkg2.example.com/2.9-1.fc30.x86_64.rpm","repo_id":"%[1]s"},{"name":"dep-package3","epoch":7,"version":"3.0.3","release":"1.fc30","arch":"x86_64","checksum":"sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720","check_gpg":true,"remote_location":"https://pkg3.example.com/3.0.3-1.fc30.x86_64.rpm","repo_id":"%[1]s"}]}`, testRepoID2),
 		},
 		{
 			rpmmd_mock.BadDepsolve,

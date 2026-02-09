@@ -214,7 +214,12 @@ func subscriptionService(
 				Description:         "First-boot service for registering with Red Hat subscription manager and/or insights",
 				ConditionPathExists: []string{subkeyFilepath},
 				Wants:               []string{"network-online.target"},
-				After:               []string{"network-online.target"},
+				After: []string{
+					// The selinux-autorelabel reboot was killing rhc mid-execution,
+					// causing partial rhsm registration without insights enrollment.
+					"selinux-autorelabel.service",
+					"network-online.target",
+				},
 			},
 			Service: &osbuild.ServiceSection{
 				Type:            osbuild.OneshotServiceType,

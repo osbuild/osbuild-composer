@@ -9,9 +9,9 @@ import (
 	"path/filepath"
 
 	"github.com/BurntSushi/toml"
-	"github.com/sirupsen/logrus"
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
+	"github.com/osbuild/images/pkg/olog"
 )
 
 // legacyBuildConfig is the json based configuration that was used in
@@ -35,7 +35,7 @@ func decodeJsonBuildConfig(r io.Reader, what string) (*blueprint.Blueprint, erro
 	var legacyBC legacyBuildConfig
 	if err := json.Unmarshal(content, &legacyBC); err == nil {
 		if legacyBC.Blueprint != nil {
-			logrus.Warningf("Using legacy config")
+			olog.Println("Using legacy config")
 			content = *legacyBC.Blueprint
 		}
 	}

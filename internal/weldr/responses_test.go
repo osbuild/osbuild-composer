@@ -73,17 +73,6 @@ const freezeTestResponse = `
 func depsolveDependenciesPartialResponse(repoID string) string {
 	return fmt.Sprintf(`[
         {
-          "name": "dep-package3",
-          "epoch": 7,
-          "version": "3.0.3",
-          "release": "1.fc30",
-          "remote_location": "https://pkg3.example.com/3.0.3-1.fc30.x86_64.rpm",
-          "repo_id": "%[1]s",
-          "arch": "x86_64",
-          "check_gpg": true,
-          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720"
-        },
-        {
           "name": "dep-package1",
           "epoch": 0,
           "version": "1.33",
@@ -104,6 +93,17 @@ func depsolveDependenciesPartialResponse(repoID string) string {
           "arch": "x86_64",
           "check_gpg": true,
           "checksum": "sha256:5797c0b0489681596b5b3cd7165d49870b85b69d65e08770946380a3dcd49ea2"
+        },
+        {
+          "name": "dep-package3",
+          "epoch": 7,
+          "version": "3.0.3",
+          "release": "1.fc30",
+          "remote_location": "https://pkg3.example.com/3.0.3-1.fc30.x86_64.rpm",
+          "repo_id": "%[1]s",
+          "arch": "x86_64",
+          "check_gpg": true,
+          "checksum": "sha256:62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720"
         }
       ]
 `, repoID)
