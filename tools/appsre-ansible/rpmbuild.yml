@@ -17,16 +17,16 @@
     become: yes
     dnf:
       state: present
-      name: https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
+      name: https://dl.fedoraproject.org/pub/epel/epel-release-latest-10.noarch.rpm
       disable_gpg_check: yes
 
   - name: Disable RHUI repos
     become: yes
     shell: >-
       dnf config-manager \
-        --set-disabled rhel-9-baseos-rhui-rpms \
-        --set-disabled rhel-9-appstream-rhui-rpms \
-        --set-disabled rhui-client-config-server-9
+        --set-disabled rhel-10-baseos-rhui-rpms \
+        --set-disabled rhel-10-appstream-rhui-rpms \
+        --set-disabled rhui-client-config-server-10
 
   - name: Enable rhsm repository management
     become: yes
@@ -140,7 +140,7 @@
     until: result is success
     shell: >-
         mock
-        -r "rhel-9-{{ ansible_architecture }}"
+        -r "rhel-10-{{ ansible_architecture }}"
         --rebuild
         --define "commit {{ OSBUILD_COMMIT }}"
         --define "_rpmfilename %%{NAME}.rpm"
@@ -167,7 +167,7 @@
     until: result is success
     shell: >-
         mock
-        -r "rhel-9-{{ ansible_architecture }}"
+        -r "rhel-10-{{ ansible_architecture }}"
         --rebuild
         --define "commit {{ COMPOSER_COMMIT }}"
         --define "_rpmfilename %%{NAME}.rpm"
