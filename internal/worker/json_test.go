@@ -10,7 +10,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/osbuild/images/pkg/depsolvednf"
 	"github.com/osbuild/images/pkg/rpmmd"
+	"github.com/osbuild/images/pkg/sbom"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
@@ -959,6 +961,98 @@ func TestDepsolvedRepoConfigRPMMDConversion(t *testing.T) {
 			dto := DepsolvedRepoConfigFromRPMMD(tc.config)
 			result := dto.ToRPMMD()
 			assert.EqualValues(t, tc.config, result)
+		})
+	}
+}
+
+func TestDepsolveJobResultToDepsolvednfResult(t *testing.T) {
+	testCases := []struct {
+		name     string
+		input    DepsolveJobResult
+		expected map[string]depsolvednf.DepsolveResult
+	}{
+		{
+			name:     "empty",
+			input:    DepsolveJobResult{},
+			expected: map[string]depsolvednf.DepsolveResult{},
+		},
+		{
+			name: "single-pipeline-without-sbom",
+			input: DepsolveJobResult{
+				PackageSpecs: map[string]DepsolvedPackageList{
+					"os": {
+						{Name: "bash", Version: "5.0", Arch: "x86_64"},
+						{Name: "coreutils", Version: "8.32", Arch: "x86_64"},
+					},
+				},
+				RepoConfigs: map[string][]DepsolvedRepoConfig{
+					"os": {
+						{Id: "baseos", BaseURLs: []string{"https://example.com/baseos"}},
+					},
+				},
+			},
+			expected: map[string]depsolvednf.DepsolveResult{
+				"os": {
+					Packages: rpmmd.PackageList{
+						{Name: "bash", Version: "5.0", Arch: "x86_64"},
+						{Name: "coreutils", Version: "8.32", Arch: "x86_64"},
+					},
+					Repos: []rpmmd.RepoConfig{
+						{Id: "baseos", BaseURLs: []string{"https://example.com/baseos"}},
+					},
+				},
+			},
+		},
+		{
+			name: "single-pipeline-with-sbom",
+			input: DepsolveJobResult{
+				PackageSpecs: map[string]DepsolvedPackageList{
+					"os": {{Name: "bash", Version: "5.0", Arch: "x86_64"}},
+				},
+				RepoConfigs: map[string][]DepsolvedRepoConfig{
+					"os": {{Id: "baseos", BaseURLs: []string{"https://example.com/baseos"}}},
+				},
+				SbomDocs: map[string]SbomDoc{
+					"os": {DocType: sbom.StandardTypeSpdx, Document: json.RawMessage(`{"spdxVersion":"SPDX-2.3"}`)},
+				},
+			},
+			expected: map[string]depsolvednf.DepsolveResult{
+				"os": {
+					Packages: rpmmd.PackageList{{Name: "bash", Version: "5.0", Arch: "x86_64"}},
+					Repos:    []rpmmd.RepoConfig{{Id: "baseos", BaseURLs: []string{"https://example.com/baseos"}}},
+					SBOM:     &sbom.Document{DocType: sbom.StandardTypeSpdx, Document: json.RawMessage(`{"spdxVersion":"SPDX-2.3"}`)},
+				},
+			},
+		},
+		{
+			name: "multiple-pipelines",
+			input: DepsolveJobResult{
+				PackageSpecs: map[string]DepsolvedPackageList{
+					"build": {{Name: "gcc", Version: "11.0", Arch: "x86_64"}},
+					"os":    {{Name: "bash", Version: "5.0", Arch: "x86_64"}},
+				},
+				RepoConfigs: map[string][]DepsolvedRepoConfig{
+					"build": {{Id: "baseos", BaseURLs: []string{"https://example.com/baseos"}}},
+					"os":    {{Id: "appstream", BaseURLs: []string{"https://example.com/appstream"}}},
+				},
+			},
+			expected: map[string]depsolvednf.DepsolveResult{
+				"build": {
+					Packages: rpmmd.PackageList{{Name: "gcc", Version: "11.0", Arch: "x86_64"}},
+					Repos:    []rpmmd.RepoConfig{{Id: "baseos", BaseURLs: []string{"https://example.com/baseos"}}},
+				},
+				"os": {
+					Packages: rpmmd.PackageList{{Name: "bash", Version: "5.0", Arch: "x86_64"}},
+					Repos:    []rpmmd.RepoConfig{{Id: "appstream", BaseURLs: []string{"https://example.com/appstream"}}},
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := tc.input.ToDepsolvednfResult()
+			assert.Equal(t, tc.expected, result)
 		})
 	}
 }
