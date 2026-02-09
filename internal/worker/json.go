@@ -652,6 +652,74 @@ func DepsolvedRepoConfigListToRPMMDList(cfgs []DepsolvedRepoConfig) []rpmmd.Repo
 	return results
 }
 
+// DepsolvedModuleConfigData is the DTO for rpmmd.ModuleConfigData.
+type DepsolvedModuleConfigData struct {
+	Name     string   `json:"name"`
+	Stream   string   `json:"stream"`
+	Profiles []string `json:"profiles"`
+	State    string   `json:"state"`
+}
+
+// DepsolvedModuleConfigFile is the DTO for rpmmd.ModuleConfigFile.
+type DepsolvedModuleConfigFile struct {
+	Path string                    `json:"path"`
+	Data DepsolvedModuleConfigData `json:"data"`
+}
+
+// DepsolvedModuleFailsafeFile is the DTO for rpmmd.ModuleFailsafeFile.
+type DepsolvedModuleFailsafeFile struct {
+	Path string `json:"path"`
+	Data string `json:"data"`
+}
+
+// DepsolvedModuleSpec is the DTO for rpmmd.ModuleSpec.
+type DepsolvedModuleSpec struct {
+	ModuleConfigFile DepsolvedModuleConfigFile   `json:"module-file"`
+	FailsafeFile     DepsolvedModuleFailsafeFile `json:"failsafe-file"`
+}
+
+func (d DepsolvedModuleSpec) ToRPMMD() rpmmd.ModuleSpec {
+	return rpmmd.ModuleSpec{
+		ModuleConfigFile: rpmmd.ModuleConfigFile{
+			Path: d.ModuleConfigFile.Path,
+			Data: rpmmd.ModuleConfigData(d.ModuleConfigFile.Data),
+		},
+		FailsafeFile: rpmmd.ModuleFailsafeFile(d.FailsafeFile),
+	}
+}
+
+func DepsolvedModuleSpecFromRPMMD(m rpmmd.ModuleSpec) DepsolvedModuleSpec {
+	return DepsolvedModuleSpec{
+		ModuleConfigFile: DepsolvedModuleConfigFile{
+			Path: m.ModuleConfigFile.Path,
+			Data: DepsolvedModuleConfigData(m.ModuleConfigFile.Data),
+		},
+		FailsafeFile: DepsolvedModuleFailsafeFile(m.FailsafeFile),
+	}
+}
+
+func DepsolvedModuleSpecListFromRPMMDList(modules []rpmmd.ModuleSpec) []DepsolvedModuleSpec {
+	if modules == nil {
+		return nil
+	}
+	results := make([]DepsolvedModuleSpec, len(modules))
+	for i, m := range modules {
+		results[i] = DepsolvedModuleSpecFromRPMMD(m)
+	}
+	return results
+}
+
+func DepsolvedModuleSpecListToRPMMDList(modules []DepsolvedModuleSpec) []rpmmd.ModuleSpec {
+	if modules == nil {
+		return nil
+	}
+	results := make([]rpmmd.ModuleSpec, len(modules))
+	for i, m := range modules {
+		results[i] = m.ToRPMMD()
+	}
+	return results
+}
+
 type DepsolveJobResult struct {
 	PackageSpecs map[string]DepsolvedPackageList  `json:"package_specs"`
 	SbomDocs     map[string]SbomDoc               `json:"sbom_docs,omitempty"`
