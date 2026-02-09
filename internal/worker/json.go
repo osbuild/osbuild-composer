@@ -271,6 +271,9 @@ type DepsolvedPackageRelDep struct {
 type DepsolvedPackageRelDepList []DepsolvedPackageRelDep
 
 func (d DepsolvedPackageRelDepList) ToRPMMDList() rpmmd.RelDepList {
+	if d == nil {
+		return nil
+	}
 	results := make(rpmmd.RelDepList, len(d))
 	for i, relDep := range d {
 		results[i] = rpmmd.RelDep(relDep)
@@ -279,6 +282,9 @@ func (d DepsolvedPackageRelDepList) ToRPMMDList() rpmmd.RelDepList {
 }
 
 func DepsolvedPackageRelDepListFromRPMMDList(relDeps rpmmd.RelDepList) DepsolvedPackageRelDepList {
+	if relDeps == nil {
+		return nil
+	}
 	results := make(DepsolvedPackageRelDepList, len(relDeps))
 	for i, relDep := range relDeps {
 		results[i] = DepsolvedPackageRelDep(relDep)
@@ -514,6 +520,9 @@ func (d DepsolvedPackage) ToRPMMD() rpmmd.Package {
 type DepsolvedPackageList []DepsolvedPackage
 
 func (d DepsolvedPackageList) ToRPMMDList() rpmmd.PackageList {
+	if d == nil {
+		return nil
+	}
 	results := make(rpmmd.PackageList, len(d))
 	for i, pkg := range d {
 		results[i] = pkg.ToRPMMD()
@@ -578,6 +587,9 @@ func DepsolvedPackageFromRPMMD(pkg rpmmd.Package) DepsolvedPackage {
 }
 
 func DepsolvedPackageListFromRPMMDList(pkgs rpmmd.PackageList) DepsolvedPackageList {
+	if pkgs == nil {
+		return nil
+	}
 	results := make(DepsolvedPackageList, len(pkgs))
 	for i, pkg := range pkgs {
 		results[i] = DepsolvedPackageFromRPMMD(pkg)
