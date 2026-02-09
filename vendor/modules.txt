@@ -271,7 +271,7 @@ github.com/aws/aws-sdk-go-v2/internal/v4a/internal/v4
 github.com/aws/aws-sdk-go-v2/service/autoscaling
 github.com/aws/aws-sdk-go-v2/service/autoscaling/internal/endpoints
 github.com/aws/aws-sdk-go-v2/service/autoscaling/types
-# github.com/aws/aws-sdk-go-v2/service/ec2 v1.281.0
+# github.com/aws/aws-sdk-go-v2/service/ec2 v1.285.0
 ## explicit; go 1.23
 github.com/aws/aws-sdk-go-v2/service/ec2
 github.com/aws/aws-sdk-go-v2/service/ec2/internal/endpoints
@@ -529,7 +529,7 @@ github.com/containers/storage/types
 # github.com/coreos/go-semver v0.3.1
 ## explicit; go 1.8
 github.com/coreos/go-semver/semver
-# github.com/coreos/go-systemd/v22 v22.6.0
+# github.com/coreos/go-systemd/v22 v22.7.0
 ## explicit; go 1.23
 github.com/coreos/go-systemd/v22/activation
 github.com/coreos/go-systemd/v22/journal
@@ -646,7 +646,7 @@ github.com/getkin/kin-openapi/openapi3filter
 github.com/getkin/kin-openapi/routers
 github.com/getkin/kin-openapi/routers/legacy
 github.com/getkin/kin-openapi/routers/legacy/pathpattern
-# github.com/getsentry/sentry-go v0.41.0
+# github.com/getsentry/sentry-go v0.42.0
 ## explicit; go 1.23.0
 github.com/getsentry/sentry-go
 github.com/getsentry/sentry-go/attribute
@@ -658,10 +658,10 @@ github.com/getsentry/sentry-go/internal/otel/baggage/internal/baggage
 github.com/getsentry/sentry-go/internal/protocol
 github.com/getsentry/sentry-go/internal/ratelimit
 github.com/getsentry/sentry-go/internal/telemetry
-# github.com/getsentry/sentry-go/echo v0.41.0
+# github.com/getsentry/sentry-go/echo v0.42.0
 ## explicit; go 1.23.0
 github.com/getsentry/sentry-go/echo
-# github.com/getsentry/sentry-go/logrus v0.41.0
+# github.com/getsentry/sentry-go/logrus v0.42.0
 ## explicit; go 1.23.0
 github.com/getsentry/sentry-go/logrus
 # github.com/go-jose/go-jose/v4 v4.0.5

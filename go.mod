@@ -12,13 +12,13 @@ require (
 	github.com/aws/aws-sdk-go-v2/credentials v1.19.7
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.18.17
 	github.com/aws/aws-sdk-go-v2/service/autoscaling v1.64.0
-	github.com/aws/aws-sdk-go-v2/service/ec2 v1.281.0
+	github.com/aws/aws-sdk-go-v2/service/ec2 v1.285.0
 	github.com/aws/smithy-go v1.24.0
-	github.com/coreos/go-systemd/v22 v22.6.0
+	github.com/coreos/go-systemd/v22 v22.7.0
 	github.com/getkin/kin-openapi v0.133.0
-	github.com/getsentry/sentry-go v0.41.0
-	github.com/getsentry/sentry-go/echo v0.41.0
-	github.com/getsentry/sentry-go/logrus v0.41.0
+	github.com/getsentry/sentry-go v0.42.0
+	github.com/getsentry/sentry-go/echo v0.42.0
+	github.com/getsentry/sentry-go/logrus v0.42.0
 	github.com/gobwas/glob v0.2.3
 	github.com/golang-jwt/jwt/v4 v4.5.2
 	github.com/google/go-cmp v0.7.0
