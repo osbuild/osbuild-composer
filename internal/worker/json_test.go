@@ -1068,6 +1068,39 @@ func TestDepsolveJobResultToDepsolvednfResult(t *testing.T) {
 			},
 		},
 		{
+			name: "single-pipeline-with-transactions",
+			input: DepsolveJobResult{
+				PackageSpecs: map[string]DepsolvedPackageList{
+					"os": {
+						{Name: "bash", Version: "5.0", Arch: "x86_64"},
+						{Name: "vim", Version: "8.2", Arch: "x86_64"},
+					},
+				},
+				Transactions: map[string][]DepsolvedPackageList{
+					"os": {
+						{{Name: "bash", Version: "5.0", Arch: "x86_64"}},
+						{{Name: "vim", Version: "8.2", Arch: "x86_64"}},
+					},
+				},
+				RepoConfigs: map[string][]DepsolvedRepoConfig{
+					"os": {{Id: "baseos", BaseURLs: []string{"https://example.com/baseos"}}},
+				},
+			},
+			expected: map[string]depsolvednf.DepsolveResult{
+				"os": {
+					Packages: rpmmd.PackageList{
+						{Name: "bash", Version: "5.0", Arch: "x86_64"},
+						{Name: "vim", Version: "8.2", Arch: "x86_64"},
+					},
+					Transactions: []rpmmd.PackageList{
+						{{Name: "bash", Version: "5.0", Arch: "x86_64"}},
+						{{Name: "vim", Version: "8.2", Arch: "x86_64"}},
+					},
+					Repos: []rpmmd.RepoConfig{{Id: "baseos", BaseURLs: []string{"https://example.com/baseos"}}},
+				},
+			},
+		},
+		{
 			name: "multiple-pipelines",
 			input: DepsolveJobResult{
 				PackageSpecs: map[string]DepsolvedPackageList{
