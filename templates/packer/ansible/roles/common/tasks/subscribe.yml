@@ -24,6 +24,6 @@
     - rhel
   shell: >-
     subscription-manager repos \
-      --enable rhel-9-for-{{ ansible_architecture }}-appstream-rpms \
-      --enable rhel-9-for-{{ ansible_architecture }}-baseos-rpms \
-      --enable codeready-builder-for-rhel-9-{{ ansible_architecture }}-rpms
+      --enable rhel-10-for-{{ ansible_architecture }}-appstream-rpms \
+      --enable rhel-10-for-{{ ansible_architecture }}-baseos-rpms \
+      --enable codeready-builder-for-rhel-10-{{ ansible_architecture }}-rpms
