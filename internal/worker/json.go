@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
+	"github.com/osbuild/images/pkg/depsolvednf"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/rpmmd"
@@ -656,6 +657,35 @@ type DepsolveJobResult struct {
 	SbomDocs     map[string]SbomDoc               `json:"sbom_docs,omitempty"`
 	RepoConfigs  map[string][]DepsolvedRepoConfig `json:"repo_configs"`
 	JobResult
+}
+
+// ToDepsolvednfResult converts the DepsolveJobResult to a map of
+// depsolvednf.DepsolveResult keyed by pipeline name. This is used
+// to pass the depsolve results to manifest serialization.
+func (d *DepsolveJobResult) ToDepsolvednfResult() map[string]depsolvednf.DepsolveResult {
+	results := make(map[string]depsolvednf.DepsolveResult, len(d.PackageSpecs))
+
+	// NOTE: PackageSpecs and RepoConfigs are always populated together by the
+	// depsolve job for the same pipeline names. SbomDocs is optional and only
+	// present when SBOM generation was requested. We iterate over PackageSpecs
+	// as the primary map and look up the corresponding entries in the others.
+	for name, pkgs := range d.PackageSpecs {
+		result := depsolvednf.DepsolveResult{
+			Packages: pkgs.ToRPMMDList(),
+			Repos:    DepsolvedRepoConfigListToRPMMDList(d.RepoConfigs[name]),
+		}
+
+		if sbomDoc, ok := d.SbomDocs[name]; ok {
+			result.SBOM = &sbom.Document{
+				DocType:  sbomDoc.DocType,
+				Document: sbomDoc.Document,
+			}
+		}
+
+		results[name] = result
+	}
+
+	return results
 }
 
 // SearchPackagesJob defines the parameters for a dnf metadata search
