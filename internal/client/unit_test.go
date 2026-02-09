@@ -71,7 +71,7 @@ func executeTests(m *testing.M) int {
 	getSolverFn := func(modulePlatformID, releaseVer, arch, distro string) weldr.Solver {
 		return &depsolvednf_mock.MockDepsolveDNF{
 			DepsolveRes: &depsolvednf.DepsolveResult{
-				Packages: depsolvednf_mock.BaseDepsolveResult(""),
+				Transactions: depsolvednf.TransactionList{depsolvednf_mock.BaseDepsolveResult("")},
 			},
 			FetchRes:     depsolvednf_mock.BaseFetchResult(),
 			SearchResMap: depsolvednf_mock.BaseSearchResultsMap(),

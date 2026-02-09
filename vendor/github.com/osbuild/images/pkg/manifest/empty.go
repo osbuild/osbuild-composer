@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/osbuild/images/pkg/container"
+	"github.com/osbuild/images/pkg/depsolvednf"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/ostree"
 	"github.com/osbuild/images/pkg/rpmmd"
@@ -21,11 +22,10 @@ type ContentTest struct {
 	commits     []ostree.SourceSpec
 
 	// resolved content
-	packageSpecs   rpmmd.PackageList
+
+	depsolveResult *depsolvednf.DepsolveResult
 	containerSpecs []container.Spec
 	commitSpecs    []ostree.CommitSpec
-
-	repos []rpmmd.RepoConfig
 
 	// serialization flag
 	serializing bool
@@ -81,7 +81,10 @@ func (p *ContentTest) getOSTreeCommitSources() []ostree.SourceSpec {
 }
 
 func (p *ContentTest) getPackageSpecs() rpmmd.PackageList {
-	return p.packageSpecs
+	if p.depsolveResult == nil {
+		return nil
+	}
+	return p.depsolveResult.Transactions.AllPackages()
 }
 
 func (p *ContentTest) getContainerSpecs() []container.Spec {
@@ -96,10 +99,9 @@ func (p *ContentTest) serializeStart(inputs Inputs) error {
 	if p.serializing {
 		return errors.New("ContentTest: double call to serializeStart()")
 	}
-	p.packageSpecs = inputs.Depsolved.Packages
+	p.depsolveResult = &inputs.Depsolved
 	p.containerSpecs = inputs.Containers
 	p.commitSpecs = inputs.Commits
-	p.repos = inputs.Depsolved.Repos
 
 	p.serializing = true
 	return nil
@@ -109,7 +111,7 @@ func (p *ContentTest) serializeEnd() {
 	if !p.serializing {
 		panic("serializeEnd() call when serialization not in progress")
 	}
-	p.packageSpecs = nil
+	p.depsolveResult = nil
 	p.containerSpecs = nil
 	p.commitSpecs = nil
 

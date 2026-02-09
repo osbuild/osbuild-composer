@@ -322,16 +322,18 @@ func (h *v2Handler) parseDepsolveResult(output []byte) (*depsolveResultRaw, erro
 		return nil, fmt.Errorf("decoding depsolve result failed: %w", err)
 	}
 
+	// Convert repos first, to enable adding a reference to the RepoConfig to each package
+	repos, repoMap := h.toRPMMDRepoConfigs(result.Repos)
+
 	// Build both per-transaction lists and a flattened list of all packages.
 	// V2 returns disjoint sets per transaction
-	transactions := make([]rpmmd.PackageList, len(result.Transactions))
-	var allPkgs rpmmd.PackageList
+	transactions := make(TransactionList, len(result.Transactions))
 
 	// Convert depsolved packages
 	for transIdx, transaction := range result.Transactions {
 		transPkgs := make(rpmmd.PackageList, 0, len(transaction))
 		for _, pkg := range transaction {
-			repo, ok := result.Repos[pkg.RepoID]
+			repo, ok := repoMap[pkg.RepoID]
 			if !ok {
 				return nil, fmt.Errorf("repo ID not found in repositories: %s", pkg.RepoID)
 			}
@@ -341,15 +343,9 @@ func (h *v2Handler) parseDepsolveResult(output []byte) (*depsolveResultRaw, erro
 				return nil, err
 			}
 			transPkgs = append(transPkgs, rpmPkg)
-			allPkgs = append(allPkgs, rpmPkg)
 		}
 		transactions[transIdx] = transPkgs
 	}
-
-	// Sort flattened packages by full NEVRA to ensure consistent ordering
-	sort.Slice(allPkgs, func(i, j int) bool {
-		return allPkgs[i].FullNEVRA() < allPkgs[j].FullNEVRA()
-	})
 
 	// Convert modules
 	modules := make([]rpmmd.ModuleSpec, 0, len(result.Modules))
@@ -357,19 +353,7 @@ func (h *v2Handler) parseDepsolveResult(output []byte) (*depsolveResultRaw, erro
 		modules = append(modules, h.toRPMMDModuleSpec(mod))
 	}
 
-	// Convert repos
-	repos := make([]rpmmd.RepoConfig, 0, len(result.Repos))
-	for repoID := range result.Repos {
-		repo := result.Repos[repoID]
-		repos = append(repos, h.toRPMMDRepoConfig(repo))
-	}
-	// Sort repos by ID for deterministic ordering
-	sort.Slice(repos, func(i, j int) bool {
-		return repos[i].Id < repos[j].Id
-	})
-
 	return &depsolveResultRaw{
-		Packages:     allPkgs,
 		Transactions: transactions,
 		Modules:      modules,
 		Repos:        repos,
@@ -403,10 +387,12 @@ func (h *v2Handler) parsePackageListResult(output []byte, operation string) (rpm
 		return nil, nil, "", fmt.Errorf("decoding %s result failed: %w", operation, err)
 	}
 
+	repos, repoMap := h.toRPMMDRepoConfigs(result.Repos)
+
 	// Convert packages
 	pkgs := make(rpmmd.PackageList, 0, len(result.Packages))
 	for _, pkg := range result.Packages {
-		repo, ok := result.Repos[pkg.RepoID]
+		repo, ok := repoMap[pkg.RepoID]
 		if !ok {
 			return nil, nil, "", fmt.Errorf("repo ID not found in repositories: %s", pkg.RepoID)
 		}
@@ -416,16 +402,6 @@ func (h *v2Handler) parsePackageListResult(output []byte, operation string) (rpm
 		}
 		pkgs = append(pkgs, rpmPkg)
 	}
-
-	// Convert repos
-	repos := make([]rpmmd.RepoConfig, 0, len(result.Repos))
-	for repoID := range result.Repos {
-		repos = append(repos, h.toRPMMDRepoConfig(result.Repos[repoID]))
-	}
-	// Sort repos by ID for deterministic ordering
-	sort.Slice(repos, func(i, j int) bool {
-		return repos[i].Id < repos[j].Id
-	})
 
 	return pkgs, repos, result.Solver, nil
 }
@@ -476,7 +452,11 @@ func (h *v2Handler) reposFromRPMMD(cfg *solverConfig, rpmRepos []rpmmd.RepoConfi
 	return dnfRepos, nil
 }
 
-func (h *v2Handler) toRPMMDPackage(pkg v2Package, repo v2Repository) (rpmmd.Package, error) {
+func (h *v2Handler) toRPMMDPackage(pkg v2Package, repo *rpmmd.RepoConfig) (rpmmd.Package, error) {
+	if repo == nil {
+		return rpmmd.Package{}, fmt.Errorf("repository configuration is nil for package %s", pkg.Name)
+	}
+
 	rpmPkg := rpmmd.Package{
 		Name:            pkg.Name,
 		Version:         pkg.Version,
@@ -495,16 +475,13 @@ func (h *v2Handler) toRPMMDPackage(pkg v2Package, repo v2Repository) (rpmmd.Pack
 		SourceRpm:       pkg.SourceRPM,
 		Reason:          pkg.Reason,
 		Files:           pkg.Files,
+		Repo:            repo,
 	}
 
 	if pkg.Epoch < 0 {
 		return rpmmd.Package{}, fmt.Errorf("invalid negative epoch for package %s", pkg.Name)
 	}
 	rpmPkg.Epoch = uint(pkg.Epoch)
-
-	if repo.GPGCheck != nil {
-		rpmPkg.CheckGPG = *repo.GPGCheck
-	}
 
 	// Parse checksum
 	if pkg.Checksum != nil {
@@ -553,9 +530,13 @@ func (h *v2Handler) toRPMMDPackage(pkg v2Package, repo v2Repository) (rpmmd.Pack
 	rpmPkg.Enhances = h.toRPMMDRelDepList(pkg.Enhances)
 	rpmPkg.Supplements = h.toRPMMDRelDepList(pkg.Supplements)
 
-	// Set SSL verification from repo
-	if sslVerify := repo.SSLVerify; sslVerify != nil {
-		rpmPkg.IgnoreSSL = !*sslVerify
+	// Assign convenience values from the repository configuration
+	if repo.CheckGPG != nil {
+		rpmPkg.CheckGPG = *repo.CheckGPG
+	}
+
+	if repo.IgnoreSSL != nil {
+		rpmPkg.IgnoreSSL = *repo.IgnoreSSL
 	}
 
 	// Set mTLS secrets if SSLClientKey is set.
@@ -624,4 +605,23 @@ func (h *v2Handler) toRPMMDRepoConfig(repo v2Repository) rpmmd.RepoConfig {
 		SSLClientCert:  repo.SSLClientCert,
 		RHSM:           repo.RHSM,
 	}
+}
+
+func (h *v2Handler) toRPMMDRepoConfigs(v2Repos map[string]v2Repository) ([]rpmmd.RepoConfig, map[string]*rpmmd.RepoConfig) {
+	repos := make([]rpmmd.RepoConfig, 0, len(v2Repos))
+	for repoID := range v2Repos {
+		v2Repo := v2Repos[repoID]
+		repo := h.toRPMMDRepoConfig(v2Repo)
+		repos = append(repos, repo)
+	}
+	// Sort repos by ID for deterministic ordering
+	sort.Slice(repos, func(i, j int) bool {
+		return repos[i].Id < repos[j].Id
+	})
+	// Build repoMap after sorting so pointers are correct
+	repoMap := make(map[string]*rpmmd.RepoConfig, len(repos))
+	for i := range repos {
+		repoMap[repos[i].Id] = &repos[i]
+	}
+	return repos, repoMap
 }

@@ -211,7 +211,7 @@ func (m Manifest) Serialize(depsolvedSets map[string]depsolvednf.DepsolveResult,
 		}
 		osbuildPipelines = append(osbuildPipelines, osbuildPipeline)
 		mergedInputs.Commits = append(mergedInputs.Commits, pipeline.getOSTreeCommits()...)
-		mergedInputs.Depsolved.Packages = append(mergedInputs.Depsolved.Packages, depsolvedSets[pipeline.Name()].Packages...)
+		mergedInputs.Depsolved.Transactions = append(mergedInputs.Depsolved.Transactions, depsolvedSets[pipeline.Name()].Transactions...)
 		mergedInputs.Depsolved.Repos = append(mergedInputs.Depsolved.Repos, depsolvedSets[pipeline.Name()].Repos...)
 		mergedInputs.Containers = append(mergedInputs.Containers, pipeline.getContainerSpecs()...)
 		mergedInputs.InlineData = append(mergedInputs.InlineData, pipeline.getInline()...)

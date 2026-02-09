@@ -149,6 +149,15 @@ func (request *DepsolveRequest) Depsolve(df *distrofactory.Factory, rr *reporegi
 		}
 	}
 
-	packages := result.PackageSpecs["os"].ToRPMMDList()
+	depsolvedRepos := worker.DepsolvedRepoConfigListToRPMMDList(result.RepoConfigs["os"])
+	repoMap := make(map[string]*rpmmd.RepoConfig, len(depsolvedRepos))
+	for i := range depsolvedRepos {
+		repoMap[depsolvedRepos[i].Id] = &depsolvedRepos[i]
+	}
+
+	packages, err := result.PackageSpecs["os"].ToRPMMDList(repoMap)
+	if err != nil {
+		return nil, HTTPErrorWithInternal(ErrorFailedToDepsolve, err)
+	}
 	return packages, nil
 }

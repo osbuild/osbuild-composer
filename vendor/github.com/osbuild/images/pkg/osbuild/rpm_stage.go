@@ -1,8 +1,11 @@
 package osbuild
 
 import (
+	"fmt"
 	"slices"
 
+	"github.com/osbuild/images/internal/common"
+	"github.com/osbuild/images/pkg/depsolvednf"
 	"github.com/osbuild/images/pkg/rpmmd"
 )
 
@@ -29,6 +32,22 @@ type RPMStageOptions struct {
 
 	// Only install certain locales (sets `_install_langs` RPM macro)
 	InstallLangs []string `json:"install_langs,omitempty"`
+}
+
+func (o *RPMStageOptions) Clone() *RPMStageOptions {
+	if o == nil {
+		return nil
+	}
+	return &RPMStageOptions{
+		DBPath:           o.DBPath,
+		GPGKeys:          slices.Clone(o.GPGKeys),
+		GPGKeysFromTree:  slices.Clone(o.GPGKeysFromTree),
+		DisableDracut:    o.DisableDracut,
+		Exclude:          common.ClonePtr(o.Exclude),
+		OSTreeBooted:     common.ClonePtr(o.OSTreeBooted),
+		KernelInstallEnv: common.ClonePtr(o.KernelInstallEnv),
+		InstallLangs:     slices.Clone(o.InstallLangs),
+	}
 }
 
 type Exclude struct {
@@ -127,23 +146,103 @@ func pkgRefs(pkgs rpmmd.PackageList) FilesInputRef {
 	return NewFilesInputSourceArrayRef(refs)
 }
 
-func NewRPMStageOptions(repos []rpmmd.RepoConfig) *RPMStageOptions {
+// GPGKeysForPackages collects and returns deduplicated GPG keys from the
+// repositories that the given packages come from. This is used to import
+// only the GPG keys needed for a specific set of packages, rather than
+// importing all keys from all configured repositories.
+//
+// Returns an error if:
+// - Any package has a nil Repo pointer (indicates a bug in depsolving)
+// - Any package requires GPG checking but its repo has no GPG keys configured
+//
+// The returned keys are sorted for deterministic output.
+//
+// NOTE: Currently collects keys even for packages/repos with CheckGPG=false.
+// This could be changed if importing unused keys is not desirable.
+func GPGKeysForPackages(pkgs rpmmd.PackageList) ([]string, error) {
+	keyMap := make(map[string]bool)
 	var gpgKeys []string
-	keyMap := make(map[string]bool) // for deduplicating keys
-	for _, repo := range repos {
-		if len(repo.GPGKeys) == 0 {
-			continue
+	for _, pkg := range pkgs {
+		if pkg.Repo == nil {
+			return nil, fmt.Errorf("package %q has nil Repo pointer. This is a bug in depsolving.", pkg.Name)
 		}
-		for _, key := range repo.GPGKeys {
+		if pkg.CheckGPG && len(pkg.Repo.GPGKeys) == 0 {
+			return nil, fmt.Errorf(
+				"package %q requires GPG check but repo %q has no GPG keys configured",
+				pkg.Name, pkg.Repo.Id)
+		}
+		for _, key := range pkg.Repo.GPGKeys {
 			if !keyMap[key] {
 				gpgKeys = append(gpgKeys, key)
 				keyMap[key] = true
 			}
 		}
 	}
-
 	slices.Sort(gpgKeys)
-	return &RPMStageOptions{
-		GPGKeys: gpgKeys,
+	return gpgKeys, nil
+}
+
+// GenRPMStagesFromTransactions creates RPM stages for each transaction.
+// Each stage installs only the packages in its transaction and imports
+// only the GPG keys needed for those packages.
+//
+// The baseOpts parameter provides template options that are copied to each
+// stage. GPGKeys will be computed per transaction from package repos.
+// GPGKeysFromTree will be filtered per transaction based on when the
+// providing package is installed.
+//
+// Returns an error if any GPGKeysFromTree path is not provided by any package
+// in the transactions.
+func GenRPMStagesFromTransactions(
+	transactions depsolvednf.TransactionList,
+	baseOpts *RPMStageOptions,
+) ([]*Stage, error) {
+	if len(transactions) == 0 {
+		return nil, nil
 	}
+
+	if baseOpts == nil {
+		baseOpts = &RPMStageOptions{}
+	}
+
+	// Lookup which GPGKeysFromTree files come from which transaction
+	var fileInfos map[string]depsolvednf.TransactionFileInfo
+	if len(baseOpts.GPGKeysFromTree) > 0 {
+		fileInfos = transactions.GetFilesTransactionInfo(baseOpts.GPGKeysFromTree)
+		// Validate all paths are provided by some package in the transactions
+		for _, keyPath := range baseOpts.GPGKeysFromTree {
+			if _, found := fileInfos[keyPath]; !found {
+				return nil, fmt.Errorf(
+					"GPGKeysFromTree path %q not provided by any package in the transactions", keyPath)
+			}
+		}
+	}
+
+	stages := make([]*Stage, 0, len(transactions))
+	for txIdx, pkgs := range transactions {
+		if len(pkgs) == 0 {
+			continue
+		}
+
+		opts := baseOpts.Clone()
+		// Set repo-specific GPGKeys for this transaction's packages repos
+		var err error
+		opts.GPGKeys, err = GPGKeysForPackages(pkgs)
+		if err != nil {
+			return nil, err
+		}
+		// Filter GPGKeysFromTree for this transaction
+		// NOTE: We need to reset the GPGKeysFromTree slice to avoid accumulating
+		// keys from previous transactions or keeping the original slice from the base options.
+		opts.GPGKeysFromTree = nil
+		for _, keyPath := range baseOpts.GPGKeysFromTree {
+			if info, found := fileInfos[keyPath]; !found || info.TxIndex != txIdx {
+				continue
+			}
+			opts.GPGKeysFromTree = append(opts.GPGKeysFromTree, keyPath)
+		}
+
+		stages = append(stages, NewRPMStage(opts, NewRpmStageSourceFilesInputs(pkgs)))
+	}
+	return stages, nil
 }

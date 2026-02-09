@@ -5,6 +5,12 @@ import (
 	"github.com/osbuild/images/pkg/osbuild"
 )
 
+type ISOGrub2MenuEntry struct {
+	Name   string
+	Linux  string
+	Initrd string
+}
+
 type ISOCustomizations struct {
 	// ISO metadata fields
 	Label       string

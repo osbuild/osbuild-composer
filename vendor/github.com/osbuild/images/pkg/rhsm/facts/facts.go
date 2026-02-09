@@ -35,4 +35,5 @@ type ImageOptions struct {
 	APIType            APIType
 	OpenSCAPProfileID  string
 	CompliancePolicyID uuid.UUID
+	BlueprintID        uuid.UUID
 }

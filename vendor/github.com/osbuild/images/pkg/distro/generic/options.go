@@ -142,13 +142,20 @@ func checkOptionsCommon(t *imageType, bp *blueprint.Blueprint, options distro.Im
 		warnings = append(warnings, fmt.Sprintln(common.FIPSEnabledImageWarning))
 	}
 
+	// check if group customizations are valid
+	if _, err := customizations.GetGroups(); err != nil {
+		return warnings, fmt.Errorf("%s: %w", errPrefix, err)
+	}
+
 	instCust, err := customizations.GetInstaller()
 	if err != nil {
 		return warnings, fmt.Errorf("%s: %w", errPrefix, err)
 	}
-	if instCust != nil && instCust.Kickstart != nil && len(instCust.Kickstart.Contents) > 0 &&
-		(customizations.GetUsers() != nil || customizations.GetGroups() != nil) {
-		return warnings, fmt.Errorf("%s: customizations.installer.kickstart.contents cannot be used with customizations.user or customizations.group", errPrefix)
+	if instCust != nil && instCust.Kickstart != nil && len(instCust.Kickstart.Contents) > 0 {
+		groups, _ := customizations.GetGroups() // group customization errors are checked above
+		if customizations.GetUsers() != nil || groups != nil {
+			return warnings, fmt.Errorf("%s: customizations.installer.kickstart.contents cannot be used with customizations.user or customizations.group", errPrefix)
+		}
 	}
 	return warnings, nil
 }

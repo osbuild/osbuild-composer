@@ -508,9 +508,12 @@ func (p *AnacondaInstallerISOTree) serialize() (osbuild.Pipeline, error) {
 				Dir:  "/images/pxeboot",
 				Opts: kernelOpts,
 			},
-			ISOLabel: p.isoLabel,
-			FIPS:     p.anacondaPipeline.platform.GetFIPSMenu(),
-			Config:   grub2config,
+			ISOLabel:        p.isoLabel,
+			FIPS:            p.anacondaPipeline.platform.GetFIPSMenu(),
+			Install:         true,
+			Test:            true,
+			Troubleshooting: true,
+			Config:          grub2config,
 		}
 
 		stage := osbuild.NewGrub2ISOLegacyStage(options)
