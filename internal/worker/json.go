@@ -598,6 +598,32 @@ func DepsolvedPackageListFromRPMMDList(pkgs rpmmd.PackageList) DepsolvedPackageL
 	return results
 }
 
+// DepsolvedTransactionsFromRPMMD converts a slice of rpmmd.PackageList (transactions)
+// to a slice of DepsolvedPackageList.
+func DepsolvedTransactionsFromRPMMD(transactions []rpmmd.PackageList) []DepsolvedPackageList {
+	if transactions == nil {
+		return nil
+	}
+	results := make([]DepsolvedPackageList, len(transactions))
+	for i, pkgs := range transactions {
+		results[i] = DepsolvedPackageListFromRPMMDList(pkgs)
+	}
+	return results
+}
+
+// DepsolvedTransactionsToRPMMD converts a slice of DepsolvedPackageList
+// to a slice of rpmmd.PackageList (transactions).
+func DepsolvedTransactionsToRPMMD(transactions []DepsolvedPackageList) []rpmmd.PackageList {
+	if transactions == nil {
+		return nil
+	}
+	results := make([]rpmmd.PackageList, len(transactions))
+	for i, pkgs := range transactions {
+		results[i] = pkgs.ToRPMMDList()
+	}
+	return results
+}
+
 // DepsolvedRepoConfig is the DTO for rpmmd.RepoConfig.
 type DepsolvedRepoConfig struct {
 	Id             string   `json:"id,omitempty"`
@@ -721,6 +747,12 @@ func DepsolvedModuleSpecListToRPMMDList(modules []DepsolvedModuleSpec) []rpmmd.M
 }
 
 type DepsolveJobResult struct {
+	Transactions map[string][]DepsolvedPackageList `json:"transactions"`
+
+	// TODO: PackageSpecs is kept for backward compatibility with workers that
+	// don't yet populate Transactions. Once all workers are updated to use the
+	// V2 depsolve API and populate Transactions, PackageSpecs should be removed
+	// and consumers should use Transactions instead.
 	PackageSpecs map[string]DepsolvedPackageList  `json:"package_specs"`
 	RepoConfigs  map[string][]DepsolvedRepoConfig `json:"repo_configs"`
 	Modules      map[string][]DepsolvedModuleSpec `json:"modules,omitempty"`
@@ -735,13 +767,20 @@ func (d *DepsolveJobResult) ToDepsolvednfResult() map[string]depsolvednf.Depsolv
 	results := make(map[string]depsolvednf.DepsolveResult, len(d.PackageSpecs))
 
 	// NOTE: PackageSpecs and RepoConfigs are always populated together by the
-	// depsolve job for the same pipeline names. SbomDocs and Modules are optional.
-	// We iterate over PackageSpecs as the primary map and look up the
-	// corresponding entries in the others.
+	// depsolve job for the same pipeline names. Transactions, Modules, and
+	// SbomDocs are optional. We iterate over PackageSpecs as the primary map
+	// and look up the corresponding entries in the others.
+	//
+	// TODO: Once Transactions becomes mandatory and PackageSpecs is removed,
+	// switch to iterating over Transactions as the primary map.
 	for name, pkgs := range d.PackageSpecs {
 		result := depsolvednf.DepsolveResult{
 			Packages: pkgs.ToRPMMDList(),
 			Repos:    DepsolvedRepoConfigListToRPMMDList(d.RepoConfigs[name]),
+		}
+
+		if transactions, ok := d.Transactions[name]; ok {
+			result.Transactions = DepsolvedTransactionsToRPMMD(transactions)
 		}
 
 		if sbomDoc, ok := d.SbomDocs[name]; ok {
