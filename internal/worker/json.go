@@ -757,6 +757,12 @@ type DepsolveJobResult struct {
 	RepoConfigs  map[string][]DepsolvedRepoConfig `json:"repo_configs"`
 	Modules      map[string][]DepsolvedModuleSpec `json:"modules,omitempty"`
 	SbomDocs     map[string]SbomDoc               `json:"sbom_docs,omitempty"`
+
+	// Solver identifies which solver produced the result (e.g., "dnf5", "dnf").
+	// This is a single value rather than a per-pipeline map because all package
+	// sets in a depsolve job are processed by the same solver instance.
+	Solver string `json:"solver,omitempty"`
+
 	JobResult
 }
 
@@ -777,6 +783,7 @@ func (d *DepsolveJobResult) ToDepsolvednfResult() map[string]depsolvednf.Depsolv
 		result := depsolvednf.DepsolveResult{
 			Packages: pkgs.ToRPMMDList(),
 			Repos:    DepsolvedRepoConfigListToRPMMDList(d.RepoConfigs[name]),
+			Solver:   d.Solver,
 		}
 
 		if transactions, ok := d.Transactions[name]; ok {

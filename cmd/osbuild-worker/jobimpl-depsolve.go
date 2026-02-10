@@ -59,12 +59,12 @@ type DepsolveJobImpl struct {
 // in repos are used for all package sets, whereas the repositories in
 // packageSetsRepos are only used for the package set with the same name
 // (matching map keys).
-func (impl *DepsolveJobImpl) depsolve(packageSets map[string][]rpmmd.PackageSet, modulePlatformID, arch, releasever string, sbomType sbom.StandardType) (map[string]worker.DepsolvedPackageList, map[string][]worker.DepsolvedPackageList, map[string][]worker.DepsolvedRepoConfig, map[string]worker.SbomDoc, map[string][]worker.DepsolvedModuleSpec, error) {
+func (impl *DepsolveJobImpl) depsolve(packageSets map[string][]rpmmd.PackageSet, modulePlatformID, arch, releasever string, sbomType sbom.StandardType) (map[string]worker.DepsolvedPackageList, map[string][]worker.DepsolvedPackageList, map[string][]worker.DepsolvedRepoConfig, map[string]worker.SbomDoc, map[string][]worker.DepsolvedModuleSpec, string, error) {
 	solver := impl.Solver.NewWithConfig(modulePlatformID, releasever, arch, "")
 	if impl.RepositoryMTLSConfig != nil && impl.RepositoryMTLSConfig.Proxy != nil {
 		err := solver.SetProxy(impl.RepositoryMTLSConfig.Proxy.String())
 		if err != nil {
-			return nil, nil, nil, nil, nil, err
+			return nil, nil, nil, nil, nil, "", err
 		}
 	}
 
@@ -72,6 +72,7 @@ func (impl *DepsolveJobImpl) depsolve(packageSets map[string][]rpmmd.PackageSet,
 	transactions := make(map[string][]worker.DepsolvedPackageList)
 	repoConfigs := make(map[string][]worker.DepsolvedRepoConfig)
 	modules := make(map[string][]worker.DepsolvedModuleSpec)
+	var solverName string
 	var sbomDocs map[string]worker.SbomDoc
 	if sbomType != sbom.StandardTypeNone {
 		sbomDocs = make(map[string]worker.SbomDoc)
@@ -79,7 +80,10 @@ func (impl *DepsolveJobImpl) depsolve(packageSets map[string][]rpmmd.PackageSet,
 	for name, pkgSet := range packageSets {
 		res, err := solver.Depsolve(pkgSet, sbomType)
 		if err != nil {
-			return nil, nil, nil, nil, nil, err
+			return nil, nil, nil, nil, nil, "", err
+		}
+		if solverName == "" {
+			solverName = res.Solver
 		}
 		// TODO: Once osbuild/images removes Packages from DepsolveResult,
 		// remove depsolvedSets and use only transactions. PackageSpecs is kept
@@ -95,7 +99,7 @@ func (impl *DepsolveJobImpl) depsolve(packageSets map[string][]rpmmd.PackageSet,
 		}
 	}
 
-	return depsolvedSets, transactions, repoConfigs, sbomDocs, modules, nil
+	return depsolvedSets, transactions, repoConfigs, sbomDocs, modules, solverName, nil
 }
 
 func workerClientErrorFrom(err error, logWithId *logrus.Entry) *clienterrors.Error {
@@ -171,7 +175,7 @@ func (impl *DepsolveJobImpl) Run(job worker.Job) error {
 		}
 	}
 
-	result.PackageSpecs, result.Transactions, result.RepoConfigs, result.SbomDocs, result.Modules, err = impl.depsolve(args.PackageSets, args.ModulePlatformID, args.Arch, args.Releasever, args.SbomType)
+	result.PackageSpecs, result.Transactions, result.RepoConfigs, result.SbomDocs, result.Modules, result.Solver, err = impl.depsolve(args.PackageSets, args.ModulePlatformID, args.Arch, args.Releasever, args.SbomType)
 	if err != nil {
 		result.JobError = workerClientErrorFrom(err, logWithId)
 	}
