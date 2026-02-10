@@ -17,5 +17,3 @@ fi
   --secret-id "${SUBSCRIPTION_MANAGER_COMMAND_ARN}" | jq -r ".SecretString" > /tmp/subscription_manager_command.json
 jq -r ".subscription_manager_command" /tmp/subscription_manager_command.json | bash
 rm -f /tmp/subscription_manager_command.json
-
-subscription-manager attach --auto
