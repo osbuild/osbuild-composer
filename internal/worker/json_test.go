@@ -1152,6 +1152,99 @@ func TestDepsolveJobResultToDepsolvednfResult(t *testing.T) {
 	}
 }
 
+func TestDepsolveJobResultJSONRoundtrip(t *testing.T) {
+	testCases := []struct {
+		name   string
+		result DepsolveJobResult
+	}{
+		{
+			name:   "empty",
+			result: DepsolveJobResult{},
+		},
+		{
+			name: "minimal",
+			result: DepsolveJobResult{
+				PackageSpecs: map[string]DepsolvedPackageList{
+					"os": {{Name: "bash", Version: "5.0", Arch: "x86_64"}},
+				},
+				RepoConfigs: map[string][]DepsolvedRepoConfig{
+					"os": {{Id: "baseos", BaseURLs: []string{"https://example.com/baseos"}}},
+				},
+			},
+		},
+		{
+			name: "full",
+			result: DepsolveJobResult{
+				Transactions: map[string][]DepsolvedPackageList{
+					"build": {
+						{{Name: "gcc", Version: "11.0", Arch: "x86_64"}},
+					},
+					"os": {
+						{{Name: "bash", Version: "5.0", Arch: "x86_64"}},
+						{{Name: "vim", Version: "8.2", Arch: "x86_64"}},
+					},
+				},
+				PackageSpecs: map[string]DepsolvedPackageList{
+					"build": {{Name: "gcc", Version: "11.0", Arch: "x86_64"}},
+					"os": {
+						{Name: "bash", Version: "5.0", Arch: "x86_64"},
+						{Name: "vim", Version: "8.2", Arch: "x86_64"},
+					},
+				},
+				RepoConfigs: map[string][]DepsolvedRepoConfig{
+					"build": {{Id: "baseos", BaseURLs: []string{"https://example.com/baseos"}}},
+					"os": {
+						{Id: "baseos", BaseURLs: []string{"https://example.com/baseos"}},
+						{Id: "appstream", BaseURLs: []string{"https://example.com/appstream"}},
+					},
+				},
+				Modules: map[string][]DepsolvedModuleSpec{
+					"os": {
+						{
+							ModuleConfigFile: DepsolvedModuleConfigFile{
+								Path: "/etc/dnf/modules.d/nodejs.module",
+								Data: DepsolvedModuleConfigData{
+									Name:     "nodejs",
+									Stream:   "18",
+									Profiles: []string{"default"},
+									State:    "enabled",
+								},
+							},
+							FailsafeFile: DepsolvedModuleFailsafeFile{
+								Path: "/etc/dnf/modules.d/nodejs.failsafe",
+								Data: "nodejs:18",
+							},
+						},
+					},
+				},
+				SbomDocs: map[string]SbomDoc{
+					"os": {
+						DocType:  sbom.StandardTypeSpdx,
+						Document: json.RawMessage(`{"spdxVersion":"SPDX-2.3","name":"os"}`),
+					},
+				},
+				Solver: "dnf5",
+				JobResult: JobResult{
+					JobError: clienterrors.New(clienterrors.ErrorDNFDepsolveError, "test error", "details"),
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			data, err := json.Marshal(tc.result)
+			require.NoError(t, err)
+
+			var result DepsolveJobResult
+			err = json.Unmarshal(data, &result)
+			require.NoError(t, err)
+
+			assert.Equal(t, tc.result, result)
+		})
+	}
+}
+
 func TestDepsolvedModuleSpecJSONRoundtrip(t *testing.T) {
 	testCases := []struct {
 		name   string
