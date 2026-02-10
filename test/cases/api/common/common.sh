@@ -38,10 +38,31 @@ function _instanceCheck() {
   $_ssh rpm -q postgresql dummy
 
 
-  MODULE=$(cat "$REQUEST_FILE" | jq -r .customizations.enabled_modules[0])
-  if [ "$MODULE" = "nodejs:20" ]; then
-      echo "checking if nodejs 20 is installed: $($_ssh rpm -q nodejs)"
-      $_ssh rpm -q nodejs | grep -q nodejs-20
+  if jq -e .customizations.enabled_modules; then
+    # NOTE: assumes only one module
+    echo "Checking enabled module"
+    MODULE_NAME=$(cat "$REQUEST_FILE" | jq -r .customizations.enabled_modules[0].name)
+    MODULE_STREAM=$(cat "$REQUEST_FILE" | jq -r .customizations.enabled_modules[0].stream)
+    echo "Checking if ${MODULE_NAME} ${MODULE_STREAM} is installed"
+    $_ssh rpm -q "${MODULE_NAME}" | grep "${MODULE_NAME}-${MODULE_STREAM}"
+
+    # Also verify that the module is enabled
+    # NOTE: on RHEL, listing enabled modules requires the machine be subscribed,
+    # which we always do in these tests
+    if ! check_modules=$($_ssh sudo dnf module list --enabled); then
+      echo "Error getting module list"
+      echo "${check_modules}"
+      exit 1
+    fi
+    pattern="${MODULE_NAME}\s+${MODULE_STREAM}"
+    if grep -P "${pattern}" <<< "${check_modules}"; then
+      echo "module ${MODULE_NAME}:${MODULE_STREAM} is enabled"
+    else
+      echo "module ${MODULE_NAME}:${MODULE_STREAM} is not enabled"
+      echo 'Output from "dnf module list --enabled":'
+      echo "${check_modules}"
+      exit 1
+    fi
   fi
 
   # Verify subscribe status. Loop check since the system may not be registered such early(RHEL only)
