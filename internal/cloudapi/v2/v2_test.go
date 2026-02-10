@@ -94,7 +94,12 @@ func mockDepsolve(t *testing.T, workerServer *worker.Server, wg *sync.WaitGroup,
 			if err != nil {
 				continue
 			}
-			dummyPackage := worker.DepsolvedPackage{
+			dummyRepoConfig := worker.DepsolvedRepoConfig{
+				Id:       "test-repo",
+				Name:     "Test Repository",
+				BaseURLs: []string{"https://example.com/repo"},
+			}
+			dummyPkg1 := worker.DepsolvedPackage{
 				Name:    "pkg1",
 				Version: "1.33",
 				Release: "2.fc30",
@@ -104,12 +109,48 @@ func mockDepsolve(t *testing.T, workerServer *worker.Server, wg *sync.WaitGroup,
 					Value: "e50ddb78a37f5851d1a5c37a4c77d59123153c156e628e064b9daa378f45a2fe",
 				},
 				RemoteLocations: []string{"https://pkg1.example.com/1.33-2.fc30.x86_64.rpm"},
+				RepoID:          dummyRepoConfig.Id,
+			}
+			dummyPkg2 := worker.DepsolvedPackage{
+				Name:    "pkg2",
+				Version: "1.34",
+				Release: "3.fc30",
+				Arch:    "x86_64",
+				Checksum: &worker.DepsolvedPackageChecksum{
+					Type:  "sha256",
+					Value: "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+				},
+				RemoteLocations: []string{"https://pkg2.example.com/1.34-3.fc30.x86_64.rpm"},
+				RepoID:          dummyRepoConfig.Id,
 			}
 			dJR := &worker.DepsolveJobResult{
+				Transactions: map[string][]worker.DepsolvedPackageList{
+					"build": {{dummyPkg1}},
+					"os":    {{dummyPkg1}, {dummyPkg2}},
+				},
 				PackageSpecs: map[string]worker.DepsolvedPackageList{
 					// Used when depsolving a manifest
-					"build": {dummyPackage},
-					"os":    {dummyPackage},
+					"build": {dummyPkg1},
+					"os":    {dummyPkg1, dummyPkg2},
+				},
+				RepoConfigs: map[string][]worker.DepsolvedRepoConfig{
+					"build": {dummyRepoConfig},
+					"os":    {dummyRepoConfig},
+				},
+				Modules: map[string][]worker.DepsolvedModuleSpec{
+					// Modules are optional, include for one pipeline to test
+					"os": {
+						{
+							ModuleConfigFile: worker.DepsolvedModuleConfigFile{
+								Path: "/etc/dnf/modules.d/test.module",
+								Data: worker.DepsolvedModuleConfigData{
+									Name:   "testmodule",
+									Stream: "1.0",
+									State:  "enabled",
+								},
+							},
+						},
+					},
 				},
 				SbomDocs: map[string]worker.SbomDoc{
 					"build": {
@@ -121,6 +162,7 @@ func mockDepsolve(t *testing.T, workerServer *worker.Server, wg *sync.WaitGroup,
 						Document: sbomDoc,
 					},
 				},
+				Solver: "dnf",
 			}
 
 			if fail {
@@ -160,7 +202,7 @@ func mockIBManifest(t *testing.T, workerServer *worker.Server, wg *sync.WaitGrou
 			r := &worker.ManifestJobByIDResult{}
 
 			if !fail {
-				r.Manifest = manifest.OSBuildManifest([]byte(`{"version":"2","pipelines":[{"name":"build"},{"name":"os"}],"sources":{"org.osbuild.curl":{"items":{"sha256:e50ddb78a37f5851d1a5c37a4c77d59123153c156e628e064b9daa378f45a2fe":{"url":"https://pkg1.example.com/1.33-2.fc30.x86_64.rpm"}}}}}`))
+				r.Manifest = manifest.OSBuildManifest([]byte(`{"version":"2","pipelines":[{"name":"build"},{"name":"os"}],"sources":{"org.osbuild.curl":{"items":{"sha256:e50ddb78a37f5851d1a5c37a4c77d59123153c156e628e064b9daa378f45a2fe":{"url":"https://pkg1.example.com/1.33-2.fc30.x86_64.rpm"},"sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff":{"url":"https://pkg2.example.com/1.34-3.fc30.x86_64.rpm"}}}}}`))
 				r.ManifestInfo = worker.ManifestInfo{
 					OSBuildComposerVersion: common.BuildVersion(),
 					PipelineNames: &worker.PipelineNames{
@@ -925,7 +967,7 @@ func TestComposeStatusSuccess(t *testing.T) {
 		]
 	}`, jobId, jobId))
 
-	emptyManifest := `{"version":"2","pipelines":[{"name":"build"},{"name":"os"}],"sources":{"org.osbuild.curl":{"items":{"sha256:e50ddb78a37f5851d1a5c37a4c77d59123153c156e628e064b9daa378f45a2fe":{"url":"https://pkg1.example.com/1.33-2.fc30.x86_64.rpm"}}}}}`
+	emptyManifest := `{"version":"2","pipelines":[{"name":"build"},{"name":"os"}],"sources":{"org.osbuild.curl":{"items":{"sha256:e50ddb78a37f5851d1a5c37a4c77d59123153c156e628e064b9daa378f45a2fe":{"url":"https://pkg1.example.com/1.33-2.fc30.x86_64.rpm"},"sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff":{"url":"https://pkg2.example.com/1.34-3.fc30.x86_64.rpm"}}}}}`
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "GET", fmt.Sprintf("/api/image-builder-composer/v2/composes/%v/manifests", jobId), ``, http.StatusOK, fmt.Sprintf(`
 	{
 		"href": "/api/image-builder-composer/v2/composes/%v/manifests",
@@ -971,14 +1013,14 @@ func TestComposeManifests(t *testing.T) {
 		{
 			name: "success",
 			jobResult: worker.ManifestJobByIDResult{
-				Manifest: manifest.OSBuildManifest([]byte(`{"version":"2","pipelines":[{"name":"build"},{"name":"os"}],"sources":{"org.osbuild.curl":{"items":{"sha256:e50ddb78a37f5851d1a5c37a4c77d59123153c156e628e064b9daa378f45a2fe":{"url":"https://pkg1.example.com/1.33-2.fc30.x86_64.rpm"}}}}}`)),
+				Manifest: manifest.OSBuildManifest([]byte(`{"version":"2","pipelines":[{"name":"build"},{"name":"os"}],"sources":{"org.osbuild.curl":{"items":{"sha256:e50ddb78a37f5851d1a5c37a4c77d59123153c156e628e064b9daa378f45a2fe":{"url":"https://pkg1.example.com/1.33-2.fc30.x86_64.rpm"},"sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff":{"url":"https://pkg2.example.com/1.34-3.fc30.x86_64.rpm"}}}}}`)),
 			},
 		},
 		{
 			name:       "success-ib",
 			ibManifest: true,
 			jobResult: worker.ManifestJobByIDResult{
-				Manifest: manifest.OSBuildManifest([]byte(`{"version":"2","pipelines":[{"name":"build"},{"name":"os"}],"sources":{"org.osbuild.curl":{"items":{"sha256:e50ddb78a37f5851d1a5c37a4c77d59123153c156e628e064b9daa378f45a2fe":{"url":"https://pkg1.example.com/1.33-2.fc30.x86_64.rpm"}}}}}`)),
+				Manifest: manifest.OSBuildManifest([]byte(`{"version":"2","pipelines":[{"name":"build"},{"name":"os"}],"sources":{"org.osbuild.curl":{"items":{"sha256:e50ddb78a37f5851d1a5c37a4c77d59123153c156e628e064b9daa378f45a2fe":{"url":"https://pkg1.example.com/1.33-2.fc30.x86_64.rpm"},"sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff":{"url":"https://pkg2.example.com/1.34-3.fc30.x86_64.rpm"}}}}}`)),
 			},
 		},
 		{
@@ -1922,6 +1964,14 @@ func TestDepsolveBlueprint(t *testing.T) {
                     "release": "2.fc30",
                     "arch": "x86_64",
 					"checksum": "sha256:e50ddb78a37f5851d1a5c37a4c77d59123153c156e628e064b9daa378f45a2fe"
+				},
+				{
+					"name": "pkg2",
+					"type": "rpm",
+					"version": "1.34",
+					"release": "3.fc30",
+					"arch": "x86_64",
+					"checksum": "sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
 				}
 			]
 		}`)
@@ -1956,6 +2006,14 @@ func TestDepsolveImageType(t *testing.T) {
                     "release": "2.fc30",
                     "arch": "x86_64",
 					"checksum": "sha256:e50ddb78a37f5851d1a5c37a4c77d59123153c156e628e064b9daa378f45a2fe"
+				},
+				{
+					"name": "pkg2",
+					"type": "rpm",
+					"version": "1.34",
+					"release": "3.fc30",
+					"arch": "x86_64",
+					"checksum": "sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
 				}
 			]
 		}`)
