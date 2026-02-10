@@ -55,16 +55,21 @@ type DepsolveJobImpl struct {
 	RepositoryMTLSConfig *RepositoryMTLSConfig
 }
 
-// depsolve each package set in the pacakgeSets map.  The repositories defined
+// depsolve each package set in the packageSets map. The repositories defined
 // in repos are used for all package sets, whereas the repositories in
 // packageSetsRepos are only used for the package set with the same name
 // (matching map keys).
-func (impl *DepsolveJobImpl) depsolve(packageSets map[string][]rpmmd.PackageSet, modulePlatformID, arch, releasever string, sbomType sbom.StandardType) (map[string]worker.DepsolvedPackageList, map[string][]worker.DepsolvedPackageList, map[string][]worker.DepsolvedRepoConfig, map[string]worker.SbomDoc, map[string][]worker.DepsolvedModuleSpec, string, error) {
+//
+// On error, returns a partial result with JobError set.
+func (impl *DepsolveJobImpl) depsolve(packageSets map[string][]rpmmd.PackageSet, modulePlatformID, arch, releasever string, sbomType sbom.StandardType, logWithId *logrus.Entry) *worker.DepsolveJobResult {
+	result := &worker.DepsolveJobResult{}
+
 	solver := impl.Solver.NewWithConfig(modulePlatformID, releasever, arch, "")
 	if impl.RepositoryMTLSConfig != nil && impl.RepositoryMTLSConfig.Proxy != nil {
 		err := solver.SetProxy(impl.RepositoryMTLSConfig.Proxy.String())
 		if err != nil {
-			return nil, nil, nil, nil, nil, "", err
+			result.JobError = workerClientErrorFrom(err, logWithId)
+			return result
 		}
 	}
 
@@ -77,10 +82,12 @@ func (impl *DepsolveJobImpl) depsolve(packageSets map[string][]rpmmd.PackageSet,
 	if sbomType != sbom.StandardTypeNone {
 		sbomDocs = make(map[string]worker.SbomDoc)
 	}
+
 	for name, pkgSet := range packageSets {
 		res, err := solver.Depsolve(pkgSet, sbomType)
 		if err != nil {
-			return nil, nil, nil, nil, nil, "", err
+			result.JobError = workerClientErrorFrom(err, logWithId)
+			return result
 		}
 		if solverName == "" {
 			solverName = res.Solver
@@ -99,7 +106,14 @@ func (impl *DepsolveJobImpl) depsolve(packageSets map[string][]rpmmd.PackageSet,
 		}
 	}
 
-	return depsolvedSets, transactions, repoConfigs, sbomDocs, modules, solverName, nil
+	result.PackageSpecs = depsolvedSets
+	result.Transactions = transactions
+	result.RepoConfigs = repoConfigs
+	result.SbomDocs = sbomDocs
+	result.Modules = modules
+	result.Solver = solverName
+
+	return result
 }
 
 func workerClientErrorFrom(err error, logWithId *logrus.Entry) *clienterrors.Error {
@@ -175,10 +189,9 @@ func (impl *DepsolveJobImpl) Run(job worker.Job) error {
 		}
 	}
 
-	result.PackageSpecs, result.Transactions, result.RepoConfigs, result.SbomDocs, result.Modules, result.Solver, err = impl.depsolve(args.PackageSets, args.ModulePlatformID, args.Arch, args.Releasever, args.SbomType)
-	if err != nil {
-		result.JobError = workerClientErrorFrom(err, logWithId)
-	}
+	depsolveResult := impl.depsolve(args.PackageSets, args.ModulePlatformID, args.Arch, args.Releasever, args.SbomType, logWithId)
+	result = *depsolveResult
+
 	if err := impl.Solver.CleanCache(); err != nil {
 		// log and ignore
 		logWithId.Errorf("Error during rpm repo cache cleanup: %s", err.Error())
