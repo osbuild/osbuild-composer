@@ -7,6 +7,7 @@ After=cloud-final.service
 
 [Service]
 Type=oneshot
+TimeoutStopSec=500
 ExecStart=touch /etc/worker-first-boot
 ExecStart=/usr/local/libexec/worker-initialization-scripts/set_hostname.sh
 ExecStart=/usr/local/libexec/worker-initialization-scripts/vector.sh
