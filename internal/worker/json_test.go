@@ -1101,6 +1101,25 @@ func TestDepsolveJobResultToDepsolvednfResult(t *testing.T) {
 			},
 		},
 		{
+			name: "single-pipeline-with-solver",
+			input: DepsolveJobResult{
+				PackageSpecs: map[string]DepsolvedPackageList{
+					"os": {{Name: "bash", Version: "5.0", Arch: "x86_64"}},
+				},
+				RepoConfigs: map[string][]DepsolvedRepoConfig{
+					"os": {{Id: "baseos", BaseURLs: []string{"https://example.com/baseos"}}},
+				},
+				Solver: "dnf5",
+			},
+			expected: map[string]depsolvednf.DepsolveResult{
+				"os": {
+					Packages: rpmmd.PackageList{{Name: "bash", Version: "5.0", Arch: "x86_64"}},
+					Repos:    []rpmmd.RepoConfig{{Id: "baseos", BaseURLs: []string{"https://example.com/baseos"}}},
+					Solver:   "dnf5",
+				},
+			},
+		},
+		{
 			name: "multiple-pipelines",
 			input: DepsolveJobResult{
 				PackageSpecs: map[string]DepsolvedPackageList{
