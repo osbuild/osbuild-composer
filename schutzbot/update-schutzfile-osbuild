@@ -1,0 +1,69 @@
+#!/usr/bin/env python3
+import json
+import os
+import sys
+import urllib.request
+
+
+def osbuild_main_commit_id():
+    token = os.environ.get("GITHUB_TOKEN")
+    req = urllib.request.Request("https://api.github.com/repos/osbuild/osbuild/commits/main")
+    req.add_header("Accept", "application/vnd.github+json")
+    if token:
+        # this API request doesn't necessarily require a token, but let's use it if we have one
+        req.add_header("Authorization", f"Bearer {token}")
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            body = resp.read()
+    except urllib.error.HTTPError as http_error:
+        print(http_error)
+        sys.exit(1)
+
+    data = json.loads(body)
+    if "[skip ci]" in data["commit"]["message"]:
+        # Post-release version bump commits contain the message [skip ci] which skips running CI. These commits do not
+        # have RPMs associated with them, so they shouldn't be used to downstream testing. Use the parent commit ID if
+        # we detect [skip ci] in the commit message on main.
+        # Our commit history is linear, so we can safely assume that there is only one parent.
+        # Also, there should never be two [skip ci] commits in a row, so we don't need to verify the commit message of
+        # the parent.
+        print("[skip ci] found in main commit message. Using parent.")
+        return data["parents"][0]["sha"]
+
+    return data["sha"]
+
+
+def update_osbuild_commit_ids(new):
+    with open("Schutzfile", encoding="utf-8") as schutzfile:
+        data = json.load(schutzfile)
+
+    unique_changes = []
+
+    for distro in data.keys():
+        if distro == "common":
+            continue
+
+        old = data[distro].get("dependencies", {}).get("osbuild", {}).get("commit", "main")
+        change = f"Changes: https://github.com/osbuild/osbuild/compare/{old}...{new}"
+        if change not in unique_changes:
+            unique_changes.append(change)
+        data[distro].setdefault("dependencies", {}).setdefault("osbuild", {})["commit"] = new
+
+    with open("Schutzfile", encoding="utf-8", mode="w") as schutzfile:
+        json.dump(data, schutzfile, indent="  ")
+
+    with open("github_pr_body.txt", encoding="utf-8", mode="w") as pr_body:
+        pr_body.write("Updating osbuild dependency commit IDs to current `main`\n\n")
+        pr_body.write("\n".join(unique_changes))
+        pr_body.write("\n")
+
+
+def main():
+    main_id = osbuild_main_commit_id()
+    print(f"osbuild/osbuild main commit ID: {main_id}")
+    print("Updating Schutzfile")
+    update_osbuild_commit_ids(main_id)
+
+
+if __name__ == "__main__":
+    main()
