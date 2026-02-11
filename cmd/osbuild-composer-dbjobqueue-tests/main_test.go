@@ -12,7 +12,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v5"
 	"github.com/stretchr/testify/require"
 
 	"github.com/osbuild/osbuild-composer/pkg/jobqueue"
@@ -87,7 +87,7 @@ func TestJobQueueInterface(t *testing.T) {
 	// run first, as migrations aren't reversible
 	testMigrationPath(t, makeJobQueue)
 
-	jobqueuetest.TestJobQueue(t, func () (jobqueue.JobQueue, func(), error) {
+	jobqueuetest.TestJobQueue(t, func() (jobqueue.JobQueue, func(), error) {
 		return makeJobQueue("last", true)
 	})
 }
