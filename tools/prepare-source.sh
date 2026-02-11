@@ -2,6 +2,7 @@
 
 set -eu
 
+# 1.24.12
 GO_MINOR_VERSION="1.24"
 GO_VERSION="${GO_MINOR_VERSION}.12"
 
