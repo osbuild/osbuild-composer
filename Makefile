@@ -23,13 +23,10 @@ RST2MAN ?= rst2man
 SHELL := /bin/bash
 .SHELLFLAGS := -ec -o pipefail
 
-# see https://hub.docker.com/r/golangci/golangci-lint/tags
+# Ensure golangci version that is compatible with Go version for this project.
+# See https://hub.docker.com/r/golangci/golangci-lint/tags
 # This is also used in Containerfile_golangci_lint FROM line
-# v1.60 to get golang 1.23 (1.23.0)
-# v1.56 to get golang 1.22 (1.22.0)
-# v1.55 to get golang 1.21 (1.21.3)
-# v1.53 to get golang 1.20 (1.20.5)
-GOLANGCI_LINT_VERSION=v2.3
+GOLANGCI_LINT_VERSION=v2.9
 GOLANGCI_LINT_CACHE_DIR=$(HOME)/.cache/golangci-lint/$(GOLANGCI_LINT_VERSION)
 GOLANGCI_COMPOSER_IMAGE=composer_golangci
 #
