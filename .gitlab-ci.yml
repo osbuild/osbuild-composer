@@ -789,7 +789,7 @@ NIGHTLY_FAIL:
   tags:
     - shell
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $NIGHTLY == "true"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $NIGHTLY == "true" && $CI_COMMIT_BRANCH == "main"'
       when: on_failure
   script:
     - schutzbot/slack_notification.sh FAILED ":big-sad:" nightly
@@ -799,7 +799,7 @@ NIGHTLY_SUCCESS:
   tags:
     - shell
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $NIGHTLY == "true"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $NIGHTLY == "true" && $CI_COMMIT_BRANCH == "main"'
   script:
     - schutzbot/slack_notification.sh SUCCESS ":partymeow:" nightly
 
@@ -808,7 +808,7 @@ GA_FAIL:
   tags:
     - shell
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $NIGHTLY== "false"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $NIGHTLY== "false" && $CI_COMMIT_BRANCH == "main"'
       when: on_failure
   script:
     - schutzbot/slack_notification.sh FAILED ":big-sad:" ga
@@ -818,7 +818,7 @@ GA_SUCCESS:
   tags:
     - shell
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $NIGHTLY== "false"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $NIGHTLY== "false" && $CI_COMMIT_BRANCH == "main"'
   script:
     - schutzbot/slack_notification.sh SUCCESS ":partymeow:" ga
 
