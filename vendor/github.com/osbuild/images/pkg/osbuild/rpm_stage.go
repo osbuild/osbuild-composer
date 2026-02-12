@@ -32,12 +32,15 @@ type RPMStageOptions struct {
 
 	// Only install certain locales (sets `_install_langs` RPM macro)
 	InstallLangs []string `json:"install_langs,omitempty"`
+
+	RPMKeys *RPMKeys `json:"rpmkeys,omitempty"`
 }
 
 func (o *RPMStageOptions) Clone() *RPMStageOptions {
 	if o == nil {
 		return nil
 	}
+
 	return &RPMStageOptions{
 		DBPath:           o.DBPath,
 		GPGKeys:          slices.Clone(o.GPGKeys),
@@ -47,6 +50,7 @@ func (o *RPMStageOptions) Clone() *RPMStageOptions {
 		OSTreeBooted:     common.ClonePtr(o.OSTreeBooted),
 		KernelInstallEnv: common.ClonePtr(o.KernelInstallEnv),
 		InstallLangs:     slices.Clone(o.InstallLangs),
+		RPMKeys:          common.ClonePtr(o.RPMKeys),
 	}
 }
 
@@ -59,6 +63,11 @@ type KernelInstallEnv struct {
 	// Sets $BOOT_ROOT for kernel-install to override
 	// $KERNEL_INSTALL_BOOT_ROOT, the installation location for boot entries
 	BootRoot string `json:"boot_root,omitempty"`
+}
+
+type RPMKeys struct {
+	BinPath              string `json:"bin_path,omitempty"`
+	IgnoreImportFailures bool   `json:"ignore_import_failures,omitempty"`
 }
 
 // RPMPackage represents one RPM, as referenced by its content hash

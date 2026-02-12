@@ -131,6 +131,10 @@ func (d *TestDistro) addArches(arches ...*TestArch) {
 	}
 }
 
+func (d *TestDistro) GetTweaks() *distro.Tweaks {
+	return nil
+}
+
 // TestArch
 
 func (a *TestArch) Name() string {

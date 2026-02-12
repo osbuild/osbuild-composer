@@ -38,6 +38,12 @@ distros:
           - azure
           - container
           - container-minimal
+      "handle PQC for rhel only":
+        when:
+          distro_name: "rhel"
+        tweaks:
+          rpmkeys:
+            ignore_build_import_failures: true
     # rhel & centos share the same list of allowed profiles so a
     # single allow list can be used
     oscap_profiles_allowlist: &oscap_profile_allowlist_rhel_10
@@ -151,6 +157,14 @@ distros:
           version_less_than: "9.6"
         ignore_image_types:
           - "azure-cvm"
+      "handle PQC for rhel only":
+        when:
+          distro_name: "rhel"
+          version_greater_or_equal: "9.7"
+        tweaks:
+          rpmkeys:
+            binary_path: "/usr/lib/pqrpm/bin/rpmkeys"
+            ignore_build_import_failures: true
     runner:
       name: "org.osbuild.rhel{{.MajorVersion}}{{.MinorVersion}}"
       build_packages: &rhel9_runner_build_packages

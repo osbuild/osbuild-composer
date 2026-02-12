@@ -46,7 +46,12 @@ func (img *AnacondaContainerInstallerLegacy) InstantiateManifest(m *manifest.Man
 	repos []rpmmd.RepoConfig,
 	runner runner.Runner,
 	rng *rand.Rand) (*artifact.Artifact, error) {
-	buildPipeline := addBuildBootstrapPipelines(m, runner, repos, &manifest.BuildOptions{ContainerBuildable: true})
+
+	if img.BuildOptions == nil {
+		img.BuildOptions = &manifest.BuildOptions{}
+	}
+	img.BuildOptions.ContainerBuildable = true
+	buildPipeline := addBuildBootstrapPipelines(m, runner, repos, img.BuildOptions)
 	buildPipeline.Checkpoint()
 
 	anacondaPipeline := manifest.NewAnacondaInstaller(

@@ -56,6 +56,8 @@ type Distro interface {
 	// Returns an object representing the given architecture as support
 	// by this distro.
 	GetArch(arch string) (Arch, error)
+
+	GetTweaks() *Tweaks
 }
 
 type CustomDepsolverDistro interface {

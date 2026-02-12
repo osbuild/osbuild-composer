@@ -197,6 +197,9 @@ type OSCustomizations struct {
 
 	// InstallLangs determines which locale files are installed by RPMs
 	InstallLangs []string
+
+	// Use this RPMKeysBinary from the tree instead of the default one
+	RPMKeysBinary string
 }
 
 // OS represents the filesystem tree of the target image. This roughly
@@ -456,6 +459,10 @@ func (p *OS) getBuildPackages(distro Distro) ([]string, error) {
 		packages = append(packages, "shadow-utils")
 	}
 
+	if p.OSCustomizations.RPMKeysBinary != "" {
+		packages = append(packages, "pqrpm")
+	}
+
 	return packages, nil
 }
 
@@ -541,6 +548,11 @@ func (p *OS) serialize() (osbuild.Pipeline, error) {
 		baseRPMOptions.Exclude = &osbuild.Exclude{Docs: true}
 	}
 	baseRPMOptions.GPGKeysFromTree = p.OSCustomizations.GPGKeyFiles
+	if p.OSCustomizations.RPMKeysBinary != "" {
+		baseRPMOptions.RPMKeys = &osbuild.RPMKeys{
+			BinPath: p.OSCustomizations.RPMKeysBinary,
+		}
+	}
 	if p.OSTreeRef != "" {
 		baseRPMOptions.OSTreeBooted = common.ToPtr(true)
 		baseRPMOptions.DBPath = "/usr/share/rpm"

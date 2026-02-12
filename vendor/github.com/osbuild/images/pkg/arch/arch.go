@@ -12,6 +12,7 @@ type Arch uint64
 
 const ( // architecture enum
 	ARCH_UNSET Arch = iota
+	ARCH_ARM
 	ARCH_AARCH64
 	ARCH_PPC64LE
 	ARCH_S390X
@@ -23,6 +24,8 @@ func (a Arch) String() string {
 	switch a {
 	case ARCH_UNSET:
 		return "unset"
+	case ARCH_ARM:
+		return "arm"
 	case ARCH_AARCH64:
 		return "aarch64"
 	case ARCH_PPC64LE:
@@ -55,6 +58,8 @@ func FromString(a string) (Arch, error) {
 	switch a {
 	case "amd64", "x86_64":
 		return ARCH_X86_64, nil
+	case "arm", "armv7":
+		return ARCH_ARM, nil
 	case "arm64", "aarch64":
 		return ARCH_AARCH64, nil
 	case "s390x":
@@ -76,6 +81,10 @@ func Current() Arch {
 
 func IsX86_64() bool {
 	return Current() == ARCH_X86_64
+}
+
+func IsArm() bool {
+	return Current() == ARCH_ARM
 }
 
 func IsAarch64() bool {

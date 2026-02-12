@@ -48,6 +48,9 @@ type CoreOSInstaller struct {
 
 	AdditionalDracutModules []string
 	AdditionalDrivers       []string
+
+	// Use this RPMKeysBinary from the tree instead of the default one
+	RPMKeysBinary string
 }
 
 // NewCoreOSInstaller creates an CoreOS installer pipeline object.
@@ -124,6 +127,11 @@ func (p *CoreOSInstaller) getBuildPackages(Distro) ([]string, error) {
 		"rpm",
 		"lorax-templates-generic",
 	)
+
+	if p.RPMKeysBinary != "" {
+		packages = append(packages, "pqrpm")
+	}
+
 	return packages, nil
 }
 
@@ -193,7 +201,14 @@ func (p *CoreOSInstaller) serialize() (osbuild.Pipeline, error) {
 		return osbuild.Pipeline{}, err
 	}
 
-	rpmStages, err := osbuild.GenRPMStagesFromTransactions(p.depsolveResult.Transactions, nil)
+	baseOptions := osbuild.RPMStageOptions{}
+	if p.RPMKeysBinary != "" {
+		baseOptions.RPMKeys = &osbuild.RPMKeys{
+			BinPath: p.RPMKeysBinary,
+		}
+	}
+
+	rpmStages, err := osbuild.GenRPMStagesFromTransactions(p.depsolveResult.Transactions, &baseOptions)
 	if err != nil {
 		return osbuild.Pipeline{}, err
 	}
