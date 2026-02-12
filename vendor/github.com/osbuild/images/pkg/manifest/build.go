@@ -54,6 +54,8 @@ type BuildrootFromPackages struct {
 	disableSelinux bool
 
 	selinuxPolicy string
+
+	rpmStageIgnoreGPGImportFailures bool
 }
 
 type BuildOptions struct {
@@ -81,6 +83,9 @@ type BuildOptions struct {
 
 	// Ensure directories exist
 	EnsureDirs []*fsnode.Directory
+
+	// Ignore gpg import failures
+	RPMStageIgnoreGPGImportFailures bool
 }
 
 // policy or default returns the selinuxPolicy or (if unset) the
@@ -104,13 +109,14 @@ func NewBuild(m *Manifest, runner runner.Runner, repos []rpmmd.RepoConfig, opts 
 		name = opts.PipelineName
 	}
 	pipeline := &BuildrootFromPackages{
-		Base:               NewBase(name, opts.BootstrapPipeline),
-		runner:             runner,
-		dependents:         make([]Pipeline, 0),
-		depsolveRepos:      filterRepos(repos, name),
-		containerBuildable: opts.ContainerBuildable,
-		disableSelinux:     opts.DisableSELinux,
-		selinuxPolicy:      policyOrDefault(opts.SELinuxPolicy),
+		Base:                            NewBase(name, opts.BootstrapPipeline),
+		runner:                          runner,
+		dependents:                      make([]Pipeline, 0),
+		depsolveRepos:                   filterRepos(repos, name),
+		containerBuildable:              opts.ContainerBuildable,
+		disableSelinux:                  opts.DisableSELinux,
+		selinuxPolicy:                   policyOrDefault(opts.SELinuxPolicy),
+		rpmStageIgnoreGPGImportFailures: opts.RPMStageIgnoreGPGImportFailures,
 	}
 
 	m.addPipeline(pipeline)
@@ -188,7 +194,13 @@ func (p *BuildrootFromPackages) serialize() (osbuild.Pipeline, error) {
 
 	pipeline.Runner = p.runner.String()
 
-	rpmStages, err := osbuild.GenRPMStagesFromTransactions(p.depsolveResult.Transactions, nil)
+	baseOptions := osbuild.RPMStageOptions{}
+	if p.rpmStageIgnoreGPGImportFailures {
+		baseOptions.RPMKeys = &osbuild.RPMKeys{
+			IgnoreImportFailures: true,
+		}
+	}
+	rpmStages, err := osbuild.GenRPMStagesFromTransactions(p.depsolveResult.Transactions, &baseOptions)
 	if err != nil {
 		return osbuild.Pipeline{}, err
 	}

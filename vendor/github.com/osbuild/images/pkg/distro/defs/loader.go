@@ -99,7 +99,7 @@ type DistroYAML struct {
 	// distro wide default image config
 	imageConfig *distro.ImageConfig `yaml:"default"`
 
-	// ignore the given image types
+	// ignore the given image types & override tweaks
 	Conditions map[string]distroConditions `yaml:"conditions"`
 
 	// XXX: remove this in favor of a better abstraction, this
@@ -110,6 +110,8 @@ type DistroYAML struct {
 
 	// set by the loader
 	ID distro.ID
+
+	Tweaks *distro.Tweaks `yaml:"tweaks"`
 }
 
 func (d *DistroYAML) ImageTypes() map[string]ImageTypeYAML {
@@ -159,6 +161,16 @@ func (d *DistroYAML) runTemplates(id distro.ID) error {
 	}
 
 	return errors.Join(errs...)
+}
+
+func (d *DistroYAML) GetTweaks() *distro.Tweaks {
+	tweaks := d.Tweaks
+	for _, cond := range d.Conditions {
+		if cond.When.Eval(d.ID, "") {
+			tweaks = tweaks.InheritFrom(cond.Tweaks)
+		}
+	}
+	return tweaks
 }
 
 // Load all YAML files directly in the root of the definitions filesystem. Each
@@ -364,6 +376,7 @@ type distroImageConfigConditions struct {
 type distroConditions struct {
 	When             *whenCondition `yaml:"when"`
 	IgnoreImageTypes []string       `yaml:"ignore_image_types"`
+	Tweaks           *distro.Tweaks `yaml:"tweaks"`
 }
 
 type ImageTypeYAML struct {

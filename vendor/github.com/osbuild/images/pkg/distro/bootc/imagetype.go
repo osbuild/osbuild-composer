@@ -164,6 +164,14 @@ func (t *imageType) manifestWithoutValidation(bp *blueprint.Blueprint, options d
 	}
 }
 
+func buildOptions(t *imageType) *manifest.BuildOptions {
+	buildOpts := &manifest.BuildOptions{}
+	if tweaks := t.arch.distro.GetTweaks(); tweaks != nil && tweaks.RPMKeys != nil && tweaks.RPMKeys.IgnoreBuildImportFailures {
+		buildOpts.RPMStageIgnoreGPGImportFailures = tweaks.RPMKeys.IgnoreBuildImportFailures
+	}
+	return buildOpts
+}
+
 func (t *imageType) manifestForDisk(bp *blueprint.Blueprint, options distro.ImageOptions, rng *rand.Rand) (*manifest.Manifest, []string, error) {
 	if t.arch.distro.imgref == "" {
 		return nil, nil, fmt.Errorf("internal error: no base image defined")
@@ -190,6 +198,9 @@ func (t *imageType) manifestForDisk(bp *blueprint.Blueprint, options distro.Imag
 	filename := strings.Split(t.Filename(), ".")[0]
 
 	img := image.NewBootcDiskImage(platform, filename, containerSource, buildContainerSource)
+	if opts := buildOptions(t); opts != nil {
+		img.BuildOptions = opts
+	}
 	img.OSCustomizations.Users = users.UsersFromBP(customizations.GetUsers())
 
 	groups, err := customizations.GetGroups()
@@ -344,6 +355,9 @@ func (t *imageType) manifestForISO(bp *blueprint.Blueprint, options distro.Image
 	if err := t.initAnacondaInstallerBaseFromSourceInfo(&img.AnacondaInstallerBase, sourceInfo, customizations); err != nil {
 		return nil, nil, err
 	}
+	if opts := buildOptions(t); opts != nil {
+		img.BuildOptions = opts
+	}
 	img.ContainerRemoveSignatures = true
 	// we auto-detect the lorax config from the source info
 	img.InstallerCustomizations.LoraxTemplates = LoraxTemplates(sourceInfo.OSRelease)
@@ -393,7 +407,7 @@ func (t *imageType) manifestForGenericISO(options distro.ImageOptions, rng *rand
 	platformi := PlatformFor(t.arch.Name(), t.arch.distro.sourceInfo.UEFIVendor)
 	platformi.ImageFormat = platform.FORMAT_ISO
 
-	img := image.NewContainerBasedIso(platformi, t.Filename(), containerSource)
+	img := image.NewContainerBasedIso(platformi, t.Filename(), containerSource, nil)
 	if options.Bootc != nil && options.Bootc.InstallerPayloadRef != "" {
 		img.PayloadContainer = &container.SourceSpec{
 			Source: options.Bootc.InstallerPayloadRef,
@@ -512,6 +526,9 @@ func (t *imageType) manifestForLegacyISO(bp *blueprint.Blueprint, rng *rand.Rand
 	if err := t.initAnacondaInstallerBaseFromSourceInfo(&img.AnacondaInstallerBase, sourceInfo, customizations); err != nil {
 		return nil, nil, err
 	}
+	if opts := buildOptions(t); opts != nil {
+		img.BuildOptions = opts
+	}
 	img.ContainerRemoveSignatures = true
 	img.ExtraBasePackages = installerPkgSet
 	// our installer customizations come from the distrodefs (unlike in manifestForISO)
@@ -561,6 +578,9 @@ func (t *imageType) manifestForPXETar(bp *blueprint.Blueprint, options distro.Im
 
 	platform := PlatformFor(t.arch.Name(), t.arch.distro.sourceInfo.UEFIVendor)
 	img := image.NewBootcPXEImage(platform, t.Filename(), containerSource, buildContainerSource)
+	if opts := buildOptions(t); opts != nil {
+		img.BuildOptions = opts
+	}
 	img.Compression = t.ImageTypeYAML.Compression
 	img.OSCustomizations.Users = users.UsersFromBP(customizations.GetUsers())
 

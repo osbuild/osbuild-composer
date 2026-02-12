@@ -53,10 +53,12 @@ func (img *AnacondaContainerInstaller) InstantiateManifestFromContainer(m *manif
 	runner runner.Runner,
 	rng *rand.Rand) (*artifact.Artifact, error) {
 	cnts := []container.SourceSpec{img.ContainerSource}
-	buildPipeline := manifest.NewBuildFromContainer(m, runner, cnts,
-		&manifest.BuildOptions{
-			ContainerBuildable: true,
-		})
+	buildOptions := img.BuildOptions
+	if buildOptions == nil {
+		buildOptions = &manifest.BuildOptions{}
+	}
+	buildOptions.ContainerBuildable = true
+	buildPipeline := manifest.NewBuildFromContainer(m, runner, cnts, buildOptions)
 
 	anacondaPipeline := manifest.NewAnacondaInstaller(
 		manifest.AnacondaInstallerTypePayload,
