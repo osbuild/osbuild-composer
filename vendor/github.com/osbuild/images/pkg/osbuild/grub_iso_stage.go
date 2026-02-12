@@ -4,6 +4,12 @@ import "fmt"
 
 const grubisoStageType = "org.osbuild.grub2.iso"
 
+type GrubISOCustomEntryOptions struct {
+	Name   string `json:"name"`
+	Linux  string `json:"linux"`
+	Initrd string `json:"initrd"`
+}
+
 type GrubISOStageOptions struct {
 	Product Product `json:"product"`
 
@@ -16,6 +22,14 @@ type GrubISOStageOptions struct {
 	Vendor string `json:"vendor,omitempty"`
 
 	FIPS bool `json:"fips,omitempty"`
+
+	Troubleshooting bool `json:"troubleshooting"`
+
+	Test bool `json:"test"`
+
+	Install bool `json:"install"`
+
+	Custom []GrubISOCustomEntryOptions `json:"custom,omitempty"`
 
 	Config *Grub2Config `json:"config,omitempty"`
 }

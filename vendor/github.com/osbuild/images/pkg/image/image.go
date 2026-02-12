@@ -17,9 +17,10 @@ type ImageKind interface {
 }
 
 type Base struct {
-	name     string
-	platform platform.Platform
-	filename string
+	name         string
+	platform     platform.Platform
+	filename     string
+	BuildOptions *manifest.BuildOptions
 }
 
 func (img Base) Name() string {

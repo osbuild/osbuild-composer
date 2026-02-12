@@ -112,13 +112,13 @@ func GenSources(inputs SourceInputs, rpmDownloader RpmDownloader) (Sources, erro
 	sources := Sources{}
 
 	// collect rpm package sources
-	if len(inputs.Depsolved.Packages) > 0 {
+	if len(inputs.Depsolved.Transactions.AllPackages()) > 0 {
 		var err error
 		switch rpmDownloader {
 		case RpmDownloaderCurl:
-			err = sources.addPackagesCurl(inputs.Depsolved.Packages)
+			err = sources.addPackagesCurl(inputs.Depsolved.Transactions.AllPackages())
 		case RpmDownloaderLibrepo:
-			err = sources.addPackagesLibrepo(inputs.Depsolved.Packages, inputs.Depsolved.Repos)
+			err = sources.addPackagesLibrepo(inputs.Depsolved.Transactions.AllPackages(), inputs.Depsolved.Repos)
 		default:
 			err = fmt.Errorf("unknown rpm downloader %v", rpmDownloader)
 		}

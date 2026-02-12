@@ -56,6 +56,8 @@ type Distro interface {
 	// Returns an object representing the given architecture as support
 	// by this distro.
 	GetArch(arch string) (Arch, error)
+
+	GetTweaks() *Tweaks
 }
 
 type CustomDepsolverDistro interface {
@@ -157,6 +159,11 @@ type ImageOptions struct {
 	PartitioningMode partition.PartitioningMode `json:"partitioning-mode,omitempty"`
 
 	UseBootstrapContainer bool `json:"use_bootstrap_container,omitempty"`
+
+	// Determines if the image being built is a preview image or not. When left
+	// empty (nil) the default from the distro is used. When set it overrides
+	// the default.
+	Preview *bool `json:"preview,omitempty"`
 }
 
 type BasePartitionTableMap map[string]disk.PartitionTable

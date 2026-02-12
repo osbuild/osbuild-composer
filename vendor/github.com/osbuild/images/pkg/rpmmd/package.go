@@ -113,8 +113,10 @@ type Package struct {
 	HeaderChecksum Checksum
 
 	// Repository ID this package belongs to
-	// XXX: We should should eventually hold a reference to the RepoConfig
+	// TODO: Deprecated: use Repo instead
 	RepoID string
+	// Direct reference to the repository configuration this package belongs to
+	Repo *RepoConfig
 
 	// Resolved reason why a package was / would be installed.
 	Reason string

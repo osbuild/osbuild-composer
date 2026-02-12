@@ -57,7 +57,7 @@ func (img *OSTreeSimplifiedInstaller) InstantiateManifest(m *manifest.Manifest,
 	repos []rpmmd.RepoConfig,
 	runner runner.Runner,
 	rng *rand.Rand) (*artifact.Artifact, error) {
-	buildPipeline := addBuildBootstrapPipelines(m, runner, repos, nil)
+	buildPipeline := addBuildBootstrapPipelines(m, runner, repos, img.BuildOptions)
 	buildPipeline.Checkpoint()
 
 	imageFilename := "image.raw.xz"
@@ -83,6 +83,7 @@ func (img *OSTreeSimplifiedInstaller) InstantiateManifest(m *manifest.Manifest,
 	coiPipeline.Variant = img.InstallerCustomizations.Variant
 	coiPipeline.AdditionalDracutModules = img.InstallerCustomizations.AdditionalDracutModules
 	coiPipeline.AdditionalDrivers = img.InstallerCustomizations.AdditionalDrivers
+	coiPipeline.RPMKeysBinary = img.OSCustomizations.RPMKeysBinary
 
 	if len(img.ISOCustomizations.Label) == 0 {
 		img.ISOCustomizations.Label = fmt.Sprintf(img.ISOLabelTmpl, img.platform.GetArch())

@@ -9,7 +9,6 @@ import (
 	"github.com/osbuild/blueprint/pkg/blueprint"
 	"github.com/osbuild/images/internal/cmdutil"
 	"github.com/osbuild/images/pkg/arch"
-	bibcontainer "github.com/osbuild/images/pkg/bib/container"
 	"github.com/osbuild/images/pkg/bib/osinfo"
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/customizations/anaconda"
@@ -154,7 +153,7 @@ func (t *imageType) manifestWithoutValidation(bp *blueprint.Blueprint, options d
 	case "bootc_iso":
 		return t.manifestForISO(bp, options, rng)
 	case "bootc_generic_iso":
-		return t.manifestForGenericISO(rng)
+		return t.manifestForGenericISO(options, rng)
 	case "bootc_disk":
 		return t.manifestForDisk(bp, options, rng)
 	case "pxe_tar":
@@ -163,6 +162,14 @@ func (t *imageType) manifestWithoutValidation(bp *blueprint.Blueprint, options d
 		err := fmt.Errorf("unknown image func: %v for %v", t.Image, t.Name())
 		panic(err)
 	}
+}
+
+func buildOptions(t *imageType) *manifest.BuildOptions {
+	buildOpts := &manifest.BuildOptions{}
+	if tweaks := t.arch.distro.GetTweaks(); tweaks != nil && tweaks.RPMKeys != nil && tweaks.RPMKeys.IgnoreBuildImportFailures {
+		buildOpts.RPMStageIgnoreGPGImportFailures = tweaks.RPMKeys.IgnoreBuildImportFailures
+	}
+	return buildOpts
 }
 
 func (t *imageType) manifestForDisk(bp *blueprint.Blueprint, options distro.ImageOptions, rng *rand.Rand) (*manifest.Manifest, []string, error) {
@@ -191,8 +198,16 @@ func (t *imageType) manifestForDisk(bp *blueprint.Blueprint, options distro.Imag
 	filename := strings.Split(t.Filename(), ".")[0]
 
 	img := image.NewBootcDiskImage(platform, filename, containerSource, buildContainerSource)
+	if opts := buildOptions(t); opts != nil {
+		img.BuildOptions = opts
+	}
 	img.OSCustomizations.Users = users.UsersFromBP(customizations.GetUsers())
-	img.OSCustomizations.Groups = users.GroupsFromBP(customizations.GetGroups())
+
+	groups, err := customizations.GetGroups()
+	if err != nil {
+		return nil, nil, err
+	}
+	img.OSCustomizations.Groups = users.GroupsFromBP(groups)
 	img.OSCustomizations.SELinux = t.arch.distro.sourceInfo.SELinuxPolicy
 	img.OSCustomizations.BuildSELinux = img.OSCustomizations.SELinux
 	if t.arch.distro.buildSourceInfo != nil {
@@ -340,6 +355,9 @@ func (t *imageType) manifestForISO(bp *blueprint.Blueprint, options distro.Image
 	if err := t.initAnacondaInstallerBaseFromSourceInfo(&img.AnacondaInstallerBase, sourceInfo, customizations); err != nil {
 		return nil, nil, err
 	}
+	if opts := buildOptions(t); opts != nil {
+		img.BuildOptions = opts
+	}
 	img.ContainerRemoveSignatures = true
 	// we auto-detect the lorax config from the source info
 	img.InstallerCustomizations.LoraxTemplates = LoraxTemplates(sourceInfo.OSRelease)
@@ -375,7 +393,7 @@ func (t *imageType) manifestForISO(bp *blueprint.Blueprint, options distro.Image
 	return &mf, nil, err
 }
 
-func (t *imageType) manifestForGenericISO(rng *rand.Rand) (*manifest.Manifest, []string, error) {
+func (t *imageType) manifestForGenericISO(options distro.ImageOptions, rng *rand.Rand) (*manifest.Manifest, []string, error) {
 	if t.arch.distro.imgref == "" {
 		return nil, nil, fmt.Errorf("internal error: no base image defined")
 	}
@@ -389,7 +407,14 @@ func (t *imageType) manifestForGenericISO(rng *rand.Rand) (*manifest.Manifest, [
 	platformi := PlatformFor(t.arch.Name(), t.arch.distro.sourceInfo.UEFIVendor)
 	platformi.ImageFormat = platform.FORMAT_ISO
 
-	img := image.NewContainerBasedIso(platformi, t.Filename(), containerSource)
+	img := image.NewContainerBasedIso(platformi, t.Filename(), containerSource, nil)
+	if options.Bootc != nil && options.Bootc.InstallerPayloadRef != "" {
+		img.PayloadContainer = &container.SourceSpec{
+			Source: options.Bootc.InstallerPayloadRef,
+			Name:   options.Bootc.InstallerPayloadRef,
+			Local:  true,
+		}
+	}
 	img.RootfsCompression = "zstd"
 	img.RootfsType = manifest.SquashfsRootfs
 	img.KernelPath = fmt.Sprintf("lib/modules/%s/vmlinuz", t.arch.distro.sourceInfo.KernelInfo.Version)
@@ -397,7 +422,30 @@ func (t *imageType) manifestForGenericISO(rng *rand.Rand) (*manifest.Manifest, [
 	img.Product = t.arch.distro.sourceInfo.OSRelease.Name
 	img.Version = t.arch.distro.sourceInfo.OSRelease.VersionID
 	img.Release = t.arch.distro.sourceInfo.OSRelease.VersionID
-	img.ISOLabel = LabelForISO(&t.arch.distro.sourceInfo.OSRelease, t.arch.Name())
+
+	isoi := t.arch.distro.sourceInfo.ISOInfo
+
+	if isoi.Label != "" {
+		img.ISOLabel = isoi.Label
+	} else {
+		img.ISOLabel = LabelForISO(&t.arch.distro.sourceInfo.OSRelease, t.arch.Name())
+	}
+
+	if len(isoi.KernelArgs) > 0 {
+		img.KernelOpts = isoi.KernelArgs
+	}
+
+	img.Grub2MenuDefault = isoi.Grub2.Default
+	img.Grub2MenuTimeout = isoi.Grub2.Timeout
+	img.Grub2MenuEntries = []manifest.ISOGrub2MenuEntry{}
+
+	for _, entry := range isoi.Grub2.Entries {
+		img.Grub2MenuEntries = append(img.Grub2MenuEntries, manifest.ISOGrub2MenuEntry{
+			Name:   entry.Name,
+			Linux:  entry.Linux,
+			Initrd: entry.Initrd,
+		})
+	}
 
 	mf := manifest.New()
 
@@ -409,48 +457,6 @@ func (t *imageType) manifestForGenericISO(rng *rand.Rand) (*manifest.Manifest, [
 
 	_, err = img.InstantiateManifestFromContainer(&mf, []container.SourceSpec{containerSource}, foundRunner, rng)
 	return &mf, nil, err
-}
-
-type DistroOptions struct {
-	// DefaultFs to use, this takes precedence over the default
-	// from the container and is required if the container does
-	// not declare a default.
-	DefaultFs string
-}
-
-// newBootcDistro returns a new instance of BootcDistro
-// from the given url
-func NewBootcDistro(imgref string, opts *DistroOptions) (*BootcDistro, error) {
-	if opts == nil {
-		opts = &DistroOptions{}
-	}
-
-	cnt, err := bibcontainer.New(imgref)
-	if err != nil {
-		return nil, err
-	}
-	defer func() {
-		err = errors.Join(err, cnt.Stop())
-	}()
-
-	info, err := osinfo.Load(cnt.Root())
-	if err != nil {
-		return nil, err
-	}
-
-	defaultFs, err := cnt.DefaultRootfsType()
-	if err != nil {
-		return nil, err
-	}
-	if opts.DefaultFs != "" {
-		defaultFs = opts.DefaultFs
-	}
-
-	cntSize, err := getContainerSize(imgref)
-	if err != nil {
-		return nil, fmt.Errorf("cannot get container size: %w", err)
-	}
-	return newBootcDistroAfterIntrospect(cnt.Arch(), info, imgref, defaultFs, cntSize)
 }
 
 // newDistroYAMLFrom() returns the distroYAML for the given sourceInfo,
@@ -520,6 +526,9 @@ func (t *imageType) manifestForLegacyISO(bp *blueprint.Blueprint, rng *rand.Rand
 	if err := t.initAnacondaInstallerBaseFromSourceInfo(&img.AnacondaInstallerBase, sourceInfo, customizations); err != nil {
 		return nil, nil, err
 	}
+	if opts := buildOptions(t); opts != nil {
+		img.BuildOptions = opts
+	}
 	img.ContainerRemoveSignatures = true
 	img.ExtraBasePackages = installerPkgSet
 	// our installer customizations come from the distrodefs (unlike in manifestForISO)
@@ -569,9 +578,17 @@ func (t *imageType) manifestForPXETar(bp *blueprint.Blueprint, options distro.Im
 
 	platform := PlatformFor(t.arch.Name(), t.arch.distro.sourceInfo.UEFIVendor)
 	img := image.NewBootcPXEImage(platform, t.Filename(), containerSource, buildContainerSource)
+	if opts := buildOptions(t); opts != nil {
+		img.BuildOptions = opts
+	}
 	img.Compression = t.ImageTypeYAML.Compression
 	img.OSCustomizations.Users = users.UsersFromBP(customizations.GetUsers())
-	img.OSCustomizations.Groups = users.GroupsFromBP(customizations.GetGroups())
+
+	groups, err := customizations.GetGroups()
+	if err != nil {
+		return nil, nil, err
+	}
+	img.OSCustomizations.Groups = users.GroupsFromBP(groups)
 	img.OSCustomizations.SELinux = t.arch.distro.sourceInfo.SELinuxPolicy
 	img.OSCustomizations.BuildSELinux = img.OSCustomizations.SELinux
 	if t.arch.distro.buildSourceInfo != nil {

@@ -1313,7 +1313,7 @@ func (api *API) modulesInfoHandler(writer http.ResponseWriter, request *http.Req
 				statusResponseError(writer, http.StatusBadRequest, errors)
 				return
 			}
-			packageInfos[i].Dependencies = weldrtypes.RPMMDPackageListToDepsolvedPackageInfoList(res.Packages)
+			packageInfos[i].Dependencies = weldrtypes.RPMMDPackageListToDepsolvedPackageInfoList(res.Transactions.AllPackages())
 		}
 		if err := solver.CleanCache(); err != nil {
 			// log and ignore
@@ -1404,7 +1404,7 @@ func (api *API) projectsDepsolveHandler(writer http.ResponseWriter, request *htt
 		// log and ignore
 		log.Printf("Error during rpm repo cache cleanup: %s", err.Error())
 	}
-	err = json.NewEncoder(writer).Encode(reply{Projects: weldrtypes.RPMMDPackageListToDepsolvedPackageInfoList(res.Packages)})
+	err = json.NewEncoder(writer).Encode(reply{Projects: weldrtypes.RPMMDPackageListToDepsolvedPackageInfoList(res.Transactions.AllPackages())})
 	common.PanicOnError(err)
 }
 
@@ -2640,9 +2640,9 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 	var packages rpmmd.PackageList
 	// TODO: introduce a way to query these from the manifest / image type
 	// BUG: installer/container image types will have empty package sets
-	if packages = depsolved["packages"].Packages; len(packages) == 0 {
-		if packages = depsolved["os"].Packages; len(packages) == 0 {
-			packages = depsolved["ostree-tree"].Packages
+	if packages = depsolved["packages"].Transactions.AllPackages(); len(packages) == 0 {
+		if packages = depsolved["os"].Transactions.AllPackages(); len(packages) == 0 {
+			packages = depsolved["ostree-tree"].Transactions.AllPackages()
 		}
 	}
 
@@ -3642,7 +3642,7 @@ func (api *API) depsolveBlueprint(bp blueprint.Blueprint) ([]weldrtypes.Depsolve
 		// log and ignore
 		log.Printf("Error during rpm repo cache cleanup: %s", err.Error())
 	}
-	return weldrtypes.RPMMDPackageListToDepsolvedPackageInfoList(res.Packages), nil
+	return weldrtypes.RPMMDPackageListToDepsolvedPackageInfoList(res.Transactions.AllPackages()), nil
 }
 
 func (api *API) uploadsScheduleHandler(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {

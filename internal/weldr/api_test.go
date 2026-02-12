@@ -128,7 +128,7 @@ func getMockDepsolveDNFSolverFn(m *depsolvednf_mock.MockDepsolveDNF) GetSolverFn
 func getBaseMockDepsolveDNFSolverFn(deosolveRepoID string) GetSolverFn {
 	return getMockDepsolveDNFSolverFn(&depsolvednf_mock.MockDepsolveDNF{
 		DepsolveRes: &depsolvednf.DepsolveResult{
-			Packages: depsolvednf_mock.BaseDepsolveResult(deosolveRepoID),
+			Transactions: []rpmmd.PackageList{depsolvednf_mock.BaseDepsolveResult(deosolveRepoID)},
 		},
 		FetchRes:     depsolvednf_mock.BaseFetchResult(),
 		SearchResMap: depsolvednf_mock.BaseSearchResultsMap(),
@@ -144,7 +144,7 @@ func ResolveContent(pkgs map[string][]rpmmd.PackageSet, containers map[string][]
 	depsolved := make(map[string]depsolvednf.DepsolveResult, len(pkgs))
 	for name := range pkgs {
 		depsolved[name] = depsolvednf.DepsolveResult{
-			Packages: depsolvednf_mock.BaseDepsolveResult(testRepoID),
+			Transactions: []rpmmd.PackageList{depsolvednf_mock.BaseDepsolveResult(testRepoID)},
 		}
 	}
 
@@ -1292,7 +1292,7 @@ func TestCompose(t *testing.T) {
 			[]string{"build_id", "warnings"},
 			getMockDepsolveDNFSolverFn(&depsolvednf_mock.MockDepsolveDNF{
 				DepsolveRes: &depsolvednf.DepsolveResult{
-					Packages: depsolvednf_mock.BaseDepsolveResult(testRepoID2),
+					Transactions: []rpmmd.PackageList{depsolvednf_mock.BaseDepsolveResult(testRepoID2)},
 				},
 			}),
 		},
