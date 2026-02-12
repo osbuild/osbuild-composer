@@ -52,6 +52,31 @@
     retries: 5
     until: result is success
 
+  - name: Install build tools
+    become: yes
+    retries: 5
+    delay: 20
+    register: result
+    until: result is success
+    package:
+      name:
+        - rpm-build
+        - mock
+        - createrepo_c
+        - rpmdevtools
+      state: present
+
+  - name: Add ec2-user to mock group
+    become: yes
+    ansible.builtin.user:
+      name: "{{ ansible_user }}"
+      groups:
+        - mock
+      append: yes
+
+  - name: Reset connection to ensure the user is in the mock group
+    ansible.builtin.meta: reset_connection
+
   - name: Create rpmbuild directory
     file:
       path: "{{ item }}"
@@ -97,29 +122,17 @@
       url: "https://raw.githubusercontent.com/osbuild/osbuild/{{ OSBUILD_COMMIT }}/osbuild.spec"
       dest: /home/ec2-user/osbuild.spec
 
-  - name: Install build tools
-    become: yes
+  - name: Download osbuild initrd source
     retries: 5
     delay: 20
     register: result
     until: result is success
-    package:
-      name:
-        - rpm-build
-        - mock
-        - createrepo_c
-      state: present
-
-  - name: Add ec2-user to mock group
-    become: yes
-    ansible.builtin.user:
-      name: "{{ ansible_user }}"
-      groups:
-        - mock
-      append: yes
-
-  - name: Reset connection to ensure the user is in the mock group
-    ansible.builtin.meta: reset_connection
+    command: >-
+      spectool
+      --get-files
+      --source 1
+      --directory /home/ec2-user/rpmbuild/SOURCES
+      /home/ec2-user/osbuild.spec
 
   - name: Make osbuild srpm
     retries: 5
