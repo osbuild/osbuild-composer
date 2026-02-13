@@ -29,10 +29,6 @@ type OSTreeDiskImage struct {
 	Ref    string
 
 	Compression string
-
-	// Container buildable tweaks the buildroot to be container friendly,
-	// i.e. to not rely on an installed osbuild-selinux
-	ContainerBuildable bool
 }
 
 func NewOSTreeDiskImageFromCommit(platform platform.Platform, filename string, commit ostree.SourceSpec) *OSTreeDiskImage {
@@ -88,7 +84,7 @@ func (img *OSTreeDiskImage) InstantiateManifest(m *manifest.Manifest,
 	repos []rpmmd.RepoConfig,
 	runner runner.Runner,
 	rng *rand.Rand) (*artifact.Artifact, error) {
-	buildPipeline := manifestNewBuild(m, runner, repos, &manifest.BuildOptions{ContainerBuildable: img.ContainerBuildable})
+	buildPipeline := manifestNewBuild(m, runner, repos, img.BuildOptions)
 	buildPipeline.Checkpoint()
 
 	// don't support compressing non-raw images

@@ -7,6 +7,7 @@ import (
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/customizations/fdo"
 	"github.com/osbuild/images/pkg/customizations/ignition"
+	"github.com/osbuild/images/pkg/depsolvednf"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/platform"
 	"github.com/osbuild/images/pkg/rpmmd"
@@ -23,14 +24,17 @@ type CoreOSInstaller struct {
 	// Extra repositories to install packages from
 	ExtraRepos []rpmmd.RepoConfig
 
-	platform     platform.Platform
-	repos        []rpmmd.RepoConfig
-	packageSpecs rpmmd.PackageList
-	kernelName   string
-	kernelVer    string
-	product      string
-	version      string
-	Variant      string
+	platform platform.Platform
+	// depsolveRepos holds the repository configuration used by
+	// getPackageSetChain() for depsolving. After depsolving, use
+	// depsolveResult.Repos which contains only repos that provided packages.
+	depsolveRepos  []rpmmd.RepoConfig
+	depsolveResult *depsolvednf.DepsolveResult
+	kernelName     string
+	kernelVer      string
+	product        string
+	version        string
+	Variant        string
 
 	// Biosdevname indicates whether or not biosdevname should be used to
 	// name network devices when booting the installer. This may affect
@@ -44,6 +48,9 @@ type CoreOSInstaller struct {
 
 	AdditionalDracutModules []string
 	AdditionalDrivers       []string
+
+	// Use this RPMKeysBinary from the tree instead of the default one
+	RPMKeysBinary string
 }
 
 // NewCoreOSInstaller creates an CoreOS installer pipeline object.
@@ -55,12 +62,12 @@ func NewCoreOSInstaller(buildPipeline Build,
 	version string) *CoreOSInstaller {
 	name := "coi-tree"
 	p := &CoreOSInstaller{
-		Base:       NewBase(name, buildPipeline),
-		platform:   platform,
-		repos:      filterRepos(repos, name),
-		kernelName: kernelName,
-		product:    product,
-		version:    version,
+		Base:          NewBase(name, buildPipeline),
+		platform:      platform,
+		depsolveRepos: filterRepos(repos, name),
+		kernelName:    kernelName,
+		product:       product,
+		version:       version,
 	}
 	buildPipeline.addDependent(p)
 	return p
@@ -120,6 +127,11 @@ func (p *CoreOSInstaller) getBuildPackages(Distro) ([]string, error) {
 		"rpm",
 		"lorax-templates-generic",
 	)
+
+	if p.RPMKeysBinary != "" {
+		packages = append(packages, "pqrpm")
+	}
+
 	return packages, nil
 }
 
@@ -132,29 +144,31 @@ func (p *CoreOSInstaller) getPackageSetChain(Distro) ([]rpmmd.PackageSet, error)
 		{
 			Include:         append(packages, p.ExtraPackages...),
 			Exclude:         p.ExcludePackages,
-			Repositories:    append(p.repos, p.ExtraRepos...),
+			Repositories:    append(p.depsolveRepos, p.ExtraRepos...),
 			InstallWeakDeps: true,
 		},
 	}, nil
 }
 
 func (p *CoreOSInstaller) getPackageSpecs() rpmmd.PackageList {
-	return p.packageSpecs
+	if p.depsolveResult == nil {
+		return nil
+	}
+	return p.depsolveResult.Transactions.AllPackages()
 }
 
 func (p *CoreOSInstaller) serializeStart(inputs Inputs) error {
-	if len(p.packageSpecs) > 0 {
+	if p.depsolveResult != nil {
 		return errors.New("CoreOSInstaller: double call to serializeStart()")
 	}
-	p.packageSpecs = inputs.Depsolved.Packages
+	p.depsolveResult = &inputs.Depsolved
 	if p.kernelName != "" {
-		kernelPkg, err := p.packageSpecs.Package(p.kernelName)
+		kernelPkg, err := p.depsolveResult.Transactions.FindPackage(p.kernelName)
 		if err != nil {
 			return fmt.Errorf("CoreOSInstaller: %w", err)
 		}
 		p.kernelVer = kernelPkg.EVRA()
 	}
-	p.repos = append(p.repos, inputs.Depsolved.Repos...)
 	return nil
 }
 
@@ -174,11 +188,11 @@ func (p *CoreOSInstaller) getInline() []string {
 }
 
 func (p *CoreOSInstaller) serializeEnd() {
-	if len(p.packageSpecs) == 0 {
+	if p.depsolveResult == nil {
 		panic("serializeEnd() call when serialization not in progress")
 	}
 	p.kernelVer = ""
-	p.packageSpecs = nil
+	p.depsolveResult = nil
 }
 
 func (p *CoreOSInstaller) serialize() (osbuild.Pipeline, error) {
@@ -187,7 +201,19 @@ func (p *CoreOSInstaller) serialize() (osbuild.Pipeline, error) {
 		return osbuild.Pipeline{}, err
 	}
 
-	pipeline.AddStage(osbuild.NewRPMStage(osbuild.NewRPMStageOptions(p.repos), osbuild.NewRpmStageSourceFilesInputs(p.packageSpecs)))
+	baseOptions := osbuild.RPMStageOptions{}
+	if p.RPMKeysBinary != "" {
+		baseOptions.RPMKeys = &osbuild.RPMKeys{
+			BinPath: p.RPMKeysBinary,
+		}
+	}
+
+	rpmStages, err := osbuild.GenRPMStagesFromTransactions(p.depsolveResult.Transactions, &baseOptions)
+	if err != nil {
+		return osbuild.Pipeline{}, err
+	}
+	pipeline.AddStages(rpmStages...)
+
 	pipeline.AddStage(osbuild.NewBuildstampStage(&osbuild.BuildstampStageOptions{
 		Arch:    p.platform.GetArch().String(),
 		Product: p.product,

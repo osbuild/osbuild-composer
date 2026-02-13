@@ -37,6 +37,8 @@ type InstallerCustomizations struct {
 	OSVersion string
 	Release   string
 	Preview   bool
+
+	RPMKeysBinary string
 }
 
 type InstallerLoraxTemplate struct {

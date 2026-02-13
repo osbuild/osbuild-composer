@@ -46,7 +46,7 @@ func (img *DiskImage) InstantiateManifest(m *manifest.Manifest,
 	runner runner.Runner,
 	rng *rand.Rand) (*artifact.Artifact, error) {
 
-	buildPipeline := addBuildBootstrapPipelines(m, runner, repos, nil)
+	buildPipeline := addBuildBootstrapPipelines(m, runner, repos, img.BuildOptions)
 	buildPipeline.Checkpoint()
 
 	osPipeline := manifest.NewOS(buildPipeline, img.platform, repos)

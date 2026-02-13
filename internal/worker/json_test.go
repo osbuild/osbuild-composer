@@ -993,9 +993,11 @@ func TestDepsolveJobResultToDepsolvednfResult(t *testing.T) {
 			},
 			expected: map[string]depsolvednf.DepsolveResult{
 				"os": {
-					Packages: rpmmd.PackageList{
-						{Name: "bash", Version: "5.0", Arch: "x86_64"},
-						{Name: "coreutils", Version: "8.32", Arch: "x86_64"},
+					Transactions: []rpmmd.PackageList{
+						{
+							{Name: "bash", Version: "5.0", Arch: "x86_64"},
+							{Name: "coreutils", Version: "8.32", Arch: "x86_64"},
+						},
 					},
 					Repos: []rpmmd.RepoConfig{
 						{Id: "baseos", BaseURLs: []string{"https://example.com/baseos"}},
@@ -1018,9 +1020,11 @@ func TestDepsolveJobResultToDepsolvednfResult(t *testing.T) {
 			},
 			expected: map[string]depsolvednf.DepsolveResult{
 				"os": {
-					Packages: rpmmd.PackageList{{Name: "bash", Version: "5.0", Arch: "x86_64"}},
-					Repos:    []rpmmd.RepoConfig{{Id: "baseos", BaseURLs: []string{"https://example.com/baseos"}}},
-					SBOM:     &sbom.Document{DocType: sbom.StandardTypeSpdx, Document: json.RawMessage(`{"spdxVersion":"SPDX-2.3"}`)},
+					Transactions: []rpmmd.PackageList{
+						{{Name: "bash", Version: "5.0", Arch: "x86_64"}},
+					},
+					Repos: []rpmmd.RepoConfig{{Id: "baseos", BaseURLs: []string{"https://example.com/baseos"}}},
+					SBOM:  &sbom.Document{DocType: sbom.StandardTypeSpdx, Document: json.RawMessage(`{"spdxVersion":"SPDX-2.3"}`)},
 				},
 			},
 		},
@@ -1050,8 +1054,8 @@ func TestDepsolveJobResultToDepsolvednfResult(t *testing.T) {
 			},
 			expected: map[string]depsolvednf.DepsolveResult{
 				"os": {
-					Packages: rpmmd.PackageList{{Name: "nodejs", Version: "18.0", Arch: "x86_64"}},
-					Repos:    []rpmmd.RepoConfig{{Id: "appstream", BaseURLs: []string{"https://example.com/appstream"}}},
+					Transactions: []rpmmd.PackageList{{{Name: "nodejs", Version: "18.0", Arch: "x86_64"}}},
+					Repos:        []rpmmd.RepoConfig{{Id: "appstream", BaseURLs: []string{"https://example.com/appstream"}}},
 					Modules: []rpmmd.ModuleSpec{
 						{
 							ModuleConfigFile: rpmmd.ModuleConfigFile{
@@ -1088,10 +1092,6 @@ func TestDepsolveJobResultToDepsolvednfResult(t *testing.T) {
 			},
 			expected: map[string]depsolvednf.DepsolveResult{
 				"os": {
-					Packages: rpmmd.PackageList{
-						{Name: "bash", Version: "5.0", Arch: "x86_64"},
-						{Name: "vim", Version: "8.2", Arch: "x86_64"},
-					},
 					Transactions: []rpmmd.PackageList{
 						{{Name: "bash", Version: "5.0", Arch: "x86_64"}},
 						{{Name: "vim", Version: "8.2", Arch: "x86_64"}},
@@ -1113,9 +1113,9 @@ func TestDepsolveJobResultToDepsolvednfResult(t *testing.T) {
 			},
 			expected: map[string]depsolvednf.DepsolveResult{
 				"os": {
-					Packages: rpmmd.PackageList{{Name: "bash", Version: "5.0", Arch: "x86_64"}},
-					Repos:    []rpmmd.RepoConfig{{Id: "baseos", BaseURLs: []string{"https://example.com/baseos"}}},
-					Solver:   "dnf5",
+					Transactions: []rpmmd.PackageList{{{Name: "bash", Version: "5.0", Arch: "x86_64"}}},
+					Repos:        []rpmmd.RepoConfig{{Id: "baseos", BaseURLs: []string{"https://example.com/baseos"}}},
+					Solver:       "dnf5",
 				},
 			},
 		},
@@ -1133,12 +1133,12 @@ func TestDepsolveJobResultToDepsolvednfResult(t *testing.T) {
 			},
 			expected: map[string]depsolvednf.DepsolveResult{
 				"build": {
-					Packages: rpmmd.PackageList{{Name: "gcc", Version: "11.0", Arch: "x86_64"}},
-					Repos:    []rpmmd.RepoConfig{{Id: "baseos", BaseURLs: []string{"https://example.com/baseos"}}},
+					Transactions: []rpmmd.PackageList{{{Name: "gcc", Version: "11.0", Arch: "x86_64"}}},
+					Repos:        []rpmmd.RepoConfig{{Id: "baseos", BaseURLs: []string{"https://example.com/baseos"}}},
 				},
 				"os": {
-					Packages: rpmmd.PackageList{{Name: "bash", Version: "5.0", Arch: "x86_64"}},
-					Repos:    []rpmmd.RepoConfig{{Id: "appstream", BaseURLs: []string{"https://example.com/appstream"}}},
+					Transactions: []rpmmd.PackageList{{{Name: "bash", Version: "5.0", Arch: "x86_64"}}},
+					Repos:        []rpmmd.RepoConfig{{Id: "appstream", BaseURLs: []string{"https://example.com/appstream"}}},
 				},
 			},
 		},

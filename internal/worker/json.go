@@ -781,9 +781,9 @@ func (d *DepsolveJobResult) ToDepsolvednfResult() map[string]depsolvednf.Depsolv
 	// switch to iterating over Transactions as the primary map.
 	for name, pkgs := range d.PackageSpecs {
 		result := depsolvednf.DepsolveResult{
-			Packages: pkgs.ToRPMMDList(),
-			Repos:    DepsolvedRepoConfigListToRPMMDList(d.RepoConfigs[name]),
-			Solver:   d.Solver,
+			Transactions: []rpmmd.PackageList{pkgs.ToRPMMDList()},
+			Repos:        DepsolvedRepoConfigListToRPMMDList(d.RepoConfigs[name]),
+			Solver:       d.Solver,
 		}
 
 		if transactions, ok := d.Transactions[name]; ok {
