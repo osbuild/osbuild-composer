@@ -17,7 +17,7 @@ jobs:
       - name: Run gobump-deps action - images
         uses: lzap/gobump@main
         with:
-          go_version: "1.23.9"
+          go_version: "1.24.12"
           token: ${{ secrets.SCHUTZBOT_GITHUB_ACCESS_TOKEN }}
           exec_pr: ./tools/prepare-source.sh
           include: "github.com/osbuild/images github.com/osbuild/blueprint"
@@ -29,7 +29,7 @@ jobs:
       - name: Run gobump-deps action - all other
         uses: lzap/gobump@main
         with:
-          go_version: "1.23.9"
+          go_version: "1.24.12"
           token: ${{ secrets.SCHUTZBOT_GITHUB_ACCESS_TOKEN }}
           exec_pr: ./tools/prepare-source.sh
           exclude: "github.com/osbuild/images,github.com/osbuild/blueprint"
