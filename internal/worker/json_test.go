@@ -967,9 +967,10 @@ func TestDepsolvedRepoConfigRPMMDConversion(t *testing.T) {
 
 func TestDepsolveJobResultToDepsolvednfResult(t *testing.T) {
 	testCases := []struct {
-		name     string
-		input    DepsolveJobResult
-		expected map[string]depsolvednf.DepsolveResult
+		name      string
+		input     DepsolveJobResult
+		expected  map[string]depsolvednf.DepsolveResult
+		expectErr string
 	}{
 		{
 			name:     "empty",
@@ -977,37 +978,107 @@ func TestDepsolveJobResultToDepsolvednfResult(t *testing.T) {
 			expected: map[string]depsolvednf.DepsolveResult{},
 		},
 		{
-			name: "single-pipeline-without-sbom",
+			name: "minimal",
 			input: DepsolveJobResult{
-				PackageSpecs: map[string]DepsolvedPackageList{
+				Transactions: map[string][]DepsolvedPackageList{
 					"os": {
-						{Name: "bash", Version: "5.0", Arch: "x86_64"},
-						{Name: "coreutils", Version: "8.32", Arch: "x86_64"},
+						{{Name: "bash", Version: "5.0", Arch: "x86_64", RepoID: "baseos"}},
+						{{Name: "vim", Version: "8.2", Arch: "x86_64", RepoID: "baseos"}},
 					},
 				},
 				RepoConfigs: map[string][]DepsolvedRepoConfig{
+					"os": {{Id: "baseos", BaseURLs: []string{"https://example.com/baseos"}}},
+				},
+			},
+			expected: func() map[string]depsolvednf.DepsolveResult {
+				repos := []rpmmd.RepoConfig{{Id: "baseos", BaseURLs: []string{"https://example.com/baseos"}}}
+				return map[string]depsolvednf.DepsolveResult{
 					"os": {
-						{Id: "baseos", BaseURLs: []string{"https://example.com/baseos"}},
+						Transactions: depsolvednf.TransactionList{
+							rpmmd.PackageList{{Name: "bash", Version: "5.0", Arch: "x86_64", RepoID: "baseos", Repo: &repos[0]}},
+							rpmmd.PackageList{{Name: "vim", Version: "8.2", Arch: "x86_64", RepoID: "baseos", Repo: &repos[0]}},
+						},
+						Repos: repos,
 					},
-				},
-			},
-			expected: map[string]depsolvednf.DepsolveResult{
-				"os": {
-					Packages: rpmmd.PackageList{
-						{Name: "bash", Version: "5.0", Arch: "x86_64"},
-						{Name: "coreutils", Version: "8.32", Arch: "x86_64"},
-					},
-					Repos: []rpmmd.RepoConfig{
-						{Id: "baseos", BaseURLs: []string{"https://example.com/baseos"}},
-					},
-				},
-			},
+				}
+			}(),
 		},
 		{
-			name: "single-pipeline-with-sbom",
+			name: "multiple-pipelines",
 			input: DepsolveJobResult{
-				PackageSpecs: map[string]DepsolvedPackageList{
-					"os": {{Name: "bash", Version: "5.0", Arch: "x86_64"}},
+				Transactions: map[string][]DepsolvedPackageList{
+					"build": {
+						{{Name: "gcc", Version: "11.0", Arch: "x86_64", RepoID: "baseos"}},
+						{{Name: "make", Version: "4.3", Arch: "x86_64", RepoID: "baseos"}},
+					},
+					"os": {
+						{{Name: "bash", Version: "5.0", Arch: "x86_64", RepoID: "appstream"}},
+						{{Name: "vim", Version: "8.2", Arch: "x86_64", RepoID: "appstream"}},
+					},
+				},
+				RepoConfigs: map[string][]DepsolvedRepoConfig{
+					"build": {{Id: "baseos", BaseURLs: []string{"https://example.com/baseos"}}},
+					"os":    {{Id: "appstream", BaseURLs: []string{"https://example.com/appstream"}}},
+				},
+			},
+			expected: func() map[string]depsolvednf.DepsolveResult {
+				buildRepos := []rpmmd.RepoConfig{{Id: "baseos", BaseURLs: []string{"https://example.com/baseos"}}}
+				osRepos := []rpmmd.RepoConfig{{Id: "appstream", BaseURLs: []string{"https://example.com/appstream"}}}
+				return map[string]depsolvednf.DepsolveResult{
+					"build": {
+						Transactions: depsolvednf.TransactionList{
+							rpmmd.PackageList{{Name: "gcc", Version: "11.0", Arch: "x86_64", RepoID: "baseos", Repo: &buildRepos[0]}},
+							rpmmd.PackageList{{Name: "make", Version: "4.3", Arch: "x86_64", RepoID: "baseos", Repo: &buildRepos[0]}},
+						},
+						Repos: buildRepos,
+					},
+					"os": {
+						Transactions: depsolvednf.TransactionList{
+							rpmmd.PackageList{{Name: "bash", Version: "5.0", Arch: "x86_64", RepoID: "appstream", Repo: &osRepos[0]}},
+							rpmmd.PackageList{{Name: "vim", Version: "8.2", Arch: "x86_64", RepoID: "appstream", Repo: &osRepos[0]}},
+						},
+						Repos: osRepos,
+					},
+				}
+			}(),
+		},
+		// optional fields
+		{
+			name: "with-solver",
+			input: DepsolveJobResult{
+				Transactions: map[string][]DepsolvedPackageList{
+					"os": {
+						{{Name: "bash", Version: "5.0", Arch: "x86_64", RepoID: "baseos"}},
+						{{Name: "vim", Version: "8.2", Arch: "x86_64", RepoID: "baseos"}},
+					},
+				},
+				RepoConfigs: map[string][]DepsolvedRepoConfig{
+					"os": {{Id: "baseos", BaseURLs: []string{"https://example.com/baseos"}}},
+				},
+				Solver: "dnf5",
+			},
+			expected: func() map[string]depsolvednf.DepsolveResult {
+				repos := []rpmmd.RepoConfig{{Id: "baseos", BaseURLs: []string{"https://example.com/baseos"}}}
+				return map[string]depsolvednf.DepsolveResult{
+					"os": {
+						Transactions: depsolvednf.TransactionList{
+							rpmmd.PackageList{{Name: "bash", Version: "5.0", Arch: "x86_64", RepoID: "baseos", Repo: &repos[0]}},
+							rpmmd.PackageList{{Name: "vim", Version: "8.2", Arch: "x86_64", RepoID: "baseos", Repo: &repos[0]}},
+						},
+						Repos:  repos,
+						Solver: "dnf5",
+					},
+				}
+			}(),
+		},
+		{
+			name: "with-sbom",
+			input: DepsolveJobResult{
+				Transactions: map[string][]DepsolvedPackageList{
+					"os": {
+						{{Name: "bash", Version: "5.0", Arch: "x86_64", RepoID: "baseos"}},
+						{{Name: "vim", Version: "8.2", Arch: "x86_64", RepoID: "baseos"}},
+					},
 				},
 				RepoConfigs: map[string][]DepsolvedRepoConfig{
 					"os": {{Id: "baseos", BaseURLs: []string{"https://example.com/baseos"}}},
@@ -1016,19 +1087,28 @@ func TestDepsolveJobResultToDepsolvednfResult(t *testing.T) {
 					"os": {DocType: sbom.StandardTypeSpdx, Document: json.RawMessage(`{"spdxVersion":"SPDX-2.3"}`)},
 				},
 			},
-			expected: map[string]depsolvednf.DepsolveResult{
-				"os": {
-					Packages: rpmmd.PackageList{{Name: "bash", Version: "5.0", Arch: "x86_64"}},
-					Repos:    []rpmmd.RepoConfig{{Id: "baseos", BaseURLs: []string{"https://example.com/baseos"}}},
-					SBOM:     &sbom.Document{DocType: sbom.StandardTypeSpdx, Document: json.RawMessage(`{"spdxVersion":"SPDX-2.3"}`)},
-				},
-			},
+			expected: func() map[string]depsolvednf.DepsolveResult {
+				repos := []rpmmd.RepoConfig{{Id: "baseos", BaseURLs: []string{"https://example.com/baseos"}}}
+				return map[string]depsolvednf.DepsolveResult{
+					"os": {
+						Transactions: depsolvednf.TransactionList{
+							rpmmd.PackageList{{Name: "bash", Version: "5.0", Arch: "x86_64", RepoID: "baseos", Repo: &repos[0]}},
+							rpmmd.PackageList{{Name: "vim", Version: "8.2", Arch: "x86_64", RepoID: "baseos", Repo: &repos[0]}},
+						},
+						Repos: repos,
+						SBOM:  &sbom.Document{DocType: sbom.StandardTypeSpdx, Document: json.RawMessage(`{"spdxVersion":"SPDX-2.3"}`)},
+					},
+				}
+			}(),
 		},
 		{
-			name: "single-pipeline-with-modules",
+			name: "with-modules",
 			input: DepsolveJobResult{
-				PackageSpecs: map[string]DepsolvedPackageList{
-					"os": {{Name: "nodejs", Version: "18.0", Arch: "x86_64"}},
+				Transactions: map[string][]DepsolvedPackageList{
+					"os": {
+						{{Name: "nodejs", Version: "18.0", Arch: "x86_64", RepoID: "appstream"}},
+						{{Name: "vim", Version: "8.2", Arch: "x86_64", RepoID: "appstream"}},
+					},
 				},
 				RepoConfigs: map[string][]DepsolvedRepoConfig{
 					"os": {{Id: "appstream", BaseURLs: []string{"https://example.com/appstream"}}},
@@ -1048,106 +1128,117 @@ func TestDepsolveJobResultToDepsolvednfResult(t *testing.T) {
 					},
 				},
 			},
-			expected: map[string]depsolvednf.DepsolveResult{
-				"os": {
-					Packages: rpmmd.PackageList{{Name: "nodejs", Version: "18.0", Arch: "x86_64"}},
-					Repos:    []rpmmd.RepoConfig{{Id: "appstream", BaseURLs: []string{"https://example.com/appstream"}}},
-					Modules: []rpmmd.ModuleSpec{
-						{
-							ModuleConfigFile: rpmmd.ModuleConfigFile{
-								Path: "/etc/dnf/modules.d/nodejs.module",
-								Data: rpmmd.ModuleConfigData{
-									Name:   "nodejs",
-									Stream: "18",
-									State:  "enabled",
+			expected: func() map[string]depsolvednf.DepsolveResult {
+				repos := []rpmmd.RepoConfig{{Id: "appstream", BaseURLs: []string{"https://example.com/appstream"}}}
+				return map[string]depsolvednf.DepsolveResult{
+					"os": {
+						Transactions: depsolvednf.TransactionList{
+							rpmmd.PackageList{{Name: "nodejs", Version: "18.0", Arch: "x86_64", RepoID: "appstream", Repo: &repos[0]}},
+							rpmmd.PackageList{{Name: "vim", Version: "8.2", Arch: "x86_64", RepoID: "appstream", Repo: &repos[0]}},
+						},
+						Repos: repos,
+						Modules: []rpmmd.ModuleSpec{
+							{
+								ModuleConfigFile: rpmmd.ModuleConfigFile{
+									Path: "/etc/dnf/modules.d/nodejs.module",
+									Data: rpmmd.ModuleConfigData{
+										Name:   "nodejs",
+										Stream: "18",
+										State:  "enabled",
+									},
 								},
 							},
 						},
 					},
-				},
-			},
+				}
+			}(),
 		},
+		// backward compatibility fallbacks
 		{
-			name: "single-pipeline-with-transactions",
+			name: "fallback-packagespecs-only",
 			input: DepsolveJobResult{
 				PackageSpecs: map[string]DepsolvedPackageList{
 					"os": {
-						{Name: "bash", Version: "5.0", Arch: "x86_64"},
-						{Name: "vim", Version: "8.2", Arch: "x86_64"},
+						{Name: "bash", Version: "5.0", Arch: "x86_64", RepoID: "baseos"},
+						{Name: "coreutils", Version: "8.32", Arch: "x86_64", RepoID: "baseos"},
 					},
 				},
+				RepoConfigs: map[string][]DepsolvedRepoConfig{
+					"os": {
+						{Id: "baseos", BaseURLs: []string{"https://example.com/baseos"}},
+					},
+				},
+			},
+			expected: func() map[string]depsolvednf.DepsolveResult {
+				repos := []rpmmd.RepoConfig{
+					{Id: "baseos", BaseURLs: []string{"https://example.com/baseos"}},
+				}
+				return map[string]depsolvednf.DepsolveResult{
+					"os": {
+						Transactions: depsolvednf.TransactionList{
+							rpmmd.PackageList{
+								{Name: "bash", Version: "5.0", Arch: "x86_64", RepoID: "baseos", Repo: &repos[0]},
+								{Name: "coreutils", Version: "8.32", Arch: "x86_64", RepoID: "baseos", Repo: &repos[0]},
+							},
+						},
+						Repos: repos,
+					},
+				}
+			}(),
+		},
+		// error cases
+		{
+			name: "error-empty-repo-id",
+			input: DepsolveJobResult{
 				Transactions: map[string][]DepsolvedPackageList{
 					"os": {
 						{{Name: "bash", Version: "5.0", Arch: "x86_64"}},
-						{{Name: "vim", Version: "8.2", Arch: "x86_64"}},
 					},
 				},
 				RepoConfigs: map[string][]DepsolvedRepoConfig{
 					"os": {{Id: "baseos", BaseURLs: []string{"https://example.com/baseos"}}},
 				},
 			},
-			expected: map[string]depsolvednf.DepsolveResult{
-				"os": {
-					Packages: rpmmd.PackageList{
-						{Name: "bash", Version: "5.0", Arch: "x86_64"},
-						{Name: "vim", Version: "8.2", Arch: "x86_64"},
-					},
-					Transactions: []rpmmd.PackageList{
-						{{Name: "bash", Version: "5.0", Arch: "x86_64"}},
-						{{Name: "vim", Version: "8.2", Arch: "x86_64"}},
-					},
-					Repos: []rpmmd.RepoConfig{{Id: "baseos", BaseURLs: []string{"https://example.com/baseos"}}},
-				},
-			},
+			expectErr: `package "bash" has empty RepoID`,
 		},
 		{
-			name: "single-pipeline-with-solver",
+			name: "error-unknown-repo-id",
 			input: DepsolveJobResult{
-				PackageSpecs: map[string]DepsolvedPackageList{
-					"os": {{Name: "bash", Version: "5.0", Arch: "x86_64"}},
+				Transactions: map[string][]DepsolvedPackageList{
+					"os": {
+						{{Name: "bash", Version: "5.0", Arch: "x86_64", RepoID: "nonexistent"}},
+					},
 				},
 				RepoConfigs: map[string][]DepsolvedRepoConfig{
 					"os": {{Id: "baseos", BaseURLs: []string{"https://example.com/baseos"}}},
 				},
-				Solver: "dnf5",
 			},
-			expected: map[string]depsolvednf.DepsolveResult{
-				"os": {
-					Packages: rpmmd.PackageList{{Name: "bash", Version: "5.0", Arch: "x86_64"}},
-					Repos:    []rpmmd.RepoConfig{{Id: "baseos", BaseURLs: []string{"https://example.com/baseos"}}},
-					Solver:   "dnf5",
-				},
-			},
-		},
-		{
-			name: "multiple-pipelines",
-			input: DepsolveJobResult{
-				PackageSpecs: map[string]DepsolvedPackageList{
-					"build": {{Name: "gcc", Version: "11.0", Arch: "x86_64"}},
-					"os":    {{Name: "bash", Version: "5.0", Arch: "x86_64"}},
-				},
-				RepoConfigs: map[string][]DepsolvedRepoConfig{
-					"build": {{Id: "baseos", BaseURLs: []string{"https://example.com/baseos"}}},
-					"os":    {{Id: "appstream", BaseURLs: []string{"https://example.com/appstream"}}},
-				},
-			},
-			expected: map[string]depsolvednf.DepsolveResult{
-				"build": {
-					Packages: rpmmd.PackageList{{Name: "gcc", Version: "11.0", Arch: "x86_64"}},
-					Repos:    []rpmmd.RepoConfig{{Id: "baseos", BaseURLs: []string{"https://example.com/baseos"}}},
-				},
-				"os": {
-					Packages: rpmmd.PackageList{{Name: "bash", Version: "5.0", Arch: "x86_64"}},
-					Repos:    []rpmmd.RepoConfig{{Id: "appstream", BaseURLs: []string{"https://example.com/appstream"}}},
-				},
-			},
+			expectErr: `repo ID "nonexistent" not found in repo map for package "bash"`,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			result := tc.input.ToDepsolvednfResult()
+			result, err := tc.input.ToDepsolvednfResult()
+			if tc.expectErr != "" {
+				assert.ErrorContains(t, err, tc.expectErr)
+				return
+			}
+			require.NoError(t, err)
 			assert.Equal(t, tc.expected, result)
+
+			// Verify that all packages have non-nil Repo pointers
+			// and that the Repo pointer points into the Repos slice.
+			for name, dr := range result {
+				for txIdx, tx := range dr.Transactions {
+					for pkgIdx, pkg := range tx {
+						assert.NotNilf(
+							t, pkg.Repo, "pipeline %q, transaction %d, package %d (%q): Repo pointer is nil",
+							name, txIdx, pkgIdx, pkg.Name,
+						)
+					}
+				}
+			}
 		})
 	}
 }

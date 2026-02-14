@@ -179,6 +179,10 @@ func runNextJob(t *testing.T, jobs []uuid.UUID, workerServer *worker.Server, org
 	// the manifest generation job would fail on empty depsolved package list.
 	// This would make the ComposeManifests endpoint return an error.
 	case worker.JobTypeDepsolve:
+		dummyRepoConfig := worker.DepsolvedRepoConfig{
+			Id:       "test-repo",
+			BaseURLs: []string{"https://example.com/repo"},
+		}
 		dummyPackage := worker.DepsolvedPackage{
 			Name:    "pkg1",
 			Version: "1.33",
@@ -189,12 +193,17 @@ func runNextJob(t *testing.T, jobs []uuid.UUID, workerServer *worker.Server, org
 				Value: "e50ddb78a37f5851d1a5c37a4c77d59123153c156e628e064b9daa378f45a2fe",
 			},
 			RemoteLocations: []string{"https://pkg1.example.com/1.33-2.fc30.x86_64.rpm"},
+			RepoID:          dummyRepoConfig.Id,
 		}
 		depsolveJobResult := &worker.DepsolveJobResult{
 			PackageSpecs: map[string]worker.DepsolvedPackageList{
 				// Used when depsolving a manifest
 				"build": {dummyPackage},
 				"os":    {dummyPackage},
+			},
+			RepoConfigs: map[string][]worker.DepsolvedRepoConfig{
+				"build": {dummyRepoConfig},
+				"os":    {dummyRepoConfig},
 			},
 		}
 		rawDepsolveJobResult, err := json.Marshal(depsolveJobResult)

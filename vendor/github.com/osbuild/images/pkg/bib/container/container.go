@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 
+	"github.com/osbuild/images/pkg/bib/osinfo"
 	"golang.org/x/exp/slices"
 )
 
@@ -14,6 +16,7 @@ import (
 // This type isn't meant as a general-purpose container management tool, but
 // as an opinonated library for bootc-image-builder.
 type Container struct {
+	ref  string
 	id   string
 	root string
 	arch string
@@ -52,7 +55,9 @@ func New(ref string) (*Container, error) {
 		return nil, fmt.Errorf("running %s container failed with generic error: %w", ref, err)
 	}
 
-	c := &Container{}
+	c := &Container{
+		ref: ref,
+	}
 	c.id = strings.TrimSpace(string(output))
 	// Ensure that the container is stopped when this function errors
 	defer func() {
@@ -97,6 +102,57 @@ func (c *Container) Stop() error {
 	}
 
 	return nil
+}
+
+// BootcInfo contains all the information from the bootc container that is
+// required to create a manifest for a bootc-based image.
+type BootcInfo struct {
+	// The name of the container image that generated the info
+	Imgref string
+
+	// The container image ID
+	ImageID string
+
+	// Information related to the OS in the container
+	OSInfo *osinfo.Info
+
+	// The container's hardware architecture
+	Arch string
+
+	// The default root filesystem from the container's bootc config
+	DefaultRootFs string
+
+	// The size of the container image
+	Size uint64
+}
+
+// ResolveInfo loads all information from the running container.
+func (c *Container) ResolveInfo() (*BootcInfo, error) {
+	bootcInfo := &BootcInfo{
+		Imgref:  c.ref,
+		ImageID: c.id,
+		Arch:    c.Arch(),
+	}
+
+	os, err := osinfo.Load(c.Root())
+	if err != nil {
+		return nil, err
+	}
+	bootcInfo.OSInfo = os
+
+	defaultFs, err := c.DefaultRootfsType()
+	if err != nil {
+		return nil, err
+	}
+	bootcInfo.DefaultRootFs = defaultFs
+
+	size, err := getContainerSize(c.ref)
+	if err != nil {
+		return nil, err
+	}
+	bootcInfo.Size = size
+
+	return bootcInfo, nil
 }
 
 // Root returns the root directory of the container as available on the host.
@@ -210,4 +266,18 @@ func findContainerArchInspect(cntId, ref string) (string, error) {
 		return "", fmt.Errorf("inspecting %s container failed with generic error: %w", ref, err)
 	}
 	return strings.TrimSpace(string(output)), nil
+}
+
+// getContainerSize returns the size of an already pulled container image in bytes
+func getContainerSize(imgref string) (uint64, error) {
+	output, err := exec.Command("podman", "image", "inspect", imgref, "--format", "{{.Size}}").Output()
+	if err != nil {
+		return 0, fmt.Errorf("failed inspect image: %w, output\n%s", err, output)
+	}
+	size, err := strconv.ParseUint(strings.TrimSpace(string(output)), 10, 64)
+	if err != nil {
+		return 0, fmt.Errorf("cannot parse image size: %w", err)
+	}
+
+	return size, nil
 }

@@ -87,24 +87,10 @@ func BaseSearchResultsMap() map[string]rpmmd.PackageList {
 }
 
 // BaseDepsolveResult is the expected list of dependencies (as rpmmd.PackageList) from
+// a depsolve operation. The list is sorted by NEVRA to match the order returned by
+// depsolvednf.TransactionList.AllPackages().
 func BaseDepsolveResult(repoID string) rpmmd.PackageList {
 	return rpmmd.PackageList{
-		{
-			Name:     "dep-package3",
-			Epoch:    7,
-			Version:  "3.0.3",
-			Release:  "1.fc30",
-			Arch:     "x86_64",
-			CheckGPG: true,
-			Checksum: rpmmd.Checksum{
-				Type:  "sha256",
-				Value: "62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720",
-			},
-			RemoteLocations: []string{
-				"https://pkg3.example.com/3.0.3-1.fc30.x86_64.rpm",
-			},
-			RepoID: repoID,
-		},
 		{
 			Name:     "dep-package1",
 			Epoch:    0,
@@ -134,6 +120,22 @@ func BaseDepsolveResult(repoID string) rpmmd.PackageList {
 			},
 			RemoteLocations: []string{
 				"https://pkg2.example.com/2.9-1.fc30.x86_64.rpm",
+			},
+			RepoID: repoID,
+		},
+		{
+			Name:     "dep-package3",
+			Epoch:    7,
+			Version:  "3.0.3",
+			Release:  "1.fc30",
+			Arch:     "x86_64",
+			CheckGPG: true,
+			Checksum: rpmmd.Checksum{
+				Type:  "sha256",
+				Value: "62278d360aa5045eb202af39fe85743a4b5615f0c9c7439a04d75d785db4c720",
+			},
+			RemoteLocations: []string{
+				"https://pkg3.example.com/3.0.3-1.fc30.x86_64.rpm",
 			},
 			RepoID: repoID,
 		},

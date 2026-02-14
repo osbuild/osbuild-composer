@@ -92,10 +92,10 @@ func (impl *DepsolveJobImpl) depsolve(packageSets map[string][]rpmmd.PackageSet,
 		if solverName == "" {
 			solverName = res.Solver
 		}
-		// TODO: Once osbuild/images removes Packages from DepsolveResult,
-		// remove depsolvedSets and use only transactions. PackageSpecs is kept
-		// for backward compatibility with older osbuild-composer servers.
-		depsolvedSets[name] = worker.DepsolvedPackageListFromRPMMDList(res.Packages)
+		// NOTE: PackageSpecs is populated for backward compatibility with older osbuild-composer servers
+		// that don't recognize the Transactions field in the DepsolveJobResult yet.
+		// TODO (2026-02-12, thozza): remove PackageSpecs after ~ 1 month / 2 releases
+		depsolvedSets[name] = worker.DepsolvedPackageListFromRPMMDList(res.Transactions.AllPackages())
 		transactions[name] = worker.DepsolvedTransactionsFromRPMMD(res.Transactions)
 		repoConfigs[name] = worker.DepsolvedRepoConfigListFromRPMMDList(res.Repos)
 		if len(res.Modules) > 0 {

@@ -17,6 +17,11 @@ type ContainerBasedIso struct {
 	// Container source for the OS tree
 	ContainerSource container.SourceSpec
 
+	// PayloadContainer is an optional container to embed in the image's
+	// container storage (for bootc installer scenarios where the payload
+	// container needs to be available at install time).
+	PayloadContainer *container.SourceSpec
+
 	Product string
 	Version string
 	Release string
@@ -27,7 +32,13 @@ type ContainerBasedIso struct {
 	RootfsType        manifest.ISORootfsType
 
 	KernelPath    string
+	KernelOpts    []string
 	InitramfsPath string
+
+	Grub2MenuDefault *int
+	Grub2MenuTimeout *int
+
+	Grub2MenuEntries []manifest.ISOGrub2MenuEntry
 }
 
 func NewContainerBasedIso(platform platform.Platform, filename string, container container.SourceSpec) *ContainerBasedIso {
@@ -43,13 +54,20 @@ func (img *ContainerBasedIso) InstantiateManifestFromContainer(m *manifest.Manif
 	rng *rand.Rand) (*artifact.Artifact, error) {
 	cnts := []container.SourceSpec{img.ContainerSource}
 
-	// org.osbuild.grub2.iso.legacy fails to run with empty kernel options, so let's use something harmless
-	kernelOpts := []string{
-		fmt.Sprintf("root=live:CDLABEL=%s", img.ISOLabel),
-		"rd.live.image",
-		"quiet",
-		"rhgb",
-		"enforcing=0",
+	kernelOpts := []string{}
+
+	if len(img.KernelOpts) > 0 {
+		kernelOpts = append(kernelOpts, img.KernelOpts...)
+	} else {
+		// org.osbuild.grub2.iso.legacy fails to run with empty kernel options, so let's use something harmless
+		// if we didn't have any specific kernelopts set
+		kernelOpts = []string{
+			fmt.Sprintf("root=live:CDLABEL=%s", img.ISOLabel),
+			"rd.live.image",
+			"quiet",
+			"rhgb",
+			"enforcing=0",
+		}
 	}
 
 	buildPipeline := manifest.NewBuildFromContainer(m, runner, cnts,
@@ -58,6 +76,7 @@ func (img *ContainerBasedIso) InstantiateManifestFromContainer(m *manifest.Manif
 		})
 
 	osTreePipeline := manifest.NewOSFromContainer("os-tree", buildPipeline, &img.ContainerSource)
+	osTreePipeline.PayloadContainer = img.PayloadContainer
 
 	product := img.Product
 	if product == "" {
@@ -72,6 +91,15 @@ func (img *ContainerBasedIso) InstantiateManifestFromContainer(m *manifest.Manif
 	bootTreePipeline.UEFIVendor = img.platform.GetUEFIVendor()
 	bootTreePipeline.ISOLabel = img.ISOLabel
 	bootTreePipeline.KernelOpts = kernelOpts
+	bootTreePipeline.MenuTimeout = img.Grub2MenuTimeout
+	bootTreePipeline.DisableTestEntry = true
+	bootTreePipeline.DisableTroubleshootingEntry = true
+
+	if img.Grub2MenuDefault != nil {
+		bootTreePipeline.DefaultMenu = *img.Grub2MenuDefault
+	}
+
+	bootTreePipeline.MenuEntries = img.Grub2MenuEntries
 
 	isoTreePipeline := manifest.NewISOTree(buildPipeline, osTreePipeline, bootTreePipeline)
 	isoTreePipeline.PartitionTable = efiBootPartitionTable(rng)

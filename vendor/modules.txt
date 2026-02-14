@@ -967,11 +967,11 @@ github.com/oracle/oci-go-sdk/v54/identity
 github.com/oracle/oci-go-sdk/v54/objectstorage
 github.com/oracle/oci-go-sdk/v54/objectstorage/transfer
 github.com/oracle/oci-go-sdk/v54/workrequests
-# github.com/osbuild/blueprint v1.22.0
+# github.com/osbuild/blueprint v1.23.0
 ## explicit; go 1.23.9
 github.com/osbuild/blueprint/internal/common
 github.com/osbuild/blueprint/pkg/blueprint
-# github.com/osbuild/images v0.236.0
+# github.com/osbuild/images v0.238.0
 ## explicit; go 1.23.9
 github.com/osbuild/images/data/dependencies
 github.com/osbuild/images/data/distrodefs

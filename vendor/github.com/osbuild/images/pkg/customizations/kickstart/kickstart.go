@@ -62,9 +62,12 @@ func New(customizations *blueprint.Customizations) (*Options, error) {
 		options.Users = bpUsers
 	}
 
-	bpGroups := users.GroupsFromBP(customizations.GetGroups())
+	bpGroups, err := customizations.GetGroups()
+	if err != nil {
+		return nil, err
+	}
 	if len(bpGroups) > 0 {
-		options.Groups = users.GroupsFromBP(customizations.GetGroups())
+		options.Groups = users.GroupsFromBP(bpGroups)
 	}
 
 	instCust, err := customizations.GetInstaller()

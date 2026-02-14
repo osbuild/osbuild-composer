@@ -755,7 +755,12 @@ func serializeManifest(ctx context.Context, manifestSource *manifest.Manifest, w
 		}
 	}
 
-	depsolveResult := depsolveJobResult.ToDepsolvednfResult()
+	depsolveResult, err := depsolveJobResult.ToDepsolvednfResult()
+	if err != nil {
+		reason := "Error converting depsolve result"
+		jobResult.JobError = clienterrors.New(clienterrors.ErrorManifestGeneration, reason, err.Error())
+		return
+	}
 	ms, err := manifestSource.Serialize(depsolveResult, containerSpecs, ostreeCommitSpecs, nil)
 	if err != nil {
 		reason := "Error serializing manifest"

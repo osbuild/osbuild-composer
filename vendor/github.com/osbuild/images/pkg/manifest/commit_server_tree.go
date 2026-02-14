@@ -7,6 +7,7 @@ import (
 
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/customizations/ostreeserver"
+	"github.com/osbuild/images/pkg/depsolvednf"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/platform"
 	"github.com/osbuild/images/pkg/rpmmd"
@@ -30,9 +31,12 @@ type OSTreeCommitServer struct {
 
 	OSTreeCommitServerCustomizations OSTreeCommitServerCustomizations
 
-	platform       platform.Platform
-	repos          []rpmmd.RepoConfig
-	packageSpecs   rpmmd.PackageList
+	platform platform.Platform
+	// depsolveRepos holds the repository configuration used by
+	// getPackageSetChain() for depsolving. After depsolving, use
+	// depsolveResult.Repos which contains only repos that provided packages.
+	depsolveRepos  []rpmmd.RepoConfig
+	depsolveResult *depsolvednf.DepsolveResult
 	commitPipeline *OSTreeCommit
 }
 
@@ -48,7 +52,7 @@ func NewOSTreeCommitServer(buildPipeline Build,
 	p := &OSTreeCommitServer{
 		Base:           NewBase(name, buildPipeline),
 		platform:       platform,
-		repos:          filterRepos(repos, name),
+		depsolveRepos:  filterRepos(repos, name),
 		commitPipeline: commitPipeline,
 		Language:       "en_US",
 	}
@@ -62,7 +66,7 @@ func (p *OSTreeCommitServer) getPackageSetChain(Distro) ([]rpmmd.PackageSet, err
 	return []rpmmd.PackageSet{
 		{
 			Include:         append(packages, p.ExtraPackages...),
-			Repositories:    append(p.repos, p.ExtraRepos...),
+			Repositories:    append(p.depsolveRepos, p.ExtraRepos...),
 			InstallWeakDeps: true,
 		},
 	}, nil
@@ -77,27 +81,29 @@ func (p *OSTreeCommitServer) getBuildPackages(Distro) ([]string, error) {
 }
 
 func (p *OSTreeCommitServer) getPackageSpecs() rpmmd.PackageList {
-	return p.packageSpecs
+	if p.depsolveResult == nil {
+		return nil
+	}
+	return p.depsolveResult.Transactions.AllPackages()
 }
 
 func (p *OSTreeCommitServer) serializeStart(inputs Inputs) error {
-	if len(p.packageSpecs) > 0 {
+	if p.depsolveResult != nil {
 		return errors.New("OSTreeCommitServer: double call to serializeStart()")
 	}
-	p.packageSpecs = inputs.Depsolved.Packages
-	p.repos = append(p.repos, inputs.Depsolved.Repos...)
+	p.depsolveResult = &inputs.Depsolved
 	return nil
 }
 
 func (p *OSTreeCommitServer) serializeEnd() {
-	if len(p.packageSpecs) == 0 {
+	if p.depsolveResult == nil {
 		panic("serializeEnd() call when serialization not in progress")
 	}
-	p.packageSpecs = nil
+	p.depsolveResult = nil
 }
 
 func (p *OSTreeCommitServer) serialize() (osbuild.Pipeline, error) {
-	if len(p.packageSpecs) == 0 {
+	if p.depsolveResult == nil {
 		return osbuild.Pipeline{}, fmt.Errorf("OSTreeCommitServer: serialization not started")
 	}
 	pipeline, err := p.Base.serialize()
@@ -105,7 +111,12 @@ func (p *OSTreeCommitServer) serialize() (osbuild.Pipeline, error) {
 		return osbuild.Pipeline{}, err
 	}
 
-	pipeline.AddStage(osbuild.NewRPMStage(osbuild.NewRPMStageOptions(p.repos), osbuild.NewRpmStageSourceFilesInputs(p.packageSpecs)))
+	rpmStages, err := osbuild.GenRPMStagesFromTransactions(p.depsolveResult.Transactions, nil)
+	if err != nil {
+		return osbuild.Pipeline{}, err
+	}
+	pipeline.AddStages(rpmStages...)
+
 	pipeline.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: p.Language}))
 
 	htmlRoot := "/usr/share/nginx/html"

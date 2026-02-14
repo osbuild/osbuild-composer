@@ -2332,6 +2332,10 @@ image_types:
             - "dracut-live"
             - "dracut-network"
             - "dracut-config-generic"
+            # gawk provides /usr/bin/awk which is a runtime dependency of
+            # dracut's net-lib module. Without it, dracut fails to build the
+            # initramfs with network support.
+            - "gawk"
     platforms:
       - *x86_64_bios_platform
       - *aarch64_platform

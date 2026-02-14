@@ -6,6 +6,7 @@ import (
 
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/customizations/fsnode"
+	"github.com/osbuild/images/pkg/depsolvednf"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/images/pkg/runner"
@@ -32,10 +33,14 @@ type Build interface {
 type BuildrootFromPackages struct {
 	Base
 
-	runner       runner.Runner
-	dependents   []Pipeline
-	repos        []rpmmd.RepoConfig
-	packageSpecs rpmmd.PackageList
+	runner     runner.Runner
+	dependents []Pipeline
+
+	// depsolveRepos holds the repository configuration used by
+	// getPackageSetChain() for depsolving. After depsolving, use
+	// depsolveResult.Repos which contains only repos that provided packages.
+	depsolveRepos  []rpmmd.RepoConfig
+	depsolveResult *depsolvednf.DepsolveResult
 
 	containerBuildable bool
 
@@ -102,7 +107,7 @@ func NewBuild(m *Manifest, runner runner.Runner, repos []rpmmd.RepoConfig, opts 
 		Base:               NewBase(name, opts.BootstrapPipeline),
 		runner:             runner,
 		dependents:         make([]Pipeline, 0),
-		repos:              filterRepos(repos, name),
+		depsolveRepos:      filterRepos(repos, name),
 		containerBuildable: opts.ContainerBuildable,
 		disableSelinux:     opts.DisableSELinux,
 		selinuxPolicy:      policyOrDefault(opts.SELinuxPolicy),
@@ -144,34 +149,36 @@ func (p *BuildrootFromPackages) getPackageSetChain(distro Distro) ([]rpmmd.Packa
 	return []rpmmd.PackageSet{
 		{
 			Include:         packages,
-			Repositories:    p.repos,
+			Repositories:    p.depsolveRepos,
 			InstallWeakDeps: true,
 		},
 	}, nil
 }
 
 func (p *BuildrootFromPackages) getPackageSpecs() rpmmd.PackageList {
-	return p.packageSpecs
+	if p.depsolveResult == nil {
+		return nil
+	}
+	return p.depsolveResult.Transactions.AllPackages()
 }
 
 func (p *BuildrootFromPackages) serializeStart(inputs Inputs) error {
-	if len(p.packageSpecs) > 0 {
+	if p.depsolveResult != nil {
 		return errors.New("BuildrootFromPackages: double call to serializeStart()")
 	}
-	p.packageSpecs = inputs.Depsolved.Packages
-	p.repos = append(p.repos, inputs.Depsolved.Repos...)
+	p.depsolveResult = &inputs.Depsolved
 	return nil
 }
 
 func (p *BuildrootFromPackages) serializeEnd() {
-	if len(p.packageSpecs) == 0 {
+	if p.depsolveResult == nil {
 		panic("serializeEnd() call when serialization not in progress")
 	}
-	p.packageSpecs = nil
+	p.depsolveResult = nil
 }
 
 func (p *BuildrootFromPackages) serialize() (osbuild.Pipeline, error) {
-	if len(p.packageSpecs) == 0 {
+	if p.depsolveResult == nil {
 		return osbuild.Pipeline{}, fmt.Errorf("BuildrootFromPackages: serialization not started")
 	}
 	pipeline, err := p.Base.serialize()
@@ -181,7 +188,12 @@ func (p *BuildrootFromPackages) serialize() (osbuild.Pipeline, error) {
 
 	pipeline.Runner = p.runner.String()
 
-	pipeline.AddStage(osbuild.NewRPMStage(osbuild.NewRPMStageOptions(p.repos), osbuild.NewRpmStageSourceFilesInputs(p.packageSpecs)))
+	rpmStages, err := osbuild.GenRPMStagesFromTransactions(p.depsolveResult.Transactions, nil)
+	if err != nil {
+		return osbuild.Pipeline{}, err
+	}
+	pipeline.AddStages(rpmStages...)
+
 	if !p.disableSelinux {
 		pipeline.AddStage(osbuild.NewSELinuxStage(&osbuild.SELinuxStageOptions{
 			FileContexts: fmt.Sprintf("etc/selinux/%s/contexts/files/file_contexts", p.selinuxPolicy),

@@ -452,7 +452,18 @@ func (d DepsolvedPackage) MarshalJSON() ([]byte, error) {
 	return json.Marshal(compat)
 }
 
-func (d DepsolvedPackage) ToRPMMD() rpmmd.Package {
+// ToRPMMD converts the DTO to an rpmmd.Package. The repoMap maps repository
+// IDs to their RepoConfig pointers so the package's Repo field can be set.
+// Returns an error if the package's RepoID is not found in the repoMap.
+func (d DepsolvedPackage) ToRPMMD(repoMap map[string]*rpmmd.RepoConfig) (rpmmd.Package, error) {
+	if d.RepoID == "" {
+		return rpmmd.Package{}, fmt.Errorf("package %q has empty RepoID", d.Name)
+	}
+	repo, ok := repoMap[d.RepoID]
+	if !ok {
+		return rpmmd.Package{}, fmt.Errorf("repo ID %q not found in repo map for package %q", d.RepoID, d.Name)
+	}
+
 	p := rpmmd.Package{
 		Name:    d.Name,
 		Epoch:   d.Epoch,
@@ -495,6 +506,7 @@ func (d DepsolvedPackage) ToRPMMD() rpmmd.Package {
 		RemoteLocations: d.RemoteLocations,
 
 		RepoID: d.RepoID,
+		Repo:   repo,
 
 		Reason: d.Reason,
 
@@ -515,20 +527,27 @@ func (d DepsolvedPackage) ToRPMMD() rpmmd.Package {
 		p.HeaderChecksum = rpmmd.Checksum(*d.HeaderChecksum)
 	}
 
-	return p
+	return p, nil
 }
 
 type DepsolvedPackageList []DepsolvedPackage
 
-func (d DepsolvedPackageList) ToRPMMDList() rpmmd.PackageList {
+// ToRPMMDList converts the DTO list to an rpmmd.PackageList. The repoMap
+// parameter maps repository IDs to their RepoConfig pointers so that each
+// package's Repo field can be set.
+func (d DepsolvedPackageList) ToRPMMDList(repoMap map[string]*rpmmd.RepoConfig) (rpmmd.PackageList, error) {
 	if d == nil {
-		return nil
+		return nil, nil
 	}
 	results := make(rpmmd.PackageList, len(d))
 	for i, pkg := range d {
-		results[i] = pkg.ToRPMMD()
+		p, err := pkg.ToRPMMD(repoMap)
+		if err != nil {
+			return nil, err
+		}
+		results[i] = p
 	}
-	return results
+	return results, nil
 }
 
 func DepsolvedPackageFromRPMMD(pkg rpmmd.Package) DepsolvedPackage {
@@ -612,16 +631,22 @@ func DepsolvedTransactionsFromRPMMD(transactions []rpmmd.PackageList) []Depsolve
 }
 
 // DepsolvedTransactionsToRPMMD converts a slice of DepsolvedPackageList
-// to a slice of rpmmd.PackageList (transactions).
-func DepsolvedTransactionsToRPMMD(transactions []DepsolvedPackageList) []rpmmd.PackageList {
+// to a slice of rpmmd.PackageList (transactions). The repoMap parameter
+// maps repository IDs to their RepoConfig pointers, analogous to
+// DepsolvedPackageList.ToRPMMDList.
+func DepsolvedTransactionsToRPMMD(transactions []DepsolvedPackageList, repoMap map[string]*rpmmd.RepoConfig) ([]rpmmd.PackageList, error) {
 	if transactions == nil {
-		return nil
+		return nil, nil
 	}
 	results := make([]rpmmd.PackageList, len(transactions))
 	for i, pkgs := range transactions {
-		results[i] = pkgs.ToRPMMDList()
+		pl, err := pkgs.ToRPMMDList(repoMap)
+		if err != nil {
+			return nil, err
+		}
+		results[i] = pl
 	}
-	return results
+	return results, nil
 }
 
 // DepsolvedRepoConfig is the DTO for rpmmd.RepoConfig.
@@ -749,10 +774,8 @@ func DepsolvedModuleSpecListToRPMMDList(modules []DepsolvedModuleSpec) []rpmmd.M
 type DepsolveJobResult struct {
 	Transactions map[string][]DepsolvedPackageList `json:"transactions"`
 
-	// TODO: PackageSpecs is kept for backward compatibility with workers that
-	// don't yet populate Transactions. Once all workers are updated to use the
-	// V2 depsolve API and populate Transactions, PackageSpecs should be removed
-	// and consumers should use Transactions instead.
+	// PackageSpecs is kept for backward compatibility with older osbuild-composer servers.
+	// TODO (2026-02-12, thozza): remove PackageSpecs after ~ 1 month / 2 releases
 	PackageSpecs map[string]DepsolvedPackageList  `json:"package_specs"`
 	RepoConfigs  map[string][]DepsolvedRepoConfig `json:"repo_configs"`
 	Modules      map[string][]DepsolvedModuleSpec `json:"modules,omitempty"`
@@ -769,25 +792,38 @@ type DepsolveJobResult struct {
 // ToDepsolvednfResult converts the DepsolveJobResult to a map of
 // depsolvednf.DepsolveResult keyed by pipeline name. This is used
 // to pass the depsolve results to manifest serialization.
-func (d *DepsolveJobResult) ToDepsolvednfResult() map[string]depsolvednf.DepsolveResult {
-	results := make(map[string]depsolvednf.DepsolveResult, len(d.PackageSpecs))
+func (d *DepsolveJobResult) ToDepsolvednfResult() (map[string]depsolvednf.DepsolveResult, error) {
+	// NOTE: This is a backward compatibility fallback. Prefer Transactions as the primary source,
+	// fall back to PackageSpecs for backward compatibility with old workers that don't populate
+	// Transactions. When using the fallback, the result will be a single transaction per pipeline.
+	// TODO (2026-02-12, thozza): remove the fallback after ~ 1 month / 2 releases
+	jobResultPipelinesTransactions := d.Transactions
+	if jobResultPipelinesTransactions == nil && d.PackageSpecs != nil {
+		jobResultPipelinesTransactions = make(map[string][]DepsolvedPackageList, len(d.PackageSpecs))
+		for name, pkgs := range d.PackageSpecs {
+			jobResultPipelinesTransactions[name] = []DepsolvedPackageList{pkgs}
+		}
+	}
 
-	// NOTE: PackageSpecs and RepoConfigs are always populated together by the
-	// depsolve job for the same pipeline names. Transactions, Modules, and
-	// SbomDocs are optional. We iterate over PackageSpecs as the primary map
-	// and look up the corresponding entries in the others.
-	//
-	// TODO: Once Transactions becomes mandatory and PackageSpecs is removed,
-	// switch to iterating over Transactions as the primary map.
-	for name, pkgs := range d.PackageSpecs {
-		result := depsolvednf.DepsolveResult{
-			Packages: pkgs.ToRPMMDList(),
-			Repos:    DepsolvedRepoConfigListToRPMMDList(d.RepoConfigs[name]),
-			Solver:   d.Solver,
+	results := make(map[string]depsolvednf.DepsolveResult, len(jobResultPipelinesTransactions))
+	for name, pipelineTransactions := range jobResultPipelinesTransactions {
+		// Convert repos first so we can build a pointer map for packages,
+		// analogous to depsolvednf v2 parseDepsolveResult / toRPMMDRepoConfigs.
+		repos := DepsolvedRepoConfigListToRPMMDList(d.RepoConfigs[name])
+		repoMap := make(map[string]*rpmmd.RepoConfig, len(repos))
+		for i := range repos {
+			repoMap[repos[i].Id] = &repos[i]
 		}
 
-		if transactions, ok := d.Transactions[name]; ok {
-			result.Transactions = DepsolvedTransactionsToRPMMD(transactions)
+		depsolvednfTransactions, err := DepsolvedTransactionsToRPMMD(pipelineTransactions, repoMap)
+		if err != nil {
+			return nil, fmt.Errorf("converting transactions for pipeline %q: %w", name, err)
+		}
+
+		result := depsolvednf.DepsolveResult{
+			Transactions: depsolvednfTransactions,
+			Repos:        repos,
+			Solver:       d.Solver,
 		}
 
 		if sbomDoc, ok := d.SbomDocs[name]; ok {
@@ -804,7 +840,7 @@ func (d *DepsolveJobResult) ToDepsolvednfResult() map[string]depsolvednf.Depsolv
 		results[name] = result
 	}
 
-	return results
+	return results, nil
 }
 
 // SearchPackagesJob defines the parameters for a dnf metadata search
