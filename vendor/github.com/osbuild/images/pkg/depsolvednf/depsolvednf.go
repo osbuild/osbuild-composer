@@ -15,6 +15,7 @@ package depsolvednf
 
 import (
 	"bytes"
+	"cmp"
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
@@ -23,7 +24,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"sort"
+	"slices"
 	"strings"
 	"time"
 
@@ -297,7 +298,7 @@ func (s *Solver) Depsolve(pkgSets []rpmmd.PackageSet, sbomType sbom.StandardType
 
 	output, err := run(s.depsolveDNFCmd, reqData, s.Stderr)
 	if err != nil {
-		return nil, parseError(output, allRepos)
+		return nil, parseError(output, allRepos, err)
 	}
 
 	// touch repos to now
@@ -370,7 +371,7 @@ func (s *Solver) FetchMetadata(repos []rpmmd.RepoConfig) (rpmmd.PackageList, err
 
 	rawRes, err := run(s.depsolveDNFCmd, reqData, s.Stderr)
 	if err != nil {
-		return nil, parseError(rawRes, repos)
+		return nil, parseError(rawRes, repos, err)
 	}
 
 	// touch repos to now
@@ -389,8 +390,8 @@ func (s *Solver) FetchMetadata(repos []rpmmd.RepoConfig) (rpmmd.PackageList, err
 	// XXX: Cache and expose the whole operation result instead of just the packages in the future.
 
 	pkgs := res.Packages
-	sort.Slice(pkgs, func(i, j int) bool {
-		return pkgs[i].NVR() < pkgs[j].NVR()
+	slices.SortFunc(pkgs, func(a, b rpmmd.Package) int {
+		return cmp.Compare(a.NVR(), b.NVR())
 	})
 
 	// Cache the results
@@ -418,7 +419,7 @@ func (s *Solver) SearchMetadata(repos []rpmmd.RepoConfig, packages []string) (rp
 
 	rawRes, err := run(s.depsolveDNFCmd, reqData, s.Stderr)
 	if err != nil {
-		return nil, parseError(rawRes, repos)
+		return nil, parseError(rawRes, repos, err)
 	}
 
 	// touch repos to now
@@ -437,8 +438,8 @@ func (s *Solver) SearchMetadata(repos []rpmmd.RepoConfig, packages []string) (rp
 	// XXX: Cache and expose the whole operation result instead of just the packages in the future.
 
 	pkgs := res.Packages
-	sort.Slice(pkgs, func(i, j int) bool {
-		return pkgs[i].NVR() < pkgs[j].NVR()
+	slices.SortFunc(pkgs, func(a, b rpmmd.Package) int {
+		return cmp.Compare(a.NVR(), b.NVR())
 	})
 
 	// Cache the results
@@ -537,21 +538,31 @@ func optionalMetadataForDistro(modulePlatformID string) []string {
 type Error struct {
 	Kind   string `json:"kind"`
 	Reason string `json:"reason"`
+	Err    error  `json:"-"`
 }
 
 func (err Error) Error() string {
-	return fmt.Sprintf("DNF error occurred: %s: %s", err.Kind, err.Reason)
+	if err.Err != nil {
+		return fmt.Sprintf("DNF error occurred: %s: %s: %s", err.Kind, err.Reason, err.Err)
+	} else {
+		return fmt.Sprintf("DNF error occurred: %s: %s", err.Kind, err.Reason)
+	}
+}
+
+func (err Error) Unwrap() error {
+	return err.Err
 }
 
 // parseError parses the response from osbuild-depsolve-dnf into the Error type and appends
 // the name and URL of a repository to all detected repository IDs in the
 // message.
-func parseError(data []byte, repos []rpmmd.RepoConfig) Error {
+func parseError(data []byte, repos []rpmmd.RepoConfig, cmdError error) Error {
 	var e Error
 	if len(data) == 0 {
 		return Error{
 			Kind:   "InternalError",
 			Reason: "osbuild-depsolve-dnf output was empty",
+			Err:    cmdError,
 		}
 	}
 
@@ -560,6 +571,7 @@ func parseError(data []byte, repos []rpmmd.RepoConfig) Error {
 		return Error{
 			Kind:   "InternalError",
 			Reason: fmt.Sprintf("Failed to unmarshal osbuild-depsolve-dnf error output %q: %s", string(data), err.Error()),
+			Err:    cmdError,
 		}
 	}
 

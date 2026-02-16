@@ -1,10 +1,12 @@
 package generic
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"math/rand"
 	"slices"
+	"text/template"
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
 	"github.com/osbuild/images/internal/common"
@@ -35,9 +37,11 @@ type imageType struct {
 
 	image    imageFunc
 	isoLabel isoLabelFunc
+
+	ostreeRef string
 }
 
-func newImageTypeFrom(d *distribution, ar *architecture, imgYAML defs.ImageTypeYAML) imageType {
+func newImageTypeFrom(d *distribution, ar *architecture, imgYAML defs.ImageTypeYAML) (imageType, error) {
 	it := imageType{
 		ImageTypeYAML: imgYAML,
 		isoLabel:      d.getISOLabelFunc(imgYAML.ISOLabel),
@@ -71,11 +75,14 @@ func newImageTypeFrom(d *distribution, ar *architecture, imgYAML defs.ImageTypeY
 	case "pxe_tar":
 		it.image = pxeTarImage
 	default:
-		err := fmt.Errorf("unknown image func: %v for %v", imgYAML.Image, imgYAML.Name())
-		panic(err)
+		return imageType{}, fmt.Errorf("unknown image func: %v for %v", imgYAML.Image, imgYAML.Name())
 	}
 
-	return it
+	if err := it.expandOSTreeRefTemplate(ar, d.ID()); err != nil {
+		return imageType{}, nil
+	}
+
+	return it, nil
 }
 
 func (t *imageType) Name() string {
@@ -99,10 +106,14 @@ func (t *imageType) MIMEType() string {
 }
 
 func (t *imageType) OSTreeRef() string {
-	d := t.arch.distro
+	return t.ostreeRef
+}
+
+func (t *imageType) OSTreeURL() string {
 	if t.ImageTypeYAML.RPMOSTree {
-		return fmt.Sprintf(d.OSTreeRef(), t.arch.Name())
+		return t.ImageTypeYAML.OSTree.URL
 	}
+
 	return ""
 }
 
@@ -151,7 +162,8 @@ func (t *imageType) BootMode() platform.BootMode {
 }
 
 func (t *imageType) BasePartitionTable() (*disk.PartitionTable, error) {
-	return t.ImageTypeYAML.PartitionTable(t.arch.distro.ID, t.arch.arch.String())
+	d := t.Arch().Distro()
+	return t.ImageTypeYAML.PartitionTable(d.ID(), t.arch.arch.String())
 }
 
 func (t *imageType) getPartitionTable(customizations *blueprint.Customizations, options distro.ImageOptions, rng *rand.Rand) (*disk.PartitionTable, error) {
@@ -166,7 +178,11 @@ func (t *imageType) getPartitionTable(customizations *blueprint.Customizations, 
 		return nil, err
 	}
 
-	defaultFsType := t.arch.distro.DefaultFSType
+	d, convOk := t.arch.distro.(*distribution)
+	if !convOk {
+		return nil, fmt.Errorf("failed to cast image type distribution %T to *distribution: this is a programming error", t.arch.distro)
+	}
+	defaultFsType := d.DefaultFSType
 	if partitioning != nil {
 		// Use the new custom partition table to create a PT fully based on the user's customizations.
 		// This overrides FilesystemCustomizations, but we should never have both defined.
@@ -191,22 +207,25 @@ func (t *imageType) getPartitionTable(customizations *blueprint.Customizations, 
 }
 
 func (t *imageType) getDefaultImageConfig() *distro.ImageConfig {
-	imageConfig := t.ImageConfig(t.arch.distro.ID, t.arch.arch.String())
-	return imageConfig.InheritFrom(t.arch.distro.ImageConfig())
+	d := t.Arch().Distro()
+	imageConfig := t.ImageConfig(d.ID(), t.arch.arch.String())
+	return imageConfig.InheritFrom(d.ImageConfig())
 }
 
 func (t *imageType) getDefaultInstallerConfig() (*distro.InstallerConfig, error) {
 	if !t.ImageTypeYAML.BootISO {
 		return nil, fmt.Errorf("image type %q is not an ISO", t.Name())
 	}
-	return t.InstallerConfig(t.arch.distro.ID, t.arch.arch.String()), nil
+	d := t.Arch().Distro()
+	return t.InstallerConfig(d.ID(), t.arch.arch.String()), nil
 }
 
 func (t *imageType) getDefaultISOConfig() (*distro.ISOConfig, error) {
 	if !t.ImageTypeYAML.BootISO {
 		return nil, fmt.Errorf("image type %q is not an ISO", t.Name())
 	}
-	return t.ISOConfig(t.arch.distro.ID, t.arch.arch.String()), nil
+	d := t.Arch().Distro()
+	return t.ISOConfig(d.ID(), t.arch.arch.String()), nil
 }
 
 func (t *imageType) PartitionType() disk.PartitionTableType {
@@ -236,7 +255,8 @@ func (t *imageType) Manifest(bp *blueprint.Blueprint,
 	// of the same name from the distro and arch
 	staticPackageSets := make(map[string]rpmmd.PackageSet)
 
-	pkgSets := t.ImageTypeYAML.PackageSets(t.arch.distro.ID, t.arch.arch.String())
+	d := t.Arch().Distro()
+	pkgSets := t.ImageTypeYAML.PackageSets(d.ID(), t.arch.arch.String())
 	for name, pkgSet := range pkgSets {
 		staticPackageSets[name] = pkgSet
 	}
@@ -294,14 +314,19 @@ func (t *imageType) Manifest(bp *blueprint.Blueprint,
 	// TODO: remove the need for this entirely, the manifest has a
 	// bunch of code that checks the distro currently, ideally all
 	// would just be encoded in the YAML
-	mf.Distro = t.arch.distro.DistroYAML.DistroLike
+	mf.Distro = d.IDLike()
 	if mf.Distro == manifest.DISTRO_NULL {
-		return nil, nil, fmt.Errorf("no distro_like set in yaml for %q", t.arch.distro.Name())
+		return nil, nil, fmt.Errorf("no distro_like set in yaml for %q", d.Name())
 	}
 	if options.UseBootstrapContainer {
-		mf.DistroBootstrapRef = bootstrapContainerFor(t)
+		bootstrapContainerRef, err := t.Arch().Distro().BootstrapContainer(t.arch.Name())
+		if err != nil {
+			return nil, nil, err
+		}
+		mf.DistroBootstrapRef = bootstrapContainerRef
 	}
-	_, err = img.InstantiateManifest(&mf, repos, &t.arch.distro.DistroYAML.Runner, rng)
+	runner := d.Runner()
+	_, err = img.InstantiateManifest(&mf, repos, &runner, rng)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -318,7 +343,8 @@ func (t *imageType) checkOptions(bp *blueprint.Blueprint, options distro.ImageOp
 		return warnings, err
 	}
 
-	switch idLike := t.arch.distro.DistroYAML.DistroLike; idLike {
+	d := t.Arch().Distro()
+	switch idLike := d.IDLike(); idLike {
 	case manifest.DISTRO_FEDORA, manifest.DISTRO_EL7, manifest.DISTRO_EL10:
 		// no specific options checkers
 	case manifest.DISTRO_EL8:
@@ -347,6 +373,37 @@ func (t *imageType) SupportedBlueprintOptions() []string {
 	return append(t.ImageTypeYAML.Blueprint.SupportedOptions, "name", "version", "description")
 }
 
-func bootstrapContainerFor(t *imageType) string {
-	return t.arch.distro.DistroYAML.BootstrapContainers[t.arch.arch]
+func (t *imageType) expandOSTreeRefTemplate(ar *architecture, id distro.ID) error {
+	if t.ImageTypeYAML.RPMOSTree {
+		subs := struct {
+			Arch   string
+			Distro distro.ID
+		}{
+			Arch:   ar.Name(),
+			Distro: id,
+		}
+
+		var buf bytes.Buffer
+
+		tmpl, err := template.New("ostree-ref").Parse(t.ImageTypeYAML.OSTree.Ref)
+		if err != nil {
+			return err
+		}
+
+		if err := tmpl.Execute(&buf, subs); err != nil {
+			return err
+		}
+
+		t.ostreeRef = buf.String()
+
+		// if we're empty after templating that's an error as we can't
+		// have an empty commit
+		if t.ostreeRef == "" {
+			return fmt.Errorf("empty ostree ref after expansion")
+		}
+
+		return nil
+	}
+
+	return nil
 }

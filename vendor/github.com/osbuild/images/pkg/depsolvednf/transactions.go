@@ -1,8 +1,9 @@
 package depsolvednf
 
 import (
+	"cmp"
 	"fmt"
-	"sort"
+	"slices"
 
 	"github.com/osbuild/images/pkg/rpmmd"
 )
@@ -19,8 +20,8 @@ func (t TransactionList) AllPackages() rpmmd.PackageList {
 	for _, pkgs := range t {
 		all = append(all, pkgs...)
 	}
-	sort.Slice(all, func(i, j int) bool {
-		return all[i].FullNEVRA() < all[j].FullNEVRA()
+	slices.SortFunc(all, func(a, b rpmmd.Package) int {
+		return cmp.Compare(a.FullNEVRA(), b.FullNEVRA())
 	})
 	return all
 }

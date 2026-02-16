@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"sort"
+	"slices"
 	"strings"
 )
 
@@ -144,7 +144,7 @@ func (res *Result) Write(writer io.Writer) error {
 	for name := range res.Log {
 		pipelineNames = append(pipelineNames, name)
 	}
-	sort.Strings(pipelineNames)
+	slices.Sort(pipelineNames)
 
 	for _, pipelineName := range pipelineNames {
 		fmt.Fprintf(writer, "Pipeline: %s\n", pipelineName)

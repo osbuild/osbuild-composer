@@ -1,4 +1,4 @@
-package bootc
+package generic
 
 import (
 	"errors"
@@ -8,68 +8,73 @@ import (
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
 	"github.com/osbuild/images/internal/cmdutil"
+	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/bib/osinfo"
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/customizations/anaconda"
 	"github.com/osbuild/images/pkg/customizations/kickstart"
 	"github.com/osbuild/images/pkg/customizations/users"
+	"github.com/osbuild/images/pkg/datasizes"
 	"github.com/osbuild/images/pkg/disk"
+	"github.com/osbuild/images/pkg/disk/partition"
 	"github.com/osbuild/images/pkg/distro"
+	"github.com/osbuild/images/pkg/distro/bootc"
 	"github.com/osbuild/images/pkg/distro/defs"
 	"github.com/osbuild/images/pkg/image"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/osbuild"
+	"github.com/osbuild/images/pkg/pathpolicy"
 	"github.com/osbuild/images/pkg/platform"
 	"github.com/osbuild/images/pkg/policies"
 	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/images/pkg/runner"
 )
 
-var _ = distro.ImageType(&imageType{})
+var _ = distro.ImageType(&bootcImageType{})
 
-type imageType struct {
+type bootcImageType struct {
 	defs.ImageTypeYAML
 
-	arch *Arch
+	arch *architecture
 }
 
-func (t *imageType) Name() string {
+func (t *bootcImageType) Name() string {
 	return t.ImageTypeYAML.Name()
 }
 
-func (t *imageType) Aliases() []string {
+func (t *bootcImageType) Aliases() []string {
 	return t.ImageTypeYAML.NameAliases
 }
 
-func (t *imageType) Arch() distro.Arch {
+func (t *bootcImageType) Arch() distro.Arch {
 	return t.arch
 }
 
-func (t *imageType) Filename() string {
+func (t *bootcImageType) Filename() string {
 	return t.ImageTypeYAML.Filename
 }
 
-func (t *imageType) MIMEType() string {
+func (t *bootcImageType) MIMEType() string {
 	return t.ImageTypeYAML.MimeType
 }
 
-func (t *imageType) OSTreeRef() string {
+func (t *bootcImageType) OSTreeRef() string {
 	return ""
 }
 
-func (t *imageType) ISOLabel() (string, error) {
+func (t *bootcImageType) ISOLabel() (string, error) {
 	return "", nil
 }
 
-func (t *imageType) Size(size uint64) uint64 {
+func (t *bootcImageType) Size(size uint64) uint64 {
 	if size == 0 {
 		size = 1073741824
 	}
 	return size
 }
 
-func (t *imageType) PartitionType() disk.PartitionTableType {
+func (t *bootcImageType) PartitionType() disk.PartitionTableType {
 	// XXX: duplicated from generic/imagetype.go
 	basePartitionTable, err := t.BasePartitionTable()
 	if errors.Is(err, defs.ErrNoPartitionTableForImgType) {
@@ -82,11 +87,12 @@ func (t *imageType) PartitionType() disk.PartitionTableType {
 	return basePartitionTable.Type
 }
 
-func (t *imageType) BasePartitionTable() (*disk.PartitionTable, error) {
-	return t.ImageTypeYAML.PartitionTable(t.arch.distro.id, t.arch.arch.String())
+func (t *bootcImageType) BasePartitionTable() (*disk.PartitionTable, error) {
+	bd := t.arch.distro.(*BootcDistro)
+	return t.ImageTypeYAML.PartitionTable(bd.id, t.arch.arch.String())
 }
 
-func (t *imageType) BootMode() platform.BootMode {
+func (t *bootcImageType) BootMode() platform.BootMode {
 	// We really never want HYBRID or LEGACY on aarch64 platforms. In the future
 	// it might be much nicer to take the same apporach as `Bootmode()` in the
 	// generic distro but that's a bit more involved. Let's start here.
@@ -97,27 +103,27 @@ func (t *imageType) BootMode() platform.BootMode {
 	return platform.BOOT_HYBRID
 }
 
-func (t *imageType) PayloadPackageSets() []string {
+func (t *bootcImageType) PayloadPackageSets() []string {
 	return nil
 }
 
-func (t *imageType) Exports() []string {
+func (t *bootcImageType) Exports() []string {
 	return t.ImageTypeYAML.Exports
 }
 
-func (t *imageType) SupportedBlueprintOptions() []string {
+func (t *bootcImageType) SupportedBlueprintOptions() []string {
 	// The blueprint contains a few fields that are essentially metadata and
 	// not configuration / customizations. These should always be implicitly
 	// supported by all image types.
 	return append(t.ImageTypeYAML.Blueprint.SupportedOptions, "name", "version", "description")
 }
 
-func (t *imageType) RequiredBlueprintOptions() []string {
+func (t *bootcImageType) RequiredBlueprintOptions() []string {
 	return nil
 }
 
 // keep in sync with "generic/imagetype.go:checkOptions()"
-func (t *imageType) checkOptions(bp *blueprint.Blueprint) []string {
+func (t *bootcImageType) checkOptions(bp *blueprint.Blueprint) []string {
 	if bp == nil {
 		return nil
 	}
@@ -132,15 +138,16 @@ func (t *imageType) checkOptions(bp *blueprint.Blueprint) []string {
 	return nil
 }
 
-func (t *imageType) Manifest(bp *blueprint.Blueprint, options distro.ImageOptions, repos []rpmmd.RepoConfig, seedp *int64) (*manifest.Manifest, []string, error) {
+func (t *bootcImageType) Manifest(bp *blueprint.Blueprint, options distro.ImageOptions, repos []rpmmd.RepoConfig, seedp *int64) (*manifest.Manifest, []string, error) {
 	validationWarnings := t.checkOptions(bp)
 
 	mani, manifestWarnings, err := t.manifestWithoutValidation(bp, options)
 	return mani, append(validationWarnings, manifestWarnings...), err
 }
 
-func (t *imageType) manifestWithoutValidation(bp *blueprint.Blueprint, options distro.ImageOptions) (*manifest.Manifest, []string, error) {
-	seed, err := cmdutil.SeedArgFor(nil, t.arch.Name(), t.arch.distro.Name())
+func (t *bootcImageType) manifestWithoutValidation(bp *blueprint.Blueprint, options distro.ImageOptions) (*manifest.Manifest, []string, error) {
+	bd := t.arch.distro.(*BootcDistro)
+	seed, err := cmdutil.SeedArgFor(nil, t.arch.Name(), bd.Name())
 	if err != nil {
 		return nil, nil, err
 	}
@@ -164,26 +171,19 @@ func (t *imageType) manifestWithoutValidation(bp *blueprint.Blueprint, options d
 	}
 }
 
-func buildOptions(t *imageType) *manifest.BuildOptions {
-	buildOpts := &manifest.BuildOptions{}
-	if tweaks := t.arch.distro.GetTweaks(); tweaks != nil && tweaks.RPMKeys != nil && tweaks.RPMKeys.IgnoreBuildImportFailures {
-		buildOpts.RPMStageIgnoreGPGImportFailures = tweaks.RPMKeys.IgnoreBuildImportFailures
-	}
-	return buildOpts
-}
-
-func (t *imageType) manifestForDisk(bp *blueprint.Blueprint, options distro.ImageOptions, rng *rand.Rand) (*manifest.Manifest, []string, error) {
-	if t.arch.distro.imgref == "" {
+func (t *bootcImageType) manifestForDisk(bp *blueprint.Blueprint, options distro.ImageOptions, rng *rand.Rand) (*manifest.Manifest, []string, error) {
+	bd := t.arch.distro.(*BootcDistro)
+	if bd.imgref == "" {
 		return nil, nil, fmt.Errorf("internal error: no base image defined")
 	}
 	containerSource := container.SourceSpec{
-		Source: t.arch.distro.imgref,
-		Name:   t.arch.distro.imgref,
+		Source: bd.imgref,
+		Name:   bd.imgref,
 		Local:  true,
 	}
 	buildContainerSource := container.SourceSpec{
-		Source: t.arch.distro.buildImgref,
-		Name:   t.arch.distro.buildImgref,
+		Source: bd.buildImgref,
+		Name:   bd.buildImgref,
 		Local:  true,
 	}
 
@@ -192,7 +192,7 @@ func (t *imageType) manifestForDisk(bp *blueprint.Blueprint, options distro.Imag
 		customizations = bp.Customizations
 	}
 
-	platform := PlatformFor(t.arch.Name(), t.arch.distro.sourceInfo.UEFIVendor)
+	platform := PlatformFor(t.arch.Name(), bd.sourceInfo.UEFIVendor)
 	// For the bootc-disk image, the filename is the basename and
 	// the extension is added automatically for each disk format
 	filename := strings.Split(t.Filename(), ".")[0]
@@ -208,16 +208,16 @@ func (t *imageType) manifestForDisk(bp *blueprint.Blueprint, options distro.Imag
 		return nil, nil, err
 	}
 	img.OSCustomizations.Groups = users.GroupsFromBP(groups)
-	img.OSCustomizations.SELinux = t.arch.distro.sourceInfo.SELinuxPolicy
+	img.OSCustomizations.SELinux = bd.sourceInfo.SELinuxPolicy
 	img.OSCustomizations.BuildSELinux = img.OSCustomizations.SELinux
-	if t.arch.distro.buildSourceInfo != nil {
-		img.OSCustomizations.BuildSELinux = t.arch.distro.buildSourceInfo.SELinuxPolicy
+	if bd.buildSourceInfo != nil {
+		img.OSCustomizations.BuildSELinux = bd.buildSourceInfo.SELinuxPolicy
 	}
-	if t.arch.distro.sourceInfo != nil && t.arch.distro.sourceInfo.MountConfiguration != nil {
-		img.OSCustomizations.MountConfiguration = *t.arch.distro.sourceInfo.MountConfiguration
+	if bd.sourceInfo != nil && bd.sourceInfo.MountConfiguration != nil {
+		img.OSCustomizations.MountConfiguration = *bd.sourceInfo.MountConfiguration
 	}
 
-	imageConfig := t.ImageTypeYAML.ImageConfig(t.arch.distro.id, t.arch.Name())
+	imageConfig := t.ImageTypeYAML.ImageConfig(bd.id, t.arch.Name())
 	if imageConfig != nil {
 		img.OSCustomizations.KernelOptionsAppend = imageConfig.KernelOptions
 	}
@@ -225,7 +225,7 @@ func (t *imageType) manifestForDisk(bp *blueprint.Blueprint, options distro.Imag
 		img.OSCustomizations.KernelOptionsAppend = append(img.OSCustomizations.KernelOptionsAppend, kopts.Append)
 	}
 
-	rootfsMinSize := max(t.arch.distro.rootfsMinSize, options.Size)
+	rootfsMinSize := max(bd.rootfsMinSize, options.Size)
 
 	pt, err := t.genPartitionTable(customizations, rootfsMinSize, rng)
 	if err != nil {
@@ -265,7 +265,7 @@ func (t *imageType) manifestForDisk(bp *blueprint.Blueprint, options distro.Imag
 	return &mf, nil, nil
 }
 
-func (t *imageType) initAnacondaInstallerBaseFromSourceInfo(img *image.AnacondaInstallerBase, sourceInfo *osinfo.Info, customizations *blueprint.Customizations) error {
+func (t *bootcImageType) initAnacondaInstallerBaseFromSourceInfo(img *image.AnacondaInstallerBase, sourceInfo *osinfo.Info, customizations *blueprint.Customizations) error {
 	img.RootfsCompression = "zstd"
 
 	if t.arch.Name() == arch.ARCH_X86_64.String() {
@@ -274,7 +274,7 @@ func (t *imageType) initAnacondaInstallerBaseFromSourceInfo(img *image.AnacondaI
 
 	img.InstallerCustomizations.Product = sourceInfo.OSRelease.Name
 	img.InstallerCustomizations.OSVersion = sourceInfo.OSRelease.VersionID
-	img.ISOCustomizations.Label = LabelForISO(&sourceInfo.OSRelease, t.arch.Name())
+	img.ISOCustomizations.Label = bootc.LabelForISO(&sourceInfo.OSRelease, t.arch.Name())
 
 	img.InstallerCustomizations.FIPS = customizations.GetFIPS()
 	var err error
@@ -323,23 +323,24 @@ func (t *imageType) initAnacondaInstallerBaseFromSourceInfo(img *image.AnacondaI
 	return nil
 }
 
-func (t *imageType) manifestForISO(bp *blueprint.Blueprint, options distro.ImageOptions, rng *rand.Rand) (*manifest.Manifest, []string, error) {
-	if t.arch.distro.imgref == "" {
+func (t *bootcImageType) manifestForISO(bp *blueprint.Blueprint, options distro.ImageOptions, rng *rand.Rand) (*manifest.Manifest, []string, error) {
+	bd := t.arch.distro.(*BootcDistro)
+	if bd.imgref == "" {
 		return nil, nil, fmt.Errorf("internal error in bootc iso: no base image defined")
 	}
 	if options.Bootc == nil || options.Bootc.InstallerPayloadRef == "" {
 		return nil, nil, fmt.Errorf("no installer payload bootc ref set")
 	}
 	payloadRef := options.Bootc.InstallerPayloadRef
-	imgref := t.arch.distro.imgref
+	imgref := bd.imgref
 	containerSource := container.SourceSpec{
 		Source: imgref,
 		Name:   imgref,
 		Local:  true,
 	}
-	sourceInfo := t.arch.distro.sourceInfo
+	sourceInfo := bd.sourceInfo
 	// XXX: keep it simple for now, we may allow this in the future
-	if t.arch.distro.buildImgref != t.arch.distro.imgref {
+	if bd.buildImgref != bd.imgref {
 		return nil, nil, fmt.Errorf("cannot use build-containers with anaconda installer images")
 	}
 
@@ -360,8 +361,8 @@ func (t *imageType) manifestForISO(bp *blueprint.Blueprint, options distro.Image
 	}
 	img.ContainerRemoveSignatures = true
 	// we auto-detect the lorax config from the source info
-	img.InstallerCustomizations.LoraxTemplates = LoraxTemplates(sourceInfo.OSRelease)
-	img.InstallerCustomizations.LoraxTemplatePackage = LoraxTemplatePackage(sourceInfo.OSRelease)
+	img.InstallerCustomizations.LoraxTemplates = bootc.LoraxTemplates(sourceInfo.OSRelease)
+	img.InstallerCustomizations.LoraxTemplatePackage = bootc.LoraxTemplatePackage(sourceInfo.OSRelease)
 
 	// kernelVer is used by dracut
 	img.KernelVer = sourceInfo.KernelInfo.Version
@@ -375,7 +376,7 @@ func (t *imageType) manifestForISO(bp *blueprint.Blueprint, options distro.Image
 	}
 	img.InstallerPayload = payloadSource
 
-	installRootfsType, err := disk.NewFSType(t.arch.distro.defaultFs)
+	installRootfsType, err := disk.NewFSType(bd.defaultFs)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -383,7 +384,7 @@ func (t *imageType) manifestForISO(bp *blueprint.Blueprint, options distro.Image
 
 	mf := manifest.New()
 
-	foundDistro, foundRunner, err := GetDistroAndRunner(sourceInfo.OSRelease)
+	foundDistro, foundRunner, err := bootc.GetDistroAndRunner(sourceInfo.OSRelease)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to infer distro and runner: %w", err)
 	}
@@ -393,18 +394,19 @@ func (t *imageType) manifestForISO(bp *blueprint.Blueprint, options distro.Image
 	return &mf, nil, err
 }
 
-func (t *imageType) manifestForGenericISO(options distro.ImageOptions, rng *rand.Rand) (*manifest.Manifest, []string, error) {
-	if t.arch.distro.imgref == "" {
+func (t *bootcImageType) manifestForGenericISO(options distro.ImageOptions, rng *rand.Rand) (*manifest.Manifest, []string, error) {
+	bd := t.arch.distro.(*BootcDistro)
+	if bd.imgref == "" {
 		return nil, nil, fmt.Errorf("internal error: no base image defined")
 	}
 
 	containerSource := container.SourceSpec{
-		Source: t.arch.distro.imgref,
-		Name:   t.arch.distro.imgref,
+		Source: bd.imgref,
+		Name:   bd.imgref,
 		Local:  true,
 	}
 
-	platformi := PlatformFor(t.arch.Name(), t.arch.distro.sourceInfo.UEFIVendor)
+	platformi := PlatformFor(t.arch.Name(), bd.sourceInfo.UEFIVendor)
 	platformi.ImageFormat = platform.FORMAT_ISO
 
 	img := image.NewContainerBasedIso(platformi, t.Filename(), containerSource, nil)
@@ -417,18 +419,18 @@ func (t *imageType) manifestForGenericISO(options distro.ImageOptions, rng *rand
 	}
 	img.RootfsCompression = "zstd"
 	img.RootfsType = manifest.SquashfsRootfs
-	img.KernelPath = fmt.Sprintf("lib/modules/%s/vmlinuz", t.arch.distro.sourceInfo.KernelInfo.Version)
-	img.InitramfsPath = fmt.Sprintf("lib/modules/%s/initramfs.img", t.arch.distro.sourceInfo.KernelInfo.Version)
-	img.Product = t.arch.distro.sourceInfo.OSRelease.Name
-	img.Version = t.arch.distro.sourceInfo.OSRelease.VersionID
-	img.Release = t.arch.distro.sourceInfo.OSRelease.VersionID
+	img.KernelPath = fmt.Sprintf("lib/modules/%s/vmlinuz", bd.sourceInfo.KernelInfo.Version)
+	img.InitramfsPath = fmt.Sprintf("lib/modules/%s/initramfs.img", bd.sourceInfo.KernelInfo.Version)
+	img.Product = bd.sourceInfo.OSRelease.Name
+	img.Version = bd.sourceInfo.OSRelease.VersionID
+	img.Release = bd.sourceInfo.OSRelease.VersionID
 
-	isoi := t.arch.distro.sourceInfo.ISOInfo
+	isoi := bd.sourceInfo.ISOInfo
 
 	if isoi.Label != "" {
 		img.ISOLabel = isoi.Label
 	} else {
-		img.ISOLabel = LabelForISO(&t.arch.distro.sourceInfo.OSRelease, t.arch.Name())
+		img.ISOLabel = bootc.LabelForISO(&bd.sourceInfo.OSRelease, t.arch.Name())
 	}
 
 	if len(isoi.KernelArgs) > 0 {
@@ -449,7 +451,7 @@ func (t *imageType) manifestForGenericISO(options distro.ImageOptions, rng *rand
 
 	mf := manifest.New()
 
-	foundDistro, foundRunner, err := GetDistroAndRunner(t.arch.distro.sourceInfo.OSRelease)
+	foundDistro, foundRunner, err := bootc.GetDistroAndRunner(bd.sourceInfo.OSRelease)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to infer distro and runner: %w", err)
 	}
@@ -481,11 +483,12 @@ func newDistroYAMLFrom(sourceInfo *osinfo.Info) (*defs.DistroYAML, *distro.ID, e
 	return nil, nil, fmt.Errorf("cannot load distro definitions for %s-%s or any of %v", sourceInfo.OSRelease.ID, sourceInfo.OSRelease.VersionID, sourceInfo.OSRelease.IDLike)
 }
 
-func (t *imageType) manifestForLegacyISO(bp *blueprint.Blueprint, rng *rand.Rand) (*manifest.Manifest, []string, error) {
-	if t.arch.distro.imgref == "" {
+func (t *bootcImageType) manifestForLegacyISO(bp *blueprint.Blueprint, rng *rand.Rand) (*manifest.Manifest, []string, error) {
+	bd := t.arch.distro.(*BootcDistro)
+	if bd.imgref == "" {
 		return nil, nil, fmt.Errorf("internal error in bootc legacy iso: no base image defined")
 	}
-	imgref := t.arch.distro.imgref
+	imgref := bd.imgref
 	containerSource := container.SourceSpec{
 		Source: imgref,
 		Name:   imgref,
@@ -493,9 +496,9 @@ func (t *imageType) manifestForLegacyISO(bp *blueprint.Blueprint, rng *rand.Rand
 	}
 
 	archStr := t.arch.Name()
-	sourceInfo := t.arch.distro.sourceInfo
+	sourceInfo := bd.sourceInfo
 
-	distroYAML, id, err := newDistroYAMLFrom(t.arch.distro.sourceInfo)
+	distroYAML, id, err := newDistroYAMLFrom(bd.sourceInfo)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -537,7 +540,7 @@ func (t *imageType) manifestForLegacyISO(bp *blueprint.Blueprint, rng *rand.Rand
 		img.InstallerCustomizations.LoraxTemplatePackage = *installerConfig.LoraxTemplatePackage
 	}
 
-	installRootfsType, err := disk.NewFSType(t.arch.distro.defaultFs)
+	installRootfsType, err := disk.NewFSType(bd.defaultFs)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -545,7 +548,7 @@ func (t *imageType) manifestForLegacyISO(bp *blueprint.Blueprint, rng *rand.Rand
 
 	mf := manifest.New()
 
-	foundDistro, foundRunner, err := GetDistroAndRunner(sourceInfo.OSRelease)
+	foundDistro, foundRunner, err := bootc.GetDistroAndRunner(sourceInfo.OSRelease)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to infer distro and runner: %w", err)
 	}
@@ -556,18 +559,19 @@ func (t *imageType) manifestForLegacyISO(bp *blueprint.Blueprint, rng *rand.Rand
 }
 
 // manifestForPXETar creates a PXE bootable bootc rootfs
-func (t *imageType) manifestForPXETar(bp *blueprint.Blueprint, options distro.ImageOptions, rng *rand.Rand) (*manifest.Manifest, []string, error) {
-	if t.arch.distro.imgref == "" {
+func (t *bootcImageType) manifestForPXETar(bp *blueprint.Blueprint, options distro.ImageOptions, rng *rand.Rand) (*manifest.Manifest, []string, error) {
+	bd := t.arch.distro.(*BootcDistro)
+	if bd.imgref == "" {
 		return nil, nil, fmt.Errorf("internal error: no base image defined")
 	}
 	containerSource := container.SourceSpec{
-		Source: t.arch.distro.imgref,
-		Name:   t.arch.distro.imgref,
+		Source: bd.imgref,
+		Name:   bd.imgref,
 		Local:  true,
 	}
 	buildContainerSource := container.SourceSpec{
-		Source: t.arch.distro.buildImgref,
-		Name:   t.arch.distro.buildImgref,
+		Source: bd.buildImgref,
+		Name:   bd.buildImgref,
 		Local:  true,
 	}
 
@@ -576,7 +580,7 @@ func (t *imageType) manifestForPXETar(bp *blueprint.Blueprint, options distro.Im
 		customizations = bp.Customizations
 	}
 
-	platform := PlatformFor(t.arch.Name(), t.arch.distro.sourceInfo.UEFIVendor)
+	platform := PlatformFor(t.arch.Name(), bd.sourceInfo.UEFIVendor)
 	img := image.NewBootcPXEImage(platform, t.Filename(), containerSource, buildContainerSource)
 	if opts := buildOptions(t); opts != nil {
 		img.BuildOptions = opts
@@ -589,16 +593,16 @@ func (t *imageType) manifestForPXETar(bp *blueprint.Blueprint, options distro.Im
 		return nil, nil, err
 	}
 	img.OSCustomizations.Groups = users.GroupsFromBP(groups)
-	img.OSCustomizations.SELinux = t.arch.distro.sourceInfo.SELinuxPolicy
+	img.OSCustomizations.SELinux = bd.sourceInfo.SELinuxPolicy
 	img.OSCustomizations.BuildSELinux = img.OSCustomizations.SELinux
-	if t.arch.distro.buildSourceInfo != nil {
-		img.OSCustomizations.BuildSELinux = t.arch.distro.buildSourceInfo.SELinuxPolicy
+	if bd.buildSourceInfo != nil {
+		img.OSCustomizations.BuildSELinux = bd.buildSourceInfo.SELinuxPolicy
 	}
-	if t.arch.distro.sourceInfo != nil && t.arch.distro.sourceInfo.MountConfiguration != nil {
-		img.OSCustomizations.MountConfiguration = *t.arch.distro.sourceInfo.MountConfiguration
+	if bd.sourceInfo != nil && bd.sourceInfo.MountConfiguration != nil {
+		img.OSCustomizations.MountConfiguration = *bd.sourceInfo.MountConfiguration
 	}
 
-	imageConfig := t.ImageTypeYAML.ImageConfig(t.arch.distro.id, t.arch.Name())
+	imageConfig := t.ImageTypeYAML.ImageConfig(bd.id, t.arch.Name())
 	if imageConfig != nil {
 		img.OSCustomizations.KernelOptionsAppend = imageConfig.KernelOptions
 	}
@@ -609,7 +613,7 @@ func (t *imageType) manifestForPXETar(bp *blueprint.Blueprint, options distro.Im
 	// NOTE: Only the / partition is needed since the final result is compressed
 	//       filesystem. But the intermediate bootc filesystem install needs a size
 	//       and partitions.
-	rootfsMinSize := max(t.arch.distro.rootfsMinSize, options.Size)
+	rootfsMinSize := max(bd.rootfsMinSize, options.Size)
 	pt, err := t.genPartitionTable(customizations, rootfsMinSize, rng)
 	if err != nil {
 		return nil, nil, err
@@ -638,7 +642,7 @@ func (t *imageType) manifestForPXETar(bp *blueprint.Blueprint, options distro.Im
 	}
 
 	// Used when dracut rebuilds the initramfs in the bootc pipeline
-	img.KernelVersion = t.arch.distro.sourceInfo.KernelInfo.Version
+	img.KernelVersion = bd.sourceInfo.KernelInfo.Version
 
 	mf := manifest.New()
 	mf.Distro = manifest.DISTRO_FEDORA
@@ -650,4 +654,274 @@ func (t *imageType) manifestForPXETar(bp *blueprint.Blueprint, options distro.Im
 
 	return &mf, nil, nil
 
+}
+
+func PlatformFor(archStr, uefiVendor string) *platform.Data {
+	archi := common.Must(arch.FromString(archStr))
+	platform := &platform.Data{
+		Arch:        archi,
+		UEFIVendor:  uefiVendor,
+		QCOW2Compat: "1.1",
+	}
+	switch archi {
+	case arch.ARCH_X86_64:
+		platform.BIOSPlatform = "i386-pc"
+	case arch.ARCH_PPC64LE:
+		platform.BIOSPlatform = "powerpc-ieee1275"
+	case arch.ARCH_S390X:
+		platform.ZiplSupport = true
+	}
+	return platform
+}
+
+var (
+	// The mountpoint policy for bootc images is more restrictive than the
+	// ostree mountpoint policy defined in osbuild/images. It only allows /
+	// (for sizing the root partition) and custom mountpoints under /var but
+	// not /var itself.
+
+	// Since our policy library doesn't support denying a path while allowing
+	// its subpaths (only the opposite), we augment the standard policy check
+	// with a simple search through the custom mountpoints to deny /var
+	// specifically.
+	mountpointPolicy = pathpolicy.NewPathPolicies(map[string]pathpolicy.PathPolicy{
+		// allow all existing mountpoints (but no subdirs) to support size customizations
+		"/":     {Deny: false, Exact: true},
+		"/boot": {Deny: false, Exact: true},
+
+		// /var is not allowed, but we need to allow any subdirectories that
+		// are not denied below, so we allow it initially and then check it
+		// separately (in checkMountpoints())
+		"/var": {Deny: false},
+
+		// /var subdir denials
+		"/var/home":     {Deny: true},
+		"/var/lock":     {Deny: true}, // symlink to ../run/lock which is on tmpfs
+		"/var/mail":     {Deny: true}, // symlink to spool/mail
+		"/var/mnt":      {Deny: true},
+		"/var/roothome": {Deny: true},
+		"/var/run":      {Deny: true}, // symlink to ../run which is on tmpfs
+		"/var/srv":      {Deny: true},
+		"/var/usrlocal": {Deny: true},
+	})
+
+	mountpointMinimalPolicy = pathpolicy.NewPathPolicies(map[string]pathpolicy.PathPolicy{
+		// allow all existing mountpoints to support size customizations
+		"/":     {Deny: false, Exact: true},
+		"/boot": {Deny: false, Exact: true},
+	})
+)
+
+func (t *bootcImageType) basePartitionTable() (*disk.PartitionTable, error) {
+	bd := t.arch.distro.(*BootcDistro)
+	// base partition table can come from the container
+	if bd.sourceInfo != nil && bd.sourceInfo.PartitionTable != nil {
+		return bd.sourceInfo.PartitionTable, nil
+	}
+	// otherwise we use our YAML
+	return t.ImageTypeYAML.PartitionTable(bd.id, t.arch.Name())
+}
+
+func (t *bootcImageType) genPartitionTable(customizations *blueprint.Customizations, rootfsMinSize uint64, rng *rand.Rand) (*disk.PartitionTable, error) {
+	// XXX: much duplication with generic/imagetype.go:getPartitionTable()
+	fsCust := customizations.GetFilesystems()
+	diskCust, err := customizations.GetPartitioning()
+	if err != nil {
+		return nil, fmt.Errorf("error reading disk customizations: %w", err)
+	}
+	basept, err := t.basePartitionTable()
+	if err != nil {
+		return nil, err
+	}
+
+	bd := t.arch.distro.(*BootcDistro)
+
+	// Embedded disk customization applies if there was no local customization
+	if fsCust == nil && diskCust == nil && bd.sourceInfo != nil && bd.sourceInfo.ImageCustomization != nil {
+		imageCustomizations := bd.sourceInfo.ImageCustomization
+
+		fsCust = imageCustomizations.GetFilesystems()
+		diskCust, err = imageCustomizations.GetPartitioning()
+		if err != nil {
+			return nil, fmt.Errorf("error reading disk customizations: %w", err)
+		}
+	}
+
+	var partitionTable *disk.PartitionTable
+	switch {
+	case fsCust != nil && diskCust != nil:
+		return nil, fmt.Errorf("cannot combine disk and filesystem customizations")
+	case diskCust != nil:
+		partitionTable, err = t.genPartitionTableDiskCust(basept, diskCust, rootfsMinSize, rng)
+		if err != nil {
+			return nil, err
+		}
+	default:
+		partitionTable, err = t.genPartitionTableFsCust(basept, fsCust, rootfsMinSize, rng)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// XXX: make this generic/configurable
+	// Ensure ext4 rootfs has fs-verity enabled
+	rootfs := partitionTable.FindMountable("/")
+	if rootfs != nil {
+		switch elem := rootfs.(type) {
+		case *disk.Filesystem:
+			if elem.Type == "ext4" {
+				elem.MkfsOptions.Verity = true
+			}
+		}
+	}
+
+	return partitionTable, nil
+}
+
+func (t *bootcImageType) genPartitionTableDiskCust(basept *disk.PartitionTable, diskCust *blueprint.DiskCustomization, rootfsMinSize uint64, rng *rand.Rand) (*disk.PartitionTable, error) {
+	if err := diskCust.ValidateLayoutConstraints(); err != nil {
+		return nil, fmt.Errorf("cannot use disk customization: %w", err)
+	}
+
+	diskCust.MinSize = max(diskCust.MinSize, rootfsMinSize)
+
+	if basept == nil {
+		return nil, fmt.Errorf("pipelines: no partition tables defined for %s", t.arch.Name())
+	}
+	bd := t.arch.distro.(*BootcDistro)
+	defaultFSType, err := disk.NewFSType(bd.defaultFs)
+	if err != nil {
+		return nil, err
+	}
+	requiredMinSizes, err := calcRequiredDirectorySizes(diskCust, rootfsMinSize)
+	if err != nil {
+		return nil, err
+	}
+	partOptions := &disk.CustomPartitionTableOptions{
+		PartitionTableType: basept.Type,
+		// XXX: not setting/defaults will fail to boot with btrfs/lvm
+		BootMode:         t.BootMode(),
+		DefaultFSType:    defaultFSType,
+		RequiredMinSizes: requiredMinSizes,
+		Architecture:     t.arch.arch,
+	}
+	return disk.NewCustomPartitionTable(diskCust, partOptions, rng)
+}
+
+func (t *bootcImageType) genPartitionTableFsCust(basept *disk.PartitionTable, fsCust []blueprint.FilesystemCustomization, rootfsMinSize uint64, rng *rand.Rand) (*disk.PartitionTable, error) {
+	if basept == nil {
+		return nil, fmt.Errorf("pipelines: no partition tables defined for %s", t.arch.Name())
+	}
+
+	partitioningMode := partition.RawPartitioningMode
+	bd := t.arch.distro.(*BootcDistro)
+	if bd.defaultFs == "btrfs" {
+		partitioningMode = partition.BtrfsPartitioningMode
+	}
+	if err := checkFilesystemCustomizations(fsCust, partitioningMode); err != nil {
+		return nil, err
+	}
+	fsCustomizations := updateFilesystemSizes(fsCust, rootfsMinSize)
+
+	imageSize := t.ImageTypeYAML.DefaultSize
+	if basept.Size != 0 {
+		imageSize = basept.Size
+	}
+
+	return disk.NewPartitionTable(basept, fsCustomizations, imageSize, partitioningMode, t.arch.arch, nil, bd.defaultFs, rng)
+}
+
+func checkMountpoints(filesystems []blueprint.FilesystemCustomization, policy *pathpolicy.PathPolicies) error {
+	errs := []error{}
+	for _, fs := range filesystems {
+		if err := policy.Check(fs.Mountpoint); err != nil {
+			errs = append(errs, err)
+		}
+		if fs.Mountpoint == "/var" {
+			// this error message is consistent with the errors returned by policy.Check()
+			// TODO: remove trailing space inside the quoted path when the function is fixed in osbuild/images.
+			errs = append(errs, fmt.Errorf(`path "/var" is not allowed`))
+		}
+	}
+	if len(errs) > 0 {
+		return fmt.Errorf("the following errors occurred while validating custom mountpoints:\n%w", errors.Join(errs...))
+	}
+	return nil
+}
+
+// calcRequiredDirectorySizes will calculate the minimum sizes for /
+// for disk customizations. We need this because with advanced partitioning
+// we never grow the rootfs to the size of the disk (unlike the tranditional
+// filesystem customizations).
+//
+// So we need to go over the customizations and ensure the min-size for "/"
+// is at least rootfsMinSize.
+//
+// Note that a custom "/usr" is not supported in image mode so splitting
+// rootfsMinSize between / and /usr is not a concern.
+func calcRequiredDirectorySizes(distCust *blueprint.DiskCustomization, rootfsMinSize uint64) (map[string]datasizes.Size, error) {
+	// XXX: this has *way* too much low-level knowledge about the
+	// inner workings of blueprint.DiskCustomizations plus when
+	// a new type it needs to get added here too, think about
+	// moving into "images" instead (at least partly)
+	mounts := map[string]uint64{}
+	for _, part := range distCust.Partitions {
+		switch part.Type {
+		case "", "plain":
+			mounts[part.Mountpoint] = part.MinSize
+		case "lvm":
+			for _, lv := range part.LogicalVolumes {
+				mounts[lv.Mountpoint] = part.MinSize
+			}
+		case "btrfs":
+			for _, subvol := range part.Subvolumes {
+				mounts[subvol.Mountpoint] = part.MinSize
+			}
+		default:
+			return nil, fmt.Errorf("unknown disk customization type %q", part.Type)
+		}
+	}
+	// ensure rootfsMinSize is respected
+	return map[string]datasizes.Size{
+		"/": datasizes.Size(max(rootfsMinSize, mounts["/"])),
+	}, nil
+}
+
+func checkFilesystemCustomizations(fsCustomizations []blueprint.FilesystemCustomization, ptmode partition.PartitioningMode) error {
+	var policy *pathpolicy.PathPolicies
+	switch ptmode {
+	case partition.BtrfsPartitioningMode:
+		// btrfs subvolumes are not supported at build time yet, so we only
+		// allow / and /boot to be customized when building a btrfs disk (the
+		// minimal policy)
+		policy = mountpointMinimalPolicy
+	default:
+		policy = mountpointPolicy
+	}
+	if err := checkMountpoints(fsCustomizations, policy); err != nil {
+		return err
+	}
+	return nil
+}
+
+// updateFilesystemSizes updates the size of the root filesystem customization
+// based on the minRootSize. The new min size whichever is larger between the
+// existing size and the minRootSize. If the root filesystem is not already
+// configured, a new customization is added.
+func updateFilesystemSizes(fsCustomizations []blueprint.FilesystemCustomization, minRootSize uint64) []blueprint.FilesystemCustomization {
+	updated := make([]blueprint.FilesystemCustomization, len(fsCustomizations), len(fsCustomizations)+1)
+	hasRoot := false
+	for idx, fsc := range fsCustomizations {
+		updated[idx] = fsc
+		if updated[idx].Mountpoint == "/" {
+			updated[idx].MinSize = max(updated[idx].MinSize, minRootSize)
+			hasRoot = true
+		}
+	}
+
+	if !hasRoot {
+		// no root customization found: add it
+		updated = append(updated, blueprint.FilesystemCustomization{Mountpoint: "/", MinSize: minRootSize})
+	}
+	return updated
 }

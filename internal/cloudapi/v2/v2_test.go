@@ -497,7 +497,6 @@ func TestGetDistribution(t *testing.T) {
 		"os_version": "1",
 		"module_platform_id": "platform:test-distro-1",
 		"product": "test-distro-1",
-		"ostree_ref": "test/1/x86_64/edge",
 		"architectures": {
 			"test_arch": {
 				"name": "test_arch",
@@ -545,7 +544,6 @@ func TestGetDistribution(t *testing.T) {
 		"os_version": "1",
 		"module_platform_id": "platform:test-distro-1",
 		"product": "test-distro-1",
-		"ostree_ref": "test/1/x86_64/edge",
 		"architectures": {
 			"test_arch": {
 				"name": "test_arch",
@@ -576,7 +574,6 @@ func TestGetDistribution(t *testing.T) {
 		"os_version": "1",
 		"module_platform_id": "platform:test-distro-1",
 		"product": "test-distro-1",
-		"ostree_ref": "test/1/x86_64/edge",
 		"architectures": {
 			"test_arch": {
 				"name": "test_arch",
@@ -622,7 +619,6 @@ func TestGetDistribution(t *testing.T) {
 		"os_version": "1",
 		"module_platform_id": "platform:test-distro-1",
 		"product": "test-distro-1",
-		"ostree_ref": "test/1/x86_64/edge",
 		"architectures": {
 			"test_arch": {
 				"name": "test_arch",
@@ -663,7 +659,6 @@ func TestGetDistribution(t *testing.T) {
 		"os_version": "1",
 		"module_platform_id": "platform:test-distro-1",
 		"product": "test-distro-1",
-		"ostree_ref": "test/1/x86_64/edge",
 		"architectures": {
 			"test_arch": {
 				"name": "test_arch",
@@ -729,7 +724,6 @@ func TestGetDistribution(t *testing.T) {
 		"os_version": "1",
 		"module_platform_id": "platform:test-distro-1",
 		"product": "test-distro-1",
-		"ostree_ref": "test/1/x86_64/edge",
 		"architectures": {
 			"test_arch": {
 				"name": "test_arch",
@@ -876,8 +870,14 @@ func TestCompose(t *testing.T) {
 
 	testDistro := test_distro.DistroFactory(test_distro.TestDistro1Name)
 	require.NotNil(t, testDistro)
-	// create two ostree repos, one to serve the default test_distro ref (for fallback tests) and one to serve a custom ref
-	ostreeRepoDefault := mock_ostree_repo.Setup(testDistro.OSTreeRef())
+	// create two ostree repos, one to serve the default edge-commit ref (for fallback tests) and one to serve a custom ref
+	// get the ostree ref from the edge commit image type
+	testArch, err := testDistro.GetArch(test_distro.TestArch3Name) // Arch3 is the architecture that has the edge-commit in the test distro
+	require.NoError(t, err)
+	edgeCommit, err := testArch.GetImageType(test_distro.TestImageTypeEdgeCommit)
+	require.NoError(t, err)
+
+	ostreeRepoDefault := mock_ostree_repo.Setup(edgeCommit.OSTreeRef())
 	defer ostreeRepoDefault.TearDown()
 	ostreeRepoOther := mock_ostree_repo.Setup("some/other/ref")
 	defer ostreeRepoOther.TearDown()
@@ -1692,10 +1692,10 @@ func TestComposeDependencyError(t *testing.T) {
 		"image_request":{
 			"architecture": "%s",
 			"image_type": "edge-commit",
-                        "ostree": {
-                                "url": "somerepo.org",
-                                "ref": "test"
-                        },
+			"ostree": {
+				"url": "somerepo.org",
+				"ref": "test"
+			},
 			"repositories": [{
 				"baseurl": "somerepo.org",
 				"rhsm": false
@@ -1745,10 +1745,10 @@ func TestComposeDependencyError(t *testing.T) {
 						"id": 22,
 						"reason": "DNF Error"
 					},
-                                        {
-                                                "id": 34,
-                                                "reason": "ostree error"
-                                        }]
+					{
+						"id": 34,
+						"reason": "ostree error"
+					}]
 				}],
 				"id": 9,
 				"reason": "Manifest dependency failed"

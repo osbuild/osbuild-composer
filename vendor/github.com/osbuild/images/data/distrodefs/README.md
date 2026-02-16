@@ -79,7 +79,6 @@ The existing `rhel.yaml` contains:
     release_version: 10
     module_platform_id: "platform:el10"
     vendor: "redhat"
-    ostree_ref_tmpl: "rhel/10/%s/edge"
     default_fs_type: "xfs"
     defs_path: rhel-10
     iso_label_tmpl: "RHEL-{{.Distro.MajorVersion}}-{{.Distro.MinorVersion}}-0-BaseOS-{{.Arch}}"

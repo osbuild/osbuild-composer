@@ -19,6 +19,7 @@ const (
 	AnssiBp28High         Profile = "xccdf_org.ssgproject.content_profile_anssi_bp28_high"
 	AnssiBp28Intermediary Profile = "xccdf_org.ssgproject.content_profile_anssi_bp28_intermediary"
 	AnssiBp28Minimal      Profile = "xccdf_org.ssgproject.content_profile_anssi_bp28_minimal"
+	BSI                   Profile = "xccdf_org.ssgproject.content_profile_bsi"
 	CcnAdvanced           Profile = "xccdf_org.ssgproject.content_profile_ccn_advanced"
 	CcnBasic              Profile = "xccdf_org.ssgproject.content_profile_ccn_basic"
 	CcnIntermediate       Profile = "xccdf_org.ssgproject.content_profile_ccn_intermediate"

@@ -45,6 +45,7 @@
         uefi:
           - "dracut-config-generic"
           - "efibootmgr"
+          - "grub2"
           - "grub2-efi-x64"
           - "shim-x64"
     x86_64_bios_platform: &x86_64_bios_platform
@@ -93,6 +94,7 @@
         uefi:
           - "dracut-config-generic"
           - "efibootmgr"
+          - "grub2"
           - "grub2-efi-aa64"
           - "grub2-tools"
           - "shim-aa64"
@@ -129,6 +131,7 @@
         bios:
           - "dracut-config-generic"
           - "powerpc-utils"
+          - "grub2"
           - "grub2-ppc64le"
           - "grub2-ppc64le-modules"
       build_packages:
@@ -1478,7 +1481,7 @@ image_types:
             - "dhcpcd"
             - "yum-utils"
             - "dracut-config-generic"
-            - "grub2"
+            - "kdump-utils"
             - "langpacks-en"
             - "NetworkManager-cloud-setup"
             - "redhat-release"
@@ -1591,6 +1594,103 @@ image_types:
               - "intel_idle.max_cstate=1"
     blueprint:
       supported_options: *supported_options_disk
+
+  ec2-cvm:
+    <<: *ec2
+    default_size: "32 GiB"
+    platforms:
+      - arch: "x86_64"
+        bootloader: "uki"
+        image_format: "raw"
+        uefi_vendor: "{{.DistroVendor}}"
+        packages:
+          uki:
+            - "efibootmgr"
+            - "kernel-uki-virt-addons"  # provides useful cmdline utilities for the UKI
+            - "shim-x64"
+            - "uki-direct"
+    partition_table:
+      x86_64:
+        uuid: "D209C89E-EA5E-4FBD-B161-B461CCE297E0"
+        type: "gpt"
+        partitions:
+          - size: "512 MiB"
+            type: *efi_system_partition_guid
+            payload_type: "filesystem"
+            payload:
+              type: vfat
+              mountpoint: "/boot/efi"
+              label: "EFI-SYSTEM"
+              fstab_options: "defaults,uid=0,gid=0,umask=077,shortname=winnt"
+              fstab_freq: 0
+              fstab_passno: 2
+          - size: "5 GiB"
+            type: *root_partition_x86_64_guid
+            payload_type: "filesystem"
+            payload:
+              type: "ext4"
+              label: "root"
+              mountpoint: "/"
+              fstab_options: "defaults"
+              fstab_freq: 0
+              fstab_passno: 0
+    image_config:
+      <<: *ami_image_config
+      default_kernel: "kernel-uki-virt"
+      default_kernel_name: "kernel-uki-virt"
+      no_bls: true
+      conditions:
+        <<: *ami_image_config_cond
+        "x86_64 shim package version lock":
+          # Lock the shim package to its installed version. This is necessary
+          # for UKI-based images that can become unbootable if the shim is
+          # upgraded to one signed by a newer certificate that does not exist
+          # in the system's database.
+          # See https://issues.redhat.com/browse/RHEL-93650
+          when:
+            arch: "x86_64"
+          shallow_merge:
+            versionlock_packages:
+              - "shim-x64"
+    package_sets:
+      os:
+        - *ami_pkgset
+        - exclude:
+            - "grub2-common"
+            - "grub2-tools"
+            - "grub2-tools-minimal"
+            - "grubby"
+            - "vdo"
+            - "kmod-kvdo"
+    blueprint:
+      supported_options:
+        # same as disk image types, but kernel customizations are not supported
+        - "distro"
+        - "packages"
+        - "modules"
+        - "groups"
+        - "enabled_modules"
+        - "containers"
+        - "customizations.cacerts"
+        - "customizations.directories"
+        - "customizations.disk"
+        - "customizations.dnf"
+        - "customizations.files"
+        - "customizations.filesystem"
+        - "customizations.partitioning_mode"
+        - "customizations.fips"
+        - "customizations.firewall"
+        - "customizations.user"
+        - "customizations.sshkey"
+        - "customizations.group"
+        - "customizations.hostname"
+        - "customizations.locale"
+        - "customizations.openscap"
+        - "customizations.repositories"
+        - "customizations.rpm"
+        - "customizations.services"
+        - "customizations.timezone"
+        - "customizations.rhsm"
 
   wsl:
     filename: "image.wsl"

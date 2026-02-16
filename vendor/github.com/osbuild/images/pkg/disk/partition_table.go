@@ -1,10 +1,11 @@
 package disk
 
 import (
+	"cmp"
 	"fmt"
 	"math/rand"
 	"path/filepath"
-	"sort"
+	"slices"
 
 	"github.com/google/uuid"
 
@@ -1442,10 +1443,9 @@ func NewCustomPartitionTable(customizations *blueprint.DiskCustomization, option
 // sortPartitions reorders the partitions in the table based on their start
 // sector.
 func (pt *PartitionTable) sortPartitions() {
-	sort.Slice(pt.Partitions, func(i, j int) bool {
-		return pt.Partitions[i].Start < pt.Partitions[j].Start
+	slices.SortFunc(pt.Partitions, func(a, b Partition) int {
+		return cmp.Compare(a.Start, b.Start)
 	})
-
 }
 
 func addPlainPartition(pt *PartitionTable, partition blueprint.PartitionCustomization, options *CustomPartitionTableOptions) error {

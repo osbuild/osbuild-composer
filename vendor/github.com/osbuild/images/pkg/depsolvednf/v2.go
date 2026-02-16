@@ -1,10 +1,10 @@
 package depsolvednf
 
 import (
+	"cmp"
 	"encoding/json"
 	"fmt"
 	"slices"
-	"sort"
 	"time"
 
 	"github.com/osbuild/images/internal/common"
@@ -615,8 +615,8 @@ func (h *v2Handler) toRPMMDRepoConfigs(v2Repos map[string]v2Repository) ([]rpmmd
 		repos = append(repos, repo)
 	}
 	// Sort repos by ID for deterministic ordering
-	sort.Slice(repos, func(i, j int) bool {
-		return repos[i].Id < repos[j].Id
+	slices.SortFunc(repos, func(a, b rpmmd.RepoConfig) int {
+		return cmp.Compare(a.Id, b.Id)
 	})
 	// Build repoMap after sorting so pointers are correct
 	repoMap := make(map[string]*rpmmd.RepoConfig, len(repos))

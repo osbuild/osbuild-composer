@@ -1,8 +1,9 @@
 package osbuild
 
 import (
+	"cmp"
 	"fmt"
-	"sort"
+	"slices"
 
 	"github.com/osbuild/images/pkg/disk"
 )
@@ -78,8 +79,8 @@ func NewFSTabStageOptions(pt *disk.PartitionTable) (*FSTabStageOptions, error) {
 	}
 
 	// sort the entries by PassNo to maintain backward compatibility
-	sort.Slice(options.FileSystems, func(i, j int) bool {
-		return key(options.FileSystems[i]) < key(options.FileSystems[j])
+	slices.SortFunc(options.FileSystems, func(a, b *FSTabEntry) int {
+		return cmp.Compare(key(a), key(b))
 	})
 	return &options, nil
 }

@@ -1016,7 +1016,13 @@ func TestCompose(t *testing.T) {
 	distro1 := test_distro.DistroFactory(test_distro.TestDistro1Name)
 	require.NotNil(t, distro1)
 
-	ostreeRepoDefault := mock_ostree_repo.Setup(distro1.OSTreeRef())
+	// get the ostree ref from the edge commit image type
+	testArch, err := distro1.GetArch(test_distro.TestArch3Name) // Arch3 is the architecture that has the edge-commit in the test distro
+	require.NoError(t, err)
+	edgeCommit, err := testArch.GetImageType(test_distro.TestImageTypeEdgeCommit)
+	require.NoError(t, err)
+
+	ostreeRepoDefault := mock_ostree_repo.Setup(edgeCommit.OSTreeRef())
 	defer ostreeRepoDefault.TearDown()
 	otherRef := "some/other/ref"
 	ostreeRepoOther := mock_ostree_repo.Setup(otherRef)

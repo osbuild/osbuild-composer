@@ -585,6 +585,7 @@
               - "firewalld.service"
               - "sshd.service"
               - "greenboot-healthcheck"
+
     iot: &image_config_iot
       <<: *image_config_iot_enabled_services
       keyboard:
@@ -1159,6 +1160,76 @@
           - <<: *aarch64_platform
             image_format: "raw"
 
+  ostree_iot: &ostree_iot
+    name: "fedora-iot"
+    remote_name: "fedora-iot"
+    ref: &ostree_iot_ref "{{.Distro.Name}}/{{.Distro.MajorVersion}}/{{.Arch}}/iot"
+    url: "https://d2ju0wfl996cmc.cloudfront.net/"
+
+  ostree_atomic: &ostree_atomic
+    name: "fedora"
+    remote_name: "fedora"
+    url: "https://d2uk5hbyrobdzx.cloudfront.net/"
+
+  atomic_installer_common: &atomic_installer_common
+    <<: *rpm_ostree_imgtype_common
+    filename: "installer.iso"
+    mime_type: "application/x-iso9660-image"
+    boot_iso: true
+    image_func: "iot_installer"
+    ostree: *ostree_atomic
+    exports: ["bootiso"]
+    required_partition_sizes: *default_required_dir_sizes
+    installer_config:
+      <<: *default_installer_config
+      install_weak_deps: false
+      default_menu: 1
+    image_config:
+      locale: "en_US.UTF-8"
+      kernel_options:
+    package_sets:
+      installer:
+        - *network_installer_pkgset
+    platforms:
+      - *x86_64_installer_platform
+      - *aarch64_installer_platform
+    blueprint:
+      supported_options:
+        - "distro"
+        - "customizations.installer"
+        - "customizations.user"
+        - "customizations.sshkey"
+        - "customizations.group"
+        - "customizations.fips"
+        - "customizations.timezone"
+        - "customizations.locale"
+
+  atomic_disk_common: &atomic_qcow2_common
+    <<: *rpm_ostree_imgtype_common
+    filename: "image.qcow2"
+    mime_type: "application/x-qemu-disk"
+    default_size: "10 GiB"
+    bootable: true
+    image_func: "iot"
+    ostree: *ostree_atomic
+    exports: ["qcow2"]
+    required_partition_sizes: *default_required_dir_sizes
+    image_config:
+      kernel_options: *ostree_deployment_kernel_options
+      ignition_platform: "qemu"
+    partition_table:
+      <<: *iot_base_partition_tables
+    platforms:
+      - <<: *x86_64_uefi_platform
+        image_format: "qcow2"
+        # XXX: the original images lib defined no qcow2Compat
+        qcow2_compat: ""
+      - <<: *aarch64_platform
+        image_format: "qcow2"
+        qcow2_compat: "1.1"
+    blueprint:
+      supported_options: *supported_options_ostree_disk
+
 image_config:
   default:
     default_oscap_datastream: "/usr/share/xml/scap/ssg/content/ssg-fedora-ds.xml"
@@ -1406,6 +1477,8 @@ image_types:
     image_func: "iot_commit"
     exports: ["commit-archive"]
     required_partition_sizes: *default_required_dir_sizes
+    ostree:
+      ref: *ostree_iot_ref
     image_config: &image_config_iot_commit
       <<: *image_config_iot_enabled_services
       bootupd_gen_metadata: true
@@ -1555,6 +1628,8 @@ image_types:
     image_func: "iot_container"
     exports: ["container"]
     required_partition_sizes: *default_required_dir_sizes
+    ostree:
+      ref: *ostree_iot_ref
     image_config:
       <<: *image_config_iot_commit
       install_weak_deps: true
@@ -1588,9 +1663,7 @@ image_types:
     default_size: "6 GiB"
     bootable: true
     image_func: "iot"
-    ostree:
-      name: "fedora-iot"
-      remote_name: "fedora-iot"
+    ostree: *ostree_iot
     exports: ["xz"]
     # Passing an empty map into the required partition sizes disables the
     # default partition sizes normally set so our `basePartitionTables` can
@@ -1649,9 +1722,7 @@ image_types:
     default_size: "10 GiB"
     bootable: true
     image_func: "iot"
-    ostree:
-      name: "fedora-iot"
-      remote_name: "fedora-iot"
+    ostree: *ostree_iot
     exports: ["qcow2"]
     required_partition_sizes: *default_required_dir_sizes
     image_config:
@@ -1677,6 +1748,8 @@ image_types:
     image_func: "bootable_container"
     exports: ["ostree-encapsulate"]
     required_partition_sizes: *default_required_dir_sizes
+    ostree:
+      ref: *ostree_iot_ref
     image_config:
       machine_id_uninitialized: false
     platforms:
@@ -1928,9 +2001,7 @@ image_types:
     image_func: "iot_installer"
     iso_label: "IoT"
     variant: "IoT"
-    ostree:
-      name: "fedora-iot"
-      remote_name: "fedora-iot"
+    ostree: *ostree_iot
     exports: ["bootiso"]
     required_partition_sizes: *default_required_dir_sizes
     installer_config:
@@ -2301,8 +2372,8 @@ image_types:
     iso_label: "IoT"
     variant: "IoT"
     ostree:
+      <<: *ostree_iot
       name: "fedora"
-      remote_name: "fedora-iot"
     exports: ["bootiso"]
     required_partition_sizes: *default_required_dir_sizes
     installer_config:
@@ -2797,3 +2868,87 @@ image_types:
             - xorg-x11-xauth
             - xrdb
             - xz
+
+  ## Fedora Atomic
+
+  "kinoite-installer":
+    <<: *atomic_installer_common
+    iso_label: "Kinoite"
+    variant: "Kinoite"
+    ostree:
+      <<: *ostree_atomic
+      ref: "{{.Distro.Name}}/{{.Distro.MajorVersion}}/{{.Arch}}/kinoite"
+    package_sets:
+      installer:
+        - *network_installer_pkgset
+        - include:
+            - "fedora-release-kinoite"
+
+  "silverblue-installer":
+    <<: *atomic_installer_common
+    iso_label: "Silverblue"
+    variant: "Silverblue"
+    ostree:
+      <<: *ostree_atomic
+      ref: "{{.Distro.Name}}/{{.Distro.MajorVersion}}/{{.Arch}}/silverblue"
+    package_sets:
+      installer:
+        - *network_installer_pkgset
+        - include:
+            - "fedora-release-silverblue"
+
+  "sway-atomic-installer":
+    <<: *atomic_installer_common
+    iso_label: "Sway Atomic"
+    variant: "Sway Atomic"
+    ostree:
+      <<: *ostree_atomic
+      ref: "{{.Distro.Name}}/{{.Distro.MajorVersion}}/{{.Arch}}/sericea"
+    package_sets:
+      installer:
+        - *network_installer_pkgset
+        - include:
+            - "fedora-release-sway-atomic"
+
+  "budgie-atomic-installer":
+    <<: *atomic_installer_common
+    iso_label: "Budgie Atomic"
+    variant: "Budgie Atomic"
+    ostree:
+      <<: *ostree_atomic
+      ref: "{{.Distro.Name}}/{{.Distro.MajorVersion}}/{{.Arch}}/onyx"
+    package_sets:
+      installer:
+        - *network_installer_pkgset
+        - include:
+            - "fedora-release-budgie-atomic"
+
+  "cosmic-atomic-installer":
+    <<: *atomic_installer_common
+    iso_label: "Cosmic Atomic"
+    variant: "Cosmic Atomic"
+    ostree:
+      <<: *ostree_atomic
+      ref: "{{.Distro.Name}}/{{.Distro.MajorVersion}}/{{.Arch}}/cosmic-atomic"
+    package_sets:
+      installer:
+        - *network_installer_pkgset
+        - include:
+            - "fedora-release-cosmic-atomic"
+
+  ### Note we only have disk images for those Atomic variants that have a form of
+  ### initial setup to provision the system.
+
+  "kinoite-qcow2":
+    <<: *atomic_qcow2_common
+    variant: "Kinoite"
+    ostree:
+      <<: *ostree_atomic
+      ref: "{{.Distro.Name}}/{{.Distro.MajorVersion}}/{{.Arch}}/kinoite"
+
+  "silverblue-qcow2":
+    <<: *atomic_qcow2_common
+    variant: "Kinoite"
+    ostree:
+      <<: *ostree_atomic
+      ref: "{{.Distro.Name}}/{{.Distro.MajorVersion}}/{{.Arch}}/kinoite"

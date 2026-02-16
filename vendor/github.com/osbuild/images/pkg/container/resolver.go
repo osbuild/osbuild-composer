@@ -1,9 +1,10 @@
 package container
 
 import (
+	"cmp"
 	"context"
 	"fmt"
-	"sort"
+	"slices"
 	"strings"
 	"time"
 )
@@ -97,7 +98,7 @@ func (r *asyncResolver) Finish() ([]Spec, error) {
 	}
 
 	// Return a stable result, sorted by Digest
-	sort.Slice(specs, func(i, j int) bool { return specs[i].Digest < specs[j].Digest })
+	slices.SortFunc(specs, func(a, b Spec) int { return cmp.Compare(a.Digest, b.Digest) })
 
 	return specs, nil
 }
@@ -177,7 +178,7 @@ func (r *blockingResolver) Finish() ([]Spec, error) {
 	}
 
 	// Return a stable result, sorted by Digest
-	sort.Slice(specs, func(i, j int) bool { return specs[i].Digest < specs[j].Digest })
+	slices.SortFunc(specs, func(a, b Spec) int { return cmp.Compare(a.Digest, b.Digest) })
 
 	return specs, nil
 }

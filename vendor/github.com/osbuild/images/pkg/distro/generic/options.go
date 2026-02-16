@@ -41,9 +41,10 @@ func checkOptionsCommon(t *imageType, bp *blueprint.Blueprint, options distro.Im
 	}
 
 	if (t.BootISO || t.Bootable) && t.RPMOSTree {
-		// ostree-based ISOs require a URL from which to pull a payload commit
-		if options.OSTree == nil || options.OSTree.URL == "" {
-			return warnings, fmt.Errorf("options validation failed for image type %q: ostree.url: required", t.Name())
+		// ostree-based ISOs require a URL from which to pull a payload commit, this can either be a default URL or one
+		// supplied through options
+		if t.OSTreeURL() == "" && (options.OSTree == nil || options.OSTree.URL == "") {
+			return warnings, fmt.Errorf("options validation failed for image type %q: ostree.url: required, there is no default available", t.Name())
 		}
 	}
 
@@ -96,7 +97,8 @@ func checkOptionsCommon(t *imageType, bp *blueprint.Blueprint, options distro.Im
 	}
 
 	if osc := customizations.GetOpenSCAP(); osc != nil {
-		supported := oscap.IsProfileAllowed(osc.ProfileID, t.arch.distro.DistroYAML.OscapProfilesAllowList)
+		d := t.arch.distro.(*distribution)
+		supported := oscap.IsProfileAllowed(osc.ProfileID, d.DistroYAML.OscapProfilesAllowList)
 		if !supported {
 			return warnings, fmt.Errorf("%s: customizations.openscap.profile_id: unsupported profile %s", errPrefix, osc.ProfileID)
 		}

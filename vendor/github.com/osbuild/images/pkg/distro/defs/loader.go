@@ -9,7 +9,6 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
-	"sort"
 	"text/template"
 
 	"go.yaml.in/yaml/v3"
@@ -78,7 +77,6 @@ type DistroYAML struct {
 	ReleaseVersion   string            `yaml:"release_version"`
 	ModulePlatformID string            `yaml:"module_platform_id"`
 	Product          string            `yaml:"product"`
-	OSTreeRefTmpl    string            `yaml:"ostree_ref_tmpl"`
 	Runner           runner.RunnerConf `yaml:"runner"`
 
 	// ISOLabelTmpl can contain {{.Product}},{{.OsVersion}},{{.Arch}},{{.ISOLabel}}
@@ -153,7 +151,6 @@ func (d *DistroYAML) runTemplates(id distro.ID) error {
 	d.Name = subs(d.Name)
 	d.OsVersion = subs(d.OsVersion)
 	d.ReleaseVersion = subs(d.ReleaseVersion)
-	d.OSTreeRefTmpl = subs(d.OSTreeRefTmpl)
 	d.ModulePlatformID = subs(d.ModulePlatformID)
 	d.Runner.Name = subs(d.Runner.Name)
 	for a := range d.BootstrapContainers {
@@ -418,6 +415,8 @@ type ImageTypeYAML struct {
 	OSTree struct {
 		Name       string `yaml:"name"`
 		RemoteName string `yaml:"remote_name"`
+		Ref        string `yaml:"ref"`
+		URL        string `yaml:"url"`
 	} `yaml:"ostree"`
 	// XXX: rhel-8 uses this
 	UseOstreeRemotes bool `yaml:"use_ostree_remotes"`
@@ -667,8 +666,8 @@ func (imgType *ImageTypeYAML) PackageSets(id distro.ID, archName string) map[str
 			}
 		}
 		// mostly for tests
-		sort.Strings(rpmmdPkgSet.Include)
-		sort.Strings(rpmmdPkgSet.Exclude)
+		slices.Sort(rpmmdPkgSet.Include)
+		slices.Sort(rpmmdPkgSet.Exclude)
 		res[key] = rpmmdPkgSet
 	}
 

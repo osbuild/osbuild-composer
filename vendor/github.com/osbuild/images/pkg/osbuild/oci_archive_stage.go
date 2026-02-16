@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
-	"sort"
+	"slices"
 
 	"github.com/osbuild/images/pkg/customizations/oci"
 )
@@ -106,7 +106,7 @@ func layerKeys(layers map[string]TreeInput) ([]string, error) {
 		}
 		keys = append(keys, key)
 	}
-	sort.Strings(keys)
+	slices.Sort(keys)
 	return keys, nil
 }
 

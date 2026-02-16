@@ -1,7 +1,8 @@
 package pathpolicy
 
 import (
-	"sort"
+	"maps"
+	"slices"
 	"strings"
 )
 
@@ -84,12 +85,7 @@ func (trie *pathTrie[T]) add(path []string) *pathTrie[T] {
 func newPathTrieFromMap[T any](entries map[string]T) *pathTrie[T] {
 	root := &pathTrie[T]{Name: []string{}}
 
-	keys := make([]string, 0, len(entries))
-	for k := range entries {
-		keys = append(keys, k)
-	}
-
-	sort.Strings(keys)
+	keys := slices.Sorted(maps.Keys(entries))
 
 	for _, k := range keys {
 		node, left := root.Lookup(k)
