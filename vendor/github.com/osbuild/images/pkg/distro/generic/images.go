@@ -387,7 +387,7 @@ func ostreeCommitServerCustomizations(t *imageType) manifest.OSTreeCommitServerC
 }
 
 func installerCustomizations(t *imageType, c *blueprint.Customizations, o distro.ImageOptions) (manifest.InstallerCustomizations, error) {
-	d := t.arch.distro
+	d := t.arch.distro.(*distribution)
 
 	// By default we get the preview state from the distro. When given through
 	// the image options we set it explicitly to that value. This allows us to
@@ -584,9 +584,9 @@ func ostreeDeploymentCustomizations(
 	return deploymentConf, nil
 }
 
-func buildOptions(t *imageType) *manifest.BuildOptions {
+func buildOptions(t distro.ImageType) *manifest.BuildOptions {
 	buildOpts := &manifest.BuildOptions{}
-	if tweaks := t.arch.distro.GetTweaks(); tweaks != nil && tweaks.RPMKeys != nil && tweaks.RPMKeys.IgnoreBuildImportFailures {
+	if tweaks := t.Arch().Distro().GetTweaks(); tweaks != nil && tweaks.RPMKeys != nil && tweaks.RPMKeys.IgnoreBuildImportFailures {
 		buildOpts.RPMStageIgnoreGPGImportFailures = tweaks.RPMKeys.IgnoreBuildImportFailures
 	}
 	return buildOpts
@@ -922,7 +922,7 @@ func iotInstallerImage(t *imageType,
 	containers []container.SourceSpec,
 	rng *rand.Rand) (image.ImageKind, error) {
 
-	commit, err := makeOSTreePayloadCommit(options.OSTree, t.OSTreeRef())
+	commit, err := makeOSTreePayloadCommit(options.OSTree, t.OSTreeURL(), t.OSTreeRef())
 	if err != nil {
 		return nil, fmt.Errorf("%s: %s", t.Name(), err.Error())
 	}
@@ -986,7 +986,7 @@ func iotImage(t *imageType,
 	containers []container.SourceSpec,
 	rng *rand.Rand) (image.ImageKind, error) {
 
-	commit, err := makeOSTreePayloadCommit(options.OSTree, t.OSTreeRef())
+	commit, err := makeOSTreePayloadCommit(options.OSTree, t.OSTreeURL(), t.OSTreeRef())
 	if err != nil {
 		return nil, fmt.Errorf("%s: %s", t.Name(), err.Error())
 	}
@@ -1034,7 +1034,7 @@ func iotSimplifiedInstallerImage(t *imageType,
 	containers []container.SourceSpec,
 	rng *rand.Rand) (image.ImageKind, error) {
 
-	commit, err := makeOSTreePayloadCommit(options.OSTree, t.OSTreeRef())
+	commit, err := makeOSTreePayloadCommit(options.OSTree, t.OSTreeURL(), t.OSTreeRef())
 	if err != nil {
 		return nil, fmt.Errorf("%s: %s", t.Name(), err.Error())
 	}
@@ -1248,22 +1248,35 @@ func makeOSTreeParentCommit(options *ostree.ImageOptions, defaultRef string) (*o
 }
 
 // Create an ostree SourceSpec to define an ostree payload using the user options and the default ref for the image type.
-func makeOSTreePayloadCommit(options *ostree.ImageOptions, defaultRef string) (ostree.SourceSpec, error) {
-	if options == nil || options.URL == "" {
-		// this should be caught by checkOptions() in distro, but it's good
-		// to guard against it here as well
+func makeOSTreePayloadCommit(options *ostree.ImageOptions, defaultURL, defaultRef string) (ostree.SourceSpec, error) {
+	url := defaultURL
+	if options != nil && options.URL != "" {
+		// user option overrides default URL
+		url = options.URL
+	}
+
+	if url == "" {
 		return ostree.SourceSpec{}, fmt.Errorf("ostree commit URL required")
 	}
 
-	commitRef := defaultRef
-	if options.ImageRef != "" {
+	ref := defaultRef
+	if options != nil && options.ImageRef != "" {
 		// user option overrides default commit ref
-		commitRef = options.ImageRef
+		ref = options.ImageRef
+	}
+
+	if ref == "" {
+		return ostree.SourceSpec{}, fmt.Errorf("ostree commit ref required")
+	}
+
+	rhsm := false
+	if options != nil {
+		rhsm = options.RHSM
 	}
 
 	return ostree.SourceSpec{
-		URL:  options.URL,
-		Ref:  commitRef,
-		RHSM: options.RHSM,
+		URL:  url,
+		Ref:  ref,
+		RHSM: rhsm,
 	}, nil
 }

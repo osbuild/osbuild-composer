@@ -3,7 +3,8 @@ package test_distro
 import (
 	"errors"
 	"fmt"
-	"sort"
+	"maps"
+	"slices"
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
 	"github.com/osbuild/images/pkg/disk"
@@ -13,6 +14,7 @@ import (
 	"github.com/osbuild/images/pkg/platform"
 	"github.com/osbuild/images/pkg/policies"
 	"github.com/osbuild/images/pkg/rpmmd"
+	"github.com/osbuild/images/pkg/runner"
 )
 
 const (
@@ -29,7 +31,6 @@ type TestDistro struct {
 	name             string
 	releasever       string
 	modulePlatformID string
-	ostreeRef        string
 	arches           map[string]distro.Arch
 }
 
@@ -43,6 +44,7 @@ type TestImageType struct {
 	architecture *TestArch
 	name         string
 	aliases      []string
+	ostreeRef    string
 }
 
 const (
@@ -79,6 +81,14 @@ func (d *TestDistro) Name() string {
 	return d.name
 }
 
+func (d *TestDistro) ID() distro.ID {
+	return distro.ID{Name: d.name}
+}
+
+func (d *TestDistro) IDLike() manifest.Distro {
+	return 0
+}
+
 func (d *TestDistro) Codename() string {
 	return "" // not supported
 }
@@ -99,17 +109,8 @@ func (d *TestDistro) ModulePlatformID() string {
 	return d.modulePlatformID
 }
 
-func (d *TestDistro) OSTreeRef() string {
-	return d.ostreeRef
-}
-
 func (d *TestDistro) ListArches() []string {
-	archs := make([]string, 0, len(d.arches))
-	for name := range d.arches {
-		archs = append(archs, name)
-	}
-	sort.Strings(archs)
-	return archs
+	return slices.Sorted(maps.Keys(d.arches))
 }
 
 func (d *TestDistro) GetArch(arch string) (distro.Arch, error) {
@@ -135,6 +136,18 @@ func (d *TestDistro) GetTweaks() *distro.Tweaks {
 	return nil
 }
 
+func (d *TestDistro) Runner() runner.RunnerConf {
+	return runner.RunnerConf{}
+}
+
+func (d *TestDistro) ImageConfig() *distro.ImageConfig {
+	return nil
+}
+
+func (d *TestDistro) BootstrapContainer(a string) (string, error) {
+	return "", nil
+}
+
 // TestArch
 
 func (a *TestArch) Name() string {
@@ -146,12 +159,7 @@ func (a *TestArch) Distro() distro.Distro {
 }
 
 func (a *TestArch) ListImageTypes() []string {
-	formats := make([]string, 0, len(a.imageTypes))
-	for name := range a.imageTypes {
-		formats = append(formats, name)
-	}
-	sort.Strings(formats)
-	return formats
+	return slices.Sorted(maps.Keys(a.imageTypes))
 }
 
 func (a *TestArch) GetImageType(imageType string) (distro.ImageType, error) {
@@ -197,10 +205,7 @@ func (t *TestImageType) MIMEType() string {
 }
 
 func (t *TestImageType) OSTreeRef() string {
-	if t.name == TestImageTypeEdgeCommit || t.name == TestImageTypeEdgeInstaller || t.name == TestImageTypeOSTree {
-		return t.architecture.distribution.OSTreeRef()
-	}
-	return ""
+	return t.ostreeRef
 }
 
 func (t *TestImageType) ISOLabel() (string, error) {
@@ -322,7 +327,6 @@ func newTestDistro(releasever string) *TestDistro {
 		name:             fmt.Sprintf("%s-%s", TestDistroNameBase, releasever),
 		releasever:       releasever,
 		modulePlatformID: fmt.Sprintf("platform:%s-%s", TestDistroNameBase, releasever),
-		ostreeRef:        fmt.Sprintf("test/%s/x86_64/edge", releasever),
 	}
 
 	ta1 := TestArch{
@@ -360,11 +364,13 @@ func newTestDistro(releasever string) *TestDistro {
 	}
 
 	it5 := TestImageType{
-		name: TestImageTypeEdgeCommit,
+		name:      TestImageTypeEdgeCommit,
+		ostreeRef: fmt.Sprintf("test/%s/x86_64/edge", releasever),
 	}
 
 	it6 := TestImageType{
-		name: TestImageTypeEdgeInstaller,
+		name:      TestImageTypeEdgeInstaller,
+		ostreeRef: fmt.Sprintf("test/%s/x86_64/edge", releasever),
 	}
 
 	it7 := TestImageType{
@@ -393,7 +399,8 @@ func newTestDistro(releasever string) *TestDistro {
 	}
 
 	it11 := TestImageType{
-		name: TestImageTypeOSTree,
+		name:      TestImageTypeOSTree,
+		ostreeRef: fmt.Sprintf("test/%s/x86_64/edge", releasever),
 	}
 
 	ta1.addImageTypes(it1, it11)

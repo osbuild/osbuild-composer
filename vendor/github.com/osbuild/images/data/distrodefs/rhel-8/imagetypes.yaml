@@ -1327,6 +1327,11 @@
       port: &ostree_server_port "8080"
       config_path: &ostree_server_config_path "/etc/nginx.conf"
 
+    ostree_edge: &ostree_edge
+      name: "rhel-edge"
+      remote_name: "rhel-edge"
+      ref: &ostree_edge_ref "{{.Distro.Name}}/{{.Distro.MajorVersion}}/{{.Arch}}/edge"
+
 
 image_config:
   default:
@@ -2048,6 +2053,8 @@ image_types:
     platforms:
       - *x86_64_bios_platform
       - *aarch64_platform
+    ostree:
+      ref: *ostree_edge_ref
     image_config: &edge_commit_image_config
       install_weak_deps: true
       enabled_services: &enabled_services_edge
@@ -2229,7 +2236,8 @@ image_types:
     iso_label: "edge"
     variant: "edge"
     ostree:
-      name: "rhel-edge"
+      <<: *ostree_edge
+      remote_name: ""
     exports: ["bootiso"]
     required_partition_sizes: *default_required_dir_sizes
     installer_config:
@@ -2272,9 +2280,7 @@ image_types:
     rpm_ostree: true
     bootable: true
     image_func: "iot"
-    ostree:
-      name: "rhel-edge"
-      remote_name: "rhel-edge"
+    ostree: *ostree_edge
     use_ostree_remotes: true
     exports: ["xz"]
     platforms:
@@ -2308,9 +2314,7 @@ image_types:
     image_func: "iot_simplified_installer"
     iso_label: "edge"
     variant: "edge"
-    ostree:
-      name: "rhel-edge"
-      remote_name: "rhel-edge"
+    ostree: *ostree_edge
     # XXX: find better name
     use_ostree_remotes: true
     exports: ["bootiso"]
@@ -2425,6 +2429,8 @@ image_types:
     platforms:
       - *x86_64_bios_platform
       - *aarch64_platform
+    ostree:
+      ref: *ostree_edge_ref
     image_config:
       <<: *edge_commit_image_config
       ostree_server: *ostree_server

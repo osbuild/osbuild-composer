@@ -21,6 +21,7 @@ type awsUploader struct {
 	region     string
 	bucketName string
 	imageName  string
+	profile    string
 	tags       []AWSTag
 	targetArch arch.Arch
 	bootMode   *platform.BootMode
@@ -30,6 +31,7 @@ type UploaderOptions struct {
 	TargetArch arch.Arch
 	// BootMode to set for the AMI. If nil, no explicit boot mode will be set.
 	BootMode *platform.BootMode
+	Profile  string
 	Tags     []AWSTag
 }
 
@@ -48,15 +50,21 @@ type awsClient interface {
 	DeleteObject(string, string) error
 }
 
-var newAwsClient = func(region string) (awsClient, error) {
-	return NewDefault(region)
+var newAwsClient = func(region string, profile string) (awsClient, error) {
+	return NewDefault(region, profile)
 }
 
 func NewUploader(region, bucketName, imageName string, opts *UploaderOptions) (cloud.Uploader, error) {
 	if opts == nil {
 		opts = &UploaderOptions{}
 	}
-	client, err := newAwsClient(region)
+
+	profile := opts.Profile
+	if profile == "" {
+		profile = "default"
+	}
+
+	client, err := newAwsClient(region, profile)
 	if err != nil {
 		return nil, err
 	}
@@ -66,6 +74,7 @@ func NewUploader(region, bucketName, imageName string, opts *UploaderOptions) (c
 		region:     region,
 		bucketName: bucketName,
 		imageName:  imageName,
+		profile:    profile,
 		tags:       opts.Tags,
 		targetArch: opts.TargetArch,
 		bootMode:   opts.BootMode,

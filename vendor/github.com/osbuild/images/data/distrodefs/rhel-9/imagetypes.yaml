@@ -45,6 +45,7 @@
         uefi:
           - "dracut-config-generic"
           - "efibootmgr"
+          - "grub2"
           - "grub2-efi-x64"
           - "shim-x64"
     x86_64_bios_platform: &x86_64_bios_platform
@@ -130,6 +131,7 @@
         uefi:
           - "dracut-config-generic"
           - "efibootmgr"
+          - "grub2"
           - "grub2-efi-aa64"
           - "grub2-tools"
           - "shim-aa64"
@@ -175,6 +177,7 @@
         bios:
           - "dracut-config-generic"
           - "powerpc-utils"
+          - "grub2"
           - "grub2-ppc64le"
           - "grub2-ppc64le-modules"
       build_packages:
@@ -222,7 +225,6 @@
       - "yum-utils"
       - "dracut-config-generic"
       - "gdisk"
-      - "grub2"
       - "langpacks-en"
       - "NetworkManager-cloud-setup"
       - "redhat-release"
@@ -1383,6 +1385,11 @@
       port: &ostree_server_port "8080"
       config_path: &ostree_server_config_path "/etc/nginx.conf"
 
+    ostree_edge: &ostree_edge
+      name: "rhel-edge"
+      remote_name: "rhel-edge"
+      ref: &ostree_edge_ref "{{.Distro.Name}}/{{.Distro.MajorVersion}}/{{.Arch}}/edge"
+
 image_config:
   default:
     default_kernel: "kernel"
@@ -2127,6 +2134,104 @@ image_types:
     blueprint:
       supported_options: *supported_options_disk
 
+  ec2-cvm:
+    <<: *ec2
+    default_size: "32 GiB"
+    platforms:
+      - arch: "x86_64"
+        bootloader: "uki"
+        image_format: "raw"
+        uefi_vendor: "{{.DistroVendor}}"
+        packages:
+          uki:
+            - "efibootmgr"
+            - "kernel-uki-virt-addons"  # provides useful cmdline utilities for the UKI
+            - "shim-x64"
+            - "uki-direct"
+    partition_table:
+      x86_64:
+        uuid: "D209C89E-EA5E-4FBD-B161-B461CCE297E0"
+        type: "gpt"
+        partitions:
+          - size: "512 MiB"
+            type: *efi_system_partition_guid
+            payload_type: "filesystem"
+            payload:
+              type: vfat
+              mountpoint: "/boot/efi"
+              label: "EFI-SYSTEM"
+              fstab_options: "defaults,uid=0,gid=0,umask=077,shortname=winnt"
+              fstab_freq: 0
+              fstab_passno: 2
+          - size: "5 GiB"
+            type: *root_partition_x86_64_guid
+            payload_type: "filesystem"
+            payload:
+              type: "ext4"
+              label: "root"
+              mountpoint: "/"
+              fstab_options: "defaults"
+              fstab_freq: 0
+              fstab_passno: 0
+    image_config:
+      <<: *ec2_image_config
+      default_kernel: "kernel-uki-virt"
+      default_kernel_name: "kernel-uki-virt"
+      no_bls: true
+      conditions:
+        <<: *ec2_image_config_cond
+        "x86_64 shim package version lock":
+          # Lock the shim package to its installed version. This is necessary
+          # for UKI-based images that can become unbootable if the shim is
+          # upgraded to one signed by a newer certificate that does not exist
+          # in the system's database.
+          # See https://issues.redhat.com/browse/RHEL-93650
+          when:
+            arch: "x86_64"
+          shallow_merge:
+            versionlock_packages:
+              - "shim-x64"
+    package_sets:
+      os:
+        - *ec2_base_pkgset
+        - exclude:
+            - "grub2-common"
+            - "grub2-tools"
+            - "grub2-tools-minimal"
+            - "grubby"
+            - "vdo"
+            - "kmod-kvdo"
+    blueprint:
+      supported_options:
+        # same as disk image types, but kernel customizations are not supported
+        - "distro"
+        - "packages"
+        - "modules"
+        - "groups"
+        - "enabled_modules"
+        - "containers"
+        - "customizations.cacerts"
+        - "customizations.directories"
+        - "customizations.disk"
+        - "customizations.dnf"
+        - "customizations.files"
+        - "customizations.filesystem"
+        - "customizations.partitioning_mode"
+        - "customizations.fips"
+        - "customizations.firewall"
+        - "customizations.user"
+        - "customizations.sshkey"
+        - "customizations.group"
+        - "customizations.hostname"
+        - "customizations.locale"
+        - "customizations.openscap"
+        - "customizations.repositories"
+        - "customizations.rpm"
+        - "customizations.services"
+        - "customizations.timezone"
+        - "customizations.rhsm"
+
+
   wsl: &wsl
     filename: "image.wsl"
     mime_type: "application/x-tar"
@@ -2560,7 +2665,7 @@ image_types:
               fstab_freq: 0
               fstab_passno: 2
           - &minimal_raw_partition_table_part_boot
-            size: "600 MiB"
+            size: "500 MiB"
             type: *xboot_ldr_partition_guid
             payload_type: "filesystem"
             payload:
@@ -2577,22 +2682,42 @@ image_types:
       conditions:
         "RHEL >= 9.3 needs to have a bigger /boot, see RHEL-7999":
           when:
-            version_less_than: "9.3"
+            version_greater_or_equal: "9.3"
+            version_less_than: "9.8"
           override:
             x86_64:
               <<: *partition_table_minimal_raw_x86_64
               partitions:
                 - *minimal_raw_partition_table_part_efi
-                - &minimal_raw_partition_table_part_boot_500
+                - &minimal_raw_partition_table_part_boot_600
                   <<: *minimal_raw_partition_table_part_boot
-                  size: "500 MiB"
+                  size: "600 MiB"
                 - *minimal_raw_partition_table_part_root
             aarch64:
               <<: *partition_table_minimal_raw_aarch64
               partitions:
                 - *minimal_raw_partition_table_part_efi
-                - *minimal_raw_partition_table_part_boot_500
+                - *minimal_raw_partition_table_part_boot_600
                 - *minimal_raw_partition_table_part_root
+        "RHEL >= 9.8 needs to have a bigger /boot, see RHEL-7999":
+          when:
+            version_greater_or_equal: "9.8"
+          override:
+            x86_64:
+              <<: *partition_table_minimal_raw_x86_64
+              partitions:
+                - *minimal_raw_partition_table_part_efi
+                - &minimal_raw_partition_table_part_boot_1000
+                  <<: *minimal_raw_partition_table_part_boot
+                  size: "1 GiB"
+                - *minimal_raw_partition_table_part_root
+            aarch64:
+              <<: *partition_table_minimal_raw_aarch64
+              partitions:
+                - *minimal_raw_partition_table_part_efi
+                - *minimal_raw_partition_table_part_boot_1000
+                - *minimal_raw_partition_table_part_root
+
     image_config:
       enabled_services:
         - "NetworkManager.service"
@@ -2676,6 +2801,8 @@ image_types:
       - *aarch64_platform
     partition_table:
       *edge_base_partition_tables
+    ostree:
+      ref: *ostree_edge_ref
     image_config: &edge_commit_image_config
       # dropin to disable grub-boot-success.timer if greenboot present
       systemd_dropin:
@@ -2878,9 +3005,7 @@ image_types:
     rpm_ostree: true
     bootable: true
     image_func: "iot"
-    ostree:
-      name: "rhel-edge"
-      remote_name: "rhel-edge"
+    ostree: *ostree_edge
     use_ostree_remotes: true
     platforms:
       - <<: *x86_64_edge_platform
@@ -2930,7 +3055,8 @@ image_types:
     iso_label: "edge"
     variant: "edge"
     ostree:
-      name: "rhel-edge"
+      <<: *ostree_edge
+      remote_name: ""
     exports: ["bootiso"]
     required_partition_sizes: *default_required_dir_sizes
     platforms:
@@ -2971,9 +3097,7 @@ image_types:
     image_func: "iot_simplified_installer"
     iso_label: "edge"
     variant: "edge"
-    ostree:
-      name: "rhel-edge"
-      remote_name: "rhel-edge"
+    ostree: *ostree_edge
     # XXX: find better name
     use_ostree_remotes: true
     exports: ["bootiso"]
@@ -3090,9 +3214,7 @@ image_types:
     rpm_ostree: true
     bootable: true
     image_func: "iot"
-    ostree:
-      name: "rhel-edge"
-      remote_name: "rhel-edge"
+    ostree: *ostree_edge
     use_ostree_remotes: true
     platforms:
       - <<: *x86_64_edge_platform

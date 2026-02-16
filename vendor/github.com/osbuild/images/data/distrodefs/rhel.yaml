@@ -9,7 +9,6 @@ distros:
     release_version: 10
     module_platform_id: "platform:el10"
     vendor: "redhat"
-    ostree_ref_tmpl: "rhel/10/%s/edge"
     default_fs_type: "xfs"
     defs_path: rhel-10
     iso_label_tmpl: "RHEL-{{.Distro.MajorVersion}}-{{.Distro.MinorVersion}}-0-BaseOS-{{.Arch}}"
@@ -31,6 +30,7 @@ distros:
           - azure-sapapps-rhui
           - ec2-sap
           - ec2-ha
+          - ec2-cvm
       "some image types are non-rhel-only":
         when:
           distro_name: "rhel"
@@ -51,6 +51,7 @@ distros:
       - "xccdf_org.ssgproject.content_profile_anssi_bp28_high"
       - "xccdf_org.ssgproject.content_profile_anssi_bp28_intermediary"
       - "xccdf_org.ssgproject.content_profile_anssi_bp28_minimal"
+      - "xccdf_org.ssgproject.content_profile_bsi"
       - "xccdf_org.ssgproject.content_profile_cis"
       - "xccdf_org.ssgproject.content_profile_cis_server_l1"
       - "xccdf_org.ssgproject.content_profile_cis_workstation_l1"
@@ -75,7 +76,6 @@ distros:
     match: 'almalinux-10\.[0-9]{1,2}'
     product: "AlmaLinux"
     vendor: "almalinux"
-    ostree_ref_tmpl: "almalinux/10/%%s/edge"
     iso_label_tmpl: "AlmaLinux-{{.Distro.MajorVersion}}-{{.Distro.MinorVersion}}-{{.Arch}}-dvd"
 
   - <<: *rhel10
@@ -83,7 +83,6 @@ distros:
     match: 'rocky-10\.[0-9]{1,2}'
     product: "Rocky Linux"
     vendor: "rocky"
-    ostree_ref_tmpl: "rocky/10/%%s/edge"
     iso_label_tmpl: "Rocky-{{.Distro.MajorVersion}}-{{.Distro.MinorVersion}}-dvd-{{.Arch}}"
 
   - &centos10
@@ -95,7 +94,6 @@ distros:
     release_version: 10
     module_platform_id: "platform:el10"
     vendor: "centos"
-    ostree_ref_tmpl: "rhel/10/%s/edge"
     default_fs_type: "xfs"
     defs_path: rhel-10
     iso_label_tmpl: "CentOS-Stream-{{.Distro.MajorVersion}}-BaseOS-{{.Arch}}"
@@ -118,7 +116,6 @@ distros:
     release_version: 10
     module_platform_id: "platform:el10"
     vendor: "almalinux"
-    ostree_ref_tmpl: "almalinux/10/%s/edge"
 
   - &rhel9
     name: "rhel-{{.MajorVersion}}.{{.MinorVersion}}"
@@ -130,7 +127,6 @@ distros:
     release_version: 9
     module_platform_id: "platform:el9"
     vendor: "redhat"
-    ostree_ref_tmpl: "rhel/9/%s/edge"
     default_fs_type: "xfs"
     defs_path: rhel-9
     iso_label_tmpl: "RHEL-{{.Distro.MajorVersion}}-{{.Distro.MinorVersion}}-0-BaseOS-{{.Arch}}"
@@ -145,6 +141,7 @@ distros:
           - azure-sapapps-rhui
           - ec2-sap
           - ec2-ha
+          - ec2-cvm
       "some image types are non-rhel-only":
         when:
           distro_name: "rhel"
@@ -157,6 +154,7 @@ distros:
           version_less_than: "9.6"
         ignore_image_types:
           - "azure-cvm"
+          - "ec2-cvm"
       "handle PQC for rhel only":
         when:
           distro_name: "rhel"
@@ -206,7 +204,6 @@ distros:
     match: 'almalinux-9\.[0-9]{1,2}'
     product: "AlmaLinux"
     vendor: "almalinux"
-    ostree_ref_tmpl: "almalinux/9/%%s/edge"
     iso_label_tmpl: "AlmaLinux-{{.Distro.MajorVersion}}-{{.Distro.MinorVersion}}-{{.Arch}}-dvd"
 
   - <<: *rhel9
@@ -214,7 +211,6 @@ distros:
     match: 'rocky-9\.[0-9]{1,2}'
     product: "Rocky Linux"
     vendor: "rocky"
-    ostree_ref_tmpl: "rocky/9/%%s/edge"
     iso_label_tmpl: "Rocky-{{.Distro.MajorVersion}}-{{.Distro.MinorVersion}}-dvd-{{.Arch}}"
 
   - &centos9
@@ -224,7 +220,6 @@ distros:
     product: "CentOS Stream"
     os_version: "9-stream"
     vendor: "centos"
-    ostree_ref_tmpl: "centos/9/%s/edge"
     default_fs_type: "xfs"
     defs_path: rhel-9
     iso_label_tmpl: "CentOS-Stream-{{.Distro.MajorVersion}}-BaseOS-{{.Arch}}"
@@ -250,7 +245,6 @@ distros:
     release_version: 8
     module_platform_id: "platform:el8"
     vendor: "redhat"
-    ostree_ref_tmpl: "rhel/8/%s/edge"
     default_fs_type: "xfs"
     defs_path: rhel-8
     iso_label_tmpl: "RHEL-{{.Distro.MajorVersion}}-{{.Distro.MinorVersion}}-0-BaseOS-{{.Arch}}"
@@ -325,7 +319,6 @@ distros:
     match: 'almalinux-8\.[0-9]{1,2}'
     product: "AlmaLinux"
     vendor: "almalinux"
-    ostree_ref_tmpl: "almalinux/8/%%s/edge"
     iso_label_tmpl: "AlmaLinux-{{.Distro.MajorVersion}}-{{.Distro.MinorVersion}}-{{.Arch}}-dvd"
 
   - <<: *rhel8
@@ -333,7 +326,6 @@ distros:
     match: 'rocky-8\.[0-9]{1,2}'
     product: "Rocky Linux"
     vendor: "rocky"
-    ostree_ref_tmpl: "rocky/8/%%s/edge"
     iso_label_tmpl: "Rocky-{{.Distro.MajorVersion}}-{{.Distro.MinorVersion}}-dvd-{{.Arch}}"
 
   - &centos8
@@ -365,7 +357,6 @@ distros:
     release_version: 7
     module_platform_id: "platform:el7"
     vendor: "redhat"
-    ostree_ref_tmpl: "rhel/7/%s/edge"
     default_fs_type: "xfs"
     defs_path: rhel-7
     runner:

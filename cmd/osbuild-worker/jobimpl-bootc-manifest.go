@@ -10,9 +10,10 @@ import (
 	"github.com/sirupsen/logrus"
 
 	repos "github.com/osbuild/images/data/repositories"
+	"github.com/osbuild/images/pkg/bootc"
 	"github.com/osbuild/images/pkg/depsolvednf"
 	"github.com/osbuild/images/pkg/distro"
-	"github.com/osbuild/images/pkg/distro/bootc"
+	"github.com/osbuild/images/pkg/distro/generic"
 	"github.com/osbuild/images/pkg/manifestgen"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/reporegistry"
@@ -66,18 +67,46 @@ func (impl *BootcManifestJobImpl) Run(job worker.Job) error {
 	}()
 
 	logWithId.Infof("Generating bootc manifest (image ref: %s)", args.Ref)
-	distri, err := bootc.NewBootcDistro(args.Ref, &bootc.DistroOptions{})
+
+	// resolve the base and build container info
+	baseContainer, err := bootc.NewContainer(args.Ref)
 	if err != nil {
 		reason := fmt.Sprintf("Unable to generate bootc manifest: %s", err.Error())
 		result.JobError = clienterrors.New(clienterrors.ErrorManifestGeneration, reason, nil)
 		return err
 	}
-	if err := distri.SetBuildContainer(args.BuildRef); err != nil {
+	baseContainerInfo, err := baseContainer.ResolveInfo()
+	if err != nil {
 		reason := fmt.Sprintf("Unable to generate bootc manifest: %s", err.Error())
 		result.JobError = clienterrors.New(clienterrors.ErrorManifestGeneration, reason, nil)
 		return err
 	}
-	archi, err := distri.GetArch(args.Arch)
+
+	buildContainer, err := bootc.NewContainer(args.BuildRef)
+	if err != nil {
+		reason := fmt.Sprintf("Unable to generate bootc manifest: %s", err.Error())
+		result.JobError = clienterrors.New(clienterrors.ErrorManifestGeneration, reason, nil)
+		return err
+	}
+	buildContainerInfo, err := buildContainer.ResolveInfo()
+	if err != nil {
+		reason := fmt.Sprintf("Unable to generate bootc manifest: %s", err.Error())
+		result.JobError = clienterrors.New(clienterrors.ErrorManifestGeneration, reason, nil)
+		return err
+	}
+
+	bootcDistro, err := generic.NewBootc("bootc", baseContainerInfo)
+	if err != nil {
+		reason := fmt.Sprintf("Unable to generate bootc manifest: %s", err.Error())
+		result.JobError = clienterrors.New(clienterrors.ErrorManifestGeneration, reason, nil)
+		return err
+	}
+	if err := bootcDistro.SetBuildContainer(buildContainerInfo); err != nil {
+		reason := fmt.Sprintf("Unable to generate bootc manifest: %s", err.Error())
+		result.JobError = clienterrors.New(clienterrors.ErrorManifestGeneration, reason, nil)
+		return err
+	}
+	archi, err := bootcDistro.GetArch(args.Arch)
 	if err != nil {
 		reason := fmt.Sprintf("Unable to generate bootc manifest: %s", err.Error())
 		result.JobError = clienterrors.New(clienterrors.ErrorManifestGeneration, reason, nil)

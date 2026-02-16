@@ -14,6 +14,7 @@ import (
 	"github.com/osbuild/images/pkg/platform"
 	"github.com/osbuild/images/pkg/rhsm/facts"
 	"github.com/osbuild/images/pkg/rpmmd"
+	"github.com/osbuild/images/pkg/runner"
 )
 
 const (
@@ -23,6 +24,13 @@ const (
 
 // A Distro represents composer's notion of what a given distribution is.
 type Distro interface {
+	// The distro ID (as in os-release(5)).
+	ID() ID
+
+	// The distro ID_LIKE (as in os-release(5)).
+	// NOTE: This will likely be removed. See [defs.DistroYAML].
+	IDLike() manifest.Distro
+
 	// Returns the name of the distro.
 	Name() string
 
@@ -46,9 +54,6 @@ type Distro interface {
 	// Returns the product name of the distro.
 	Product() string
 
-	// Returns the ostree reference template
-	OSTreeRef() string
-
 	// Returns a sorted list of the names of the architectures this distro
 	// supports.
 	ListArches() []string
@@ -58,6 +63,16 @@ type Distro interface {
 	GetArch(arch string) (Arch, error)
 
 	GetTweaks() *Tweaks
+
+	// The distro-wide image config.
+	ImageConfig() *ImageConfig
+
+	// The osbuild runner for this distro.
+	Runner() runner.RunnerConf
+
+	// The ref for the bootstrap container for this distro for a specific
+	// architecture.
+	BootstrapContainer(a string) (string, error)
 }
 
 type CustomDepsolverDistro interface {

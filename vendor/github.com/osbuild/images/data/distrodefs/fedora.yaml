@@ -8,7 +8,6 @@ distros:
     release_version: 44
     module_platform_id: platform:f44
     product: "Fedora"
-    ostree_ref_tmpl: "fedora/44/%s/iot"
     iso_label_tmpl: "{{.Product}}-{{.Distro.MajorVersion}}-{{.ISOLabel}}-{{.Arch}}"
     default_fs_type: "ext4"
     defs_path: fedora
@@ -51,7 +50,6 @@ distros:
     os_version: "{{.MajorVersion}}"
     release_version: "{{.MajorVersion}}"
     module_platform_id: "platform:f{{.MajorVersion}}"
-    ostree_ref_tmpl: "fedora/{{.MajorVersion}}/%s/iot"
     runner:
       <<: *fedora_runner
       name: "org.osbuild.fedora{{.MajorVersion}}"

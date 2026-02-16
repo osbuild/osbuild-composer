@@ -5,7 +5,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
-	"sort"
+	"slices"
 	"sync"
 	"time"
 
@@ -178,14 +178,18 @@ func (r *rpmCache) updateInfo() {
 		}
 	}
 
-	sortFunc := func(idx, jdx int) bool {
-		ir := repos[repoIDs[idx]]
-		jr := repos[repoIDs[jdx]]
-		return ir.mtime.Before(jr.mtime)
-	}
-
 	// sort IDs by mtime (oldest first)
-	sort.Slice(repoIDs, sortFunc)
+	slices.SortFunc(repoIDs, func(a, b string) int {
+		ir := repos[a]
+		jr := repos[b]
+		if ir.mtime.Before(jr.mtime) {
+			return -1
+		}
+		if jr.mtime.Before(ir.mtime) {
+			return 1
+		}
+		return 0
+	})
 
 	r.repoRecency = repoIDs
 }

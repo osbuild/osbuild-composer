@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"path"
 	"path/filepath"
-	"sort"
+	"slices"
 	"strings"
 
 	"github.com/osbuild/images/internal/common"
@@ -973,7 +973,7 @@ func makeKickstartSudoersPost(names []string) *osbuild.PostOptions {
 	chmodLineFmt := `chmod 0440 /etc/sudoers.d/%[1]s`
 
 	filenames := make(map[string]bool)
-	sort.Strings(names)
+	slices.Sort(names)
 	post := &osbuild.PostOptions{}
 	for _, name := range names {
 		if filenames[name] {

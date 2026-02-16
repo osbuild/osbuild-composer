@@ -1,23 +1,23 @@
 package rpmmd
 
 type ModuleSpec struct {
-	ModuleConfigFile ModuleConfigFile   `json:"module-file"`
-	FailsafeFile     ModuleFailsafeFile `json:"failsafe-file"`
+	ModuleConfigFile ModuleConfigFile
+	FailsafeFile     ModuleFailsafeFile
 }
 
 type ModuleConfigFile struct {
-	Path string           `json:"path"`
-	Data ModuleConfigData `json:"data"`
+	Path string
+	Data ModuleConfigData
 }
 
 type ModuleConfigData struct {
-	Name     string   `json:"name"`
-	Stream   string   `json:"stream"`
-	Profiles []string `json:"profiles"`
-	State    string   `json:"state"`
+	Name     string
+	Stream   string
+	Profiles []string
+	State    string
 }
 
 type ModuleFailsafeFile struct {
-	Path string `json:"path"`
-	Data string `json:"data"`
+	Path string
+	Data string
 }

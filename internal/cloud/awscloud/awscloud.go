@@ -109,7 +109,7 @@ func NewDefault(region string) (*AWS, error) {
 		return nil, err
 	}
 
-	imagesAWS, err := images_awscloud.NewDefault(region)
+	imagesAWS, err := images_awscloud.NewDefault(region, "")
 	if err != nil {
 		return nil, fmt.Errorf("failed to create images AWS client: %w", err)
 	}

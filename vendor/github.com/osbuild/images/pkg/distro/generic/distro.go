@@ -4,14 +4,17 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"sort"
+	"maps"
+	"slices"
 	"text/template"
 
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distro/defs"
+	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/platform"
+	"github.com/osbuild/images/pkg/runner"
 )
 
 const (
@@ -43,33 +46,7 @@ type distribution struct {
 	arches map[string]*architecture
 }
 
-func (d *distribution) getISOLabelFunc(isoLabel string) isoLabelFunc {
-	id := common.Must(distro.ParseID(d.Name()))
-
-	return func(t *imageType) string {
-		type inputs struct {
-			Distro   *distro.ID
-			Product  string
-			Arch     string
-			ISOLabel string
-		}
-		templ := common.Must(template.New("iso-label").Parse(d.DistroYAML.ISOLabelTmpl))
-		var buf bytes.Buffer
-		err := templ.Execute(&buf, inputs{
-			Distro:   id,
-			Product:  d.Product(),
-			Arch:     t.Arch().Name(),
-			ISOLabel: isoLabel,
-		})
-		if err != nil {
-			// XXX: cleanup isoLabelFunc to allow error
-			panic(err)
-		}
-		return buf.String()
-	}
-}
-
-func newDistro(nameVer string) (distro.Distro, error) {
+func New(nameVer string) (distro.Distro, error) {
 	distroYAML, err := defs.NewDistroYAML(nameVer)
 	if err != nil {
 		return nil, err
@@ -102,7 +79,11 @@ func newDistro(nameVer string) (distro.Distro, error) {
 			if distroYAML.SkipImageType(imgTypeYAML.Name(), pl.Arch.String()) {
 				continue
 			}
-			it := newImageTypeFrom(rd, ar, imgTypeYAML)
+			it, err := newImageTypeFrom(rd, ar, imgTypeYAML)
+			if err != nil {
+				return nil, err
+			}
+
 			if err := ar.addImageType(&pl, it); err != nil {
 				return nil, err
 			}
@@ -110,6 +91,40 @@ func newDistro(nameVer string) (distro.Distro, error) {
 	}
 
 	return rd, nil
+}
+
+func (d *distribution) getISOLabelFunc(isoLabel string) isoLabelFunc {
+	id := common.Must(distro.ParseID(d.Name()))
+
+	return func(t *imageType) string {
+		type inputs struct {
+			Distro   *distro.ID
+			Product  string
+			Arch     string
+			ISOLabel string
+		}
+		templ := common.Must(template.New("iso-label").Parse(d.DistroYAML.ISOLabelTmpl))
+		var buf bytes.Buffer
+		err := templ.Execute(&buf, inputs{
+			Distro:   id,
+			Product:  d.Product(),
+			Arch:     t.Arch().Name(),
+			ISOLabel: isoLabel,
+		})
+		if err != nil {
+			// XXX: cleanup isoLabelFunc to allow error
+			panic(err)
+		}
+		return buf.String()
+	}
+}
+
+func (d *distribution) ID() distro.ID {
+	return d.DistroYAML.ID
+}
+
+func (d *distribution) IDLike() manifest.Distro {
+	return d.DistroLike
 }
 
 func (d *distribution) Name() string {
@@ -136,17 +151,8 @@ func (d *distribution) ModulePlatformID() string {
 	return d.DistroYAML.ModulePlatformID
 }
 
-func (d *distribution) OSTreeRef() string {
-	return d.DistroYAML.OSTreeRefTmpl
-}
-
 func (d *distribution) ListArches() []string {
-	archNames := make([]string, 0, len(d.arches))
-	for name := range d.arches {
-		archNames = append(archNames, name)
-	}
-	sort.Strings(archNames)
-	return archNames
+	return slices.Sorted(maps.Keys(d.arches))
 }
 
 func (d *distribution) GetArch(name string) (distro.Arch, error) {
@@ -157,11 +163,23 @@ func (d *distribution) GetArch(name string) (distro.Arch, error) {
 	return arch, nil
 }
 
+func (d *distribution) Runner() runner.RunnerConf {
+	return d.DistroYAML.Runner
+}
+
+func (d *distribution) BootstrapContainer(a string) (string, error) {
+	aa, err := arch.FromString(a)
+	if err != nil {
+		return "", err
+	}
+	return d.DistroYAML.BootstrapContainers[aa], nil
+}
+
 // architecture implements the distro.Arch interface
 var _ = distro.Arch(&architecture{})
 
 type architecture struct {
-	distro           *distribution
+	distro           distro.Distro
 	arch             arch.Arch
 	imageTypes       map[string]distro.ImageType
 	imageTypeAliases map[string]string
@@ -181,12 +199,7 @@ func (a *architecture) Name() string {
 }
 
 func (a *architecture) ListImageTypes() []string {
-	itNames := make([]string, 0, len(a.imageTypes))
-	for name := range a.imageTypes {
-		itNames = append(itNames, name)
-	}
-	sort.Strings(itNames)
-	return itNames
+	return slices.Sorted(maps.Keys(a.imageTypes))
 }
 
 func (a *architecture) GetImageType(name string) (distro.ImageType, error) {
@@ -220,12 +233,27 @@ func (a *architecture) addImageType(platform platform.Platform, it imageType) er
 	return nil
 }
 
+func (a *architecture) addBootcImageType(it bootcImageType) error {
+	it.arch = a
+	a.imageTypes[it.Name()] = &it
+	for _, alias := range it.ImageTypeYAML.NameAliases {
+		if a.imageTypeAliases == nil {
+			a.imageTypeAliases = map[string]string{}
+		}
+		if existingAliasFor, exists := a.imageTypeAliases[alias]; exists {
+			return fmt.Errorf("image type alias '%s' for '%s' is already defined for another image type '%s'", alias, it.Name(), existingAliasFor)
+		}
+		a.imageTypeAliases[alias] = it.Name()
+	}
+	return nil
+}
+
 func (a *architecture) Distro() distro.Distro {
 	return a.distro
 }
 
 func DistroFactory(idStr string) distro.Distro {
-	distro, err := newDistro(idStr)
+	distro, err := New(idStr)
 	if errors.Is(err, ErrDistroNotFound) {
 		return nil
 	}
