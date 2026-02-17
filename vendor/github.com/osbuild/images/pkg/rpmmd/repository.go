@@ -24,6 +24,7 @@ type repository struct {
 	CheckGPG       bool     `json:"check_gpg,omitempty"`
 	IgnoreSSL      bool     `json:"ignore_ssl,omitempty"`
 	RHSM           bool     `json:"rhsm,omitempty"`
+	RHUI           bool     `json:"rhui,omitempty"`
 	ModuleHotfixes *bool    `json:"module_hotfixes,omitempty"`
 	MetadataExpire string   `json:"metadata_expire,omitempty"`
 	ImageTypeTags  []string `json:"image_type_tags,omitempty"`
@@ -83,6 +84,7 @@ type RepoConfig struct {
 	MetadataExpire string   `json:"metadata_expire,omitempty"`
 	ModuleHotfixes *bool    `json:"module_hotfixes,omitempty"`
 	RHSM           bool     `json:"rhsm,omitempty"`
+	RHUI           bool     `json:"rhui,omitempty"`
 	Enabled        *bool    `json:"enabled,omitempty"`
 	ImageTypeTags  []string `json:"image_type_tags,omitempty"`
 	PackageSets    []string `json:"package_sets,omitempty"`
@@ -119,6 +121,7 @@ func (r *RepoConfig) Hash() string {
 		bpts(r.IgnoreSSL)+
 		r.MetadataExpire+
 		bts(r.RHSM)+
+		bts(r.RHUI)+
 		bpts(r.ModuleHotfixes)+
 		r.SSLCACert+
 		r.SSLClientKey+
@@ -164,6 +167,7 @@ func LoadRepositoriesFromReader(r io.Reader) (map[string][]RepoConfig, error) {
 				GPGKeys:        keys,
 				CheckGPG:       &repo.CheckGPG,
 				RHSM:           repo.RHSM,
+				RHUI:           repo.RHUI,
 				MetadataExpire: repo.MetadataExpire,
 				ModuleHotfixes: repo.ModuleHotfixes,
 				ImageTypeTags:  repo.ImageTypeTags,

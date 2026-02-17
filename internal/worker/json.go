@@ -664,6 +664,7 @@ type DepsolvedRepoConfig struct {
 	MetadataExpire string   `json:"metadata_expire,omitempty"`
 	ModuleHotfixes *bool    `json:"module_hotfixes,omitempty"`
 	RHSM           bool     `json:"rhsm,omitempty"`
+	RHUI           bool     `json:"rhui,omitempty"`
 	Enabled        *bool    `json:"enabled,omitempty"`
 	ImageTypeTags  []string `json:"image_type_tags,omitempty"`
 	PackageSets    []string `json:"package_sets,omitempty"`
