@@ -1426,6 +1426,7 @@ components:
       type: string
       enum:
         - aws
+        - aws-cvm
         - aws-ha-rhui
         - aws-rhui
         - aws-sap-rhui

@@ -197,6 +197,8 @@ func imageTypeFromApiImageType(it ImageTypes) string {
 		return "ami"
 	case ImageTypesAwsRhui:
 		return "ec2"
+	case ImageTypesAwsCvm:
+		return "ec2-cvm"
 	case ImageTypesAwsHaRhui:
 		return "ec2-ha"
 	case ImageTypesAwsSapRhui:

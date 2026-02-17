@@ -886,6 +886,12 @@ func TestGetImageRequests_ImageTypeConversion(t *testing.T) {
 			expectedTargetName: target.TargetNameAWS,
 		},
 		{
+			requestedImageType: ImageTypesAwsCvm,
+			requestedDistros:   []string{rhel9},
+			expectedImageType:  "ec2-cvm",
+			expectedTargetName: target.TargetNameAWS,
+		},
+		{
 			requestedImageType: ImageTypesAzure,
 			requestedDistros:   []string{rhel8, centos8, rhel9, centos9},
 			expectedImageType:  "vhd",
