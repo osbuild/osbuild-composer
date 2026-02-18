@@ -111,8 +111,8 @@ RPM:
           - aws/fedora-42-aarch64
           - aws/rhel-8.10-ga-x86_64
           - aws/rhel-8.10-ga-aarch64
-          - aws/rhel-9.6-ga-x86_64
-          - aws/rhel-9.6-ga-aarch64
+          - aws/rhel-9.7.ga-x86_64
+          - aws/rhel-9.7.ga-aarch64
           - aws/rhel-10.1-ga-x86_64
           - aws/rhel-10.1-ga-aarch64
           - aws/centos-stream-9-x86_64
@@ -172,7 +172,7 @@ Packer:
   script:
     - tools/ci-build-worker-packer.sh
   variables:
-    RUNNER: aws/rhel-9.6-ga-x86_64
+    RUNNER: aws/rhel-9.7.ga-x86_64
 
 Prepare-rhel-internal:
   stage: prepare-rhel-internal
@@ -212,8 +212,8 @@ Base:
           - aws/fedora-42-aarch64
           - aws/rhel-8.10-ga-x86_64
           - aws/rhel-8.10-ga-aarch64
-          - aws/rhel-9.6-ga-x86_64
-          - aws/rhel-9.6-ga-aarch64
+          - aws/rhel-9.7.ga-x86_64
+          - aws/rhel-9.7.ga-aarch64
           - aws/rhel-10.1-ga-x86_64
           - aws/rhel-10.1-ga-aarch64
           - aws/centos-stream-9-x86_64
@@ -240,8 +240,8 @@ Base:
       - RUNNER:
           - aws/rhel-8.10-ga-x86_64
           - aws/rhel-8.10-ga-aarch64
-          - aws/rhel-9.6-ga-x86_64
-          - aws/rhel-9.6-ga-aarch64
+          - aws/rhel-9.7.ga-x86_64
+          - aws/rhel-9.7.ga-aarch64
           - aws/rhel-10.1-ga-x86_64
           - aws/rhel-10.1-ga-aarch64
           - aws/centos-stream-9-x86_64
@@ -294,7 +294,7 @@ regression-old-worker-new-composer:
     matrix:
       - RUNNER:
           - aws/rhel-8.10-ga-x86_64
-          - aws/rhel-9.6-ga-x86_64
+          - aws/rhel-9.7.ga-x86_64
           - aws/rhel-10.1-ga-x86_64
         INTERNAL_NETWORK: ["true"]
   extends: .regression
@@ -349,7 +349,7 @@ regression-no-explicit-rootfs-definition:
 .rhel_runners: &rhel_runners
     RUNNER:
       - aws/rhel-8.10-ga-x86_64
-      - aws/rhel-9.6-ga-x86_64
+      - aws/rhel-9.7.ga-x86_64
       - aws/rhel-10.1-ga-x86_64
       - aws/rhel-10.2-nightly-x86_64
       - aws/centos-stream-9-x86_64
@@ -391,17 +391,17 @@ koji.sh (cloud upload):
   parallel:
     matrix:
       - RUNNER:
-          - aws/rhel-9.6-ga-x86_64
+          - aws/rhel-9.7.ga-x86_64
         INTERNAL_NETWORK: ["true"]
         CLOUD_TARGET: aws
         IMAGE_TYPE: aws-rhui
       - RUNNER:
-          - aws/rhel-9.6-ga-x86_64
+          - aws/rhel-9.7.ga-x86_64
         INTERNAL_NETWORK: ["true"]
         CLOUD_TARGET: azure
         IMAGE_TYPE: azure-rhui
       - RUNNER:
-          - aws/rhel-9.6-ga-x86_64
+          - aws/rhel-9.7.ga-x86_64
         INTERNAL_NETWORK: ["true"]
         CLOUD_TARGET: gcp
         IMAGE_TYPE: gcp-rhui
@@ -418,7 +418,7 @@ koji.sh (cloudapi):
     matrix:
       - *fedora_runners
       - RUNNER:
-          - aws/rhel-9.6-ga-x86_64
+          - aws/rhel-9.7.ga-x86_64
         INTERNAL_NETWORK: ["true"]
 
 aws.sh:
@@ -524,7 +524,7 @@ filesystem.sh:
         INTERNAL_NETWORK: ["true"]
       - CUSTOMIZATION_TYPE: "disk-plain"
         RUNNER:
-          - aws/rhel-9.6-ga-x86_64
+          - aws/rhel-9.7.ga-x86_64
           - aws/rhel-10.1-ga-x86_64
           - aws/rhel-10.2-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
@@ -573,7 +573,7 @@ API:
       - <<: *API_TESTS
         RUNNER:
           - aws/rhel-8.10-ga-x86_64
-          - aws/rhel-9.6-ga-x86_64
+          - aws/rhel-9.7.ga-x86_64
           - aws/rhel-9.8-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
       # el10 supports only a subset of image types
@@ -599,7 +599,7 @@ API:
       - IMAGE_TYPE: ["aws"]
         RUNNER:
           - aws/rhel-8.10-ga-aarch64
-          - aws/rhel-9.6-ga-aarch64
+          - aws/rhel-9.7.ga-aarch64
           - aws/rhel-10.1-ga-aarch64
         INTERNAL_NETWORK: ["true"]
 
@@ -654,7 +654,7 @@ API-module-hotfixes:
           - rhos-01/fedora-42-x86_64
       - RUNNER:
           - gcp/rhel-8.10-ga-x86_64
-          - gcp/rhel-9.6-ga-x86_64
+          - gcp/rhel-9.7.ga-x86_64
           - gcp/rhel-10.1-ga-x86_64
           - gcp/rhel-9.8-nightly-x86_64
           - gcp/rhel-10.2-nightly-x86_64
@@ -680,7 +680,7 @@ ubi-wsl.sh:
     matrix:
       - RUNNER:
           - aws/rhel-8.10-ga-x86_64
-          - aws/rhel-9.6-ga-x86_64
+          - aws/rhel-9.7.ga-x86_64
           - aws/rhel-10.1-ga-x86_64
           - aws/rhel-10.2-nightly-x86_64
         INTERNAL_NETWORK: "true"
@@ -740,7 +740,7 @@ RHEL 8 on 9 (Koji):
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/koji.sh
   variables:
-    RUNNER: aws/rhel-9.6-ga-x86_64
+    RUNNER: aws/rhel-9.7.ga-x86_64
     INTERNAL_NETWORK: "true"
     DISTRO_CODE: rhel-8.10
 
@@ -754,7 +754,7 @@ RHEL 10 on 9 (Koji):
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/koji.sh
   variables:
-    RUNNER: aws/rhel-9.6-ga-x86_64
+    RUNNER: aws/rhel-9.7.ga-x86_64
     INTERNAL_NETWORK: "true"
     DISTRO_CODE: rhel-10.1
 
