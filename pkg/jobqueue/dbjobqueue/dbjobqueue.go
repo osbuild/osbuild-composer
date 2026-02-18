@@ -15,10 +15,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgconn"
-	"github.com/jackc/pgtype"
-	"github.com/jackc/pgx/v4"
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/sirupsen/logrus"
 
 	"github.com/osbuild/osbuild-composer/internal/common/slogger"
@@ -227,7 +226,7 @@ func New(url string) (*DBJobQueue, error) {
 
 // NewWithLogger creates a new DBJobQueue object for `url` with specific configuration.
 func NewWithConfig(url string, config Config) (*DBJobQueue, error) {
-	pool, err := pgxpool.Connect(context.Background(), url)
+	pool, err := pgxpool.New(context.Background(), url)
 	if err != nil {
 		return nil, fmt.Errorf("error establishing connection: %v", err)
 	}
@@ -705,7 +704,7 @@ func (q *DBJobQueue) JobStatus(id uuid.UUID) (jobType string, channel string, re
 
 	// Use double pointers for timestamps because they might be NULL, which would result in *time.Time == nil
 	var sp, fp *time.Time
-	var rp pgtype.JSON
+	var rp []byte
 	err = conn.QueryRow(context.Background(), sqlQueryJobStatus, id).Scan(&jobType, &channel, &rp, &queued, &sp, &fp, &canceled)
 	if err != nil {
 		return
@@ -716,8 +715,8 @@ func (q *DBJobQueue) JobStatus(id uuid.UUID) (jobType string, channel string, re
 	if fp != nil {
 		finished = *fp
 	}
-	if rp.Status != pgtype.Null {
-		result = rp.Bytes
+	if rp != nil {
+		result = rp
 	}
 
 	deps, err = q.jobDependencies(context.Background(), conn, id)
