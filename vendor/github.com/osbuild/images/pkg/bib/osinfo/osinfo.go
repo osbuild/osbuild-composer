@@ -7,6 +7,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"go.yaml.in/yaml/v3"
@@ -58,10 +59,30 @@ type Info struct {
 	SELinuxPolicy      string    `yaml:"selinux_policy"`
 	ImageCustomization *blueprint.Customizations
 	KernelInfo         *KernelInfo `yaml:"kernel_info"`
+	InitrdModules      []string    `yaml:"initrd_modules"`
 	ISOInfo            ISOInfo     `yaml:"iso_info"`
 
 	MountConfiguration *osbuild.MountConfiguration
 	PartitionTable     *disk.PartitionTable
+}
+
+// HasModules returns true if all of the requested modules are in the InitrdModules list
+// It returns true if the requested module list is empty
+// It returns an error if the InitrdModules list is empty, and at least one
+// module has been requested.
+func (info *Info) HasModules(modules []string) (bool, error) {
+	if len(modules) == 0 {
+		return true, nil
+	}
+	if len(info.InitrdModules) == 0 {
+		return false, fmt.Errorf("The initrd module list is empty")
+	}
+	for _, m := range modules {
+		if !slices.Contains(info.InitrdModules, m) {
+			return false, nil
+		}
+	}
+	return true, nil
 }
 
 func validateOSRelease(osrelease map[string]string) error {

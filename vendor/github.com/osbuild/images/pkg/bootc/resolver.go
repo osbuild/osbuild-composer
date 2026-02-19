@@ -183,6 +183,13 @@ func (c *Container) ResolveInfo() (*Info, error) {
 	if err != nil {
 		return nil, err
 	}
+	if os.KernelInfo != nil {
+		modules, err := c.InitrdModules(os.KernelInfo.Version)
+		if err != nil {
+			return nil, err
+		}
+		os.InitrdModules = modules
+	}
 	bootcInfo.OSInfo = os
 
 	defaultFs, err := c.DefaultRootfsType()
@@ -294,6 +301,24 @@ func (c *Container) DefaultRootfsType() (string, error) {
 	}
 
 	return fsType, nil
+}
+
+// InitrdModules gets the list of modules from the container's initrd
+func (c *Container) InitrdModules(kver string) ([]string, error) {
+	args := []string{"exec"}
+	args = append(args, c.extraOpts...)
+	args = append(args, c.id, "lsinitrd", "--mod", "--kver", kver)
+
+	/* #nosec G204 */
+	output, err := exec.Command("podman", args...).Output()
+	if err != nil {
+		if err, ok := err.(*exec.ExitError); ok {
+			return nil, fmt.Errorf("failed to run lsinitrd --mod --kver %s: %w, output:\n%s\nstderr:\n%s", kver, err, output, err.Stderr)
+		}
+		return nil, fmt.Errorf("failed to run lsinitrd --mod --kver %s: %w, output:\n%s", kver, err, output)
+	}
+
+	return strings.Split(strings.TrimRight(string(output), "\n"), "\n"), nil
 }
 
 func findImageIdFor(cntId, ref string, extraOpts []string) (string, error) {
@@ -473,4 +498,21 @@ func forceSymlink(symlinkPath, target string) error {
 		return fmt.Errorf("cannot run ln: %w, output:\n%s", err, output)
 	}
 	return nil
+}
+
+// ResolveBootcInfo resolves the bootc container reference and returns the info structure
+func ResolveBootcInfo(ref string) (*Info, error) {
+	c, err := NewContainer(ref)
+	if err != nil {
+		return nil, err
+	}
+	info, err := c.ResolveInfo()
+	if stopErr := c.Stop(); stopErr != nil {
+		if err != nil {
+			err = fmt.Errorf("%w\nstopping the container failed too: %s", err, stopErr)
+		} else {
+			err = fmt.Errorf("stopping the container failed: %s", stopErr)
+		}
+	}
+	return info, err
 }

@@ -564,6 +564,17 @@ func (t *bootcImageType) manifestForPXETar(bp *blueprint.Blueprint, options dist
 	if bd.imgref == "" {
 		return nil, nil, fmt.Errorf("internal error: no base image defined")
 	}
+
+	// The bootc PXE initramfs requires the dmsquash-live and ostree modules in order to boot
+	// check for them here so that we can tell the user instead of failing to boot
+	ok, err := bd.sourceInfo.HasModules([]string{"ostree", "dmsquash-live", "livenet"})
+	if err != nil {
+		return nil, nil, fmt.Errorf("internal error: %w", err)
+	}
+	if !ok {
+		return nil, nil, fmt.Errorf("bootc container initramfs requires ostree, dmsquash-live and livenet modules")
+	}
+
 	containerSource := container.SourceSpec{
 		Source: bd.imgref,
 		Name:   bd.imgref,

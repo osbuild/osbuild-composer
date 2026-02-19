@@ -18,8 +18,9 @@ type ISOCustomizations struct {
 	Publisher   string
 	Application string
 
-	RootfsType ISORootfsType
-	BootType   ISOBootType
+	RootfsType   ISORootfsType
+	ErofsOptions osbuild.ErofsStageOptions
+	BootType     ISOBootType
 }
 
 // An ISO represents a bootable ISO file created from an

@@ -293,38 +293,30 @@ func (p *AnacondaInstallerISOTree) NewSquashfsStage() (*osbuild.Stage, error) {
 // NewErofsStage returns an osbuild stage configured to build
 // the erofs root filesystem for the ISO.
 func (p *AnacondaInstallerISOTree) NewErofsStage() (*osbuild.Stage, error) {
-	var erofsOptions osbuild.ErofsStageOptions
+	if p.anacondaPipeline == nil {
+		return nil, fmt.Errorf("Anaconda pipeline not set for %s pipeline", p.name)
+	}
+
+	if p.RootfsType != ErofsRootfs {
+		return nil, fmt.Errorf("Rootfs not set to Erofs for %s pipeline, can not create erofs stage", p.name)
+	}
+
+	erofsOptions := p.anacondaPipeline.ISOCustomizations.ErofsOptions
 
 	switch p.anacondaPipeline.Type {
 	case AnacondaInstallerTypePayload, AnacondaInstallerTypeNetinst:
-		erofsOptions = osbuild.ErofsStageOptions{
-			Filename: "images/install.img",
-		}
+		erofsOptions.Filename = "images/install.img"
 	case AnacondaInstallerTypeLive:
-		erofsOptions = osbuild.ErofsStageOptions{
-			Filename: "LiveOS/squashfs.img",
-		}
+		erofsOptions.Filename = "LiveOS/squashfs.img"
 	default:
 		// Shouldn't be possible, but catch it anyway
 		return nil, fmt.Errorf("unknown AnacondaInstallerType %v in NewErofsStage", p.anacondaPipeline.Type)
 	}
 
-	var compression osbuild.ErofsCompression
-	if p.RootfsCompression != "" {
-		compression.Method = p.RootfsCompression
-	} else {
-		// default to zstd if not specified
-		compression.Method = "zstd"
-	}
-	compression.Level = common.ToPtr(8)
-	erofsOptions.Compression = &compression
-	erofsOptions.ExtendedOptions = []string{"all-fragments", "dedupe"}
-	erofsOptions.ClusterSize = common.ToPtr(131072)
-
 	// Clean up the root filesystem's /boot to save space
 	erofsOptions.ExcludePaths = installerBootExcludePaths
 
-	return osbuild.NewErofsStage(&erofsOptions, p.anacondaPipeline.Name()), nil
+	return osbuild.NewErofsStage(erofsOptions, p.anacondaPipeline.Name()), nil
 }
 
 func (p *AnacondaInstallerISOTree) serializeStart(inputs Inputs) error {
