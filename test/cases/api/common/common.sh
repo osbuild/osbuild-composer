@@ -294,7 +294,9 @@ function verify_modules_customization {
     # Also verify that the module is enabled
     # NOTE: on RHEL, listing enabled modules requires the machine be subscribed,
     # which we always do in these tests
-    if ! check_modules=$($_ssh sudo dnf module list --enabled); then
+    # The -y option is needed to accept gpg key import for Google Compute
+    # Engine repositories.
+    if ! check_modules=$($_ssh sudo dnf -y module list --enabled); then
       echo "Error getting module list"
       echo "${check_modules}"
       exit 1
