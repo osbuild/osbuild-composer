@@ -94,7 +94,7 @@ func (p *PXETree) serialize() (osbuild.Pipeline, error) {
 		// TODO this is shared with the ISO, should it be?
 		// Clean up the root filesystem's /boot to save space
 		erofsOptions.ExcludePaths = installerBootExcludePaths
-		pipeline.AddStage(osbuild.NewErofsStage(&erofsOptions, p.osPipeline.Name()))
+		pipeline.AddStage(osbuild.NewErofsStage(erofsOptions, p.osPipeline.Name()))
 	} else {
 		var squashfsOptions osbuild.SquashfsStageOptions
 
