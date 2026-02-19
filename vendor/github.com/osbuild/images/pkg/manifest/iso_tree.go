@@ -3,7 +3,6 @@ package manifest
 import (
 	"fmt"
 
-	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/osbuild"
 )
@@ -26,6 +25,8 @@ type ISOTree struct {
 
 	RootfsCompression string
 	RootfsType        ISORootfsType
+	// set only when RootfsType is erofs
+	ErofsOptions *osbuild.ErofsStageOptions `yaml:"erofs_options,omitempty"`
 
 	// Kernel options for the ISO image
 	KernelOpts []string
@@ -88,26 +89,17 @@ func (p *ISOTree) NewSquashfsStage() (*osbuild.Stage, error) {
 func (p *ISOTree) NewErofsStage() (*osbuild.Stage, error) {
 	// TODO: We should somehow make this customizable, because non-live anaconda ISOs
 	// use images/install.img
-	erofsOptions := osbuild.ErofsStageOptions{
-		Filename: "LiveOS/squashfs.img",
+	if p.RootfsType != ErofsRootfs || p.ErofsOptions == nil {
+		return nil, fmt.Errorf("Rootfs not set to Erofs or options set to nil for %s pipeline, can not create erofs stage", p.name)
 	}
 
-	var compression osbuild.ErofsCompression
-	if p.RootfsCompression != "" {
-		compression.Method = p.RootfsCompression
-	} else {
-		// default to zstd if not specified
-		compression.Method = "zstd"
-	}
-	compression.Level = common.ToPtr(8)
-	erofsOptions.Compression = &compression
-	erofsOptions.ExtendedOptions = []string{"all-fragments", "dedupe"}
-	erofsOptions.ClusterSize = common.ToPtr(131072)
+	erofsOptions := *p.ErofsOptions
+	erofsOptions.Filename = "LiveOS/squashfs.img"
 
 	// Clean up the root filesystem's /boot to save space
 	erofsOptions.ExcludePaths = installerBootExcludePaths
 
-	return osbuild.NewErofsStage(&erofsOptions, p.treePipeline.Name()), nil
+	return osbuild.NewErofsStage(erofsOptions, p.treePipeline.Name()), nil
 }
 
 func (p *ISOTree) serialize() (osbuild.Pipeline, error) {

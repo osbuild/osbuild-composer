@@ -560,6 +560,14 @@
         shallow_merge:
           boot_type: "grub2"
 
+  erofs_options: &default_erofs_options
+    compression:
+      method: "lzma"
+      level: 6
+    options:
+      - "fragments"
+    cluster-size: 1048576
+
   image_config:
     iot_enabled_services: &image_config_iot_enabled_services
       enabled_services:
@@ -1180,6 +1188,10 @@
     ostree: *ostree_atomic
     exports: ["bootiso"]
     required_partition_sizes: *default_required_dir_sizes
+    iso_config:
+      <<: *default_iso_config
+      rootfs_type: "erofs"
+      erofs_options: *default_erofs_options
     installer_config:
       <<: *default_installer_config
       install_weak_deps: false
@@ -2520,7 +2532,10 @@ image_types:
         - ["/usr/share/licenses/fedora-release-common/Fedora-Legal-README.txt", "/Fedora-Legal-README.txt"]
         - ["/usr/share/licenses/fedora-release-common/LICENSE", "/LICENSE"]
       install_weak_deps: false
-    iso_config: *default_iso_config
+    iso_config:
+      <<: *default_iso_config
+      rootfs_type: "erofs"
+      erofs_options: *default_erofs_options
     image_config:
       locale: "en_US.UTF-8"
     package_sets:

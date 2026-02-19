@@ -165,9 +165,6 @@ func pkgRefs(pkgs rpmmd.PackageList) FilesInputRef {
 // - Any package requires GPG checking but its repo has no GPG keys configured
 //
 // The returned keys are sorted for deterministic output.
-//
-// NOTE: Currently collects keys even for packages/repos with CheckGPG=false.
-// This could be changed if importing unused keys is not desirable.
 func GPGKeysForPackages(pkgs rpmmd.PackageList) ([]string, error) {
 	keyMap := make(map[string]bool)
 	var gpgKeys []string
@@ -175,7 +172,13 @@ func GPGKeysForPackages(pkgs rpmmd.PackageList) ([]string, error) {
 		if pkg.Repo == nil {
 			return nil, fmt.Errorf("package %q has nil Repo pointer. This is a bug in depsolving.", pkg.Name)
 		}
-		if pkg.CheckGPG && len(pkg.Repo.GPGKeys) == 0 {
+		// Don't collect keys from repos for packages that don't require GPG checking.
+		if !pkg.CheckGPG {
+			continue
+		}
+		// Fail if the package requires GPG checking but the repo has no GPG keys configured.
+		// NOTE: At this point we know that pkg.CheckGPG is true
+		if len(pkg.Repo.GPGKeys) == 0 {
 			return nil, fmt.Errorf(
 				"package %q requires GPG check but repo %q has no GPG keys configured",
 				pkg.Name, pkg.Repo.Id)

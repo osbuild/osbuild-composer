@@ -2,6 +2,7 @@ package distro
 
 import (
 	"github.com/osbuild/images/pkg/manifest"
+	"github.com/osbuild/images/pkg/osbuild"
 )
 
 // ISOConfig represents configuration for the ISO part of images that are packed
@@ -13,6 +14,9 @@ type ISOConfig struct {
 	// RootfsType defines what rootfs (squashfs, erofs,ext4)
 	// is used
 	RootfsType *manifest.ISORootfsType `yaml:"rootfs_type,omitempty"`
+
+	// set only when RootfsType is erofs
+	ErofsOptions *osbuild.ErofsStageOptions `yaml:"erofs_options,omitempty"`
 
 	// Metadata field on the ISO for the volume id
 	Label *string `yaml:"label,omitempty"`
