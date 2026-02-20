@@ -47,6 +47,7 @@ type v2Repository struct {
 	MetadataExpire string   `json:"metadata_expire,omitempty"`
 	ModuleHotfixes *bool    `json:"module_hotfixes,omitempty"`
 	RHSM           bool     `json:"rhsm,omitempty"`
+	RHUI           bool     `json:"rhui,omitempty"`
 }
 
 // v2Package represents an RPM package with full metadata.
@@ -429,7 +430,12 @@ func (h *v2Handler) reposFromRPMMD(cfg *solverConfig, rpmRepos []rpmmd.RepoConfi
 			dr.SSLVerify = common.ToPtr(!*rr.IgnoreSSL)
 		}
 
-		if rr.RHSM {
+		if rr.RHUI {
+			// RHUI repos delegate secret discovery to osbuild-depsolve-dnf.
+			// The Python solver reads the host RHUI repo files and discovers
+			// SSL certs from /etc/pki/rhui/ directly.
+			dr.RHUI = true
+		} else if rr.RHSM {
 			// TODO: Enable V2 RHSM secrets discovery by setting dr.RHSM = true
 			// and removing the client-side secrets resolution below.
 			// This requires functional testing to ensure RHSM secrets discovery
