@@ -19,3 +19,13 @@
   tags:
     - always
   command: restorecon -Rv /etc
+
+# The workers are RHEL10 and are still building RHEL 9 and RHEL 8
+# images. The latter contain rpms signed with sha1 keys, which need to
+# be imported successfully when creating the buildroot.
+- name: Set crypto policy to LEGACY
+  become: yes
+  tags:
+    - rhel
+  shell: >-
+    sudo update-crypto-policies --set LEGACY
