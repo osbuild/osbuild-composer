@@ -756,7 +756,21 @@ RHEL 10 on 9 (Koji):
   variables:
     RUNNER: aws/rhel-9.6-ga-x86_64
     INTERNAL_NETWORK: "true"
-    DISTRO_CODE: rhel-10.1
+    DISTRO_CODE: rhel-10.2
+
+RHEL 9 on 10 (Koji):
+  stage: test
+  extends: .terraform
+  rules:
+    - !reference [.upstream_and_ga_rules_all, rules]
+    - !reference [.ga_rules_all, rules]
+  script:
+    - schutzbot/deploy.sh
+    - /usr/libexec/tests/osbuild-composer/koji.sh
+  variables:
+    RUNNER: aws/rhel-10.1-ga-x86_64
+    INTERNAL_NETWORK: "true"
+    DISTRO_CODE: rhel-9.8
 
 Multi-tenancy:
   stage: test

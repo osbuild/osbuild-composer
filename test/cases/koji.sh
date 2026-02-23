@@ -360,13 +360,6 @@ koji --server="${KOJI_HUB_URL}" --user=osbuild --password=osbuildpass --authtype
 greenprint "Creating Koji task"
 koji --server="${KOJI_HUB_URL}" --user kojiadmin --password kojipass --authtype=password make-task image
 
-# Always build the latest RHEL - that suits the koji API usecase the most.
-if [[ "$DISTRO_CODE" == rhel-8* ]]; then
-    DISTRO_CODE=rhel-8.10
-elif [[ "$DISTRO_CODE" == rhel-9* ]]; then
-    DISTRO_CODE=rhel-9.5
-fi
-
 case ${TEST_TYPE} in
     "$TEST_TYPE_CLOUDAPI")
         greenprint "Pushing compose to Koji (/api/image-builder-comoser/v2/)"
