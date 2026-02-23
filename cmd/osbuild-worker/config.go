@@ -100,6 +100,8 @@ type workerConfig struct {
 	RepositoryMTLSConfig *repositoryMTLSConfig `toml:"repository_mtls"`
 	// something like "production" or "staging" to be added to logging
 	DeploymentChannel string `toml:"deployment_channel"`
+	// clean store between runs, this should only be used with workers running on AWS within an ASG
+	CleanStore bool `toml:"clean_store"`
 }
 
 func parseConfig(file string) (*workerConfig, error) {

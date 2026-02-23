@@ -20,6 +20,7 @@ func Test_parseConfig(t *testing.T) {
 # comment
 base_path = "/api/image-builder-worker/v1"
 dnf-json = "/usr/libexec/osbuild-depsolve-dnf"
+clean_store = true
 
 [composer]
 proxy = "http://proxy.example.com"
@@ -129,6 +130,7 @@ key_name = "osbuild-worker"
 					ClientSecretPath: "/etc/osbuild-worker/client_secret",
 				},
 				DeploymentChannel: "local",
+				CleanStore:        true,
 			},
 		},
 		{
@@ -140,6 +142,7 @@ key_name = "osbuild-worker"
 					Type: "host",
 				},
 				DeploymentChannel: "local",
+				CleanStore:        false,
 			},
 		},
 		{
@@ -151,6 +154,7 @@ key_name = "osbuild-worker"
 					Type: "host",
 				},
 				DeploymentChannel: "staging",
+				CleanStore:        false,
 			},
 		},
 	}
