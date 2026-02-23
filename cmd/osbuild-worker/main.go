@@ -20,6 +20,7 @@ import (
 	slogger "github.com/osbuild/osbuild-composer/pkg/splunk_logger"
 
 	"github.com/BurntSushi/toml"
+	"github.com/coreos/go-systemd/v22/dbus"
 	"github.com/sirupsen/logrus"
 
 	"github.com/osbuild/images/pkg/arch"
@@ -541,7 +542,48 @@ var run = func() {
 			logrus.Warn("Received error from RequestAndRunJob, backing off")
 			time.Sleep(backoffDuration)
 		}
+		if config.CleanStore {
+			err := os.RemoveAll(store)
+			if err != nil {
+				// Shut down the worker in case of failure, as sharing stores
+				// between jobs should be avoided at all costs.
+				logrus.Errorf("Unable to clean out store: %s", err)
+
+				err = awscloud.ShutdownSelf()
+				if err != nil {
+					logrus.Errorf("Unable to shut self down: %v", err)
+				}
+				stopSelf()
+				return
+			}
+		}
 	}
+}
+
+func stopSelf() {
+	logrus.Info("Stopping worker unit")
+	conn, err := dbus.NewSystemConnectionContext(context.Background())
+	if err != nil {
+		logrus.Fatalf("Unable to get systemd system connection: %v", err)
+	}
+	defer conn.Close()
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute*5)
+	defer cancel()
+	// ignore integer overflow; PIDs fit inside uint32
+	// nolint:all
+	unitName, err := conn.GetUnitNameByPID(ctx, uint32(os.Getpid()))
+	if err != nil {
+		logrus.Fatalf("Unable to get unit name by pid: %v", err)
+	}
+
+	logrus.Infof("Stopping unit %s", unitName)
+	res := make(chan string)
+	_, err = conn.StopUnitContext(ctx, unitName, "ignore-dependencies", res)
+	if err != nil {
+		logrus.Fatalf("Unable to stop worker service: %v", err)
+	}
+	logrus.Infof("Attempted to stop worker unit: %s", <-res)
 }
 
 func main() {
