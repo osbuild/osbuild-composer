@@ -161,6 +161,12 @@ cp -a repositories/centos-stream-%{centos}*          %{buildroot}%{_datadir}/osb
 %if 0%{?rhel} >= 10
 for REPO_FILE in $(ls vendor/github.com/osbuild/images/data/repositories/rhel-* ); do
     install -m 0644 -vp ${REPO_FILE}                               %{buildroot}%{_datadir}/osbuild-composer/repositories/$(basename ${REPO_FILE})
+
+done
+
+# temporary RHEL 9.7 and 9.8 overrides for new PQC key (for building RHEL 9 on 10)
+for REPO_FILE in $(ls repositories/rhel-9*.json); do
+    install -m 0644 -vp ${REPO_FILE}                               %{buildroot}%{_datadir}/osbuild-composer/repositories/$(basename ${REPO_FILE})
 done
 
 # RHEL-8 auxiliary key is signed using SHA-1, which is not enabled by default on RHEL-10 and later
@@ -174,11 +180,17 @@ for REPO_FILE in $(ls vendor/github.com/osbuild/images/data/repositories/rhel-%{
     install -m 0644 -vp ${REPO_FILE}                               %{buildroot}%{_datadir}/osbuild-composer/repositories/$(basename ${REPO_FILE})
 done
 
-# RHEL 9 supports building also for RHEL 8
 %if 0%{?rhel} == 9
+# RHEL 9 supports building also for RHEL 8
 for REPO_FILE in $(ls vendor/github.com/osbuild/images/data/repositories/rhel-8* ); do
     install -m 0644 -vp ${REPO_FILE}                               %{buildroot}%{_datadir}/osbuild-composer/repositories/$(basename ${REPO_FILE})
 done
+
+# temporary RHEL 9.7 and 9.8 overrides for new PQC key
+for REPO_FILE in $(ls repositories/rhel-9*.json); do
+    install -m 0644 -vp ${REPO_FILE}                               %{buildroot}%{_datadir}/osbuild-composer/repositories/$(basename ${REPO_FILE})
+done
+
 %endif
 
 %endif
