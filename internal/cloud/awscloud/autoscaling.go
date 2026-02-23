@@ -43,3 +43,33 @@ func (a *AWS) ASGSetProtectHost(protect bool) error {
 
 	return err
 }
+
+func (a *AWS) ShutdownSelf() error {
+	identity, err := a.ec2imds.GetInstanceIdentityDocument(context.Background(), &imds.GetInstanceIdentityDocumentInput{})
+	if err != nil {
+		return err
+	}
+
+	_, err = a.asg.TerminateInstanceInAutoScalingGroup(
+		context.Background(),
+		&autoscaling.TerminateInstanceInAutoScalingGroupInput{
+			InstanceId: &identity.InstanceID,
+		},
+	)
+	return err
+}
+
+func (a *AWS) SetInstanceToUnhealthy() error {
+	identity, err := a.ec2imds.GetInstanceIdentityDocument(context.Background(), &imds.GetInstanceIdentityDocumentInput{})
+	if err != nil {
+		return err
+	}
+
+	_, err = a.asg.SetInstanceHealth(
+		context.Background(),
+		&autoscaling.SetInstanceHealthInput{
+			InstanceId: &identity.InstanceID,
+		},
+	)
+	return err
+}

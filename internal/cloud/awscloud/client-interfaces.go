@@ -55,5 +55,7 @@ type EC2Imds interface {
 
 type ASG interface {
 	DescribeAutoScalingInstances(context.Context, *autoscaling.DescribeAutoScalingInstancesInput, ...func(*autoscaling.Options)) (*autoscaling.DescribeAutoScalingInstancesOutput, error)
+	SetInstanceHealth(context.Context, *autoscaling.SetInstanceHealthInput, ...func(*autoscaling.Options)) (*autoscaling.SetInstanceHealthOutput, error)
 	SetInstanceProtection(context.Context, *autoscaling.SetInstanceProtectionInput, ...func(*autoscaling.Options)) (*autoscaling.SetInstanceProtectionOutput, error)
+	TerminateInstanceInAutoScalingGroup(context.Context, *autoscaling.TerminateInstanceInAutoScalingGroupInput, ...func(*autoscaling.Options)) (*autoscaling.TerminateInstanceInAutoScalingGroupOutput, error)
 }
