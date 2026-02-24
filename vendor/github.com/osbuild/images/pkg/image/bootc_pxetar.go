@@ -108,13 +108,7 @@ func (img *BootcPXEImage) InstantiateManifestFromContainers(m *manifest.Manifest
 		rawImage.SourcePipeline = customSourcePipeline
 	}
 	rawImage.PartitionTable = img.PartitionTable
-	rawImage.Users = img.OSCustomizations.Users
-	rawImage.Groups = img.OSCustomizations.Groups
-	rawImage.Files = img.OSCustomizations.Files
-	rawImage.Directories = img.OSCustomizations.Directories
-	rawImage.KernelOptionsAppend = img.OSCustomizations.KernelOptionsAppend
-	rawImage.SELinux = img.OSCustomizations.SELinux
-	rawImage.MountConfiguration = img.OSCustomizations.MountConfiguration
+	rawImage.OSCustomizations = img.OSCustomizations
 	rawImage.KernelVersion = img.KernelVersion
 
 	// Setup root filesystem so that dmsquash-live will boot it

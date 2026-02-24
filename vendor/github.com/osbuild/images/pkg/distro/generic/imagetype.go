@@ -18,6 +18,7 @@ import (
 	"github.com/osbuild/images/pkg/experimentalflags"
 	"github.com/osbuild/images/pkg/image"
 	"github.com/osbuild/images/pkg/manifest"
+	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/platform"
 	"github.com/osbuild/images/pkg/rpmmd"
 )
@@ -288,7 +289,7 @@ func (t *imageType) Manifest(bp *blueprint.Blueprint,
 		if t.ImageConfigYAML.ImageConfig != nil {
 			t.ImageConfigYAML.ImageConfig = &distro.ImageConfig{}
 		}
-		t.ImageConfigYAML.ImageConfig.MountUnits = common.ToPtr(true)
+		t.ImageConfigYAML.ImageConfig.MountConfiguration = common.ToPtr(osbuild.MOUNT_CONFIGURATION_UNITS)
 	}
 
 	containerSources := make([]container.SourceSpec, len(bp.Containers))

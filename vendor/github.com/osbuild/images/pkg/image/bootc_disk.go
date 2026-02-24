@@ -107,13 +107,7 @@ func (img *BootcDiskImage) InstantiateManifestFromContainers(m *manifest.Manifes
 		rawImage.SourcePipeline = customSourcePipeline
 	}
 	rawImage.PartitionTable = img.PartitionTable
-	rawImage.Users = img.OSCustomizations.Users
-	rawImage.Groups = img.OSCustomizations.Groups
-	rawImage.Files = img.OSCustomizations.Files
-	rawImage.Directories = img.OSCustomizations.Directories
-	rawImage.KernelOptionsAppend = img.OSCustomizations.KernelOptionsAppend
-	rawImage.SELinux = img.OSCustomizations.SELinux
-	rawImage.MountConfiguration = img.OSCustomizations.MountConfiguration
+	rawImage.OSCustomizations = img.OSCustomizations
 
 	// In BIB, we export multiple images from the same pipeline so we use the
 	// filename as the basename for each export and set the extensions based on
