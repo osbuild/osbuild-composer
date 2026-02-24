@@ -553,7 +553,7 @@
     preparer: "image-builder - https://osbuild.org/"
     publisher: "Fedora Project"
     rootfs_type: "squashfs"
-    conditions:
+    conditions: &default_iso_config_conditions
       "x86_64 uses grub2":
         when:
           arch: "x86_64"
@@ -1599,7 +1599,6 @@ image_types:
             - "shadow-utils"
             - "skopeo"
             - "slirp4netns"
-            - "ssh-key-dir"
             - "sssd-client"
             - "sudo"
             - "systemd"
@@ -1629,6 +1628,12 @@ image_types:
               append:
                 include:
                   - "filesystem"
+            "f44 does not have ssh-key-dir":
+              when:
+                version_less_than: "44"
+              append:
+                include:
+                  - "ssh-key-dir"
     blueprint:
       supported_options: *supported_options_ostree_commit
 
@@ -1946,7 +1951,7 @@ image_types:
       grub2_config:
         timeout: 5
       install_weak_deps: false
-      mount_units: true
+      mount_configuration: "units"
       machine_id_uninitialized: false
       enabled_services:
         - "NetworkManager.service"
@@ -1960,7 +1965,7 @@ image_types:
             version_less_than: "43"
           shallow_merge:
             install_weak_deps: true
-            mount_units: false
+            mount_configuration: "fstab"
             enabled_services:
               - "NetworkManager.service"
               - "initial-setup.service"
@@ -2019,7 +2024,16 @@ image_types:
     installer_config:
       <<: *default_installer_config
       default_menu: 0
-    iso_config: *default_iso_config
+    iso_config:
+      <<: *default_iso_config
+      conditions:
+        <<: *default_iso_config_conditions
+        "f45 and above use erofs":
+          when:
+            version_greater_or_equal: "45"
+          shallow_merge:
+            rootfs_type: "erofs"
+            erofs_options: *default_erofs_options
     image_config:
       <<: *image_config_iot_enabled_services
       locale: "en_US.UTF-8"

@@ -353,8 +353,8 @@ func osCustomizations(t *imageType, osPackageSet rpmmd.PackageSet, options distr
 		osc.MachineIdUninitialized = *imageConfig.MachineIdUninitialized
 	}
 
-	if imageConfig.MountUnits != nil && *imageConfig.MountUnits {
-		osc.MountConfiguration = osbuild.MOUNT_CONFIGURATION_UNITS
+	if imageConfig.MountConfiguration != nil {
+		osc.MountConfiguration = *imageConfig.MountConfiguration
 	}
 
 	osc.VersionlockPackages = imageConfig.VersionlockPackages
@@ -789,7 +789,7 @@ func imageInstallerImage(t *imageType,
 	}
 
 	if img.ISOCustomizations.RootfsType == manifest.ErofsRootfs {
-		img.RootfsCompression = t.ISOConfigYAML.ErofsOptions.Compression.Method
+		img.RootfsCompression = img.ISOCustomizations.ErofsOptions.Compression.Method
 	} else {
 		img.RootfsCompression = "xz"
 	}
@@ -974,7 +974,7 @@ func iotInstallerImage(t *imageType,
 	}
 
 	if img.ISOCustomizations.RootfsType == manifest.ErofsRootfs {
-		img.RootfsCompression = t.ISOConfigYAML.ErofsOptions.Compression.Method
+		img.RootfsCompression = img.ISOCustomizations.ErofsOptions.Compression.Method
 	} else {
 		img.RootfsCompression = "xz"
 	}
@@ -1189,7 +1189,7 @@ func networkInstallerImage(t *imageType,
 	}
 
 	if img.ISOCustomizations.RootfsType == manifest.ErofsRootfs {
-		img.RootfsCompression = t.ISOConfigYAML.ErofsOptions.Compression.Method
+		img.RootfsCompression = img.ISOCustomizations.ErofsOptions.Compression.Method
 	} else {
 		img.RootfsCompression = "xz"
 	}

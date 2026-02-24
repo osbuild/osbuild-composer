@@ -173,7 +173,7 @@ func (p *BootcPXETree) makeGrubConfig() ([]*osbuild.Stage, error) {
 		return nil, err
 	}
 
-	template := strings.ReplaceAll(string(grubTemplate), "@CMDLINE@", strings.Join(p.bootcPipeline.KernelOptionsAppend, " "))
+	template := strings.ReplaceAll(string(grubTemplate), "@CMDLINE@", strings.Join(p.bootcPipeline.OSCustomizations.KernelOptionsAppend, " "))
 	f, err := fsnode.NewFile("/grub.cfg", nil, nil, nil, []byte(template))
 	if err != nil {
 		panic(err)

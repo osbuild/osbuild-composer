@@ -26,30 +26,6 @@ type RawBootcImage struct {
 	containers     []container.SourceSpec
 	containerSpecs []container.Spec
 
-	// customizations go here because there is no intermediate
-	// tree, with `bootc install to-filesystem` we can only work
-	// with the image itself
-	PartitionTable *disk.PartitionTable
-
-	KernelOptionsAppend []string
-
-	// The users to put into the image, note that /etc/paswd (and friends)
-	// will become unmanaged state by bootc when used
-	Users  []users.User
-	Groups []users.Group
-
-	// Custom directories and files to create in the image
-	Directories []*fsnode.Directory
-	Files       []*fsnode.File
-
-	// SELinux policy, when set it enables the labeling of the tree with the
-	// selected profile
-	SELinux string
-
-	// What type of mount configuration should we create, systemd units, fstab
-	// or none
-	MountConfiguration osbuild.MountConfiguration
-
 	// Source pipeline for files written to raw partitions
 	SourcePipeline string
 
@@ -58,6 +34,14 @@ type RawBootcImage struct {
 
 	// This adds directories to the root filesystem so that dmsquash-live will boot it
 	LiveBoot bool
+
+	// customizations go here because there is no intermediate
+	// tree, with `bootc install to-filesystem` we can only work
+	// with the image itself
+	PartitionTable *disk.PartitionTable
+
+	// OSCustomizations to apply to the base OS
+	OSCustomizations OSCustomizations
 }
 
 func (p RawBootcImage) Filename() string {
@@ -156,7 +140,7 @@ func (p *RawBootcImage) serialize() (osbuild.Pipeline, error) {
 		return osbuild.Pipeline{}, fmt.Errorf("expected a single container input got %v", p.containerSpecs)
 	}
 	opts := &osbuild.BootcInstallToFilesystemOptions{
-		Kargs: p.KernelOptionsAppend,
+		Kargs: p.OSCustomizations.KernelOptionsAppend,
 	}
 	if len(p.containers) > 0 {
 		opts.TargetImgref = p.containers[0].Name
@@ -189,7 +173,7 @@ func (p *RawBootcImage) serialize() (osbuild.Pipeline, error) {
 
 	postStages := []*osbuild.Stage{}
 
-	fsCfgStages, err := filesystemConfigStages(pt, p.MountConfiguration)
+	fsCfgStages, err := filesystemConfigStages(pt, p.OSCustomizations.MountConfiguration)
 	if err != nil {
 		return osbuild.Pipeline{}, err
 	}
@@ -200,25 +184,25 @@ func (p *RawBootcImage) serialize() (osbuild.Pipeline, error) {
 	}
 
 	// customize the image
-	if len(p.Groups) > 0 {
-		groupsStage := osbuild.GenGroupsStage(p.Groups)
+	if len(p.OSCustomizations.Groups) > 0 {
+		groupsStage := osbuild.GenGroupsStage(p.OSCustomizations.Groups)
 		groupsStage.Mounts = mounts
 		groupsStage.Devices = devices
 		postStages = append(postStages, groupsStage)
 	}
 
-	if len(p.Users) > 0 {
+	if len(p.OSCustomizations.Users) > 0 {
 		// ensure home root dir (currently /var/home, /var/roothome) is
 		// available
 		mkdirStage := osbuild.NewMkdirStage(&osbuild.MkdirStageOptions{
-			Paths: buildHomedirPaths(p.Users),
+			Paths: buildHomedirPaths(p.OSCustomizations.Users),
 		})
 		mkdirStage.Mounts = mounts
 		mkdirStage.Devices = devices
 		postStages = append(postStages, mkdirStage)
 
 		// add the users
-		usersStage, err := osbuild.GenUsersStage(p.Users, false)
+		usersStage, err := osbuild.GenUsersStage(p.OSCustomizations.Users, false)
 		if err != nil {
 			return osbuild.Pipeline{}, fmt.Errorf("user stage failed %w", err)
 		}
@@ -260,9 +244,9 @@ func (p *RawBootcImage) serialize() (osbuild.Pipeline, error) {
 	}
 
 	// First create custom directories, because some of the custom files may depend on them
-	if len(p.Directories) > 0 {
+	if len(p.OSCustomizations.Directories) > 0 {
 
-		stages := osbuild.GenDirectoryNodesStages(p.Directories)
+		stages := osbuild.GenDirectoryNodesStages(p.OSCustomizations.Directories)
 		for _, stage := range stages {
 			stage.Mounts = mounts
 			stage.Devices = devices
@@ -270,8 +254,8 @@ func (p *RawBootcImage) serialize() (osbuild.Pipeline, error) {
 		postStages = append(postStages, stages...)
 	}
 
-	if len(p.Files) > 0 {
-		stages := osbuild.GenFileNodesStages(p.Files)
+	if len(p.OSCustomizations.Files) > 0 {
+		stages := osbuild.GenFileNodesStages(p.OSCustomizations.Files)
 		for _, stage := range stages {
 			stage.Mounts = mounts
 			stage.Devices = devices
@@ -283,12 +267,12 @@ func (p *RawBootcImage) serialize() (osbuild.Pipeline, error) {
 
 	// In case we created any files in the deploy directory we need to relabel
 	// then per the selinux policy
-	if p.SELinux != "" {
+	if p.OSCustomizations.SELinux != "" {
 		if len(postStages) > 0 {
 			for _, changedFile := range []string{"/etc", "/var"} {
 				opts := &osbuild.SELinuxStageOptions{
 					Target:       "tree://" + changedFile,
-					FileContexts: fmt.Sprintf("etc/selinux/%s/contexts/files/file_contexts", p.SELinux),
+					FileContexts: fmt.Sprintf("etc/selinux/%s/contexts/files/file_contexts", p.OSCustomizations.SELinux),
 					ExcludePaths: []string{"/sysroot"},
 				}
 				selinuxStage := osbuild.NewSELinuxStage(opts)
@@ -307,7 +291,7 @@ func (p *RawBootcImage) getInline() []string {
 	inlineData := []string{}
 
 	// inline data for custom files
-	for _, file := range p.Files {
+	for _, file := range p.OSCustomizations.Files {
 		inlineData = append(inlineData, string(file.Data()))
 	}
 
