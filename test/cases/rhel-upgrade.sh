@@ -118,7 +118,7 @@ CONSOLE_PID=$!
 sudo virt-install --name rhel-test \
                   --memory 4096 \
                   --vcpus 2 \
-                  --disk size=20 \
+                  --disk size=40 \
                   --location "$VIRT_BASEOS_REPO_URL" \
                   --network network=integration,mac=34:49:22:B0:83:30 \
                   --console pipe,source.path="$TEMPFILE" \
