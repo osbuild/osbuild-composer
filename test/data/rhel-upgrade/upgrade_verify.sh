@@ -17,6 +17,8 @@ function cleanup() {
     greenprint "📝 osbuild-worker journal logs"
     journalctl --no-pager -b -u 'osbuild-worker*.service'
 
+    greenprint "📝 audit"
+    sudo cat /var/log/audit/audit.log
     rm -rf "$WORKSPACE"
 }
 trap cleanup EXIT
@@ -115,6 +117,9 @@ EOF
 # push and depsolve the blueprint
 composer-cli blueprints push blueprint.toml
 composer-cli blueprints depsolve bash
+
+# MEH
+sudo setenforce 0
 
 # build a qcow image to verify functionality
 composer-cli --json compose start bash qcow2 | tee "$COMPOSE_START"
