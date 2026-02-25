@@ -33,6 +33,8 @@ fi
 # Set up temporary files.
 TEMPDIR=$(mktemp -d)
 function cleanup() {
+    # sometimes the delete calls fail, cloud-cleaner will get the rest
+    set +e
     greenprint "== Script execution stopped or finished - Cleaning up =="
 
     $AZURE_CMD vm show \
