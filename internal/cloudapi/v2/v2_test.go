@@ -1000,6 +1000,28 @@ func TestCompose(t *testing.T) {
 		"kind": "ComposeId"
 	}`, "id")
 
+	// With blueprint_id for RHSM facts
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
+	{
+		"distribution": "%s",
+		"blueprint_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+		"image_request":{
+			"architecture": "%s",
+			"image_type": "aws",
+			"repositories": [{
+				"baseurl": "somerepo.org",
+				"rhsm": false
+			}],
+			"upload_options": {
+				"region": "eu-central-1"
+			}
+		}
+	}`, testDistro.Name(), test_distro.TestArch3Name), http.StatusCreated, `
+	{
+		"href": "/api/image-builder-composer/v2/compose",
+		"kind": "ComposeId"
+	}`, "id")
+
 	// With upload options for specific upload target
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
 	{

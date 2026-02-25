@@ -5,6 +5,8 @@ import (
 	"io/fs"
 	"testing"
 
+	"github.com/google/uuid"
+	openapi_types "github.com/oapi-codegen/runtime/types"
 	"github.com/osbuild/blueprint/pkg/blueprint"
 	repos "github.com/osbuild/images/data/repositories"
 	"github.com/osbuild/images/pkg/customizations/subscription"
@@ -1168,6 +1170,53 @@ func TestGetImageRequests_BlueprintDistro(t *testing.T) {
 	require.Greater(t, len(got[0].repositories), 0)
 	assert.Contains(t, got[0].repositories[0].Metalink, TEST_DISTRO_VERSION)
 	assert.Equal(t, got[0].blueprint.Distro, TEST_DISTRO_NAME)
+}
+
+// TestGetImageRequests_BlueprintId verifies that blueprint_id is propagated to imageOptions.Facts.BlueprintID
+func TestGetImageRequests_BlueprintId(t *testing.T) {
+	expectedBlueprintID := uuid.MustParse("a1b2c3d4-e5f6-7890-abcd-ef1234567890")
+	bid := openapi_types.UUID(expectedBlueprintID)
+	request := &ComposeRequest{
+		Distribution: common.ToPtr(TEST_DISTRO_NAME),
+		BlueprintId:  &bid,
+		ImageRequest: &ImageRequest{
+			Architecture:  "x86_64",
+			ImageType:     ImageTypesAws,
+			UploadOptions: &UploadOptions{},
+			Repositories: []Repository{
+				{Baseurl: common.ToPtr("http://example.org/pub/linux/repo")},
+			},
+		},
+	}
+	rr, err := reporegistry.New(nil, []fs.FS{repos.FS})
+	require.NoError(t, err)
+	got, err := request.GetImageRequests(distrofactory.NewDefault(), rr)
+	assert.NoError(t, err)
+	require.Len(t, got, 1)
+	require.NotNil(t, got[0].imageOptions.Facts, "Facts should be set when composing")
+	assert.Equal(t, expectedBlueprintID, got[0].imageOptions.Facts.BlueprintID)
+}
+
+// TestGetImageRequests_BlueprintIdNil verifies that when blueprint_id is omitted, Facts are still created but BlueprintID remains uuid.Nil
+func TestGetImageRequests_BlueprintIdNil(t *testing.T) {
+	request := &ComposeRequest{
+		Distribution: common.ToPtr(TEST_DISTRO_NAME),
+		ImageRequest: &ImageRequest{
+			Architecture:  "x86_64",
+			ImageType:     ImageTypesAws,
+			UploadOptions: &UploadOptions{},
+			Repositories: []Repository{
+				{Baseurl: common.ToPtr("http://example.org/pub/linux/repo")},
+			},
+		},
+	}
+	rr, err := reporegistry.New(nil, []fs.FS{repos.FS})
+	require.NoError(t, err)
+	got, err := request.GetImageRequests(distrofactory.NewDefault(), rr)
+	assert.NoError(t, err)
+	require.Len(t, got, 1)
+	require.NotNil(t, got[0].imageOptions.Facts, "Facts should be set when composing")
+	assert.Equal(t, uuid.Nil, got[0].imageOptions.Facts.BlueprintID)
 }
 
 func TestOpenSCAPTailoringOptions(t *testing.T) {
