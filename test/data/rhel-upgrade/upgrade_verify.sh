@@ -10,6 +10,8 @@ function cleanup() {
     echo "== Script execution stopped or finished - Cleaning up =="
 
     # print journal logs before cleanup
+    greenprint "📝 full journal"
+    journalctl --no-pager
     greenprint "📝 osbuild-composer journal logs"
     journalctl --no-pager -b -u osbuild-composer.service
     greenprint "📝 osbuild-worker journal logs"
