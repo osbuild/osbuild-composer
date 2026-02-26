@@ -1374,6 +1374,12 @@ components:
           $ref: '#/components/schemas/Koji'
         blueprint:
           $ref: '#/components/schemas/Blueprint'
+        blueprint_id:
+          type: string
+          format: uuid
+          description: |
+            Optional blueprint ID to record in RHSM facts. This is set automatically
+            when composing from a blueprint via image-builder.
     Bootc:
       type: object
       required:
