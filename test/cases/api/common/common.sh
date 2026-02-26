@@ -37,13 +37,6 @@ function _instanceCheck() {
   # Check if postgres is installed
   $_ssh rpm -q postgresql dummy
 
-
-  MODULE=$(cat "$REQUEST_FILE" | jq -r .customizations.enabled_modules[0])
-  if [ "$MODULE" = "nodejs:20" ]; then
-      echo "checking if nodejs 20 is installed: $($_ssh rpm -q nodejs)"
-      $_ssh rpm -q nodejs | grep -q nodejs-20
-  fi
-
   # Verify subscribe status. Loop check since the system may not be registered such early(RHEL only)
   if [[ "$ID" == "rhel" ]]; then
     set +eu
@@ -91,10 +84,13 @@ function _instanceCheck() {
         fi
     fi
 
+    verify_modules_customization "$_ssh"
+
     # Unregister subscription
     $_ssh sudo subscription-manager unregister
   else
     echo "Not RHEL OS. Skip subscription check."
+    verify_modules_customization "$_ssh"
   fi
 
   # Verify that directories and files customization worked as expected
@@ -281,5 +277,38 @@ function verify_cacert_customization {
     echo "Extracted CA file is not present, bundle contents:"
     $_ssh "grep '^#' /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem"
     exit 1
+  fi
+}
+
+
+function verify_modules_customization {
+  local _ssh="$1"
+  if jq -e .customizations.enabled_modules; then
+    # NOTE: assumes only one module
+    echo "✔️ Checking CA cert extration"
+    module_name=$(cat "$REQUEST_FILE" | jq -r .customizations.enabled_modules[0].name)
+    module_stream=$(cat "$REQUEST_FILE" | jq -r .customizations.enabled_modules[0].stream)
+    echo "Checking if ${module_name} ${module_stream} is installed"
+    $_ssh rpm -q "${module_name}" | grep "${module_name}-${module_stream}"
+
+    # Also verify that the module is enabled
+    # NOTE: on RHEL, listing enabled modules requires the machine be subscribed,
+    # which we always do in these tests
+    # The -y option is needed to accept gpg key import for Google Compute
+    # Engine repositories.
+    if ! check_modules=$($_ssh sudo dnf -y module list --enabled); then
+      echo "Error getting module list"
+      echo "${check_modules}"
+      exit 1
+    fi
+    pattern="${module_name}\s+${module_stream}"
+    if grep -P "${pattern}" <<< "${check_modules}"; then
+      echo "module ${module_name}:${module_stream} is enabled"
+    else
+      echo "module ${module_name}:${module_stream} is not enabled"
+      echo 'Output from "dnf module list --enabled":'
+      echo "${check_modules}"
+      exit 1
+    fi
   fi
 }
