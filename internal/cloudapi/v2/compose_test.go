@@ -822,6 +822,28 @@ func TestGetSubscriptions(t *testing.T) {
 	sub = cr.GetSubscription()
 	assert.Equal(t, expected, sub)
 
+	// Populated Subscription (with content sets)
+	cr = ComposeRequest{Customizations: &Customizations{
+		Subscription: common.ToPtr(Subscription{
+			ActivationKey: "key",
+			BaseUrl:       "http://example.org/baseurl",
+			Insights:      false,
+			Organization:  "Weyland-Yutani",
+			ServerUrl:     "http://example.org/serverurl",
+			ContentSets:   common.ToPtr([]string{"content-label-1"}),
+		}),
+	}}
+
+	expected = &subscription.ImageOptions{
+		ActivationKey: "key",
+		BaseUrl:       "http://example.org/baseurl",
+		Insights:      false,
+		Organization:  "Weyland-Yutani",
+		ServerUrl:     "http://example.org/serverurl",
+		ContentSets:   []string{"content-label-1"},
+	}
+	sub = cr.GetSubscription()
+	assert.Equal(t, expected, sub)
 }
 
 func TestGetPartitioningMode(t *testing.T) {
