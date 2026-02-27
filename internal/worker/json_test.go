@@ -918,6 +918,14 @@ func TestDepsolvedRepoConfigJSONRoundtrip(t *testing.T) {
 				SSLClientCert:  "/etc/pki/client.crt",
 			},
 		},
+		{
+			name: "rhui",
+			config: DepsolvedRepoConfig{
+				Id:       "rhel-8-baseos-rhui-rpms",
+				BaseURLs: []string{"https://rhui.us-east-1.aws.ce.redhat.com/baseos"},
+				RHUI:     true,
+			},
+		},
 	}
 
 	for _, tc := range testCases {
@@ -952,6 +960,14 @@ func TestDepsolvedRepoConfigRPMMDConversion(t *testing.T) {
 				CheckGPG:  common.ToPtr(true),
 				IgnoreSSL: common.ToPtr(false),
 				RHSM:      true,
+			},
+		},
+		{
+			name: "rhui",
+			config: rpmmd.RepoConfig{
+				Id:       "rhel-8-baseos-rhui-rpms",
+				BaseURLs: []string{"https://rhui.us-east-1.aws.ce.redhat.com/baseos"},
+				RHUI:     true,
 			},
 		},
 	}
