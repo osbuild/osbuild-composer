@@ -9,6 +9,10 @@ set -euxo pipefail
 # pull the -test package from.
 PROJECT=${1:-osbuild-composer}
 
+# Temporary workaround until we get newer CI images (2026-02-26)
+# See https://issues.redhat.com/browse/HMS-10241
+sudo dnf upgrade -y libsemanage
+
 # set locale to en_US.UTF-8
 sudo dnf install -y glibc-langpack-en
 sudo localectl set-locale LANG=en_US.UTF-8
