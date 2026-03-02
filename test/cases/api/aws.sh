@@ -210,9 +210,9 @@ function verify() {
   echo "ARCH is $ARCH"
 
   if [ "$ARCH" = "aarch64" ]; then
-    INST_TYPE="t4g.micro"
+    INST_TYPE="t4g.small"
   elif [ "$ARCH" = "x86_64" ]; then
-    INST_TYPE="t2.micro"
+    INST_TYPE="t2.small"
   else
     echo "Unsupported architecture ❌"
     exit 1
