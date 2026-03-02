@@ -19,17 +19,35 @@ sources:
   executor:
     type: vector
     address: ${PRIVATE_IP}:12005
+
+transforms:
+  parse_journal_json:
+    type: remap
+    inputs:
+      - journald
+    source: |
+      if exists(.OSBUILD_OUTPUT) {
+          parsed, err = parse_json(string!(.OSBUILD_OUTPUT))
+          if err == null {
+              .osbuild_output = parsed
+          } else {
+              .osbuild_output = string!(.OSBUILD_OUTPUT)
+          }
+          del(.OSBUILD_OUTPUT)
+      }
+
 sinks:
   worker_out:
     type: aws_cloudwatch_logs
     inputs:
-      - journald
+      - parse_journal_json
     region: ${REGION}
     endpoint: ${CLOUDWATCH_LOGS_ENDPOINT_URL}
     group_name: ${CLOUDWATCH_LOG_GROUP}
     stream_name: worker_syslog_{{ host }}
     encoding:
       codec: json
+
   executor_out:
     type: aws_cloudwatch_logs
     inputs:
