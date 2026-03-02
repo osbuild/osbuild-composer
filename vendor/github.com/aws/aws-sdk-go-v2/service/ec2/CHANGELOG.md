@@ -1,3 +1,27 @@
+# v1.293.0 (2026-02-26)
+
+* **Feature**: Add c8id, m8id and hpc8a instance types.
+
+# v1.292.0 (2026-02-25)
+
+* **Feature**: Add support for EC2 Capacity Blocks in Local Zones.
+
+# v1.291.0 (2026-02-24)
+
+* **Feature**: Adds httpTokensEnforced property to ModifyInstanceMetadataDefaults API. Set per account or manage organization-wide using declarative policies to prevent IMDSv1-enabled instance launch and block attempts to enable IMDSv1 on existing IMDSv2-only instances.
+
+# v1.290.1 (2026-02-23)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.290.0 (2026-02-17)
+
+* **Feature**: Add Operator field to CreatePlacementGroup and DescribePlacementGroup APIs.
+
+# v1.289.1 (2026-02-16)
+
+* **Documentation**: Documentation updates for EC2 Secondary Networks
+
 # v1.289.0 (2026-02-13)
 
 * **Feature**: This release adds geography information to EC2 region and availability zone APIs. DescribeRegions now includes a Geography field, while DescribeAvailabilityZones includes both Geography and SubGeography fields, enabling better geographic classification for AWS regions and zones.

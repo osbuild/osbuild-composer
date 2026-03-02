@@ -288,7 +288,12 @@ func bindAdditionalProperties(additionalProperties reflect.Value, parentStruct r
 
 func marshalFormImpl(v reflect.Value, result url.Values, name string) {
 	switch v.Kind() {
-	case reflect.Interface, reflect.Ptr:
+	case reflect.Ptr:
+		if v.IsNil() {
+			break
+		}
+		fallthrough
+	case reflect.Interface:
 		marshalFormImpl(v.Elem(), result, name)
 	case reflect.Slice:
 		for i := 0; i < v.Len(); i++ {

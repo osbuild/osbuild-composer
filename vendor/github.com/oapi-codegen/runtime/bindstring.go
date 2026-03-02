@@ -31,6 +31,22 @@ import (
 // know the destination type each place that we use this, is to generate code
 // to read each specific type.
 func BindStringToObject(src string, dst interface{}) error {
+	return BindStringToObjectWithOptions(src, dst, BindStringToObjectOptions{})
+}
+
+// BindStringToObjectOptions defines optional arguments for BindStringToObjectWithOptions.
+type BindStringToObjectOptions struct {
+	// Type is the OpenAPI type of the parameter (e.g. "string", "integer").
+	Type string
+	// Format is the OpenAPI format of the parameter (e.g. "byte", "date-time").
+	// When set to "byte" and the destination is []byte, the source string is
+	// base64-decoded rather than treated as a generic slice.
+	Format string
+}
+
+// BindStringToObjectWithOptions takes a string, and attempts to assign it to the destination
+// interface via whatever type conversion is necessary, with additional options.
+func BindStringToObjectWithOptions(src string, dst interface{}, opts BindStringToObjectOptions) error {
 	var err error
 
 	v := reflect.ValueOf(dst)
@@ -59,6 +75,17 @@ func BindStringToObject(src string, dst interface{}) error {
 	}
 
 	switch t.Kind() {
+	case reflect.Slice:
+		if opts.Format == "byte" && isByteSlice(t) {
+			decoded, decErr := base64Decode(src)
+			if decErr != nil {
+				return fmt.Errorf("error binding string parameter: %w", decErr)
+			}
+			v.SetBytes(decoded)
+			return nil
+		}
+		// Non-binary slices fall through to the default error case.
+		fallthrough
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		var val int64
 		val, err = strconv.ParseInt(src, 10, 64)

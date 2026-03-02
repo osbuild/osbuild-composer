@@ -69039,6 +69039,13 @@ func awsEc2query_serializeOpDocumentCreatePlacementGroupInput(v *CreatePlacement
 		objectKey.String(*v.LinkedGroupId)
 	}
 
+	if v.Operator != nil {
+		objectKey := object.Key("Operator")
+		if err := awsEc2query_serializeDocumentOperatorRequest(v.Operator, objectKey); err != nil {
+			return err
+		}
+	}
+
 	if v.PartitionCount != nil {
 		objectKey := object.Key("PartitionCount")
 		objectKey.Integer(*v.PartitionCount)
@@ -73606,6 +73613,11 @@ func awsEc2query_serializeOpDocumentDescribeCapacityBlockExtensionOfferingsInput
 func awsEc2query_serializeOpDocumentDescribeCapacityBlockOfferingsInput(v *DescribeCapacityBlockOfferingsInput, value query.Value) error {
 	object := value.Object()
 	_ = object
+
+	if v.AllAvailabilityZones != nil {
+		objectKey := object.Key("AllAvailabilityZones")
+		objectKey.Boolean(*v.AllAvailabilityZones)
+	}
 
 	if v.CapacityDurationHours != nil {
 		objectKey := object.Key("CapacityDurationHours")
@@ -84455,6 +84467,11 @@ func awsEc2query_serializeOpDocumentModifyInstanceMetadataDefaultsInput(v *Modif
 	if len(v.HttpTokens) > 0 {
 		objectKey := object.Key("HttpTokens")
 		objectKey.String(string(v.HttpTokens))
+	}
+
+	if len(v.HttpTokensEnforced) > 0 {
+		objectKey := object.Key("HttpTokensEnforced")
+		objectKey.String(string(v.HttpTokensEnforced))
 	}
 
 	if len(v.InstanceMetadataTags) > 0 {

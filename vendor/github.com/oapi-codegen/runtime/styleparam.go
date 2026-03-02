@@ -16,6 +16,7 @@ package runtime
 import (
 	"bytes"
 	"encoding"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -51,10 +52,31 @@ func StyleParam(style string, explode bool, paramName string, value interface{})
 	return StyleParamWithLocation(style, explode, paramName, ParamLocationUndefined, value)
 }
 
-// Given an input value, such as a primitive type, array or object, turn it
-// into a parameter based on style/explode definition, performing whatever
-// escaping is necessary based on parameter location
+// StyleParamWithLocation serializes a Go value into an OpenAPI-styled parameter
+// string, performing escaping based on parameter location.
 func StyleParamWithLocation(style string, explode bool, paramName string, paramLocation ParamLocation, value interface{}) (string, error) {
+	return StyleParamWithOptions(style, explode, paramName, value, StyleParamOptions{
+		ParamLocation: paramLocation,
+	})
+}
+
+// StyleParamOptions defines optional arguments for StyleParamWithOptions.
+type StyleParamOptions struct {
+	// ParamLocation controls URL escaping behavior.
+	ParamLocation ParamLocation
+	// Type is the OpenAPI type of the parameter (e.g. "string", "integer").
+	Type string
+	// Format is the OpenAPI format of the parameter (e.g. "byte", "date-time").
+	// When set to "byte" and the value is []byte, it is base64-encoded as a
+	// single string rather than treated as a generic slice of uint8.
+	Format string
+	// Required indicates whether the parameter is required.
+	Required bool
+}
+
+// StyleParamWithOptions serializes a Go value into an OpenAPI-styled parameter
+// string with additional options.
+func StyleParamWithOptions(style string, explode bool, paramName string, value interface{}, opts StyleParamOptions) (string, error) {
 	t := reflect.TypeOf(value)
 	v := reflect.ValueOf(value)
 
@@ -83,24 +105,28 @@ func StyleParamWithLocation(style string, explode bool, paramName string, paramL
 				return "", fmt.Errorf("error marshaling '%s' as text: %w", value, err)
 			}
 
-			return stylePrimitive(style, explode, paramName, paramLocation, string(b))
+			return stylePrimitive(style, explode, paramName, opts.ParamLocation, string(b))
 		}
 	}
 
 	switch t.Kind() {
 	case reflect.Slice:
+		if opts.Format == "byte" && isByteSlice(t) {
+			encoded := base64.StdEncoding.EncodeToString(v.Bytes())
+			return stylePrimitive(style, explode, paramName, opts.ParamLocation, encoded)
+		}
 		n := v.Len()
 		sliceVal := make([]interface{}, n)
 		for i := 0; i < n; i++ {
 			sliceVal[i] = v.Index(i).Interface()
 		}
-		return styleSlice(style, explode, paramName, paramLocation, sliceVal)
+		return styleSlice(style, explode, paramName, opts.ParamLocation, sliceVal)
 	case reflect.Struct:
-		return styleStruct(style, explode, paramName, paramLocation, value)
+		return styleStruct(style, explode, paramName, opts.ParamLocation, value)
 	case reflect.Map:
-		return styleMap(style, explode, paramName, paramLocation, value)
+		return styleMap(style, explode, paramName, opts.ParamLocation, value)
 	default:
-		return stylePrimitive(style, explode, paramName, paramLocation, value)
+		return stylePrimitive(style, explode, paramName, opts.ParamLocation, value)
 	}
 }
 

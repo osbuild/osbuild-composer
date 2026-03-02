@@ -20,6 +20,7 @@ import (
 	"net/url"
 	"reflect"
 	"regexp"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -205,7 +206,7 @@ func LowercaseFirstCharacters(str string) string {
 
 	runes := []rune(str)
 
-	for i := 0; i < len(runes); i++ {
+	for i := range runes {
 		next := i + 1
 		if i != 0 && next < len(runes) && unicode.IsLower(runes[next]) {
 			break
@@ -224,25 +225,25 @@ func LowercaseFirstCharacters(str string) string {
 func ToCamelCase(str string) string {
 	s := strings.Trim(str, " ")
 
-	n := ""
+	var n strings.Builder
 	capNext := true
 	for _, v := range s {
 		if unicode.IsUpper(v) {
-			n += string(v)
+			n.WriteString(string(v))
 		}
 		if unicode.IsDigit(v) {
-			n += string(v)
+			n.WriteString(string(v))
 		}
 		if unicode.IsLower(v) {
 			if capNext {
-				n += strings.ToUpper(string(v))
+				n.WriteString(strings.ToUpper(string(v)))
 			} else {
-				n += string(v)
+				n.WriteString(string(v))
 			}
 		}
 		_, capNext = separatorSet[v]
 	}
-	return n
+	return n.String()
 }
 
 // ToCamelCaseWithDigits function will convert query-arg style strings to CamelCase. We will
@@ -407,12 +408,7 @@ func schemaXOrder(v *openapi3.SchemaRef) (int64, bool) {
 // StringInArray checks whether the specified string is present in an array
 // of strings
 func StringInArray(str string, array []string) bool {
-	for _, elt := range array {
-		if elt == str {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(array, str)
 }
 
 // RefPathToObjName returns the name of referenced object without changes.
@@ -654,15 +650,29 @@ func ReplacePathParamsWithStr(uri string) string {
 }
 
 // SortParamsByPath reorders the given parameter definitions to match those in the path URI.
+// If a parameter appears more than once in the path (e.g. Keycloak's
+// /clients/{client-uuid}/roles/{role-name}/composites/clients/{client-uuid}),
+// duplicates are removed and only the first occurrence determines the order.
 func SortParamsByPath(path string, in []ParameterDefinition) ([]ParameterDefinition, error) {
 	pathParams := OrderedParamsFromUri(path)
-	n := len(in)
-	if len(pathParams) != n {
-		return nil, fmt.Errorf("path '%s' has %d positional parameters, but spec has %d declared",
-			path, len(pathParams), n)
+
+	// Deduplicate, preserving first-occurrence order.
+	seen := make(map[string]struct{}, len(pathParams))
+	uniqueParams := make([]string, 0, len(pathParams))
+	for _, name := range pathParams {
+		if _, exists := seen[name]; !exists {
+			seen[name] = struct{}{}
+			uniqueParams = append(uniqueParams, name)
+		}
 	}
-	out := make([]ParameterDefinition, len(in))
-	for i, name := range pathParams {
+
+	n := len(in)
+	if len(uniqueParams) != n {
+		return nil, fmt.Errorf("path '%s' has %d positional parameters, but spec has %d declared",
+			path, len(uniqueParams), n)
+	}
+	out := make([]ParameterDefinition, n)
+	for i, name := range uniqueParams {
 		p := ParameterDefinitions(in).FindByName(name)
 		if p == nil {
 			return nil, fmt.Errorf("path '%s' refers to parameter '%s', which doesn't exist in specification",
@@ -864,6 +874,13 @@ func PathToTypeName(path []string) string {
 	return strings.Join(path, "_")
 }
 
+// StringToGoString takes an arbitrary string and converts it to a valid Go string literal,
+// including the quotes. For instance, `foo "bar"` would be converted to `"foo \"bar\""`
+func StringToGoString(in string) string {
+	esc := strings.ReplaceAll(in, "\"", "\\\"")
+	return fmt.Sprintf("\"%s\"", esc)
+}
+
 // StringToGoComment renders a possible multi-line string as a valid Go-Comment.
 // Each line is prefixed as a comment.
 func StringToGoComment(in string) string {
@@ -1053,7 +1070,7 @@ func ParseGoImportExtension(v *openapi3.SchemaRef) (*goImport, error) {
 
 	goTypeImportExt := v.Value.Extensions[extPropGoImport]
 
-	importI, ok := goTypeImportExt.(map[string]interface{})
+	importI, ok := goTypeImportExt.(map[string]any)
 	if !ok {
 		return nil, fmt.Errorf("failed to convert type: %T", goTypeImportExt)
 	}
@@ -1105,10 +1122,88 @@ func isAdditionalPropertiesExplicitFalse(s *openapi3.Schema) bool {
 }
 
 func sliceContains[E comparable](s []E, v E) bool {
-	for _, ss := range s {
-		if ss == v {
+	return slices.Contains(s, v)
+}
+
+// FixDuplicateTypeNames renames duplicate type names.
+func FixDuplicateTypeNames(typeDefs []TypeDefinition) []TypeDefinition {
+	if !hasDuplicatedTypeNames(typeDefs) {
+		return typeDefs
+	}
+
+	// try to fix duplicate type names with their definition section
+	typeDefs = fixDuplicateTypeNamesWithCompName(typeDefs)
+	if !hasDuplicatedTypeNames(typeDefs) {
+		return typeDefs
+	}
+
+	const maxIter = 100
+	for i := 0; i < maxIter && hasDuplicatedTypeNames(typeDefs); i++ {
+		typeDefs = fixDuplicateTypeNamesDupCounts(typeDefs)
+	}
+
+	if hasDuplicatedTypeNames(typeDefs) {
+		panic("too much duplicate type names")
+	}
+
+	return typeDefs
+}
+
+func hasDuplicatedTypeNames(typeDefs []TypeDefinition) bool {
+	dupCheck := make(map[string]int, len(typeDefs))
+
+	for _, d := range typeDefs {
+		dupCheck[d.TypeName]++
+
+		if dupCheck[d.TypeName] != 1 {
 			return true
 		}
 	}
+
 	return false
+}
+
+func fixDuplicateTypeNamesWithCompName(typeDefs []TypeDefinition) []TypeDefinition {
+	dupCheck := make(map[string]int, len(typeDefs))
+	deDup := make([]TypeDefinition, len(typeDefs))
+
+	for i, d := range typeDefs {
+		dupCheck[d.TypeName]++
+
+		if dupCheck[d.TypeName] != 1 {
+			switch d.Schema.DefinedComp {
+			case ComponentTypeSchema:
+				d.TypeName += "Schema"
+			case ComponentTypeParameter:
+				d.TypeName += "Parameter"
+			case ComponentTypeRequestBody:
+				d.TypeName += "RequestBody"
+			case ComponentTypeResponse:
+				d.TypeName += "Response"
+			case ComponentTypeHeader:
+				d.TypeName += "Header"
+			}
+		}
+
+		deDup[i] = d
+	}
+
+	return deDup
+}
+
+func fixDuplicateTypeNamesDupCounts(typeDefs []TypeDefinition) []TypeDefinition {
+	dupCheck := make(map[string]int, len(typeDefs))
+	deDup := make([]TypeDefinition, len(typeDefs))
+
+	for i, d := range typeDefs {
+		dupCheck[d.TypeName]++
+
+		if dupCheck[d.TypeName] != 1 {
+			d.TypeName = d.TypeName + strconv.Itoa(dupCheck[d.TypeName])
+		}
+
+		deDup[i] = d
+	}
+
+	return deDup
 }

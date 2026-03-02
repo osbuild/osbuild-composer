@@ -1,6 +1,7 @@
 package runtime
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -71,8 +72,10 @@ func MarshalDeepObject(i interface{}, paramName string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to marshal input to JSON: %w", err)
 	}
+	e := json.NewDecoder(bytes.NewReader(buf))
+	e.UseNumber()
 	var i2 interface{}
-	err = json.Unmarshal(buf, &i2)
+	err = e.Decode(&i2)
 	if err != nil {
 		return "", fmt.Errorf("failed to unmarshal JSON: %w", err)
 	}
@@ -133,11 +136,16 @@ func UnmarshalDeepObject(dst interface{}, paramName string, params url.Values) e
 		if strings.HasPrefix(pName, searchStr) {
 			// trim the parameter name from the full name.
 			pName = pName[len(paramName):]
-			fieldNames = append(fieldNames, pName)
-			if len(pValues) != 1 {
-				return fmt.Errorf("%s has multiple values", pName)
+			if len(pValues) == 1 {
+				fieldNames = append(fieldNames, pName)
+				fieldValues = append(fieldValues, pValues[0])
+			} else {
+				// Non-indexed array format: expand repeated keys into indexed entries
+				for i, value := range pValues {
+					fieldNames = append(fieldNames, pName+"["+strconv.Itoa(i)+"]")
+					fieldValues = append(fieldValues, value)
+				}
 			}
-			fieldValues = append(fieldValues, pValues[0])
 		}
 	}
 
@@ -255,12 +263,10 @@ func assignPathValues(dst interface{}, pathValues fieldOrValue) error {
 			tm, err = time.Parse(time.RFC3339Nano, pathValues.value)
 			if err != nil {
 				// Fall back to parsing it as a date.
-				// TODO: why is this marked as an ineffassign?
-				tm, err = time.Parse(types.DateFormat, pathValues.value) //nolint:ineffassign,staticcheck
+				tm, err = time.Parse(types.DateFormat, pathValues.value)
 				if err != nil {
 					return fmt.Errorf("error parsing '%s' as RFC3339 or 2006-01-02 time: %w", pathValues.value, err)
 				}
-				return fmt.Errorf("invalid date format: %w", err)
 			}
 			dst := iv
 			if it != reflect.TypeOf(time.Time{}) {
@@ -335,26 +341,24 @@ func assignPathValues(dst interface{}, pathValues fieldOrValue) error {
 }
 
 func assignSlice(dst reflect.Value, pathValues fieldOrValue) error {
-	// Gather up the values
 	nValues := len(pathValues.fields)
-	values := make([]string, nValues)
-	// We expect to have consecutive array indices in the map
+
+	// Process each array element by index
 	for i := 0; i < nValues; i++ {
 		indexStr := strconv.Itoa(i)
 		fv, found := pathValues.fields[indexStr]
 		if !found {
 			return errors.New("array deepObjects must have consecutive indices")
 		}
-		values[i] = fv.value
-	}
 
-	// This could be cleaner, but we can call into assignPathValues to
-	// avoid recreating this logic.
-	for i := 0; i < nValues; i++ {
+		// Get the destination element
 		dstElem := dst.Index(i).Addr()
-		err := assignPathValues(dstElem.Interface(), fieldOrValue{value: values[i]})
+
+		// assignPathValues handles both simple values (via fv.value) and
+		// nested objects (via fv.fields) automatically
+		err := assignPathValues(dstElem.Interface(), fv)
 		if err != nil {
-			return fmt.Errorf("error binding array: %w", err)
+			return fmt.Errorf("error binding array element %d: %w", i, err)
 		}
 	}
 
