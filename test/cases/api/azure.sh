@@ -172,7 +172,7 @@ function verify() {
   $AZURE_CMD vm create --name "$AZURE_INSTANCE_NAME" \
     --resource-group "$AZURE_RESOURCE_GROUP" \
     --image "$AZURE_IMAGE_NAME" \
-    --size "Standard_B1s" \
+    --size "Standard_B1ms" \
     --admin-username "$SSH_USER" \
     --ssh-key-values "$AZURE_SSH_KEY.pub" \
     --authentication-type "ssh" \
