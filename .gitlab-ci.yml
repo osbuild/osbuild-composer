@@ -199,9 +199,9 @@ Base:
   stage: test
   extends: .terraform
   rules:
-    - !reference [.upstream_rules_all, rules]
-    - !reference [.nightly_rules_all, rules]
+    - !reference [.upstream_and_ga_rules_all, rules]
     - !reference [.ga_rules_all, rules]
+    - !reference [.nightly_rules_all, rules]
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/base_tests.sh
