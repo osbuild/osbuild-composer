@@ -189,9 +189,10 @@ $OC_CLI whoami
 OPENSHIFT_PROJECT="image-builder--runtime-int"
 $OC_CLI project $OPENSHIFT_PROJECT
 
-# Note: rh-restricted-nfs is the default StorageClass, see
-# https://console-openshift-console.apps.prod-scale-spoke1-aws-us-east-1.itup.redhat.com/k8s/cluster/storage.k8s.io~v1~StorageClass
-STORAGE_CLASS="rh-restricted-nfs"
+# Note: rh-restricted-nfs-economy offers little data protection (no
+# cloning/mirroring), but considering these are just for tests that is
+# fine.
+STORAGE_CLASS="rh-restricted-nfs-economy"
 
 # import the image into a data volume; total quota on the namespace seems to be 500 GiB
 PVC_NAME="image-builder-data-volume-$TEST_ID"
