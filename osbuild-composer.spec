@@ -415,7 +415,11 @@ Requires:   firewalld
 %if (0%{?rhel} && 0%{?rhel} < 10) || (0%{?fedora} && 0%{?fedora} < 40)
 Requires:   podman-plugins
 %endif
-Requires:   dnf-plugins-core
+%if 0%{?fedora} || 0%{?rhel} >= 11
+Requires:   dnf5-command(copr)
+%else
+Requires:   dnf-command(copr)
+%endif
 Requires:   skopeo
 Requires:   make
 Requires:   python3-pip
