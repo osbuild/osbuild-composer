@@ -315,7 +315,18 @@ EOF
     compose_id=$(start_compose "$bp_name" "$image_type")
     local compose_status
     compose_status=$(wait_for_compose "$compose_id")
-    
+
+    # TODO: Remove this condition once we backport PQC keys to 9.7 repo defs. They were fixed in v165.
+    if [[ ${distro} == "rhel-9.7" ]] && ! nvrGreaterOrEqual "osbuild-composer" "165"; then
+        if [[ $compose_status != "FAILED" ]]; then
+            redprint "ERROR: Compose did not fail as expected ($compose_status)"
+            redprint "INFO: Compose logs for $compose_id:"
+            get_compose_log "$compose_id"
+            exit 1
+        fi
+        return
+    fi
+
     if [[ $compose_status != "FINISHED" ]]; then
         redprint "ERROR: Compose did not finish successfully ($compose_status)"
         redprint "INFO: Compose logs for $compose_id:"
@@ -341,8 +352,8 @@ case $ID in
             10)
                 # There are no new RHEL-8 releases, so just use the distro alias
                 test_cross_build_distro "rhel-8"
-                # Test building RHEL 9.6, which is the latest RHEL-9 minor version that is GA at this time
-                test_cross_build_distro "rhel-9.6"
+                # Test building RHEL 9.7, which is the latest RHEL-9 minor version that is GA at this time
+                test_cross_build_distro "rhel-9.7"
                 ;;
             *)
                 greenprint "INFO not testing actual cross-distro image build on $ID-$VERSION_ID"
