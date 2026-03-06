@@ -391,7 +391,7 @@ case "${IMAGE_TYPE}" in
         "baseurl": [ "http://example.com" ],
         "gpgkey": [ "$CUSTOM_GPG_KEY" ],
         "check_gpg": true,
-        "enabled": true
+        "enabled": false
     }]
 EOF
 )
