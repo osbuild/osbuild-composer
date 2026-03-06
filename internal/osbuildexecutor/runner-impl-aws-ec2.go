@@ -311,7 +311,7 @@ func (ec2e *awsEC2Executor) RunOSBuild(manifest []byte, logger logrus.FieldLogge
 			logrus.Errorf("something went wrong during the executor's build: %v, unable to fetch log: %v", err, logErr)
 			return nil, fmt.Errorf("something went wrong during the executor's build: %w, unable to fetch log: %w", err, logErr)
 		}
-		logrus.Errorf("something went wrong handling the executor's build: %v\nosbuild log: %v", err, log)
+		logrus.WithField("osbuild_output", string(log)).Errorf("something went wrong handling the executor's build: %v\nosbuild log: %v", err, log)
 		return nil, fmt.Errorf("osbuild failed: %s", log)
 	}
 

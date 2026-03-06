@@ -7,6 +7,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"net/url"
 	"os"
@@ -15,6 +16,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/coreos/go-systemd/v22/journal"
 	slogger "github.com/osbuild/osbuild-composer/pkg/splunk_logger"
 
 	"github.com/BurntSushi/toml"
@@ -27,6 +29,7 @@ import (
 	"github.com/osbuild/images/pkg/upload/koji"
 	"github.com/osbuild/images/pkg/upload/oci"
 	"github.com/osbuild/osbuild-composer/internal/cloud/awscloud"
+	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 )
 
@@ -542,6 +545,16 @@ var run = func() {
 }
 
 func main() {
+	// If we are running under systemd, use the journal. Otherwise,
+	// fallback to text formatter.
+	if journal.Enabled() {
+		logrus.SetFormatter(&logrus.JSONFormatter{})
+		logrus.AddHook(&common.JournalHook{})
+		logrus.SetOutput(io.Discard)
+	} else {
+		logrus.SetFormatter(&logrus.TextFormatter{})
+	}
+
 	defer func() {
 		if r := recover(); r != nil {
 			logrus.Fatalf("worker crashed: %s\n%s", r, debug.Stack())
