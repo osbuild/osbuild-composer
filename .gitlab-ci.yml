@@ -899,6 +899,19 @@ WorkerExecutorFailure:
     RUNNER: aws/fedora-42-x86_64
     IAM_INSTANCE_PROFILE: worker-executor
 
+
+CleanStore:
+  stage: test
+  extends: .terraform
+  rules:
+    - !reference [.upstream_rules_all, rules]
+    - !reference [.ga_rules_all, rules]
+  script:
+    - schutzbot/deploy.sh
+    - /usr/libexec/tests/osbuild-composer/cleanstore.sh
+  variables:
+    RUNNER: aws/fedora-42-x86_64
+
 finish:
   stage: finish
   dependencies: []
