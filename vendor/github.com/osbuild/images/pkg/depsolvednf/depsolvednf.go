@@ -447,16 +447,23 @@ func (s *Solver) SearchMetadata(repos []rpmmd.RepoConfig, packages []string) (rp
 	return pkgs, nil
 }
 
-// applyRHSMSecrets overrides the Secrets field on packages from RHSM repos.
+// applyRHSMSecrets overrides the Secrets field on packages from RHSM or RHUI repos.
 // The activeHandler sets "org.osbuild.mtls" for repos with SSLClientKey,
-// but RHSM repos need "org.osbuild.rhsm" instead.
+// but RHSM repos need "org.osbuild.rhsm" and RHUI repos need "org.osbuild.rhui" instead.
 func applyRHSMSecrets(pkgs rpmmd.PackageList, repos []rpmmd.RepoConfig) {
-	rhsmRepos := make(map[string]bool)
+	type repoFlags struct {
+		rhsm bool
+		rhui bool
+	}
+	repoMap := make(map[string]repoFlags)
 	for _, repo := range repos {
-		rhsmRepos[repo.Hash()] = repo.RHSM
+		repoMap[repo.Hash()] = repoFlags{rhsm: repo.RHSM, rhui: repo.RHUI}
 	}
 	for i := range pkgs {
-		if rhsmRepos[pkgs[i].RepoID] {
+		flags := repoMap[pkgs[i].RepoID]
+		if flags.rhui {
+			pkgs[i].Secrets = "org.osbuild.rhui"
+		} else if flags.rhsm {
 			pkgs[i].Secrets = "org.osbuild.rhsm"
 		}
 	}
@@ -506,11 +513,13 @@ func validatePackageSetRepoChain(pkgSets []rpmmd.PackageSet) error {
 }
 
 // validateSubscriptionsForRepos checks that RHSM subscriptions are available
-// for any repositories that require them.
+// for any repositories that require them. Repositories with RHUI set to true
+// are skipped since they use cloud instance identity for authentication
+// instead of RHSM entitlement certificates.
 func validateSubscriptionsForRepos(pkgSets []rpmmd.PackageSet, haveSubscriptions bool, subsErr error) error {
 	for _, ps := range pkgSets {
 		for _, repo := range ps.Repositories {
-			if repo.RHSM && !haveSubscriptions {
+			if repo.RHSM && !repo.RHUI && !haveSubscriptions {
 				return fmt.Errorf("This system does not have any valid subscriptions. Subscribe it before specifying rhsm: true in sources (error details: %w)", subsErr)
 			}
 		}

@@ -45,6 +45,10 @@ func NewCurlPackageItem(pkg rpmmd.Package) (CurlSourceItem, error) {
 		item.Secrets = &URLSecrets{
 			Name: "org.osbuild.rhsm",
 		}
+	case "org.osbuild.rhui":
+		item.Secrets = &URLSecrets{
+			Name: "org.osbuild.rhui",
+		}
 	case "org.osbuild.mtls":
 		item.Secrets = &URLSecrets{
 			Name: "org.osbuild.mtls",
