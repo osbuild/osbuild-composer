@@ -67,6 +67,8 @@ func (img *AnacondaTarInstaller) InstantiateManifest(m *manifest.Manifest,
 		img.Kickstart.Path = osbuild.KickstartPathOSBuild
 	}
 
+	img.InstallerCustomizations.Payload.Path = "/liveimg.tar.gz"
+
 	anacondaPipeline := manifest.NewAnacondaInstaller(
 		manifest.AnacondaInstallerTypePayload,
 		buildPipeline,
@@ -97,8 +99,6 @@ func (img *AnacondaTarInstaller) InstantiateManifest(m *manifest.Manifest,
 
 	anacondaPipeline.Locale = img.OSCustomizations.Language
 
-	tarPath := "/liveimg.tar.gz"
-
 	anacondaPipeline.Checkpoint()
 
 	var rootfsImagePipeline *manifest.ISORootfsImg
@@ -109,12 +109,7 @@ func (img *AnacondaTarInstaller) InstantiateManifest(m *manifest.Manifest,
 	default:
 	}
 
-	bootTreePipeline := manifest.NewEFIBootTree(buildPipeline, img.InstallerCustomizations.Product, img.InstallerCustomizations.OSVersion)
-	bootTreePipeline.Platform = img.platform
-	bootTreePipeline.UEFIVendor = img.platform.GetUEFIVendor()
-	bootTreePipeline.ISOLabel = img.ISOCustomizations.Label
-	bootTreePipeline.DefaultMenu = img.InstallerCustomizations.DefaultMenu
-
+	// Setup the kernel options for the tar installer
 	kernelOpts := []string{
 		fmt.Sprintf("inst.stage2=hd:LABEL=%s", img.ISOCustomizations.Label),
 		fmt.Sprintf("inst.ks=hd:LABEL=%s:%s", img.ISOCustomizations.Label, img.Kickstart.Path),
@@ -124,15 +119,24 @@ func (img *AnacondaTarInstaller) InstantiateManifest(m *manifest.Manifest,
 		kernelOpts = append(kernelOpts, "fips=1")
 	}
 	kernelOpts = append(kernelOpts, img.InstallerCustomizations.KernelOptionsAppend...)
-	bootTreePipeline.KernelOpts = kernelOpts
+
+	// Setup the bootloaders
+	bootloaders := img.Bootloaders(buildPipeline, img.platform, kernelOpts)
 
 	osPipeline := manifest.NewOS(buildPipeline, img.platform, repos)
 	osPipeline.OSCustomizations = img.OSCustomizations
 	osPipeline.Environment = img.Environment
 
-	isoTreePipeline := manifest.NewAnacondaInstallerISOTree(buildPipeline, anacondaPipeline, rootfsImagePipeline, bootTreePipeline)
+	isoTreePipeline := manifest.NewAnacondaInstallerISOTree(
+		buildPipeline,
+		anacondaPipeline,
+		rootfsImagePipeline,
+		bootloaders,
+		img.InstallerCustomizations,
+		img.ISOCustomizations,
+	)
 	initIsoTreePipeline(isoTreePipeline, &img.AnacondaInstallerBase, rng)
-	isoTreePipeline.PayloadPath = tarPath
+
 	isoTreePipeline.OSPipeline = osPipeline
 
 	isoPipeline := manifest.NewISO(buildPipeline, isoTreePipeline, img.ISOCustomizations)

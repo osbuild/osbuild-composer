@@ -353,14 +353,25 @@ func osCustomizations(t *imageType, osPackageSet rpmmd.PackageSet, options distr
 		osc.MachineIdUninitialized = *imageConfig.MachineIdUninitialized
 	}
 
-	if imageConfig.MountConfiguration != nil {
-		osc.MountConfiguration = *imageConfig.MountConfiguration
-	}
-
 	osc.VersionlockPackages = imageConfig.VersionlockPackages
 
 	if tweaks := t.arch.distro.GetTweaks(); tweaks != nil && tweaks.RPMKeys != nil && tweaks.RPMKeys.BinPath != "" {
 		osc.RPMKeysBinary = tweaks.RPMKeys.BinPath
+	}
+
+	if sshdCust := c.GetSshd(); sshdCust != nil && imageConfig.SshdConfig != nil {
+		if sshdCust.PasswordAuthentication != nil {
+			osc.SshdConfig.Config.PasswordAuthentication = sshdCust.PasswordAuthentication
+		}
+		if sshdCust.KbdInteractiveAuthentication != nil {
+			osc.SshdConfig.Config.ChallengeResponseAuthentication = sshdCust.KbdInteractiveAuthentication
+		}
+		if sshdCust.ClientAliveInterval != nil {
+			osc.SshdConfig.Config.ClientAliveInterval = sshdCust.ClientAliveInterval
+		}
+		if sshdCust.PermitRootLogin != "" {
+			osc.SshdConfig.Config.PermitRootLogin = osbuild.PermitRootLoginValueStr(sshdCust.PermitRootLogin)
+		}
 	}
 
 	return osc, nil
@@ -439,6 +450,12 @@ func installerCustomizations(t *imageType, c *blueprint.Customizations, o distro
 		}
 
 		isc.ISOFiles = append(isc.ISOFiles, installerConfig.ISOFiles...)
+
+		if installerConfig.Payload != nil {
+			if location := installerConfig.Payload.Location; location != nil {
+				isc.Payload.Location = *location
+			}
+		}
 	}
 
 	installerCust, err := c.GetInstaller()
@@ -494,9 +511,17 @@ func isoCustomizations(t *imageType, c *blueprint.Customizations) (manifest.ISOC
 		if erofsOptions := isoConfig.ErofsOptions; erofsOptions != nil {
 			isc.ErofsOptions = *erofsOptions
 		}
+
+		if excludePaths := isoConfig.ExcludePaths; len(excludePaths) > 0 {
+			isc.ExcludePaths = excludePaths
+		}
+
 	}
 
-	isoCust := c.GetISO()
+	isoCust, err := c.GetISO()
+	if err != nil {
+		return isc, err
+	}
 	if isoCust != nil {
 		if isoCust.Publisher != "" {
 			isc.Publisher = isoCust.Publisher
@@ -512,6 +537,27 @@ func isoCustomizations(t *imageType, c *blueprint.Customizations) (manifest.ISOC
 	}
 
 	return isc, nil
+}
+
+func diskCustomizations(t *imageType) (manifest.DiskCustomizations, error) {
+	diskCust := manifest.NewDiskCustomizations()
+
+	diskConfig, err := t.getDefaultDiskConfig()
+	if err != nil {
+		return diskCust, err
+	}
+
+	if diskConfig != nil {
+		if diskConfig.MountConfiguration != nil {
+			diskCust.MountConfiguration = *diskConfig.MountConfiguration
+		}
+
+		if diskConfig.PartitioningTool != nil {
+			diskCust.PartitioningTool = *diskConfig.PartitioningTool
+		}
+	}
+
+	return diskCust, nil
 }
 
 func ostreeDeploymentCustomizations(
@@ -535,7 +581,11 @@ func ostreeDeploymentCustomizations(
 
 	switch deploymentConf.IgnitionPlatform {
 	case "metal":
-		if bpIgnition := c.GetIgnition(); bpIgnition != nil && bpIgnition.FirstBoot != nil && bpIgnition.FirstBoot.ProvisioningURL != "" {
+		bpIgnition, err := c.GetIgnition()
+		if err != nil {
+			return deploymentConf, err
+		}
+		if bpIgnition != nil && bpIgnition.FirstBoot != nil && bpIgnition.FirstBoot.ProvisioningURL != "" {
 			kernelOptions = append(kernelOptions, "ignition.config.url="+bpIgnition.FirstBoot.ProvisioningURL)
 		}
 	}
@@ -617,6 +667,11 @@ func diskImage(t *imageType,
 	}
 	img.OSCustomizations.PayloadRepos = payloadRepos
 
+	img.DiskCustomizations, err = diskCustomizations(t)
+	if err != nil {
+		return nil, err
+	}
+
 	img.Environment = &t.ImageTypeYAML.Environment
 	img.Compression = t.ImageTypeYAML.Compression
 
@@ -633,10 +688,6 @@ func diskImage(t *imageType,
 		img.OSProduct = t.Arch().Distro().Product()
 		img.OSVersion = t.Arch().Distro().OsVersion()
 		img.OSNick = t.Arch().Distro().Codename()
-	}
-
-	if t.ImageTypeYAML.DiskImagePartTool != nil {
-		img.PartTool = *t.ImageTypeYAML.DiskImagePartTool
 	}
 
 	return img, nil
@@ -1094,13 +1145,15 @@ func iotSimplifiedInstallerImage(t *imageType,
 		img.FDO = fdo.FromBP(*bpFDO)
 	}
 	// ignition configs from blueprint
-	if bpIgnition := customizations.GetIgnition(); bpIgnition != nil {
-		if bpIgnition.Embedded != nil {
-			var err error
-			img.IgnitionEmbedded, err = ignition.EmbeddedOptionsFromBP(*bpIgnition.Embedded)
-			if err != nil {
-				return nil, err
-			}
+	bpIgnition, err := customizations.GetIgnition()
+	if err != nil {
+		return nil, err
+	}
+	if bpIgnition != nil && bpIgnition.Embedded != nil {
+		var err error
+		img.IgnitionEmbedded, err = ignition.EmbeddedOptionsFromBP(*bpIgnition.Embedded)
+		if err != nil {
+			return nil, err
 		}
 	}
 	img.InstallerCustomizations, err = installerCustomizations(t, bp.Customizations, options)

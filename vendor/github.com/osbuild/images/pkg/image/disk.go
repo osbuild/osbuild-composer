@@ -19,10 +19,11 @@ import (
 type DiskImage struct {
 	Base
 
-	PartitionTable   *disk.PartitionTable
-	OSCustomizations manifest.OSCustomizations
-	Environment      environment.Environment
-	Compression      string
+	PartitionTable     *disk.PartitionTable
+	OSCustomizations   manifest.OSCustomizations
+	DiskCustomizations manifest.DiskCustomizations
+	Environment        environment.Environment
+	Compression        string
 
 	// Control the VPC subformat use of force_size
 	VPCForceSize *bool
@@ -52,13 +53,13 @@ func (img *DiskImage) InstantiateManifest(m *manifest.Manifest,
 	osPipeline := manifest.NewOS(buildPipeline, img.platform, repos)
 	osPipeline.PartitionTable = img.PartitionTable
 	osPipeline.OSCustomizations = img.OSCustomizations
+	osPipeline.DiskCustomizations = img.DiskCustomizations
 	osPipeline.Environment = img.Environment
 	osPipeline.OSProduct = img.OSProduct
 	osPipeline.OSVersion = img.OSVersion
 	osPipeline.OSNick = img.OSNick
 
-	rawImagePipeline := manifest.NewRawImage(buildPipeline, osPipeline)
-	rawImagePipeline.PartTool = img.PartTool
+	rawImagePipeline := manifest.NewRawImage(buildPipeline, osPipeline, img.DiskCustomizations)
 
 	var imagePipeline manifest.FilePipeline
 	switch img.platform.GetImageFormat() {

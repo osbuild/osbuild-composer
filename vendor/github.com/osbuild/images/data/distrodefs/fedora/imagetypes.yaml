@@ -375,7 +375,9 @@
           - "grub2-tools-efi"
           - "grub2-tools"
           - "grub2-tools-extra"
+          - "grub2-efi-ia32"
           - "grub2-efi-ia32-cdboot"
+          - "shim-ia32"
         firmware:
           - "microcode_ctl"
           - "amd-gpu-firmware"
@@ -397,13 +399,14 @@
           - "realtek-firmware"
           - "tiwilink-firmware"
           - "zd1211-firmware"
-      bootloader: "grub2"
-    x86_64_installer_platform_compat: &x86_64_installer_platform_compat
-      <<: *x86_64_installer_platform
-      packages:
-        <<: *x86_64_installer_platform_packages
-        compat:
+      build_packages:
+        booting:
           - "shim-ia32"
+          - "grub2-efi-ia32"
+          - "grub2-efi-ia32-cdboot"
+      bootloader: "grub2"
+      extra_uefi_architectures:
+        - "ia32"
     aarch64_platform: &aarch64_platform
       arch: "aarch64"
       uefi_vendor: "fedora"
@@ -559,6 +562,14 @@
           arch: "x86_64"
         shallow_merge:
           boot_type: "grub2"
+      "fedora 45 and up exclude efiboot.img on x86":
+        when:
+          version_greater_or_equal: "45"
+          arch: "x86_64"
+        shallow_merge:
+          exclude_paths:
+            - "efiboot.img"
+
 
   erofs_options: &default_erofs_options
     compression:
@@ -1055,6 +1066,7 @@
       - "customizations.rpm"
       - "customizations.services"
       - "customizations.timezone"
+      - "customizations.sshd"
 
     # options supported by base ostree image types (commit and container)
     supported_options_ostree_commit: &supported_options_ostree_commit
@@ -1172,12 +1184,12 @@
     name: "fedora-iot"
     remote_name: "fedora-iot"
     ref: &ostree_iot_ref "{{.Distro.Name}}/{{.Distro.MajorVersion}}/{{.Arch}}/iot"
-    url: "https://d2ju0wfl996cmc.cloudfront.net/"
+    url: "mirrorlist=https://ostree.fedoraproject.org/iot/mirrorlist"
 
   ostree_atomic: &ostree_atomic
     name: "fedora"
     remote_name: "fedora"
-    url: "https://d2uk5hbyrobdzx.cloudfront.net/"
+    url: "mirrorlist=https://ostree.fedoraproject.org/mirrorlist"
 
   atomic_installer_common: &atomic_installer_common
     <<: *rpm_ostree_imgtype_common
@@ -1196,6 +1208,11 @@
       <<: *default_installer_config
       install_weak_deps: false
       default_menu: 1
+      iso_files:
+        - ["/usr/share/licenses/fedora-release-common/Fedora-Legal-README.txt", "/Fedora-Legal-README.txt"]
+        - ["/usr/share/licenses/fedora-release-common/LICENSE", "/LICENSE"]
+      payload:
+        location: "rootfs"
     image_config:
       locale: "en_US.UTF-8"
       kernel_options:
@@ -1512,14 +1529,6 @@ image_types:
     platforms:
       - *x86_64_installer_platform
       - *aarch64_installer_platform
-    platforms_override:
-      conditions:
-        "Fedora 44 no longer has shim-ia32":
-          when:
-            version_less_than: "44"
-          override:
-            - *x86_64_installer_platform_compat
-            - *aarch64_installer_platform
     package_sets:
       os:
         - include:
@@ -1662,14 +1671,6 @@ image_types:
     platforms:
       - *x86_64_installer_platform
       - *aarch64_installer_platform
-    platforms_override:
-      conditions:
-        "Fedora 44 no longer has shim-ia32":
-          when:
-            version_less_than: "44"
-          override:
-            - *x86_64_installer_platform_compat
-            - *aarch64_installer_platform
 
   "iot-raw-xz":
     <<: *rpm_ostree_imgtype_common
@@ -1934,6 +1935,14 @@ image_types:
           - ["/usr/share/uboot/rpi_arm64/u-boot.bin", "/boot/efi/rpi-u-boot.bin"]
         bootloader: "grub2"
       - *riscv64_uefi_platform
+    disk_config:
+      mount_configuration: "units"
+      conditions:
+        "f42 and below was quite different":
+          when:
+            version_less_than: "43"
+          shallow_merge:
+            mount_configuration: "fstab"
     image_config:
       # NOTE: initial-setup doesn't allow a system to be reconfigured
       # NOTE: if certain files are already configured (locale, users,
@@ -1951,7 +1960,6 @@ image_types:
       grub2_config:
         timeout: 5
       install_weak_deps: false
-      mount_configuration: "units"
       machine_id_uninitialized: false
       enabled_services:
         - "NetworkManager.service"
@@ -1965,7 +1973,6 @@ image_types:
             version_less_than: "43"
           shallow_merge:
             install_weak_deps: true
-            mount_configuration: "fstab"
             enabled_services:
               - "NetworkManager.service"
               - "initial-setup.service"
@@ -2047,14 +2054,6 @@ image_types:
     platforms:
       - *x86_64_installer_platform
       - *aarch64_installer_platform
-    platforms_override:
-      conditions:
-        "Fedora 44 no longer has shim-ia32":
-          when:
-            version_less_than: "44"
-          override:
-            - *x86_64_installer_platform_compat
-            - *aarch64_installer_platform
     blueprint:
       supported_options:
         - "distro"
@@ -2125,14 +2124,6 @@ image_types:
     platforms:
       - *x86_64_installer_platform
       - *aarch64_installer_platform
-    platforms_override:
-      conditions:
-        "Fedora 44 no longer has shim-ia32":
-          when:
-            version_less_than: "44"
-          override:
-            - *x86_64_installer_platform_compat
-            - *aarch64_installer_platform
     blueprint:
       supported_options:
         - "distro"
@@ -2175,14 +2166,6 @@ image_types:
     platforms:
       - *x86_64_installer_platform
       - *aarch64_installer_platform
-    platforms_override:
-      conditions:
-        "Fedora 44 no longer has shim-ia32":
-          when:
-            version_less_than: "44"
-          override:
-            - *x86_64_installer_platform_compat
-            - *aarch64_installer_platform
     package_sets:
       os:
         - *minimal_raw_pkgset
@@ -2558,14 +2541,6 @@ image_types:
     platforms:
       - *x86_64_installer_platform
       - *aarch64_installer_platform
-    platforms_override:
-      conditions:
-        "Fedora 44 no longer has shim-ia32":
-          when:
-            version_less_than: "44"
-          override:
-            - *x86_64_installer_platform_compat
-            - *aarch64_installer_platform
     blueprint:
       supported_options:
         - "distro"
@@ -2928,7 +2903,7 @@ image_types:
 
   "sway-atomic-installer":
     <<: *atomic_installer_common
-    iso_label: "Sway Atomic"
+    iso_label: "Sway-Atomic"
     variant: "Sway Atomic"
     ostree:
       <<: *ostree_atomic
@@ -2941,7 +2916,7 @@ image_types:
 
   "budgie-atomic-installer":
     <<: *atomic_installer_common
-    iso_label: "Budgie Atomic"
+    iso_label: "Budgie-Atomic"
     variant: "Budgie Atomic"
     ostree:
       <<: *ostree_atomic
@@ -2954,7 +2929,7 @@ image_types:
 
   "cosmic-atomic-installer":
     <<: *atomic_installer_common
-    iso_label: "Cosmic Atomic"
+    iso_label: "Cosmic-Atomic"
     variant: "Cosmic Atomic"
     ostree:
       <<: *ostree_atomic

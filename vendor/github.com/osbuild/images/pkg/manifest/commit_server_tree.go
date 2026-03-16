@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"path/filepath"
+	"slices"
 
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/customizations/ostreeserver"
@@ -67,7 +68,7 @@ func (p *OSTreeCommitServer) getPackageSetChain(Distro) ([]rpmmd.PackageSet, err
 	return []rpmmd.PackageSet{
 		{
 			Include:         append(packages, p.ExtraPackages...),
-			Repositories:    append(p.depsolveRepos, p.ExtraRepos...),
+			Repositories:    slices.Concat(p.depsolveRepos, p.ExtraRepos),
 			InstallWeakDeps: true,
 		},
 	}, nil

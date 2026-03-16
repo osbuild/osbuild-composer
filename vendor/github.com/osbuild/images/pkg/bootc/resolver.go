@@ -207,6 +207,17 @@ func (c *Container) ResolveInfo() (*Info, error) {
 	return bootcInfo, nil
 }
 
+// ResolveBuildInfo loads a subset of information from a container, this is
+// used for build containers where we don't need all the information and trying
+// to get it might break things.
+func (c *Container) ResolveBuildInfo() (*Info, error) {
+	return &Info{
+		Imgref:  c.ref,
+		ImageID: c.id,
+		Arch:    c.Arch(),
+	}, nil
+}
+
 // Root returns the root directory of the container as available on the host.
 func (c *Container) Root() string {
 	return c.root
@@ -500,19 +511,45 @@ func forceSymlink(symlinkPath, target string) error {
 	return nil
 }
 
-// ResolveBootcInfo resolves the bootc container reference and returns the info structure
-func ResolveBootcInfo(ref string) (*Info, error) {
+func runContainer(ref string, fn func(c *Container) error) (err error) {
 	c, err := NewContainer(ref)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	info, err := c.ResolveInfo()
-	if stopErr := c.Stop(); stopErr != nil {
-		if err != nil {
-			err = fmt.Errorf("%w\nstopping the container failed too: %s", err, stopErr)
-		} else {
-			err = fmt.Errorf("stopping the container failed: %s", stopErr)
+
+	defer func() {
+		if cErr := c.Stop(); cErr != nil {
+			if err != nil {
+				err = fmt.Errorf("%w\nstopping the container failed too: %s", err, cErr)
+			} else {
+				err = fmt.Errorf("stopping the container failed: %s", cErr)
+			}
 		}
-	}
+	}()
+
+	return fn(c)
+}
+
+// ResolveBootcInfo resolves the bootc container reference and returns the relevant info structure
+// for a container
+func ResolveBootcInfo(ref string) (*Info, error) {
+	var info *Info
+	err := runContainer(ref, func(c *Container) error {
+		var err error
+		info, err = c.ResolveInfo()
+		return err
+	})
+	return info, err
+}
+
+// ResolveBootcBuildInfo resolves the bootc container reference and returns the minimal info structure
+// for a build container
+func ResolveBootcBuildInfo(ref string) (*Info, error) {
+	var info *Info
+	err := runContainer(ref, func(c *Container) error {
+		var err error
+		info, err = c.ResolveBuildInfo()
+		return err
+	})
 	return info, err
 }

@@ -86,27 +86,29 @@ func (img *AnacondaNetInstaller) InstantiateManifest(m *manifest.Manifest,
 	default:
 	}
 
-	bootTreePipeline := manifest.NewEFIBootTree(buildPipeline, img.InstallerCustomizations.Product, img.InstallerCustomizations.OSVersion)
-	bootTreePipeline.Platform = img.platform
-	bootTreePipeline.UEFIVendor = img.platform.GetUEFIVendor()
-	bootTreePipeline.ISOLabel = img.ISOCustomizations.Label
-	bootTreePipeline.DefaultMenu = img.InstallerCustomizations.DefaultMenu
-
+	// Setup the kernel options for the netinst iso
 	kernelOpts := []string{
 		fmt.Sprintf("inst.stage2=hd:LABEL=%s", img.ISOCustomizations.Label),
 	}
-
 	if img.Kickstart != nil {
 		kernelOpts = append(kernelOpts, fmt.Sprintf("inst.ks=hd:LABEL=%s:%s", img.ISOCustomizations.Label, img.Kickstart.Path))
 	}
-
 	if anacondaPipeline.InstallerCustomizations.FIPS {
 		kernelOpts = append(kernelOpts, "fips=1")
 	}
 	kernelOpts = append(kernelOpts, img.InstallerCustomizations.KernelOptionsAppend...)
-	bootTreePipeline.KernelOpts = kernelOpts
 
-	isoTreePipeline := manifest.NewAnacondaInstallerISOTree(buildPipeline, anacondaPipeline, rootfsImagePipeline, bootTreePipeline)
+	// Setup the bootloaders
+	bootloaders := img.Bootloaders(buildPipeline, img.platform, kernelOpts)
+
+	isoTreePipeline := manifest.NewAnacondaInstallerISOTree(
+		buildPipeline,
+		anacondaPipeline,
+		rootfsImagePipeline,
+		bootloaders,
+		img.InstallerCustomizations,
+		img.ISOCustomizations,
+	)
 	initIsoTreePipeline(isoTreePipeline, &img.AnacondaInstallerBase, rng)
 
 	isoPipeline := manifest.NewISO(buildPipeline, isoTreePipeline, img.ISOCustomizations)

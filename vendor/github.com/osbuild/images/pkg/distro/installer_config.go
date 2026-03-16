@@ -34,6 +34,10 @@ type InstallerConfig struct {
 	// used to copy (for example) license and legal information into the root of the ISO. An
 	// array of source (in anaconda-tree) and destination (in iso-tree).
 	ISOFiles [][2]string `yaml:"iso_files"`
+
+	Payload *struct {
+		Location *manifest.PayloadLocation `yaml:"location,omitempty"`
+	} `yaml:"payload,omitempty"`
 }
 
 // InheritFrom inherits unset values from the provided parent configuration and

@@ -33,6 +33,11 @@ type XorrisofsStageOptions struct {
 	// This will cause the created iso to use grub2 instead of syslinux/isolinux
 	// when booting on BIOS systems.
 	Grub2MBR string `json:"grub2mbr,omitempty"`
+
+	// Excludes are paths to exclude from the Rock Ridge ISO filesystem; they are
+	// shell globs and if no `/` is included then the leaf (or basename) of the
+	// file is used.
+	Exclude []string `json:"exclude,omitempty"`
 }
 
 type XorrisofsBoot struct {

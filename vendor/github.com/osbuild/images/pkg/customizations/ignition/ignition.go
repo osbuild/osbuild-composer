@@ -9,6 +9,7 @@ import (
 
 type FirstBootOptions struct {
 	ProvisioningURL string
+	Empty           bool
 }
 
 func FirstbootOptionsFromBP(bpIgnitionFirstboot blueprint.FirstBootIgnitionCustomization) *FirstBootOptions {

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"slices"
 
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/arch"
@@ -13,6 +14,7 @@ import (
 	"github.com/osbuild/images/pkg/customizations/users"
 	"github.com/osbuild/images/pkg/depsolvednf"
 	"github.com/osbuild/images/pkg/osbuild"
+	"github.com/osbuild/images/pkg/ostree"
 	"github.com/osbuild/images/pkg/platform"
 	"github.com/osbuild/images/pkg/rpmmd"
 )
@@ -95,6 +97,19 @@ type AnacondaInstaller struct {
 	// Locale for the installer. This should be set to the same locale as the
 	// ISO OS payload, if known.
 	Locale string
+
+	// Payload specific fields, these are both here and in the iso tree because
+	// it is possible to toggle where these end up. Perhaps they should move
+	// into customizations?
+
+	// Note that initially we only put OSTree commits here as that's what we
+	// need directly; container installers should move to different image types
+	// that don't need this anymore and the image installer can be a separate
+	// follow-up if ever needed to reduce its size since it might get deprecated?
+	PayloadRemoveSignatures bool
+
+	OSTreeCommitSource *ostree.SourceSpec
+	ostreeCommitSpec   *ostree.CommitSpec
 }
 
 func NewAnacondaInstaller(installerType AnacondaInstallerType,
@@ -165,6 +180,21 @@ func (p *AnacondaInstaller) getContainerSources() []container.SourceSpec {
 	return []container.SourceSpec{*p.BootcLivefsContainer}
 }
 
+func (p *AnacondaInstaller) getOSTreeCommitSources() []ostree.SourceSpec {
+	if p.OSTreeCommitSource == nil {
+		return nil
+	}
+
+	return []ostree.SourceSpec{*p.OSTreeCommitSource}
+}
+
+func (p *AnacondaInstaller) getOSTreeCommits() []ostree.CommitSpec {
+	if p.ostreeCommitSpec == nil {
+		return nil
+	}
+	return []ostree.CommitSpec{*p.ostreeCommitSpec}
+}
+
 func (p *AnacondaInstaller) getBuildPackages(Distro) ([]string, error) {
 	// when using a bootc container for the livefs there is no
 	// need to get packages
@@ -193,6 +223,10 @@ func (p *AnacondaInstaller) getBuildPackages(Distro) ([]string, error) {
 
 	if p.InstallerCustomizations.RPMKeysBinary != "" {
 		packages = append(packages, "pqrpm")
+	}
+
+	if p.OSTreeCommitSource != nil {
+		packages = append(packages, "rpm-ostree")
 	}
 
 	return packages, nil
@@ -231,7 +265,7 @@ func (p *AnacondaInstaller) getPackageSetChain(Distro) ([]rpmmd.PackageSet, erro
 		{
 			Include:         append(packages, p.ExtraPackages...),
 			Exclude:         p.ExcludePackages,
-			Repositories:    append(p.depsolveRepos, p.ExtraRepos...),
+			Repositories:    slices.Concat(p.depsolveRepos, p.ExtraRepos),
 			InstallWeakDeps: p.InstallerCustomizations.InstallWeakDeps,
 		},
 	}, nil
@@ -258,6 +292,25 @@ func (p *AnacondaInstaller) serializeStart(inputs Inputs) error {
 		p.kernelVer = kernelPkg.EVRA()
 	}
 	p.bootcLivefsContainerSpecs = inputs.Containers
+
+	hasRPMs := len(p.depsolveResult.Transactions) > 0
+	hasContainers := len(p.bootcLivefsContainerSpecs) > 0
+	if hasRPMs && hasContainers {
+		return errors.New("AnacondaInstaller: using packages and containers at the same time is not allowed")
+	}
+	if !hasRPMs && !hasContainers {
+		return errors.New("AnacondaInstaller: need either repos (for RPM install) or a bootc container source")
+	}
+
+	// commits are separate from the above checks as they're not mutually exclusive
+	if len(inputs.Commits) > 1 {
+		return errors.New("AnacondaInstaller: pipeline supports at most one ostree commit")
+	}
+
+	if len(inputs.Commits) > 0 {
+		p.ostreeCommitSpec = &inputs.Commits[0]
+	}
+
 	return nil
 }
 
@@ -268,6 +321,7 @@ func (p *AnacondaInstaller) serializeEnd() {
 	p.kernelVer = ""
 	p.depsolveResult = nil
 	p.bootcLivefsContainerSpecs = nil
+	p.ostreeCommitSpec = nil
 }
 
 func installerRootUser() osbuild.UsersStageOptionsUser {
@@ -279,9 +333,6 @@ func installerRootUser() osbuild.UsersStageOptionsUser {
 func (p *AnacondaInstaller) serialize() (osbuild.Pipeline, error) {
 	if p.depsolveResult == nil && len(p.bootcLivefsContainerSpecs) == 0 {
 		return osbuild.Pipeline{}, fmt.Errorf("AnacondaInstaller: serialization not started")
-	}
-	if len(p.depsolveResult.Transactions) > 0 && len(p.bootcLivefsContainerSpecs) > 0 {
-		return osbuild.Pipeline{}, fmt.Errorf("AnacondaInstaller: using packages and containers at the same time is not allowed")
 	}
 
 	pipeline, err := p.Base.serialize()
@@ -314,6 +365,19 @@ func (p *AnacondaInstaller) serialize() (osbuild.Pipeline, error) {
 			return pipeline, err
 		}
 		pipeline.AddStage(stage)
+	}
+
+	// If we're a payload installer, and the payload should be in the compressed read only filesystem then
+	// we should be including the payload right here. Otherwise the payload is included in the Anaconda ISO
+	// tree pipeline.
+	if p.Type == AnacondaInstallerTypePayload && p.InstallerCustomizations.Payload.Location == PAYLOAD_LOCATION_ROOTFS {
+		if p.ostreeCommitSpec != nil {
+			ostreeCommitStages, err := p.ostreeCommitStages()
+			if err != nil {
+				return osbuild.Pipeline{}, fmt.Errorf("cannot create ostree commit stages: %w", err)
+			}
+			pipeline.AddStages(ostreeCommitStages...)
+		}
 	}
 
 	pipeline.AddStage(osbuild.NewBuildstampStage(&osbuild.BuildstampStageOptions{
@@ -357,6 +421,19 @@ func (p *AnacondaInstaller) serialize() (osbuild.Pipeline, error) {
 	}
 
 	return pipeline, nil
+}
+
+func (p *AnacondaInstaller) ostreeCommitStages() ([]*osbuild.Stage, error) {
+	stages := make([]*osbuild.Stage, 0)
+
+	// Set up the payload ostree repo
+	stages = append(stages, osbuild.NewOSTreeInitStage(&osbuild.OSTreeInitStageOptions{Path: p.InstallerCustomizations.Payload.Path}))
+	stages = append(stages, osbuild.NewOSTreePullStage(
+		&osbuild.OSTreePullStageOptions{Repo: p.InstallerCustomizations.Payload.Path},
+		osbuild.NewOstreePullStageInputs("org.osbuild.source", p.ostreeCommitSpec.Checksum, p.ostreeCommitSpec.Ref),
+	))
+
+	return stages, nil
 }
 
 // payloadStages creates the stages needed to boot Anaconda

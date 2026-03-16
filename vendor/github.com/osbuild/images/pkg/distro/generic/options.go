@@ -68,11 +68,15 @@ func checkOptionsCommon(t *imageType, bp *blueprint.Blueprint, options distro.Im
 		}
 	}
 
-	if customizations.GetIgnition() != nil {
-		if customizations.GetIgnition().Embedded != nil && customizations.GetIgnition().FirstBoot != nil {
+	ignitionCustomization, err := customizations.GetIgnition()
+	if err != nil {
+		return warnings, err
+	}
+	if ignitionCustomization != nil {
+		if ignitionCustomization.Embedded != nil && ignitionCustomization.FirstBoot != nil {
 			return warnings, fmt.Errorf("%s: customizations.ignition.embedded cannot be used with customizations.ignition.firstboot", errPrefix)
 		}
-		if customizations.GetIgnition().FirstBoot != nil && customizations.GetIgnition().FirstBoot.ProvisioningURL == "" {
+		if ignitionCustomization.FirstBoot != nil && ignitionCustomization.FirstBoot.ProvisioningURL == "" {
 			return warnings, fmt.Errorf("%s: customizations.ignition.firstboot requires customizations.ignition.firstboot.provisioning_url", errPrefix)
 		}
 	}

@@ -822,6 +822,7 @@
       - "customizations.services"
       - "customizations.timezone"
       - "customizations.rhsm"
+      - "customizations.sshd"
 
     # options supported by PXE image type
     # Includes everything except disk, filesystem, and partitioning_mode
