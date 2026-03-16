@@ -54,6 +54,9 @@ func (img *AnacondaContainerInstallerLegacy) InstantiateManifest(m *manifest.Man
 	buildPipeline := addBuildBootstrapPipelines(m, runner, repos, img.BuildOptions)
 	buildPipeline.Checkpoint()
 
+	img.InstallerCustomizations.Payload.Path = "/container"
+	img.InstallerCustomizations.Payload.ContainerRemoveSignatures = img.ContainerRemoveSignatures
+
 	anacondaPipeline := manifest.NewAnacondaInstaller(
 		manifest.AnacondaInstallerTypePayload,
 		buildPipeline,
@@ -87,11 +90,7 @@ func (img *AnacondaContainerInstallerLegacy) InstantiateManifest(m *manifest.Man
 	default:
 	}
 
-	bootTreePipeline := manifest.NewEFIBootTree(buildPipeline, img.InstallerCustomizations.Product, img.InstallerCustomizations.OSVersion)
-	bootTreePipeline.Platform = img.platform
-	bootTreePipeline.UEFIVendor = img.platform.GetUEFIVendor()
-	bootTreePipeline.ISOLabel = img.ISOCustomizations.Label
-
+	// Setup the kernel options for the container installer
 	if img.Kickstart == nil {
 		img.Kickstart = &kickstart.Options{}
 	}
@@ -104,13 +103,21 @@ func (img *AnacondaContainerInstallerLegacy) InstantiateManifest(m *manifest.Man
 		kernelOpts = append(kernelOpts, "fips=1")
 	}
 	kernelOpts = append(kernelOpts, img.InstallerCustomizations.KernelOptionsAppend...)
-	bootTreePipeline.KernelOpts = kernelOpts
 
-	isoTreePipeline := manifest.NewAnacondaInstallerISOTree(buildPipeline, anacondaPipeline, rootfsImagePipeline, bootTreePipeline)
+	// Setup the bootloaders
+	bootloaders := img.Bootloaders(buildPipeline, img.platform, kernelOpts)
+
+	isoTreePipeline := manifest.NewAnacondaInstallerISOTree(
+		buildPipeline,
+		anacondaPipeline,
+		rootfsImagePipeline,
+		bootloaders,
+		img.InstallerCustomizations,
+		img.ISOCustomizations,
+	)
 	initIsoTreePipeline(isoTreePipeline, &img.AnacondaInstallerBase, rng)
+
 	// For ostree installers, always put the kickstart file in the root of the ISO
-	isoTreePipeline.PayloadPath = "/container"
-	isoTreePipeline.PayloadRemoveSignatures = img.ContainerRemoveSignatures
 	isoTreePipeline.ContainerSource = &img.ContainerSource
 	isoTreePipeline.InstallRootfsType = img.InstallRootfsType
 

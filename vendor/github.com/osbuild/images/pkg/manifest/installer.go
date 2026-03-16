@@ -1,5 +1,60 @@
 package manifest
 
+import (
+	"encoding/json"
+	"fmt"
+
+	"github.com/osbuild/images/internal/common"
+)
+
+type PayloadLocation uint
+
+const (
+	// on the iso is the default, for compatibility
+	PAYLOAD_LOCATION_ISO PayloadLocation = iota
+	PAYLOAD_LOCATION_ROOTFS
+)
+
+func (v PayloadLocation) String() string {
+	switch v {
+	case PAYLOAD_LOCATION_ISO:
+		return "iso"
+	case PAYLOAD_LOCATION_ROOTFS:
+		return "rootfs"
+	default:
+		panic(fmt.Sprintf("unknown or unsupported payload location enum value %d", v))
+	}
+}
+
+func (v *PayloadLocation) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return err
+	}
+
+	new, err := NewPayloadLocation(s)
+	if err != nil {
+		return err
+	}
+	*v = new
+	return nil
+}
+
+func (v *PayloadLocation) UnmarshalYAML(unmarshal func(any) error) error {
+	return common.UnmarshalYAMLviaJSON(v, unmarshal)
+}
+
+func NewPayloadLocation(s string) (PayloadLocation, error) {
+	switch s {
+	case "iso":
+		return PAYLOAD_LOCATION_ISO, nil
+	case "rootfs":
+		return PAYLOAD_LOCATION_ROOTFS, nil
+	default:
+		return 0, fmt.Errorf("unknown or unsupported payload location name: %s", s)
+	}
+}
+
 // Contains all configuration applied to installer type images such as
 // Anaconda or CoreOS installer ones.
 type InstallerCustomizations struct {
@@ -39,6 +94,17 @@ type InstallerCustomizations struct {
 	Preview   bool
 
 	RPMKeysBinary string
+
+	Payload struct {
+		// The path where the payload (tarball, ostree repo, or container) will be stored.
+		Path string
+
+		// If set the skopeo stage will remove signatures during copy (relevant for container
+		// payloads)
+		ContainerRemoveSignatures bool
+
+		Location PayloadLocation
+	}
 }
 
 type InstallerLoraxTemplate struct {

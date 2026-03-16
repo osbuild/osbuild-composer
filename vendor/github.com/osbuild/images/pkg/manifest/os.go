@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/url"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/google/uuid"
@@ -15,6 +16,7 @@ import (
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/customizations/bootc"
 	"github.com/osbuild/images/pkg/customizations/fsnode"
+	"github.com/osbuild/images/pkg/customizations/ignition"
 	"github.com/osbuild/images/pkg/customizations/oscap"
 	"github.com/osbuild/images/pkg/customizations/shell"
 	"github.com/osbuild/images/pkg/customizations/subscription"
@@ -148,6 +150,7 @@ type OSCustomizations struct {
 	NetworkManager        *osbuild.NMConfStageOptions
 	Presets               []osbuild.Preset
 	ContainersStorage     *string
+	Ignition              *ignition.FirstBootOptions
 
 	// OpenSCAP config
 	OpenSCAPRemediationConfig *oscap.RemediationConfig
@@ -185,10 +188,6 @@ type OSCustomizations struct {
 	// "ConditionFirstBoot" to work in systemd
 	MachineIdUninitialized bool
 
-	// What type of mount configuration should we create, systemd units, fstab
-	// or none
-	MountConfiguration osbuild.MountConfiguration
-
 	// VersionlockPackges uses dnf versionlock to lock a package to the version
 	// that is installed during image build, preventing it from being updated.
 	// This is only supported for distributions that use dnf4, because osbuild
@@ -209,6 +208,9 @@ type OS struct {
 
 	// OSCustomizations to apply to the base OS
 	OSCustomizations OSCustomizations
+
+	// DiskCustomizations can influence things in the base OS tree
+	DiskCustomizations DiskCustomizations
 
 	// Environment the system will run in
 	Environment environment.Environment
@@ -327,7 +329,7 @@ func (p *OS) getPackageSetChain(Distro) ([]rpmmd.PackageSet, error) {
 		customizationPackages = append(customizationPackages, "dnf", "python3-dnf-plugin-versionlock")
 	}
 
-	osRepos := append(p.depsolveRepos, p.OSCustomizations.ExtraBaseRepos...)
+	osRepos := slices.Concat(p.depsolveRepos, p.OSCustomizations.ExtraBaseRepos)
 
 	// merge all package lists for the pipeline
 	baseOSPackages := make([]string, 0)
@@ -362,7 +364,7 @@ func (p *OS) getPackageSetChain(Distro) ([]rpmmd.PackageSet, error) {
 	if len(bpPackages) > 0 {
 		ps := rpmmd.PackageSet{
 			Include:      bpPackages,
-			Repositories: append(osRepos, p.OSCustomizations.PayloadRepos...),
+			Repositories: slices.Concat(osRepos, p.OSCustomizations.PayloadRepos),
 			// Although 'false' is the default value, set it explicitly to make
 			// it visible that we are not adding weak dependencies.
 			InstallWeakDeps: false,
@@ -782,7 +784,7 @@ func (p *OS) serialize() (osbuild.Pipeline, error) {
 	}
 
 	if pt := p.PartitionTable; pt != nil {
-		rootUUID, kernelOptions, err := osbuild.GenImageKernelOptions(p.PartitionTable, p.OSCustomizations.MountConfiguration)
+		rootUUID, kernelOptions, err := osbuild.GenImageKernelOptions(p.PartitionTable, p.DiskCustomizations.MountConfiguration)
 		if err != nil {
 			return osbuild.Pipeline{}, err
 		}
@@ -796,7 +798,7 @@ func (p *OS) serialize() (osbuild.Pipeline, error) {
 			}))
 		}
 
-		fsCfgStages, err := filesystemConfigStages(pt, p.OSCustomizations.MountConfiguration)
+		fsCfgStages, err := filesystemConfigStages(pt, p.DiskCustomizations.MountConfiguration)
 		if err != nil {
 			return osbuild.Pipeline{}, err
 		}

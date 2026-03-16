@@ -21,6 +21,8 @@ type ISOCustomizations struct {
 	RootfsType   ISORootfsType
 	ErofsOptions osbuild.ErofsStageOptions
 	BootType     ISOBootType
+
+	ExcludePaths []string
 }
 
 // An ISO represents a bootable ISO file created from an
@@ -82,6 +84,10 @@ func xorrisofsStageOptions(filename string, isoCustomizations ISOCustomizations)
 		Prep:     isoCustomizations.Preparer,
 		Pub:      isoCustomizations.Publisher,
 		AppID:    isoCustomizations.Application,
+	}
+
+	if len(isoCustomizations.ExcludePaths) > 0 {
+		options.Exclude = isoCustomizations.ExcludePaths
 	}
 
 	switch isoCustomizations.BootType {

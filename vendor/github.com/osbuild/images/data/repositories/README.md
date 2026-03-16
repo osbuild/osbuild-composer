@@ -9,3 +9,26 @@ The `rhel-8*.json` repository definitions have been modified to contain only the
  * The `Red Hat, Inc. (auxiliary key 2)` is signed only with RSA-SHA1, which is not allowed by the default crypto-policy on RHEL-9 and newer. This means that importing such key when bootstrapping the RHEL-8 buildroot on RHEL-9 and newer would fail.
  * The `Red Hat, Inc. (auxiliary key 2)` is not commonly used for signing the RHEL-8 RPMs. It is a disaster recovery key that would be used in the unlikely event Red Hat loses the ability to sign with the master hardware keys. The key file uses a sub-key, that would be most probably used to sign RPMs in this unlikely event, so that the main key can be stored offline. Previously, we used to ship only the auxiliary key, without the sub-key in `rhel-8*.json` configurations on RHEL-9, because only the sub-key's signature was causing issues when importing it on RHEL-9 with the default crypto-policy. However, given the purpose of the sub-key, there's no reason to include the main key in the `rhel-8*.json` configurations without the sub-key.
  * None of the projects that use the repository definitions in the `osbuild/images` go module (`osbuild-composer`, `image-builder-cli`, etc.) are being released or updated in RHEL-8. The `rhel-8*.json` repository definitions are used only for cross-building RHEL-8 images on RHEL-9 and newer.
+
+## RHEL & post quantum cryptography (PQC) GPG keys
+
+Starting from RHEL 9.7 and 10.1, packages are signed with [`ML-DSA-87+Ed448/D246D6276AFEDF8F(2025-10-08): Red Hat, Inc. (release key 4) <security@redhat.com>`](https://security.access.redhat.com/data/6afedf8f.txt) in addition to the regular release key. This complicates distro cross-building further: the tooling (`rpmkeys`) on RHEL 9 does not support PQC keys, while RHEL 10's tooling does. As a result, the keys are selectively ignored or respected depending on the stage of the build and the host. The following represents the current state:
+
+Build pipeline:
+
+1. RHEL 9 on RHEL 9: PQC keys cannot be imported, and any import errors should be ignored. Packages signed with the PQC key are not verified against the PQC key, but are against the regular release key.[^1]
+1. RHEL 9 on RHEL 10: PQC keys can be imported, and packages signed with the PQC key can be verified against the PQC key.
+1. RHEL 10 on RHEL 10: PQC keys can be imported and packages can be verified against the PQC key.
+1. RHEL 10 on RHEL 9: not supported.
+
+
+Pipelines run within the buildroot:
+
+1. RHEL 9 on RHEL 9: the `pqrpm` binary (shipped separately from `rpmkeys`) can be used to import the PQC key and verify packages.
+1. RHEL 9 on RHEL 10: the `pqrpm` binary (shipped separately from `rpmkeys`) can be used to import the PQC key and verify packages.
+1. RHEL 10 on RHEL 10: the regular `rpmkeys` binary can be used to import the PQC key and verify packages.
+1. RHEL 10 on RHEL 9: not supported.
+
+Starting from RHEL 9.7 and 10.1, the PQC keys should be part of the repositories.
+
+[^1]: note that this could be improved further by using `pqrpm` binary in the build pipeline on RHEL 9, verifying packages against the PQC key.

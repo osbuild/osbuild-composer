@@ -25,7 +25,6 @@ import (
 	"github.com/osbuild/images/pkg/experimentalflags"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/olog"
-	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/platform"
 	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/images/pkg/runner"
@@ -396,6 +395,7 @@ type ImageTypeYAML struct {
 	ImageConfigYAML     imageConfig     `yaml:"image_config,omitempty"`
 	InstallerConfigYAML installerConfig `yaml:"installer_config,omitempty"`
 	ISOConfigYAML       isoConfig       `yaml:"iso_config,omitempty"`
+	DiskConfigYAML      diskConfig      `yaml:"disk_config,omitempty"`
 
 	Filename    string                      `yaml:"filename"`
 	MimeType    string                      `yaml:"mime_type"`
@@ -434,10 +434,7 @@ type ImageTypeYAML struct {
 
 	InstallWeakDeps *bool `yaml:"install_weak_deps"`
 
-	// for RHEL7 compat
-	// TODO: determine a better place for these options, but for now they are here
-	DiskImagePartTool     *osbuild.PartTool `yaml:"disk_image_part_tool"`
-	DiskImageVPCForceSize *bool             `yaml:"disk_image_vpc_force_size"`
+	DiskImageVPCForceSize *bool `yaml:"disk_image_vpc_force_size"`
 
 	SupportedPartitioningModes []partition.PartitioningMode `yaml:"supported_partitioning_modes"`
 
@@ -592,6 +589,11 @@ type isoConfig struct {
 	Conditions        map[string]*conditionsISOConf `yaml:"conditions,omitempty"`
 }
 
+type diskConfig struct {
+	*distro.DiskConfig `yaml:",inline"`
+	Conditions         map[string]*conditionsDiskConf `yaml:"conditions,omitempty"`
+}
+
 type conditionsInstallerConf struct {
 	When         whenCondition           `yaml:"when,omitempty"`
 	ShallowMerge *distro.InstallerConfig `yaml:"shallow_merge,omitempty"`
@@ -600,6 +602,11 @@ type conditionsInstallerConf struct {
 type conditionsISOConf struct {
 	When         whenCondition     `yaml:"when,omitempty"`
 	ShallowMerge *distro.ISOConfig `yaml:"shallow_merge,omitempty"`
+}
+
+type conditionsDiskConf struct {
+	When         whenCondition      `yaml:"when,omitempty"`
+	ShallowMerge *distro.DiskConfig `yaml:"shallow_merge,omitempty"`
 }
 
 type packageSet struct {
@@ -734,4 +741,18 @@ func (imgType *ImageTypeYAML) ISOConfig(id distro.ID, archName string) *distro.I
 	}
 
 	return isoConfig
+}
+
+// DiskConfig returns the DiskConfig for the given imgType
+// Note that on conditions the DiskConfig is fully replaced, do
+// any merging in YAML
+func (imgType *ImageTypeYAML) DiskConfig(id distro.ID, archName string) *distro.DiskConfig {
+	diskConfig := imgType.DiskConfigYAML.DiskConfig
+	for _, cond := range imgType.DiskConfigYAML.Conditions {
+		if cond.When.Eval(id, archName) {
+			diskConfig = cond.ShallowMerge.InheritFrom(diskConfig)
+		}
+	}
+
+	return diskConfig
 }

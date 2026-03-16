@@ -12,9 +12,9 @@ import (
 // hypervisor. It is created from an existing OSPipeline.
 type RawImage struct {
 	Base
-	treePipeline *OS
-	filename     string
-	PartTool     osbuild.PartTool
+	treePipeline       *OS
+	filename           string
+	DiskCustomizations DiskCustomizations
 }
 
 func (p RawImage) Filename() string {
@@ -25,14 +25,14 @@ func (p *RawImage) SetFilename(filename string) {
 	p.filename = filename
 }
 
-func NewRawImage(buildPipeline Build, treePipeline *OS) *RawImage {
+func NewRawImage(buildPipeline Build, treePipeline *OS, diskCustomizations DiskCustomizations) *RawImage {
 	p := &RawImage{
-		Base:         NewBase("image", buildPipeline),
-		treePipeline: treePipeline,
-		filename:     "disk.img",
+		Base:               NewBase("image", buildPipeline),
+		treePipeline:       treePipeline,
+		filename:           "disk.img",
+		DiskCustomizations: diskCustomizations,
 	}
 	buildPipeline.addDependent(p)
-	p.PartTool = osbuild.PTSfdisk // default; can be changed after initialisation
 	return p
 }
 
@@ -41,7 +41,7 @@ func (p *RawImage) getBuildPackages(d Distro) ([]string, error) {
 	if err != nil {
 		return nil, fmt.Errorf("cannget get build packages from %q: %w", p.treePipeline.Name(), err)
 	}
-	if p.PartTool == osbuild.PTSgdisk {
+	if p.DiskCustomizations.PartitioningTool == osbuild.PTSgdisk {
 		pkgs = append(pkgs, "gdisk")
 	}
 	return pkgs, nil
@@ -58,7 +58,7 @@ func (p *RawImage) serialize() (osbuild.Pipeline, error) {
 		return osbuild.Pipeline{}, fmt.Errorf("no partition table in live image")
 	}
 
-	for _, stage := range osbuild.GenImagePrepareStages(pt, p.Filename(), p.PartTool, p.treePipeline.Name()) {
+	for _, stage := range osbuild.GenImagePrepareStages(pt, p.Filename(), p.DiskCustomizations.PartitioningTool, p.treePipeline.Name()) {
 		pipeline.AddStage(stage)
 	}
 

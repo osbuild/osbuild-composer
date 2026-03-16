@@ -59,12 +59,7 @@ func NewUploader(region, bucketName, imageName string, opts *UploaderOptions) (c
 		opts = &UploaderOptions{}
 	}
 
-	profile := opts.Profile
-	if profile == "" {
-		profile = "default"
-	}
-
-	client, err := newAwsClient(region, profile)
+	client, err := newAwsClient(region, opts.Profile)
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +69,7 @@ func NewUploader(region, bucketName, imageName string, opts *UploaderOptions) (c
 		region:     region,
 		bucketName: bucketName,
 		imageName:  imageName,
-		profile:    profile,
+		profile:    opts.Profile,
 		tags:       opts.Tags,
 		targetArch: opts.TargetArch,
 		bootMode:   opts.BootMode,

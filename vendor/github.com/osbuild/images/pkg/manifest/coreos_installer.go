@@ -3,6 +3,7 @@ package manifest
 import (
 	"errors"
 	"fmt"
+	"slices"
 
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/customizations/fdo"
@@ -144,7 +145,7 @@ func (p *CoreOSInstaller) getPackageSetChain(Distro) ([]rpmmd.PackageSet, error)
 		{
 			Include:         append(packages, p.ExtraPackages...),
 			Exclude:         p.ExcludePackages,
-			Repositories:    append(p.depsolveRepos, p.ExtraRepos...),
+			Repositories:    slices.Concat(p.depsolveRepos, p.ExtraRepos),
 			InstallWeakDeps: true,
 		},
 	}, nil

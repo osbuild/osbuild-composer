@@ -203,44 +203,111 @@ func httpClientForRef(scheme string, ss SourceSpec) (*http.Client, error) {
 	}, nil
 }
 
-// resolveRef resolves the URL path specified by the location and ref
-// (location+"refs/heads/"+ref) and returns the commit ID for the named ref. If
-// there is an error, it will be of type ResolveRefError.
-func resolveRef(ss SourceSpec) (string, error) {
-	u, err := url.Parse(ss.URL)
+// fetchMirrorlistURL fetches the given URL (an endpoint of a mirrorlist) and returns
+// the first line of the response as the resolved repository URL. The response
+// is validated in order to be a valid http response.
+func fetchMirrorlistURL(mirrorlistURL string, ss SourceSpec) (string, error) {
+	u, err := url.Parse(mirrorlistURL)
 	if err != nil {
-		return "", NewResolveRefError("error parsing ostree repository location: %v", err)
+		return "", NewResolveRefError("error parsing mirrorlist URL %q: %v", mirrorlistURL, err)
 	}
-	u.Path = path.Join(u.Path, "refs", "heads", ss.Ref)
 
 	client, err := httpClientForRef(u.Scheme, ss)
 	if err != nil {
 		return "", err
 	}
 
-	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
+	req, err := http.NewRequest(http.MethodGet, mirrorlistURL, nil)
 	if err != nil {
-		return "", NewResolveRefError("error preparing ostree resolve request: %s", err)
+		return "", NewResolveRefError("error preparing mirrorlist request: %s", err)
 	}
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return "", NewResolveRefError("error sending request to ostree repository %q: %v", u.String(), err)
+		return "", NewResolveRefError("error sending request to fetch mirrorlist %q: %v", mirrorlistURL, err)
 	}
+	defer resp.Body.Close()
+
 	if resp.StatusCode != http.StatusOK {
-		return "", NewResolveRefError("ostree repository %q returned status: %s", u.String(), resp.Status)
+		return "", NewResolveRefError("mirrorlist %q returned status: %s", mirrorlistURL, resp.Status)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", NewResolveRefError("error reading mirrorlist response from %q: %v", mirrorlistURL, err)
+	}
+
+	// assume that there is more lines of urls
+	lines := strings.Split(strings.TrimSpace(string(body)), "\n")
+	var resolvedUrl string
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line != "" && !strings.HasPrefix(line, "#") {
+			resolvedUrl = line
+			break
+		}
+	}
+	if resolvedUrl == "" {
+		return "", NewResolveRefError("mirrorlist %q did not return any valid URL", mirrorlistURL)
+	}
+	parsed, err := url.Parse(resolvedUrl)
+	if err != nil {
+		return "", NewResolveRefError("mirrorlist %q returned invalid URL %q: %v", mirrorlistURL, resolvedUrl, err)
+	}
+	if parsed.Scheme != "http" && parsed.Scheme != "https" {
+		return "", NewResolveRefError("mirrorlist %q returned URL with unsupported scheme %q", mirrorlistURL, parsed.Scheme)
+	}
+	return resolvedUrl, nil
+}
+
+// resolveRef resolves the URL path specified by the location and ref
+// (location+"refs/heads/"+ref) and returns the commit ID for the named ref. If
+// there is an error, it will be of type ResolveRefError.
+func resolveRef(ss SourceSpec) (string, string, error) {
+	if mirrorlist, isMirrorList := strings.CutPrefix(ss.URL, "mirrorlist="); isMirrorList {
+		resolvedURL, err := fetchMirrorlistURL(mirrorlist, ss)
+		if err != nil {
+			return "", "", err
+		}
+		ss.URL = resolvedURL
+	}
+
+	u, err := url.Parse(ss.URL)
+	if err != nil {
+		return "", "", NewResolveRefError("error parsing ostree repository location: %v", err)
+	}
+	u.Path = path.Join(u.Path, "refs", "heads", ss.Ref)
+
+	client, err := httpClientForRef(u.Scheme, ss)
+	if err != nil {
+		return "", "", err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
+	if err != nil {
+		return "", "", NewResolveRefError("error preparing ostree resolve request: %s", err)
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", "", NewResolveRefError("error sending request to ostree repository %q: %v", u.String(), err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", "", NewResolveRefError("ostree repository %q returned status: %s", u.String(), resp.Status)
 	}
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", NewResolveRefError("error reading response from ostree repository %q: %v", u.String(), err)
+		return "", "", NewResolveRefError("error reading response from ostree repository %q: %v", u.String(), err)
 	}
 	checksum := strings.TrimSpace(string(body))
 	// Check that this is at least a hex string.
 	_, err = hex.DecodeString(checksum)
 	if err != nil {
-		return "", NewResolveRefError("ostree repository %q returned invalid reference", u.String())
+		return "", "", NewResolveRefError("ostree repository %q returned invalid reference", u.String())
 	}
-	return checksum, nil
+	return ss.URL, checksum, nil
 }
 
 // Resolve the ostree source specification to a commit specification.
@@ -300,11 +367,12 @@ func Resolve(source SourceSpec) (CommitSpec, error) {
 	// URL set: Resolve checksum
 	if source.URL != "" {
 		// If a URL is specified, we need to fetch the commit at the URL.
-		checksum, err := resolveRef(source)
+		url, checksum, err := resolveRef(source)
 		if err != nil {
 			return CommitSpec{}, err // ResolveRefError
 		}
 		commit.Checksum = checksum
+		commit.URL = url
 	}
 	return commit, nil
 }

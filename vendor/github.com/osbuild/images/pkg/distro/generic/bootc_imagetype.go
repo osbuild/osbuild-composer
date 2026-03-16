@@ -13,6 +13,7 @@ import (
 	"github.com/osbuild/images/pkg/bib/osinfo"
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/customizations/anaconda"
+	"github.com/osbuild/images/pkg/customizations/ignition"
 	"github.com/osbuild/images/pkg/customizations/kickstart"
 	"github.com/osbuild/images/pkg/customizations/users"
 	"github.com/osbuild/images/pkg/datasizes"
@@ -214,13 +215,19 @@ func (t *bootcImageType) manifestForDisk(bp *blueprint.Blueprint, options distro
 		img.OSCustomizations.BuildSELinux = bd.buildSourceInfo.SELinuxPolicy
 	}
 	if bd.sourceInfo != nil && bd.sourceInfo.MountConfiguration != nil {
-		img.OSCustomizations.MountConfiguration = *bd.sourceInfo.MountConfiguration
+		img.DiskCustomizations.MountConfiguration = *bd.sourceInfo.MountConfiguration
 	}
 
 	imageConfig := t.ImageTypeYAML.ImageConfig(bd.id, t.arch.Name())
 	if imageConfig != nil {
 		img.OSCustomizations.KernelOptionsAppend = imageConfig.KernelOptions
 	}
+
+	// when we omit default kernel options reset them to be empty
+	if options.Bootc != nil && options.Bootc.OmitDefaultKernelArgs {
+		img.OSCustomizations.KernelOptionsAppend = []string{}
+	}
+
 	if kopts := customizations.GetKernel(); kopts != nil && kopts.Append != "" {
 		img.OSCustomizations.KernelOptionsAppend = append(img.OSCustomizations.KernelOptionsAppend, kopts.Append)
 	}
@@ -252,6 +259,16 @@ func (t *bootcImageType) manifestForDisk(bp *blueprint.Blueprint, options distro
 	img.OSCustomizations.Directories, err = blueprint.DirectoryCustomizationsToFsNodeDirectories(dc)
 	if err != nil {
 		return nil, nil, err
+	}
+
+	bpIgnitionCustomization, err := customizations.GetIgnition()
+	if err != nil {
+		return nil, nil, err
+	}
+	if bpIgnitionCustomization != nil {
+		if bpIgnitionCustomization.FirstBoot != nil {
+			img.OSCustomizations.Ignition = ignition.FirstbootOptionsFromBP(*bpIgnitionCustomization.FirstBoot)
+		}
 	}
 
 	mf := manifest.New()
@@ -610,7 +627,7 @@ func (t *bootcImageType) manifestForPXETar(bp *blueprint.Blueprint, options dist
 		img.OSCustomizations.BuildSELinux = bd.buildSourceInfo.SELinuxPolicy
 	}
 	if bd.sourceInfo != nil && bd.sourceInfo.MountConfiguration != nil {
-		img.OSCustomizations.MountConfiguration = *bd.sourceInfo.MountConfiguration
+		img.DiskCustomizations.MountConfiguration = *bd.sourceInfo.MountConfiguration
 	}
 
 	imageConfig := t.ImageTypeYAML.ImageConfig(bd.id, t.arch.Name())

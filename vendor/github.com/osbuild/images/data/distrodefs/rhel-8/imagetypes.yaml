@@ -1280,6 +1280,7 @@
       - "customizations.services"
       - "customizations.timezone"
       - "customizations.rhsm"
+      - "customizations.sshd"
 
     # options supported by base ostree image types (commit and container)
     supported_options_ostree_commit: &supported_options_ostree_commit

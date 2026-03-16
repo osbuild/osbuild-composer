@@ -21,7 +21,8 @@ type BootcPXEImage struct {
 	BuildContainerSource *container.SourceSpec
 
 	// Customizations
-	OSCustomizations manifest.OSCustomizations
+	OSCustomizations   manifest.OSCustomizations
+	DiskCustomizations manifest.DiskCustomizations
 
 	// Kernel version from the container, used to copy it into the PXE tar tree
 	KernelVersion string
@@ -35,7 +36,7 @@ func NewBootcPXEImage(platform platform.Platform, filename string, container con
 		Base:                 NewBase("pxe-tar", platform, filename),
 		ContainerSource:      &container,
 		BuildContainerSource: &buildContainer,
-		OSCustomizations: manifest.OSCustomizations{
+		DiskCustomizations: manifest.DiskCustomizations{
 			MountConfiguration: osbuild.MOUNT_CONFIGURATION_NONE, // default to no mount config for PXE images
 		},
 	}
@@ -109,6 +110,7 @@ func (img *BootcPXEImage) InstantiateManifestFromContainers(m *manifest.Manifest
 	}
 	rawImage.PartitionTable = img.PartitionTable
 	rawImage.OSCustomizations = img.OSCustomizations
+	rawImage.DiskCustomizations = img.DiskCustomizations
 	rawImage.KernelVersion = img.KernelVersion
 
 	// Setup root filesystem so that dmsquash-live will boot it

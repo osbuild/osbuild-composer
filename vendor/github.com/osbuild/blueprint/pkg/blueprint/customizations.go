@@ -38,6 +38,7 @@ type Customizations struct {
 	Firstboot          *FirstbootCustomization        `json:"firstboot,omitempty" toml:"firstboot,omitempty"`
 	DNF                *DNFCustomization              `json:"dnf,omitempty" toml:"dnf,omitempty"`
 	ISO                *ISOCustomization              `json:"iso,omitempty" toml:"iso,omitempty"`
+	Sshd               *SshdCustomization             `json:"sshd,omitempty" toml:"sshd,omitempty"`
 }
 
 type IgnitionCustomization struct {
@@ -51,6 +52,7 @@ type EmbeddedIgnitionCustomization struct {
 
 type FirstBootIgnitionCustomization struct {
 	ProvisioningURL string `json:"url,omitempty" toml:"url,omitempty"`
+	Empty           bool   `json:"empty,omitempty" toml:"empty,omitempty"`
 }
 
 type FDOCustomization struct {
@@ -334,11 +336,16 @@ func (c *Customizations) GetOpenSCAP() *OpenSCAPCustomization {
 	return c.OpenSCAP
 }
 
-func (c *Customizations) GetIgnition() *IgnitionCustomization {
+func (c *Customizations) GetIgnition() (*IgnitionCustomization, error) {
 	if c == nil {
-		return nil
+		return nil, nil
 	}
-	return c.Ignition
+	if c.Ignition != nil && c.Ignition.FirstBoot != nil {
+		if c.Ignition.FirstBoot.Empty && c.Ignition.FirstBoot.ProvisioningURL != "" {
+			return nil, fmt.Errorf("ignition.firstboot.url is mutually exclusive with ignition.firstboot.empty")
+		}
+	}
+	return c.Ignition, nil
 }
 
 func (c *Customizations) GetDirectories() []DirectoryCustomization {
@@ -414,12 +421,24 @@ func (c *Customizations) GetInstaller() (*InstallerCustomization, error) {
 	return c.Installer, nil
 }
 
-func (c *Customizations) GetISO() *ISOCustomization {
+func (c *Customizations) GetISO() (*ISOCustomization, error) {
+	if c == nil || c.ISO == nil {
+		return nil, nil
+	}
+
+	if err := validateVolumeID(c.ISO.VolumeID); err != nil {
+		return nil, err
+	}
+
+	return c.ISO, nil
+}
+
+func (c *Customizations) GetSshd() *SshdCustomization {
 	if c == nil {
 		return nil
 	}
 
-	return c.ISO
+	return c.Sshd
 }
 
 func (c *Customizations) GetRPM() *RPMCustomization {

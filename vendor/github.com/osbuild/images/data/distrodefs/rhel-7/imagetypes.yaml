@@ -239,6 +239,7 @@
       - "customizations.rpm"
       - "customizations.services"
       - "customizations.timezone"
+      - "customizations.sshd"
 
 image_config:
   default:
@@ -271,6 +272,8 @@ image_types:
     platforms:
       - <<: *x86_64_uefi_vendor_platform
         image_format: "vhd"
+    disk_config:
+      partitioning_tool: "sgdisk"
     image_config:
       timezone: "Etc/UTC"
       locale: "en_US.UTF-8"
@@ -407,7 +410,6 @@ image_types:
         - "earlyprintk=ttyS0"
         - "rootdelay=300"
         - "scsi_mod.use_blk_mq=y"
-    disk_image_part_tool: sgdisk
     partition_table:
       <<: *azure_rhui_partition_tables
     package_sets:
@@ -428,6 +430,8 @@ image_types:
     platforms:
       - <<: *x86_64_bios_platform
         image_format: "raw"
+    disk_config:
+      partitioning_tool: "sgdisk"
     image_config:
       files:
         # systemd-firstboot on el7 does not support --keymap option
@@ -513,7 +517,6 @@ image_types:
         - "nvme_core.io_timeout=4294967295"
         - "crashkernel=auto"
         - "LANG=en_US.UTF-8"
-    disk_image_part_tool: "sgdisk"
     partition_table:
       <<: *ec2_partition_tables
     package_sets:
@@ -579,11 +582,12 @@ image_types:
     image_func: "disk"
     exports: ["qcow2"]
     required_partition_sizes: *default_required_dir_sizes
-    disk_image_part_tool: sgdisk
     platforms:
       - <<: *x86_64_uefi_vendor_platform
         image_format: "qcow2"
         qcow2_compat: "0.10"
+    disk_config:
+      partitioning_tool: "sgdisk"
     image_config:
       default_target: "multi-user.target"
       selinux_force_relabel: true

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/artifact"
@@ -42,6 +43,9 @@ type RawBootcImage struct {
 
 	// OSCustomizations to apply to the base OS
 	OSCustomizations OSCustomizations
+
+	// DiskCustomizations can influence things in the base OS tree
+	DiskCustomizations DiskCustomizations
 }
 
 func (p RawBootcImage) Filename() string {
@@ -173,7 +177,7 @@ func (p *RawBootcImage) serialize() (osbuild.Pipeline, error) {
 
 	postStages := []*osbuild.Stage{}
 
-	fsCfgStages, err := filesystemConfigStages(pt, p.OSCustomizations.MountConfiguration)
+	fsCfgStages, err := filesystemConfigStages(pt, p.DiskCustomizations.MountConfiguration)
 	if err != nil {
 		return osbuild.Pipeline{}, err
 	}
@@ -261,6 +265,34 @@ func (p *RawBootcImage) serialize() (osbuild.Pipeline, error) {
 			stage.Devices = devices
 		}
 		postStages = append(postStages, stages...)
+	}
+
+	// The ignition stamp must be created after bootc install, otherwise bootc will error out
+	// because the boot partition is not empty.
+	// That's why we have to pass `mount://boot/` and can't write to `tree://boot/`.
+	if p.OSCustomizations.Ignition != nil {
+		var ignitionStage *osbuild.Stage
+		if len(p.OSCustomizations.Ignition.ProvisioningURL) > 0 {
+			urls := strings.Fields(p.OSCustomizations.Ignition.ProvisioningURL)
+			opts := osbuild.IgnitionStageOptions{
+				Network: urls,
+				Target:  "mount://boot/",
+			}
+			ignitionStage = osbuild.NewIgnitionStage(&opts)
+		} else if p.OSCustomizations.Ignition.Empty {
+			opts := osbuild.IgnitionStageOptions{
+				Target: "mount://boot/",
+			}
+			ignitionStage = osbuild.NewIgnitionStage(&opts)
+		}
+		var err error
+		// We cannot reuse the existing mounts because the generated ostree mounts are shadowing /boot and the file ends up
+		// in the wrong place. We reuse the bootupd mount generator as it's enough for this. We just need /boot.
+		ignitionStage.Devices, ignitionStage.Mounts, err = osbuild.GenBootupdDevicesMounts(p.filename, p.PartitionTable, p.platform)
+		if err != nil {
+			return osbuild.Pipeline{}, fmt.Errorf("gen devices stage failed %w", err)
+		}
+		postStages = append(postStages, ignitionStage)
 	}
 
 	pipeline.AddStages(postStages...)

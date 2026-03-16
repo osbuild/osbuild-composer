@@ -1292,6 +1292,7 @@
       - "customizations.services"
       - "customizations.timezone"
       - "customizations.rhsm"
+      - "customizations.sshd"
 
     # options supported by base ostree image types (commit and container)
     supported_options_ostree_commit: &supported_options_ostree_commit
@@ -2813,6 +2814,8 @@ image_types:
             # XXX: sadly the osbuild options are upper case for "Unit" vs lower above :(
             Unit:
               ConditionPathExists: "!/usr/libexec/greenboot/greenboot"
+      # Enable bootupd metadata generation for ostree commits (9.8+ only)
+      bootupd_gen_metadata: true
       enabled_services: &enabled_services_edge
         # XXX: shared with 9.2
         - "NetworkManager.service"
@@ -2833,6 +2836,11 @@ image_types:
               - "firewalld.service"
               - "sshd.service"
               - "fdo-client-linuxapp.service"
+        "rhel-9.7 and below do not have bootupd":
+          when:
+            version_less_than: "9.8"
+          shallow_merge:
+            bootupd_gen_metadata: false
     package_sets:
       os:
         - &edge_commit_pkgset

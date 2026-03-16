@@ -131,58 +131,11 @@ type Platform interface {
 	GetQCOW2Compat() string
 	GetBIOSPlatform() string
 	GetUEFIVendor() string
+	GetExtraUEFIArchitectures() []string
 	GetZiplSupport() bool
 	GetPackages() []string
 	GetBuildPackages() []string
 	GetBootFiles() [][2]string
 	GetBootloader() Bootloader
 	GetFIPSMenu() bool
-}
-
-type BasePlatform struct {
-	ImageFormat      ImageFormat
-	QCOW2Compat      string
-	FirmwarePackages []string
-	FIPSMenu         bool // Add FIPS entry to iso bootloader menu
-}
-
-func (p BasePlatform) GetImageFormat() ImageFormat {
-	return p.ImageFormat
-}
-
-func (p BasePlatform) GetQCOW2Compat() string {
-	return p.QCOW2Compat
-}
-
-func (p BasePlatform) GetBIOSPlatform() string {
-	return ""
-}
-
-func (p BasePlatform) GetUEFIVendor() string {
-	return ""
-}
-
-func (p BasePlatform) GetZiplSupport() bool {
-	return false
-}
-
-func (p BasePlatform) GetPackages() []string {
-	return p.FirmwarePackages
-}
-
-func (p BasePlatform) GetBuildPackages() []string {
-	return []string{}
-}
-
-func (p BasePlatform) GetBootFiles() [][2]string {
-	return [][2]string{}
-}
-
-func (p BasePlatform) GetBootloader() Bootloader {
-	return BOOTLOADER_NONE
-}
-
-// GetFIPSMenu is used to add the FIPS entry to the iso bootloader menu
-func (p BasePlatform) GetFIPSMenu() bool {
-	return p.FIPSMenu
 }

@@ -22,7 +22,8 @@ type BootcDiskImage struct {
 	BuildContainerSource *container.SourceSpec
 
 	// Customizations
-	OSCustomizations manifest.OSCustomizations
+	OSCustomizations   manifest.OSCustomizations
+	DiskCustomizations manifest.DiskCustomizations
 }
 
 func NewBootcDiskImage(platform platform.Platform, filename string, container container.SourceSpec, buildContainer container.SourceSpec) *BootcDiskImage {
@@ -30,7 +31,7 @@ func NewBootcDiskImage(platform platform.Platform, filename string, container co
 		Base:                 NewBase("bootc-raw-image", platform, filename),
 		ContainerSource:      &container,
 		BuildContainerSource: &buildContainer,
-		OSCustomizations: manifest.OSCustomizations{
+		DiskCustomizations: manifest.DiskCustomizations{
 			MountConfiguration: osbuild.MOUNT_CONFIGURATION_UNITS, // default use mount units for bootc disk images
 		},
 	}
@@ -108,6 +109,7 @@ func (img *BootcDiskImage) InstantiateManifestFromContainers(m *manifest.Manifes
 	}
 	rawImage.PartitionTable = img.PartitionTable
 	rawImage.OSCustomizations = img.OSCustomizations
+	rawImage.DiskCustomizations = img.DiskCustomizations
 
 	// In BIB, we export multiple images from the same pipeline so we use the
 	// filename as the basename for each export and set the extensions based on

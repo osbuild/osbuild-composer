@@ -29,6 +29,10 @@ type ISOConfig struct {
 
 	// Metadata field on the ISO for the application ID
 	Application *string `yaml:"application,omitempty"`
+
+	// Paths to exclude from the ISO filesystem, globs or when only a filename
+	// is given the name itself is matched against the basename of files.
+	ExcludePaths []string `yaml:"exclude_paths,omitempty"`
 }
 
 // InheritFrom inherits unset values from the provided parent configuration and

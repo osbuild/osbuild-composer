@@ -7,12 +7,13 @@ import (
 // Data is a platform configured from YAML inputs
 // that implements the "Platform" interface
 type Data struct {
-	Arch         arch.Arch   `yaml:"arch"`
-	ImageFormat  ImageFormat `yaml:"image_format"`
-	QCOW2Compat  string      `yaml:"qcow2_compat"`
-	BIOSPlatform string      `yaml:"bios_platform"`
-	UEFIVendor   string      `yaml:"uefi_vendor"`
-	ZiplSupport  bool        `yaml:"zipl_support"`
+	Arch                   arch.Arch   `yaml:"arch"`
+	ImageFormat            ImageFormat `yaml:"image_format"`
+	QCOW2Compat            string      `yaml:"qcow2_compat"`
+	BIOSPlatform           string      `yaml:"bios_platform"`
+	UEFIVendor             string      `yaml:"uefi_vendor"`
+	ExtraUEFIArchitectures []string    `yaml:"extra_uefi_architectures"`
+	ZiplSupport            bool        `yaml:"zipl_support"`
 	// packages are index by an arbitrary string key to
 	// make them YAML mergable, a good key is e.g. "bios"
 	// to indicate that these packages are needed for
@@ -42,6 +43,9 @@ func (d *Data) GetBIOSPlatform() string {
 }
 func (d *Data) GetUEFIVendor() string {
 	return d.UEFIVendor
+}
+func (d *Data) GetExtraUEFIArchitectures() []string {
+	return d.ExtraUEFIArchitectures
 }
 func (d *Data) GetZiplSupport() bool {
 	return d.ZiplSupport

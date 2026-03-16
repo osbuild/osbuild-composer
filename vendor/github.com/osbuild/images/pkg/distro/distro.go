@@ -162,6 +162,14 @@ type ImageType interface {
 
 type BootcImageOptions struct {
 	InstallerPayloadRef string `json:"installer_payload_ref,omitempty"`
+
+	// We introduce default kernel arguments in bootc generic image types which
+	// can clash with certain user use cases. Normally we only allow appending
+	// to the default kernel arguments through blueprints. This option allows turning
+	// off the default arguments; leaving them up to the user (in the container).
+	// This is introduced as an option here as it's likely that in the future we want
+	// to entirely stop adding default kernel arguments to bootc images.
+	OmitDefaultKernelArgs bool `json:"omit_default_kernel_args,omitempty"`
 }
 
 // The ImageOptions specify options for a specific image build
