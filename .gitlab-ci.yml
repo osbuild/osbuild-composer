@@ -107,8 +107,8 @@ RPM:
   parallel:
     matrix:
       - RUNNER:
-          - aws/fedora-42-x86_64
-          - aws/fedora-42-aarch64
+          - aws/fedora-43-x86_64
+          - aws/fedora-43-aarch64
           - aws/rhel-8.10-ga-x86_64
           - aws/rhel-8.10-ga-aarch64
           - aws/rhel-9.7-ga-x86_64
@@ -208,8 +208,8 @@ Base:
   parallel:
     matrix:
       - RUNNER:
-          - aws/fedora-42-x86_64
-          - aws/fedora-42-aarch64
+          - aws/fedora-43-x86_64
+          - aws/fedora-43-aarch64
           - aws/rhel-8.10-ga-x86_64
           - aws/rhel-8.10-ga-aarch64
           - aws/rhel-9.7-ga-x86_64
@@ -235,8 +235,8 @@ Base:
   parallel:
     matrix:
       - RUNNER:
-          - aws/fedora-42-x86_64
-          - aws/fedora-42-aarch64
+          - aws/fedora-43-x86_64
+          - aws/fedora-43-aarch64
       - RUNNER:
           - aws/rhel-8.10-ga-x86_64
           - aws/rhel-8.10-ga-aarch64
@@ -364,7 +364,7 @@ regression-no-explicit-rootfs-definition:
 
 .fedora_runners: &fedora_runners
     RUNNER:
-      - aws/fedora-42-x86_64
+      - aws/fedora-43-x86_64
 
 .integration_fedora:
   extends: .integration_base
@@ -517,7 +517,7 @@ filesystem.sh:
     matrix:
       - CUSTOMIZATION_TYPE: "disk-btrfs"
         RUNNER:
-          - aws/fedora-42-x86_64
+          - aws/fedora-43-x86_64
       - CUSTOMIZATION_TYPE: "filesystem"
         RUNNER:
           - aws/rhel-8.10-ga-x86_64
@@ -591,11 +591,11 @@ API:
         INTERNAL_NETWORK: ["true"]
       - IMAGE_TYPE: ["iot-commit"]
         RUNNER:
-          - aws/fedora-42-x86_64
+          - aws/fedora-43-x86_64
       - IMAGE_TYPE: ["iot-bootable-container"]
         RUNNER:
-          - aws/fedora-42-x86_64
-          - aws/fedora-42-aarch64
+          - aws/fedora-43-x86_64
+          - aws/fedora-43-aarch64
       - IMAGE_TYPE: ["aws"]
         RUNNER:
           - aws/rhel-8.10-ga-aarch64
@@ -651,7 +651,7 @@ API-module-hotfixes:
   parallel:
     matrix:
       - RUNNER:
-          - rhos-01/fedora-42-x86_64
+          - rhos-01/fedora-43-x86_64
       - RUNNER:
           - gcp/rhel-8.10-ga-x86_64
           - gcp/rhel-9.7-ga-x86_64
@@ -852,7 +852,7 @@ ContainerUpload:
   parallel:
     matrix:
       - RUNNER:
-          - aws/fedora-42-x86_64
+          - aws/fedora-43-x86_64
 
 ContainerEmbedding:
   stage: test
@@ -883,7 +883,7 @@ WorkerExecutor:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/worker-executor.sh
   variables:
-    RUNNER: aws/fedora-42-x86_64
+    RUNNER: aws/fedora-43-x86_64
     IAM_INSTANCE_PROFILE: worker-executor
 
 WorkerExecutorFailure:
@@ -896,7 +896,7 @@ WorkerExecutorFailure:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/worker-executor-crash.sh
   variables:
-    RUNNER: aws/fedora-42-x86_64
+    RUNNER: aws/fedora-43-x86_64
     IAM_INSTANCE_PROFILE: worker-executor
 
 
@@ -910,7 +910,7 @@ CleanStore:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/cleanstore.sh
   variables:
-    RUNNER: aws/fedora-42-x86_64
+    RUNNER: aws/fedora-43-x86_64
 
 finish:
   stage: finish
