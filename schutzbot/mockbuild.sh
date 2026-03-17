@@ -94,7 +94,7 @@ if [[ "$ID" == rhel ]] && sudo subscription-manager status; then
 fi
 
 # EL8 aarch64 builds run out of memory and get killed. A swapfile fixes this.
-if [[ "$PLATFORM_ID" == "platform:el8" ]] && [[ "${ARCH}" == "aarch64" ]]; then
+if [[ ${VERSION_ID%.*} == 8 ]] && [[ "${ARCH}" == "aarch64" ]]; then
     sudo dd if=/dev/zero of=/swapfile bs=1M count=1024
     sudo chmod 600 /swapfile
     sudo mkswap /swapfile
