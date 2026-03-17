@@ -111,8 +111,8 @@ RPM:
   parallel:
     matrix:
       - RUNNER:
-          - aws/fedora-42-x86_64
-          - aws/fedora-42-aarch64
+          - aws/fedora-44-x86_64
+          - aws/fedora-44-aarch64
           - aws/rhel-8.10-ga-x86_64
           - aws/rhel-9.7-ga-x86_64
           - aws/rhel-10.1-ga-x86_64
@@ -236,8 +236,8 @@ Base:
   parallel:
     matrix:
       - RUNNER:
-          - aws/fedora-42-x86_64
-          - aws/fedora-42-aarch64
+          - aws/fedora-44-x86_64
+          - aws/fedora-44-aarch64
           - aws/rhel-8.10-ga-x86_64
           - aws/rhel-8.10-ga-aarch64
           - aws/rhel-9.7-ga-x86_64
@@ -263,8 +263,8 @@ Base:
   parallel:
     matrix:
       - RUNNER:
-          - aws/fedora-42-x86_64
-          - aws/fedora-42-aarch64
+          - aws/fedora-44-x86_64
+          - aws/fedora-44-aarch64
       - RUNNER:
           - aws/rhel-8.10-ga-x86_64
           - aws/rhel-8.10-ga-aarch64
@@ -383,7 +383,7 @@ regression-insecure-repo:
 
 .fedora_runners: &fedora_runners
     RUNNER:
-      - aws/fedora-42-x86_64
+      - aws/fedora-44-x86_64
 
 .integration_fedora:
   extends: .integration_base
@@ -589,11 +589,11 @@ API:
         INTERNAL_NETWORK: ["true"]
       - IMAGE_TYPE: ["iot-commit"]
         RUNNER:
-          - aws/fedora-42-x86_64
+          - aws/fedora-44-x86_64
       - IMAGE_TYPE: ["iot-bootable-container"]
         RUNNER:
-          - aws/fedora-42-x86_64
-          - aws/fedora-42-aarch64
+          - aws/fedora-44-x86_64
+          - aws/fedora-44-aarch64
       - IMAGE_TYPE: ["aws"]
         RUNNER:
           - aws/rhel-8.10-ga-aarch64
@@ -664,7 +664,7 @@ API-unit:
   parallel:
     matrix:
       - RUNNER:
-          - rhos-01/fedora-42-x86_64
+          - rhos-01/fedora-44-x86_64
       - RUNNER:
           - gcp/rhel-8.10-ga-x86_64
           - gcp/rhel-9.7-ga-x86_64
@@ -854,7 +854,7 @@ ContainerUpload:
   parallel:
     matrix:
       - RUNNER:
-          - aws/fedora-42-x86_64
+          - aws/fedora-44-x86_64
 
 WorkerExecutor:
   stage: test
@@ -866,7 +866,7 @@ WorkerExecutor:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/worker-executor.sh
   variables:
-    RUNNER: aws/fedora-42-x86_64
+    RUNNER: aws/fedora-44-x86_64
     IAM_INSTANCE_PROFILE: worker-executor
 
 WorkerExecutorFailure:
@@ -879,7 +879,7 @@ WorkerExecutorFailure:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/worker-executor-crash.sh
   variables:
-    RUNNER: aws/fedora-42-x86_64
+    RUNNER: aws/fedora-44-x86_64
     IAM_INSTANCE_PROFILE: worker-executor
 
 API-bootc-service:
@@ -921,7 +921,7 @@ CleanStore:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/cleanstore.sh
   variables:
-    RUNNER: aws/fedora-42-x86_64
+    RUNNER: aws/fedora-44-x86_64
 
 finish:
   stage: finish
