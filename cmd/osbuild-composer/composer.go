@@ -9,6 +9,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"net/http/pprof"
 	"os"
 	"os/signal"
 	"path"
@@ -320,6 +321,16 @@ func (c *Composer) Start() error {
 		// trailing slash for rooted subtrees, whereas the
 		// handler functions don't.
 		mux.Handle(apiRouteV2+"/", c.api.V2(apiRouteV2))
+
+		// Expose pprof endpoints for debugging purposes
+		// but only on staging channel
+		if c.config.DeploymentChannel == "staging" {
+			mux.HandleFunc(apiRouteV2+"/pprof/", pprof.Index)
+			mux.HandleFunc(apiRouteV2+"/pprof/cmdline", pprof.Cmdline)
+			mux.HandleFunc(apiRouteV2+"/pprof/profile", pprof.Profile)
+			mux.HandleFunc(apiRouteV2+"/pprof/symbol", pprof.Symbol)
+			mux.HandleFunc(apiRouteV2+"/pprof/trace", pprof.Trace)
+		}
 
 		handler := http.Handler(mux)
 		var err error
