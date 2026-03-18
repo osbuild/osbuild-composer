@@ -895,6 +895,14 @@ func (s *Server) RequeueOrFinishJob(token uuid.UUID, maxRetries uint64, result j
 		}
 	}
 
+	// Pre-fetch job info before changing state so metrics can be updated
+	// immediately after the state change, avoiding a race between the
+	// queue update and the prometheus metric update.
+	preJobInfo, err := s.jobInfo(jobId, nil)
+	if err != nil {
+		return fmt.Errorf("error fetching job info: %v", err)
+	}
+
 	requeued, err := s.jobs.RequeueOrFinishJob(jobId, maxRetries, result)
 	if err != nil {
 		switch err {
@@ -906,11 +914,8 @@ func (s *Server) RequeueOrFinishJob(token uuid.UUID, maxRetries uint64, result j
 	}
 
 	if requeued {
-		jobInfo, err := s.jobInfo(jobId, nil)
-		if err != nil {
-			return fmt.Errorf("error requeueing job: %w", err)
-		}
-		prometheus.RequeueJobMetrics(jobInfo.JobType, jobInfo.Channel)
+		prometheus.RequeueJobMetrics(preJobInfo.JobType, preJobInfo.Channel)
+		return nil
 	}
 
 	jobType, err := s.JobType(jobId)
