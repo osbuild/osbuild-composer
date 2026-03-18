@@ -334,7 +334,7 @@ parameters:
     value: "256Mi"
   - name: MEMORY_LIMIT
     description: Memory limit per container
-    value: "512Mi"
+    value: "1024Mi"
   - description: Splunk HTTP Event Collector port
     name: SPLUNK_HEC_PORT
     value: "443"
