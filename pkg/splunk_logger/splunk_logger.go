@@ -42,8 +42,10 @@ type SplunkEvent struct {
 }
 
 func NewSplunkLogger(context context.Context, url, token, source, hostname string) *SplunkLogger {
+	rc := retryablehttp.NewClient()
+	rc.Logger = nil
 	sl := &SplunkLogger{
-		client:   retryablehttp.NewClient().StandardClient(),
+		client:   rc.StandardClient(),
 		url:      url,
 		token:    token,
 		source:   source,
