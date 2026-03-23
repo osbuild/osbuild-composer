@@ -182,3 +182,10 @@ func TestConfigFromEnv(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, expectedDistroAliases, config.DistroAliases)
 }
+
+func TestLogFormatFromEnv(t *testing.T) {
+	t.Setenv("OSBUILD_COMPOSER_LOG_FORMAT", "text")
+	config, err := LoadConfig("testdata/non-existing-config.toml")
+	require.NoError(t, err)
+	require.Equal(t, "text", config.LogFormat)
+}

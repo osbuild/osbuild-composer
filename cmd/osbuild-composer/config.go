@@ -17,7 +17,7 @@ type ComposerConfigFile struct {
 	WeldrAPI           WeldrAPIConfig    `toml:"weldr_api"`
 	DistroAliases      map[string]string `toml:"distro_aliases" env:"DISTRO_ALIASES"`
 	LogLevel           string            `toml:"log_level"`
-	LogFormat          string            `toml:"log_format"`
+	LogFormat          string            `toml:"log_format" env:"OSBUILD_COMPOSER_LOG_FORMAT"`
 	DNFJson            string            `toml:"dnf-json"`
 	IgnoreMissingRepos bool              `toml:"ignore_missing_repos"`
 	SplunkHost         string            `env:"SPLUNK_HEC_HOST"`
