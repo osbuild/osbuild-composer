@@ -455,6 +455,10 @@ func installerCustomizations(t *imageType, c *blueprint.Customizations, o distro
 			if location := installerConfig.Payload.Location; location != nil {
 				isc.Payload.Location = *location
 			}
+
+			if kickstart := installerConfig.Payload.Kickstart; kickstart != nil {
+				isc.Payload.Kickstart = *kickstart
+			}
 		}
 	}
 
@@ -993,19 +997,6 @@ func iotInstallerImage(t *imageType,
 
 	customizations := bp.Customizations
 	img.ExtraBasePackages = packageSets[installerPkgsKey]
-	img.Kickstart, err = kickstart.New(customizations)
-	if err != nil {
-		return nil, err
-	}
-	img.Kickstart.OSTree = &kickstart.OSTree{
-		OSName: t.OSTree.Name,
-		Remote: t.OSTree.RemoteName,
-	}
-	img.Kickstart.Path = osbuild.KickstartPathOSBuild
-	img.Kickstart.Language, img.Kickstart.Keyboard = customizations.GetPrimaryLocale()
-	// ignore ntp servers - we don't currently support setting these in the
-	// kickstart though kickstart does support setting them
-	img.Kickstart.Timezone, _ = customizations.GetTimezoneSettings()
 
 	img.InstallerCustomizations, err = installerCustomizations(t, bp.Customizations, options)
 	if err != nil {
@@ -1017,11 +1008,56 @@ func iotInstallerImage(t *imageType,
 		return nil, err
 	}
 
+	// set up the default kickstart based on customizations, this kickstart ends up
+	// in the root of the ISO if it is non-empty; otherwise it is omitted
+	// TODO: pretty function to know *beforehand* if the kickstart is going to be empty
+	img.Kickstart, err = kickstart.New(customizations)
+	if err != nil {
+		return nil, err
+	}
+
+	img.Kickstart.Language, img.Kickstart.Keyboard = customizations.GetPrimaryLocale()
+	// ignore ntp servers - we don't currently support setting these in the
+	// kickstart though kickstart does support setting them
+	img.Kickstart.Timezone, _ = customizations.GetTimezoneSettings()
+
 	// XXX these bits should move into the `installerCustomization` function
 	// XXX directly
 	if len(img.Kickstart.Users)+len(img.Kickstart.Groups) > 0 {
 		// only enable the users module if needed
 		img.InstallerCustomizations.EnabledAnacondaModules = append(img.InstallerCustomizations.EnabledAnacondaModules, anaconda.ModuleUsers)
+	}
+
+	// alternatively it is possible that we want to write a kickstart into the
+	// anaconda tree that is on the compressed root filesystem, we do that based
+	// on an image config setting
+
+	if img.InstallerCustomizations.Payload.Kickstart == manifest.PAYLOAD_KICKSTART_ROOT {
+		// when written to the root we can add this information to the default kickstart
+		// located on the ISO root; this makes it non-empty even when no customizations
+		// are put into it
+		img.Kickstart.OSTree = &kickstart.OSTree{
+			OSName: t.OSTree.Name,
+			Remote: t.OSTree.RemoteName,
+		}
+	} else {
+		// otherwise they go into the interactive defaults kickstart
+		img.InteractiveDefaultsKickstart, err = kickstart.New(nil)
+		if err != nil {
+			return nil, err
+		}
+
+		img.InteractiveDefaultsKickstart.OSTree = &kickstart.OSTree{
+			OSName: t.OSTree.Name,
+			Remote: t.OSTree.RemoteName,
+		}
+	}
+
+	// reset the kickstart to nil in case it is empty, this makes sure that we don't write
+	// any kernel arguments to it if there's no need. the kickstart is empty if there are
+	// no customizations and the payload kickstart is interactive defaults
+	if img.Kickstart.IsZero() {
+		img.Kickstart = nil
 	}
 
 	if img.ISOCustomizations.RootfsType == manifest.ErofsRootfs {

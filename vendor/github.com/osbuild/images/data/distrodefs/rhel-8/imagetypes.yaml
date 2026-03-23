@@ -217,7 +217,7 @@
       "x86_64 specific dracut conf":
         when:
           arch: "x86_64"
-        shallow_merge: &ami_image_config_cond_x86_64
+        shallow_merge:
           dracut_conf:
             - *sgdisk_dracut_conf
             - filename: "ec2.conf"
@@ -927,7 +927,7 @@
           - "s390utils-base"
 
   default_installer_config: &default_installer_config
-    enabled_anaconda_modules: &install_config_enabled_anaconda_modules
+    enabled_anaconda_modules:
       - "org.fedoraproject.Anaconda.Modules.Network"
       - "org.fedoraproject.Anaconda.Modules.Payloads"
       - "org.fedoraproject.Anaconda.Modules.Storage"
@@ -955,13 +955,10 @@
   partitioning:
     ids:
       - &prep_partition_dosid "41"
-      - &filesystem_linux_dosid "83"
-      - &fat16_bdosid "06"
     guids:
       - &bios_boot_partition_guid "21686148-6449-6E6F-744E-656564454649"
       - &efi_system_partition_guid "C12A7328-F81F-11D2-BA4B-00A0C93EC93B"
       - &filesystem_data_guid "0FC63DAF-8483-4772-8E79-3D69D8477DE4"
-      - &xboot_ldr_partition_guid "BC13C2FF-59E6-4262-A352-B275FD6F7172"
       - &lvm_partition_guid "E6D6D379-F507-44C2-A23C-238F2A3DF928"
 
     partitions:
@@ -1014,7 +1011,7 @@
           - *default_partition_table_part_bios
           - *default_partition_table_part_efi
           - *default_partition_table_part_root
-      aarch64: &default_partition_table_aarch64
+      aarch64:
         uuid: "D209C89E-EA5E-4FBD-B161-B461CCE297E0"
         type: "gpt"
         partitions:
@@ -1092,7 +1089,7 @@
                 fstab_options: "defaults"
                 fstab_freq: 0
                 fstab_passno: 0
-      aarch64: &edge_base_partition_table_aarch64
+      aarch64:
         uuid: "D209C89E-EA5E-4FBD-B161-B461CCE297E0"
         type: "gpt"
         partitions:
@@ -1605,7 +1602,7 @@ image_types:
                     enabled: false
     partition_table:
       <<: *default_partition_tables
-    package_sets: &qcow2_pkgset
+    package_sets:
       os:
         - *qcow2_common_pkgset
     blueprint:
@@ -1765,7 +1762,7 @@ image_types:
     package_sets:
       os:
         - *azure_common_pkgset
-        - &azure_pkgset
+        -
           include:
             - "firewalld"
           exclude:
@@ -2044,7 +2041,7 @@ image_types:
         - "customizations.timezone"
         - "customizations.rhsm"
 
-  "edge-commit": &edge_commit
+  "edge-commit":
     name_aliases: ["rhel-edge-commit"]
     filename: "commit.tar"
     mime_type: "application/x-tar"
@@ -2172,7 +2169,7 @@ image_types:
             - "xz"
           exclude:
             - "rng-tools"
-          conditions: &conditions_pkgsets_edge_commit
+          conditions:
             "x86_64 specific packages for edge-commit":
               when:
                 arch: "x86_64"
@@ -2467,7 +2464,7 @@ image_types:
         - "net.ifnames=0"
     partition_table:
       <<: *default_partition_tables
-    package_sets: &vmdk_pkgsets
+    package_sets:
       os:
         - include:
             - "@core"

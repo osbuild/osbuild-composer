@@ -1213,6 +1213,7 @@
         - ["/usr/share/licenses/fedora-release-common/LICENSE", "/LICENSE"]
       payload:
         location: "rootfs"
+        kickstart: "interactive-defaults"
     image_config:
       locale: "en_US.UTF-8"
       kernel_options:
