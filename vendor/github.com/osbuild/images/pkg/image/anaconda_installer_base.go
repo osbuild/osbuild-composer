@@ -13,7 +13,9 @@ type AnacondaInstallerBase struct {
 	InstallerCustomizations manifest.InstallerCustomizations
 	ISOCustomizations       manifest.ISOCustomizations
 	RootfsCompression       string
-	Kickstart               *kickstart.Options
+
+	Kickstart                    *kickstart.Options
+	InteractiveDefaultsKickstart *kickstart.Options
 }
 
 func (img *AnacondaInstallerBase) Bootloaders(buildPipeline manifest.Build, platform platform.Platform, kernelOpts []string) []manifest.ISOBootloader {

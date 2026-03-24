@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -94,7 +95,7 @@ type DistroYAML struct {
 
 	imageTypes map[string]ImageTypeYAML
 	// distro wide default image config
-	imageConfig *distro.ImageConfig `yaml:"default"`
+	DistroImageConfig *distroImageConfig `yaml:"image_config,omitempty"`
 
 	// ignore the given image types & override tweaks
 	Conditions map[string]distroConditions `yaml:"conditions"`
@@ -119,7 +120,10 @@ func (d *DistroYAML) ImageTypes() map[string]ImageTypeYAML {
 //
 // Each ImageType gets this as their default ImageConfig.
 func (d *DistroYAML) ImageConfig() *distro.ImageConfig {
-	return d.imageConfig
+	if d.DistroImageConfig != nil {
+		return d.DistroImageConfig.For(d.ID)
+	}
+	return nil
 }
 
 func (d *DistroYAML) SkipImageType(imgTypeName, archName string) bool {
@@ -267,22 +271,56 @@ func LoadDistroWithoutImageTypes(nameVer string) (*DistroYAML, error) {
 }
 
 func (d *DistroYAML) LoadImageTypes() error {
-	f, err := dataFS().Open(filepath.Join(d.DefsPath, "imagetypes.yaml"))
+	configs, err := loadImageTypeConfigs(d)
 	if err != nil {
 		return err
 	}
-	defer f.Close()
+	return mergeImageTypeConfigs(d, configs)
+}
 
-	var toplevel imageTypesYAML
-	decoder := yaml.NewDecoder(f)
-	decoder.KnownFields(true)
-	if err := decoder.Decode(&toplevel); err != nil {
-		return err
+func loadImageTypeConfigs(d *DistroYAML) ([]imageTypesYAML, error) {
+	files, err := fs.Glob(dataFS(), filepath.Join(d.DefsPath, "[^_]*.yaml"))
+	if err != nil {
+		return nil, err
 	}
-	if len(toplevel.ImageTypes) > 0 {
-		d.imageTypes = make(map[string]ImageTypeYAML, len(toplevel.ImageTypes))
-		for name := range toplevel.ImageTypes {
-			v := toplevel.ImageTypes[name]
+
+	commonPath := filepath.Join(d.DefsPath, "_common.yaml")
+	commonContent, _ := fs.ReadFile(dataFS(), commonPath)
+
+	configs := make([]imageTypesYAML, 0, len(files))
+	for _, fileName := range files {
+		f, err := dataFS().Open(fileName)
+		if err != nil {
+			return nil, err
+		}
+		defer f.Close()
+
+		var reader io.Reader = f
+		if len(commonContent) > 0 {
+			reader = io.MultiReader(bytes.NewReader(commonContent), f)
+		}
+
+		var toplevel imageTypesYAML
+		decoder := yaml.NewDecoder(reader)
+		decoder.KnownFields(true)
+		decodeErr := decoder.Decode(&toplevel)
+		if decodeErr != nil {
+			return nil, err
+		}
+
+		configs = append(configs, toplevel)
+	}
+
+	return configs, nil
+}
+
+func mergeImageTypeConfigs(d *DistroYAML, configs []imageTypesYAML) error {
+	imageTypes := make(map[string]ImageTypeYAML)
+	for _, cfg := range configs {
+		for name, v := range cfg.ImageTypes {
+			if _, exists := d.imageTypes[name]; exists {
+				return fmt.Errorf("duplicate image type %s found", name)
+			}
 			v.name = name
 			if err := v.runTemplates(d); err != nil {
 				return err
@@ -291,10 +329,14 @@ func (d *DistroYAML) LoadImageTypes() error {
 				return err
 			}
 
-			d.imageTypes[name] = v
+			imageTypes[name] = v
 		}
 	}
-	d.imageConfig = toplevel.ImageConfig.For(d.ID)
+
+	if len(imageTypes) > 0 {
+		d.imageTypes = imageTypes
+	}
+
 	return nil
 }
 
@@ -302,9 +344,8 @@ func (d *DistroYAML) LoadImageTypes() error {
 // family. Note that multiple distros may use the same image types,
 // e.g. centos/rhel
 type imageTypesYAML struct {
-	ImageConfig distroImageConfig        `yaml:"image_config,omitempty"`
-	ImageTypes  map[string]ImageTypeYAML `yaml:"image_types"`
-	Common      map[string]any           `yaml:".common,omitempty"`
+	ImageTypes map[string]ImageTypeYAML `yaml:"image_types"`
+	Common     map[string]any           `yaml:".common,omitempty"`
 }
 
 type distroImageConfig struct {

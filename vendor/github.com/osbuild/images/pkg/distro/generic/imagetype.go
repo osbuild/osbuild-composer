@@ -56,16 +56,16 @@ func newImageTypeFrom(d *distribution, ar *architecture, imgYAML defs.ImageTypeY
 		it.image = liveInstallerImage
 	case "bootable_container":
 		it.image = bootableContainerImage
-	case "iot":
-		it.image = iotImage
-	case "iot_commit":
-		it.image = iotCommitImage
-	case "iot_container":
-		it.image = iotContainerImage
-	case "iot_installer":
-		it.image = iotInstallerImage
-	case "iot_simplified_installer":
-		it.image = iotSimplifiedInstallerImage
+	case "ostree_disk":
+		it.image = ostreeDiskImage
+	case "ostree_commit":
+		it.image = ostreeCommitImage
+	case "ostree_container":
+		it.image = ostreeContainerImage
+	case "ostree_installer":
+		it.image = ostreeInstallerImage
+	case "ostree_simplified_installer":
+		it.image = ostreeSimplifiedInstallerImage
 	case "tar":
 		it.image = tarImage
 	case "network-installer":

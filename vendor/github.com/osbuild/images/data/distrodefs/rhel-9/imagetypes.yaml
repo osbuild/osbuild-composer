@@ -535,45 +535,6 @@
       oobe: &wsl_distribution_oobe_config
         default_uid: 1000
 
-  anaconda_boot_pkgset: &anaconda_boot_pkgset
-    conditions:
-      "x86 specific packages for the anaconda boot pkgset":
-        when:
-          arch: "x86_64"
-        append:
-          include:
-            # eficommon
-            - "efibootmgr"
-            # XXX: de-dup?
-            # grub-common
-            - "grub2-tools"
-            - "grub2-tools-extra"
-            - "grub2-tools-minimal"
-            # arch specific
-            - "grub2-efi-x64"
-            - "grub2-efi-x64-cdboot"
-            - "grub2-pc"
-            - "grub2-pc-modules"
-            - "shim-x64"
-            - "syslinux"
-            - "syslinux-nonlinux"
-      "aarch64 specific packages for the anaconda boot pkgset":
-        when:
-          arch: "aarch64"
-        append:
-          include:
-            # eficommon
-            - "efibootmgr"
-            # XXX: de-dup?
-            # grub-common
-            - "grub2-tools"
-            - "grub2-tools-extra"
-            - "grub2-tools-minimal"
-            # arch specific
-            - "grub2-efi-aa64-cdboot"
-            - "grub2-efi-aa64"
-            - "shim-aa64"
-
   anaconda_pkgset: &anaconda_pkgset
     include:
       - "aajohan-comfortaa-fonts"
@@ -730,8 +691,6 @@
   partitioning:
     ids:
       - &prep_partition_dosid "41"
-      - &filesystem_linux_dosid "83"
-      - &fat16_bdosid "06"
     guids:
       - &bios_boot_partition_guid "21686148-6449-6E6F-744E-656564454649"
       - &efi_system_partition_guid "C12A7328-F81F-11D2-BA4B-00A0C93EC93B"
@@ -788,12 +747,6 @@
         payload_type: "filesystem"
         payload:
           <<: *default_partition_table_part_boot_payload
-      - &default_partition_table_part_boot512_ppc64le
-        <<: *default_partition_table_part_boot_ppc64le
-        size: "500 MiB"
-      - &default_partition_table_part_boot600_ppc64le
-        <<: *default_partition_table_part_boot_ppc64le
-        size: "600 MiB"
       - &default_partition_table_part_root_ppc64le
         size: "2 GiB"
         payload_type: "filesystem"
@@ -817,19 +770,19 @@
           - *default_partition_table_part_efi
           - *default_partition_table_part_boot
           - *default_partition_table_part_root
-      ppc64le: &default_partition_table_ppc64le
+      ppc64le:
         uuid: "0x14fc63d2"
         type: "dos"
         partitions:
           - *default_partition_table_part_bios_ppc64le
           - *default_partition_table_part_boot_ppc64le
           - *default_partition_table_part_root_ppc64le
-      s390x: &default_partition_table_s390x
+      s390x:
         uuid: "0x14fc63d2"
         type: "dos"
         partitions:
           - *default_partition_table_part_boot_ppc64le
-          - &default_partition_table_part_root_s390x
+          -
             <<: *default_partition_table_part_root_ppc64le
             bootable: true
 
@@ -909,7 +862,7 @@
                       fstab_options: "defaults"
                       fstab_freq: 0
                       fstab_passno: 0
-      aarch64: &edge_base_partition_table_aarch64
+      aarch64:
         uuid: "D209C89E-EA5E-4FBD-B161-B461CCE297E0"
         type: "gpt"
         partitions:
@@ -1230,7 +1183,7 @@
                     V: "1"
 
   default_installer_config: &default_installer_config
-    enabled_anaconda_modules: &install_config_enabled_anaconda_modules
+    enabled_anaconda_modules:
       - "org.fedoraproject.Anaconda.Modules.Network"
       - "org.fedoraproject.Anaconda.Modules.Payloads"
       - "org.fedoraproject.Anaconda.Modules.Runtime"
@@ -1391,25 +1344,6 @@
       remote_name: "rhel-edge"
       ref: &ostree_edge_ref "{{.Distro.Name}}/{{.Distro.MajorVersion}}/{{.Arch}}/edge"
 
-image_config:
-  default:
-    default_kernel: "kernel"
-    default_oscap_datastream: "/usr/share/xml/scap/ssg/content/ssg-rhel9-ds.xml"
-    install_weak_deps: true
-    locale: "C.UTF-8"
-    permissive_rhc: true
-    sysconfig:
-      networking: true
-      no_zero_conf: true
-    timezone: "America/New_York"
-    update_default_kernel: true
-  conditions:
-    "oscap needs a differnt path on centos":
-      when:
-        distro_name: "centos"
-      shallow_merge:
-        default_oscap_datastream: "/usr/share/xml/scap/ssg/content/ssg-cs9-ds.xml"
-
 image_types:
   # XXX: not a real pkgset but the "os" pipeline pkgset for image-installer
   # find a nicer way to represent this
@@ -1457,7 +1391,7 @@ image_types:
             - "tuned"
           exclude:
             - "dracut-config-rescue"
-          conditions: &conditions_subscription_manager_cockpit
+          conditions:
             "add subscription-manager-cockpit on rhel":
               when:
                 distro_name: "rhel"
@@ -1565,7 +1499,7 @@ image_types:
             - "plymouth"
             - "rng-tools"
             - "udisks2"
-          conditions: &conditions_pkgsets_insigths_pkgs
+          conditions:
             "add insights pkgs on rhel":
               when:
                 distro_name: "rhel"
@@ -1629,6 +1563,20 @@ image_types:
     platforms:
       - <<: *x86_64_bios_platform
         image_format: "qcow2"
+    image_config:
+      <<: *qcow2_image_config
+      kernel_options:
+        - "console=tty0"
+        - "console=ttyS0,115200n8"
+        - "net.ifnames=0"
+        - "netroot=iscsi"
+        - "rd.iscsi.firmware=1"
+      cloud_init:
+        - filename: "00-rhel-default-user.cfg"
+          config:
+            system_info:
+              default_user:
+                name: "opc"
     blueprint:
       supported_options: *supported_options_disk
 
@@ -1692,8 +1640,8 @@ image_types:
     exports: ["xz"]
     compression: "xz"
     filename: "disk.vhd.xz"
-    partition_table: &partition_table_azure_internal
-      x86_64: &azure_rhui_partition_table_x86_64
+    partition_table:
+      x86_64:
         uuid: "D209C89E-EA5E-4FBD-B161-B461CCE297E0"
         type: "gpt"
         size: "64 GiB"
@@ -1719,7 +1667,7 @@ image_types:
               fstab_options: "defaults"
               fstab_freq: 0
               fstab_passno: 0
-          - &azure_rhui_part_bios
+          -
             size: "2 MiB"
             bootable: true
             type: *bios_boot_partition_guid
@@ -1770,7 +1718,7 @@ image_types:
                     label: "var"
                     mountpoint: "/var"
                     fstab_options: "defaults"
-      aarch64: &azure_rhui_partition_table_aarch64
+      aarch64:
         uuid: "D209C89E-EA5E-4FBD-B161-B461CCE297E0"
         type: "gpt"
         size: "64 GiB"
@@ -2233,7 +2181,7 @@ image_types:
         - "customizations.rhsm"
 
 
-  wsl: &wsl
+  wsl:
     filename: "image.wsl"
     mime_type: "application/x-tar"
     image_func: "tar"
@@ -2261,7 +2209,7 @@ image_types:
           when:
             distro_name: "almalinux"
           shallow_merge:
-            wsl: &wsl_distribution_config_almalinux
+            wsl:
               <<: *wsl_config
               distribution_config:
                 <<: *wsl_distribution_config
@@ -2272,7 +2220,7 @@ image_types:
           when:
             distro_name: "rocky"
           shallow_merge:
-            wsl: &wsl_distribution_config_rocky
+            wsl:
               <<: *wsl_config
               distribution_config:
                 <<: *wsl_distribution_config
@@ -2795,7 +2743,7 @@ image_types:
     filename: "commit.tar"
     mime_type: "application/x-tar"
     rpm_ostree: true
-    image_func: "iot_commit"
+    image_func: "ostree_commit"
     exports: ["commit-archive"]
     platforms:
       - *x86_64_bios_platform
@@ -2843,7 +2791,7 @@ image_types:
             bootupd_gen_metadata: false
     package_sets:
       os:
-        - &edge_commit_pkgset
+        -
           include:
             - "redhat-release"
             - "glibc"
@@ -2922,7 +2870,7 @@ image_types:
             - "sos"
           exclude:
             - "rng-tools"
-          conditions: &conditions_pkgsets_edge_commit
+          conditions:
             "greenboot in 9.8 and c9s requires bootupd":
               # we don't want bootupd in edge commits, but greenboot requires
               # it in 9.8 and c9s, so we can only exclude it for older versions
@@ -2986,7 +2934,7 @@ image_types:
     filename: "container.tar"
     mime_type: "application/x-tar"
     rpm_ostree: true
-    image_func: "iot_container"
+    image_func: "ostree_container"
     exports: ["container"]
     <<: *edge_commit
     image_config:
@@ -3012,7 +2960,7 @@ image_types:
     default_size: "10 GiB"
     rpm_ostree: true
     bootable: true
-    image_func: "iot"
+    image_func: "ostree_disk"
     ostree: *ostree_edge
     use_ostree_remotes: true
     platforms:
@@ -3028,7 +2976,7 @@ image_types:
         keymap: "us"
       locale: "C.UTF-8"
       lock_root_user: true
-      kernel_options: &kernel_options_raw_image
+      kernel_options:
         - "modprobe.blacklist=vc4"
         - "rw"
         - "coreos.no_persist_ip"
@@ -3059,7 +3007,7 @@ image_types:
     mime_type: "application/x-iso9660-image"
     rpm_ostree: true
     boot_iso: true
-    image_func: "iot_installer"
+    image_func: "ostree_installer"
     iso_label: "edge"
     variant: "edge"
     ostree:
@@ -3102,7 +3050,7 @@ image_types:
     # NOTE: RHEL 8 only supports the older Anaconda configs
     use_legacy_anaconda_config: true
     default_size: "10 GiB"
-    image_func: "iot_simplified_installer"
+    image_func: "ostree_simplified_installer"
     iso_label: "edge"
     variant: "edge"
     ostree: *ostree_edge
@@ -3221,7 +3169,7 @@ image_types:
     exports: ["image"]
     rpm_ostree: true
     bootable: true
-    image_func: "iot"
+    image_func: "ostree_disk"
     ostree: *ostree_edge
     use_ostree_remotes: true
     platforms:

@@ -170,6 +170,14 @@ type BootcImageOptions struct {
 	// This is introduced as an option here as it's likely that in the future we want
 	// to entirely stop adding default kernel arguments to bootc images.
 	OmitDefaultKernelArgs bool `json:"omit_default_kernel_args,omitempty"`
+
+	// UseRemoteContainerSource controls whether the container source in the
+	// manifest uses org.osbuild.skopeo (true) or org.osbuild.containers-storage
+	// (false, default). The default (false) is backward-compatible with
+	// bootc-image-builder which requires the container in local podman storage.
+	// Set to true for service backends that pull containers via osbuild's
+	// skopeo source mechanism.
+	UseRemoteContainerSource bool `json:"use_remote_container_source,omitempty"`
 }
 
 // The ImageOptions specify options for a specific image build

@@ -494,6 +494,12 @@ func (p *AnacondaInstallerISOTree) serialize() (osbuild.Pipeline, error) {
 				return osbuild.Pipeline{}, fmt.Errorf("cannot create ostree commit stages: %w", err)
 			}
 			pipeline.AddStages(ostreeCommitStages...)
+
+			ostreeKickstartStages, err := p.ostreeKickstartStages()
+			if err != nil {
+				return osbuild.Pipeline{}, fmt.Errorf("cannot create ostree kickstart stages: %w", err)
+			}
+			pipeline.AddStages(ostreeKickstartStages...)
 		case p.containerSpec != nil:
 			ostreeContainerStages, err := p.ostreeContainerStages()
 			if err != nil {
@@ -532,9 +538,6 @@ func (p *AnacondaInstallerISOTree) serialize() (osbuild.Pipeline, error) {
 func (p *AnacondaInstallerISOTree) ostreeCommitStages() ([]*osbuild.Stage, error) {
 	stages := make([]*osbuild.Stage, 0)
 
-	var payloadPath string
-	var ostreeCommitSpec *ostree.CommitSpec
-
 	// Set up the payload ostree repo *if* the repo is on the ISO root filesystem otherwise
 	// this is done inside the anaconda pipeline and the repo is in the rootfs
 	if p.InstallerCustomizations.Payload.Location == PAYLOAD_LOCATION_ISO {
@@ -543,31 +546,59 @@ func (p *AnacondaInstallerISOTree) ostreeCommitStages() ([]*osbuild.Stage, error
 			&osbuild.OSTreePullStageOptions{Repo: p.InstallerCustomizations.Payload.Path},
 			osbuild.NewOstreePullStageInputs("org.osbuild.source", p.ostreeCommitSpec.Checksum, p.ostreeCommitSpec.Ref),
 		))
-
-		ostreeCommitSpec = p.ostreeCommitSpec
-		payloadPath = makeISORootPath(p.InstallerCustomizations.Payload.Path)
-	} else {
-		ostreeCommitSpec = p.anacondaPipeline.ostreeCommitSpec
-		payloadPath = makeISORootfsPath(p.InstallerCustomizations.Payload.Path)
 	}
 
+	return stages, nil
+}
+
+func (p *AnacondaInstallerISOTree) ostreeKickstartStages() ([]*osbuild.Stage, error) {
+	stages := make([]*osbuild.Stage, 0)
+
+	// first make sure that the payload bits for the kickstart need to be written to the
+	// root of the ISO
+	if p.InstallerCustomizations.Payload.Kickstart == PAYLOAD_KICKSTART_ROOT {
+		// then we *must* have a kickstart and it *must* have container ostree stuff
+		if p.Kickstart == nil || p.Kickstart.OSTree == nil {
+			return nil, fmt.Errorf("missing kickstart ostree options for anaconda installer iso tree")
+		}
+	}
+
+	// otherwise if there's no kickstart at all we can return early
 	if p.Kickstart == nil {
-		return nil, fmt.Errorf("Kickstart options not set for %s pipeline", p.name)
+		return stages, nil
 	}
 
-	if p.Kickstart.OSTree == nil {
-		return nil, fmt.Errorf("Kickstart ostree options not set for %s pipeline", p.name)
-	}
+	var kickstartOptions *osbuild.KickstartStageOptions
+	var err error
 
-	// Configure the kickstart file with the payload and any user options
-	kickstartOptions, err := osbuild.NewKickstartStageOptionsWithOSTreeCommit(
-		p.Kickstart.Path,
-		p.Kickstart.Users,
-		p.Kickstart.Groups,
-		payloadPath,
-		ostreeCommitSpec.Ref,
-		p.Kickstart.OSTree.Remote,
-		p.Kickstart.OSTree.OSName)
+	if p.Kickstart.OSTree != nil {
+		// configure the kickstart file with the payload and any user options
+		var payloadPath string
+		var ostreeCommitSpec *ostree.CommitSpec
+
+		if p.InstallerCustomizations.Payload.Location == PAYLOAD_LOCATION_ISO {
+			ostreeCommitSpec = p.ostreeCommitSpec
+			payloadPath = makeISORootPath(p.InstallerCustomizations.Payload.Path)
+		} else {
+			payloadPath = makeISORootfsPath(p.InstallerCustomizations.Payload.Path)
+			ostreeCommitSpec = p.anacondaPipeline.ostreeCommitSpec
+		}
+
+		kickstartOptions, err = osbuild.NewKickstartStageOptionsWithOSTreeCommit(
+			p.Kickstart.Path,
+			p.Kickstart.Users,
+			p.Kickstart.Groups,
+			payloadPath,
+			ostreeCommitSpec.Ref,
+			p.Kickstart.OSTree.Remote,
+			p.Kickstart.OSTree.OSName)
+	} else {
+		// or without the payload but with the user options
+		kickstartOptions, err = osbuild.NewKickstartStageOptions(
+			p.Kickstart.Path,
+			p.Kickstart.Users,
+			p.Kickstart.Groups)
+	}
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to create kickstart stage options: %w", err)
@@ -575,7 +606,7 @@ func (p *AnacondaInstallerISOTree) ostreeCommitStages() ([]*osbuild.Stage, error
 
 	kickstartStages, err := p.makeKickstartStages(kickstartOptions)
 	if err != nil {
-		return nil, fmt.Errorf("cannot create kickstart stages: %w", err)
+		return stages, err
 	}
 	stages = append(stages, kickstartStages...)
 
@@ -803,12 +834,12 @@ func (p *AnacondaInstallerISOTree) netinstKickstartStages() ([]*osbuild.Stage, e
 // installation if set and with any extra file insertion stage required for
 // extra kickstart content.
 func (p *AnacondaInstallerISOTree) makeKickstartStages(stageOptions *osbuild.KickstartStageOptions) ([]*osbuild.Stage, error) {
+	stages := make([]*osbuild.Stage, 0)
+
 	kickstartOptions := p.Kickstart
 	if kickstartOptions == nil {
-		kickstartOptions = new(kickstart.Options)
+		return stages, nil
 	}
-
-	stages := make([]*osbuild.Stage, 0)
 
 	// kickstart.New() already validates the options but they may have been
 	// modified since then, so validate them before we create the stages
