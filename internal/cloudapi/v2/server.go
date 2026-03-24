@@ -111,18 +111,21 @@ func (s *Server) Handler(path string) http.Handler {
 	e.Use(middleware.Recover())
 
 	e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
-		LogURI:     true,
-		LogStatus:  true,
-		LogLatency: true,
-		LogMethod:  true,
+		LogURI:          true,
+		LogStatus:       true,
+		LogLatency:      true,
+		LogMethod:       true,
+		LogResponseSize: true,
 		LogValuesFunc: func(c echo.Context, values middleware.RequestLoggerValues) error {
 			fields := logrus.Fields{
-				"uri":          values.URI,
-				"method":       values.Method,
-				"status":       values.Status,
-				"latency_ms":   values.Latency.Milliseconds(),
-				"operation_id": c.Get(common.OperationIDKey),
-				"external_id":  c.Get(common.ExternalIDKey),
+				"uri":                 values.URI,
+				"method":              values.Method,
+				"status":              values.Status,
+				"latency_ms":          values.Latency.Milliseconds(),
+				"operation_id":        c.Get(common.OperationIDKey),
+				"external_id":         c.Get(common.ExternalIDKey),
+				"request_body_bytes":  c.Request().ContentLength,
+				"response_body_bytes": values.ResponseSize,
 			}
 			if values.Error != nil {
 				fields["error"] = values.Error
