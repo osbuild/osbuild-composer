@@ -11,7 +11,6 @@ import (
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/customizations/fsnode"
 	"github.com/osbuild/images/pkg/customizations/kickstart"
-	"github.com/osbuild/images/pkg/customizations/users"
 	"github.com/osbuild/images/pkg/depsolvednf"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/ostree"
@@ -78,15 +77,6 @@ type AnacondaInstaller struct {
 	BootcLivefsContainer      *container.SourceSpec
 	bootcLivefsContainerSpecs []container.Spec
 
-	// Interactive defaults is a kickstart stage that can be provided, it
-	// will be written to /usr/share/anaconda/interactive-defaults
-	InteractiveDefaults *AnacondaInteractiveDefaults
-
-	// Kickstart options that will be written to the interactive defaults
-	// kickstart file. Currently only supports Users and Groups. Other
-	// properties are ignored.
-	InteractiveDefaultsKickstart *kickstart.Options
-
 	Files []*fsnode.File
 
 	// SELinux policy, when set it enables the labeling of the installer
@@ -110,6 +100,8 @@ type AnacondaInstaller struct {
 
 	OSTreeCommitSource *ostree.SourceSpec
 	ostreeCommitSpec   *ostree.CommitSpec
+
+	Kickstart *kickstart.Options
 }
 
 func NewAnacondaInstaller(installerType AnacondaInstallerType,
@@ -367,16 +359,31 @@ func (p *AnacondaInstaller) serialize() (osbuild.Pipeline, error) {
 		pipeline.AddStage(stage)
 	}
 
-	// If we're a payload installer, and the payload should be in the compressed read only filesystem then
-	// we should be including the payload right here. Otherwise the payload is included in the Anaconda ISO
-	// tree pipeline.
-	if p.Type == AnacondaInstallerTypePayload && p.InstallerCustomizations.Payload.Location == PAYLOAD_LOCATION_ROOTFS {
-		if p.ostreeCommitSpec != nil {
-			ostreeCommitStages, err := p.ostreeCommitStages()
-			if err != nil {
-				return osbuild.Pipeline{}, fmt.Errorf("cannot create ostree commit stages: %w", err)
+	if p.Type == AnacondaInstallerTypePayload {
+		// If we're a payload installer, and the payload should be in the compressed read only filesystem then
+		// we should be including the payload right here. Otherwise the payload is included in the Anaconda ISO
+		// tree pipeline.
+		if p.InstallerCustomizations.Payload.Location == PAYLOAD_LOCATION_ROOTFS {
+			if p.ostreeCommitSpec != nil {
+				ostreeCommitStages, err := p.ostreeCommitStages()
+				if err != nil {
+					return osbuild.Pipeline{}, fmt.Errorf("cannot create ostree commit stages: %w", err)
+				}
+				pipeline.AddStages(ostreeCommitStages...)
 			}
-			pipeline.AddStages(ostreeCommitStages...)
+		}
+
+		// If the payload kickstart is in interactive defaults we need to write it here instead of in the Anaconda
+		// ISO tree pipeline, a similar check exists on the other side. Note that we always write an *empty*
+		if p.InstallerCustomizations.Payload.Kickstart == PAYLOAD_KICKSTART_INTERACTIVE_DEFAULTS {
+			if p.ostreeCommitSpec != nil {
+				kickstartStages, err := p.ostreeKickstartStages()
+				if err != nil {
+					return osbuild.Pipeline{}, fmt.Errorf("cannot create ostree kickstart stages: %w", err)
+				}
+
+				pipeline.AddStages(kickstartStages...)
+			}
 		}
 	}
 
@@ -399,10 +406,7 @@ func (p *AnacondaInstaller) serialize() (osbuild.Pipeline, error) {
 	// being serialized
 	switch p.Type {
 	case AnacondaInstallerTypeLive:
-		if p.InteractiveDefaultsKickstart != nil && (len(p.InteractiveDefaultsKickstart.Users) != 0 || len(p.InteractiveDefaultsKickstart.Groups) != 0) {
-			return osbuild.Pipeline{}, fmt.Errorf("anaconda installer type live does not support users and groups customization")
-		}
-		if p.InteractiveDefaults != nil {
+		if p.Kickstart != nil {
 			return osbuild.Pipeline{}, fmt.Errorf("anaconda installer type live does not support interactive defaults")
 		}
 		liveStages, err := p.liveStages()
@@ -432,6 +436,28 @@ func (p *AnacondaInstaller) ostreeCommitStages() ([]*osbuild.Stage, error) {
 		&osbuild.OSTreePullStageOptions{Repo: p.InstallerCustomizations.Payload.Path},
 		osbuild.NewOstreePullStageInputs("org.osbuild.source", p.ostreeCommitSpec.Checksum, p.ostreeCommitSpec.Ref),
 	))
+
+	return stages, nil
+}
+
+func (p *AnacondaInstaller) ostreeKickstartStages() ([]*osbuild.Stage, error) {
+	stages := make([]*osbuild.Stage, 0)
+
+	// Configure the kickstart file with the payload and any user options
+	kickstartOptions, err := osbuild.NewKickstartStageOptionsWithOSTreeCommit(
+		p.Kickstart.Path,
+		nil,
+		nil,
+		makeISORootfsPath(p.InstallerCustomizations.Payload.Path),
+		p.ostreeCommitSpec.Ref,
+		p.Kickstart.OSTree.Remote,
+		p.Kickstart.OSTree.OSName)
+
+	if err != nil {
+		return stages, err
+	}
+
+	stages = append(stages, osbuild.NewKickstartStage(kickstartOptions))
 
 	return stages, nil
 }
@@ -531,27 +557,6 @@ func (p *AnacondaInstaller) payloadStages() ([]*osbuild.Stage, error) {
 	// that isn't an empty string
 	if p.SELinux != "" {
 		return nil, fmt.Errorf("payload installers do not support SELinux policies (got policy %q)", p.SELinux)
-	}
-
-	if p.InteractiveDefaults != nil {
-		var ksUsers []users.User
-		var ksGroups []users.Group
-		if p.InteractiveDefaultsKickstart != nil {
-			ksUsers = p.InteractiveDefaultsKickstart.Users
-			ksGroups = p.InteractiveDefaultsKickstart.Groups
-		}
-		kickstartOptions, err := osbuild.NewKickstartStageOptionsWithLiveIMG(
-			osbuild.KickstartPathInteractiveDefaults,
-			ksUsers,
-			ksGroups,
-			p.InteractiveDefaults.TarPath,
-		)
-
-		if err != nil {
-			return nil, fmt.Errorf("failed to create kickstart stage options for interactive defaults: %w", err)
-		}
-
-		stages = append(stages, osbuild.NewKickstartStage(kickstartOptions))
 	}
 
 	return stages, nil
@@ -672,18 +677,6 @@ func (p *AnacondaInstaller) dracutStageOptions() (*osbuild.DracutStageOptions, e
 
 func (p *AnacondaInstaller) Platform() platform.Platform {
 	return p.platform
-}
-
-type AnacondaInteractiveDefaults struct {
-	TarPath string
-}
-
-func NewAnacondaInteractiveDefaults(tarPath string) *AnacondaInteractiveDefaults {
-	i := &AnacondaInteractiveDefaults{
-		TarPath: tarPath,
-	}
-
-	return i
 }
 
 func (p *AnacondaInstaller) getInline() []string {

@@ -60,7 +60,7 @@ func (img *AnacondaNetInstaller) InstantiateManifest(m *manifest.Manifest,
 	anacondaPipeline.ExcludePackages = img.ExtraBasePackages.Exclude
 	anacondaPipeline.ExtraRepos = img.ExtraBasePackages.Repositories
 	if img.Kickstart != nil {
-		anacondaPipeline.InteractiveDefaultsKickstart = &kickstart.Options{
+		anacondaPipeline.Kickstart = &kickstart.Options{
 			Users:  img.Kickstart.Users,
 			Groups: img.Kickstart.Groups,
 		}

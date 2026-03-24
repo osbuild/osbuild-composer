@@ -21,14 +21,6 @@
       - "smartmontools"
       - "smartmontools-selinux"
 
-  server_host_pkgset: &server_host_pkgset
-    include:
-      - "@container-management"
-      - "@server-hardware-support"
-      - "dracut-config-rescue"
-      - "kernel"
-      - "linux-firmware"
-
   cloud_core_pkgset: &cloud_core_pkgset
     include:
       - "@cloud-server-environment"
@@ -304,8 +296,6 @@
     - "cloud-init-local.service"
 
   kernel_options:
-    default_kernel_optons:
-      - "ro"
     generic_kernel_options: &generic_kernel_options
       - "no_timer_check"
       - "console=tty1"
@@ -470,36 +460,6 @@
           - "grub2-ppc64le"
           - "grub2-ppc64le-modules"
       bootloader: "grub2"
-    ppc64le_installer_platform: &ppc64le_installer_platform
-      <<: *ppc64le_bios_platform
-      image_format: "qcow2"
-      packages:
-        <<: *ppc64le_bios_platform_packages
-        booting:
-          - "lsvpd"
-          - "ppc64-diag"
-          - "grub2-tools"
-          - "grub2-tools-minimal"
-          - "grub2-tools-extra"
-        firmware:
-          - "amd-gpu-firmware"
-          - "atheros-firmware"
-          - "atmel-firmware"
-          - "b43-openfwwf"
-          - "brcmfmac-firmware"
-          - "intel-gpu-firmware"
-          - "iwlegacy-firmware"
-          - "iwlwifi-dvm-firmware"
-          - "iwlwifi-mvm-firmware"
-          - "libertas-firmware"
-          - "linux-firmware"
-          - "mt7xxx-firmware"
-          - "nvidia-gpu-firmware"
-          - "nxpwireless-firmware"
-          - "qed-firmware"
-          - "realtek-firmware"
-          - "tiwilink-firmware"
-          - "zd1211-firmware"
     s390x_zipl_platform: &s390x_zipl_platform
       arch: "s390x"
       zipl_support: true
@@ -637,7 +597,6 @@
       - &root_partition_guid_x86_64 "4f68bce3-e8cd-4db1-96e7-fbcaf984b709"
       - &root_partition_guid_aarch64 "b921b045-1df0-41c3-af44-4c6f280d3fae"
       - &root_partition_guid_ppc64le "c31c45e6-3f39-412e-80fb-4809c4980599"
-      - &root_partition_guid_s390x "5eead9a9-fe09-4a1e-a1d7-520d00531306"
 
     # the invidual partitions for easier composibility
     partitions:
@@ -1196,7 +1155,7 @@
     filename: "installer.iso"
     mime_type: "application/x-iso9660-image"
     boot_iso: true
-    image_func: "iot_installer"
+    image_func: "ostree_installer"
     ostree: *ostree_atomic
     exports: ["bootiso"]
     required_partition_sizes: *default_required_dir_sizes
@@ -1213,6 +1172,7 @@
         - ["/usr/share/licenses/fedora-release-common/LICENSE", "/LICENSE"]
       payload:
         location: "rootfs"
+        kickstart: "interactive-defaults"
     image_config:
       locale: "en_US.UTF-8"
       kernel_options:
@@ -1239,7 +1199,7 @@
     mime_type: "application/x-qemu-disk"
     default_size: "10 GiB"
     bootable: true
-    image_func: "iot"
+    image_func: "ostree_disk"
     ostree: *ostree_atomic
     exports: ["qcow2"]
     required_partition_sizes: *default_required_dir_sizes
@@ -1258,17 +1218,6 @@
         qcow2_compat: "1.1"
     blueprint:
       supported_options: *supported_options_ostree_disk
-
-image_config:
-  default:
-    default_oscap_datastream: "/usr/share/xml/scap/ssg/content/ssg-fedora-ds.xml"
-    hostname: "localhost.localdomain"
-    install_weak_deps: true
-    locale: "C.UTF-8"
-    machine_id_uninitialized: true
-    timezone: "UTC"
-    default_kernel: "kernel-core"
-    update_default_kernel: true
 
 image_types:
   "generic-vagrant-libvirt": &generic_vagrant_libvirt
@@ -1503,7 +1452,7 @@ image_types:
     name_aliases: ["fedora-iot-commit"]
     filename: "commit.tar"
     mime_type: "application/x-tar"
-    image_func: "iot_commit"
+    image_func: "ostree_commit"
     exports: ["commit-archive"]
     required_partition_sizes: *default_required_dir_sizes
     ostree:
@@ -1651,7 +1600,7 @@ image_types:
     name_aliases: ["fedora-iot-container"]
     filename: "container.tar"
     mime_type: "application/x-tar"
-    image_func: "iot_container"
+    image_func: "ostree_container"
     exports: ["container"]
     required_partition_sizes: *default_required_dir_sizes
     ostree:
@@ -1680,7 +1629,7 @@ image_types:
     mime_type: "application/xz"
     default_size: "6 GiB"
     bootable: true
-    image_func: "iot"
+    image_func: "ostree_disk"
     ostree: *ostree_iot
     exports: ["xz"]
     # Passing an empty map into the required partition sizes disables the
@@ -1739,7 +1688,7 @@ image_types:
     mime_type: "application/x-qemu-disk"
     default_size: "10 GiB"
     bootable: true
-    image_func: "iot"
+    image_func: "ostree_disk"
     ostree: *ostree_iot
     exports: ["qcow2"]
     required_partition_sizes: *default_required_dir_sizes
@@ -2022,7 +1971,7 @@ image_types:
     filename: "installer.iso"
     mime_type: "application/x-iso9660-image"
     boot_iso: true
-    image_func: "iot_installer"
+    image_func: "ostree_installer"
     iso_label: "IoT"
     variant: "IoT"
     ostree: *ostree_iot
@@ -2377,7 +2326,7 @@ image_types:
     bootable: true
     boot_iso: true
     default_size: "10 GiB"
-    image_func: "iot_simplified_installer"
+    image_func: "ostree_simplified_installer"
     iso_label: "IoT"
     variant: "IoT"
     ostree:

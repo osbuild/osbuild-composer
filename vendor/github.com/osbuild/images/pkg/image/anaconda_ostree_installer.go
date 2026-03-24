@@ -7,7 +7,6 @@ import (
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/artifact"
 	"github.com/osbuild/images/pkg/customizations/anaconda"
-	"github.com/osbuild/images/pkg/customizations/kickstart"
 	"github.com/osbuild/images/pkg/customizations/subscription"
 	"github.com/osbuild/images/pkg/datasizes"
 	"github.com/osbuild/images/pkg/manifest"
@@ -50,6 +49,20 @@ func (img *AnacondaOSTreeInstaller) InstantiateManifest(m *manifest.Manifest,
 
 	img.InstallerCustomizations.Payload.Path = "/ostree/repo"
 
+	// ostree options can be in either kickstart but should be in at least one
+	if (img.Kickstart == nil || img.Kickstart.OSTree == nil) && (img.InteractiveDefaultsKickstart == nil || img.InteractiveDefaultsKickstart.OSTree == nil) {
+		return nil, fmt.Errorf("kickstart options not set for ostree installer")
+	}
+
+	// set the default paths for these kickstarts
+	if img.Kickstart != nil && img.Kickstart.Path == "" {
+		img.Kickstart.Path = osbuild.KickstartPathOSBuild
+	}
+
+	if img.InteractiveDefaultsKickstart != nil && img.InteractiveDefaultsKickstart.Path == "" {
+		img.InteractiveDefaultsKickstart.Path = osbuild.KickstartPathInteractiveDefaults
+	}
+
 	anacondaPipeline := manifest.NewAnacondaInstaller(
 		manifest.AnacondaInstallerTypePayload,
 		buildPipeline,
@@ -62,12 +75,11 @@ func (img *AnacondaOSTreeInstaller) InstantiateManifest(m *manifest.Manifest,
 	anacondaPipeline.ExtraPackages = img.ExtraBasePackages.Include
 	anacondaPipeline.ExcludePackages = img.ExtraBasePackages.Exclude
 	anacondaPipeline.ExtraRepos = img.ExtraBasePackages.Repositories
-	if img.Kickstart != nil {
-		anacondaPipeline.InteractiveDefaultsKickstart = &kickstart.Options{
-			Users:  img.Kickstart.Users,
-			Groups: img.Kickstart.Groups,
-		}
+
+	if img.InteractiveDefaultsKickstart != nil {
+		anacondaPipeline.Kickstart = img.InteractiveDefaultsKickstart
 	}
+
 	anacondaPipeline.Biosdevname = (img.platform.GetArch() == arch.ARCH_X86_64)
 
 	if img.InstallerCustomizations.Payload.Location == manifest.PAYLOAD_LOCATION_ROOTFS {
@@ -93,17 +105,16 @@ func (img *AnacondaOSTreeInstaller) InstantiateManifest(m *manifest.Manifest,
 	default:
 	}
 
-	// Setup the kernel options for the ostree installer
-	if img.Kickstart == nil || img.Kickstart.OSTree == nil {
-		return nil, fmt.Errorf("kickstart options not set for ostree installer")
+	kernelOpts := []string{fmt.Sprintf("inst.stage2=hd:LABEL=%s", img.ISOCustomizations.Label)}
+
+	if img.Kickstart != nil {
+		kernelOpts = append(kernelOpts, fmt.Sprintf("inst.ks=hd:LABEL=%s:%s", img.ISOCustomizations.Label, img.Kickstart.Path))
 	}
-	if img.Kickstart.Path == "" {
-		img.Kickstart.Path = osbuild.KickstartPathOSBuild
-	}
-	kernelOpts := []string{fmt.Sprintf("inst.stage2=hd:LABEL=%s", img.ISOCustomizations.Label), fmt.Sprintf("inst.ks=hd:LABEL=%s:%s", img.ISOCustomizations.Label, img.Kickstart.Path)}
+
 	if anacondaPipeline.InstallerCustomizations.FIPS {
 		kernelOpts = append(kernelOpts, "fips=1")
 	}
+
 	kernelOpts = append(kernelOpts, img.InstallerCustomizations.KernelOptionsAppend...)
 
 	// Setup the bootloaders

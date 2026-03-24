@@ -70,6 +70,24 @@ distros:
       aarch64: "registry.access.redhat.com/ubi{{.MajorVersion}}/ubi:latest"
       ppc64le: "registry.access.redhat.com/ubi{{.MajorVersion}}/ubi:latest"
       s390x: "registry.access.redhat.com/ubi{{.MajorVersion}}/ubi:latest"
+    image_config:
+      default:
+        default_kernel: "kernel"
+        default_oscap_datastream: "/usr/share/xml/scap/ssg/content/ssg-rhel10-ds.xml"
+        install_weak_deps: true
+        locale: "C.UTF-8"
+        permissive_rhc: true
+        sysconfig:
+          networking: true
+          no_zero_conf: true
+        timezone: "UTC"
+        update_default_kernel: true
+      conditions:
+        "centos oscap datastream path":
+          when:
+            distro_name: "centos"
+          shallow_merge:
+            default_oscap_datastream: "/usr/share/xml/scap/ssg/content/ssg-cs10-ds.xml"
 
   - <<: *rhel10
     name: "almalinux-{{.MajorVersion}}.{{.MinorVersion}}"
@@ -199,6 +217,25 @@ distros:
       ppc64le: "registry.access.redhat.com/ubi{{.MajorVersion}}/ubi:latest"
       s390x: "registry.access.redhat.com/ubi{{.MajorVersion}}/ubi:latest"
 
+    image_config:
+      default:
+        default_kernel: "kernel"
+        default_oscap_datastream: "/usr/share/xml/scap/ssg/content/ssg-rhel9-ds.xml"
+        install_weak_deps: true
+        locale: "C.UTF-8"
+        permissive_rhc: true
+        sysconfig:
+          networking: true
+          no_zero_conf: true
+        timezone: "America/New_York"
+        update_default_kernel: true
+      conditions:
+        "oscap needs a differnt path on centos":
+          when:
+            distro_name: "centos"
+          shallow_merge:
+            default_oscap_datastream: "/usr/share/xml/scap/ssg/content/ssg-cs9-ds.xml"
+
   - <<: *rhel9
     name: "almalinux-{{.MajorVersion}}.{{.MinorVersion}}"
     match: 'almalinux-9\.[0-9]{1,2}'
@@ -314,6 +351,26 @@ distros:
       ppc64le: "registry.access.redhat.com/ubi{{.MajorVersion}}/ubi:latest"
       s390x: "registry.access.redhat.com/ubi{{.MajorVersion}}/ubi:latest"
 
+    image_config:
+      default:
+        default_kernel: "kernel"
+        default_oscap_datastream: "/usr/share/xml/scap/ssg/content/ssg-rhel8-ds.xml"
+        install_weak_deps: true
+        kernel_options_bootloader: true
+        locale: "en_US.UTF-8"
+        permissive_rhc: false
+        sysconfig:
+          networking: true
+          no_zero_conf: true
+        timezone: "America/New_York"
+        update_default_kernel: true
+      conditions:
+        "centos has a different oscap path":
+          when:
+            distro_name: "centos"
+          shallow_merge:
+            default_oscap_datastream: "/usr/share/xml/scap/ssg/content/ssg-centos8-ds.xml"
+
   - <<: *rhel8
     name: "almalinux-{{.MajorVersion}}.{{.MinorVersion}}"
     match: 'almalinux-8\.[0-9]{1,2}'
@@ -373,6 +430,22 @@ distros:
       x86_64: "registry.access.redhat.com/ubi{{.MajorVersion}}/ubi:latest"
       ppc64le: "registry.access.redhat.com/ubi{{.MajorVersion}}/ubi:latest"
       s390x: "registry.access.redhat.com/ubi{{.MajorVersion}}/ubi:latest"
+    image_config:
+      default:
+        timezone: "America/New_York"
+        locale: "en_US.UTF-8"
+        gpgkey_files:
+          - "/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release"
+        sysconfig:
+          networking: true
+          no_zero_conf: true
+          create_default_network_scripts: true
+        default_kernel: "kernel"
+        update_default_kernel: true
+        kernel_options_bootloader: true
+        # RHEL 7 grub does not support BLS
+        no_bls: true
+        install_weak_deps: true
 
   # Note that this will not be visible by default because we do not
   # ship with a reporegistry that contains repositories for it. It

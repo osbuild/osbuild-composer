@@ -157,7 +157,7 @@ func (t *bootcImageType) manifestWithoutValidation(bp *blueprint.Blueprint, opti
 
 	switch t.Image {
 	case "bootc_legacy_iso":
-		return t.manifestForLegacyISO(bp, rng)
+		return t.manifestForLegacyISO(bp, options, rng)
 	case "bootc_iso":
 		return t.manifestForISO(bp, options, rng)
 	case "bootc_generic_iso":
@@ -172,20 +172,28 @@ func (t *bootcImageType) manifestWithoutValidation(bp *blueprint.Blueprint, opti
 	}
 }
 
+func (t *bootcImageType) useLocalStorage(options distro.ImageOptions) bool {
+	if options.Bootc != nil {
+		return !options.Bootc.UseRemoteContainerSource
+	}
+	return true
+}
+
 func (t *bootcImageType) manifestForDisk(bp *blueprint.Blueprint, options distro.ImageOptions, rng *rand.Rand) (*manifest.Manifest, []string, error) {
 	bd := t.arch.distro.(*BootcDistro)
 	if bd.imgref == "" {
 		return nil, nil, fmt.Errorf("internal error: no base image defined")
 	}
+	local := t.useLocalStorage(options)
 	containerSource := container.SourceSpec{
 		Source: bd.imgref,
 		Name:   bd.imgref,
-		Local:  true,
+		Local:  local,
 	}
 	buildContainerSource := container.SourceSpec{
 		Source: bd.buildImgref,
 		Name:   bd.buildImgref,
-		Local:  true,
+		Local:  local,
 	}
 
 	var customizations *blueprint.Customizations
@@ -349,11 +357,12 @@ func (t *bootcImageType) manifestForISO(bp *blueprint.Blueprint, options distro.
 		return nil, nil, fmt.Errorf("no installer payload bootc ref set")
 	}
 	payloadRef := options.Bootc.InstallerPayloadRef
+	local := t.useLocalStorage(options)
 	imgref := bd.imgref
 	containerSource := container.SourceSpec{
 		Source: imgref,
 		Name:   imgref,
-		Local:  true,
+		Local:  local,
 	}
 	sourceInfo := bd.sourceInfo
 	// XXX: keep it simple for now, we may allow this in the future
@@ -389,7 +398,7 @@ func (t *bootcImageType) manifestForISO(bp *blueprint.Blueprint, options distro.
 	payloadSource := container.SourceSpec{
 		Source: payloadRef,
 		Name:   payloadRef,
-		Local:  true,
+		Local:  local,
 	}
 	img.InstallerPayload = payloadSource
 
@@ -417,10 +426,11 @@ func (t *bootcImageType) manifestForGenericISO(options distro.ImageOptions, rng 
 		return nil, nil, fmt.Errorf("internal error: no base image defined")
 	}
 
+	local := t.useLocalStorage(options)
 	containerSource := container.SourceSpec{
 		Source: bd.imgref,
 		Name:   bd.imgref,
-		Local:  true,
+		Local:  local,
 	}
 
 	platformi := PlatformFor(t.arch.Name(), bd.sourceInfo.UEFIVendor)
@@ -431,7 +441,7 @@ func (t *bootcImageType) manifestForGenericISO(options distro.ImageOptions, rng 
 		img.PayloadContainer = &container.SourceSpec{
 			Source: options.Bootc.InstallerPayloadRef,
 			Name:   options.Bootc.InstallerPayloadRef,
-			Local:  true,
+			Local:  local,
 		}
 	}
 	img.RootfsCompression = "zstd"
@@ -500,16 +510,17 @@ func newDistroYAMLFrom(sourceInfo *osinfo.Info) (*defs.DistroYAML, *distro.ID, e
 	return nil, nil, fmt.Errorf("cannot load distro definitions for %s-%s or any of %v", sourceInfo.OSRelease.ID, sourceInfo.OSRelease.VersionID, sourceInfo.OSRelease.IDLike)
 }
 
-func (t *bootcImageType) manifestForLegacyISO(bp *blueprint.Blueprint, rng *rand.Rand) (*manifest.Manifest, []string, error) {
+func (t *bootcImageType) manifestForLegacyISO(bp *blueprint.Blueprint, options distro.ImageOptions, rng *rand.Rand) (*manifest.Manifest, []string, error) {
 	bd := t.arch.distro.(*BootcDistro)
 	if bd.imgref == "" {
 		return nil, nil, fmt.Errorf("internal error in bootc legacy iso: no base image defined")
 	}
+	local := t.useLocalStorage(options)
 	imgref := bd.imgref
 	containerSource := container.SourceSpec{
 		Source: imgref,
 		Name:   imgref,
-		Local:  true,
+		Local:  local,
 	}
 
 	archStr := t.arch.Name()
@@ -592,15 +603,16 @@ func (t *bootcImageType) manifestForPXETar(bp *blueprint.Blueprint, options dist
 		return nil, nil, fmt.Errorf("bootc container initramfs requires ostree, dmsquash-live and livenet modules")
 	}
 
+	local := t.useLocalStorage(options)
 	containerSource := container.SourceSpec{
 		Source: bd.imgref,
 		Name:   bd.imgref,
-		Local:  true,
+		Local:  local,
 	}
 	buildContainerSource := container.SourceSpec{
 		Source: bd.buildImgref,
 		Name:   bd.buildImgref,
-		Local:  true,
+		Local:  local,
 	}
 
 	var customizations *blueprint.Customizations

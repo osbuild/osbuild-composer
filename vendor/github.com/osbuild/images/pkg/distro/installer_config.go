@@ -36,7 +36,8 @@ type InstallerConfig struct {
 	ISOFiles [][2]string `yaml:"iso_files"`
 
 	Payload *struct {
-		Location *manifest.PayloadLocation `yaml:"location,omitempty"`
+		Location  *manifest.PayloadLocation  `yaml:"location,omitempty"`
+		Kickstart *manifest.PayloadKickstart `yaml:"kickstart,omitempty"`
 	} `yaml:"payload,omitempty"`
 }
 
