@@ -1,0 +1,86 @@
+FROM quay.io/fedora/fedora-bootc:latest AS baseos
+
+COPY osbuild-composer.spec osbuild-composer.spec
+
+RUN <<EORUN
+set -ex
+
+# Install composer plus useful utilities for development.
+dnf -y install osbuild osbuild-composer composer-cli osbuild-depsolve-dnf \
+    dnf-plugins-core rpm-build spectool redhat-rpm-config dnf5-plugins \
+    policycoreutils-python-utils socat
+
+# Install build dependencies for osbuild-composer just in case a rebuild is needed.
+dnf -y builddep osbuild-composer.spec
+
+# Enable osbuild-composer socket and set root password.
+systemctl enable osbuild-composer.socket
+echo "root:redhat" | chpasswd
+
+# Disable services which are not needed for development in host network.
+systemctl mask \
+    avahi-daemon.service \
+    avahi-daemon.socket \
+    NetworkManager.service \
+    NetworkManager-wait-online.service \
+    auditd.service \
+    systemd-hostnamed.service \
+    systemd-resolved.service \
+    firewalld.service \
+    fedora-readonly.service \
+    bootloader-update.service
+
+# Create HTTP bridges forCloudAPI -> 6061, Job -> 6062, Weldr -> 6063
+declare -A BRIDGES=( 
+    ["cloudapi"]="6061:/run/cloudapi/api.socket:osbuild-composer.socket" 
+    ["job"]="6062:/run/osbuild-composer/job.socket:osbuild-local-worker.socket" 
+    ["weldr"]="6063:/run/weldr/api.socket:osbuild-composer.socket" 
+)
+
+for NAME in "${!BRIDGES[@]}"; do
+    DATA="${BRIDGES[$NAME]}"
+    PORT="${DATA%%:*}"
+    REST="${DATA#*:}"
+    SOCK="${REST%%:*}"
+    UNIT="${REST#*:}"
+
+    cat <<EOF > /etc/systemd/system/socat-${NAME}.service
+[Unit]
+Description=Socat for osbuild-composer ${NAME}
+After=${UNIT}
+Requires=${UNIT}
+
+[Service]
+ExecStart=/usr/bin/socat TCP-LISTEN:${PORT},reuseaddr,fork UNIX-CONNECT:${SOCK}
+Restart=always
+RestartSec=1
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+    systemctl enable socat-${NAME}.service
+done
+EORUN
+
+# Copy SSH public key to authorized_keys if it exists and configure SSH port.
+# Alghouth the intention is to run this via podman, update SELinux policy just
+# in case someone runs this in a VM.
+RUN --mount=type=secret,id=ssh_pubkey <<EORUN
+set -ex
+mkdir -p /var/roothome/.ssh
+chmod 700 /var/roothome
+
+if [ -f /run/secrets/ssh_pubkey ]; then
+    cat /run/secrets/ssh_pubkey > /var/roothome/.ssh/authorized_keys
+    chmod 600 /var/roothome/.ssh/authorized_keys
+    chown -R root:root /var/roothome/.ssh
+fi
+
+sed -i 's/#Port 22/Port 222/' /etc/ssh/sshd_config
+sed -i 's/#UseDNS yes/UseDNS no/' /etc/ssh/sshd_config
+echo "GSSAPIAuthentication no" >> /etc/ssh/sshd_config
+echo "PrintMotd no" >> /etc/ssh/sshd_config
+echo "PrintLastLog no" >> /etc/ssh/sshd_config
+semanage port -a -t ssh_port_t -p tcp 222
+EORUN

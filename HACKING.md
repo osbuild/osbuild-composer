@@ -71,6 +71,28 @@ The containers are a good way to quickly test small changes, but before
 submitting a Pull Request, it's recommended to run through all the tests using
 the [Virtual Machine](#virtual-machine) setup described above.
 
+## Bootable dev container
+
+The `Containerfile.devel` contains a Fedora-based bootc image definition that installs osbuild and its (build) dependencies, configures ssh to listen on port 222 so it can be easily started in podman host network, adds host machine ssh public keys, sets root password, exposes composer and workers through TCP and prepares the container to be either booted in podman or in a VM.
+
+This can be used as a development box to test changes, a helper script `bootc-dev` is provided.
+
+### Usage
+
+From the repository root, `./bootc-dev` manages a Podman container named `composer-git` built from `Containerfile.devel`. The container runs privileged with systemd and host networking (so HTTP bridges on 6061–6063 and SSH on 222 match the host).
+
+- **`build`** — Build the image with from `Containerfile.devel`. If `~/.ssh/id_rsa.pub` exists, it is passed as a build secret so root can log in via SSH with your key; otherwise root password `redhat` can be used.
+- **`start`** — Start the container in the background (`podman run -d …`) with host network configuration.
+- **`stop`** — Stop the container and remove it.
+- **`restart`** — Same as stop then start.
+- **`remove`** — Remove the container (`podman rm`); stop it first if it is still running.
+- **`logs`** — Follow journal lines inside the container; any extra arguments are passed to `journalctl`.
+- **`copy`** — On the host, build composer/worker/executor, `scp` it to the bootable container and restart services.
+- **`cli`** — Run `composer-cli` inside the container; pass subcommands and flags after `cli` (e.g. `./bootc-dev cli status show`).
+- **`ssh`** — Open an SSH session (or run a remote command) as `root@localhost` on port `222`, with host key checks disabled for convenience.
+
+To connect to the container, use `ssh -p 222 root@localhost`.
+
 ### Build and run
 
 To build the containers run:
