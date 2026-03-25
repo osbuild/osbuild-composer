@@ -51,8 +51,13 @@ type OSBuildJob struct {
 	// as part of the depsolve job, so that they can be uploaded to Koji.
 	DepsolveDynArgsIdx *int `json:"depsolve_dyn_args_idx,omitempty"`
 
-	Targets       []*target.Target `json:"targets,omitempty"`
-	PipelineNames *PipelineNames   `json:"pipeline_names,omitempty"`
+	Targets []*target.Target `json:"targets,omitempty"`
+
+	// Deprecated: PipelineNames should not be set on OSBuildJob args.
+	// PipelineNames are now always read from ManifestJobByIDResult.ManifestInfo.PipelineNames,
+	// set by serializeManifest in CloudAPI. This field is kept for backward compatibility
+	// and due to Weldr API still setting it on OSBuildJob args.
+	PipelineNames *PipelineNames `json:"pipeline_names,omitempty"`
 
 	// The ImageBootMode is just copied to the result by the worker, so that
 	// the value can be accessed job which depend on it.
