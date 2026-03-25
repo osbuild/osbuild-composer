@@ -2,6 +2,7 @@ package v2
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/google/uuid"
 	"github.com/osbuild/images/pkg/manifest"
@@ -17,4 +18,9 @@ func MockSerializeManifestFunc(f func(ctx context.Context, manifestSource *manif
 	return func() {
 		serializeManifestFunc = originalSerializeManifestFunc
 	}
+}
+
+// HandleBootcPreManifest exports the handleBootcPreManifest function for testing.
+func HandleBootcPreManifest(workers *worker.Server, jobID uuid.UUID, token uuid.UUID, staticArgs json.RawMessage, dynArgs []json.RawMessage) {
+	handleBootcPreManifest(workers, jobID, token, staticArgs, dynArgs)
 }

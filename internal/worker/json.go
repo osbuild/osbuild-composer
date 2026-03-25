@@ -14,6 +14,7 @@ import (
 	"github.com/osbuild/images/pkg/bootc"
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/depsolvednf"
+	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/rpmmd"
@@ -1270,5 +1271,35 @@ type BootcInfoResolveJobResult struct {
 	// Infos is a list of resolved bootc container infos. The order of the infos
 	// is the same as the order of the specs in the job args.
 	Infos []BootcContainerInfo `json:"infos"`
+	JobResult
+}
+
+// BootcPreManifestJob is a server-side job that generates a pre-manifest
+// from resolved bootc info. Its result contains the arguments for
+// downstream resolve jobs.
+type BootcPreManifestJob struct {
+	ImageType    string              `json:"image_type"`
+	Blueprint    blueprint.Blueprint `json:"blueprint"`
+	ImageOptions distro.ImageOptions `json:"image_options"`
+	Seed         int64               `json:"seed"`
+
+	// Index of the BootcInfoResolveJobResult in the dynamic args slice.
+	BootcInfoResolveDynArgsIdx *int `json:"bootc_info_resolve_dyn_args_idx"`
+
+	// Index of the base container info within BootcInfoResolveJobResult.Infos.
+	BaseInfoIdx int `json:"base_info_idx"`
+
+	// Index of the build container info within BootcInfoResolveJobResult.Infos.
+	// If nil, the base container is used for build as well.
+	BuildInfoIdx *int `json:"build_info_idx,omitempty"`
+}
+
+// BootcPreManifestJobResult holds the result of a BootcPreManifest job,
+// including the arguments for downstream container resolve jobs extracted
+// from the pre-manifest.
+type BootcPreManifestJobResult struct {
+	// Arguments for the downstream container resolve job.
+	ContainerResolveJobArgs *ContainerResolveJob `json:"container_resolve_job_args,omitempty"`
+
 	JobResult
 }
