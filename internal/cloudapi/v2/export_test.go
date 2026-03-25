@@ -5,14 +5,16 @@ import (
 	"encoding/json"
 
 	"github.com/google/uuid"
-	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 )
 
 type ManifestJobDependencies = manifestJobDependencies
 
+// ManifestSourceFunc exports the manifestSourceFunc type for testing.
+type ManifestSourceFunc = manifestSourceFunc
+
 // MockSerializeManifestFunc overrides the serializeManifestFunc for testing
-func MockSerializeManifestFunc(f func(ctx context.Context, manifestSource *manifest.Manifest, workers *worker.Server, dependencies manifestJobDependencies, manifestJobID uuid.UUID, seed int64)) (restore func()) {
+func MockSerializeManifestFunc(f func(ctx context.Context, getManifestSource manifestSourceFunc, workers *worker.Server, dependencies manifestJobDependencies, manifestJobID uuid.UUID, seed int64)) (restore func()) {
 	originalSerializeManifestFunc := serializeManifestFunc
 	serializeManifestFunc = f
 	return func() {
