@@ -118,7 +118,7 @@ func (request *DepsolveRequest) Depsolve(df *distrofactory.Factory, rr *reporegi
 	}
 
 	// Limit how long a depsolve can take
-	ctx, cancel := context.WithTimeout(context.Background(), time.Minute*depsolveTimeoutMin)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute*maxJobTimeoutMinutes)
 	defer cancel()
 
 	// Wait until depsolve job is finished, fails, or is canceled
