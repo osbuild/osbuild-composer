@@ -45,6 +45,7 @@ const (
 	ErrorGeneratingSignedURL  ClientErrorCode = 38
 	ErrorInvalidRepositoryURL ClientErrorCode = 39
 	ErrorDepsolveTimeout      ClientErrorCode = 40
+	ErrorBootcInfoResolve     ClientErrorCode = 41
 )
 
 type ClientErrorCode int
@@ -105,6 +106,8 @@ func GetStatusCode(err *Error) StatusCode {
 	case ErrorContainerResolution:
 		return JobStatusUserInputError
 	case ErrorOSTreeDependency:
+		return JobStatusUserInputError
+	case ErrorBootcInfoResolve:
 		return JobStatusUserInputError
 	default:
 		return JobStatusInternalError

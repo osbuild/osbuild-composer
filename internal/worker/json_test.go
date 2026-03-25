@@ -10,6 +10,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/osbuild/images/pkg/bib/osinfo"
+	"github.com/osbuild/images/pkg/bootc"
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/depsolvednf"
 	"github.com/osbuild/images/pkg/rpmmd"
@@ -1747,6 +1749,150 @@ func TestContainerResolveJobResultMarshalJSON(t *testing.T) {
 			data, err := json.Marshal(tc.result)
 			require.NoError(t, err)
 			assert.EqualValues(t, tc.json, string(data))
+		})
+	}
+}
+
+func TestBootcContainerInfoVendorConversion(t *testing.T) {
+	testCases := []struct {
+		name string
+		info *bootc.Info
+	}{
+		{
+			name: "all fields with OSInfo",
+			info: &bootc.Info{
+				Imgref:        "quay.io/centos-bootc/centos-bootc:stream9",
+				ImageID:       "sha256:abc123",
+				Arch:          "x86_64",
+				DefaultRootFs: "xfs",
+				Size:          1073741824,
+				OSInfo: &osinfo.Info{
+					OSRelease: osinfo.OSRelease{
+						PlatformID: "platform:el9",
+						ID:         "centos",
+						VersionID:  "9",
+						Name:       "CentOS Stream",
+					},
+					KernelInfo: &osinfo.KernelInfo{
+						Version: "5.14.0-362.el9.x86_64",
+					},
+					InitrdModules: []string{"nvme", "xfs"},
+				},
+			},
+		},
+		{
+			name: "all scalars, nil OSInfo",
+			info: &bootc.Info{
+				Imgref:        "registry.example.com/image:latest",
+				ImageID:       "sha256:ghi789",
+				Arch:          "x86_64",
+				DefaultRootFs: "ext4",
+				Size:          536870912,
+			},
+		},
+		{
+			name: "minimal scalar fields",
+			info: &bootc.Info{
+				Imgref:  "quay.io/centos-bootc/centos-bootc:stream9",
+				ImageID: "sha256:def456",
+				Arch:    "aarch64",
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			dto, err := BootcContainerInfoFromVendor(tc.info)
+			require.NoError(t, err)
+			roundTrip, err := dto.ToVendor()
+			require.NoError(t, err)
+			require.NotNil(t, roundTrip)
+			assert.Equal(t, tc.info, roundTrip)
+		})
+	}
+}
+
+func TestBootcResolveInfoModeUnmarshalJSON(t *testing.T) {
+	testCases := []struct {
+		name     string
+		json     string
+		expected BootcInfoResolveMode
+		errorMsg string
+	}{
+		{
+			name:     "full",
+			json:     `"full"`,
+			expected: BootcInfoResolveModeFull,
+		},
+		{
+			name:     "build",
+			json:     `"build"`,
+			expected: BootcInfoResolveModeBuild,
+		},
+		{
+			name:     "invalid",
+			json:     `"invalid"`,
+			errorMsg: "invalid bootc info resolve mode: \"invalid\"",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			var mode BootcInfoResolveMode
+			err := json.Unmarshal([]byte(tc.json), &mode)
+			if tc.errorMsg != "" {
+				require.Error(t, err)
+				assert.Equal(t, tc.errorMsg, err.Error())
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tc.expected, mode)
+		})
+	}
+}
+
+func TestBootcContainerInfoJSONRoundtrip(t *testing.T) {
+	testCases := []struct {
+		name string
+		info BootcContainerInfo
+	}{
+		{
+			name: "minimal",
+			info: BootcContainerInfo{},
+		},
+		{
+			name: "all scalar fields, nil OSInfo",
+			info: BootcContainerInfo{
+				Imgref:        "registry.example.com/image:latest",
+				ImageID:       "sha256:ghi789",
+				Arch:          "x86_64",
+				DefaultRootFs: "ext4",
+				Size:          536870912,
+			},
+		},
+		{
+			name: "all fields with OSInfo",
+			info: BootcContainerInfo{
+				Imgref:        "quay.io/centos-bootc/centos-bootc:stream9",
+				ImageID:       "sha256:abc123",
+				Arch:          "x86_64",
+				DefaultRootFs: "xfs",
+				Size:          1073741824,
+				OSInfo:        json.RawMessage(`{"os-release":{"id":"centos","version_id":"9"}}`),
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			data, err := json.Marshal(tc.info)
+			require.NoError(t, err)
+
+			var result BootcContainerInfo
+			err = json.Unmarshal(data, &result)
+			require.NoError(t, err)
+
+			assert.Equal(t, tc.info, result)
 		})
 	}
 }

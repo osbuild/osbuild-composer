@@ -585,6 +585,16 @@ func enqueueAndFinishTestJobDependencies(s *worker.Server, deps []testJob) ([]uu
 				return nil, err
 			}
 
+		case *worker.BootcInfoResolveJob:
+			job := dep.main.(*worker.BootcInfoResolveJob)
+			if len(depUUIDs) != 0 {
+				return nil, fmt.Errorf("dependencies are not supported for BootcInfoResolveJob, got: %d", len(depUUIDs))
+			}
+			id, err = s.EnqueueBootcInfoResolveJob(arch.ARCH_X86_64.String(), job, "")
+			if err != nil {
+				return nil, err
+			}
+
 		default:
 			return nil, fmt.Errorf("unexpected job type")
 		}
@@ -1534,4 +1544,100 @@ func TestCleanupArtifacts(t *testing.T) {
 	assert.True(t, artifactUUIDExists(tempdir, jobID))
 	assert.False(t, artifactUUIDExists(tempdir, lostJobID))
 	assert.False(t, artifactUUIDExists(tempdir, emptyJobID))
+}
+
+func testBootcInfoResolveSampleJob() *worker.BootcInfoResolveJob {
+	return &worker.BootcInfoResolveJob{
+		Specs: []worker.BootcInfoResolveJobSpec{
+			{
+				Ref:         "quay.io/centos-bootc/centos-bootc:stream9",
+				ResolveMode: worker.BootcInfoResolveModeFull,
+			},
+		},
+	}
+}
+
+func TestBootcInfoResolveJob(t *testing.T) {
+	server := newTestServer(t, t.TempDir(), defaultConfig, false)
+	job := testBootcInfoResolveSampleJob()
+
+	jobID, err := server.EnqueueBootcInfoResolveJob("x86_64", job, "")
+	require.NoError(t, err)
+	require.NotEqual(t, uuid.Nil, jobID)
+
+	dequeuedID, token, jobType, args, dynamicArgs, err := server.RequestJob(
+		context.Background(), "x86_64",
+		[]string{worker.JobTypeBootcInfoResolve}, []string{""}, uuid.Nil,
+	)
+	require.NoError(t, err)
+	require.Equal(t, jobID, dequeuedID)
+	require.Equal(t, worker.JobTypeBootcInfoResolve, jobType)
+	require.NotNil(t, args)
+	require.Nil(t, dynamicArgs)
+	require.NotEqual(t, uuid.Nil, token)
+
+	var dequeuedArgs worker.BootcInfoResolveJob
+	err = json.Unmarshal(args, &dequeuedArgs)
+	require.NoError(t, err)
+	assert.Equal(t, *job, dequeuedArgs)
+
+	expectedResult := worker.BootcInfoResolveJobResult{
+		Infos: []worker.BootcContainerInfo{
+			{
+				Imgref:        "quay.io/centos-bootc/centos-bootc:stream9",
+				ImageID:       "sha256:abc123",
+				Arch:          "x86_64",
+				DefaultRootFs: "xfs",
+				Size:          1073741824,
+			},
+		},
+	}
+	resultJSON, err := json.Marshal(expectedResult)
+	require.NoError(t, err)
+	err = server.FinishJob(token, resultJSON)
+	require.NoError(t, err)
+
+	var jobResult worker.BootcInfoResolveJobResult
+	jobInfo, err := server.BootcInfoResolveJobInfo(jobID, &jobResult)
+	require.NoError(t, err)
+	require.NotNil(t, jobInfo)
+	assert.Equal(t, worker.JobTypeBootcInfoResolve, jobInfo.JobType)
+	assert.False(t, jobInfo.JobStatus.Finished.IsZero())
+	assert.Equal(t, expectedResult.Infos, jobResult.Infos)
+}
+
+func TestBootcInfoResolveJobArchRouting(t *testing.T) {
+	server := newTestServer(t, t.TempDir(), worker.Config{
+		RequestJobTimeout: time.Millisecond * 50,
+		BasePath:          "/api/worker/v1",
+	}, false)
+
+	_, err := server.EnqueueBootcInfoResolveJob("x86_64", testBootcInfoResolveSampleJob(), "")
+	require.NoError(t, err)
+
+	_, _, _, _, _, err = server.RequestJob(
+		context.Background(), "aarch64",
+		[]string{worker.JobTypeBootcInfoResolve}, []string{""}, uuid.Nil,
+	)
+	require.Equal(t, jobqueue.ErrDequeueTimeout, err)
+}
+
+func TestBootcInfoResolveJobInfoWrongType(t *testing.T) {
+	server := newTestServer(t, t.TempDir(), defaultConfig, false)
+
+	depsolveJobID, err := server.EnqueueDepsolve(&worker.DepsolveJob{}, "")
+	require.NoError(t, err)
+
+	_, token, _, _, _, err := server.RequestJob(
+		context.Background(), "x86_64",
+		[]string{worker.JobTypeDepsolve}, []string{""}, uuid.Nil,
+	)
+	require.NoError(t, err)
+
+	err = server.FinishJob(token, json.RawMessage(`{}`))
+	require.NoError(t, err)
+
+	var result worker.BootcInfoResolveJobResult
+	_, err = server.BootcInfoResolveJobInfo(depsolveJobID, &result)
+	require.Error(t, err, "reading depsolve job as bootc-info-resolve should fail")
 }
