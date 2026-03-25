@@ -2,9 +2,12 @@ package v2
 
 import (
 	"context"
+	"crypto/rand"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
+	"math/big"
 	"net/http"
 	"slices"
 	"strings"
@@ -21,9 +24,11 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/sirupsen/logrus"
 
+	"github.com/osbuild/blueprint/pkg/blueprint"
 	"github.com/osbuild/osbuild-composer/pkg/jobqueue"
 
 	"github.com/osbuild/images/pkg/arch"
+	"github.com/osbuild/images/pkg/bootc"
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/depsolvednf"
 	"github.com/osbuild/images/pkg/distro"
@@ -185,6 +190,7 @@ type manifestJobDependencies struct {
 	depsolveJobID         uuid.UUID
 	containerResolveJobID uuid.UUID
 	ostreeResolveJobID    uuid.UUID
+	bootcInfoResolveJobID uuid.UUID
 }
 
 // IDs returns a slice of the non-nil job IDs.
@@ -198,6 +204,9 @@ func (mjd manifestJobDependencies) IDs() []uuid.UUID {
 	}
 	if mjd.ostreeResolveJobID != uuid.Nil {
 		ids = append(ids, mjd.ostreeResolveJobID)
+	}
+	if mjd.bootcInfoResolveJobID != uuid.Nil {
+		ids = append(ids, mjd.bootcInfoResolveJobID)
 	}
 	return ids
 }
@@ -481,6 +490,72 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 	return id, nil
 }
 
+// buildBootcManifestSource reconstructs a manifest source from resolved bootc info.
+func buildBootcManifestSource(
+	baseInfoIdx int,
+	buildInfoIdx *int,
+	bootcInfoResult worker.BootcInfoResolveJobResult,
+	imageTypeName string,
+	bp *blueprint.Blueprint,
+	imageOptions distro.ImageOptions,
+	seed int64,
+) (*manifest.Manifest, error) {
+
+	if bootcInfoResult.JobError != nil {
+		return nil, fmt.Errorf("bootc info resolve dependency failed: %s", bootcInfoResult.JobError.Reason)
+	}
+	if len(bootcInfoResult.Infos) == 0 {
+		return nil, fmt.Errorf("bootc info resolve result has no infos")
+	}
+
+	if baseInfoIdx < 0 || baseInfoIdx >= len(bootcInfoResult.Infos) {
+		return nil, fmt.Errorf("base info index %d is out of range (resolved %d infos)", baseInfoIdx, len(bootcInfoResult.Infos))
+	}
+
+	baseInfo, err := bootcInfoResult.Infos[baseInfoIdx].ToVendor()
+	if err != nil {
+		return nil, fmt.Errorf("converting bootc base info to vendor type: %w", err)
+	}
+
+	var buildInfo *bootc.Info
+	if buildInfoIdx != nil {
+		if *buildInfoIdx < 0 || *buildInfoIdx >= len(bootcInfoResult.Infos) {
+			return nil, fmt.Errorf("build info index %d is out of range (resolved %d infos)", *buildInfoIdx, len(bootcInfoResult.Infos))
+		}
+		buildInfo, err = bootcInfoResult.Infos[*buildInfoIdx].ToVendor()
+		if err != nil {
+			return nil, fmt.Errorf("converting bootc build info to vendor type: %w", err)
+		}
+	}
+
+	bootcDistro, err := generic.NewBootc("bootc", baseInfo)
+	if err != nil {
+		return nil, fmt.Errorf("creating bootc distro: %w", err)
+	}
+	if buildInfo != nil {
+		if err := bootcDistro.SetBuildContainer(buildInfo); err != nil {
+			return nil, fmt.Errorf("setting build container: %w", err)
+		}
+	}
+	canonicalArch, err := arch.FromString(baseInfo.Arch)
+	if err != nil {
+		return nil, fmt.Errorf("invalid arch %q: %w", baseInfo.Arch, err)
+	}
+	archi, err := bootcDistro.GetArch(canonicalArch.String())
+	if err != nil {
+		return nil, fmt.Errorf("getting arch %q: %w", canonicalArch.String(), err)
+	}
+	imgType, err := archi.GetImageType(imageTypeName)
+	if err != nil {
+		return nil, fmt.Errorf("getting image type %q: %w", imageTypeName, err)
+	}
+	manifestSource, _, err := imgType.Manifest(bp, imageOptions, nil, &seed)
+	if err != nil {
+		return nil, fmt.Errorf("generating manifest: %w", err)
+	}
+	return manifestSource, nil
+}
+
 func (s *Server) enqueueBootcCompose(request ComposeRequest, channel string) (uuid.UUID, error) {
 	var ir ImageRequest
 	if request.ImageRequest != nil {
@@ -492,17 +567,6 @@ func (s *Server) enqueueBootcCompose(request ComposeRequest, channel string) (uu
 	}
 
 	bp, err := request.GetBlueprint()
-	if err != nil {
-		return uuid.Nil, err
-	}
-
-	mani, err := s.workers.EnqueueBootcManifestJob(&worker.BootcManifestJob{
-		Ref:       request.Bootc.Reference,
-		BuildRef:  request.Bootc.Reference,
-		Arch:      ir.Architecture,
-		ImageType: imageTypeFromApiImageType(ir.ImageType),
-		Blueprint: bp,
-	}, channel)
 	if err != nil {
 		return uuid.Nil, err
 	}
@@ -519,23 +583,130 @@ func (s *Server) enqueueBootcCompose(request ComposeRequest, channel string) (uu
 		target.NewWorkerServerTarget(),
 	}
 
+	imageTypeName := imageTypeFromApiImageType(ir.ImageType)
+
 	// TODO: Hardcoding this is obviously a very bad hack, but currently this image type
 	// information isn't retrievable from images without running the bootc container.
-	if imageTypeFromApiImageType(ir.ImageType) == "qcow2" {
+	if imageTypeName == "qcow2" {
 		tgts[0].ImageName = "disk.qcow2"
 		tgts[0].OsbuildArtifact.ExportFilename = "disk.qcow2"
 		tgts[0].OsbuildArtifact.ExportName = "qcow2"
 	} else {
 		return uuid.Nil, HTTPErrorWithDetails(ErrorUnsupportedImageType, nil, "only qcow2 (guest-image) is supported for bootc composes")
 	}
-	id, err := s.workers.EnqueueOSBuildAsDependency(ir.Architecture, &worker.OSBuildJob{
-		Targets: tgts,
-	}, []uuid.UUID{mani}, channel)
+
+	// Generate a manifest seed using crypto/rand, same approach as
+	// GetImageRequests (compose.go). Must be the same for both
+	// BootcPreManifest and ManifestByID so they produce identical manifests.
+	bigSeed, err := rand.Int(rand.Reader, big.NewInt(math.MaxInt64))
 	if err != nil {
-		return uuid.Nil, err
+		return uuid.Nil, HTTPError(ErrorFailedToGenerateManifestSeed)
+	}
+	seed := bigSeed.Int64()
+
+	// Construct ImageOptions once — used by both BootcPreManifest and ManifestByID.
+	// UseRemoteContainerSource: on-prem uses local podman storage (false).
+	imageOptions := distro.ImageOptions{
+		Bootc: &distro.BootcImageOptions{
+			UseRemoteContainerSource: false,
+		},
 	}
 
-	return id, nil
+	// 1. Handle Bootc info resolution job
+	bootcInfoResolveSpecs := []worker.BootcInfoResolveJobSpec{
+		// base container
+		{
+			Ref:         request.Bootc.Reference,
+			ResolveMode: worker.BootcInfoResolveModeFull,
+		},
+	}
+
+	// TODO: Add BuildReference to the Bootc API struct and add it here
+	// to bootcInfoResolveSpecs to support separate build containers.
+	// For now, base == build.
+
+	bootcInfoResolveJobID, err := s.workers.EnqueueBootcInfoResolveJob(ir.Architecture, &worker.BootcInfoResolveJob{
+		Specs: bootcInfoResolveSpecs,
+	}, channel)
+	if err != nil {
+		return uuid.Nil, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
+	}
+
+	// 2. Enqueue BootcPreManifest (server-side job, depends on bootc info resolve)
+	preManifestDeps := []uuid.UUID{bootcInfoResolveJobID}
+	preManifestArgs := &worker.BootcPreManifestJob{
+		ImageType:                  imageTypeName,
+		Blueprint:                  bp,
+		ImageOptions:               imageOptions,
+		Seed:                       seed,
+		BootcInfoResolveDynArgsIdx: common.ToPtr(0), // dynArgs[0] = BootcInfoResolve
+		BaseInfoIdx:                0,               // base container info index within the BootcInfoResolve job result infos slice
+	}
+	preManifestJobID, err := s.workers.EnqueueBootcPreManifestJob(preManifestArgs, preManifestDeps, channel)
+	if err != nil {
+		return uuid.Nil, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
+	}
+
+	// 3. Enqueue container resolve job with empty args, depending on BootcPreManifest.
+	//    The container specs come from BootcPreManifest result via dynArgs[0].
+	containerResolveJobID, err := s.workers.EnqueueContainerResolveJob(
+		&worker.ContainerResolveJob{
+			PreManifestDynArgsIdx: common.ToPtr(0),
+		},
+		[]uuid.UUID{preManifestJobID},
+		channel,
+	)
+	if err != nil {
+		return uuid.Nil, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
+	}
+
+	// No depsolve job — bootc images are self-contained, all content comes from containers.
+
+	// 4. Enqueue ManifestByID (server-side job)
+	//    Dependencies: [containerResolve, bootcInfoResolve]
+	//    Bootc mode is detected by dependencies.bootcInfoResolveJobID != uuid.Nil.
+	dependencies := manifestJobDependencies{
+		// depsolveJobID: uuid.Nil — no depsolve for bootc
+		containerResolveJobID: containerResolveJobID,
+		bootcInfoResolveJobID: bootcInfoResolveJobID,
+	}
+
+	manifestJobID, err := s.workers.EnqueueManifestJobByID(
+		&worker.ManifestJobByID{},
+		dependencies.IDs(),
+		channel,
+	)
+	if err != nil {
+		return uuid.Nil, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
+	}
+
+	// 5. Enqueue OSBuild (worker job, depends on ManifestByID)
+	osbuildJobID, err := s.workers.EnqueueOSBuildAsDependency(ir.Architecture, &worker.OSBuildJob{
+		Targets: tgts,
+	}, []uuid.UUID{manifestJobID}, channel)
+	if err != nil {
+		return uuid.Nil, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
+	}
+
+	// 6. Start ManifestByID server-side goroutine.
+	baseInfoIdx := preManifestArgs.BaseInfoIdx
+	buildInfoIdx := preManifestArgs.BuildInfoIdx
+	getManifestSource := func() (*manifest.Manifest, error) {
+		var bootcInfoResult worker.BootcInfoResolveJobResult
+		_, err := s.workers.BootcInfoResolveJobInfo(dependencies.bootcInfoResolveJobID, &bootcInfoResult)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read bootc info resolve job result: %w", err)
+		}
+
+		return buildBootcManifestSource(baseInfoIdx, buildInfoIdx, bootcInfoResult, imageTypeName, &bp, imageOptions, seed)
+	}
+	s.goroutinesGroup.Add(1)
+	go func() {
+		defer s.goroutinesGroup.Done()
+		serializeManifestFunc(s.goroutinesCtx, getManifestSource, s.workers, dependencies, manifestJobID, seed)
+	}()
+
+	return osbuildJobID, nil
 }
 
 func serializeManifest(ctx context.Context, getManifestSource manifestSourceFunc, workers *worker.Server, dependencies manifestJobDependencies, manifestJobID uuid.UUID, seed int64) {
@@ -878,95 +1049,13 @@ func handleBootcPreManifest(
 		)
 		return
 	}
-	if bootcInfoResult.JobError != nil {
-		preManifestResult.JobError = clienterrors.New(
-			clienterrors.ErrorJobDependency,
-			"Bootc info resolve dependency failed", bootcInfoResult.JobError.Reason,
-		)
-		return
-	}
-	// Extract base container info
-	if preManifestArgs.BaseInfoIdx < 0 || preManifestArgs.BaseInfoIdx >= len(bootcInfoResult.Infos) {
-		preManifestResult.JobError = clienterrors.New(
-			clienterrors.ErrorParsingDynamicArgs,
-			fmt.Sprintf("BaseInfoIdx %d is out of range (resolved %d infos)",
-				preManifestArgs.BaseInfoIdx, len(bootcInfoResult.Infos)), nil,
-		)
-		return
-	}
-	baseInfo, err := bootcInfoResult.Infos[preManifestArgs.BaseInfoIdx].ToVendor()
-	if err != nil {
-		preManifestResult.JobError = clienterrors.New(
-			clienterrors.ErrorManifestGeneration,
-			"Error converting base bootc info to vendor type: "+err.Error(), nil,
-		)
-		return
-	}
-	// Create bootc distro from base container info
-	bootcDistro, err := generic.NewBootc("bootc", baseInfo)
-	if err != nil {
-		preManifestResult.JobError = clienterrors.New(
-			clienterrors.ErrorManifestGeneration,
-			"Error creating bootc distro: "+err.Error(), nil,
-		)
-		return
-	}
-	// Set build container if a separate build info index is specified
-	if preManifestArgs.BuildInfoIdx != nil {
-		if *preManifestArgs.BuildInfoIdx < 0 || *preManifestArgs.BuildInfoIdx >= len(bootcInfoResult.Infos) {
-			preManifestResult.JobError = clienterrors.New(
-				clienterrors.ErrorParsingDynamicArgs,
-				fmt.Sprintf("BuildInfoIdx %d is out of range (resolved %d infos)",
-					*preManifestArgs.BuildInfoIdx, len(bootcInfoResult.Infos)), nil,
-			)
-			return
-		}
-		buildInfo, err := bootcInfoResult.Infos[*preManifestArgs.BuildInfoIdx].ToVendor()
-		if err != nil {
-			preManifestResult.JobError = clienterrors.New(
-				clienterrors.ErrorManifestGeneration,
-				"Error converting build bootc info to vendor type: "+err.Error(), nil,
-			)
-			return
-		}
-		if err := bootcDistro.SetBuildContainer(buildInfo); err != nil {
-			preManifestResult.JobError = clienterrors.New(
-				clienterrors.ErrorManifestGeneration,
-				"Error setting build container: "+err.Error(), nil,
-			)
-			return
-		}
-	}
-
-	canonicalArch, err := arch.FromString(baseInfo.Arch)
-	if err != nil {
-		preManifestResult.JobError = clienterrors.New(
-			clienterrors.ErrorManifestGeneration,
-			fmt.Sprintf("Error parsing the architecture %q from the base bootc info: %s", baseInfo.Arch, err.Error()),
-			nil,
-		)
-		return
-	}
-	archi, err := bootcDistro.GetArch(canonicalArch.String())
-	if err != nil {
-		preManifestResult.JobError = clienterrors.New(
-			clienterrors.ErrorManifestGeneration,
-			"Error getting arch from bootc distro: "+err.Error(), nil,
-		)
-		return
-	}
-	imgType, err := archi.GetImageType(preManifestArgs.ImageType)
-	if err != nil {
-		preManifestResult.JobError = clienterrors.New(
-			clienterrors.ErrorManifestGeneration,
-			"Error getting image type from bootc distro: "+err.Error(), nil,
-		)
-		return
-	}
 
 	// Generate pre-manifest.
-	// NOTE: Bootc image types ignore the repos parameter (all content comes from containers), so nil is safe.
-	manifestSource, _, err := imgType.Manifest(&preManifestArgs.Blueprint, preManifestArgs.ImageOptions, nil, &preManifestArgs.Seed)
+	// Bootc image types ignore the repos parameter (all content comes from
+	// containers), so nil is safe here.
+	baseInfoIdx := preManifestArgs.BaseInfoIdx
+	buildInfoIdx := preManifestArgs.BuildInfoIdx
+	manifestSource, err := buildBootcManifestSource(baseInfoIdx, buildInfoIdx, bootcInfoResult, preManifestArgs.ImageType, &preManifestArgs.Blueprint, preManifestArgs.ImageOptions, preManifestArgs.Seed)
 	if err != nil {
 		preManifestResult.JobError = clienterrors.New(
 			clienterrors.ErrorManifestGeneration,
@@ -1014,6 +1103,15 @@ func handleBootcPreManifest(
 		for i, source := range pipelineSources {
 			pipelineContainerSpecs[name][i] = worker.ContainerSpecFromVendorSourceSpec(source)
 		}
+	}
+	canonicalArch, err := arch.FromString(bootcInfoResult.Infos[baseInfoIdx].Arch)
+	if err != nil {
+		preManifestResult.JobError = clienterrors.New(
+			clienterrors.ErrorManifestGeneration,
+			fmt.Sprintf("Error parsing the architecture %q from bootc info: %s", bootcInfoResult.Infos[baseInfoIdx].Arch, err.Error()),
+			nil,
+		)
+		return
 	}
 	preManifestResult.ContainerResolveJobArgs = &worker.ContainerResolveJob{
 		Arch:          canonicalArch.String(),

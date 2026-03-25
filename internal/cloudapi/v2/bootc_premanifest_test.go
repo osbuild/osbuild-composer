@@ -156,8 +156,8 @@ func TestHandleBootcPreManifest_Errors(t *testing.T) {
 				require.NoError(t, err)
 				return []json.RawMessage{b}
 			},
-			wantErrID:          clienterrors.ErrorJobDependency,
-			wantReasonContains: "Bootc info resolve dependency failed",
+			wantErrID:          clienterrors.ErrorManifestGeneration,
+			wantReasonContains: "bootc info resolve dependency failed",
 		},
 		{
 			name: "base_index_out_of_range",
@@ -171,8 +171,8 @@ func TestHandleBootcPreManifest_Errors(t *testing.T) {
 				t.Helper()
 				return []json.RawMessage{rawValidBaseBootcInfoResult(t)}
 			},
-			wantErrID:          clienterrors.ErrorParsingDynamicArgs,
-			wantReasonContains: "BaseInfoIdx 5 is out of range (resolved 1 infos)",
+			wantErrID:          clienterrors.ErrorManifestGeneration,
+			wantReasonContains: "base info index 5 is out of range (resolved 1 infos)",
 		},
 		{
 			name: "base_info_index_out_of_range_negative",
@@ -186,8 +186,8 @@ func TestHandleBootcPreManifest_Errors(t *testing.T) {
 				t.Helper()
 				return []json.RawMessage{rawValidBaseBootcInfoResult(t)}
 			},
-			wantErrID:          clienterrors.ErrorParsingDynamicArgs,
-			wantReasonContains: "BaseInfoIdx -1 is out of range (resolved 1 infos)",
+			wantErrID:          clienterrors.ErrorManifestGeneration,
+			wantReasonContains: "base info index -1 is out of range (resolved 1 infos)",
 		},
 		{
 			name: "build_index_out_of_range",
@@ -201,8 +201,8 @@ func TestHandleBootcPreManifest_Errors(t *testing.T) {
 				t.Helper()
 				return []json.RawMessage{rawValidBaseBootcInfoResult(t)}
 			},
-			wantErrID:          clienterrors.ErrorParsingDynamicArgs,
-			wantReasonContains: "BuildInfoIdx 5 is out of range (resolved 1 infos)",
+			wantErrID:          clienterrors.ErrorManifestGeneration,
+			wantReasonContains: "build info index 5 is out of range (resolved 1 infos)",
 		},
 		{
 			name: "build_info_index_out_of_range_negative",
@@ -216,8 +216,8 @@ func TestHandleBootcPreManifest_Errors(t *testing.T) {
 				t.Helper()
 				return []json.RawMessage{rawValidBaseBootcInfoResult(t)}
 			},
-			wantErrID:          clienterrors.ErrorParsingDynamicArgs,
-			wantReasonContains: "BuildInfoIdx -1 is out of range (resolved 1 infos)",
+			wantErrID:          clienterrors.ErrorManifestGeneration,
+			wantReasonContains: "build info index -1 is out of range (resolved 1 infos)",
 		},
 		{
 			name: "invalid_image_type",
@@ -231,7 +231,7 @@ func TestHandleBootcPreManifest_Errors(t *testing.T) {
 				return []json.RawMessage{rawValidBaseBootcInfoResult(t)}
 			},
 			wantErrID:          clienterrors.ErrorManifestGeneration,
-			wantReasonContains: "invalid image type: nonexistent-image-type",
+			wantReasonContains: "Error generating bootc pre-manifest: getting image type \"nonexistent-image-type\": invalid image type: nonexistent-image-type",
 		},
 	}
 
