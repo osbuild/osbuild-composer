@@ -462,12 +462,17 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 	}
 
 	// copy pipeline info to the result
-	osbuildJobResult.PipelineNames = jobArgs.PipelineNames
+	// TODO: Remove this once PipelineNames is removed from OSBuildJob
+	// NOTE: Weldr API is the only one that still sets PipelineNames on OSBuildJob args.
+	osbuildJobResult.PipelineNames = jobArgs.PipelineNames //nolint:staticcheck // intentional use for Weldr API backward compatibility
 	if osbuildJobResult.PipelineNames == nil {
-		// jobArgs doesn't provide the pipeline names when the manifest was
-		// generated using image-builder-cli. In this case, the manifest job
-		// result itself should have the pipeline names (under ManifestInfo)
-		// parsed from the manifest itself.
+		// The PipelineNames are now set in the manifest job result by default in CloudAPI.
+		// This is also the only case when the manifest is taken from the dynamic arguments
+		// and the manifestInfo is also set. To be safe, we check for nil here anyway.
+		if manifestInfo == nil || manifestInfo.PipelineNames == nil {
+			osbuildJobResult.JobError = clienterrors.New(clienterrors.ErrorManifestGeneration, "ManifestInfo.PipelineNames is nil in dynamic args", nil)
+			return fmt.Errorf("ManifestInfo.PipelineNames is nil in dynamic args")
+		}
 		osbuildJobResult.PipelineNames = manifestInfo.PipelineNames
 	}
 
@@ -1099,10 +1104,10 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				logWithId.Info("[Koji] ⬆ Uploading SBOM documents")
 				for pipelineName, sbomDoc := range depsolveJR.SbomDocs {
 					var pipelinePurpose string
-					if slices.Contains(jobArgs.PipelineNames.Payload, pipelineName) {
+					if slices.Contains(osbuildJobResult.PipelineNames.Payload, pipelineName) {
 						pipelinePurpose = "image"
 					}
-					if slices.Contains(jobArgs.PipelineNames.Build, pipelineName) {
+					if slices.Contains(osbuildJobResult.PipelineNames.Build, pipelineName) {
 						pipelinePurpose = "buildroot"
 					}
 

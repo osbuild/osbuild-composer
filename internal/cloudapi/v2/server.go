@@ -302,13 +302,9 @@ func (s *Server) enqueueCompose(irs []imageRequest, channel string) (uuid.UUID, 
 		return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
 	}
 
-	id, err = s.workers.EnqueueOSBuildAsDependency(ir.imageType.Arch().Name(), &worker.OSBuildJob{
-		Targets: ir.targets,
-		PipelineNames: &worker.PipelineNames{
-			Build:   manifestSource.BuildPipelines(),
-			Payload: manifestSource.PayloadPipelines(),
-		},
-	}, []uuid.UUID{manifestJobID}, channel)
+	id, err = s.workers.EnqueueOSBuildAsDependency(
+		ir.imageType.Arch().Name(), &worker.OSBuildJob{Targets: ir.targets}, []uuid.UUID{manifestJobID}, channel,
+	)
 	if err != nil {
 		logrus.Warningf("ErrorEnqueueingJob, failed creating osbuild job: %v", err)
 		return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
@@ -368,11 +364,9 @@ func (s *Server) enqueueComposeIBCLI(irs []imageRequest, channel string) (uuid.U
 	}
 	logrus.Debugf("manifest job enqueued: %v", manifestJobID)
 
-	osbuildJobID, err = s.workers.EnqueueOSBuildAsDependency(arch.Name(),
-		&worker.OSBuildJob{
-			Targets:       ir.targets,
-			PipelineNames: nil, // NOTE: the manifest job result provides these when they're not available from the osbuild job args
-		}, []uuid.UUID{manifestJobID}, channel)
+	osbuildJobID, err = s.workers.EnqueueOSBuildAsDependency(
+		arch.Name(), &worker.OSBuildJob{Targets: ir.targets}, []uuid.UUID{manifestJobID}, channel,
+	)
 	if err != nil {
 		return osbuildJobID, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
 	}
@@ -441,10 +435,6 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 		}
 
 		buildID, err := s.workers.EnqueueOSBuildAsDependency(archName, &worker.OSBuildJob{
-			PipelineNames: &worker.PipelineNames{
-				Build:   manifestSource.BuildPipelines(),
-				Payload: manifestSource.PayloadPipelines(),
-			},
 			Targets:            targets,
 			ManifestDynArgsIdx: common.ToPtr(1),
 			DepsolveDynArgsIdx: common.ToPtr(2),
@@ -753,6 +743,10 @@ func serializeManifest(ctx context.Context, manifestSource *manifest.Manifest, w
 	}
 
 	jobResult.Manifest = ms
+	jobResult.ManifestInfo.PipelineNames = &worker.PipelineNames{
+		Build:   manifestSource.BuildPipelines(),
+		Payload: manifestSource.PayloadPipelines(),
+	}
 }
 
 // bootcPreManifestLoop is a long-running goroutine started at server init
