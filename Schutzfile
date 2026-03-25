@@ -6,7 +6,7 @@
       }
     }
   },
-  "fedora-42": {
+  "fedora-43": {
     "dependencies": {
       "osbuild": {
         "commit": "89601f77042d28dcd7a4b192c901d94ffea8d251"
@@ -19,14 +19,14 @@
           {
             "title": "fedora",
             "name": "fedora",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f42/f42-x86_64-fedora-20250512"
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f43/f43-x86_64-fedora-20260106"
           }
         ],
         "aarch64": [
           {
             "title": "fedora",
             "name": "fedora",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f42/f42-aarch64-fedora-20250512"
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f43/f43-aarch64-fedora-20260106"
           }
         ]
       },
@@ -36,14 +36,14 @@
           {
             "title": "updates",
             "name": "updates",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f42/f42-x86_64-updates-released-20260308"
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f43/f43-x86_64-updates-released-20260315"
           }
         ],
         "aarch64": [
           {
             "title": "updates",
             "name": "updates",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f42/f42-aarch64-updates-released-20260308"
+            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/public/f43/f43-aarch64-updates-released-20260315"
           }
         ]
       }
