@@ -41,7 +41,6 @@ const (
 	JobTypeAWSEC2Copy           string = "aws-ec2-copy"
 	JobTypeAWSEC2Share          string = "aws-ec2-share"
 	JobTypeImageBuilderManifest string = "image-builder-manifest"
-	JobTypeBootcManifest        string = "bootc-manifest"
 	JobTypeBootcInfoResolve     string = "bootc-info-resolve"
 	// JobTypeBootcPreManifest is a server-side job type handled by the
 	// bootcPreManifestLoop in the API server. Workers must NOT register
@@ -247,10 +246,6 @@ func (s *Server) EnqueueImageBuilderManifestJob(job *ImageBuilderManifestJob, ch
 	return s.enqueue(JobTypeImageBuilderManifest, job, nil, channel)
 }
 
-func (s *Server) EnqueueBootcManifestJob(job *BootcManifestJob, channel string) (uuid.UUID, error) {
-	return s.enqueue(JobTypeBootcManifest, job, nil, channel)
-}
-
 func (s *Server) EnqueueBootcInfoResolveJob(arch string, job *BootcInfoResolveJob, channel string) (uuid.UUID, error) {
 	return s.enqueue(JobTypeBootcInfoResolve+":"+arch, job, nil, channel)
 }
@@ -351,13 +346,6 @@ func (s *Server) JobDependencyChainErrors(id uuid.UUID) (*clienterrors.Error, er
 			return nil, err
 		}
 		jobResult = &ibManifestJR.JobResult
-	case JobTypeBootcManifest:
-		var bootcManifestJR BootcManifestJobResult
-		jobInfo, err = s.ManifestJobInfo(id, &bootcManifestJR)
-		if err != nil {
-			return nil, err
-		}
-		jobResult = &bootcManifestJR.JobResult
 	case JobTypeBootcInfoResolve:
 		var bootcInfoResolveJR BootcInfoResolveJobResult
 		jobInfo, err = s.BootcInfoResolveJobInfo(id, &bootcInfoResolveJR)
@@ -547,7 +535,7 @@ func (s *Server) ManifestJobInfo(id uuid.UUID, result *ManifestJobByIDResult) (*
 	}
 
 	switch jobInfo.JobType {
-	case JobTypeManifestIDOnly, JobTypeImageBuilderManifest, JobTypeBootcManifest:
+	case JobTypeManifestIDOnly, JobTypeImageBuilderManifest:
 		return jobInfo, nil
 	default:
 		return nil, fmt.Errorf("expected %q or %q, found %q job instead", JobTypeManifestIDOnly, JobTypeImageBuilderManifest, jobInfo.JobType)
@@ -1081,13 +1069,6 @@ func (s *Server) RequeueOrFinishJob(token uuid.UUID, maxRetries uint64, result j
 			return err
 		}
 		jobResult = &ibManifestJR.JobResult
-	case JobTypeBootcManifest:
-		var bootcJR BootcManifestJobResult
-		jobInfo, err = s.ManifestJobInfo(jobId, &bootcJR)
-		if err != nil {
-			return err
-		}
-		jobResult = &bootcJR.JobResult
 	case JobTypeBootcInfoResolve:
 		var bootcInfoResolveJR BootcInfoResolveJobResult
 		jobInfo, err = s.BootcInfoResolveJobInfo(jobId, &bootcInfoResolveJR)
