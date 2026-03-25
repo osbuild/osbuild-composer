@@ -10,6 +10,8 @@ import (
 	"time"
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
+	"github.com/osbuild/images/pkg/bib/osinfo"
+	"github.com/osbuild/images/pkg/bootc"
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/depsolvednf"
 	"github.com/osbuild/images/pkg/manifest"
@@ -1164,3 +1166,109 @@ type ImageBuilderManifestJob struct {
 
 // ImageBuilderManifestJobResult is an alias to [ManifestJobByIDResult].
 type ImageBuilderManifestJobResult = ManifestJobByIDResult
+
+// BootcInfoResolveMode is a type that represents the mode of bootc info resolve operation.
+type BootcInfoResolveMode string
+
+const (
+	BootcInfoResolveModeFull  BootcInfoResolveMode = "full"
+	BootcInfoResolveModeBuild BootcInfoResolveMode = "build"
+)
+
+func (m *BootcInfoResolveMode) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return err
+	}
+
+	if !slices.Contains([]BootcInfoResolveMode{
+		BootcInfoResolveModeFull,
+		BootcInfoResolveModeBuild,
+	}, BootcInfoResolveMode(s)) {
+		return fmt.Errorf("invalid bootc info resolve mode: %q", s)
+	}
+
+	*m = BootcInfoResolveMode(s)
+	return nil
+}
+
+// BootcInfoResolveJobSpec is a specification for a single bootc container to resolve.
+type BootcInfoResolveJobSpec struct {
+	Ref         string               `json:"reference"`
+	ResolveMode BootcInfoResolveMode `json:"resolve_mode"`
+}
+
+// BootcInfoResolveJob resolves bootc container metadata by running
+// and inspecting the container. Each job handles multiple containers.
+type BootcInfoResolveJob struct {
+	Specs []BootcInfoResolveJobSpec `json:"specs"`
+}
+
+// BootcContainerInfo is a DTO for bootc container metadata, decoupled
+// from the vendored bootc.Info type. The OSInfo field is kept as
+// json.RawMessage for simplicity; it can be expanded with more
+// granular fields later if needed.
+type BootcContainerInfo struct {
+	Imgref        string          `json:"imgref"`
+	ImageID       string          `json:"image_id"`
+	Arch          string          `json:"arch"`
+	DefaultRootFs string          `json:"default_root_fs"`
+	Size          uint64          `json:"size"`
+	OSInfo        json.RawMessage `json:"os_info,omitempty"`
+}
+
+// BootcContainerInfoFromVendor converts a vendored bootc.Info to the DTO.
+func BootcContainerInfoFromVendor(info *bootc.Info) (*BootcContainerInfo, error) {
+	if info == nil {
+		return nil, fmt.Errorf("input info is nil")
+	}
+
+	containerInfo := &BootcContainerInfo{
+		Imgref:        info.Imgref,
+		ImageID:       info.ImageID,
+		Arch:          info.Arch,
+		DefaultRootFs: info.DefaultRootFs,
+		Size:          info.Size,
+	}
+
+	if info.OSInfo != nil {
+		osInfoJSON, err := json.Marshal(info.OSInfo)
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal OSInfo: %w", err)
+		}
+		containerInfo.OSInfo = osInfoJSON
+	}
+
+	return containerInfo, nil
+}
+
+// ToVendor converts the DTO back to the vendored bootc.Info type.
+func (b *BootcContainerInfo) ToVendor() (*bootc.Info, error) {
+	if b == nil {
+		return nil, fmt.Errorf("input info is nil")
+	}
+
+	info := &bootc.Info{
+		Imgref:        b.Imgref,
+		ImageID:       b.ImageID,
+		Arch:          b.Arch,
+		DefaultRootFs: b.DefaultRootFs,
+		Size:          b.Size,
+	}
+
+	if len(b.OSInfo) > 0 {
+		info.OSInfo = new(osinfo.Info)
+		if err := json.Unmarshal(b.OSInfo, info.OSInfo); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal OSInfo: %w", err)
+		}
+	}
+
+	return info, nil
+}
+
+type BootcInfoResolveJobResult struct {
+	// Infos is a list of resolved bootc container infos. The order of the infos
+	// is the same as the order of the specs in the job args.
+	Infos []BootcContainerInfo `json:"infos"`
+	JobResult
+}

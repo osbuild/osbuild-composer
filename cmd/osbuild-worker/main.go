@@ -529,6 +529,7 @@ var run = func() {
 		worker.JobTypeBootcManifest: &BootcManifestJobImpl{
 			Store: store,
 		},
+		worker.JobTypeBootcInfoResolve: &BootcInfoResolveJobImpl{},
 	}
 
 	acceptedJobTypes := []string{}

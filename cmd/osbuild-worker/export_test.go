@@ -14,3 +14,21 @@ func MockRun(new func()) (restore func()) {
 		run = saved
 	}
 }
+
+type ResolveBootcInfoFuncType = resolveBootcInfoFuncType
+
+func MockResolveBootcInfoFunc(mockFunc ResolveBootcInfoFuncType) (restore func()) {
+	saved := resolveBootcInfoFunc
+	resolveBootcInfoFunc = mockFunc
+	return func() {
+		resolveBootcInfoFunc = saved
+	}
+}
+
+func MockResolveBootcBuildInfoFunc(mockFunc ResolveBootcInfoFuncType) (restore func()) {
+	saved := resolveBootcBuildInfoFunc
+	resolveBootcBuildInfoFunc = mockFunc
+	return func() {
+		resolveBootcBuildInfoFunc = saved
+	}
+}
