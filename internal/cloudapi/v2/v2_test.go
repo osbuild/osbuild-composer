@@ -3054,11 +3054,12 @@ func TestComposeIBManifest(t *testing.T) {
 func TestComposeBootc(t *testing.T) {
 	srv, _, queue, cancel := newV2Server(t, t.TempDir(), nil)
 	defer cancel()
+	baseContainerRef := "registry.org/centos-bootc:tag"
 
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
 	{
 		"bootc": {
-                  "reference": "registry.org/centos-bootc:tag"
+                  "reference": "%s"
                 },
 		"image_request":{
 			"architecture": "%s",
@@ -3066,30 +3067,108 @@ func TestComposeBootc(t *testing.T) {
 			"image_type": "guest-image",
 			"upload_options": {}
 		}
-	}`, test_distro.TestArch3Name), http.StatusCreated, `
+	}`, baseContainerRef, test_distro.TestArch3Name), http.StatusCreated, `
 	{
 		"href": "/api/image-builder-composer/v2/compose",
 		"kind": "ComposeId"
 	}`, "id")
 
-	// get the osbuild job (as root job) and check that its dependency is an JobTypeBootcManifest
+	// The job graph for bootc composes is:
+	//   BootcInfoResolve -> BootcPreManifest -> ContainerResolve -> ManifestByID -> OSBuild
+	// The root job (no dependents) is OSBuild.
 	rootJobs, err := queue.AllRootJobIDs(context.Background())
 	require.NoError(t, err)
 	require.Len(t, rootJobs, 1)
 
 	osbuildJobID := rootJobs[0]
-	osbuildJobType, argsJSON, deps, _, err := queue.Job(osbuildJobID)
-	osbuildJobTypeSplit := strings.Split(osbuildJobType, ":")
+	osbuildJobType, osbuildArgsJSON, osbuildDeps, _, err := queue.Job(osbuildJobID)
 	require.NoError(t, err)
-	require.Equal(t, worker.JobTypeOSBuild, osbuildJobTypeSplit[0])
-	require.Equal(t, test_distro.TestArch3Name, osbuildJobTypeSplit[1])
-	// ensure the local target is used
-	var args worker.OSBuildJob
-	require.NoError(t, json.Unmarshal(argsJSON, &args))
-	require.Equal(t, target.TargetNameWorkerServer, args.Targets[0].Name)
+	osbuildJobTypeParts := strings.Split(osbuildJobType, ":")
+	require.Equal(t, worker.JobTypeOSBuild, osbuildJobTypeParts[0])
+	require.Equal(t, test_distro.TestArch3Name, osbuildJobTypeParts[1])
 
-	require.Len(t, deps, 1)
-	ibManifestJobID, _, _, _, err := queue.Job(deps[0])
+	// Ensure the local target is used
+	var osbuildArgs worker.OSBuildJob
+	require.NoError(t, json.Unmarshal(osbuildArgsJSON, &osbuildArgs))
+	require.Equal(t, target.TargetNameWorkerServer, osbuildArgs.Targets[0].Name)
+
+	// OSBuild depends on ManifestByID
+	require.Len(t, osbuildDeps, 1)
+	manifestJobID := osbuildDeps[0]
+
+	// NOTE: we do not check the job args here, because ManifestByID job has no static
+	// arguments since it accesses all of its dependencies directly via job IDs.
+	manifestJobType, _, manifestDeps, _, err := queue.Job(manifestJobID)
 	require.NoError(t, err)
-	require.Equal(t, worker.JobTypeBootcManifest, ibManifestJobID)
+	require.Equal(t, worker.JobTypeManifestIDOnly, manifestJobType)
+
+	// ManifestByID depends on ContainerResolve and BootcBaseResolve (in IDs() order).
+	// No depsolve, no ostree resolve, no build resolve (single ref).
+	require.Len(t, manifestDeps, 2, "ManifestByID should depend on ContainerResolve and BootcBaseResolve")
+	containerResolveJobID := manifestDeps[0]
+	bootcBaseResolveJobID := manifestDeps[1]
+
+	containerResolveJobType, containerResolveArgsJSON, containerResolveDeps, _, err := queue.Job(containerResolveJobID)
+	require.NoError(t, err)
+	require.Equal(t, worker.JobTypeContainerResolve, containerResolveJobType)
+
+	var containerResolveArgs worker.ContainerResolveJob
+	require.NoError(t, json.Unmarshal(containerResolveArgsJSON, &containerResolveArgs))
+	// Verify the ContainerResolve job static args are empty
+	require.Empty(t, containerResolveArgs.Arch)
+	require.Empty(t, containerResolveArgs.PipelineSpecs)
+	// Verify the ContainerResolve job dynamic args index is set correctly
+	require.NotNil(t, containerResolveArgs.PreManifestDynArgsIdx, "ContainerResolve should have PreManifestDynArgsIdx set")
+	require.Equal(t, 0, *containerResolveArgs.PreManifestDynArgsIdx)
+
+	// ContainerResolve depends on BootcPreManifest
+	require.Len(t, containerResolveDeps, 1)
+	preManifestJobID := containerResolveDeps[0]
+
+	preManifestJobType, preManifestArgsJSON, preManifestDeps, _, err := queue.Job(preManifestJobID)
+	require.NoError(t, err)
+	require.Equal(t, worker.JobTypeBootcPreManifest, preManifestJobType)
+
+	var preManifestArgs worker.BootcPreManifestJob
+	require.NoError(t, json.Unmarshal(preManifestArgsJSON, &preManifestArgs))
+	require.Equal(t, "qcow2", preManifestArgs.ImageType)
+	require.NotZero(t, preManifestArgs.Seed, "BootcPreManifest seed should not be zero")
+	// Verify the BootcInfoResolve job ID and index are set correctly
+	require.NotNil(t, preManifestArgs.BootcInfoResolveDynArgsIdx)
+	require.Equal(t, 0, *preManifestArgs.BootcInfoResolveDynArgsIdx)
+	require.Equal(t, 0, preManifestArgs.BaseInfoIdx)
+	// TODO: adjust this once we add support for a separate build container
+	require.Nil(t, preManifestArgs.BuildInfoIdx, "single ref: no build info index")
+
+	// BootcPreManifest depends on BootcInfoResolve
+	require.Len(t, preManifestDeps, 1)
+	preManifestBootcInfoResolveJobID := preManifestDeps[0]
+
+	bootcInfoResolveJobType, bootcInfoResolveArgsJSON, bootcInfoResolveDeps, _, err := queue.Job(preManifestBootcInfoResolveJobID)
+	require.NoError(t, err)
+	// BootcInfoResolve uses arch suffix
+	bootcInfoResolveTypeParts := strings.Split(bootcInfoResolveJobType, ":")
+	require.Equal(t, worker.JobTypeBootcInfoResolve, bootcInfoResolveTypeParts[0])
+	require.Equal(t, test_distro.TestArch3Name, bootcInfoResolveTypeParts[1])
+
+	// Verify the BootcInfoResolve job args are set correctly
+	var bootcInfoResolveArgs worker.BootcInfoResolveJob
+	require.NoError(t, json.Unmarshal(bootcInfoResolveArgsJSON, &bootcInfoResolveArgs))
+	require.Len(t, bootcInfoResolveArgs.Specs, 1)
+	require.Equal(t, baseContainerRef, bootcInfoResolveArgs.Specs[0].Ref)
+	require.Equal(t, worker.BootcInfoResolveModeFull, bootcInfoResolveArgs.Specs[0].ResolveMode)
+	// TODO: add check for build container once we add support for it
+
+	// BootcInfoResolve has no dependencies
+	require.Empty(t, bootcInfoResolveDeps)
+
+	// The BootcInfoResolve job referenced by BootcPreManifest should be
+	// the same job referenced by ManifestByID dependencies
+	require.Equal(t, bootcBaseResolveJobID, preManifestBootcInfoResolveJobID,
+		"ManifestByID and BootcPreManifest should reference the same BootcInfoResolve job")
+
+	// ManifestByID should NOT depend on BootcPreManifest (transitive only)
+	for _, depID := range manifestDeps {
+		require.NotEqual(t, preManifestJobID, depID, "ManifestByID should not directly depend on BootcPreManifest")
+	}
 }
