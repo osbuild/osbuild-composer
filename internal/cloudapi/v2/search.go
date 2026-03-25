@@ -50,7 +50,7 @@ func (request *SearchPackagesRequest) Search(df *distrofactory.Factory, rr *repo
 	}
 
 	// Limit how long a search can take
-	ctx, cancel := context.WithTimeout(context.Background(), time.Minute*depsolveTimeoutMin)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute*maxJobTimeoutMinutes)
 	defer cancel()
 
 	// Wait until search job is finished, fails, or is canceled

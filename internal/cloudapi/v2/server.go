@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -23,6 +24,7 @@ import (
 	"github.com/osbuild/osbuild-composer/pkg/jobqueue"
 
 	"github.com/osbuild/images/pkg/container"
+	"github.com/osbuild/images/pkg/depsolvednf"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distrofactory"
 	"github.com/osbuild/images/pkg/manifest"
@@ -37,8 +39,8 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
 )
 
-// How long to wait for a depsolve job to finish
-const depsolveTimeoutMin = 5
+// maxJobTimeoutMinutes is the maximum timeout in minutes for a job to finish
+const maxJobTimeoutMinutes = 5
 
 // serializeManifestFunc is used to serialize the manifest
 // it can be overridden for testing
@@ -528,7 +530,7 @@ func (s *Server) enqueueBootcCompose(request ComposeRequest, channel string) (uu
 
 func serializeManifest(ctx context.Context, manifestSource *manifest.Manifest, workers *worker.Server, dependencies manifestJobDependencies, manifestJobID uuid.UUID, seed int64) {
 	// prepared to become a config variable
-	ctx, cancel := context.WithTimeout(ctx, time.Minute*depsolveTimeoutMin)
+	ctx, cancel := context.WithTimeout(ctx, time.Minute*maxJobTimeoutMinutes)
 	defer cancel()
 
 	jobResult := &worker.ManifestJobByIDResult{
@@ -554,27 +556,16 @@ func serializeManifest(ctx context.Context, manifestSource *manifest.Manifest, w
 			if jobResult.JobError != nil {
 				// set all jobs to "failed"
 				// osbuild job will fail as dependency
-				jobs := []struct {
-					Name string
-					ID   uuid.UUID
-				}{
-					{"depsolve", dependencies.depsolveJobID},
-					{"containerResolve", dependencies.containerResolveJobID},
-					{"ostreeResolve", dependencies.ostreeResolveJobID},
-					{"manifest", manifestJobID},
-				}
-
-				for _, job := range jobs {
-					if job.ID != uuid.Nil {
-						err := workers.SetFailed(job.ID, jobResult.JobError)
-						if err != nil {
-							logWithId.Errorf("Error failing %s job: %v", job.Name, err)
-						}
+				allJobIDs := slices.Concat(dependencies.IDs(), []uuid.UUID{manifestJobID})
+				for _, jobID := range allJobIDs {
+					err := workers.SetFailed(jobID, jobResult.JobError)
+					if err != nil {
+						logWithId.Errorf("Error failing job %s: %v", jobID, err)
 					}
 				}
 
 			} else {
-				logWithId.Errorf("Internal error, no worker started depsolve but we didn't get a reason.")
+				logWithId.Errorf("Internal error, no worker started processing dependencies but we didn't get a reason.")
 			}
 		} else {
 			result, err := json.Marshal(jobResult)
@@ -595,15 +586,15 @@ func serializeManifest(ctx context.Context, manifestSource *manifest.Manifest, w
 	for {
 		_, token, _, _, dynArgs, err = workers.RequestJobById(ctx, "", manifestJobID)
 		if errors.Is(err, jobqueue.ErrNotPending) {
-			logWithId.Debug("Manifest job not pending, waiting for depsolve job to finish")
+			logWithId.Debug("Manifest job not pending, waiting for dependencies to finish")
 			time.Sleep(time.Millisecond * 50)
 			select {
 			case <-ctx.Done():
 				logWithId.Warning(fmt.Sprintf("Manifest job dependencies took longer than %d minutes to finish,"+
-					" or the server is shutting down, returning to avoid dangling routines", depsolveTimeoutMin))
+					" or the server is shutting down, returning to avoid dangling routines", maxJobTimeoutMinutes))
 
-				jobResult.JobError = clienterrors.New(clienterrors.ErrorDepsolveTimeout,
-					"Timeout while waiting for package dependency resolution",
+				jobResult.JobError = clienterrors.New(clienterrors.ErrorJobDependency,
+					"Timeout while waiting for dependencies to finish",
 					"There may be a temporary issue with compute resources.",
 				)
 				break
@@ -635,33 +626,36 @@ func serializeManifest(ctx context.Context, manifestSource *manifest.Manifest, w
 		return
 	}
 
-	var depsolveJobResult worker.DepsolveJobResult
-	err = json.Unmarshal(dynArgs[0], &depsolveJobResult)
-	if err != nil {
-		reason := "Error parsing dynamic arguments"
-		jobResult.JobError = clienterrors.New(clienterrors.ErrorParsingDynamicArgs, reason, nil)
-		return
-	}
-
-	_, err = workers.DepsolveJobInfo(dependencies.depsolveJobID, &depsolveJobResult)
-	if err != nil {
-		reason := "Error reading depsolve status"
-		jobResult.JobError = clienterrors.New(clienterrors.ErrorReadingJobStatus, reason, nil)
-		return
-	}
-
-	if jobErr := depsolveJobResult.JobError; jobErr != nil {
-		if jobErr.ID == clienterrors.ErrorDNFDepsolveError || jobErr.ID == clienterrors.ErrorDNFMarkingErrors {
-			jobResult.JobError = clienterrors.New(clienterrors.ErrorDepsolveDependency, "Error in depsolve job dependency input, bad package set requested", jobErr.Details)
+	var depsolveResult map[string]depsolvednf.DepsolveResult
+	if dependencies.depsolveJobID != uuid.Nil {
+		var depsolveJobResult worker.DepsolveJobResult
+		_, err = workers.DepsolveJobInfo(dependencies.depsolveJobID, &depsolveJobResult)
+		if err != nil {
+			reason := "Error reading depsolve status"
+			jobResult.JobError = clienterrors.New(clienterrors.ErrorReadingJobStatus, reason, nil)
 			return
 		}
-		jobResult.JobError = clienterrors.New(clienterrors.ErrorDepsolveDependency, "Error in depsolve job dependency", jobErr.Details)
-		return
-	}
 
-	if len(depsolveJobResult.PackageSpecs) == 0 {
-		jobResult.JobError = clienterrors.New(clienterrors.ErrorEmptyPackageSpecs, "Received empty package specs", nil)
-		return
+		if jobErr := depsolveJobResult.JobError; jobErr != nil {
+			if jobErr.ID == clienterrors.ErrorDNFDepsolveError || jobErr.ID == clienterrors.ErrorDNFMarkingErrors {
+				jobResult.JobError = clienterrors.New(clienterrors.ErrorDepsolveDependency, "Error in depsolve job dependency input, bad package set requested", jobErr.Details)
+				return
+			}
+			jobResult.JobError = clienterrors.New(clienterrors.ErrorDepsolveDependency, "Error in depsolve job dependency", jobErr.Details)
+			return
+		}
+
+		if len(depsolveJobResult.PackageSpecs) == 0 {
+			jobResult.JobError = clienterrors.New(clienterrors.ErrorEmptyPackageSpecs, "Received empty package specs", nil)
+			return
+		}
+
+		depsolveResult, err = depsolveJobResult.ToDepsolvednfResult()
+		if err != nil {
+			reason := "Error converting depsolve result"
+			jobResult.JobError = clienterrors.New(clienterrors.ErrorManifestGeneration, reason, err.Error())
+			return
+		}
 	}
 
 	var containerSpecs map[string][]container.Spec
@@ -742,12 +736,6 @@ func serializeManifest(ctx context.Context, manifestSource *manifest.Manifest, w
 		}
 	}
 
-	depsolveResult, err := depsolveJobResult.ToDepsolvednfResult()
-	if err != nil {
-		reason := "Error converting depsolve result"
-		jobResult.JobError = clienterrors.New(clienterrors.ErrorManifestGeneration, reason, err.Error())
-		return
-	}
 	ms, err := manifestSource.Serialize(depsolveResult, containerSpecs, ostreeCommitSpecs, nil)
 	if err != nil {
 		reason := "Error serializing manifest"

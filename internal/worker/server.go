@@ -213,7 +213,7 @@ func (s *Server) EnqueueSearchPackages(job *SearchPackagesJob, channel string) (
 
 func (s *Server) EnqueueManifestJobByID(job *ManifestJobByID, dependencies []uuid.UUID, channel string) (uuid.UUID, error) {
 	if len(dependencies) == 0 {
-		panic("EnqueueManifestJobByID has no dependencies, expected at least a depsolve job")
+		panic("EnqueueManifestJobByID has no dependencies, expected at least one dependency")
 	}
 	return s.enqueue(JobTypeManifestIDOnly, job, dependencies, channel)
 }
