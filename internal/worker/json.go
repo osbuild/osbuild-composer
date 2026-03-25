@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
+	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/depsolvednf"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/osbuild"
@@ -917,10 +918,67 @@ type ContainerSpec struct {
 	Source    string `json:"source"`
 	Name      string `json:"name"`
 	TLSVerify *bool  `json:"tls-verify,omitempty"`
+	Local     bool   `json:"local,omitempty"`
 
 	ImageID    string `json:"image_id"`
 	Digest     string `json:"digest"`
 	ListDigest string `json:"list-digest,omitempty"`
+}
+
+// ContainerSpecFromVendorSourceSpec converts a vendor container.SourceSpec
+// to a worker ContainerSpec (source fields only).
+func ContainerSpecFromVendorSourceSpec(s container.SourceSpec) ContainerSpec {
+	return ContainerSpec{
+		Source:    s.Source,
+		Name:      s.Name,
+		TLSVerify: s.TLSVerify,
+		Local:     s.Local,
+	}
+}
+
+// ToVendorSourceSpec converts the source fields of a ContainerSpec back to
+// the vendor container.SourceSpec (for resolver input).
+func (cs *ContainerSpec) ToVendorSourceSpec() container.SourceSpec {
+	return container.SourceSpec{
+		Source:    cs.Source,
+		Name:      cs.Name,
+		TLSVerify: cs.TLSVerify,
+		Local:     cs.Local,
+	}
+}
+
+// ContainerSpecFromVendorSpec converts a vendor container.Spec (resolved
+// result) to a worker ContainerSpec.
+// NOTE: container.Spec uses different field names than SourceSpec:
+// - LocalName (not Name)
+// - LocalStorage (not Local)
+func ContainerSpecFromVendorSpec(s container.Spec) ContainerSpec {
+	return ContainerSpec{
+		Source:     s.Source,
+		Name:       s.LocalName,
+		TLSVerify:  s.TLSVerify,
+		Local:      s.LocalStorage,
+		ImageID:    s.ImageID,
+		Digest:     s.Digest,
+		ListDigest: s.ListDigest,
+	}
+}
+
+// ToVendorSpec converts a ContainerSpec to the vendor container.Spec
+// (for manifest serialization).
+// NOTE: container.Spec uses different field names than SourceSpec:
+// - LocalName (not Name)
+// - LocalStorage (not Local)
+func (cs *ContainerSpec) ToVendorSpec() container.Spec {
+	return container.Spec{
+		Source:       cs.Source,
+		LocalName:    cs.Name,
+		TLSVerify:    cs.TLSVerify,
+		LocalStorage: cs.Local,
+		ImageID:      cs.ImageID,
+		Digest:       cs.Digest,
+		ListDigest:   cs.ListDigest,
+	}
 }
 
 type ContainerResolveJob struct {

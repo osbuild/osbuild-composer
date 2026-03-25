@@ -2339,11 +2339,7 @@ func (api *API) resolveContainers(sourceSpecs map[string][]container.SourceSpec,
 		}
 
 		for i, c := range sources {
-			job.Specs[i] = worker.ContainerSpec{
-				Source:    c.Source,
-				Name:      c.Name,
-				TLSVerify: c.TLSVerify,
-			}
+			job.Specs[i] = worker.ContainerSpecFromVendorSourceSpec(c)
 		}
 
 		jobId, err := api.workers.EnqueueContainerResolveJob(&job, "")
@@ -2378,12 +2374,7 @@ func (api *API) resolveContainers(sourceSpecs map[string][]container.SourceSpec,
 
 		specs[name] = make([]container.Spec, len(sources))
 		for i, s := range result.Specs {
-			specs[name][i].Source = s.Source
-			specs[name][i].Digest = s.Digest
-			specs[name][i].LocalName = s.Name
-			specs[name][i].TLSVerify = s.TLSVerify
-			specs[name][i].ImageID = s.ImageID
-			specs[name][i].ListDigest = s.ListDigest
+			specs[name][i] = s.ToVendorSpec()
 		}
 	}
 
