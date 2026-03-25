@@ -32,7 +32,7 @@ func (impl *ContainerResolveJobImpl) Run(job worker.Job) error {
 	resolver.AuthFilePath = impl.AuthFilePath
 
 	for _, s := range args.Specs {
-		resolver.Add(container.SourceSpec{s.Source, s.Name, nil, s.TLSVerify, false})
+		resolver.Add(s.ToVendorSourceSpec())
 	}
 
 	specs, err := resolver.Finish()
@@ -41,14 +41,7 @@ func (impl *ContainerResolveJobImpl) Run(job worker.Job) error {
 		result.JobError = clienterrors.New(clienterrors.ErrorContainerResolution, err.Error(), nil)
 	} else {
 		for i, spec := range specs {
-			result.Specs[i] = worker.ContainerSpec{
-				Source:     spec.Source,
-				Name:       spec.LocalName,
-				TLSVerify:  spec.TLSVerify,
-				ImageID:    spec.ImageID,
-				Digest:     spec.Digest,
-				ListDigest: spec.ListDigest,
-			}
+			result.Specs[i] = worker.ContainerSpecFromVendorSpec(spec)
 		}
 	}
 

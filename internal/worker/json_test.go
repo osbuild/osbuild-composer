@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/depsolvednf"
 	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/images/pkg/sbom"
@@ -1413,6 +1414,164 @@ func TestDepsolvedModuleSpecRPMMDConversion(t *testing.T) {
 			dto := DepsolvedModuleSpecFromRPMMD(tc.module)
 			result := dto.ToRPMMD()
 			assert.EqualValues(t, tc.module, result)
+		})
+	}
+}
+
+func TestContainerSpecVendorSourceSpecConversion(t *testing.T) {
+	testCases := []struct {
+		name string
+		src  container.SourceSpec
+	}{
+		{name: "minimal fields", src: container.SourceSpec{}},
+		{
+			name: "all source fields, Local false",
+			src: container.SourceSpec{
+				Source:    "registry.example.com/image:latest",
+				Name:      "my-container",
+				TLSVerify: common.ToPtr(true),
+				Local:     false,
+			},
+		},
+		{
+			name: "all source fields, Local true",
+			src: container.SourceSpec{
+				Source:    "localhost/my-bootc:latest",
+				Name:      "bootc-container",
+				TLSVerify: common.ToPtr(false),
+				Local:     true,
+			},
+		},
+		{
+			name: "TLSVerify nil",
+			src: container.SourceSpec{
+				Source:    "registry.example.com/image:latest",
+				Name:      "my-container",
+				TLSVerify: nil,
+				Local:     false,
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			dto := ContainerSpecFromVendorSourceSpec(tc.src)
+			assert.Equal(t, tc.src, dto.ToVendorSourceSpec())
+		})
+	}
+
+	t.Run("ToVendorSourceSpec ignores resolved fields", func(t *testing.T) {
+		cs := ContainerSpec{
+			Source:     "registry.example.com/image:latest",
+			Name:       "my-container",
+			TLSVerify:  common.ToPtr(true),
+			Local:      false,
+			ImageID:    "sha256:abc123",
+			Digest:     "sha256:def456",
+			ListDigest: "sha256:ghi789",
+		}
+		assert.Equal(t, container.SourceSpec{
+			Source:    "registry.example.com/image:latest",
+			Name:      "my-container",
+			TLSVerify: common.ToPtr(true),
+			Local:     false,
+		}, cs.ToVendorSourceSpec())
+	})
+}
+
+func TestContainerSpecVendorSpecConversion(t *testing.T) {
+	testCases := []struct {
+		name string
+		spec container.Spec
+	}{
+		{name: "minimal fields", spec: container.Spec{}},
+		{
+			name: "all fields populated, LocalStorage false",
+			spec: container.Spec{
+				Source:       "registry.example.com/image",
+				LocalName:    "my-container",
+				TLSVerify:    common.ToPtr(true),
+				LocalStorage: false,
+				ImageID:      "sha256:abc123",
+				Digest:       "sha256:def456",
+				ListDigest:   "sha256:ghi789",
+			},
+		},
+		{
+			name: "all fields populated, LocalStorage true",
+			spec: container.Spec{
+				Source:       "localhost/my-bootc",
+				LocalName:    "bootc-container",
+				TLSVerify:    nil,
+				LocalStorage: true,
+				ImageID:      "sha256:abc123",
+				Digest:       "sha256:def456",
+				ListDigest:   "sha256:ghi789",
+			},
+		},
+		{
+			name: "LocalName and LocalStorage mapping",
+			spec: container.Spec{
+				Source:       "registry.example.com/image",
+				LocalName:    "custom-local-name",
+				LocalStorage: true,
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			dto := ContainerSpecFromVendorSpec(tc.spec)
+			assert.Equal(t, tc.spec, dto.ToVendorSpec())
+		})
+	}
+}
+
+func TestContainerSpecJSONRoundtrip(t *testing.T) {
+	testCases := []struct {
+		name string
+		spec ContainerSpec
+	}{
+		{
+			name: "minimal",
+			spec: ContainerSpec{},
+		},
+		{
+			name: "all fields, Local false",
+			spec: ContainerSpec{
+				Source:     "registry.example.com/image",
+				Name:       "my-container",
+				TLSVerify:  common.ToPtr(true),
+				Local:      false,
+				ImageID:    "sha256:abc123",
+				Digest:     "sha256:def456",
+				ListDigest: "sha256:ghi789",
+			},
+		},
+		{
+			name: "all fields, Local true",
+			spec: ContainerSpec{
+				Source:     "localhost/my-bootc",
+				Name:       "bootc-container",
+				TLSVerify:  nil,
+				Local:      true,
+				ImageID:    "sha256:abc123",
+				Digest:     "sha256:def456",
+				ListDigest: "sha256:ghi789",
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			data, err := json.Marshal(tc.spec)
+			require.NoError(t, err)
+
+			var result ContainerSpec
+			err = json.Unmarshal(data, &result)
+			require.NoError(t, err)
+
+			assert.Equal(t, tc.spec, result)
 		})
 	}
 }

@@ -224,11 +224,7 @@ func (s *Server) enqueueResolveJobs(manifestSource *manifest.Manifest, it distro
 	for _, sources := range containerSources {
 		workerResolveSpecs := make([]worker.ContainerSpec, len(sources))
 		for idx, source := range sources {
-			workerResolveSpecs[idx] = worker.ContainerSpec{
-				Source:    source.Source,
-				Name:      source.Name,
-				TLSVerify: source.TLSVerify,
-			}
+			workerResolveSpecs[idx] = worker.ContainerSpecFromVendorSourceSpec(source)
 		}
 
 		job := worker.ContainerResolveJob{
@@ -703,15 +699,7 @@ func serializeManifest(ctx context.Context, manifestSource *manifest.Manifest, w
 
 		pipelineSpecs := make([]container.Spec, len(result.Specs))
 		for idx, resultSpec := range result.Specs {
-			pipelineSpecs[idx] = container.Spec{
-				Source:     resultSpec.Source,
-				Digest:     resultSpec.Digest,
-				LocalName:  resultSpec.Name,
-				TLSVerify:  resultSpec.TLSVerify,
-				ImageID:    resultSpec.ImageID,
-				ListDigest: resultSpec.ListDigest,
-			}
-
+			pipelineSpecs[idx] = resultSpec.ToVendorSpec()
 		}
 		containerSpecs = map[string][]container.Spec{
 			containerEmbedPipeline: pipelineSpecs,
