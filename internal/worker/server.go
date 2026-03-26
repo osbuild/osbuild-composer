@@ -223,8 +223,8 @@ func (s *Server) EnqueueManifestJobByID(job *ManifestJobByID, dependencies []uui
 	return s.enqueue(JobTypeManifestIDOnly, job, dependencies, channel)
 }
 
-func (s *Server) EnqueueContainerResolveJob(job *ContainerResolveJob, channel string) (uuid.UUID, error) {
-	return s.enqueue(JobTypeContainerResolve, job, nil, channel)
+func (s *Server) EnqueueContainerResolveJob(job *ContainerResolveJob, dependencies []uuid.UUID, channel string) (uuid.UUID, error) {
+	return s.enqueue(JobTypeContainerResolve, job, dependencies, channel)
 }
 
 func (s *Server) EnqueueFileResolveJob(job *FileResolveJob, channel string) (uuid.UUID, error) {
