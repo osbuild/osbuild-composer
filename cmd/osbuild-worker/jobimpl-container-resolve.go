@@ -16,17 +16,35 @@ type ContainerResolveJobImpl struct {
 
 func (impl *ContainerResolveJobImpl) Run(job worker.Job) error {
 	logWithId := logrus.WithField("jobId", job.Id())
+
+	result := worker.ContainerResolveJobResult{}
+	defer func() {
+		if r := recover(); r != nil {
+			logWithId.Errorf("Recovered from panic in ContainerResolveJobImpl.Run: %v", r)
+			result.JobError = clienterrors.New(clienterrors.ErrorJobPanicked, "Error resolving containers", r)
+		}
+
+		err := job.Finish(&result)
+		if err != nil {
+			logWithId.Errorf("Error reporting job result: %v", err)
+		}
+	}()
+
 	var args worker.ContainerResolveJob
-	err := job.Args(&args)
-	if err != nil {
-		return err
+	if err := job.Args(&args); err != nil {
+		result.JobError = clienterrors.New(
+			clienterrors.ErrorParsingJobArgs, "Error parsing container resolve job args: "+err.Error(), nil)
+		return fmt.Errorf("Error parsing container resolve job args: %v", err)
 	}
 
-	result := worker.ContainerResolveJobResult{
-		Specs: make([]worker.ContainerSpec, len(args.Specs)),
+	// No-op: no specs to resolve
+	if len(args.Specs) == 0 {
+		return nil
 	}
 
 	logWithId.Infof("Resolving containers (%d)", len(args.Specs))
+
+	result.Specs = make([]worker.ContainerSpec, len(args.Specs))
 
 	resolver := container.NewResolver(args.Arch)
 	resolver.AuthFilePath = impl.AuthFilePath
@@ -39,15 +57,11 @@ func (impl *ContainerResolveJobImpl) Run(job worker.Job) error {
 
 	if err != nil {
 		result.JobError = clienterrors.New(clienterrors.ErrorContainerResolution, err.Error(), nil)
-	} else {
-		for i, spec := range specs {
-			result.Specs[i] = worker.ContainerSpecFromVendorSpec(spec)
-		}
+		return fmt.Errorf("Error resolving containers: %v", err)
 	}
 
-	err = job.Finish(&result)
-	if err != nil {
-		return fmt.Errorf("Error reporting job result: %v", err)
+	for i, spec := range specs {
+		result.Specs[i] = worker.ContainerSpecFromVendorSpec(spec)
 	}
 
 	return nil
