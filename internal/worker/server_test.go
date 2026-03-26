@@ -568,10 +568,7 @@ func enqueueAndFinishTestJobDependencies(s *worker.Server, deps []testJob) ([]uu
 
 		case *worker.ContainerResolveJob:
 			job := dep.main.(*worker.ContainerResolveJob)
-			if len(depUUIDs) != 0 {
-				return nil, fmt.Errorf("dependencies are not supported for ContainerResolveJob, got: %d", len(depUUIDs))
-			}
-			id, err = s.EnqueueContainerResolveJob(job, "")
+			id, err = s.EnqueueContainerResolveJob(job, depUUIDs, "")
 			if err != nil {
 				return nil, err
 			}

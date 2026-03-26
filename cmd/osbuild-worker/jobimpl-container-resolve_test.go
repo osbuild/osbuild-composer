@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	main "github.com/osbuild/osbuild-composer/cmd/osbuild-worker"
+	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
 )
@@ -22,9 +23,10 @@ func TestContainerResolveJobRun(t *testing.T) {
 	tests := []struct {
 		name               string
 		jobArgs            *worker.ContainerResolveJob
-		jobArgsRaw         json.RawMessage                                                      // if jobArgs is nil, use this instead
-		mockMockJobFunc    func(t *testing.T, jobType string, rawArgs json.RawMessage) *mockJob // if nil, use the default mock job creator
-		wantRunErrSubstr   string                                                               // if empty, no error is expected
+		jobArgsRaw         json.RawMessage // if jobArgs is nil, use this instead
+		dynArgs            []interface{}
+		mockMockJobFunc    func(t *testing.T, jobType string, rawArgs json.RawMessage, dynamicArgs ...interface{}) *mockJob // if nil, use the default mock job creator
+		wantRunErrSubstr   string                                                                                           // if empty, no error is expected
 		verifyFinishResult func(t *testing.T, result worker.ContainerResolveJobResult)
 	}{
 		{
@@ -58,7 +60,7 @@ func TestContainerResolveJobRun(t *testing.T) {
 				Arch:          "x86_64",
 				PipelineSpecs: map[string][]worker.ContainerSpec{},
 			},
-			mockMockJobFunc: func(t *testing.T, jobType string, rawArgs json.RawMessage) *mockJob {
+			mockMockJobFunc: func(t *testing.T, jobType string, rawArgs json.RawMessage, dynamicArgs ...interface{}) *mockJob {
 				jobMock := newMockJob(t, jobType, rawArgs)
 				jobMock.finishErr = fmt.Errorf("connection lost")
 				return jobMock
@@ -103,6 +105,147 @@ func TestContainerResolveJobRun(t *testing.T) {
 				assert.Equal(t, clienterrors.ErrorContainerResolution, result.JobError.ID)
 			},
 		},
+		{
+			name: "PipelineSpecs and PreManifestDynArgsIdx set at the same time",
+			jobArgs: &worker.ContainerResolveJob{
+				Arch: "x86_64",
+				PipelineSpecs: map[string][]worker.ContainerSpec{
+					"build": {
+						{
+							Source: "localhost:1/nonexistent/image:latest",
+							Name:   "test-container",
+						},
+					},
+				},
+				PreManifestDynArgsIdx: common.ToPtr(0),
+			},
+			dynArgs: []interface{}{
+				worker.BootcPreManifestJobResult{
+					ContainerResolveJobArgs: &worker.ContainerResolveJob{
+						Arch: "x86_64",
+						PipelineSpecs: map[string][]worker.ContainerSpec{
+							"build": {
+								{
+									Source: "localhost:1/nonexistent/image:latest",
+									Name:   "test-from-dynargs",
+								},
+							},
+						},
+					},
+				},
+			},
+			wantRunErrSubstr: "PipelineSpecs and PreManifestDynArgsIdx cannot be set at the same time",
+			verifyFinishResult: func(t *testing.T, result worker.ContainerResolveJobResult) {
+				assert.NotNil(t, result.JobError, "expected job error for invalid config")
+			},
+		},
+		{
+			name: "dynArgs with PreManifestDynArgsIdx reads specs from BootcPreManifestJobResult",
+			jobArgs: &worker.ContainerResolveJob{
+				Arch:                  "x86_64",
+				PipelineSpecs:         nil,
+				PreManifestDynArgsIdx: common.ToPtr(0),
+			},
+			dynArgs: []interface{}{
+				worker.BootcPreManifestJobResult{
+					ContainerResolveJobArgs: &worker.ContainerResolveJob{
+						Arch: "x86_64",
+						PipelineSpecs: map[string][]worker.ContainerSpec{
+							"build": {
+								{
+									Source: "localhost:1/nonexistent/image:latest",
+									Name:   "test-from-dynargs",
+								},
+							},
+						},
+					},
+				},
+			},
+			wantRunErrSubstr: "Error resolving containers",
+			verifyFinishResult: func(t *testing.T, result worker.ContainerResolveJobResult) {
+				assert.NotNil(t, result.JobError, "expected job error for unresolvable container from dynArgs")
+				assert.Equal(t, clienterrors.ErrorContainerResolution, result.JobError.ID, "expected ErrorContainerResolution, got %d", result.JobError.ID)
+			},
+		},
+		{
+			name: "dynArgs with empty ContainerResolveJobArgs is no-op",
+			jobArgs: &worker.ContainerResolveJob{
+				Arch:                  "x86_64",
+				PipelineSpecs:         nil,
+				PreManifestDynArgsIdx: common.ToPtr(0),
+			},
+			dynArgs: []interface{}{worker.BootcPreManifestJobResult{}},
+			verifyFinishResult: func(t *testing.T, result worker.ContainerResolveJobResult) {
+				assert.Nil(t, result.JobError, "expected no job error for empty ContainerResolveJobArgs")
+				assert.Empty(t, result.PipelineSpecs, "expected empty result PipelineSpecs when ContainerResolveJobArgs is empty")
+			},
+		},
+		{
+			name: "dynArgs index out of range",
+			jobArgs: &worker.ContainerResolveJob{
+				Arch:                  "x86_64",
+				PipelineSpecs:         nil,
+				PreManifestDynArgsIdx: common.ToPtr(5),
+			},
+			wantRunErrSubstr: "Error reading container resolve args from dynamic args",
+			verifyFinishResult: func(t *testing.T, result worker.ContainerResolveJobResult) {
+				require.NotNil(t, result.JobError, "expected job error for out-of-range dynArgs index")
+				assert.Equal(t, clienterrors.ErrorParsingDynamicArgs, result.JobError.ID, "expected ErrorParsingDynamicArgs, got %d", result.JobError.ID)
+			},
+		},
+		{
+			name: "dynArgs index out of range - negative index",
+			jobArgs: &worker.ContainerResolveJob{
+				Arch:                  "x86_64",
+				PipelineSpecs:         nil,
+				PreManifestDynArgsIdx: common.ToPtr(-1),
+			},
+			wantRunErrSubstr: "Error reading container resolve args from dynamic args",
+			verifyFinishResult: func(t *testing.T, result worker.ContainerResolveJobResult) {
+				require.NotNil(t, result.JobError, "expected job error for out-of-range dynArgs index")
+				assert.Equal(t, clienterrors.ErrorParsingDynamicArgs, result.JobError.ID, "expected ErrorParsingDynamicArgs, got %d", result.JobError.ID)
+			},
+		},
+		{
+			name: "dynArgs dependency failed",
+			jobArgs: &worker.ContainerResolveJob{
+				Arch:                  "x86_64",
+				PipelineSpecs:         nil,
+				PreManifestDynArgsIdx: common.ToPtr(0),
+			},
+			dynArgs: []interface{}{
+				worker.BootcPreManifestJobResult{
+					JobResult: worker.JobResult{
+						JobError: clienterrors.New(clienterrors.ErrorBuildJob, "pre-manifest failed", nil),
+					},
+				},
+			},
+			wantRunErrSubstr: "Error reading container resolve args from dynamic args",
+			verifyFinishResult: func(t *testing.T, result worker.ContainerResolveJobResult) {
+				require.NotNil(t, result.JobError, "expected job error for failed dependency")
+				assert.Equal(t, clienterrors.ErrorJobDependency, result.JobError.ID, "expected ErrorJobDependency, got %d", result.JobError.ID)
+			},
+		},
+		{
+			name: "no dynArgs without PreManifestDynArgsIdx - standard flow unchanged",
+			jobArgs: &worker.ContainerResolveJob{
+				Arch: "x86_64",
+				PipelineSpecs: map[string][]worker.ContainerSpec{
+					"build": {
+						{
+							Source: "localhost:1/nonexistent/image:latest",
+							Name:   "test-container",
+						},
+					},
+				},
+				PreManifestDynArgsIdx: nil,
+			},
+			wantRunErrSubstr: "Error resolving containers",
+			verifyFinishResult: func(t *testing.T, result worker.ContainerResolveJobResult) {
+				assert.NotNil(t, result.JobError, "expected job error for unresolvable container")
+				assert.Equal(t, clienterrors.ErrorContainerResolution, result.JobError.ID, "expected ErrorContainerResolution, got %d", result.JobError.ID)
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -118,7 +261,7 @@ func TestContainerResolveJobRun(t *testing.T) {
 			if tt.mockMockJobFunc == nil {
 				tt.mockMockJobFunc = newMockJob
 			}
-			jobMock := tt.mockMockJobFunc(t, worker.JobTypeContainerResolve, rawArgs)
+			jobMock := tt.mockMockJobFunc(t, worker.JobTypeContainerResolve, rawArgs, tt.dynArgs...)
 
 			impl := &main.ContainerResolveJobImpl{AuthFilePath: ""}
 			runErr := impl.Run(jobMock)

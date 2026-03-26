@@ -2341,7 +2341,7 @@ func (api *API) resolveContainers(sourceSpecs map[string][]container.SourceSpec,
 		}
 	}
 
-	jobId, err := api.workers.EnqueueContainerResolveJob(&job, "")
+	jobId, err := api.workers.EnqueueContainerResolveJob(&job, nil, "")
 	if err != nil {
 		return specs, err
 	}

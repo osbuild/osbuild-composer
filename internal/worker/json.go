@@ -988,6 +988,10 @@ func (cs *ContainerSpec) ToVendorSpec() container.Spec {
 type ContainerResolveJob struct {
 	Arch          string                     `json:"arch"`
 	PipelineSpecs map[string][]ContainerSpec `json:"pipeline_specs,omitempty"`
+
+	// Index of the BootcPreManifestJobResult in dynamic args, from which
+	// to read resolve args when PipelineSpecs is empty.
+	PreManifestDynArgsIdx *int `json:"pre_manifest_dyn_args_idx,omitempty"`
 }
 
 // MarshalJSON implements custom marshaling for ContainerResolveJob to maintain

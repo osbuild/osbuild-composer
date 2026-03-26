@@ -37,6 +37,24 @@ func (impl *ContainerResolveJobImpl) Run(job worker.Job) error {
 		return fmt.Errorf("Error parsing container resolve job args: %v", err)
 	}
 
+	if len(args.PipelineSpecs) > 0 && args.PreManifestDynArgsIdx != nil {
+		result.JobError = clienterrors.New(
+			clienterrors.ErrorParsingJobArgs, "PipelineSpecs and PreManifestDynArgsIdx cannot be set at the same time", nil)
+		return fmt.Errorf("PipelineSpecs and PreManifestDynArgsIdx cannot be set at the same time")
+	}
+
+	// If static args have no PipelineSpecs and a PreManifestDynArgsIdx is set, read args from the BootcPreManifest dependency result.
+	if len(args.PipelineSpecs) == 0 && args.PreManifestDynArgsIdx != nil {
+		dynArgsResult, dynArgsErr := readContainerResolveArgsFromDynArgs(job, *args.PreManifestDynArgsIdx)
+		if dynArgsErr != nil {
+			result.JobError = dynArgsErr
+			return fmt.Errorf("Error reading container resolve args from dynamic args: %v", dynArgsErr)
+		}
+		if dynArgsResult != nil {
+			args = *dynArgsResult
+		}
+	}
+
 	// No-op: no specs to resolve
 	if len(args.PipelineSpecs) == 0 {
 		return nil
@@ -78,4 +96,35 @@ func (impl *ContainerResolveJobImpl) Run(job worker.Job) error {
 	}
 
 	return nil
+}
+
+// readContainerResolveArgsFromDynArgs reads the container resolve args from
+// a BootcPreManifestJobResult stored in dynamic args at the given index.
+func readContainerResolveArgsFromDynArgs(job worker.Job, dynArgsIdx int) (*worker.ContainerResolveJob, *clienterrors.Error) {
+	if dynArgsIdx < 0 || dynArgsIdx >= job.NDynamicArgs() {
+		return nil, clienterrors.New(
+			clienterrors.ErrorParsingDynamicArgs,
+			fmt.Sprintf("PreManifestDynArgsIdx %d is out of range", dynArgsIdx),
+			nil,
+		)
+	}
+
+	var preManifestResult worker.BootcPreManifestJobResult
+	if err := job.DynamicArgs(dynArgsIdx, &preManifestResult); err != nil {
+		return nil, clienterrors.New(
+			clienterrors.ErrorParsingDynamicArgs,
+			"Error parsing BootcPreManifestJobResult from dynamic args: "+err.Error(),
+			nil,
+		)
+	}
+
+	if preManifestResult.JobError != nil {
+		return nil, clienterrors.New(
+			clienterrors.ErrorJobDependency,
+			"BootcPreManifest dependency failed",
+			preManifestResult.JobError.Reason,
+		)
+	}
+
+	return preManifestResult.ContainerResolveJobArgs, nil
 }

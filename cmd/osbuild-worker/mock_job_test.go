@@ -71,12 +71,19 @@ func (j *mockJob) Finish(result interface{}) error {
 	return nil
 }
 
-func newMockJob(t *testing.T, jobType string, rawArgs json.RawMessage) *mockJob {
+func newMockJob(t *testing.T, jobType string, rawArgs json.RawMessage, dynamicArgs ...interface{}) *mockJob {
 	t.Helper()
+	rawDynArgs := make([]json.RawMessage, len(dynamicArgs))
+	for i, da := range dynamicArgs {
+		raw, err := json.Marshal(da)
+		require.NoError(t, err, "failed to marshal dynamic arg %d", i)
+		rawDynArgs[i] = raw
+	}
 	return &mockJob{
-		jobID:   uuid.New(),
-		jobType: jobType,
-		rawArgs: rawArgs,
+		jobID:       uuid.New(),
+		jobType:     jobType,
+		rawArgs:     rawArgs,
+		dynamicArgs: rawDynArgs,
 	}
 }
 

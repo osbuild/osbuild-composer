@@ -67,10 +67,10 @@ func TestBootcInfoResolveJobRun(t *testing.T) {
 		name                 string
 		jobArgs              *worker.BootcInfoResolveJob
 		jobArgsRaw           json.RawMessage
-		mockResolveFullInfo  main.ResolveBootcInfoFuncType                                        // if nil, use the default mock function
-		mockResolveBuildInfo main.ResolveBootcInfoFuncType                                        // if nil, use the default mock function
-		mockMockJobFunc      func(t *testing.T, jobType string, rawArgs json.RawMessage) *mockJob // if nil, use the default mock job creator
-		wantRunErrSubstr     string                                                               // if empty, no error is expected
+		mockResolveFullInfo  main.ResolveBootcInfoFuncType                                                                    // if nil, use the default mock function
+		mockResolveBuildInfo main.ResolveBootcInfoFuncType                                                                    // if nil, use the default mock function
+		mockMockJobFunc      func(t *testing.T, jobType string, rawArgs json.RawMessage, dynamicArgs ...interface{}) *mockJob // if nil, use the default mock job creator
+		wantRunErrSubstr     string                                                                                           // if empty, no error is expected
 		verifyFinishResult   func(t *testing.T, result worker.BootcInfoResolveJobResult)
 	}{
 		{
@@ -171,7 +171,7 @@ func TestBootcInfoResolveJobRun(t *testing.T) {
 			jobArgs: &worker.BootcInfoResolveJob{
 				Specs: []worker.BootcInfoResolveJobSpec{},
 			},
-			mockMockJobFunc: func(t *testing.T, jobType string, rawArgs json.RawMessage) *mockJob {
+			mockMockJobFunc: func(t *testing.T, jobType string, rawArgs json.RawMessage, dynamicArgs ...interface{}) *mockJob {
 				jobMock := newMockJob(t, jobType, rawArgs)
 				jobMock.finishErr = fmt.Errorf("connection lost")
 				return jobMock
