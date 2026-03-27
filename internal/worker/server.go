@@ -822,31 +822,48 @@ func (s *Server) DeleteArtifacts(id uuid.UUID) error {
 }
 
 func (s *Server) RequestJob(ctx context.Context, arch string, jobTypes, channels []string, workerID uuid.UUID) (uuid.UUID, uuid.UUID, string, json.RawMessage, []json.RawMessage, error) {
-	return s.requestJob(ctx, arch, jobTypes, uuid.Nil, channels, workerID)
+	return s.requestJob(ctx, arch, jobTypes, func(ctx context.Context, jts []string) (uuid.UUID, uuid.UUID, []uuid.UUID, string, json.RawMessage, error) {
+		return s.jobs.Dequeue(ctx, workerID, jts, channels)
+	})
 }
 
 func (s *Server) RequestJobById(ctx context.Context, arch string, requestedJobId uuid.UUID) (uuid.UUID, uuid.UUID, string, json.RawMessage, []json.RawMessage, error) {
-	return s.requestJob(ctx, arch, []string{}, requestedJobId, nil, uuid.Nil)
+	return s.requestJob(ctx, arch, nil, func(ctx context.Context, _ []string) (uuid.UUID, uuid.UUID, []uuid.UUID, string, json.RawMessage, error) {
+		token, depIDs, jobType, args, err := s.jobs.DequeueByID(ctx, requestedJobId, uuid.Nil)
+		return requestedJobId, token, depIDs, jobType, args, err
+	})
 }
 
-func (s *Server) requestJob(ctx context.Context, arch string, jobTypes []string, requestedJobId uuid.UUID, channels []string, workerID uuid.UUID) (
+func (s *Server) RequestJobAnyChannel(ctx context.Context, arch string, jobTypes []string) (uuid.UUID, uuid.UUID, string, json.RawMessage, []json.RawMessage, error) {
+	return s.requestJob(ctx, arch, jobTypes, func(ctx context.Context, jts []string) (uuid.UUID, uuid.UUID, []uuid.UUID, string, json.RawMessage, error) {
+		return s.jobs.DequeueAnyChannel(ctx, uuid.Nil, jts)
+	})
+}
+
+// dequeueFunc abstracts the different jobqueue dequeue methods behind a
+// common signature so that requestJob can handle timeout, arch-based job
+// type transformation, post-dequeue bookkeeping, and metrics uniformly.
+type dequeueFunc func(ctx context.Context, jobTypes []string) (
+	jobId uuid.UUID, token uuid.UUID, depIDs []uuid.UUID,
+	jobType string, args json.RawMessage, err error,
+)
+
+func (s *Server) requestJob(ctx context.Context, arch string, jobTypes []string, dequeueFn dequeueFunc) (
 	jobId uuid.UUID, token uuid.UUID, jobType string, args json.RawMessage, dynamicArgs []json.RawMessage, err error) {
-	// treat osbuild jobs specially until we have found a generic way to
-	// specify dequeuing restrictions. For now, we only have one
-	// restriction: arch for osbuild and bootc info resolve jobs.
-	jts := []string{}
-	// Only set the arch label used for prometheus metrics for job types that
-	// use arch-based dequeuing. Otherwise the dequeue metrics would set the
-	// label for all job types, while the finish metrics only set it for
-	// arch-aware jobs (osbuild and bootc-info-resolve).
+
+	// Append arch suffix to arch-aware job types so that the queue
+	// matches them against the stored type (e.g. "osbuild:x86_64").
+	// Also record the arch label for prometheus dequeue metrics so that
+	// dequeue and finish metrics use the same label dimensions.
 	var archPromLabel string
+	jts := make([]string, 0, len(jobTypes))
 	for _, t := range jobTypes {
+		if t == JobTypeManifestIDOnly {
+			return uuid.Nil, uuid.Nil, "", nil, nil, ErrInvalidJobType
+		}
 		if t == JobTypeOSBuild || t == JobTypeBootcInfoResolve {
 			t = t + ":" + arch
 			archPromLabel = arch
-		}
-		if t == JobTypeManifestIDOnly {
-			return uuid.Nil, uuid.Nil, "", nil, nil, ErrInvalidJobType
 		}
 		jts = append(jts, t)
 	}
@@ -859,12 +876,7 @@ func (s *Server) requestJob(ctx context.Context, arch string, jobTypes []string,
 	}
 
 	var depIDs []uuid.UUID
-	if requestedJobId != uuid.Nil {
-		jobId = requestedJobId
-		token, depIDs, jobType, args, err = s.jobs.DequeueByID(dequeueCtx, requestedJobId, workerID)
-	} else {
-		jobId, token, depIDs, jobType, args, err = s.jobs.Dequeue(dequeueCtx, workerID, jts, channels)
-	}
+	jobId, token, depIDs, jobType, args, err = dequeueFn(dequeueCtx, jts)
 	if err != nil {
 		if err != jobqueue.ErrDequeueTimeout && err != jobqueue.ErrNotPending {
 			logrus.Errorf("dequeuing job failed: %v", err)
