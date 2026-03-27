@@ -970,8 +970,8 @@ func serializeManifest(ctx context.Context, getManifestSource manifestSourceFunc
 }
 
 // bootcPreManifestLoop is a long-running goroutine started at server init
-// that picks up pending BootcPreManifest jobs via RequestJob and spawns a
-// goroutine per job for parallel processing.
+// that picks up pending BootcPreManifest jobs via RequestJobAnyChannel and
+// spawns a goroutine per job for parallel processing.
 func (s *Server) bootcPreManifestLoop() {
 	const maxConcurrentPreManifestJobs = 8
 	sem := make(chan struct{}, maxConcurrentPreManifestJobs)
@@ -983,11 +983,8 @@ func (s *Server) bootcPreManifestLoop() {
 	for {
 		sem <- struct{}{}
 
-		// Pass empty channel for on-prem (no tenant).
-		// TODO: Multi-tenant deployments with JWT-based channels will need this
-		// updated to enumerate tenant channels or use a different mechanism.
-		jobID, token, _, staticArgs, dynArgs, err := s.workers.RequestJob(
-			s.goroutinesCtx, "", []string{worker.JobTypeBootcPreManifest}, []string{""}, uuid.Nil,
+		jobID, token, _, staticArgs, dynArgs, err := s.workers.RequestJobAnyChannel(
+			s.goroutinesCtx, "", []string{worker.JobTypeBootcPreManifest},
 		)
 		if err != nil {
 			<-sem // release on error
