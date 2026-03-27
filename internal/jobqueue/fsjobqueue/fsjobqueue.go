@@ -16,6 +16,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"slices"
 	"sync"
 	"time"
 
@@ -198,7 +199,11 @@ func (q *fsJobQueue) Enqueue(jobType string, args interface{}, dependencies []uu
 	return j.Id, nil
 }
 
-func (q *fsJobQueue) Dequeue(ctx context.Context, wID uuid.UUID, jobTypes, channels []string) (uuid.UUID, uuid.UUID, []uuid.UUID, string, json.RawMessage, error) {
+// dequeueLoop blocks until a job matching the given criteria is available or
+// ctx is canceled. The matches function determines whether a pending job is
+// eligible for dequeuing. This is the shared implementation for Dequeue and
+// DequeueAnyChannel.
+func (q *fsJobQueue) dequeueLoop(ctx context.Context, wID uuid.UUID, matches func(*job) bool) (uuid.UUID, uuid.UUID, []uuid.UUID, string, json.RawMessage, error) {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 
@@ -217,7 +222,7 @@ func (q *fsJobQueue) Dequeue(ctx context.Context, wID uuid.UUID, jobTypes, chann
 	for {
 		var found bool
 		var err error
-		j, found, err = q.dequeueSuitableJob(jobTypes, channels)
+		j, found, err = q.dequeueSuitableJob(matches)
 		if err != nil {
 			return uuid.Nil, uuid.Nil, nil, "", nil, err
 		}
@@ -254,6 +259,18 @@ func (q *fsJobQueue) Dequeue(ctx context.Context, wID uuid.UUID, jobTypes, chann
 	}
 
 	return j.Id, j.Token, j.Dependencies, j.Type, j.Args, nil
+}
+
+func (q *fsJobQueue) Dequeue(ctx context.Context, wID uuid.UUID, jobTypes, channels []string) (uuid.UUID, uuid.UUID, []uuid.UUID, string, json.RawMessage, error) {
+	return q.dequeueLoop(ctx, wID, func(j *job) bool {
+		return jobMatchesCriteria(j, jobTypes, channels)
+	})
+}
+
+func (q *fsJobQueue) DequeueAnyChannel(ctx context.Context, wID uuid.UUID, jobTypes []string) (uuid.UUID, uuid.UUID, []uuid.UUID, string, json.RawMessage, error) {
+	return q.dequeueLoop(ctx, wID, func(j *job) bool {
+		return jobMatchesType(j, jobTypes)
+	})
 }
 
 func (q *fsJobQueue) DequeueByID(ctx context.Context, id, wID uuid.UUID) (uuid.UUID, []uuid.UUID, string, json.RawMessage, error) {
@@ -660,17 +677,13 @@ func (q *fsJobQueue) hasAllFinishedDependencies(j *job) (bool, error) {
 	return true, nil
 }
 
-// dequeueSuitableJob finds a suitable job in the list of pending jobs, removes it from there and returns it
-//
-// The job must meet the following conditions:
-// - must be pending
-// - its dependencies must be finished
-// - must be of one of the type from jobTypes
-// - must be of one of the channel from channels
+// dequeueSuitableJob finds a suitable job in the list of pending jobs, removes
+// it from there and returns it. The matches function determines whether a given
+// job is eligible for dequeuing.
 //
 // If a suitable job is not found, false is returned.
 // If an error occurs during the search, it's returned.
-func (q *fsJobQueue) dequeueSuitableJob(jobTypes []string, channels []string) (*job, bool, error) {
+func (q *fsJobQueue) dequeueSuitableJob(matches func(*job) bool) (*job, bool, error) {
 	el := q.pending.Front()
 	for el != nil {
 		id := el.Value.(uuid.UUID)
@@ -680,7 +693,7 @@ func (q *fsJobQueue) dequeueSuitableJob(jobTypes []string, channels []string) (*
 			return nil, false, err
 		}
 
-		if !jobMatchesCriteria(j, jobTypes, channels) {
+		if !matches(j) {
 			el = el.Next()
 			continue
 		}
@@ -720,17 +733,15 @@ func (q *fsJobQueue) removePendingJob(id uuid.UUID) {
 //   - the job's type is one of the acceptedJobTypes
 //   - the job's channel is one of the acceptedChannels
 func jobMatchesCriteria(j *job, acceptedJobTypes []string, acceptedChannels []string) bool {
-	contains := func(slice []string, str string) bool {
-		for _, item := range slice {
-			if str == item {
-				return true
-			}
-		}
+	return slices.Contains(acceptedJobTypes, j.Type) && slices.Contains(acceptedChannels, j.Channel)
+}
 
-		return false
-	}
-
-	return contains(acceptedJobTypes, j.Type) && contains(acceptedChannels, j.Channel)
+// jobMatchesType returns true if it matches criteria defined in parameters
+//
+// Criteria:
+//   - the job's type is one of the acceptedJobTypes
+func jobMatchesType(j *job, acceptedJobTypes []string) bool {
+	return slices.Contains(acceptedJobTypes, j.Type)
 }
 
 // AllRootJobIDs Return a list of all the top level(root) job uuids

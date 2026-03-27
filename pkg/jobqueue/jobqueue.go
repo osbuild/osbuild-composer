@@ -50,6 +50,17 @@ type JobQueue interface {
 	// can be unmarshaled to the type given in Enqueue().
 	DequeueByID(ctx context.Context, id, workerID uuid.UUID) (uuid.UUID, []uuid.UUID, string, json.RawMessage, error)
 
+	// DequeueAnyChannel dequeues a job matching any of jobTypes regardless
+	// of the channel the job was enqueued with. Blocks until one is
+	// available or ctx is canceled.
+	//
+	// This is intended for server-side jobs that must be processed by the
+	// server itself, not by tenant-scoped workers.
+	//
+	// Returns the job's id, token, dependencies, type, and arguments, or
+	// an error.
+	DequeueAnyChannel(ctx context.Context, workerID uuid.UUID, jobTypes []string) (uuid.UUID, uuid.UUID, []uuid.UUID, string, json.RawMessage, error)
+
 	// Updates the result of a job without finishing it
 	//
 	// This allows partial results to be set on a running job.

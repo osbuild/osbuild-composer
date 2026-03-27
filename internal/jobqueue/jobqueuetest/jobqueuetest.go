@@ -62,6 +62,7 @@ func TestJobQueue(t *testing.T, makeJobQueue MakeJobQueue) {
 	t.Run("timeout", wrap(testDequeueTimeout))
 	t.Run("dequeue-by-id", wrap(testDequeueByID))
 	t.Run("multiple-channels", wrap(testMultipleChannels))
+	t.Run("dequeue-any-channel", wrap(testDequeueAnyChannel))
 	t.Run("100-dequeuers", wrap(test100dequeuers))
 	t.Run("workers", wrap(testWorkers))
 	t.Run("fail", wrap(testFail))
@@ -743,6 +744,92 @@ func testMultipleChannels(t *testing.T, q jobqueue.JobQueue) {
 		// dequeue from an empty channel
 		_, _, _, _, _, err = q.Dequeue(context.Background(), uuid.Nil, []string{"octopus"}, []string{""})
 		require.NoError(t, err)
+	})
+}
+
+func testDequeueAnyChannel(t *testing.T, q jobqueue.JobQueue) {
+	type enqueueSpec struct {
+		jobType string
+		channel string
+	}
+
+	type testCase struct {
+		name             string
+		enqueue          []enqueueSpec
+		dequeueJobTypes  []string
+		expectedJobCount int
+		expectTimeout    bool
+	}
+
+	testCases := []testCase{
+		{
+			name: "dequeues jobs from multiple channels",
+			enqueue: []enqueueSpec{
+				{jobType: "octopus", channel: ""},
+				{jobType: "octopus", channel: "org-A"},
+				{jobType: "octopus", channel: "org-B"},
+			},
+			dequeueJobTypes:  []string{"octopus"},
+			expectedJobCount: 3,
+		},
+		{
+			name: "respects job type filter",
+			enqueue: []enqueueSpec{
+				{jobType: "starfish", channel: "org-A"},
+			},
+			dequeueJobTypes: []string{"octopus"},
+			expectTimeout:   true,
+		},
+		{
+			name:            "timeout when no jobs available",
+			enqueue:         nil,
+			dequeueJobTypes: []string{"octopus"},
+			expectTimeout:   true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			var enqueuedIDs []uuid.UUID
+			for _, spec := range tc.enqueue {
+				id := pushTestJob(t, q, spec.jobType, nil, nil, spec.channel)
+				enqueuedIDs = append(enqueuedIDs, id)
+			}
+
+			if tc.expectTimeout {
+				ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(time.Millisecond*100))
+				defer cancel()
+				_, _, _, _, _, err := q.DequeueAnyChannel(ctx, uuid.Nil, tc.dequeueJobTypes)
+				require.ErrorIs(t, err, jobqueue.ErrDequeueTimeout)
+				return
+			}
+
+			var dequeuedIDs []uuid.UUID
+			for range tc.expectedJobCount {
+				id, _, _, _, _, err := q.DequeueAnyChannel(context.Background(), uuid.Nil, tc.dequeueJobTypes)
+				require.NoError(t, err)
+				dequeuedIDs = append(dequeuedIDs, id)
+			}
+			require.ElementsMatch(t, enqueuedIDs, dequeuedIDs)
+		})
+	}
+
+	// This case verifies that DequeueAnyChannel does not interfere with
+	// channel-filtered Dequeue. It requires sequential dequeue calls with
+	// different methods, so it is tested separately.
+	t.Run("does not interfere with channel-filtered Dequeue", func(t *testing.T) {
+		orgXJobID := pushTestJob(t, q, "octopus", nil, nil, "org-X")
+
+		// Regular Dequeue with a different channel should not find it
+		ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(time.Millisecond*100))
+		defer cancel()
+		_, _, _, _, _, err := q.Dequeue(ctx, uuid.Nil, []string{"octopus"}, []string{"org-Y"})
+		require.ErrorIs(t, err, jobqueue.ErrDequeueTimeout)
+
+		// DequeueAnyChannel should find it
+		id, _, _, _, _, err := q.DequeueAnyChannel(context.Background(), uuid.Nil, []string{"octopus"})
+		require.NoError(t, err)
+		require.Equal(t, orgXJobID, id)
 	})
 }
 
