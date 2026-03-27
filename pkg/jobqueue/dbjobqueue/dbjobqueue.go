@@ -44,6 +44,18 @@ const (
 		)
 		RETURNING id, type, args`
 
+	sqlDequeueAnyChannel = `
+		UPDATE jobs
+		SET token = $1, started_at = statement_timestamp()
+		WHERE id = (
+		  SELECT id
+		  FROM ready_jobs
+		  WHERE type = ANY($2)
+		  LIMIT 1
+		  FOR UPDATE SKIP LOCKED
+		)
+		RETURNING id, type, args`
+
 	sqlDequeueByID = `
 		UPDATE jobs
 		SET token = $1, started_at = statement_timestamp()
@@ -356,44 +368,37 @@ func (q *DBJobQueue) Enqueue(jobType string, args interface{}, dependencies []uu
 	return id, nil
 }
 
-func (q *DBJobQueue) Dequeue(ctx context.Context, workerID uuid.UUID, jobTypes, channels []string) (uuid.UUID, uuid.UUID, []uuid.UUID, string, json.RawMessage, error) {
-	// add ourselves as a dequeuer
+// dequeueLoop implements the polling loop pattern for dequeuing jobs.
+// It registers as a dequeuer for the duration of the call and returns
+// the job's id, dependencies, type, and arguments, or an error.
+func (q *DBJobQueue) dequeueLoop(ctx context.Context, tryFn func(ctx context.Context) (uuid.UUID, []uuid.UUID, string, json.RawMessage, error)) (id uuid.UUID, dependencies []uuid.UUID, jobType string, args json.RawMessage, err error) {
 	c := make(chan struct{}, 1)
 	el := q.dequeuers.pushBack(c)
 	defer q.dequeuers.remove(el)
-
-	token := uuid.New()
 	for {
-		var err error
-		id, dependencies, jobType, args, err := q.dequeueMaybe(ctx, token, workerID, jobTypes, channels)
+		id, dependencies, jobType, args, err := tryFn(ctx)
 		if err == nil {
-			return id, token, dependencies, jobType, args, nil
+			return id, dependencies, jobType, args, nil
 		}
-		if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+		if !errors.Is(err, pgx.ErrNoRows) {
 			if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
-				return uuid.Nil, uuid.Nil, nil, "", nil, jobqueue.ErrDequeueTimeout
+				return uuid.Nil, nil, "", nil, jobqueue.ErrDequeueTimeout
 			}
-			return uuid.Nil, uuid.Nil, nil, "", nil, fmt.Errorf("error dequeuing job: %v", err)
+			return uuid.Nil, nil, "", nil, fmt.Errorf("error dequeuing job: %v", err)
 		}
-
-		// no suitable job was found, wait for the next queue update
 		select {
 		case <-c:
 		case <-ctx.Done():
-			return uuid.Nil, uuid.Nil, nil, "", nil, jobqueue.ErrDequeueTimeout
+			return uuid.Nil, nil, "", nil, jobqueue.ErrDequeueTimeout
 		}
 	}
 }
 
-// dequeueMaybe tries to dequeue a job.
-//
-// Dequeuing a job means to run the sqlDequeue query, insert an initial
-// heartbeat and retrieve all extra metadata from the database.
-//
+// tryDequeue is a helper function that tries to dequeue a job from the database.
+// It returns the job's id, dependencies, type, and arguments, or an error.
 // This method returns pgx.ErrNoRows if the method didn't manage to dequeue
 // anything
-func (q *DBJobQueue) dequeueMaybe(ctx context.Context, token, workerID uuid.UUID, jobTypes, channels []string) (uuid.UUID, []uuid.UUID, string, json.RawMessage, error) {
-	var conn *pgxpool.Conn
+func (q *DBJobQueue) tryDequeue(ctx context.Context, token, workerID uuid.UUID, query string, queryArgs ...any) (uuid.UUID, []uuid.UUID, string, json.RawMessage, error) {
 	conn, err := q.pool.Acquire(ctx)
 	if err != nil {
 		return uuid.Nil, nil, "", nil, fmt.Errorf("error acquiring a new connection when dequeueing: %w", err)
@@ -404,7 +409,6 @@ func (q *DBJobQueue) dequeueMaybe(ctx context.Context, token, workerID uuid.UUID
 	if err != nil {
 		return uuid.Nil, nil, "", nil, fmt.Errorf("error starting a new transaction when dequeueing: %w", err)
 	}
-
 	defer func() {
 		err = tx.Rollback(context.Background())
 		if err != nil && !errors.Is(err, pgx.ErrTxClosed) {
@@ -415,7 +419,7 @@ func (q *DBJobQueue) dequeueMaybe(ctx context.Context, token, workerID uuid.UUID
 	var id uuid.UUID
 	var jobType string
 	var args json.RawMessage
-	err = tx.QueryRow(ctx, sqlDequeue, token, jobTypes, channels).Scan(&id, &jobType, &args)
+	err = tx.QueryRow(ctx, query, queryArgs...).Scan(&id, &jobType, &args)
 
 	// skip the rest of the dequeueing operation if there are no rows
 	if err != nil && errors.Is(err, pgx.ErrNoRows) {
@@ -448,6 +452,28 @@ func (q *DBJobQueue) dequeueMaybe(ctx context.Context, token, workerID uuid.UUID
 	q.logger.Info("Dequeued job", "job_type", jobType, "job_id", id.String(), "job_dependencies", fmt.Sprintf("%+v", dependencies))
 
 	return id, dependencies, jobType, args, nil
+}
+
+func (q *DBJobQueue) Dequeue(ctx context.Context, workerID uuid.UUID, jobTypes, channels []string) (uuid.UUID, uuid.UUID, []uuid.UUID, string, json.RawMessage, error) {
+	token := uuid.New()
+	id, deps, jobType, args, err := q.dequeueLoop(ctx, func(ctx context.Context) (uuid.UUID, []uuid.UUID, string, json.RawMessage, error) {
+		return q.tryDequeue(ctx, token, workerID, sqlDequeue, token, jobTypes, channels)
+	})
+	if err != nil {
+		return uuid.Nil, uuid.Nil, nil, "", nil, err
+	}
+	return id, token, deps, jobType, args, nil
+}
+
+func (q *DBJobQueue) DequeueAnyChannel(ctx context.Context, workerID uuid.UUID, jobTypes []string) (uuid.UUID, uuid.UUID, []uuid.UUID, string, json.RawMessage, error) {
+	token := uuid.New()
+	id, deps, jobType, args, err := q.dequeueLoop(ctx, func(ctx context.Context) (uuid.UUID, []uuid.UUID, string, json.RawMessage, error) {
+		return q.tryDequeue(ctx, token, workerID, sqlDequeueAnyChannel, token, jobTypes)
+	})
+	if err != nil {
+		return uuid.Nil, uuid.Nil, nil, "", nil, err
+	}
+	return id, token, deps, jobType, args, nil
 }
 
 func (q *DBJobQueue) DequeueByID(ctx context.Context, id, workerID uuid.UUID) (uuid.UUID, []uuid.UUID, string, json.RawMessage, error) {
