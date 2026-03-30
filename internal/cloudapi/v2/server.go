@@ -212,33 +212,26 @@ func (s *Server) enqueueResolveJobs(manifestSource *manifest.Manifest, it distro
 	jobDependencies.depsolveJobID = depsolveJobID
 
 	containerSources := manifestSource.GetContainerSourceSpecs()
-	if len(containerSources) > 1 {
-		// only one pipeline can embed containers
-		pipelines := make([]string, 0, len(containerSources))
-		for name := range containerSources {
-			pipelines = append(pipelines, name)
-		}
-		return jobDependencies, HTTPErrorWithInternal(ErrorEnqueueingJob, fmt.Errorf("manifest returned %d pipelines with containers (at most 1 is supported): %s", len(containerSources), strings.Join(pipelines, ", ")))
-	}
-
-	for _, sources := range containerSources {
-		workerResolveSpecs := make([]worker.ContainerSpec, len(sources))
-		for idx, source := range sources {
-			workerResolveSpecs[idx] = worker.ContainerSpecFromVendorSourceSpec(source)
+	if len(containerSources) > 0 {
+		pipelineSpecs := make(map[string][]worker.ContainerSpec, len(containerSources))
+		for name, sources := range containerSources {
+			specs := make([]worker.ContainerSpec, len(sources))
+			for idx, source := range sources {
+				specs[idx] = worker.ContainerSpecFromVendorSourceSpec(source)
+			}
+			pipelineSpecs[name] = specs
 		}
 
 		job := worker.ContainerResolveJob{
-			Arch:  arch.Name(),
-			Specs: workerResolveSpecs,
+			Arch:          arch.Name(),
+			PipelineSpecs: pipelineSpecs,
 		}
 
 		containerResolveJobID, err := s.workers.EnqueueContainerResolveJob(&job, channel)
 		if err != nil {
 			return jobDependencies, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
 		}
-
 		jobDependencies.containerResolveJobID = containerResolveJobID
-		break // there can be only one
 	}
 
 	commitSources := manifestSource.GetOSTreeSourceSpecs()
