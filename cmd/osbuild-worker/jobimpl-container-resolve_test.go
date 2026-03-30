@@ -24,7 +24,7 @@ func TestContainerResolveJobRun(t *testing.T) {
 	assertNoopResolveResult := func(t *testing.T, raw json.RawMessage) {
 		assertResolveResult(t, raw, func(t *testing.T, cntResolveResult worker.ContainerResolveJobResult) {
 			assert.Nil(t, cntResolveResult.JobError)
-			assert.Empty(t, cntResolveResult.Specs)
+			assert.Empty(t, cntResolveResult.PipelineSpecs)
 		})
 	}
 
@@ -39,19 +39,19 @@ func TestContainerResolveJobRun(t *testing.T) {
 		verifyFinishResult func(t *testing.T, raw json.RawMessage)
 	}{
 		{
-			name: "empty specs - no-op",
+			name: "empty pipeline specs - no-op",
 			jobArgs: &worker.ContainerResolveJob{
-				Arch:  "x86_64",
-				Specs: []worker.ContainerSpec{},
+				Arch:          "x86_64",
+				PipelineSpecs: map[string][]worker.ContainerSpec{},
 			},
 			wantFinishCalled:   true,
 			verifyFinishResult: assertNoopResolveResult,
 		},
 		{
-			name: "nil specs - no-op",
+			name: "nil pipeline specs - no-op",
 			jobArgs: &worker.ContainerResolveJob{
-				Arch:  "x86_64",
-				Specs: nil,
+				Arch:          "x86_64",
+				PipelineSpecs: nil,
 			},
 			wantFinishCalled:   true,
 			verifyFinishResult: assertNoopResolveResult,
@@ -65,26 +65,51 @@ func TestContainerResolveJobRun(t *testing.T) {
 		{
 			name: "finish error is logged not returned",
 			jobArgs: &worker.ContainerResolveJob{
-				Arch:  "x86_64",
-				Specs: []worker.ContainerSpec{},
+				Arch:          "x86_64",
+				PipelineSpecs: map[string][]worker.ContainerSpec{},
 			},
 			finishErr:        fmt.Errorf("connection lost"),
 			wantRunErr:       false,
 			wantFinishCalled: true,
 		},
 		{
-			name: "specs with unresolvable container",
+			name: "pipeline specs with unresolvable container",
 			jobArgs: &worker.ContainerResolveJob{
 				Arch: "x86_64",
-				Specs: []worker.ContainerSpec{
-					{
-						Source: "localhost:1/nonexistent/image:latest",
-						Name:   "test-container",
+				PipelineSpecs: map[string][]worker.ContainerSpec{
+					"image": {
+						{
+							Source: "localhost:1/nonexistent/image:latest",
+							Name:   "test-container",
+						},
 					},
 				},
 			},
 			wantRunErr:       true,
-			wantErrSubstr:    "Error resolving containers",
+			wantErrSubstr:    "Error resolving containers for pipeline \"image\":",
+			wantFinishCalled: true,
+			verifyFinishResult: func(t *testing.T, raw json.RawMessage) {
+				assertResolveResult(t, raw, func(t *testing.T, cntResolveResult worker.ContainerResolveJobResult) {
+					assert.NotNil(t, cntResolveResult.JobError, "expected job error for unresolvable container")
+					assert.Equal(t, clienterrors.ErrorContainerResolution, cntResolveResult.JobError.ID)
+				})
+			},
+		},
+		{
+			name: "old format flat specs - handled via UnmarshalJSON",
+			jobArgsRaw: json.RawMessage(`{
+				"arch": "x86_64",
+				"specs": [
+					{
+						"source": "localhost:1/nonexistent/image:latest",
+						"name": "test-container",
+						"image_id": "",
+						"digest": ""
+					}
+				]
+			}`),
+			wantRunErr:       true,
+			wantErrSubstr:    "Error resolving containers for pipeline \"\":",
 			wantFinishCalled: true,
 			verifyFinishResult: func(t *testing.T, raw json.RawMessage) {
 				assertResolveResult(t, raw, func(t *testing.T, cntResolveResult worker.ContainerResolveJobResult) {
