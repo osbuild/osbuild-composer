@@ -1713,3 +1713,43 @@ func TestContainerResolveJobJSONRoundtrip(t *testing.T) {
 		})
 	}
 }
+
+func TestContainerResolveJobResultMarshalJSON(t *testing.T) {
+	testCases := []struct {
+		name   string
+		result ContainerResolveJobResult
+		json   string
+	}{
+		{
+			name: "pipeline specs populated - derives flat specs",
+			result: ContainerResolveJobResult{
+				PipelineSpecs: map[string][]ContainerSpec{
+					"build": {
+						{Source: "registry.example.com/image:latest", Name: "build-container", ImageID: "sha256:abc123", Digest: "sha256:def456"},
+					},
+					"image": {
+						{Source: "registry.example.com/image:latest", Name: "os-container", ImageID: "sha256:abc123", Digest: "sha256:def456"},
+					},
+				},
+			},
+			json: `{"pipeline_specs":{"build":[{"source":"registry.example.com/image:latest","name":"build-container","image_id":"sha256:abc123","digest":"sha256:def456"}],"image":[{"source":"registry.example.com/image:latest","name":"os-container","image_id":"sha256:abc123","digest":"sha256:def456"}]},"specs":[{"source":"registry.example.com/image:latest","name":"build-container","image_id":"sha256:abc123","digest":"sha256:def456"},{"source":"registry.example.com/image:latest","name":"os-container","image_id":"sha256:abc123","digest":"sha256:def456"}]}`,
+		},
+		{
+			name: "only flat specs populated - old worker",
+			result: ContainerResolveJobResult{
+				Specs: []ContainerSpec{
+					{Source: "registry.example.com/image:latest", Name: "test-container", ImageID: "sha256:abc123", Digest: "sha256:def456"},
+				},
+			},
+			json: `{"specs":[{"source":"registry.example.com/image:latest","name":"test-container","image_id":"sha256:abc123","digest":"sha256:def456"}]}`,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			data, err := json.Marshal(tc.result)
+			require.NoError(t, err)
+			assert.EqualValues(t, tc.json, string(data))
+		})
+	}
+}
