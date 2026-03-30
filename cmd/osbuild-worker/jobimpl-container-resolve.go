@@ -38,30 +38,43 @@ func (impl *ContainerResolveJobImpl) Run(job worker.Job) error {
 	}
 
 	// No-op: no specs to resolve
-	if len(args.Specs) == 0 {
+	if len(args.PipelineSpecs) == 0 {
 		return nil
 	}
 
-	logWithId.Infof("Resolving containers (%d)", len(args.Specs))
-
-	result.Specs = make([]worker.ContainerSpec, len(args.Specs))
-
-	resolver := container.NewResolver(args.Arch)
-	resolver.AuthFilePath = impl.AuthFilePath
-
-	for _, s := range args.Specs {
-		resolver.Add(s.ToVendorSourceSpec())
+	totalSpecs := 0
+	for _, specs := range args.PipelineSpecs {
+		totalSpecs += len(specs)
 	}
+	logWithId.Infof("Resolving containers (%d specs across %d pipelines)", totalSpecs, len(args.PipelineSpecs))
 
-	specs, err := resolver.Finish()
+	// NOTE: container.Resolver.Finish() sorts results by digest, destroying Add() ordering.
+	// Use a separate resolver per pipeline because, positional slicing
+	// across pipelines would not work, due to the sorting by digest.
+	result.PipelineSpecs = make(map[string][]worker.ContainerSpec, len(args.PipelineSpecs))
+	for name, specs := range args.PipelineSpecs {
+		if len(specs) == 0 {
+			continue
+		}
 
-	if err != nil {
-		result.JobError = clienterrors.New(clienterrors.ErrorContainerResolution, err.Error(), nil)
-		return fmt.Errorf("Error resolving containers: %v", err)
-	}
+		resolver := container.NewResolver(args.Arch)
+		resolver.AuthFilePath = impl.AuthFilePath
 
-	for i, spec := range specs {
-		result.Specs[i] = worker.ContainerSpecFromVendorSpec(spec)
+		for _, s := range specs {
+			resolver.Add(s.ToVendorSourceSpec())
+		}
+
+		resolved, err := resolver.Finish()
+		if err != nil {
+			result.JobError = clienterrors.New(clienterrors.ErrorContainerResolution, err.Error(), nil)
+			return fmt.Errorf("Error resolving containers for pipeline %q: %v", name, err)
+		}
+
+		pipelineResult := make([]worker.ContainerSpec, len(resolved))
+		for i, spec := range resolved {
+			pipelineResult[i] = worker.ContainerSpecFromVendorSpec(spec)
+		}
+		result.PipelineSpecs[name] = pipelineResult
 	}
 
 	return nil
