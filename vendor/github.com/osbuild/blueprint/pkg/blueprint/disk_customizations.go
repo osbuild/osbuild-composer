@@ -23,6 +23,9 @@ type DiskCustomization struct {
 	MinSize     uint64                   `json:"minsize,omitempty,omitzero" toml:"minsize,omitempty,omitzero"`
 	Partitions  []PartitionCustomization `json:"partitions,omitempty" toml:"partitions,omitempty"`
 	StartOffset uint64                   `json:"start_offset,omitempty" toml:"start_offset,omitempty"`
+	// Sector size in bytes. Common values are 512 (default) or 4096.
+	// Optional, defaults to 512 if not specified.
+	SectorSize  uint64                   `json:"sector_size,omitempty" toml:"sector_size,omitempty"`
 }
 
 type diskCustomizationMarshaler struct {
@@ -30,6 +33,7 @@ type diskCustomizationMarshaler struct {
 	MinSize     datasizes.Size           `json:"minsize,omitempty" toml:"minsize,omitempty"`
 	Partitions  []PartitionCustomization `json:"partitions,omitempty" toml:"partitions,omitempty"`
 	StartOffset datasizes.Size           `json:"start_offset,omitempty" toml:"start_offset,omitempty"`
+	SectorSize  uint64                   `json:"sector_size,omitempty" toml:"sector_size,omitempty"`
 }
 
 func (dc *DiskCustomization) UnmarshalJSON(data []byte) error {
@@ -41,6 +45,7 @@ func (dc *DiskCustomization) UnmarshalJSON(data []byte) error {
 	dc.MinSize = dcm.MinSize.Uint64()
 	dc.Partitions = dcm.Partitions
 	dc.StartOffset = dcm.StartOffset.Uint64()
+	dc.SectorSize = dcm.SectorSize
 
 	return nil
 }
@@ -412,6 +417,10 @@ func (p *DiskCustomization) Validate() error {
 		return fmt.Errorf("unknown partition table type: %s (valid: gpt, dos)", p.Type)
 	}
 
+	if p.SectorSize != 0 && !isPowerOfTwo(p.SectorSize) {
+		return fmt.Errorf("invalid partitioning customizations: sector_size must be a power of 2, got %d", p.SectorSize)
+	}
+
 	mountpoints := make(map[string]bool)
 	vgnames := make(map[string]bool)
 	var errs []error
@@ -536,6 +545,11 @@ var validPlainFSTypes = []string{
 
 // exactly 2 hex digits
 var validDosPartitionType = regexp.MustCompile(`^[0-9a-fA-F]{2}$`)
+
+// isPowerOfTwo returns true if n is a power of 2
+func isPowerOfTwo(n uint64) bool {
+	return n > 0 && (n&(n-1)) == 0
+}
 
 // ValidatePartitionTypeID returns an error if the partition type ID is not
 // valid given the partition table type. If the partition table type is an
