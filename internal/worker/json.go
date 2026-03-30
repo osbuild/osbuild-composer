@@ -1034,9 +1034,35 @@ func (j *ContainerResolveJob) UnmarshalJSON(data []byte) error {
 }
 
 type ContainerResolveJobResult struct {
-	Specs []ContainerSpec `json:"specs"`
+	PipelineSpecs map[string][]ContainerSpec `json:"pipeline_specs,omitempty"`
+
+	// Specs is kept for backward compatibility with older workers that don't produce pipeline-aware results.
+	// TODO (2026-03-30, thozza): remove Specs after migration of all infrastructure.
+	// Deprecated: Use PipelineSpecs instead. Will be removed after migration.
+	Specs []ContainerSpec `json:"specs,omitempty"`
 
 	JobResult
+}
+
+// MarshalJSON implements custom marshaling for ContainerResolveJobResult to
+// maintain backward compatibility of the worker with old composers that only
+// read the flat "specs" field.
+//
+// When PipelineSpecs is populated and Specs is nil, the marshaler derives a
+// flat "specs" array from PipelineSpecs (sorted pipeline names). This keeps
+// the backward compat derivation out of the worker's main flow.
+func (r ContainerResolveJobResult) MarshalJSON() ([]byte, error) {
+	type alias ContainerResolveJobResult
+	a := alias(r)
+
+	// Derive flat specs from PipelineSpecs for old-composer compat.
+	if len(a.PipelineSpecs) > 0 && len(a.Specs) == 0 {
+		for _, name := range slices.Sorted(maps.Keys(a.PipelineSpecs)) {
+			a.Specs = append(a.Specs, a.PipelineSpecs[name]...)
+		}
+	}
+
+	return json.Marshal(a)
 }
 
 type FileResolveJob struct {
