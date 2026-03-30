@@ -2329,51 +2329,45 @@ func (api *API) resolveContainers(sourceSpecs map[string][]container.SourceSpec,
 		return specs, nil
 	}
 
-	// Run one job for each value in the sourceSpecs in order.
-	// Currently this should still only be one job, but if containers are added
-	// to multiple pipelines at any point, this should work.
+	job := worker.ContainerResolveJob{
+		Arch:          archName,
+		PipelineSpecs: make(map[string][]worker.ContainerSpec, len(sourceSpecs)),
+	}
+
 	for name, sources := range sourceSpecs {
-		job := worker.ContainerResolveJob{
-			Arch:  archName,
-			Specs: make([]worker.ContainerSpec, len(sources)),
-		}
-
+		job.PipelineSpecs[name] = make([]worker.ContainerSpec, len(sources))
 		for i, c := range sources {
-			job.Specs[i] = worker.ContainerSpecFromVendorSourceSpec(c)
+			job.PipelineSpecs[name][i] = worker.ContainerSpecFromVendorSourceSpec(c)
 		}
+	}
 
-		jobId, err := api.workers.EnqueueContainerResolveJob(&job, "")
+	jobId, err := api.workers.EnqueueContainerResolveJob(&job, "")
+	if err != nil {
+		return specs, err
+	}
+
+	var result worker.ContainerResolveJobResult
+	for {
+		jobInfo, err := api.workers.ContainerResolveJobInfo(jobId, &result)
 
 		if err != nil {
 			return specs, err
 		}
 
-		var result worker.ContainerResolveJobResult
-
-		for {
-			jobInfo, err := api.workers.ContainerResolveJobInfo(jobId, &result)
-
-			if err != nil {
-				return specs, err
-			}
-
-			if result.JobError != nil {
-				return specs, errors.New(result.JobError.Reason)
-			} else if jobInfo.JobStatus.Canceled {
-				return specs, fmt.Errorf("Failed to resolve containers: job cancelled")
-			} else if !jobInfo.JobStatus.Finished.IsZero() {
-				break
-			}
-
-			time.Sleep(time.Millisecond * 250)
+		if result.JobError != nil {
+			return specs, errors.New(result.JobError.Reason)
+		} else if jobInfo.JobStatus.Canceled {
+			return specs, fmt.Errorf("Failed to resolve containers: job cancelled")
+		} else if !jobInfo.JobStatus.Finished.IsZero() {
+			break
 		}
 
-		if len(result.Specs) != len(sources) {
-			panic("programming error: input / output length don't match")
-		}
+		time.Sleep(time.Millisecond * 250)
+	}
 
-		specs[name] = make([]container.Spec, len(sources))
-		for i, s := range result.Specs {
+	for name, resolvedSpecs := range result.PipelineSpecs {
+		specs[name] = make([]container.Spec, len(resolvedSpecs))
+		for i, s := range resolvedSpecs {
 			specs[name][i] = s.ToVendorSpec()
 		}
 	}
