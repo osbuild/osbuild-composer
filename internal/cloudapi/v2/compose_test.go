@@ -1336,7 +1336,7 @@ func TestDecodeMinsize(t *testing.T) {
 		},
 		{
 			in:           common.ToPtr("not a number"),
-			expErrSubstr: "the size string doesn't contain any number: not a number",
+			expErrSubstr: "the size string is not a valid positive float number: not a number",
 		},
 		{
 			in:           common.ToPtr("10 GiBi"),

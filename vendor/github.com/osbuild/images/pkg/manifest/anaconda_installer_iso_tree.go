@@ -62,6 +62,7 @@ const ( // ISOBoot type enum
 	Grub2UEFIOnlyISOBoot ISOBootType = iota // Only boot with grub2 UEFI
 	SyslinuxISOBoot                         // Boot with grub2 UEFI and syslinux/isolinux BIOS
 	Grub2ISOBoot                            // Boot with grub2 UEFI and grub2 BIOS
+	Grub2PPCISOBoot                         // Boot with grub2 BIOS for ppc64le
 )
 
 func (r *ISOBootType) UnmarshalJSON(data []byte) error {
@@ -76,6 +77,8 @@ func (r *ISOBootType) UnmarshalJSON(data []byte) error {
 		*r = SyslinuxISOBoot
 	case "grub2":
 		*r = Grub2ISOBoot
+	case "grub2-ppc64le":
+		*r = Grub2PPCISOBoot
 	default:
 		return fmt.Errorf("unknown ISOBootType: %q", s)
 	}

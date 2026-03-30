@@ -38,6 +38,21 @@ type XorrisofsStageOptions struct {
 	// shell globs and if no `/` is included then the leaf (or basename) of the
 	// file is used.
 	Exclude []string `json:"exclude,omitempty"`
+
+	// Generate rationalized Rock Ridge directory information
+	RationalRock bool `json:"rational_rock,omitempty"`
+
+	// Allow Untranslated filenames
+	UntranslatedFilenames bool `json:"untranslated_filenames,omitempty"`
+
+	// Allow full 31 character filenames for ISO9660 names
+	FullFilenames bool `json:"full_filenames,omitempty"`
+
+	// Volume set ID
+	VolSet string `json:"volset,omitempty"`
+
+	// Mark the ISO image as MBR partition of type 0x96
+	CHRPBoot bool `json:"chrp_boot,omitempty"`
 }
 
 type XorrisofsBoot struct {

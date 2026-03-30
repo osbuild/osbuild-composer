@@ -105,3 +105,79 @@ func (boot *Grub2X86Boot) GetISOBootStages(inputName string, _ *disk.PartitionTa
 
 	return stages, []*fsnode.File{}, nil
 }
+
+// grub2 PPC64le booting
+type Grub2PPC64Boot struct {
+	Base
+
+	Platform platform.Platform
+
+	product string
+	version string
+
+	ISOLabel string
+
+	KernelOpts []string
+
+	// Default Grub2 menu on the ISO
+	DefaultMenu int
+}
+
+func NewGrub2PPC64Bootloader(buildPipeline Build, product, version string) *Grub2PPC64Boot {
+	p := &Grub2PPC64Boot{
+		Base:    NewBase("grub2boot-tree", buildPipeline),
+		product: product,
+		version: version,
+	}
+	return p
+}
+
+// GetISOBootStages returns the stages and files needed for the grub2 PPC64LE bootloader
+func (boot *Grub2PPC64Boot) GetISOBootStages(inputName string, _ *disk.PartitionTable) ([]*osbuild.Stage, []*fsnode.File, error) {
+	stages := make([]*osbuild.Stage, 0)
+
+	var grub2config *osbuild.Grub2Config
+	if boot.DefaultMenu > 0 {
+		grub2config = &osbuild.Grub2Config{
+			Default: boot.DefaultMenu,
+		}
+	}
+	options := &osbuild.Grub2ISOLegacyStageOptions{
+		Grub2Dir: "boot/grub",
+		Product: osbuild.Product{
+			Name:    boot.product,
+			Version: boot.version,
+		},
+		Kernel: osbuild.ISOKernel{
+			Dir:  "/images/pxeboot",
+			Opts: boot.KernelOpts,
+		},
+		ISOLabel:        boot.ISOLabel,
+		FIPS:            boot.Platform.GetFIPSMenu(),
+		Install:         true,
+		Test:            true,
+		Troubleshooting: true,
+		Config:          grub2config,
+		Platform:        "powerpc-ieee1275",
+	}
+	stages = append(stages, osbuild.NewGrub2ISOLegacyStage(options))
+
+	// Add the bootinfo.txt file which is used by the CHRP boot method to point to grub2
+	// It is installed into the /ppc directory
+	stages = append(stages, osbuild.NewMkdirStage(&osbuild.MkdirStageOptions{
+		Paths: []osbuild.MkdirStagePath{{Path: "/ppc"}},
+	}))
+
+	bootinfo, err := fileDataFS.ReadFile("iso/bootinfo.txt")
+	if err != nil {
+		return nil, nil, err
+	}
+
+	f, err := fsnode.NewFile("/ppc/bootinfo.txt", nil, nil, nil, bootinfo)
+	if err != nil {
+		return nil, nil, err
+	}
+	stages = append(stages, osbuild.GenFileNodesStages([]*fsnode.File{f})...)
+
+	return stages, []*fsnode.File{f}, nil
+}
