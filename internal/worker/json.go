@@ -984,7 +984,6 @@ func (cs *ContainerSpec) ToVendorSpec() container.Spec {
 
 type ContainerResolveJob struct {
 	Arch          string                     `json:"arch"`
-	Specs         []ContainerSpec            `json:"specs,omitempty"`
 	PipelineSpecs map[string][]ContainerSpec `json:"pipeline_specs,omitempty"`
 }
 
@@ -996,16 +995,21 @@ type ContainerResolveJob struct {
 // Old workers ignore the unknown "pipeline_specs" and read "specs" as before.
 func (j ContainerResolveJob) MarshalJSON() ([]byte, error) {
 	type alias ContainerResolveJob
-	a := alias(j)
+	compat := struct {
+		alias
+		Specs []ContainerSpec `json:"specs,omitempty"`
+	}{
+		alias: alias(j),
+	}
 
 	// Derive flat specs from PipelineSpecs for old-worker compat.
-	if len(a.PipelineSpecs) > 0 && len(a.Specs) == 0 {
-		for _, name := range slices.Sorted(maps.Keys(a.PipelineSpecs)) {
-			a.Specs = append(a.Specs, a.PipelineSpecs[name]...)
+	if len(j.PipelineSpecs) > 0 {
+		for _, name := range slices.Sorted(maps.Keys(j.PipelineSpecs)) {
+			compat.Specs = append(compat.Specs, j.PipelineSpecs[name]...)
 		}
 	}
 
-	return json.Marshal(a)
+	return json.Marshal(compat)
 }
 
 // UnmarshalJSON implements custom unmarshaling for ContainerResolveJob to handle
@@ -1016,17 +1020,20 @@ func (j ContainerResolveJob) MarshalJSON() ([]byte, error) {
 // new worker can process it uniformly.
 func (j *ContainerResolveJob) UnmarshalJSON(data []byte) error {
 	type alias ContainerResolveJob
-	var a alias
-	if err := json.Unmarshal(data, &a); err != nil {
+	var compat struct {
+		alias
+		Specs []ContainerSpec `json:"specs,omitempty"`
+	}
+	if err := json.Unmarshal(data, &compat); err != nil {
 		return err
 	}
 
-	*j = ContainerResolveJob(a)
+	*j = ContainerResolveJob(compat.alias)
 
 	// If we got only flat specs (old composer), store them under sentinel key.
-	if len(j.PipelineSpecs) == 0 && len(j.Specs) > 0 {
+	if len(j.PipelineSpecs) == 0 && len(compat.Specs) > 0 {
 		j.PipelineSpecs = map[string][]ContainerSpec{
-			"": j.Specs,
+			"": compat.Specs,
 		}
 	}
 
