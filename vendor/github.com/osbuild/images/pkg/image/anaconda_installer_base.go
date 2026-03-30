@@ -36,17 +36,27 @@ func (img *AnacondaInstallerBase) Bootloaders(buildPipeline manifest.Build, plat
 		grub2.KernelOpts = kernelOpts
 		grub2.DefaultMenu = img.InstallerCustomizations.DefaultMenu
 		bootloaders = append(bootloaders, grub2)
+
+	case manifest.Grub2PPCISOBoot:
+		grub2ppc64 := manifest.NewGrub2PPC64Bootloader(buildPipeline, img.InstallerCustomizations.Product, img.InstallerCustomizations.OSVersion)
+		grub2ppc64.Platform = platform
+		grub2ppc64.ISOLabel = img.ISOCustomizations.Label
+		grub2ppc64.KernelOpts = kernelOpts
+		grub2ppc64.DefaultMenu = img.InstallerCustomizations.DefaultMenu
+		bootloaders = append(bootloaders, grub2ppc64)
 	}
 
-	// EFI bootloader adds a pipeline and adds stages
-	bootTreePipeline := manifest.NewEFIBootTree(buildPipeline, img.InstallerCustomizations.Product, img.InstallerCustomizations.OSVersion)
-	bootTreePipeline.Platform = platform
-	bootTreePipeline.UEFIVendor = platform.GetUEFIVendor()
-	bootTreePipeline.ISOLabel = img.ISOCustomizations.Label
-	bootTreePipeline.DefaultMenu = img.InstallerCustomizations.DefaultMenu
-	bootTreePipeline.KernelOpts = kernelOpts
-	bootloaders = append(bootloaders, bootTreePipeline)
-
+	// Skip using UEFI on PPC64LE
+	if img.ISOCustomizations.BootType != manifest.Grub2PPCISOBoot {
+		// EFI bootloader adds a pipeline and adds stages
+		bootTreePipeline := manifest.NewEFIBootTree(buildPipeline, img.InstallerCustomizations.Product, img.InstallerCustomizations.OSVersion)
+		bootTreePipeline.Platform = platform
+		bootTreePipeline.UEFIVendor = platform.GetUEFIVendor()
+		bootTreePipeline.ISOLabel = img.ISOCustomizations.Label
+		bootTreePipeline.DefaultMenu = img.InstallerCustomizations.DefaultMenu
+		bootTreePipeline.KernelOpts = kernelOpts
+		bootloaders = append(bootloaders, bootTreePipeline)
+	}
 	return bootloaders
 }
 

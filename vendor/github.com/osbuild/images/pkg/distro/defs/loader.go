@@ -305,7 +305,7 @@ func loadImageTypeConfigs(d *DistroYAML) ([]imageTypesYAML, error) {
 		decoder.KnownFields(true)
 		decodeErr := decoder.Decode(&toplevel)
 		if decodeErr != nil {
-			return nil, err
+			return nil, decodeErr
 		}
 
 		configs = append(configs, toplevel)
@@ -318,7 +318,7 @@ func mergeImageTypeConfigs(d *DistroYAML, configs []imageTypesYAML) error {
 	imageTypes := make(map[string]ImageTypeYAML)
 	for _, cfg := range configs {
 		for name, v := range cfg.ImageTypes {
-			if _, exists := d.imageTypes[name]; exists {
+			if _, exists := imageTypes[name]; exists {
 				return fmt.Errorf("duplicate image type %s found", name)
 			}
 			v.name = name
