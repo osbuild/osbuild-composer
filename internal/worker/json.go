@@ -3,7 +3,9 @@ package worker
 import (
 	"encoding/json"
 	"fmt"
+	"maps"
 	"runtime/debug"
+	"slices"
 	"strings"
 	"time"
 
@@ -17,7 +19,6 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
-	"golang.org/x/exp/slices"
 )
 
 //
@@ -982,8 +983,54 @@ func (cs *ContainerSpec) ToVendorSpec() container.Spec {
 }
 
 type ContainerResolveJob struct {
-	Arch  string          `json:"arch"`
-	Specs []ContainerSpec `json:"specs"`
+	Arch          string                     `json:"arch"`
+	Specs         []ContainerSpec            `json:"specs,omitempty"`
+	PipelineSpecs map[string][]ContainerSpec `json:"pipeline_specs,omitempty"`
+}
+
+// MarshalJSON implements custom marshaling for ContainerResolveJob to maintain
+// backward compatibility with old workers that only read the flat "specs" field.
+//
+// When PipelineSpecs is populated, the marshaler writes both "pipeline_specs"
+// and a flattened "specs" array (pipeline names sorted for deterministic order).
+// Old workers ignore the unknown "pipeline_specs" and read "specs" as before.
+func (j ContainerResolveJob) MarshalJSON() ([]byte, error) {
+	type alias ContainerResolveJob
+	a := alias(j)
+
+	// Derive flat specs from PipelineSpecs for old-worker compat.
+	if len(a.PipelineSpecs) > 0 && len(a.Specs) == 0 {
+		for _, name := range slices.Sorted(maps.Keys(a.PipelineSpecs)) {
+			a.Specs = append(a.Specs, a.PipelineSpecs[name]...)
+		}
+	}
+
+	return json.Marshal(a)
+}
+
+// UnmarshalJSON implements custom unmarshaling for ContainerResolveJob to handle
+// inputs from old composers that only write the flat "specs" field.
+//
+// If "pipeline_specs" is present, it is used directly. Otherwise, the flat "specs"
+// array is stored under the sentinel key "" (empty string) in PipelineSpecs so the
+// new worker can process it uniformly.
+func (j *ContainerResolveJob) UnmarshalJSON(data []byte) error {
+	type alias ContainerResolveJob
+	var a alias
+	if err := json.Unmarshal(data, &a); err != nil {
+		return err
+	}
+
+	*j = ContainerResolveJob(a)
+
+	// If we got only flat specs (old composer), store them under sentinel key.
+	if len(j.PipelineSpecs) == 0 && len(j.Specs) > 0 {
+		j.PipelineSpecs = map[string][]ContainerSpec{
+			"": j.Specs,
+		}
+	}
+
+	return nil
 }
 
 type ContainerResolveJobResult struct {

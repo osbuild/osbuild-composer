@@ -1575,3 +1575,141 @@ func TestContainerSpecJSONRoundtrip(t *testing.T) {
 		})
 	}
 }
+
+func TestContainerResolveJobMarshalJSON(t *testing.T) {
+	testCases := []struct {
+		name string
+		job  ContainerResolveJob
+		json string
+	}{
+		{
+			name: "pipeline specs only - specs derived from pipeline specs",
+			job: ContainerResolveJob{
+				Arch: "x86_64",
+				PipelineSpecs: map[string][]ContainerSpec{
+					"build": {
+						{Source: "registry.example.com/image:latest", Name: "build-container"},
+					},
+					"image": {
+						{Source: "registry.example.com/image:latest", Name: "os-container"},
+					},
+				},
+			},
+			json: `{"arch":"x86_64","specs":[{"source":"registry.example.com/image:latest","name":"build-container","image_id":"","digest":""},{"source":"registry.example.com/image:latest","name":"os-container","image_id":"","digest":""}],"pipeline_specs":{"build":[{"source":"registry.example.com/image:latest","name":"build-container","image_id":"","digest":""}],"image":[{"source":"registry.example.com/image:latest","name":"os-container","image_id":"","digest":""}]}}`,
+		},
+		{
+			name: "empty",
+			job: ContainerResolveJob{
+				Arch: "x86_64",
+			},
+			json: `{"arch":"x86_64"}`,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			data, err := json.Marshal(tc.job)
+			require.NoError(t, err)
+			assert.EqualValues(t, tc.json, string(data))
+		})
+	}
+}
+
+func TestContainerResolveJobUnmarshalJSON(t *testing.T) {
+	testCases := []struct {
+		name     string
+		json     string
+		expected ContainerResolveJob
+	}{
+		{
+			name: "pipeline specs present",
+			json: `{"arch":"x86_64","pipeline_specs":{"build":[{"source":"registry.example.com/image:latest","name":"build-container","image_id":"","digest":""}]}}`,
+			expected: ContainerResolveJob{
+				Arch: "x86_64",
+				PipelineSpecs: map[string][]ContainerSpec{
+					"build": {
+						{Source: "registry.example.com/image:latest", Name: "build-container"},
+					},
+				},
+			},
+		},
+		{
+			name: "flat specs only - old format",
+			json: `{"arch":"x86_64","specs":[{"source":"registry.example.com/image:latest","name":"test-container","image_id":"","digest":""}]}`,
+			expected: ContainerResolveJob{
+				Arch: "x86_64",
+				Specs: []ContainerSpec{
+					{Source: "registry.example.com/image:latest", Name: "test-container"},
+				},
+				PipelineSpecs: map[string][]ContainerSpec{
+					"": {
+						{Source: "registry.example.com/image:latest", Name: "test-container"},
+					},
+				},
+			},
+		},
+		{
+			name: "empty",
+			json: `{"arch":"x86_64"}`,
+			expected: ContainerResolveJob{
+				Arch: "x86_64",
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			var job ContainerResolveJob
+			err := json.Unmarshal([]byte(tc.json), &job)
+			require.NoError(t, err)
+			assert.EqualValues(t, tc.expected, job)
+		})
+	}
+}
+
+func TestContainerResolveJobJSONRoundtrip(t *testing.T) {
+	testCases := []struct {
+		name string
+		job  ContainerResolveJob
+	}{
+		{
+			name: "single pipeline",
+			job: ContainerResolveJob{
+				Arch: "x86_64",
+				PipelineSpecs: map[string][]ContainerSpec{
+					"image": {
+						{Source: "registry.example.com/image:latest", Name: "os-container"},
+					},
+				},
+			},
+		},
+		{
+			name: "multiple pipelines",
+			job: ContainerResolveJob{
+				Arch: "aarch64",
+				PipelineSpecs: map[string][]ContainerSpec{
+					"build": {
+						{Source: "registry.example.com/buildroot:latest", Name: "buildroot"},
+					},
+					"image": {
+						{Source: "registry.example.com/os:latest", Name: "os-content"},
+					},
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			data, err := json.Marshal(tc.job)
+			require.NoError(t, err)
+
+			var roundtripped ContainerResolveJob
+			err = json.Unmarshal(data, &roundtripped)
+			require.NoError(t, err)
+
+			assert.EqualValues(t, tc.job.Arch, roundtripped.Arch)
+			assert.EqualValues(t, tc.job.PipelineSpecs, roundtripped.PipelineSpecs)
+		})
+	}
+}
