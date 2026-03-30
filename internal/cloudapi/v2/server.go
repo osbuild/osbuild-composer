@@ -688,21 +688,24 @@ func serializeManifest(ctx context.Context, manifestSource *manifest.Manifest, w
 			return
 		}
 
-		// NOTE: The container resolve job doesn't hold the pipeline name for
-		// the container embedding, so we need to get it from the manifest
-		// content field. There should be only one.
-		var containerEmbedPipeline string
-		for name := range manifestSource.GetContainerSourceSpecs() {
-			containerEmbedPipeline = name
-			break
-		}
-
-		pipelineSpecs := make([]container.Spec, len(result.Specs))
-		for idx, resultSpec := range result.Specs {
-			pipelineSpecs[idx] = resultSpec.ToVendorSpec()
-		}
-		containerSpecs = map[string][]container.Spec{
-			containerEmbedPipeline: pipelineSpecs,
+		if result.PipelineSpecs != nil {
+			containerSpecs = make(map[string][]container.Spec, len(result.PipelineSpecs))
+			for name, specs := range result.PipelineSpecs {
+				vendorSpecs := make([]container.Spec, len(specs))
+				for i, s := range specs {
+					vendorSpecs[i] = s.ToVendorSpec()
+				}
+				containerSpecs[name] = vendorSpecs
+			}
+		} else if result.Specs != nil {
+			// TODO (2026-03-30, thozza): remove this once all workers are migrated to the new format.
+			// Old worker fallback: flat result, reconstruct pipeline mapping using manifest source specs.
+			containerSpecs, err = matchContainerSpecsToPipelines(result.Specs, manifestSource.GetContainerSourceSpecs())
+			if err != nil {
+				reason := "Error matching container specs to pipelines"
+				jobResult.JobError = clienterrors.New(clienterrors.ErrorContainerDependency, reason, err.Error())
+				return
+			}
 		}
 	}
 
