@@ -1595,7 +1595,7 @@ func TestContainerResolveJobMarshalJSON(t *testing.T) {
 					},
 				},
 			},
-			json: `{"arch":"x86_64","specs":[{"source":"registry.example.com/image:latest","name":"build-container","image_id":"","digest":""},{"source":"registry.example.com/image:latest","name":"os-container","image_id":"","digest":""}],"pipeline_specs":{"build":[{"source":"registry.example.com/image:latest","name":"build-container","image_id":"","digest":""}],"image":[{"source":"registry.example.com/image:latest","name":"os-container","image_id":"","digest":""}]}}`,
+			json: `{"arch":"x86_64","pipeline_specs":{"build":[{"source":"registry.example.com/image:latest","name":"build-container","image_id":"","digest":""}],"image":[{"source":"registry.example.com/image:latest","name":"os-container","image_id":"","digest":""}]},"specs":[{"source":"registry.example.com/image:latest","name":"build-container","image_id":"","digest":""},{"source":"registry.example.com/image:latest","name":"os-container","image_id":"","digest":""}]}`,
 		},
 		{
 			name: "empty",
@@ -1638,9 +1638,6 @@ func TestContainerResolveJobUnmarshalJSON(t *testing.T) {
 			json: `{"arch":"x86_64","specs":[{"source":"registry.example.com/image:latest","name":"test-container","image_id":"","digest":""}]}`,
 			expected: ContainerResolveJob{
 				Arch: "x86_64",
-				Specs: []ContainerSpec{
-					{Source: "registry.example.com/image:latest", Name: "test-container"},
-				},
 				PipelineSpecs: map[string][]ContainerSpec{
 					"": {
 						{Source: "registry.example.com/image:latest", Name: "test-container"},
