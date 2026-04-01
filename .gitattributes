@@ -1,0 +1,6 @@
+# Collapse by default on GitHub (linguist-generated)
+go.sum linguist-generated
+
+*.gen.go linguist-generated
+
+vendor/modules.txt linguist-generated
