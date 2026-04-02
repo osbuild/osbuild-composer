@@ -370,6 +370,18 @@ func TestHandleBootcPreManifest_HappyPath(t *testing.T) {
 	assert.False(t, jobInfo.JobStatus.Finished.IsZero(), "job should be finished")
 
 	assertValidPreManifestResult(t, readResult, archi, specs)
+
+	// Verify ManifestInfo is populated
+	assert.Equal(t, common.BuildVersion(), readResult.ManifestInfo.OSBuildComposerVersion)
+	// OSBuildComposerDeps may be nil in tests. See https://github.com/golang/go/issues/33976
+	if readResult.ManifestInfo.OSBuildComposerDeps != nil {
+		assert.Len(t, readResult.ManifestInfo.OSBuildComposerDeps, 1)
+		assert.Equal(t, "github.com/osbuild/images", readResult.ManifestInfo.OSBuildComposerDeps[0].Path)
+		assert.NotEmpty(t, readResult.ManifestInfo.OSBuildComposerDeps[0].Version)
+	}
+	assert.NotNil(t, readResult.ManifestInfo.PipelineNames)
+	assert.NotEmpty(t, readResult.ManifestInfo.PipelineNames.Build)
+	assert.NotEmpty(t, readResult.ManifestInfo.PipelineNames.Payload)
 }
 
 // TestBootcPreManifestLoop_PicksUpJob tests the full loop lifecycle:

@@ -1064,6 +1064,31 @@ func handleBootcPreManifest(
 		return
 	}
 
+	// Populate ManifestInfo with the build environment information.
+	// This information is used by parent jobs to detect version mismatches
+	// between composer instances that handled the pre-manifest job and the
+	// manifest job that serialized the manifest.
+	preManifestResult.ManifestInfo = worker.ManifestInfo{
+		OSBuildComposerVersion: common.BuildVersion(),
+		PipelineNames: &worker.PipelineNames{
+			Build:   manifestSource.BuildPipelines(),
+			Payload: manifestSource.PayloadPipelines(),
+		},
+	}
+
+	osbuildImagesDep, depErr := common.GetDepModuleInfoByPath(common.OSBuildImagesModulePath)
+	if depErr == nil {
+		preManifestResult.ManifestInfo.OSBuildComposerDeps = append(
+			preManifestResult.ManifestInfo.OSBuildComposerDeps,
+			worker.ComposerDepModuleFromDebugModule(osbuildImagesDep),
+		)
+	} else {
+		logWithId.Warnf(
+			"Could not get %s dependency info, skipping it in ManifestInfo: %v",
+			common.OSBuildImagesModulePath, depErr,
+		)
+	}
+
 	// Bootc images should not require package depsolving or ostree commits.
 	// All content comes from containers. Error if the pre-manifest unexpectedly
 	// requests these - it means something is wrong with the image type definition.
