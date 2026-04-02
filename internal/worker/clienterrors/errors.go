@@ -46,6 +46,7 @@ const (
 	ErrorInvalidRepositoryURL ClientErrorCode = 39
 	ErrorDepsolveTimeout      ClientErrorCode = 40
 	ErrorBootcInfoResolve     ClientErrorCode = 41
+	ErrorBuildVersionMismatch ClientErrorCode = 42
 )
 
 type ClientErrorCode int
@@ -109,6 +110,8 @@ func GetStatusCode(err *Error) StatusCode {
 		return JobStatusUserInputError
 	case ErrorBootcInfoResolve:
 		return JobStatusUserInputError
+	case ErrorBuildVersionMismatch:
+		return JobStatusInternalError
 	default:
 		return JobStatusInternalError
 	}
@@ -128,6 +131,8 @@ func (e *Error) IsDependencyError() bool {
 	case ErrorKojiFailedDependency:
 		return true
 	case ErrorJobDependency:
+		return true
+	case ErrorBuildVersionMismatch:
 		return true
 	default:
 		return false
