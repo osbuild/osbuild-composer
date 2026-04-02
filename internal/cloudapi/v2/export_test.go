@@ -26,3 +26,22 @@ func MockSerializeManifestFunc(f func(ctx context.Context, getManifestSource man
 func HandleBootcPreManifest(workers *worker.Server, jobID uuid.UUID, token uuid.UUID, staticArgs json.RawMessage, dynArgs []json.RawMessage) {
 	handleBootcPreManifest(workers, jobID, token, staticArgs, dynArgs)
 }
+
+// SerializeManifest exports the serializeManifest function for testing.
+func SerializeManifest(ctx context.Context, getManifestSource ManifestSourceFunc, workers *worker.Server, dependencies ManifestJobDependencies, manifestJobID uuid.UUID, seed int64) {
+	serializeManifest(ctx, getManifestSource, workers, dependencies, manifestJobID, seed)
+}
+
+// NewManifestJobDependencies creates a manifestJobDependencies for testing.
+func NewManifestJobDependencies(
+	depsolveJobID, containerResolveJobID, ostreeResolveJobID,
+	bootcInfoResolveJobID, bootcPreManifestJobID uuid.UUID,
+) ManifestJobDependencies {
+	return manifestJobDependencies{
+		depsolveJobID:         depsolveJobID,
+		containerResolveJobID: containerResolveJobID,
+		ostreeResolveJobID:    ostreeResolveJobID,
+		bootcInfoResolveJobID: bootcInfoResolveJobID,
+		bootcPreManifestJobID: bootcPreManifestJobID,
+	}
+}
