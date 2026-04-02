@@ -251,6 +251,10 @@ func imageTypeFromApiImageType(it ImageTypes) string {
 		return "minimal-raw"
 	case ImageTypesNetworkInstaller:
 		return "network-installer"
+	case ImageTypesEverythingNetworkInstaller:
+		return "everything-network-installer"
+	case ImageTypesServerNetworkInstaller:
+		return "server-network-installer"
 	case ImageTypesOci:
 		return "oci"
 	case ImageTypesPxeTarXz:
