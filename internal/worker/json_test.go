@@ -1896,3 +1896,84 @@ func TestBootcContainerInfoJSONRoundtrip(t *testing.T) {
 		})
 	}
 }
+
+func TestBootcPreManifestJobResultJSONRoundtrip(t *testing.T) {
+	testCases := []struct {
+		name   string
+		result BootcPreManifestJobResult
+	}{
+		{
+			name:   "empty",
+			result: BootcPreManifestJobResult{},
+		},
+		{
+			name: "with_manifest_info",
+			result: BootcPreManifestJobResult{
+				ManifestInfo: ManifestInfo{
+					OSBuildComposerVersion: "git-rev:abc123",
+					OSBuildComposerDeps: []*OSBuildComposerDepModule{
+						{
+							Path:    "github.com/osbuild/images",
+							Version: "v0.15.0",
+						},
+					},
+					PipelineNames: &PipelineNames{
+						Build:   []string{"build"},
+						Payload: []string{"os", "image"},
+					},
+				},
+			},
+		},
+		{
+			name: "with_manifest_info_and_container_resolve",
+			result: BootcPreManifestJobResult{
+				ContainerResolveJobArgs: &ContainerResolveJob{
+					Arch: "x86_64",
+					PipelineSpecs: map[string][]ContainerSpec{
+						"image": {
+							{Source: "quay.io/centos-bootc/centos-bootc:stream9"},
+						},
+					},
+				},
+				ManifestInfo: ManifestInfo{
+					OSBuildComposerVersion: "NEVRA:osbuild-composer-100-1.el9.x86_64",
+					PipelineNames: &PipelineNames{
+						Build:   []string{"build"},
+						Payload: []string{"image"},
+					},
+				},
+			},
+		},
+		{
+			name: "manifest_info_with_replace_dep",
+			result: BootcPreManifestJobResult{
+				ManifestInfo: ManifestInfo{
+					OSBuildComposerVersion: "devel",
+					OSBuildComposerDeps: []*OSBuildComposerDepModule{
+						{
+							Path:    "github.com/osbuild/images",
+							Version: "v0.0.0",
+							Replace: &OSBuildComposerDepModule{
+								Path:    "../images",
+								Version: "v0.0.0",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			data, err := json.Marshal(tc.result)
+			require.NoError(t, err)
+
+			var roundtripped BootcPreManifestJobResult
+			err = json.Unmarshal(data, &roundtripped)
+			require.NoError(t, err)
+
+			assert.Equal(t, tc.result, roundtripped)
+		})
+	}
+}
