@@ -3102,11 +3102,12 @@ func TestComposeBootc(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, worker.JobTypeManifestIDOnly, manifestJobType)
 
-	// ManifestByID depends on ContainerResolve and BootcBaseResolve (in IDs() order).
+	// ManifestByID depends on ContainerResolve, BootcInfoResolve, and BootcPreManifest (in IDs() order).
 	// No depsolve, no ostree resolve, no build resolve (single ref).
-	require.Len(t, manifestDeps, 2, "ManifestByID should depend on ContainerResolve and BootcBaseResolve")
+	require.Len(t, manifestDeps, 3, "ManifestByID should depend on ContainerResolve, BootcInfoResolve, and BootcPreManifest")
 	containerResolveJobID := manifestDeps[0]
-	bootcBaseResolveJobID := manifestDeps[1]
+	bootcInfoResolveJobID := manifestDeps[1]
+	bootcPreManifestDepJobID := manifestDeps[2]
 
 	containerResolveJobType, containerResolveArgsJSON, containerResolveDeps, _, err := queue.Job(containerResolveJobID)
 	require.NoError(t, err)
@@ -3164,11 +3165,10 @@ func TestComposeBootc(t *testing.T) {
 
 	// The BootcInfoResolve job referenced by BootcPreManifest should be
 	// the same job referenced by ManifestByID dependencies
-	require.Equal(t, bootcBaseResolveJobID, preManifestBootcInfoResolveJobID,
+	require.Equal(t, bootcInfoResolveJobID, preManifestBootcInfoResolveJobID,
 		"ManifestByID and BootcPreManifest should reference the same BootcInfoResolve job")
 
-	// ManifestByID should NOT depend on BootcPreManifest (transitive only)
-	for _, depID := range manifestDeps {
-		require.NotEqual(t, preManifestJobID, depID, "ManifestByID should not directly depend on BootcPreManifest")
-	}
+	// ManifestByID should directly depend on BootcPreManifest (third dependency)
+	require.Equal(t, preManifestJobID, bootcPreManifestDepJobID,
+		"ManifestByID should directly depend on BootcPreManifest")
 }
