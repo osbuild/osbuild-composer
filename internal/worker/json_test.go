@@ -1977,3 +1977,346 @@ func TestBootcPreManifestJobResultJSONRoundtrip(t *testing.T) {
 		})
 	}
 }
+
+func TestOSBuildComposerDepModuleEqual(t *testing.T) {
+	tests := []struct {
+		name     string
+		receiver *OSBuildComposerDepModule
+		other    *OSBuildComposerDepModule
+		want     bool
+	}{
+		{
+			name:     "both_nil",
+			receiver: nil,
+			other:    nil,
+			want:     true,
+		},
+		{
+			name:     "receiver_nil_other_non_nil",
+			receiver: nil,
+			other:    &OSBuildComposerDepModule{Path: "example.com/foo", Version: "v1.0.0"},
+			want:     false,
+		},
+		{
+			name:     "receiver_non_nil_other_nil",
+			receiver: &OSBuildComposerDepModule{Path: "example.com/foo", Version: "v1.0.0"},
+			other:    nil,
+			want:     false,
+		},
+		{
+			name:     "equal_no_replace",
+			receiver: &OSBuildComposerDepModule{Path: "example.com/foo", Version: "v1.0.0"},
+			other:    &OSBuildComposerDepModule{Path: "example.com/foo", Version: "v1.0.0"},
+			want:     true,
+		},
+		{
+			name:     "path_mismatch",
+			receiver: &OSBuildComposerDepModule{Path: "example.com/foo", Version: "v1.0.0"},
+			other:    &OSBuildComposerDepModule{Path: "example.com/bar", Version: "v1.0.0"},
+			want:     false,
+		},
+		{
+			name:     "version_mismatch",
+			receiver: &OSBuildComposerDepModule{Path: "example.com/foo", Version: "v1.0.0"},
+			other:    &OSBuildComposerDepModule{Path: "example.com/foo", Version: "v2.0.0"},
+			want:     false,
+		},
+		{
+			name: "equal_with_replace",
+			receiver: &OSBuildComposerDepModule{
+				Path:    "example.com/foo",
+				Version: "v0.0.0",
+				Replace: &OSBuildComposerDepModule{Path: "../foo", Version: "v0.0.0"},
+			},
+			other: &OSBuildComposerDepModule{
+				Path:    "example.com/foo",
+				Version: "v0.0.0",
+				Replace: &OSBuildComposerDepModule{Path: "../foo", Version: "v0.0.0"},
+			},
+			want: true,
+		},
+		{
+			name: "replace_present_vs_absent",
+			receiver: &OSBuildComposerDepModule{
+				Path:    "example.com/foo",
+				Version: "v0.0.0",
+				Replace: &OSBuildComposerDepModule{Path: "../foo", Version: "v0.0.0"},
+			},
+			other: &OSBuildComposerDepModule{
+				Path:    "example.com/foo",
+				Version: "v0.0.0",
+			},
+			want: false,
+		},
+		{
+			name: "replace_absent_vs_present",
+			receiver: &OSBuildComposerDepModule{
+				Path:    "example.com/foo",
+				Version: "v0.0.0",
+			},
+			other: &OSBuildComposerDepModule{
+				Path:    "example.com/foo",
+				Version: "v0.0.0",
+				Replace: &OSBuildComposerDepModule{Path: "../foo", Version: "v0.0.0"},
+			},
+			want: false,
+		},
+		{
+			name: "replace_path_mismatch",
+			receiver: &OSBuildComposerDepModule{
+				Path:    "example.com/foo",
+				Version: "v0.0.0",
+				Replace: &OSBuildComposerDepModule{Path: "../foo", Version: "v0.0.0"},
+			},
+			other: &OSBuildComposerDepModule{
+				Path:    "example.com/foo",
+				Version: "v0.0.0",
+				Replace: &OSBuildComposerDepModule{Path: "../bar", Version: "v0.0.0"},
+			},
+			want: false,
+		},
+		{
+			name: "replace_version_mismatch",
+			receiver: &OSBuildComposerDepModule{
+				Path:    "example.com/foo",
+				Version: "v0.0.0",
+				Replace: &OSBuildComposerDepModule{Path: "../foo", Version: "v0.0.0"},
+			},
+			other: &OSBuildComposerDepModule{
+				Path:    "example.com/foo",
+				Version: "v0.0.0",
+				Replace: &OSBuildComposerDepModule{Path: "../foo", Version: "v1.0.0"},
+			},
+			want: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, tt.receiver.Equal(tt.other))
+		})
+	}
+}
+
+func TestCompareManifestInfos(t *testing.T) {
+	tests := []struct {
+		name         string
+		upstreamInfo ManifestInfo
+		localInfo    ManifestInfo
+		wantErr      bool
+		wantErrID    clienterrors.ClientErrorCode
+	}{
+		{
+			name: "both_match_fully",
+			upstreamInfo: ManifestInfo{
+				OSBuildComposerVersion: "git-rev:abc123",
+				OSBuildComposerDeps: []*OSBuildComposerDepModule{
+					{Path: "github.com/osbuild/images", Version: "v0.15.0"},
+				},
+			},
+			localInfo: ManifestInfo{
+				OSBuildComposerVersion: "git-rev:abc123",
+				OSBuildComposerDeps: []*OSBuildComposerDepModule{
+					{Path: "github.com/osbuild/images", Version: "v0.15.0"},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "version_mismatch",
+			upstreamInfo: ManifestInfo{
+				OSBuildComposerVersion: "git-rev:abc123",
+			},
+			localInfo: ManifestInfo{
+				OSBuildComposerVersion: "git-rev:def456",
+			},
+			wantErr:   true,
+			wantErrID: clienterrors.ErrorBuildVersionMismatch,
+		},
+		{
+			name: "dep_version_mismatch",
+			upstreamInfo: ManifestInfo{
+				OSBuildComposerVersion: "git-rev:abc123",
+				OSBuildComposerDeps: []*OSBuildComposerDepModule{
+					{Path: "github.com/osbuild/images", Version: "v0.15.0"},
+				},
+			},
+			localInfo: ManifestInfo{
+				OSBuildComposerVersion: "git-rev:abc123",
+				OSBuildComposerDeps: []*OSBuildComposerDepModule{
+					{Path: "github.com/osbuild/images", Version: "v0.16.0"},
+				},
+			},
+			wantErr:   true,
+			wantErrID: clienterrors.ErrorBuildVersionMismatch,
+		},
+		{
+			name: "dep_present_upstream_missing_local",
+			upstreamInfo: ManifestInfo{
+				OSBuildComposerVersion: "git-rev:abc123",
+				OSBuildComposerDeps: []*OSBuildComposerDepModule{
+					{Path: "github.com/osbuild/images", Version: "v0.15.0"},
+				},
+			},
+			localInfo: ManifestInfo{
+				OSBuildComposerVersion: "git-rev:abc123",
+			},
+			wantErr:   true,
+			wantErrID: clienterrors.ErrorBuildVersionMismatch,
+		},
+		{
+			name: "dep_missing_upstream_present_local",
+			upstreamInfo: ManifestInfo{
+				OSBuildComposerVersion: "git-rev:abc123",
+			},
+			localInfo: ManifestInfo{
+				OSBuildComposerVersion: "git-rev:abc123",
+				OSBuildComposerDeps: []*OSBuildComposerDepModule{
+					{Path: "github.com/osbuild/images", Version: "v0.15.0"},
+				},
+			},
+			wantErr:   true,
+			wantErrID: clienterrors.ErrorBuildVersionMismatch,
+		},
+		{
+			name: "both_devel_both_nil_deps",
+			upstreamInfo: ManifestInfo{
+				OSBuildComposerVersion: "devel",
+			},
+			localInfo: ManifestInfo{
+				OSBuildComposerVersion: "devel",
+			},
+			wantErr: false,
+		},
+		{
+			name: "one_devel_one_real",
+			upstreamInfo: ManifestInfo{
+				OSBuildComposerVersion: "devel",
+			},
+			localInfo: ManifestInfo{
+				OSBuildComposerVersion: "git-rev:abc123",
+			},
+			wantErr:   true,
+			wantErrID: clienterrors.ErrorBuildVersionMismatch,
+		},
+		{
+			name: "dep_path_mismatch_with_replace",
+			upstreamInfo: ManifestInfo{
+				OSBuildComposerVersion: "devel",
+				OSBuildComposerDeps: []*OSBuildComposerDepModule{
+					{
+						Path:    "github.com/osbuild/images",
+						Version: "v0.0.0",
+						Replace: &OSBuildComposerDepModule{
+							Path:    "../images",
+							Version: "v0.0.0",
+						},
+					},
+				},
+			},
+			localInfo: ManifestInfo{
+				OSBuildComposerVersion: "devel",
+				OSBuildComposerDeps: []*OSBuildComposerDepModule{
+					{
+						Path:    "github.com/osbuild/images",
+						Version: "v0.15.0",
+					},
+				},
+			},
+			wantErr:   true,
+			wantErrID: clienterrors.ErrorBuildVersionMismatch,
+		},
+		{
+			name: "both_have_replace_matching",
+			upstreamInfo: ManifestInfo{
+				OSBuildComposerVersion: "devel",
+				OSBuildComposerDeps: []*OSBuildComposerDepModule{
+					{
+						Path:    "github.com/osbuild/images",
+						Version: "v0.0.0",
+						Replace: &OSBuildComposerDepModule{
+							Path:    "../images",
+							Version: "v0.0.0",
+						},
+					},
+				},
+			},
+			localInfo: ManifestInfo{
+				OSBuildComposerVersion: "devel",
+				OSBuildComposerDeps: []*OSBuildComposerDepModule{
+					{
+						Path:    "github.com/osbuild/images",
+						Version: "v0.0.0",
+						Replace: &OSBuildComposerDepModule{
+							Path:    "../images",
+							Version: "v0.0.0",
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name:         "both_empty",
+			upstreamInfo: ManifestInfo{},
+			localInfo:    ManifestInfo{},
+			wantErr:      false,
+		},
+		{
+			name: "multiple_deps_match",
+			upstreamInfo: ManifestInfo{
+				OSBuildComposerVersion: "git-rev:abc123",
+				OSBuildComposerDeps: []*OSBuildComposerDepModule{
+					{Path: "github.com/osbuild/images", Version: "v0.15.0"},
+					{Path: "github.com/osbuild/osbuild-composer", Version: "v100"},
+				},
+			},
+			localInfo: ManifestInfo{
+				OSBuildComposerVersion: "git-rev:abc123",
+				OSBuildComposerDeps: []*OSBuildComposerDepModule{
+					{Path: "github.com/osbuild/images", Version: "v0.15.0"},
+					{Path: "github.com/osbuild/osbuild-composer", Version: "v100"},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "different_number_of_deps",
+			upstreamInfo: ManifestInfo{
+				OSBuildComposerVersion: "git-rev:abc123",
+				OSBuildComposerDeps: []*OSBuildComposerDepModule{
+					{Path: "github.com/osbuild/images", Version: "v0.15.0"},
+					{Path: "github.com/osbuild/other", Version: "v1.0.0"},
+				},
+			},
+			localInfo: ManifestInfo{
+				OSBuildComposerVersion: "git-rev:abc123",
+				OSBuildComposerDeps: []*OSBuildComposerDepModule{
+					{Path: "github.com/osbuild/images", Version: "v0.15.0"},
+				},
+			},
+			wantErr:   true,
+			wantErrID: clienterrors.ErrorBuildVersionMismatch,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := CompareManifestInfos(tt.upstreamInfo, tt.localInfo)
+			if tt.wantErr {
+				require.NotNil(t, err, "expected error but got nil")
+				assert.Equal(t, tt.wantErrID, err.ID)
+				assert.Contains(t, err.Reason, "different composer builds")
+				// Verify details contain version info for diagnostics
+				assert.NotNil(t, err.Details)
+				details := err.Details.(map[string]interface{})
+				assert.Equal(t, tt.upstreamInfo.OSBuildComposerVersion, details["upstream_version"])
+				assert.Equal(t, tt.localInfo.OSBuildComposerVersion, details["local_version"])
+				assert.Equal(t, tt.upstreamInfo.OSBuildComposerDeps, details["upstream_deps"])
+				assert.Equal(t, tt.localInfo.OSBuildComposerDeps, details["local_deps"])
+			} else {
+				assert.Nil(t, err, "expected no error but got: %v", err)
+			}
+		})
+	}
+}
