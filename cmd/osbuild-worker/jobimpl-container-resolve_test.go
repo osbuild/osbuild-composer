@@ -13,30 +13,19 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
 )
 
-func assertResolveResult(t *testing.T, raw json.RawMessage, assertFn func(t *testing.T, cntResolveResult worker.ContainerResolveJobResult)) {
-	t.Helper()
-	var r worker.ContainerResolveJobResult
-	require.NoError(t, json.Unmarshal(raw, &r))
-	assertFn(t, r)
-}
-
 func TestContainerResolveJobRun(t *testing.T) {
-	assertNoopResolveResult := func(t *testing.T, raw json.RawMessage) {
-		assertResolveResult(t, raw, func(t *testing.T, cntResolveResult worker.ContainerResolveJobResult) {
-			assert.Nil(t, cntResolveResult.JobError)
-			assert.Empty(t, cntResolveResult.PipelineSpecs)
-		})
+	assertEmptyResult := func(t *testing.T, result worker.ContainerResolveJobResult) {
+		assert.Nil(t, result.JobError)
+		assert.Empty(t, result.PipelineSpecs)
 	}
 
 	tests := []struct {
 		name               string
 		jobArgs            *worker.ContainerResolveJob
-		jobArgsRaw         json.RawMessage // if jobArgs is nil, use this instead
-		finishErr          error
-		wantRunErr         bool
-		wantErrSubstr      string
-		wantFinishCalled   bool
-		verifyFinishResult func(t *testing.T, raw json.RawMessage)
+		jobArgsRaw         json.RawMessage                                                      // if jobArgs is nil, use this instead
+		mockMockJobFunc    func(t *testing.T, jobType string, rawArgs json.RawMessage) *mockJob // if nil, use the default mock job creator
+		wantRunErrSubstr   string                                                               // if empty, no error is expected
+		verifyFinishResult func(t *testing.T, result worker.ContainerResolveJobResult)
 	}{
 		{
 			name: "empty pipeline specs - no-op",
@@ -44,8 +33,7 @@ func TestContainerResolveJobRun(t *testing.T) {
 				Arch:          "x86_64",
 				PipelineSpecs: map[string][]worker.ContainerSpec{},
 			},
-			wantFinishCalled:   true,
-			verifyFinishResult: assertNoopResolveResult,
+			verifyFinishResult: assertEmptyResult,
 		},
 		{
 			name: "nil pipeline specs - no-op",
@@ -53,24 +41,29 @@ func TestContainerResolveJobRun(t *testing.T) {
 				Arch:          "x86_64",
 				PipelineSpecs: nil,
 			},
-			wantFinishCalled:   true,
-			verifyFinishResult: assertNoopResolveResult,
+			verifyFinishResult: assertEmptyResult,
 		},
 		{
 			name:             "args unmarshal error",
 			jobArgsRaw:       json.RawMessage(`{invalid json`),
-			wantRunErr:       true,
-			wantFinishCalled: true,
+			wantRunErrSubstr: "Error parsing container resolve job args: invalid character 'i' looking for beginning of object key string",
+			verifyFinishResult: func(t *testing.T, result worker.ContainerResolveJobResult) {
+				assert.NotNil(t, result.JobError)
+				assert.Equal(t, clienterrors.ErrorParsingJobArgs, result.JobError.ID)
+			},
 		},
 		{
-			name: "finish error is logged not returned",
+			name: "job.Finish() error is logged, but not returned from impl.Run()",
 			jobArgs: &worker.ContainerResolveJob{
 				Arch:          "x86_64",
 				PipelineSpecs: map[string][]worker.ContainerSpec{},
 			},
-			finishErr:        fmt.Errorf("connection lost"),
-			wantRunErr:       false,
-			wantFinishCalled: true,
+			mockMockJobFunc: func(t *testing.T, jobType string, rawArgs json.RawMessage) *mockJob {
+				jobMock := newMockJob(t, jobType, rawArgs)
+				jobMock.finishErr = fmt.Errorf("connection lost")
+				return jobMock
+			},
+			wantRunErrSubstr: "", // no error expected
 		},
 		{
 			name: "pipeline specs with unresolvable container",
@@ -85,14 +78,10 @@ func TestContainerResolveJobRun(t *testing.T) {
 					},
 				},
 			},
-			wantRunErr:       true,
-			wantErrSubstr:    "Error resolving containers for pipeline \"image\":",
-			wantFinishCalled: true,
-			verifyFinishResult: func(t *testing.T, raw json.RawMessage) {
-				assertResolveResult(t, raw, func(t *testing.T, cntResolveResult worker.ContainerResolveJobResult) {
-					assert.NotNil(t, cntResolveResult.JobError, "expected job error for unresolvable container")
-					assert.Equal(t, clienterrors.ErrorContainerResolution, cntResolveResult.JobError.ID)
-				})
+			wantRunErrSubstr: "Error resolving containers for pipeline \"image\":",
+			verifyFinishResult: func(t *testing.T, result worker.ContainerResolveJobResult) {
+				assert.NotNil(t, result.JobError, "expected job error for unresolvable container")
+				assert.Equal(t, clienterrors.ErrorContainerResolution, result.JobError.ID)
 			},
 		},
 		{
@@ -108,14 +97,10 @@ func TestContainerResolveJobRun(t *testing.T) {
 					}
 				]
 			}`),
-			wantRunErr:       true,
-			wantErrSubstr:    "Error resolving containers for pipeline \"\":",
-			wantFinishCalled: true,
-			verifyFinishResult: func(t *testing.T, raw json.RawMessage) {
-				assertResolveResult(t, raw, func(t *testing.T, cntResolveResult worker.ContainerResolveJobResult) {
-					assert.NotNil(t, cntResolveResult.JobError, "expected job error for unresolvable container")
-					assert.Equal(t, clienterrors.ErrorContainerResolution, cntResolveResult.JobError.ID)
-				})
+			wantRunErrSubstr: "Error resolving containers for pipeline \"\":",
+			verifyFinishResult: func(t *testing.T, result worker.ContainerResolveJobResult) {
+				assert.NotNil(t, result.JobError, "expected job error for unresolvable container")
+				assert.Equal(t, clienterrors.ErrorContainerResolution, result.JobError.ID)
 			},
 		},
 	}
@@ -129,24 +114,29 @@ func TestContainerResolveJobRun(t *testing.T) {
 				rawArgs = tt.jobArgsRaw
 			}
 
-			jobMock := newMockJob(t, worker.JobTypeContainerResolve, rawArgs)
-			jobMock.finishErr = tt.finishErr
+			// if no mock worker job constructor is provided, use the default mock job creator
+			if tt.mockMockJobFunc == nil {
+				tt.mockMockJobFunc = newMockJob
+			}
+			jobMock := tt.mockMockJobFunc(t, worker.JobTypeContainerResolve, rawArgs)
 
 			impl := &main.ContainerResolveJobImpl{AuthFilePath: ""}
 			runErr := impl.Run(jobMock)
 
-			if tt.wantRunErr {
+			if tt.wantRunErrSubstr != "" {
 				require.Error(t, runErr)
-				if tt.wantErrSubstr != "" {
-					assert.Contains(t, runErr.Error(), tt.wantErrSubstr)
-				}
+				assert.Contains(t, runErr.Error(), tt.wantRunErrSubstr)
 			} else {
 				require.NoError(t, runErr)
 			}
 
-			assert.Equal(t, tt.wantFinishCalled, jobMock.finishCalled, "Finish() called state")
-			if tt.verifyFinishResult != nil && jobMock.finishCalled && tt.finishErr == nil {
-				tt.verifyFinishResult(t, jobMock.finishResult)
+			assert.True(t, jobMock.finishCalled, "Finish() should be called")
+			if tt.verifyFinishResult != nil {
+				var result worker.ContainerResolveJobResult
+				require.NoError(t, json.Unmarshal(jobMock.finishResult, &result))
+				tt.verifyFinishResult(t, result)
+			} else {
+				assert.Nil(t, jobMock.finishResult)
 			}
 		})
 	}
