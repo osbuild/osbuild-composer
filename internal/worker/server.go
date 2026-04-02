@@ -659,12 +659,25 @@ func (s *Server) JobChannel(id uuid.UUID) (string, error) {
 	return channel, err
 }
 
+// JobTypeWithArch returns the type and architecture of the job
+// If the job type does not have an architecture, the second return value will be an empty string.
+func (s *Server) JobTypeWithArch(id uuid.UUID) (string, string, error) {
+	jobType, _, _, _, err := s.jobs.Job(id)
+	if err != nil {
+		return "", "", err
+	}
+	var arch string
+	jobtypeParts := strings.SplitN(jobType, ":", 2)
+	if len(jobtypeParts) == 2 {
+		arch = jobtypeParts[1]
+	}
+	return jobtypeParts[0], arch, nil
+}
+
 // JobType returns the type of the job
 func (s *Server) JobType(id uuid.UUID) (string, error) {
-	jobType, _, _, _, err := s.jobs.Job(id)
-	// the architecture is internally encdode in the job type, but hide that
-	// from this API
-	return strings.Split(jobType, ":")[0], err
+	jobType, _, err := s.JobTypeWithArch(id)
+	return jobType, err
 }
 
 func (s *Server) Cancel(id uuid.UUID) error {
@@ -918,12 +931,11 @@ func (s *Server) RequeueOrFinishJob(token uuid.UUID, maxRetries uint64, result j
 		return nil
 	}
 
-	jobType, err := s.JobType(jobId)
+	jobType, jobArch, err := s.JobTypeWithArch(jobId)
 	if err != nil {
 		return err
 	}
 
-	var arch string
 	var jobInfo *JobInfo
 	var jobResult *JobResult
 	switch jobType {
@@ -933,7 +945,6 @@ func (s *Server) RequeueOrFinishJob(token uuid.UUID, maxRetries uint64, result j
 		if err != nil {
 			return err
 		}
-		arch = osbuildJR.Arch
 		jobResult = &osbuildJR.JobResult
 
 	case JobTypeDepsolve:
@@ -1030,7 +1041,7 @@ func (s *Server) RequeueOrFinishJob(token uuid.UUID, maxRetries uint64, result j
 	}
 
 	statusCode := clienterrors.GetStatusCode(jobResult.JobError)
-	prometheus.FinishJobMetrics(jobInfo.JobStatus.Started, jobInfo.JobStatus.Finished, jobInfo.JobStatus.Canceled, jobType, jobInfo.Channel, arch, statusCode)
+	prometheus.FinishJobMetrics(jobInfo.JobStatus.Started, jobInfo.JobStatus.Finished, jobInfo.JobStatus.Canceled, jobType, jobInfo.Channel, jobArch, statusCode)
 
 	// Move artifacts from the temporary location to the final job
 	// location. Log any errors, but do not treat them as fatal. The job is
