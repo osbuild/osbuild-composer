@@ -1297,5 +1297,13 @@ type BootcPreManifestJobResult struct {
 	// Arguments for the downstream container resolve job.
 	ContainerResolveJobArgs *ContainerResolveJob `json:"container_resolve_job_args,omitempty"`
 
+	// ManifestInfo captures build information of the osbuild-composer instance
+	// that generated the source manifest in the pre-manifest job.
+	// This is important, since the osbuild-composer build version affects
+	// the manifest content and structure, thus also the sources specs that
+	// need to be resolved. This information can be used by parent jobs for
+	// detecting version mismatches during manifest serialization.
+	ManifestInfo ManifestInfo `json:"info,omitempty"`
+
 	JobResult
 }
