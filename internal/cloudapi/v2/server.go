@@ -191,6 +191,7 @@ type manifestJobDependencies struct {
 	containerResolveJobID uuid.UUID
 	ostreeResolveJobID    uuid.UUID
 	bootcInfoResolveJobID uuid.UUID
+	bootcPreManifestJobID uuid.UUID
 }
 
 // IDs returns a slice of the non-nil job IDs.
@@ -207,6 +208,9 @@ func (mjd manifestJobDependencies) IDs() []uuid.UUID {
 	}
 	if mjd.bootcInfoResolveJobID != uuid.Nil {
 		ids = append(ids, mjd.bootcInfoResolveJobID)
+	}
+	if mjd.bootcPreManifestJobID != uuid.Nil {
+		ids = append(ids, mjd.bootcPreManifestJobID)
 	}
 	return ids
 }
@@ -663,12 +667,13 @@ func (s *Server) enqueueBootcCompose(request ComposeRequest, channel string) (uu
 	// No depsolve job — bootc images are self-contained, all content comes from containers.
 
 	// 4. Enqueue ManifestByID (server-side job)
-	//    Dependencies: [containerResolve, bootcInfoResolve]
+	//    Dependencies: [containerResolve, bootcInfoResolve, bootcPreManifest]
 	//    Bootc mode is detected by dependencies.bootcInfoResolveJobID != uuid.Nil.
 	dependencies := manifestJobDependencies{
 		// depsolveJobID: uuid.Nil — no depsolve for bootc
 		containerResolveJobID: containerResolveJobID,
 		bootcInfoResolveJobID: bootcInfoResolveJobID,
+		bootcPreManifestJobID: preManifestJobID,
 	}
 
 	manifestJobID, err := s.workers.EnqueueManifestJobByID(
