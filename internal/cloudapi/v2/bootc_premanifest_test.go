@@ -3,6 +3,7 @@ package v2_test
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -14,6 +15,7 @@ import (
 
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/bib/osinfo"
+	"github.com/osbuild/images/pkg/manifest"
 	v2 "github.com/osbuild/osbuild-composer/internal/cloudapi/v2"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue/fsjobqueue"
@@ -426,5 +428,131 @@ func TestBootcPreManifestLoop_PicksUpJob(t *testing.T) {
 
 		// Small sleep to avoid busy-waiting
 		time.Sleep(50 * time.Millisecond)
+	}
+}
+
+// TestSerializeManifest_PreManifestErrors tests that serializeManifest
+// correctly handles pre-manifest job failures and build version mismatches.
+func TestSerializeManifest_PreManifestErrors(t *testing.T) {
+	tests := []struct {
+		name              string
+		preManifestResult worker.BootcPreManifestJobResult
+		checkResult       func(t *testing.T, result worker.ManifestJobByIDResult)
+	}{
+		{
+			name: "dependency_failed",
+			preManifestResult: worker.BootcPreManifestJobResult{
+				JobResult: worker.JobResult{
+					JobError: clienterrors.New(
+						clienterrors.ErrorManifestGeneration,
+						"simulated pre-manifest failure", nil,
+					),
+				},
+			},
+			checkResult: func(t *testing.T, result worker.ManifestJobByIDResult) {
+				require.NotNil(t, result.JobError, "expected job to fail but it succeeded")
+				assert.Equal(t, clienterrors.ErrorJobDependency, result.JobError.ID)
+				assert.Contains(t, result.JobError.Reason, "bootc pre-manifest job dependency")
+				assert.Nil(t, result.JobError.Details)
+			},
+		},
+		{
+			name: "version_mismatch",
+			preManifestResult: worker.BootcPreManifestJobResult{
+				ManifestInfo: worker.ManifestInfo{
+					OSBuildComposerVersion: "git-rev:FAKE_DIFFERENT_VERSION",
+					OSBuildComposerDeps: []*worker.OSBuildComposerDepModule{
+						{Path: "github.com/osbuild/images", Version: "v999.999.999"},
+					},
+				},
+			},
+			checkResult: func(t *testing.T, result worker.ManifestJobByIDResult) {
+				require.NotNil(t, result.JobError, "expected job to fail but it succeeded")
+				assert.Equal(t, clienterrors.ErrorBuildVersionMismatch, result.JobError.ID)
+				assert.Contains(t, result.JobError.Reason, "different composer builds")
+				assert.Equal(t, map[string]interface{}{
+					"upstream_version": "git-rev:FAKE_DIFFERENT_VERSION",
+					"local_version":    common.BuildVersion(),
+					"upstream_deps": []interface{}{
+						map[string]interface{}{
+							"path":    "github.com/osbuild/images",
+							"version": "v999.999.999",
+						},
+					},
+					// local_deps is nil because debug.ReadBuildInfo() fails in test binaries.
+					// See https://github.com/golang/go/issues/33976
+					"local_deps": nil,
+				}, result.JobError.Details)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			workerServer := newTestWorkerServer(t)
+
+			preManifestJob := &worker.BootcPreManifestJob{
+				ImageType:                  "qcow2",
+				Seed:                       42,
+				BootcInfoResolveDynArgsIdx: common.ToPtr(0),
+			}
+			preManifestJobID, err := workerServer.EnqueueBootcPreManifestJob(preManifestJob, nil, "")
+			require.NoError(t, err)
+
+			jobID, token, _, _, _, err := workerServer.RequestJob(
+				context.Background(), "",
+				[]string{worker.JobTypeBootcPreManifest}, []string{""}, uuid.Nil,
+			)
+			require.NoError(t, err)
+			require.Equal(t, preManifestJobID, jobID)
+
+			preManifestResultRaw, err := json.Marshal(tt.preManifestResult)
+			require.NoError(t, err)
+
+			err = workerServer.FinishJob(token, preManifestResultRaw)
+			require.NoError(t, err)
+
+			manifestJobID, err := workerServer.EnqueueManifestJobByID(
+				&worker.ManifestJobByID{},
+				[]uuid.UUID{preManifestJobID},
+				"",
+			)
+			require.NoError(t, err)
+
+			dependencies := v2.NewManifestJobDependencies(
+				uuid.Nil,         // depsolveJobID
+				uuid.Nil,         // containerResolveJobID
+				uuid.Nil,         // ostreeResolveJobID
+				uuid.Nil,         // bootcInfoResolveJobID
+				preManifestJobID, // bootcPreManifestJobID
+			)
+
+			getManifestSource := func() (*manifest.Manifest, error) {
+				return nil, fmt.Errorf("should not be called — error should be caught first")
+			}
+
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
+
+			done := make(chan struct{})
+			go func() {
+				defer close(done)
+				v2.SerializeManifest(ctx, getManifestSource, workerServer, dependencies, manifestJobID, 42)
+			}()
+
+			select {
+			case <-done:
+			case <-time.After(15 * time.Second):
+				t.Fatal("timed out waiting for serializeManifest to finish")
+			}
+
+			var manifestResult worker.ManifestJobByIDResult
+			jobInfo, err := workerServer.ManifestJobInfo(manifestJobID, &manifestResult)
+			require.NoError(t, err)
+			require.NotNil(t, jobInfo)
+			assert.False(t, jobInfo.JobStatus.Finished.IsZero(), "manifest job should be finished")
+
+			tt.checkResult(t, manifestResult)
+		})
 	}
 }
