@@ -3,6 +3,7 @@ package manifest
 import (
 	"github.com/osbuild/images/pkg/artifact"
 	"github.com/osbuild/images/pkg/container"
+	"github.com/osbuild/images/pkg/flatpak"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/ostree"
 	"github.com/osbuild/images/pkg/platform"
@@ -49,6 +50,10 @@ type Pipeline interface {
 	// resolved and added to the pipeline. Each source should be resolved to
 	// its full Spec. See the ostree package for more details.
 	getOSTreeCommitSources() []ostree.SourceSpec
+	// getFlatpakSources returns the list of flatpak sources to be resolved and
+	// embedded by the pipeline. Each source should be resolved to its full
+	// Spec. See the flatpak package for more details.
+	getFlatpakSources() []flatpak.SourceSpec
 
 	serializeStart(Inputs) error
 	serializeEnd()
@@ -66,6 +71,9 @@ type Pipeline interface {
 	// getInline returns the list of inlined data content that will be used to
 	// embed files in the pipeline tree.
 	getInline() []string
+	// getFlatpakSpecs returns the list of specifications for the flatpaks
+	// that will be installed to the pipeline tree.
+	getFlatpakSpecs() []flatpak.Spec
 
 	// files generated from url references
 	fileRefs() ([]string, error)
@@ -136,6 +144,10 @@ func (p Base) getOSTreeCommitSources() []ostree.SourceSpec {
 	return nil
 }
 
+func (p Base) getFlatpakSources() []flatpak.SourceSpec {
+	return nil
+}
+
 func (p Base) getPackageSpecs() rpmmd.PackageList {
 	return nil
 }
@@ -148,6 +160,9 @@ func (p Base) getContainerSpecs() []container.Spec {
 	return nil
 }
 
+func (p Base) getFlatpakSpecs() []flatpak.Spec {
+	return nil
+}
 func (p Base) getInline() []string {
 	return []string{}
 }

@@ -78,7 +78,6 @@
           - "iwlwifi-mvm-firmware"
           - "libertas-firmware"
           - "linux-firmware"
-          - "linux-firmware"
           - "mt7xxx-firmware"
           - "nvidia-gpu-firmware"
           - "nxpwireless-firmware"
@@ -115,7 +114,6 @@
           - "iwlwifi-mvm-firmware"
           - "libertas-firmware"
           - "linux-firmware"
-          - "linux-firmware"
           - "mt7xxx-firmware"
           - "nvidia-gpu-firmware"
           - "nxpwireless-firmware"
@@ -127,7 +125,7 @@
       bios_platform: "powerpc-ieee1275"
       image_format: "qcow2"
       qcow2_compat: "1.1"
-      packages:
+      packages: &ppc64le_bios_platform_packages
         bios:
           - "dracut-config-generic"
           - "powerpc-utils"
@@ -138,6 +136,33 @@
         bios:
           - "grub2-ppc64le"
           - "grub2-ppc64le-modules"
+    ppc64le_installer_platform: &ppc64le_installer_platform
+      <<: *ppc64le_bios_platform
+      image_format: "qcow2"
+      packages:
+        <<: *ppc64le_bios_platform_packages
+        booting:
+          - "lsvpd"
+          - "ppc64-diag"
+          - "grub2-tools"
+          - "grub2-tools-minimal"
+          - "grub2-tools-extra"
+        firmware:
+          - "amd-gpu-firmware"
+          - "amd-ucode-firmware"
+          - "atheros-firmware"
+          - "brcmfmac-firmware"
+          - "intel-gpu-firmware"
+          - "iwlegacy-firmware"
+          - "iwlwifi-dvm-firmware"
+          - "iwlwifi-mvm-firmware"
+          - "libertas-firmware"
+          - "linux-firmware"
+          - "mt7xxx-firmware"
+          - "nvidia-gpu-firmware"
+          - "nxpwireless-firmware"
+          - "realtek-firmware"
+          - "tiwilink-firmware"
     s390x_zipl_platform: &s390x_zipl_platform
       arch: "s390x"
       # XXX: merge zipl_support/bootloader
@@ -153,6 +178,19 @@
       build_packages:
         zipl:
           - "s390utils-base"
+    s390x_installer_platform: &s390x_installer_platform
+      arch: "s390x"
+      image_format: "qcow2"
+      qcow2_compat: "1.1"
+      packages:
+        booting:
+          - "dracut-config-generic"
+          - "s390utils-base"
+          - "s390utils-core"
+      build_packages:
+        booting:
+          - "s390utils-base"
+      bootloader: "zipl"
 
   default_installer_config: &default_installer_config
     enabled_anaconda_modules:
@@ -184,6 +222,16 @@
           arch: "x86_64"
         shallow_merge:
           boot_type: "grub2"
+      "ppc64le uses grub2-ppc64le":
+        when:
+          arch: "ppc64le"
+        shallow_merge:
+          boot_type: "grub2-ppc64le"
+      "s390x uses s390-iso":
+        when:
+          arch: "s390x"
+        shallow_merge:
+          boot_type: "s390-iso"
 
   sapapps_image_config: &sapapps_image_config
     selinux_config:
@@ -2309,6 +2357,8 @@ image_types:
     platforms:
       - *x86_64_installer_platform
       - *aarch64_installer_platform
+      - *ppc64le_installer_platform
+      - *s390x_installer_platform
     platforms_override:
       conditions:
         "RHEL 10.1+ adds FIPS menu":
@@ -2319,6 +2369,10 @@ image_types:
               fips_menu: true
             - <<: *aarch64_installer_platform
               fips_menu: true
+            - <<: *ppc64le_installer_platform
+              fips_menu: true
+            # s390x iso has no boot menu
+            - <<: *s390x_installer_platform
     package_sets:
       installer:
         - include:

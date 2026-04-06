@@ -541,7 +541,10 @@ func (t *bootcImageType) manifestForLegacyISO(bp *blueprint.Blueprint, options d
 	if !ok {
 		return nil, nil, fmt.Errorf("cannot find installer package set for %v", installerImgTypeName)
 	}
-	installerConfig := imgType.InstallerConfig(*id, archStr)
+	installerConfig, err := imgType.InstallerConfig(*id, archStr)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error in installer config for %s: %w", installerImgTypeName, err)
+	}
 	if installerConfig == nil {
 		return nil, nil, fmt.Errorf("empty installer config for %s", installerImgTypeName)
 	}

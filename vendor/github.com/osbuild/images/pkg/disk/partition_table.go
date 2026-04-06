@@ -1423,6 +1423,10 @@ func NewCustomPartitionTable(customizations *blueprint.DiskCustomization, option
 		pt.StartOffset = Offset(customizations.StartOffset)
 	}
 
+	if customizations.SectorSize > 0 {
+		pt.SectorSize = customizations.SectorSize
+	}
+
 	// TODO: make blueprint MinSize of type datatypes.Size too
 	pt.relayout(datasizes.Size(customizations.MinSize))
 	pt.GenerateUUIDs(rng)

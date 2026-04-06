@@ -140,12 +140,17 @@ func genMountsForBootupd(source string, pt *disk.PartitionTable) ([]Mount, error
 }
 
 func genDevicesForBootupd(filename, devName string, pt *disk.PartitionTable) (map[string]Device, error) {
+	var sectorSize *uint64
+	if pt.SectorSize != 0 {
+		sectorSize = &pt.SectorSize
+	}
 	devices := map[string]Device{
 		devName: Device{
 			Type: "org.osbuild.loopback",
 			Options: &LoopbackDeviceOptions{
-				Filename: filename,
-				Partscan: true,
+				Filename:   filename,
+				Partscan:   true,
+				SectorSize: sectorSize,
 			},
 		},
 	}
