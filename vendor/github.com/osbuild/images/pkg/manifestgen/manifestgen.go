@@ -17,6 +17,7 @@ import (
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/depsolvednf"
 	"github.com/osbuild/images/pkg/distro"
+	"github.com/osbuild/images/pkg/flatpak"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/ostree"
@@ -76,6 +77,7 @@ type Options struct {
 	Depsolve          DepsolveFunc
 	ContainerResolver ContainerResolverFunc
 	CommitResolver    CommitResolverFunc
+	FlatpakResolver   FlatpakResolverFunc
 
 	// Use the a bootstrap container to buildroot (useful for e.g.
 	// cross-arch or cross-distro builds)
@@ -90,6 +92,7 @@ type Generator struct {
 	depsolve               DepsolveFunc
 	containerResolver      ContainerResolverFunc
 	commitResolver         CommitResolverFunc
+	flatpakResolver        FlatpakResolverFunc
 	sbomWriter             SBOMWriterFunc
 	warningsOutput         io.Writer
 	depsolveWarningsOutput io.Writer
@@ -134,6 +137,9 @@ func New(reporegistry *reporegistry.RepoRegistry, opts *Options) (*Generator, er
 	}
 	if mg.commitResolver == nil {
 		mg.commitResolver = ostree.ResolveAll
+	}
+	if mg.flatpakResolver == nil {
+		mg.flatpakResolver = flatpak.ResolveAll
 	}
 	if mg.cacheDir == "" {
 		xdgCacheHomeDir, err := xdgCacheHome()
@@ -224,10 +230,17 @@ func (mg *Generator) Generate(bp *blueprint.Blueprint, imgType distro.ImageType,
 	if err != nil {
 		return nil, err
 	}
+
+	flatpakSpecs, err := mg.flatpakResolver(preManifest.GetFlatpakSourceSpecs())
+	if err != nil {
+		return nil, err
+	}
+
 	opts := &manifest.SerializeOptions{
 		RpmDownloader: mg.rpmDownloader,
 	}
-	mf, err := preManifest.Serialize(depsolved, containerSpecs, commitSpecs, opts)
+
+	mf, err := preManifest.Serialize(depsolved, containerSpecs, commitSpecs, flatpakSpecs, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -302,6 +315,8 @@ type (
 	ContainerResolverFunc func(containerSources map[string][]container.SourceSpec, archName string) (map[string][]container.Spec, error)
 
 	CommitResolverFunc func(commitSources map[string][]ostree.SourceSpec) (map[string][]ostree.CommitSpec, error)
+
+	FlatpakResolverFunc func(flatpakSources map[string][]flatpak.SourceSpec) (map[string][]flatpak.Spec, error)
 
 	SBOMWriterFunc func(filename string, content io.Reader, docType sbom.StandardType) error
 )

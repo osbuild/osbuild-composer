@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/osbuild/images/internal/common"
+	"github.com/osbuild/images/pkg/flatpak"
 )
 
 type PayloadLocation uint
@@ -154,6 +155,8 @@ type InstallerCustomizations struct {
 		Location  PayloadLocation
 		Kickstart PayloadKickstart
 	}
+
+	Flatpaks []flatpak.SourceSpec
 }
 
 type InstallerLoraxTemplate struct {

@@ -173,7 +173,7 @@
       bios_platform: "powerpc-ieee1275"
       image_format: "qcow2"
       qcow2_compat: "1.1"
-      packages:
+      packages: &ppc64le_bios_platform_packages
         bios:
           - "dracut-config-generic"
           - "powerpc-utils"
@@ -184,6 +184,43 @@
         bios:
           - "grub2-ppc64le"
           - "grub2-ppc64le-modules"
+    ppc64le_installer_platform: &ppc64le_installer_platform
+      <<: *ppc64le_bios_platform
+      image_format: "qcow2"
+      packages:
+        <<: *ppc64le_bios_platform_packages
+        booting:
+          - "lsvpd"
+          - "ppc64-diag"
+          - "grub2-tools"
+          - "grub2-tools-minimal"
+          - "grub2-tools-extra"
+        firmware:
+          - "iwl100-firmware"
+          - "iwl1000-firmware"
+          - "iwl105-firmware"
+          - "iwl135-firmware"
+          - "iwl2000-firmware"
+          - "iwl2030-firmware"
+          - "iwl3160-firmware"
+          # NOTE: Some firmware packages are only available in Buildroot
+          # - "iwl3945-firmware"
+          # - "iwl4965-firmware"
+          - "iwl5000-firmware"
+          - "iwl5150-firmware"
+          # - "iwl6000-firmware"
+          - "iwl6000g2a-firmware"
+          - "iwl6000g2b-firmware"
+          - "iwl6050-firmware"
+          - "iwl7260-firmware"
+          # - "libertas-sd8686-firmware"
+          - "libertas-sd8787-firmware"
+          # - "libertas-usb8388-firmware"
+          # - "libertas-usb8388-olpc-firmware"
+          - "linux-firmware"
+          # - "liquidio-firmware"
+          - "netronome-firmware"
+          # - "opal-firmware"
     s390x_zipl_platform: &s390x_zipl_platform
       arch: "s390x"
       # XXX: merge zipl_support/bootloader
@@ -199,6 +236,19 @@
       build_packages:
         zipl:
           - "s390utils-base"
+    s390x_installer_platform: &s390x_installer_platform
+      arch: "s390x"
+      image_format: "qcow2"
+      qcow2_compat: "1.1"
+      packages:
+        booting:
+          - "dracut-config-generic"
+          - "s390utils-base"
+          - "s390utils-core"
+      build_packages:
+        booting:
+          - "s390utils-base"
+      bootloader: "zipl"
 
   common_conditions:
     "add insights client on rhel": &conditions_pkgsets_insights_client_on_rhel
@@ -1212,6 +1262,16 @@
           arch: "x86_64"
         shallow_merge:
           boot_type: "syslinux"
+      "ppc64le uses grub2-ppc64le":
+        when:
+          arch: "ppc64le"
+        shallow_merge:
+          boot_type: "grub2-ppc64le"
+      "s390x uses s390-iso":
+        when:
+          arch: "s390x"
+        shallow_merge:
+          boot_type: "s390-iso"
 
   supported_options_lists:
     # Common options supported by all disk image types.
@@ -3371,6 +3431,8 @@ image_types:
     platforms:
       - *x86_64_installer_platform
       - *aarch64_installer_platform
+      - *ppc64le_installer_platform
+      - *s390x_installer_platform
     platforms_override:
       conditions:
         "RHEL 9.7+ adds FIPS menu":
@@ -3381,6 +3443,10 @@ image_types:
               fips_menu: true
             - <<: *aarch64_installer_platform
               fips_menu: true
+            - <<: *ppc64le_installer_platform
+              fips_menu: true
+            # s390x has no boot menu
+            - <<: *s390x_installer_platform
     package_sets:
       installer:
         - include:

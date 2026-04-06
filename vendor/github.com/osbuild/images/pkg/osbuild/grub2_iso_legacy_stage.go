@@ -11,6 +11,8 @@ type Grub2ISOLegacyCustomEntryOptions struct {
 }
 
 type Grub2ISOLegacyStageOptions struct {
+	Grub2Dir string `json:"grub2dir,omitempty"`
+
 	Product Product `json:"product"`
 
 	Kernel ISOKernel `json:"kernel"`
@@ -26,6 +28,8 @@ type Grub2ISOLegacyStageOptions struct {
 	Install bool `json:"install"`
 
 	Custom []Grub2ISOLegacyCustomEntryOptions `json:"custom,omitempty"`
+
+	Platform string `json:"platform,omitempty"`
 
 	Config *Grub2Config `json:"config,omitempty"`
 }
