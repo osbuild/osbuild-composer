@@ -107,11 +107,11 @@ type OSBuildJobImpl struct {
 func (impl *OSBuildJobImpl) getAWS(region string, accessId string, secret string, token string) (*awscloud.AWS, error) {
 	if accessId != "" && secret != "" {
 		return awscloud.New(region, accessId, secret, token)
-	} else if impl.AWSCreds != "" {
-		return awscloud.NewFromFile(impl.AWSCreds, region)
-	} else {
-		return awscloud.NewDefault(region)
 	}
+	if impl.AWSCreds != "" {
+		return awscloud.NewFromFile(impl.AWSCreds, region)
+	}
+	return awscloud.NewDefault(region)
 }
 
 func (impl *OSBuildJobImpl) getAWSForS3TargetFromOptions(options *target.AWSS3TargetOptions) (*awscloud.AWS, error) {
@@ -169,7 +169,7 @@ func (impl *OSBuildJobImpl) getAWSForS3Target(options *target.AWSS3TargetOptions
 		if bucket == "" {
 			bucket = impl.AWSBucket
 			if bucket == "" {
-				err = fmt.Errorf("No AWS bucket provided")
+				err = fmt.Errorf("no AWS bucket provided")
 			}
 		}
 	} else if options.Endpoint != "" && options.Region != "" { // Endpoint != "" && Region != "" => Generic S3 Weldr API
@@ -205,13 +205,15 @@ func (impl *OSBuildJobImpl) getGCP(credentials []byte) (*gcp.GCP, error) {
 	if credentials != nil {
 		logrus.Info("[GCP] 🔑 using credentials provided with the job request")
 		return gcp.New(credentials)
-	} else if impl.GCPConfig.Creds != "" {
+	}
+
+	if impl.GCPConfig.Creds != "" {
 		logrus.Info("[GCP] 🔑 using credentials from the worker configuration")
 		return gcp.NewFromFile(impl.GCPConfig.Creds)
-	} else {
-		logrus.Info("[GCP] 🔑 using Application Default Credentials via Google library")
-		return gcp.New(nil)
 	}
+
+	logrus.Info("[GCP] 🔑 using Application Default Credentials via Google library")
+	return gcp.New(nil)
 }
 
 // Takes the worker config as a base and overwrites it with both t1 and t2's options
@@ -243,7 +245,7 @@ func validateResult(result *worker.OSBuildJobResult, jobID string) {
 	if result.JobError != nil {
 		logWithId.Errorf("osbuild job failed: %s", result.JobError.Reason)
 		if result.JobError.Details != nil {
-			logWithId.Errorf("failure details : %v", result.JobError.Details)
+			logWithId.Errorf("failure details: %v", result.JobError.Details)
 		}
 		return
 	}
@@ -254,9 +256,8 @@ func validateResult(result *worker.OSBuildJobResult, jobID string) {
 		logWithId.Errorf("osbuild job failed: %s", reason)
 		result.JobError = clienterrors.New(clienterrors.ErrorBuildJob, reason, nil)
 		return
-	} else {
-		logWithId.Infof("osbuild job succeeded")
 	}
+	logWithId.Infof("osbuild job succeeded")
 	result.Success = true
 }
 
@@ -271,7 +272,6 @@ func uploadToS3(a *awscloud.AWS, outputDirectory, exportPath, bucket, key, filen
 	result, err := a.Upload(imagePath, bucket, key)
 	if err != nil {
 		return "", clienterrors.New(clienterrors.ErrorUploadingImage, err.Error(), nil)
-
 	}
 
 	if public {
@@ -303,7 +303,6 @@ func (impl *OSBuildJobImpl) getContainerClient(destination string, targetOptions
 	}
 
 	if appliedDefaults {
-
 		if impl.ContainersConfig.CertPath != "" {
 			client.SetDockerCertPath(impl.ContainersConfig.CertPath)
 		}
