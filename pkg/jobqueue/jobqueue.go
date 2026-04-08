@@ -37,7 +37,8 @@ type JobQueue interface {
 	// Dequeues a job, blocking until one is available.
 	//
 	// Waits until a job with a type of any of `jobTypes` and any of `channels`
-	// is available, or `ctx` is canceled.
+	// is available, or `ctx` is canceled. If 'channels' is 'nil' or empty,
+	// no job will be matched and no job will be returned.
 	//
 	// Returns the job's id, token, dependencies, type, and arguments, or an error. Arguments
 	// can be unmarshaled to the type given in Enqueue().

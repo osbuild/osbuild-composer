@@ -49,6 +49,7 @@ func TestJobQueue(t *testing.T, makeJobQueue MakeJobQueue) {
 	t.Run("errors", wrap(testErrors))
 	t.Run("args", wrap(testArgs))
 	t.Run("cancel", wrap(testCancel))
+	t.Run("dequeue-nil-and-empty-channels", wrap(testDequeueNilAndEmptyChannels))
 	t.Run("requeue", wrap(testRequeue))
 	t.Run("requeue-limit", wrap(testRequeueLimit))
 	t.Run("update-job-result", wrap(testUpdateJobResult))
@@ -991,5 +992,24 @@ func testDeleteJobs(t *testing.T, q jobqueue.JobQueue) {
 			jobType, _, _, _, err := q.Job(jobId)
 			assert.Error(t, err, jobType)
 		}
+	})
+}
+
+func testDequeueNilAndEmptyChannels(t *testing.T, q jobqueue.JobQueue) {
+	// Enqueue a job on a specific channel
+	_ = pushTestJob(t, q, "octopus", nil, nil, "toucan")
+	// Dequeue with nil channels must not match any job
+	t.Run("nil-channels-matches-nothing", func(t *testing.T) {
+		ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
+		defer cancel()
+		_, _, _, _, _, err := q.Dequeue(ctx, uuid.Nil, []string{"octopus"}, nil)
+		require.Equal(t, jobqueue.ErrDequeueTimeout, err)
+	})
+	// Dequeue with empty channels must not match any job
+	t.Run("empty-channels-matches-nothing", func(t *testing.T) {
+		ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
+		defer cancel()
+		_, _, _, _, _, err := q.Dequeue(ctx, uuid.Nil, []string{"octopus"}, []string{})
+		require.Equal(t, jobqueue.ErrDequeueTimeout, err)
 	})
 }
