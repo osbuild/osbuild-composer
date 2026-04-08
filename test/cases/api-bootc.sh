@@ -65,6 +65,8 @@ PGUSER=postgres PGPASSWORD=foobar PGDATABASE=osbuildcomposer PGHOST=localhost PG
     "$(go env GOPATH)"/bin/tern migrate -m /usr/share/tests/osbuild-composer/schemas
 popd
 
+BOOTC_USE_REMOTE_CONTAINER_SOURCE="${BOOTC_USE_REMOTE_CONTAINER_SOURCE:-false}"
+
 cat <<EOF | sudo tee "/etc/osbuild-composer/osbuild-composer.toml"
 ignore_missing_repos = true
 log_level = "debug"
@@ -81,6 +83,8 @@ pg_user = "postgres"
 pg_password = "foobar"
 pg_ssl_mode = "disable"
 pg_max_conns = 10
+[bootc]
+use_remote_container_source = ${BOOTC_USE_REMOTE_CONTAINER_SOURCE}
 EOF
 
 sudo systemctl restart osbuild-composer
@@ -164,6 +168,30 @@ function waitForState() {
     export UPLOAD_OPTIONS
 }
 
+# verify the container source type in the compose manifest is correct
+function verifyManifestContainerSourceType() {
+    MANIFESTS=$(curl \
+        --silent \
+        --show-error \
+        --cacert /etc/osbuild-composer/ca-crt.pem \
+        --key /etc/osbuild-composer/client-key.pem \
+        --cert /etc/osbuild-composer/client-crt.pem \
+        "https://localhost/api/image-builder-composer/v2/composes/$COMPOSE_ID/manifests")
+    echo "compose MANIFESTS:"
+    echo "$MANIFESTS"
+    HAS_SKOPEO=$(echo "$MANIFESTS" | jq -r '.manifests[0].sources | has("org.osbuild.skopeo")')
+    HAS_LOCAL=$(echo "$MANIFESTS" | jq -r '.manifests[0].sources | has("org.osbuild.containers-storage")')
+    echo "has org.osbuild.skopeo: $HAS_SKOPEO"
+    echo "has org.osbuild.containers-storage: $HAS_LOCAL"
+    if [ "$BOOTC_USE_REMOTE_CONTAINER_SOURCE" = "true" ]; then
+        test "$HAS_SKOPEO" = "true"
+        test "$HAS_LOCAL" = "false"
+    else
+        test "$HAS_SKOPEO" = "false"
+        test "$HAS_LOCAL" = "true"
+    fi
+}
+
 WORKDIR=$(mktemp -d)
 REQ="${WORKDIR}/compose_request.json"
 ARCH=$(uname -m)
@@ -197,3 +225,5 @@ curl \
     --cert /etc/osbuild-composer/client-crt.pem \
     "https://localhost/api/image-builder-composer/v2/composes/$COMPOSE_ID"
 test "$UPLOAD_STATUS" = "success"
+
+verifyManifestContainerSourceType
