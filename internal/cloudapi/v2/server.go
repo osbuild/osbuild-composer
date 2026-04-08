@@ -80,6 +80,8 @@ type ServerConfig struct {
 	//
 	//     IMAGE_BUILDER_EXPERIMENTAL="image-builder-manifest-generation"
 	ImageBuilderManifestGeneration bool
+
+	BootcUseRemoteContainerSource bool
 }
 
 func NewServer(workers *worker.Server, distros *distrofactory.Factory, repos *reporegistry.RepoRegistry, config ServerConfig) *Server {
@@ -609,10 +611,9 @@ func (s *Server) enqueueBootcCompose(request ComposeRequest, channel string) (uu
 	seed := bigSeed.Int64()
 
 	// Construct ImageOptions once — used by both BootcPreManifest and ManifestByID.
-	// UseRemoteContainerSource: on-prem uses local podman storage (false).
 	imageOptions := distro.ImageOptions{
 		Bootc: &distro.BootcImageOptions{
-			UseRemoteContainerSource: false,
+			UseRemoteContainerSource: s.config.BootcUseRemoteContainerSource,
 		},
 	}
 
