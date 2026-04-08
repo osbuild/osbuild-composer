@@ -22,3 +22,6 @@ image_type_denylist = [ "qcow2" ]
 [distro_aliases]
 rhel-8 = "rhel-8.9"
 rhel-9 = "rhel-9.3"
+
+[bootc]
+use_remote_container_source = true
