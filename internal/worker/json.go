@@ -913,20 +913,6 @@ func ComposerDepModuleFromDebugModule(module *debug.Module) *OSBuildComposerDepM
 	return depModule
 }
 
-// equalComposerDepModules compares two slices of OSBuildComposerDepModule for equality.
-// Two nil/empty slices are considered equal. Order matters.
-func equalComposerDepModules(upstream, local []*OSBuildComposerDepModule) bool {
-	if len(upstream) != len(local) {
-		return false
-	}
-	for i := range upstream {
-		if !upstream[i].Equal(local[i]) {
-			return false
-		}
-	}
-	return true
-}
-
 // CompareManifestInfos compares two ManifestInfo structs from two manifest
 // generation contexts. It returns a clienterrors.Error with
 // ErrorBuildVersionMismatch if the build versions or dependency module info
@@ -939,7 +925,10 @@ func equalComposerDepModules(upstream, local []*OSBuildComposerDepModule) bool {
 // pipeline names are structurally guaranteed to match.
 func CompareManifestInfos(upstream, local ManifestInfo) *clienterrors.Error {
 	versionMatch := upstream.OSBuildComposerVersion == local.OSBuildComposerVersion
-	depsMatch := equalComposerDepModules(upstream.OSBuildComposerDeps, local.OSBuildComposerDeps)
+	depsMatch := slices.EqualFunc(upstream.OSBuildComposerDeps, local.OSBuildComposerDeps,
+		func(a, b *OSBuildComposerDepModule) bool {
+			return a.Equal(b)
+		})
 
 	if versionMatch && depsMatch {
 		return nil
