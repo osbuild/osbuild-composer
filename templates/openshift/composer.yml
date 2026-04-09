@@ -128,6 +128,8 @@ objects:
             value: ${DISTRO_ALIASES}
           - name: CHANNEL
             value: ${CHANNEL}
+          - name: BOOTC_USE_REMOTE_CONTAINER_SOURCE
+            value: "${BOOTC_USE_REMOTE_CONTAINER_SOURCE}"
           ports:
           - name: composer-api
             protocol: TCP
@@ -350,3 +352,10 @@ parameters:
       Channel where this pod is deployed.
       This is appended to the logs. Usually something like
       "local", "staging" or "production".
+  - name: BOOTC_USE_REMOTE_CONTAINER_SOURCE
+    value: "true"
+    description: >
+      Whether to use remote container source for bootc composes.
+      This is used to control the container source type in the compose manifest.
+      For the service deployment, this should be true, because one can't expect
+      the container to be present in local podman storage.
