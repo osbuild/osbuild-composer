@@ -205,7 +205,7 @@ cat > "$REQ" << EOF
     "architecture": "$ARCH",
     "image_type": "guest-image",
     "repositories": [],
-    "upload_options": {}
+    "upload_targets": [{"type": "local", "upload_options": {}}]
   }
 }
 EOF
