@@ -163,6 +163,7 @@ API-bootc:
     matrix:
       - RUNNER:
           - aws/centos-stream-9-x86_64
+        BOOTC_USE_REMOTE_CONTAINER_SOURCE: ["true", "false"]
 
 Packer:
   stage: test

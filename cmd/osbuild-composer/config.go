@@ -15,6 +15,7 @@ type ComposerConfigFile struct {
 	Koji               KojiAPIConfig     `toml:"koji"`
 	Worker             WorkerAPIConfig   `toml:"worker"`
 	WeldrAPI           WeldrAPIConfig    `toml:"weldr_api"`
+	Bootc              BootcConfig       `toml:"bootc"`
 	DistroAliases      map[string]string `toml:"distro_aliases" env:"DISTRO_ALIASES"`
 	LogLevel           string            `toml:"log_level"`
 	LogFormat          string            `toml:"log_format"`
@@ -68,6 +69,11 @@ type WeldrAPIConfig struct {
 
 type WeldrDistroConfig struct {
 	ImageTypeDenyList []string `toml:"image_type_denylist"`
+}
+
+// BootcConfig holds configuration options specific to bootc composes.
+type BootcConfig struct {
+	UseRemoteContainerSource bool `toml:"use_remote_container_source" env:"BOOTC_USE_REMOTE_CONTAINER_SOURCE"`
 }
 
 // weldrDistrosImageTypeDenyList returns a map of distro-specific Image Type
@@ -168,6 +174,19 @@ func envStrToMap(s string) (map[string]string, error) {
 	return result, nil
 }
 
+// lookupEnvTagValue looks up the value of the env tag in the environment variables
+func lookupEnvTagValue(fieldT reflect.StructField) (string, bool) {
+	key, ok := fieldT.Tag.Lookup("env")
+	if !ok {
+		return "", false
+	}
+	confV, ok := os.LookupEnv(key)
+	if !ok {
+		return "", false
+	}
+	return confV, true
+}
+
 func loadConfigFromEnv(intf interface{}) error {
 	t := reflect.TypeOf(intf).Elem()
 	v := reflect.ValueOf(intf).Elem()
@@ -179,21 +198,13 @@ func loadConfigFromEnv(intf interface{}) error {
 
 		switch kind {
 		case reflect.String:
-			key, ok := fieldT.Tag.Lookup("env")
-			if !ok {
-				continue
-			}
-			confV, ok := os.LookupEnv(key)
+			confV, ok := lookupEnvTagValue(fieldT)
 			if !ok {
 				continue
 			}
 			fieldV.SetString(confV)
 		case reflect.Int:
-			key, ok := fieldT.Tag.Lookup("env")
-			if !ok {
-				continue
-			}
-			confV, ok := os.LookupEnv(key)
+			confV, ok := lookupEnvTagValue(fieldT)
 			if !ok {
 				continue
 			}
@@ -203,23 +214,26 @@ func loadConfigFromEnv(intf interface{}) error {
 			}
 			fieldV.SetInt(value)
 		case reflect.Bool:
-			// no-op
-			continue
+			confV, ok := lookupEnvTagValue(fieldT)
+			if !ok {
+				continue
+			}
+			value, err := strconv.ParseBool(confV)
+			if err != nil {
+				return err
+			}
+			fieldV.SetBool(value)
 		case reflect.Slice:
 			// no-op
 			continue
 		case reflect.Map:
-			key, ok := fieldT.Tag.Lookup("env")
+			confV, ok := lookupEnvTagValue(fieldT)
 			if !ok {
 				continue
 			}
 			// handle only map[string]string
 			if fieldV.Type().Key().Kind() != reflect.String || fieldV.Type().Elem().Kind() != reflect.String {
 				return fmt.Errorf("Unsupported map type for loading from ENV: %s", kind)
-			}
-			confV, ok := os.LookupEnv(key)
-			if !ok {
-				continue
 			}
 			value, err := envStrToMap(confV)
 			if err != nil {

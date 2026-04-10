@@ -15,6 +15,7 @@ import (
 
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/bib/osinfo"
+	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/manifest"
 	v2 "github.com/osbuild/osbuild-composer/internal/cloudapi/v2"
 	"github.com/osbuild/osbuild-composer/internal/common"
@@ -279,7 +280,7 @@ func TestHandleBootcPreManifest_Errors(t *testing.T) {
 // enqueuePreManifestWithResolvedDep enqueues a bootc info-resolve job,
 // finishes it with a valid result, and enqueues a pre-manifest job that
 // depends on it. Returns the pre-manifest job ID.
-func enqueuePreManifestWithResolvedDep(t *testing.T, ws *worker.Server, arch string, specs []worker.BootcInfoResolveJobSpec) uuid.UUID {
+func enqueuePreManifestWithResolvedDep(t *testing.T, ws *worker.Server, arch string, specs []worker.BootcInfoResolveJobSpec, io distro.ImageOptions) uuid.UUID {
 	t.Helper()
 	infoResolveJob := &worker.BootcInfoResolveJob{
 		Specs: specs,
@@ -291,6 +292,7 @@ func enqueuePreManifestWithResolvedDep(t *testing.T, ws *worker.Server, arch str
 		ImageType:                  "qcow2",
 		Seed:                       42,
 		BootcInfoResolveDynArgsIdx: common.ToPtr(0),
+		ImageOptions:               io,
 	}
 	preManifestJobID, err := ws.EnqueueBootcPreManifestJob(
 		preManifestJob, []uuid.UUID{infoResolveJobID}, "",
@@ -312,15 +314,21 @@ func enqueuePreManifestWithResolvedDep(t *testing.T, ws *worker.Server, arch str
 // assertValidPreManifestResult checks that a BootcPreManifestJobResult
 // completed without error and contains the expected container resolve data
 // for the test fixture container (centos-bootc:stream9 on x86_64).
-func assertValidPreManifestResult(t *testing.T, result worker.BootcPreManifestJobResult, arch string, specs []worker.BootcInfoResolveJobSpec) {
+func assertValidPreManifestResult(t *testing.T, result worker.BootcPreManifestJobResult, arch string, specs []worker.BootcInfoResolveJobSpec, useRemoteContainerSource bool) {
 	t.Helper()
 
 	require.Nil(t, result.JobError, "expected no job error, got: %v", result.JobError)
-
 	assert.Equal(t, arch, result.ContainerResolveJobArgs.Arch)
 	assert.Len(t, result.ContainerResolveJobArgs.PipelineSpecs, 2, "expected 2 pipelines specs")
 	assert.Len(t, result.ContainerResolveJobArgs.PipelineSpecs["image"], 1, "expected 1 container spec in image pipeline")
 	assert.Len(t, result.ContainerResolveJobArgs.PipelineSpecs["build"], 1, "expected 1 container spec in build pipeline")
+
+	// verify that all specs have the appropriate Local setting, based on the useRemoteContainerSource flag
+	for _, pipelineSpecs := range result.ContainerResolveJobArgs.PipelineSpecs {
+		for _, pipelineSpec := range pipelineSpecs {
+			assert.Equal(t, !useRemoteContainerSource, pipelineSpec.Local)
+		}
+	}
 
 	// Verify that all container refs from BootcInfoResolveJobSpec are present
 	// in the container resolve job results for at least one pipeline.
@@ -344,46 +352,68 @@ func assertValidPreManifestResult(t *testing.T, result worker.BootcPreManifestJo
 // dependency, and verify the job finishes successfully. Without going
 // through the loop.
 func TestHandleBootcPreManifest_HappyPath(t *testing.T) {
-	workerServer := newTestWorkerServer(t)
-	specs := []worker.BootcInfoResolveJobSpec{
+	testCases := []struct {
+		name                     string
+		useRemoteContainerSource bool
+	}{
 		{
-			Ref:         "quay.io/centos-bootc/centos-bootc:stream9",
-			ResolveMode: worker.BootcInfoResolveModeFull,
+			name:                     "default/local_container_source",
+			useRemoteContainerSource: false,
+		},
+		{
+			name:                     "remote_container_source",
+			useRemoteContainerSource: true,
 		},
 	}
-	archi := arch.ARCH_X86_64.String()
-	preManifestJobID := enqueuePreManifestWithResolvedDep(t, workerServer, archi, specs)
 
-	// Dequeue the pre-manifest job (it should be pending now)
-	jobID, preManifestToken, _, staticArgs, dynArgs, err := workerServer.RequestJob(
-		context.Background(), "",
-		[]string{worker.JobTypeBootcPreManifest}, []string{""}, uuid.Nil,
-	)
-	require.NoError(t, err)
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			workerServer := newTestWorkerServer(t)
+			specs := []worker.BootcInfoResolveJobSpec{
+				{
+					Ref:         "quay.io/centos-bootc/centos-bootc:stream9",
+					ResolveMode: worker.BootcInfoResolveModeFull,
+				},
+			}
+			archi := arch.ARCH_X86_64.String()
+			preManifestJobID := enqueuePreManifestWithResolvedDep(t, workerServer, archi, specs, distro.ImageOptions{
+				Bootc: &distro.BootcImageOptions{
+					UseRemoteContainerSource: tc.useRemoteContainerSource,
+				},
+			})
 
-	// Call the handler
-	v2.HandleBootcPreManifest(workerServer, jobID, preManifestToken, staticArgs, dynArgs)
+			// Dequeue the pre-manifest job (it should be pending now)
+			jobID, preManifestToken, _, staticArgs, dynArgs, err := workerServer.RequestJob(
+				context.Background(), "",
+				[]string{worker.JobTypeBootcPreManifest}, []string{""}, uuid.Nil,
+			)
+			require.NoError(t, err)
 
-	// Verify the job finished successfully
-	var readResult worker.BootcPreManifestJobResult
-	jobInfo, err := workerServer.BootcPreManifestJobInfo(preManifestJobID, &readResult)
-	require.NoError(t, err)
-	require.NotNil(t, jobInfo)
-	assert.False(t, jobInfo.JobStatus.Finished.IsZero(), "job should be finished")
+			// Call the handler
+			v2.HandleBootcPreManifest(workerServer, jobID, preManifestToken, staticArgs, dynArgs)
 
-	assertValidPreManifestResult(t, readResult, archi, specs)
+			// Verify the job finished successfully
+			var readResult worker.BootcPreManifestJobResult
+			jobInfo, err := workerServer.BootcPreManifestJobInfo(preManifestJobID, &readResult)
+			require.NoError(t, err)
+			require.NotNil(t, jobInfo)
+			assert.False(t, jobInfo.JobStatus.Finished.IsZero(), "job should be finished")
 
-	// Verify ManifestInfo is populated
-	assert.Equal(t, common.BuildVersion(), readResult.ManifestInfo.OSBuildComposerVersion)
-	// OSBuildComposerDeps may be nil in tests. See https://github.com/golang/go/issues/33976
-	if readResult.ManifestInfo.OSBuildComposerDeps != nil {
-		assert.Len(t, readResult.ManifestInfo.OSBuildComposerDeps, 1)
-		assert.Equal(t, "github.com/osbuild/images", readResult.ManifestInfo.OSBuildComposerDeps[0].Path)
-		assert.NotEmpty(t, readResult.ManifestInfo.OSBuildComposerDeps[0].Version)
+			assertValidPreManifestResult(t, readResult, archi, specs, tc.useRemoteContainerSource)
+
+			// Verify ManifestInfo is populated
+			assert.Equal(t, common.BuildVersion(), readResult.ManifestInfo.OSBuildComposerVersion)
+			// OSBuildComposerDeps may be nil in tests. See https://github.com/golang/go/issues/33976
+			if readResult.ManifestInfo.OSBuildComposerDeps != nil {
+				assert.Len(t, readResult.ManifestInfo.OSBuildComposerDeps, 1)
+				assert.Equal(t, "github.com/osbuild/images", readResult.ManifestInfo.OSBuildComposerDeps[0].Path)
+				assert.NotEmpty(t, readResult.ManifestInfo.OSBuildComposerDeps[0].Version)
+			}
+			assert.NotNil(t, readResult.ManifestInfo.PipelineNames)
+			assert.NotEmpty(t, readResult.ManifestInfo.PipelineNames.Build)
+			assert.NotEmpty(t, readResult.ManifestInfo.PipelineNames.Payload)
+		})
 	}
-	assert.NotNil(t, readResult.ManifestInfo.PipelineNames)
-	assert.NotEmpty(t, readResult.ManifestInfo.PipelineNames.Build)
-	assert.NotEmpty(t, readResult.ManifestInfo.PipelineNames.Payload)
 }
 
 // TestBootcPreManifestLoop_PicksUpJob tests the full loop lifecycle:
@@ -405,7 +435,7 @@ func TestBootcPreManifestLoop_PicksUpJob(t *testing.T) {
 	}
 	archi := arch.ARCH_X86_64.String()
 
-	preManifestJobID := enqueuePreManifestWithResolvedDep(t, workerServer, archi, specs)
+	preManifestJobID := enqueuePreManifestWithResolvedDep(t, workerServer, archi, specs, distro.ImageOptions{})
 
 	// Wait for the loop to pick up and finish the pre-manifest job.
 	// Poll with timeout.
@@ -422,7 +452,7 @@ func TestBootcPreManifestLoop_PicksUpJob(t *testing.T) {
 		var readResult worker.BootcPreManifestJobResult
 		jobInfo, err := workerServer.BootcPreManifestJobInfo(preManifestJobID, &readResult)
 		if err == nil && !jobInfo.JobStatus.Finished.IsZero() {
-			assertValidPreManifestResult(t, readResult, archi, specs)
+			assertValidPreManifestResult(t, readResult, archi, specs, false)
 			return
 		}
 

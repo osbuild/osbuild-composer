@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"os"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -78,6 +79,7 @@ func TestDefaultConfig(t *testing.T) {
 	require.Equal(t, expectedDistroAliases, defaultConfig.DistroAliases)
 
 	require.Equal(t, "journal", defaultConfig.LogFormat)
+	require.Equal(t, BootcConfig{}, defaultConfig.Bootc)
 }
 
 func TestConfig(t *testing.T) {
@@ -96,12 +98,6 @@ func TestConfig(t *testing.T) {
 
 	require.Equal(t, "overwrite-me-db", config.Worker.PGDatabase)
 
-	require.NoError(t, os.Setenv("PGDATABASE", "composer-db"))
-	config, err = LoadConfig("testdata/test.toml")
-	require.NoError(t, err)
-	require.NotNil(t, config)
-	require.Equal(t, "composer-db", config.Worker.PGDatabase)
-
 	require.False(t, config.Koji.EnableJWT)
 	require.Equal(t, []string{"https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/certs"}, config.Koji.JWTKeysURLs)
 	require.Equal(t, "", config.Koji.JWTKeysCA)
@@ -115,6 +111,20 @@ func TestConfig(t *testing.T) {
 		"rhel-9":  "rhel-9.3",
 	}
 	require.Equal(t, expectedDistroAliases, config.DistroAliases)
+	require.True(t, config.Bootc.UseRemoteContainerSource)
+
+	// Test overriding the config file with environment variables
+	require.NoError(t, os.Setenv("PGDATABASE", "composer-db"))
+	// NOTE: use negated config value to ensure that the env variable overrides the config file value
+	require.NoError(t, os.Setenv("BOOTC_USE_REMOTE_CONTAINER_SOURCE", strconv.FormatBool(!config.Bootc.UseRemoteContainerSource)))
+
+	// Reload the config from the file and verify that the env variables take precedence
+	config, err = LoadConfig("testdata/test.toml")
+	require.NoError(t, err)
+	require.NotNil(t, config)
+
+	require.Equal(t, "composer-db", config.Worker.PGDatabase)
+	require.False(t, config.Bootc.UseRemoteContainerSource)
 }
 
 func TestWeldrDistrosImageTypeDenyList(t *testing.T) {
