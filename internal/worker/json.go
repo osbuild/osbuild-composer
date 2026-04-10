@@ -1317,6 +1317,13 @@ type BootcInfoResolveJobResult struct {
 	JobResult
 }
 
+// BootcUploadTarget is a serializable representation of an API upload target,
+// usable across packages without depending on the v2 package.
+type BootcUploadTarget struct {
+	Type    string          `json:"type"`
+	Options json.RawMessage `json:"options,omitempty"`
+}
+
 // BootcPreManifestJob is a server-side job that generates a pre-manifest
 // from resolved bootc info. Its result contains the arguments for
 // downstream resolve jobs.
@@ -1335,6 +1342,12 @@ type BootcPreManifestJob struct {
 	// Index of the build container info within BootcInfoResolveJobResult.Infos.
 	// If nil, the base container is used for build as well.
 	BuildInfoIdx *int `json:"build_info_idx,omitempty"`
+
+	// Upload targets to construct in the pre-manifest job.
+	// Each entry is a normalized upload target spec (type + options).
+	// Both explicit UploadTargets and the default UploadOptions from the API
+	// request are merged into this single slice at enqueue time.
+	UploadTargets []BootcUploadTarget `json:"upload_targets,omitempty"`
 }
 
 // BootcPreManifestJobResult holds the result of a BootcPreManifest job,
@@ -1351,6 +1364,10 @@ type BootcPreManifestJobResult struct {
 	// need to be resolved. This information can be used by parent jobs for
 	// detecting version mismatches during manifest serialization.
 	ManifestInfo ManifestInfo `json:"info,omitempty"`
+
+	// Complete upload targets constructed from the upload target specs
+	// using the distro.ImageType available in the pre-manifest job.
+	Targets []*target.Target `json:"targets,omitempty"`
 
 	JobResult
 }
