@@ -1,0 +1,53 @@
+#!/bin/bash
+
+PUBKEY=$HOME/.ssh/id_rsa.pub
+NAME=composer-git
+CMD=$1
+
+function start() {
+    podman run -d --name $NAME --privileged --systemd=always --network=host --hostname $NAME $NAME
+}
+
+function sshcmd() {
+    ssh -p 222 -o GSSAPIAuthentication=no -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR root@localhost "$@"
+}
+
+if [ "$CMD" == "build" ]; then
+    if [ -f "$PUBKEY" ]; then
+        podman build --secret "id=ssh_pubkey,src=$PUBKEY" -f Containerfile.devel -t "$NAME" .
+    else
+        podman build -f Containerfile.devel -t $NAME .
+    fi
+elif [ "$CMD" == "start" ]; then
+    start
+elif [ "$CMD" == "stop" ]; then
+    podman stop $NAME
+    podman rm $NAME
+elif [ "$CMD" == "restart" ]; then
+    podman stop $NAME
+    podman rm $NAME
+    start
+elif [ "$CMD" == "remove" ]; then
+    podman rm $NAME
+elif [ "$CMD" == "logs" ]; then
+    if shift && [ $# -eq 0 ]; then
+        podman exec -it $NAME /usr/bin/journalctl -f -n 50
+    else
+        podman exec -it $NAME /usr/bin/journalctl "$@"
+    fi
+elif [ "$CMD" == "copy" ]; then
+    for BIN in osbuild-composer osbuild-worker osbuild-worker-executor; do
+        go build -o bin/$BIN ./cmd/$BIN/
+        podman cp bin/$BIN $NAME:/usr/libexec/osbuild-composer/$BIN
+    done
+    sshcmd "systemctl restart osbuild-composer.service osbuild-worker@1.service"
+elif [ "$CMD" == "cli" ]; then
+    shift
+    podman exec -it $NAME /usr/bin/composer-cli "$@"
+elif [ "$CMD" == "ssh" ]; then
+    shift
+    sshcmd "$@"
+else
+    echo "Usage: $0 <build|start|stop|restart|remove|copy|logs|ssh>"
+    exit 1
+fi
