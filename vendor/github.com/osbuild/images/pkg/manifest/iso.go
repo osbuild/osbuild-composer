@@ -79,7 +79,6 @@ func xorrisofsStageOptions(filename string, isoCustomizations ISOCustomizations)
 		Filename: filename,
 		VolID:    isoCustomizations.Label,
 		SysID:    "LINUX",
-		EFI:      "images/efiboot.img",
 		ISOLevel: 3,
 		Prep:     isoCustomizations.Preparer,
 		Pub:      isoCustomizations.Publisher,
@@ -91,8 +90,11 @@ func xorrisofsStageOptions(filename string, isoCustomizations ISOCustomizations)
 	}
 
 	switch isoCustomizations.BootType {
+	case Grub2UEFIOnlyISOBoot:
+		options.EFI = "images/efiboot.img"
 	case SyslinuxISOBoot:
 		// Syslinux BIOS ISO creation
+		options.EFI = "images/efiboot.img"
 		options.Boot = &osbuild.XorrisofsBoot{
 			Image:   "isolinux/isolinux.bin",
 			Catalog: "isolinux/boot.cat",
@@ -100,11 +102,19 @@ func xorrisofsStageOptions(filename string, isoCustomizations ISOCustomizations)
 		options.IsohybridMBR = "/usr/share/syslinux/isohdpfx.bin"
 	case Grub2ISOBoot:
 		// grub2 BIOS ISO creation
+		options.EFI = "images/efiboot.img"
 		options.Boot = &osbuild.XorrisofsBoot{
 			Image:   "images/eltorito.img",
 			Catalog: "boot.cat",
 		}
 		options.Grub2MBR = "/usr/lib/grub/i386-pc/boot_hybrid.img"
+	case Grub2PPCISOBoot:
+		// PPC64LE ISO creation
+		options.RationalRock = true
+		options.UntranslatedFilenames = true
+		options.FullFilenames = true
+		options.CHRPBoot = true
+		options.VolSet = isoCustomizations.Label
 	}
 
 	return options
