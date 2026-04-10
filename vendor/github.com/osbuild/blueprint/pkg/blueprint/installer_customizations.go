@@ -6,6 +6,7 @@ type InstallerCustomization struct {
 	Kickstart    *Kickstart           `json:"kickstart,omitempty" toml:"kickstart,omitempty"`
 	Modules      *AnacondaModules     `json:"modules,omitempty" toml:"modules,omitempty"`
 	Bootloader   *InstallerBootloader `json:"bootloader,omitempty" toml:"bootloader,omitempty"`
+	Payload      *InstallerPayload    `json:"payload,omitempty" toml:"payload,omitempty"`
 }
 
 type Kickstart struct {
@@ -23,4 +24,22 @@ type InstallerBootloader struct {
 
 type InstallerGrub2 struct {
 	MenuTimeout *int `json:"menu-timeout,omitempty" toml:"menu-timeout,omitempty"`
+}
+
+type InstallerPayload struct {
+	Flatpaks *FlatpakMeta `json:"flatpaks,omitempty" toml:"flatpaks,omitempty"`
+}
+
+type FlatpakMeta struct {
+	Force []Flatpak `json:"force,omitempty" toml:"force,omitempty"`
+}
+
+type Flatpak struct {
+	Registry   *FlatpakRegistry `json:"registry,omitempty" toml:"registry,omitempty"`
+	References []string         `json:"references,omitempty" toml:"references,omitempty"`
+}
+
+type FlatpakRegistry struct {
+	RemoteName string `json:"remote_name,omitempty" toml:"remote_name,omitempty"`
+	URL        string `json:"url,omitempty" toml:"url,omitempty"`
 }

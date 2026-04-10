@@ -460,6 +460,36 @@
           - "grub2-ppc64le"
           - "grub2-ppc64le-modules"
       bootloader: "grub2"
+    ppc64le_installer_platform: &ppc64le_installer_platform
+      <<: *ppc64le_bios_platform
+      image_format: "qcow2"
+      packages:
+        <<: *ppc64le_bios_platform_packages
+        booting:
+          - "lsvpd"
+          - "ppc64-diag"
+          - "grub2-tools"
+          - "grub2-tools-minimal"
+          - "grub2-tools-extra"
+        firmware:
+          - "amd-gpu-firmware"
+          - "atheros-firmware"
+          - "atmel-firmware"
+          - "b43-openfwwf"
+          - "brcmfmac-firmware"
+          - "intel-gpu-firmware"
+          - "iwlegacy-firmware"
+          - "iwlwifi-dvm-firmware"
+          - "iwlwifi-mvm-firmware"
+          - "libertas-firmware"
+          - "linux-firmware"
+          - "mt7xxx-firmware"
+          - "nvidia-gpu-firmware"
+          - "nxpwireless-firmware"
+          - "qed-firmware"
+          - "realtek-firmware"
+          - "tiwilink-firmware"
+          - "zd1211-firmware"
     s390x_zipl_platform: &s390x_zipl_platform
       arch: "s390x"
       zipl_support: true
@@ -529,7 +559,11 @@
         shallow_merge:
           exclude_paths:
             - "efiboot.img"
-
+      "ppc64le uses grub2-ppc64le":
+        when:
+          arch: "ppc64le"
+        shallow_merge:
+          boot_type: "grub2-ppc64le"
 
   erofs_options: &default_erofs_options
     compression:
@@ -2490,6 +2524,7 @@ image_types:
     platforms:
       - *x86_64_installer_platform
       - *aarch64_installer_platform
+      - *ppc64le_installer_platform
     blueprint:
       supported_options:
         - "distro"
