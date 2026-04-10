@@ -577,28 +577,60 @@ func (s *Server) enqueueBootcCompose(request ComposeRequest, channel string) (uu
 		return uuid.Nil, err
 	}
 
-	// Only local targets are supported
-	if ir.UploadTargets != nil {
-		for _, ut := range *ir.UploadTargets {
-			if ut.Type != UploadTypesLocal {
-				return uuid.Nil, HTTPError(ErrorInvalidUploadTarget)
-			}
-		}
-	}
-	tgts := []*target.Target{
-		target.NewWorkerServerTarget(),
-	}
-
 	imageTypeName := imageTypeFromApiImageType(ir.ImageType)
 
-	// TODO: Hardcoding this is obviously a very bad hack, but currently this image type
-	// information isn't retrievable from images without running the bootc container.
-	if imageTypeName == "qcow2" {
-		tgts[0].ImageName = "disk.qcow2"
-		tgts[0].OsbuildArtifact.ExportFilename = "disk.qcow2"
-		tgts[0].OsbuildArtifact.ExportName = "qcow2"
-	} else {
+	// TODO: Only qcow2 (guest-image) is supported for bootc composes for now.
+	if imageTypeName != "qcow2" {
 		return uuid.Nil, HTTPErrorWithDetails(ErrorUnsupportedImageType, nil, "only qcow2 (guest-image) is supported for bootc composes")
+	}
+
+	// Validate and normalize upload targets — consistent with non-bootc flow.
+	// Error if no targets provided.
+	if ir.UploadOptions == nil && (ir.UploadTargets == nil || len(*ir.UploadTargets) == 0) {
+		return uuid.Nil, HTTPError(ErrorJSONUnMarshallingError)
+	}
+
+	tsm := targetSupportMap()
+	var uploadTargetSpecs []worker.BootcUploadTarget
+
+	if ir.UploadTargets != nil {
+		for _, ut := range *ir.UploadTargets {
+			if !tsm[ut.Type][ir.ImageType] {
+				return uuid.Nil, HTTPErrorWithDetails(
+					ErrorInvalidUploadTarget, nil,
+					fmt.Sprintf("invalid upload target type %q for image type %q", ut.Type, ir.ImageType),
+				)
+			}
+			rawOpts, err := json.Marshal(ut.UploadOptions)
+			if err != nil {
+				return uuid.Nil, HTTPErrorWithInternal(ErrorJSONMarshallingError, err)
+			}
+			uploadTargetSpecs = append(uploadTargetSpecs, worker.BootcUploadTarget{
+				Type:    string(ut.Type),
+				Options: rawOpts,
+			})
+		}
+	}
+
+	if ir.UploadOptions != nil {
+		defTargetType, err := getDefaultTarget(ir.ImageType)
+		if err != nil {
+			return uuid.Nil, err
+		}
+		if !tsm[defTargetType][ir.ImageType] {
+			return uuid.Nil, HTTPErrorWithDetails(
+				ErrorInvalidUploadTarget, nil,
+				fmt.Sprintf("invalid default upload target type %q for image type %q", defTargetType, ir.ImageType),
+			)
+		}
+		rawOpts, err := json.Marshal(*ir.UploadOptions)
+		if err != nil {
+			return uuid.Nil, HTTPErrorWithInternal(ErrorJSONMarshallingError, err)
+		}
+		uploadTargetSpecs = append(uploadTargetSpecs, worker.BootcUploadTarget{
+			Type:    string(defTargetType),
+			Options: rawOpts,
+		})
 	}
 
 	// Generate a manifest seed using crypto/rand, same approach as
@@ -646,6 +678,7 @@ func (s *Server) enqueueBootcCompose(request ComposeRequest, channel string) (uu
 		Seed:                       seed,
 		BootcInfoResolveDynArgsIdx: common.ToPtr(0), // dynArgs[0] = BootcInfoResolve
 		BaseInfoIdx:                0,               // base container info index within the BootcInfoResolve job result infos slice
+		UploadTargets:              uploadTargetSpecs,
 	}
 	preManifestJobID, err := s.workers.EnqueueBootcPreManifestJob(preManifestArgs, preManifestDeps, channel)
 	if err != nil {
@@ -686,10 +719,12 @@ func (s *Server) enqueueBootcCompose(request ComposeRequest, channel string) (uu
 		return uuid.Nil, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
 	}
 
-	// 5. Enqueue OSBuild (worker job, depends on ManifestByID)
+	// 5. Enqueue OSBuild (worker job, depends on ManifestByID and BootcPreManifest)
 	osbuildJobID, err := s.workers.EnqueueOSBuildAsDependency(ir.Architecture, &worker.OSBuildJob{
-		Targets: tgts,
-	}, []uuid.UUID{manifestJobID}, channel)
+		// Targets are empty — filled by worker from BootcPreManifest dynargs.
+		ManifestDynArgsIdx:    common.ToPtr(0), // dynArgs[0] = ManifestByID result
+		PreManifestDynArgsIdx: common.ToPtr(1), // dynArgs[1] = BootcPreManifest result
+	}, []uuid.UUID{manifestJobID, preManifestJobID}, channel)
 	if err != nil {
 		return uuid.Nil, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
 	}

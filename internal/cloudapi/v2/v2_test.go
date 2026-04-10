@@ -3059,14 +3059,73 @@ func TestComposeBootc(t *testing.T) {
 	testCases := []struct {
 		name                          string
 		bootcUseRemoteContainerSource bool
+		uploadJSON                    string   // upload_options or upload_targets JSON fragment
+		expectedStatus                int      // expected HTTP status code
+		expectedBody                  string   // empty = default ComposeId success body
+		expectedUploadTargetTypes     []string // expected BootcUploadTarget.Type values in pre-manifest args
 	}{
 		{
+			// Matches cockpit-image-builder on-prem: explicit local target
 			name:                          "default/local",
 			bootcUseRemoteContainerSource: false,
+			uploadJSON:                    `"upload_targets": [{"type": "local", "upload_options": {}}]`,
+			expectedStatus:                http.StatusCreated,
+			expectedUploadTargetTypes:     []string{"local"},
 		},
 		{
 			name:                          "remote_container_source",
 			bootcUseRemoteContainerSource: true,
+			uploadJSON:                    `"upload_targets": [{"type": "local", "upload_options": {}}]`,
+			expectedStatus:                http.StatusCreated,
+			expectedUploadTargetTypes:     []string{"local"},
+		},
+		{
+			// upload_options defaults to aws.s3 via getDefaultTarget
+			name:                          "default_upload_options_aws_s3",
+			bootcUseRemoteContainerSource: false,
+			uploadJSON:                    `"upload_options": {}`,
+			expectedStatus:                http.StatusCreated,
+			expectedUploadTargetTypes:     []string{"aws.s3"},
+		},
+		{
+			name:                          "aws_s3_upload_target",
+			bootcUseRemoteContainerSource: false,
+			uploadJSON:                    `"upload_targets": [{"type": "aws.s3", "upload_options": {"region": "us-east-1"}}]`,
+			expectedStatus:                http.StatusCreated,
+			expectedUploadTargetTypes:     []string{"aws.s3"},
+		},
+		{
+			name:                          "local_upload_target",
+			bootcUseRemoteContainerSource: false,
+			uploadJSON:                    `"upload_targets": [{"type": "local", "upload_options": {}}]`,
+			expectedStatus:                http.StatusCreated,
+			expectedUploadTargetTypes:     []string{"local"},
+		},
+		{
+			name:                          "invalid_azure_upload_target",
+			bootcUseRemoteContainerSource: false,
+			uploadJSON:                    `"upload_targets": [{"type": "azure", "upload_options": {"tenant_id": "t", "subscription_id": "s", "resource_group": "rg"}}]`,
+			expectedStatus:                http.StatusBadRequest,
+			expectedBody: `{
+				"code": "IMAGE-BUILDER-COMPOSER-38",
+				"details": "invalid upload target type \"azure\" for image type \"guest-image\"",
+				"href": "/api/image-builder-composer/v2/errors/38",
+				"kind": "Error",
+				"reason": "Invalid upload target for image type"
+			}`,
+		},
+		{
+			name:                          "no_upload_target",
+			bootcUseRemoteContainerSource: false,
+			uploadJSON:                    "",
+			expectedStatus:                http.StatusInternalServerError,
+			expectedBody: `{
+				"code": "IMAGE-BUILDER-COMPOSER-1004",
+				"details": "",
+				"href": "/api/image-builder-composer/v2/errors/1004",
+				"kind": "Error",
+				"reason": "Failed to unmarshal struct"
+			}`,
 		},
 	}
 
@@ -3077,7 +3136,13 @@ func TestComposeBootc(t *testing.T) {
 			})
 			defer cancel()
 
-			test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
+			// Build the upload fragment with a leading comma when present.
+			uploadFragment := ""
+			if tc.uploadJSON != "" {
+				uploadFragment = ", " + tc.uploadJSON
+			}
+
+			requestBody := fmt.Sprintf(`
 			{
 				"bootc": {
 						"reference": "%s"
@@ -3085,17 +3150,27 @@ func TestComposeBootc(t *testing.T) {
 				"image_request":{
 					"architecture": "%s",
 					"repositories": [],
-					"image_type": "guest-image",
-					"upload_options": {}
+					"image_type": "guest-image"%s
 				}
-			}`, baseContainerRef, test_distro.TestArch3Name), http.StatusCreated, `
-			{
-				"href": "/api/image-builder-composer/v2/compose",
-				"kind": "ComposeId"
-			}`, "id")
+			}`, baseContainerRef, test_distro.TestArch3Name, uploadFragment)
+
+			expectedBody := tc.expectedBody
+			if expectedBody == "" {
+				expectedBody = `{
+					"href": "/api/image-builder-composer/v2/compose",
+					"kind": "ComposeId"
+				}`
+			}
+
+			test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", requestBody, tc.expectedStatus, expectedBody, "id", "operation_id")
+
+			if tc.expectedStatus != http.StatusCreated {
+				return // error cases don't create jobs
+			}
 
 			// The job graph for bootc composes is:
-			//   BootcInfoResolve -> BootcPreManifest -> ContainerResolve -> ManifestByID -> OSBuild
+			//   BootcInfoResolve -> BootcPreManifest -> ContainerResolve -> ManifestByID ─┐
+			//                            └────────────────────────────────────────────────├─> OSBuild
 			// The root job (no dependents) is OSBuild.
 			rootJobs, err := queue.AllRootJobIDs(context.Background())
 			require.NoError(t, err)
@@ -3108,14 +3183,19 @@ func TestComposeBootc(t *testing.T) {
 			require.Equal(t, worker.JobTypeOSBuild, osbuildJobTypeParts[0])
 			require.Equal(t, test_distro.TestArch3Name, osbuildJobTypeParts[1])
 
-			// Ensure the local target is used
+			// OSBuild job should have empty static targets and PreManifestDynArgsIdx set
 			var osbuildArgs worker.OSBuildJob
 			require.NoError(t, json.Unmarshal(osbuildArgsJSON, &osbuildArgs))
-			require.Equal(t, target.TargetNameWorkerServer, osbuildArgs.Targets[0].Name)
+			require.NotNil(t, osbuildArgs.ManifestDynArgsIdx, "ManifestDynArgsIdx should be set for multi-dep OSBuild")
+			require.Equal(t, 0, *osbuildArgs.ManifestDynArgsIdx)
+			require.Empty(t, osbuildArgs.Targets, "static targets should be empty for bootc composes")
+			require.NotNil(t, osbuildArgs.PreManifestDynArgsIdx, "PreManifestDynArgsIdx should be set")
+			require.Equal(t, 1, *osbuildArgs.PreManifestDynArgsIdx)
 
-			// OSBuild depends on ManifestByID
-			require.Len(t, osbuildDeps, 1)
+			// OSBuild depends on ManifestByID and BootcPreManifest
+			require.Len(t, osbuildDeps, 2, "OSBuild should depend on ManifestByID and BootcPreManifest")
 			manifestJobID := osbuildDeps[0]
+			osbuildPreManifestDepJobID := osbuildDeps[1]
 
 			// NOTE: we do not check the job args here, because ManifestByID job has no static
 			// arguments since it accesses all of its dependencies directly via job IDs.
@@ -3154,6 +3234,15 @@ func TestComposeBootc(t *testing.T) {
 			var preManifestArgs worker.BootcPreManifestJob
 			require.NoError(t, json.Unmarshal(preManifestArgsJSON, &preManifestArgs))
 			require.Equal(t, "qcow2", preManifestArgs.ImageType)
+
+			// Verify upload targets in pre-manifest args
+			require.Len(t, preManifestArgs.UploadTargets, len(tc.expectedUploadTargetTypes),
+				"pre-manifest should have %d upload targets", len(tc.expectedUploadTargetTypes))
+			for i, expectedType := range tc.expectedUploadTargetTypes {
+				require.Equal(t, expectedType, preManifestArgs.UploadTargets[i].Type,
+					"upload target %d type mismatch", i)
+			}
+
 			require.NotZero(t, preManifestArgs.Seed, "BootcPreManifest seed should not be zero")
 			// Verify the BootcInfoResolve job ID and index are set correctly
 			require.NotNil(t, preManifestArgs.BootcInfoResolveDynArgsIdx)
@@ -3193,6 +3282,11 @@ func TestComposeBootc(t *testing.T) {
 			// the same job referenced by ManifestByID dependencies
 			require.Equal(t, bootcInfoResolveJobID, preManifestBootcInfoResolveJobID,
 				"ManifestByID and BootcPreManifest should reference the same BootcInfoResolve job")
+
+			// The OSBuild pre-manifest dep should be the same as
+			// the ManifestByID pre-manifest dep
+			require.Equal(t, bootcPreManifestDepJobID, osbuildPreManifestDepJobID,
+				"OSBuild and ManifestByID should reference the same BootcPreManifest job")
 
 			// ManifestByID should directly depend on BootcPreManifest (third dependency)
 			require.Equal(t, preManifestJobID, bootcPreManifestDepJobID,
