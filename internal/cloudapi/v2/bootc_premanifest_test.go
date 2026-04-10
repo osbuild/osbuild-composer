@@ -20,6 +20,7 @@ import (
 	v2 "github.com/osbuild/osbuild-composer/internal/cloudapi/v2"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue/fsjobqueue"
+	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
 )
@@ -236,6 +237,23 @@ func TestHandleBootcPreManifest_Errors(t *testing.T) {
 			wantErrID:          clienterrors.ErrorManifestGeneration,
 			wantReasonContains: "Error generating bootc pre-manifest: getting image type \"nonexistent-image-type\": invalid image type: nonexistent-image-type",
 		},
+		{
+			name: "invalid_upload_target_options",
+			job: &worker.BootcPreManifestJob{
+				ImageType:                  "qcow2",
+				Seed:                       42,
+				BootcInfoResolveDynArgsIdx: common.ToPtr(0),
+				UploadTargets: []worker.BootcUploadTarget{
+					{Type: "aws.s3", Options: json.RawMessage(`{"region":123}`)},
+				},
+			},
+			dynArgs: func(t *testing.T) []json.RawMessage {
+				t.Helper()
+				return []json.RawMessage{rawValidBaseBootcInfoResult(t)}
+			},
+			wantErrID:          clienterrors.ErrorInvalidTargetConfig,
+			wantReasonContains: "Error constructing upload target",
+		},
 	}
 
 	for _, tt := range tests {
@@ -280,7 +298,7 @@ func TestHandleBootcPreManifest_Errors(t *testing.T) {
 // enqueuePreManifestWithResolvedDep enqueues a bootc info-resolve job,
 // finishes it with a valid result, and enqueues a pre-manifest job that
 // depends on it. Returns the pre-manifest job ID.
-func enqueuePreManifestWithResolvedDep(t *testing.T, ws *worker.Server, arch string, specs []worker.BootcInfoResolveJobSpec, io distro.ImageOptions) uuid.UUID {
+func enqueuePreManifestWithResolvedDep(t *testing.T, ws *worker.Server, arch string, specs []worker.BootcInfoResolveJobSpec, io distro.ImageOptions, uploadTargets []worker.BootcUploadTarget) uuid.UUID {
 	t.Helper()
 	infoResolveJob := &worker.BootcInfoResolveJob{
 		Specs: specs,
@@ -293,6 +311,7 @@ func enqueuePreManifestWithResolvedDep(t *testing.T, ws *worker.Server, arch str
 		Seed:                       42,
 		BootcInfoResolveDynArgsIdx: common.ToPtr(0),
 		ImageOptions:               io,
+		UploadTargets:              uploadTargets,
 	}
 	preManifestJobID, err := ws.EnqueueBootcPreManifestJob(
 		preManifestJob, []uuid.UUID{infoResolveJobID}, "",
@@ -352,9 +371,16 @@ func assertValidPreManifestResult(t *testing.T, result worker.BootcPreManifestJo
 // dependency, and verify the job finishes successfully. Without going
 // through the loop.
 func TestHandleBootcPreManifest_HappyPath(t *testing.T) {
+	type expectedTarget struct {
+		name   target.TargetName
+		verify func(t *testing.T, tgt *target.Target)
+	}
+
 	testCases := []struct {
 		name                     string
 		useRemoteContainerSource bool
+		uploadTargets            []worker.BootcUploadTarget
+		expectedTargets          []expectedTarget
 	}{
 		{
 			name:                     "default/local_container_source",
@@ -363,6 +389,66 @@ func TestHandleBootcPreManifest_HappyPath(t *testing.T) {
 		{
 			name:                     "remote_container_source",
 			useRemoteContainerSource: true,
+		},
+		{
+			name:                     "aws_s3_upload_target",
+			useRemoteContainerSource: false,
+			uploadTargets: []worker.BootcUploadTarget{
+				{Type: "aws.s3", Options: json.RawMessage(`{"region":"us-east-1"}`)},
+			},
+			expectedTargets: []expectedTarget{
+				{
+					name: target.TargetNameAWSS3,
+					verify: func(t *testing.T, tgt *target.Target) {
+						opts, ok := tgt.Options.(*target.AWSS3TargetOptions)
+						require.True(t, ok, "expected AWSS3TargetOptions")
+						assert.Equal(t, "us-east-1", opts.Region)
+						assert.False(t, opts.Public)
+						assert.NotEmpty(t, opts.Key)
+					},
+				},
+			},
+		},
+		{
+			name:                     "local_upload_target",
+			useRemoteContainerSource: false,
+			uploadTargets: []worker.BootcUploadTarget{
+				{Type: "local", Options: json.RawMessage(`{}`)},
+			},
+			expectedTargets: []expectedTarget{
+				{
+					name: target.TargetNameWorkerServer,
+					verify: func(t *testing.T, tgt *target.Target) {
+						_, ok := tgt.Options.(*target.WorkerServerTargetOptions)
+						require.True(t, ok, "expected WorkerServerTargetOptions")
+					},
+				},
+			},
+		},
+		{
+			name:                     "multiple_upload_targets",
+			useRemoteContainerSource: false,
+			uploadTargets: []worker.BootcUploadTarget{
+				{Type: "aws.s3", Options: json.RawMessage(`{"region":"eu-west-1"}`)},
+				{Type: "local", Options: json.RawMessage(`{}`)},
+			},
+			expectedTargets: []expectedTarget{
+				{
+					name: target.TargetNameAWSS3,
+					verify: func(t *testing.T, tgt *target.Target) {
+						opts, ok := tgt.Options.(*target.AWSS3TargetOptions)
+						require.True(t, ok, "expected AWSS3TargetOptions")
+						assert.Equal(t, "eu-west-1", opts.Region)
+					},
+				},
+				{
+					name: target.TargetNameWorkerServer,
+					verify: func(t *testing.T, tgt *target.Target) {
+						_, ok := tgt.Options.(*target.WorkerServerTargetOptions)
+						require.True(t, ok, "expected WorkerServerTargetOptions")
+					},
+				},
+			},
 		},
 	}
 
@@ -380,7 +466,7 @@ func TestHandleBootcPreManifest_HappyPath(t *testing.T) {
 				Bootc: &distro.BootcImageOptions{
 					UseRemoteContainerSource: tc.useRemoteContainerSource,
 				},
-			})
+			}, tc.uploadTargets)
 
 			// Dequeue the pre-manifest job (it should be pending now)
 			jobID, preManifestToken, _, staticArgs, dynArgs, err := workerServer.RequestJob(
@@ -400,6 +486,17 @@ func TestHandleBootcPreManifest_HappyPath(t *testing.T) {
 			assert.False(t, jobInfo.JobStatus.Finished.IsZero(), "job should be finished")
 
 			assertValidPreManifestResult(t, readResult, archi, specs, tc.useRemoteContainerSource)
+
+			if len(tc.expectedTargets) > 0 {
+				require.Len(t, readResult.Targets, len(tc.expectedTargets), "expected %d targets", len(tc.expectedTargets))
+				for i, et := range tc.expectedTargets {
+					tgt := readResult.Targets[i]
+					assert.Equal(t, et.name, tgt.Name, "target %d name mismatch", i)
+					assert.NotEmpty(t, tgt.OsbuildArtifact.ExportFilename, "target %d ExportFilename should be set", i)
+					assert.NotEmpty(t, tgt.OsbuildArtifact.ExportName, "target %d ExportName should be set", i)
+					et.verify(t, tgt)
+				}
+			}
 
 			// Verify ManifestInfo is populated
 			assert.Equal(t, common.BuildVersion(), readResult.ManifestInfo.OSBuildComposerVersion)
@@ -435,7 +532,7 @@ func TestBootcPreManifestLoop_PicksUpJob(t *testing.T) {
 	}
 	archi := arch.ARCH_X86_64.String()
 
-	preManifestJobID := enqueuePreManifestWithResolvedDep(t, workerServer, archi, specs, distro.ImageOptions{})
+	preManifestJobID := enqueuePreManifestWithResolvedDep(t, workerServer, archi, specs, distro.ImageOptions{}, nil)
 
 	// Wait for the loop to pick up and finish the pre-manifest job.
 	// Poll with timeout.

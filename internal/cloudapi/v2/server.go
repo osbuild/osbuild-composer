@@ -1082,7 +1082,7 @@ func handleBootcPreManifest(
 	// containers), so nil is safe here.
 	baseInfoIdx := preManifestArgs.BaseInfoIdx
 	buildInfoIdx := preManifestArgs.BuildInfoIdx
-	manifestSource, _, err := buildBootcManifestSource(baseInfoIdx, buildInfoIdx, bootcInfoResult, preManifestArgs.ImageType, &preManifestArgs.Blueprint, preManifestArgs.ImageOptions, preManifestArgs.Seed)
+	manifestSource, imgType, err := buildBootcManifestSource(baseInfoIdx, buildInfoIdx, bootcInfoResult, preManifestArgs.ImageType, &preManifestArgs.Blueprint, preManifestArgs.ImageOptions, preManifestArgs.Seed)
 	if err != nil {
 		preManifestResult.JobError = clienterrors.New(
 			clienterrors.ErrorManifestGeneration,
@@ -1168,5 +1168,39 @@ func handleBootcPreManifest(
 	preManifestResult.ContainerResolveJobArgs = &worker.ContainerResolveJob{
 		Arch:          canonicalArch.String(),
 		PipelineSpecs: pipelineContainerSpecs,
+	}
+
+	// Construct complete upload targets using the image type.
+	// This is the bootc equivalent of getTarget() called at enqueue time
+	// in the non-bootc flow. We do it here because distro.ImageType is
+	// only available after resolving bootc container info.
+	// Target type validation against image type is already done at enqueue
+	// time via targetSupportMap(), so we skip it here and go straight to
+	// target construction.
+	if len(preManifestArgs.UploadTargets) > 0 {
+		targets := make([]*target.Target, 0, len(preManifestArgs.UploadTargets))
+		for _, ut := range preManifestArgs.UploadTargets {
+			targetType := UploadTypes(ut.Type)
+
+			var opts UploadOptions
+			if err := opts.UnmarshalJSON(ut.Options); err != nil {
+				preManifestResult.JobError = clienterrors.New(
+					clienterrors.ErrorInvalidTargetConfig,
+					"Error constructing upload target: "+err.Error(), nil,
+				)
+				return
+			}
+
+			trgt, err := getTarget(targetType, opts, imgType)
+			if err != nil {
+				preManifestResult.JobError = clienterrors.New(
+					clienterrors.ErrorInvalidTargetConfig,
+					"Error constructing upload target: "+err.Error(), nil,
+				)
+				return
+			}
+			targets = append(targets, trgt)
+		}
+		preManifestResult.Targets = targets
 	}
 }
