@@ -51,6 +51,10 @@ type OSBuildJob struct {
 	// as part of the depsolve job, so that they can be uploaded to Koji.
 	DepsolveDynArgsIdx *int `json:"depsolve_dyn_args_idx,omitempty"`
 
+	// Index of the BootcPreManifestJobResult in dynamic args, from which
+	// to read complete targets when static Targets is empty.
+	PreManifestDynArgsIdx *int `json:"pre_manifest_dyn_args_idx,omitempty"`
+
 	Targets []*target.Target `json:"targets,omitempty"`
 
 	// Deprecated: PipelineNames should not be set on OSBuildJob args.

@@ -408,6 +408,38 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 		return err
 	}
 
+	// Read targets from BootcPreManifest dynargs if configured
+	if len(jobArgs.Targets) > 0 && jobArgs.PreManifestDynArgsIdx != nil {
+		osbuildJobResult.JobError = clienterrors.New(
+			clienterrors.ErrorParsingJobArgs,
+			"Targets and PreManifestDynArgsIdx cannot be set at the same time", nil)
+		return fmt.Errorf("Targets and PreManifestDynArgsIdx cannot be set at the same time")
+	}
+
+	if len(jobArgs.Targets) == 0 && jobArgs.PreManifestDynArgsIdx != nil {
+		idx := *jobArgs.PreManifestDynArgsIdx
+		if idx < 0 || idx >= job.NDynamicArgs() {
+			osbuildJobResult.JobError = clienterrors.New(
+				clienterrors.ErrorParsingDynamicArgs,
+				fmt.Sprintf("PreManifestDynArgsIdx %d is out of range", idx), nil)
+			return fmt.Errorf("PreManifestDynArgsIdx %d is out of range of %d dynamic args", idx, job.NDynamicArgs())
+		}
+		var preManifestResult worker.BootcPreManifestJobResult
+		if err = job.DynamicArgs(idx, &preManifestResult); err != nil {
+			osbuildJobResult.JobError = clienterrors.New(
+				clienterrors.ErrorParsingDynamicArgs,
+				"Error parsing BootcPreManifest dynamic args", nil)
+			return fmt.Errorf("error parsing BootcPreManifest dynamic args: %v", err)
+		}
+		if preManifestResult.JobError != nil {
+			osbuildJobResult.JobError = clienterrors.New(
+				clienterrors.ErrorJobDependency,
+				"BootcPreManifest job dependency failed", nil)
+			return nil
+		}
+		jobArgs.Targets = preManifestResult.Targets
+	}
+
 	// In case the manifest is empty, try to get it from dynamic args
 	var manifestInfo *worker.ManifestInfo
 	if len(jobArgs.Manifest) == 0 {
