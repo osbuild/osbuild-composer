@@ -505,61 +505,61 @@ func buildBootcManifestSource(
 	bp *blueprint.Blueprint,
 	imageOptions distro.ImageOptions,
 	seed int64,
-) (*manifest.Manifest, error) {
+) (*manifest.Manifest, distro.ImageType, error) {
 
 	if bootcInfoResult.JobError != nil {
-		return nil, fmt.Errorf("bootc info resolve dependency failed: %s", bootcInfoResult.JobError.Reason)
+		return nil, nil, fmt.Errorf("bootc info resolve dependency failed: %s", bootcInfoResult.JobError.Reason)
 	}
 	if len(bootcInfoResult.Infos) == 0 {
-		return nil, fmt.Errorf("bootc info resolve result has no infos")
+		return nil, nil, fmt.Errorf("bootc info resolve result has no infos")
 	}
 
 	if baseInfoIdx < 0 || baseInfoIdx >= len(bootcInfoResult.Infos) {
-		return nil, fmt.Errorf("base info index %d is out of range (resolved %d infos)", baseInfoIdx, len(bootcInfoResult.Infos))
+		return nil, nil, fmt.Errorf("base info index %d is out of range (resolved %d infos)", baseInfoIdx, len(bootcInfoResult.Infos))
 	}
 
 	baseInfo, err := bootcInfoResult.Infos[baseInfoIdx].ToVendor()
 	if err != nil {
-		return nil, fmt.Errorf("converting bootc base info to vendor type: %w", err)
+		return nil, nil, fmt.Errorf("converting bootc base info to vendor type: %w", err)
 	}
 
 	var buildInfo *bootc.Info
 	if buildInfoIdx != nil {
 		if *buildInfoIdx < 0 || *buildInfoIdx >= len(bootcInfoResult.Infos) {
-			return nil, fmt.Errorf("build info index %d is out of range (resolved %d infos)", *buildInfoIdx, len(bootcInfoResult.Infos))
+			return nil, nil, fmt.Errorf("build info index %d is out of range (resolved %d infos)", *buildInfoIdx, len(bootcInfoResult.Infos))
 		}
 		buildInfo, err = bootcInfoResult.Infos[*buildInfoIdx].ToVendor()
 		if err != nil {
-			return nil, fmt.Errorf("converting bootc build info to vendor type: %w", err)
+			return nil, nil, fmt.Errorf("converting bootc build info to vendor type: %w", err)
 		}
 	}
 
 	bootcDistro, err := generic.NewBootc("bootc", baseInfo)
 	if err != nil {
-		return nil, fmt.Errorf("creating bootc distro: %w", err)
+		return nil, nil, fmt.Errorf("creating bootc distro: %w", err)
 	}
 	if buildInfo != nil {
 		if err := bootcDistro.SetBuildContainer(buildInfo); err != nil {
-			return nil, fmt.Errorf("setting build container: %w", err)
+			return nil, nil, fmt.Errorf("setting build container: %w", err)
 		}
 	}
 	canonicalArch, err := arch.FromString(baseInfo.Arch)
 	if err != nil {
-		return nil, fmt.Errorf("invalid arch %q: %w", baseInfo.Arch, err)
+		return nil, nil, fmt.Errorf("invalid arch %q: %w", baseInfo.Arch, err)
 	}
 	archi, err := bootcDistro.GetArch(canonicalArch.String())
 	if err != nil {
-		return nil, fmt.Errorf("getting arch %q: %w", canonicalArch.String(), err)
+		return nil, nil, fmt.Errorf("getting arch %q: %w", canonicalArch.String(), err)
 	}
 	imgType, err := archi.GetImageType(imageTypeName)
 	if err != nil {
-		return nil, fmt.Errorf("getting image type %q: %w", imageTypeName, err)
+		return nil, nil, fmt.Errorf("getting image type %q: %w", imageTypeName, err)
 	}
 	manifestSource, _, err := imgType.Manifest(bp, imageOptions, nil, &seed)
 	if err != nil {
-		return nil, fmt.Errorf("generating manifest: %w", err)
+		return nil, nil, fmt.Errorf("generating manifest: %w", err)
 	}
-	return manifestSource, nil
+	return manifestSource, imgType, nil
 }
 
 func (s *Server) enqueueBootcCompose(request ComposeRequest, channel string) (uuid.UUID, error) {
@@ -704,7 +704,8 @@ func (s *Server) enqueueBootcCompose(request ComposeRequest, channel string) (uu
 			return nil, fmt.Errorf("failed to read bootc info resolve job result: %w", err)
 		}
 
-		return buildBootcManifestSource(baseInfoIdx, buildInfoIdx, bootcInfoResult, imageTypeName, &bp, imageOptions, seed)
+		m, _, err := buildBootcManifestSource(baseInfoIdx, buildInfoIdx, bootcInfoResult, imageTypeName, &bp, imageOptions, seed)
+		return m, err
 	}
 	s.goroutinesGroup.Add(1)
 	go func() {
@@ -1081,7 +1082,7 @@ func handleBootcPreManifest(
 	// containers), so nil is safe here.
 	baseInfoIdx := preManifestArgs.BaseInfoIdx
 	buildInfoIdx := preManifestArgs.BuildInfoIdx
-	manifestSource, err := buildBootcManifestSource(baseInfoIdx, buildInfoIdx, bootcInfoResult, preManifestArgs.ImageType, &preManifestArgs.Blueprint, preManifestArgs.ImageOptions, preManifestArgs.Seed)
+	manifestSource, _, err := buildBootcManifestSource(baseInfoIdx, buildInfoIdx, bootcInfoResult, preManifestArgs.ImageType, &preManifestArgs.Blueprint, preManifestArgs.ImageOptions, preManifestArgs.Seed)
 	if err != nil {
 		preManifestResult.JobError = clienterrors.New(
 			clienterrors.ErrorManifestGeneration,
