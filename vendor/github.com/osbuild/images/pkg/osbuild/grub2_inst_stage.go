@@ -171,12 +171,18 @@ func NewGrub2InstStageOption(filename string, pt *disk.PartitionTable, platform 
 		Path:   prefixPath,
 	}
 
+	var sectorSize *uint64
+	if pt.SectorSize != 0 {
+		sectorSize = &pt.SectorSize
+	}
+
 	return &Grub2InstStageOptions{
-		Filename: filename,
-		Platform: platform,
-		Location: common.ToPtr(coreLocation),
-		Core:     core,
-		Prefix:   prefix,
+		Filename:   filename,
+		Platform:   platform,
+		Location:   common.ToPtr(coreLocation),
+		Core:       core,
+		Prefix:     prefix,
+		SectorSize: sectorSize,
 	}
 }
 

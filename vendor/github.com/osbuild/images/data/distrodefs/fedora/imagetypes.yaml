@@ -388,7 +388,6 @@
           - "qed-firmware"
           - "realtek-firmware"
           - "tiwilink-firmware"
-          - "zd1211-firmware"
       build_packages:
         booting:
           - "shim-ia32"
@@ -397,6 +396,12 @@
       bootloader: "grub2"
       extra_uefi_architectures:
         - "ia32"
+    x86_64_installer_platform_compat: &x86_64_installer_platform_compat
+      <<: *x86_64_installer_platform
+      packages:
+        <<: *x86_64_installer_platform_packages
+        compat:
+          - "zd1211-firmware"
     aarch64_platform: &aarch64_platform
       arch: "aarch64"
       uefi_vendor: "fedora"
@@ -413,7 +418,7 @@
     aarch64_installer_platform: &aarch64_installer_platform
       arch: "aarch64"
       uefi_vendor: "fedora"
-      packages:
+      packages: &aarch64_installer_platform_packages
         <<: *aarch64_uefi_platform_packages
         booting:
           - "arm-image-installer"
@@ -442,8 +447,13 @@
           - "qed-firmware"
           - "realtek-firmware"
           - "tiwilink-firmware"
-          - "zd1211-firmware"
       bootloader: "grub2"
+    aarch64_installer_platform_compat: &aarch64_installer_platform_compat
+      <<: *aarch64_installer_platform
+      packages:
+        <<: *aarch64_installer_platform_packages
+        compat:
+          - "zd1211-firmware"
     ppc64le_bios_platform: &ppc64le_bios_platform
       arch: "ppc64le"
       bios_platform: "powerpc-ieee1275"
@@ -460,6 +470,41 @@
           - "grub2-ppc64le"
           - "grub2-ppc64le-modules"
       bootloader: "grub2"
+    ppc64le_installer_platform: &ppc64le_installer_platform
+      <<: *ppc64le_bios_platform
+      image_format: "qcow2"
+      packages: &ppc64le_installer_platform_packages
+        <<: *ppc64le_bios_platform_packages
+        booting:
+          - "lsvpd"
+          - "ppc64-diag"
+          - "grub2-tools"
+          - "grub2-tools-minimal"
+          - "grub2-tools-extra"
+        firmware:
+          - "amd-gpu-firmware"
+          - "atheros-firmware"
+          - "atmel-firmware"
+          - "b43-openfwwf"
+          - "brcmfmac-firmware"
+          - "intel-gpu-firmware"
+          - "iwlegacy-firmware"
+          - "iwlwifi-dvm-firmware"
+          - "iwlwifi-mvm-firmware"
+          - "libertas-firmware"
+          - "linux-firmware"
+          - "mt7xxx-firmware"
+          - "nvidia-gpu-firmware"
+          - "nxpwireless-firmware"
+          - "qed-firmware"
+          - "realtek-firmware"
+          - "tiwilink-firmware"
+    ppc64le_installer_platform_compat: &ppc64le_installer_platform_compat
+      <<: *ppc64le_installer_platform
+      packages:
+        <<: *ppc64le_installer_platform_packages
+        compat:
+          - "zd1211-firmware"
     s390x_zipl_platform: &s390x_zipl_platform
       arch: "s390x"
       zipl_support: true
@@ -472,6 +517,19 @@
           - "s390utils-core"
       build_packages:
         zipl:
+          - "s390utils-base"
+      bootloader: "zipl"
+    s390x_installer_platform: &s390x_installer_platform
+      arch: "s390x"
+      image_format: "qcow2"
+      qcow2_compat: "1.1"
+      packages:
+        booting:
+          - "dracut-config-generic"
+          - "s390utils-base"
+          - "s390utils-core"
+      build_packages:
+        booting:
           - "s390utils-base"
       bootloader: "zipl"
     riscv64_uefi_platform: &riscv64_uefi_platform
@@ -529,7 +587,16 @@
         shallow_merge:
           exclude_paths:
             - "efiboot.img"
-
+      "ppc64le uses grub2-ppc64le":
+        when:
+          arch: "ppc64le"
+        shallow_merge:
+          boot_type: "grub2-ppc64le"
+      "s390x uses s390-iso":
+        when:
+          arch: "s390x"
+        shallow_merge:
+          boot_type: "s390-iso"
 
   erofs_options: &default_erofs_options
     compression:
@@ -1163,7 +1230,7 @@
       <<: *default_iso_config
       rootfs_type: "erofs"
       erofs_options: *default_erofs_options
-    installer_config:
+    installer_config: &atomic_installer_installer_config_common
       <<: *default_installer_config
       install_weak_deps: false
       default_menu: 1
@@ -1182,6 +1249,15 @@
     platforms:
       - *x86_64_installer_platform
       - *aarch64_installer_platform
+    platforms_override:
+      conditions:
+        "Fedora 45 and up no longer have zd1211-firmware":
+          when:
+            version_less_than: "45"
+          override:
+            - *x86_64_installer_platform_compat
+            - *aarch64_installer_platform_compat
+
     blueprint:
       supported_options:
         - "distro"
@@ -1478,6 +1554,14 @@ image_types:
     platforms:
       - *x86_64_installer_platform
       - *aarch64_installer_platform
+    platforms_override:
+      conditions:
+        "Fedora 45 and up no longer have zd1211-firmware":
+          when:
+            version_less_than: "45"
+          override:
+            - *x86_64_installer_platform_compat
+            - *aarch64_installer_platform_compat
     package_sets:
       os:
         - include:
@@ -1620,6 +1704,14 @@ image_types:
     platforms:
       - *x86_64_installer_platform
       - *aarch64_installer_platform
+    platforms_override:
+      conditions:
+        "Fedora 45 and up no longer have zd1211-firmware":
+          when:
+            version_less_than: "45"
+          override:
+            - *x86_64_installer_platform_compat
+            - *aarch64_installer_platform_compat
 
   "iot-raw-xz":
     <<: *rpm_ostree_imgtype_common
@@ -2003,6 +2095,14 @@ image_types:
     platforms:
       - *x86_64_installer_platform
       - *aarch64_installer_platform
+    platforms_override:
+      conditions:
+        "Fedora 45 and up no longer have zd1211-firmware":
+          when:
+            version_less_than: "45"
+          override:
+            - *x86_64_installer_platform_compat
+            - *aarch64_installer_platform_compat
     blueprint:
       supported_options:
         - "distro"
@@ -2073,6 +2173,14 @@ image_types:
     platforms:
       - *x86_64_installer_platform
       - *aarch64_installer_platform
+    platforms_override:
+      conditions:
+        "Fedora 45 and up no longer have zd1211-firmware":
+          when:
+            version_less_than: "45"
+          override:
+            - *x86_64_installer_platform_compat
+            - *aarch64_installer_platform_compat
     blueprint:
       supported_options:
         - "distro"
@@ -2115,6 +2223,14 @@ image_types:
     platforms:
       - *x86_64_installer_platform
       - *aarch64_installer_platform
+    platforms_override:
+      conditions:
+        "Fedora 45 and up no longer have zd1211-firmware":
+          when:
+            version_less_than: "45"
+          override:
+            - *x86_64_installer_platform_compat
+            - *aarch64_installer_platform_compat
     package_sets:
       os:
         - *minimal_raw_pkgset
@@ -2490,6 +2606,18 @@ image_types:
     platforms:
       - *x86_64_installer_platform
       - *aarch64_installer_platform
+      - *ppc64le_installer_platform
+      - *s390x_installer_platform
+    platforms_override:
+      conditions:
+        "Fedora 45 and up no longer have zd1211-firmware":
+          when:
+            version_less_than: "45"
+          override:
+            - *x86_64_installer_platform_compat
+            - *aarch64_installer_platform_compat
+            - *ppc64le_installer_platform_compat
+            - *s390x_installer_platform
     blueprint:
       supported_options:
         - "distro"
@@ -2836,6 +2964,47 @@ image_types:
         - *network_installer_pkgset
         - include:
             - "fedora-release-kinoite"
+    installer_config:
+      <<: *atomic_installer_installer_config_common
+      flatpaks:
+        - registry:
+            remote_name: "fedora"
+            url: "oci+https://registry.fedoraproject.org"
+          references:
+            - "runtime/org.fedoraproject.KDE6Platform/{{.Arch}}/f{{.Distro.MajorVersion}}"
+            - "runtime/org.fedoraproject.Platform.GL.default/{{.Arch}}/f{{.Distro.MajorVersion}}"
+            - "app/org.kde.elisa/{{.Arch}}/stable"
+            - "app/org.kde.gwenview/{{.Arch}}/stable"
+            - "app/org.kde.kcalc/{{.Arch}}/stable"
+            - "app/org.kde.kmahjongg/{{.Arch}}/stable"
+            - "app/org.kde.kmines/{{.Arch}}/stable"
+            - "app/org.kde.kolourpaint/{{.Arch}}/stable"
+            - "app/org.kde.krdc/{{.Arch}}/stable"
+            - "app/org.kde.okular/{{.Arch}}/stable"
+            - "app/org.kde.skanpage/{{.Arch}}/stable"
+            - "app/org.kde.qrca/{{.Arch}}/stable"
+      conditions:
+        "there are no 45 runtimes":
+          when:
+            version_greater_or_equal: "45"
+          shallow_merge:
+            flatpaks:
+              - registry:
+                  remote_name: "fedora"
+                  url: "oci+https://registry.fedoraproject.org"
+                references:
+                  - "runtime/org.fedoraproject.KDE6Platform/{{.Arch}}/f44"
+                  - "runtime/org.fedoraproject.Platform.GL.default/{{.Arch}}/f44"
+                  - "app/org.kde.elisa/{{.Arch}}/stable"
+                  - "app/org.kde.gwenview/{{.Arch}}/stable"
+                  - "app/org.kde.kcalc/{{.Arch}}/stable"
+                  - "app/org.kde.kmahjongg/{{.Arch}}/stable"
+                  - "app/org.kde.kmines/{{.Arch}}/stable"
+                  - "app/org.kde.kolourpaint/{{.Arch}}/stable"
+                  - "app/org.kde.krdc/{{.Arch}}/stable"
+                  - "app/org.kde.okular/{{.Arch}}/stable"
+                  - "app/org.kde.skanpage/{{.Arch}}/stable"
+                  - "app/org.kde.qrca/{{.Arch}}/stable"
 
   "silverblue-installer":
     <<: *atomic_installer_common
@@ -2849,6 +3018,63 @@ image_types:
         - *network_installer_pkgset
         - include:
             - "fedora-release-silverblue"
+    installer_config:
+      <<: *atomic_installer_installer_config_common
+      flatpaks:
+        - registry:
+            remote_name: "fedora"
+            url: "oci+https://registry.fedoraproject.org"
+          references:
+            - "runtime/org.fedoraproject.Platform/{{.Arch}}/f{{.Distro.MajorVersion}}"
+            - "runtime/org.fedoraproject.Platform.GL.default/{{.Arch}}/f{{.Distro.MajorVersion}}"
+            - "app/org.gnome.baobab/{{.Arch}}/stable"
+            - "app/org.gnome.Calculator/{{.Arch}}/stable"
+            - "app/org.gnome.Calendar/{{.Arch}}/stable"
+            - "app/org.gnome.Characters/{{.Arch}}/stable"
+            - "app/org.gnome.Snapshot/{{.Arch}}/stable"
+            - "app/org.gnome.clocks/{{.Arch}}/stable"
+            - "app/org.gnome.Connections/{{.Arch}}/stable"
+            - "app/org.gnome.Contacts/{{.Arch}}/stable"
+            - "app/org.gnome.Extensions/{{.Arch}}/stable"
+            - "app/org.gnome.font-viewer/{{.Arch}}/stable"
+            - "app/org.gnome.TextEditor/{{.Arch}}/stable"
+            - "app/org.gnome.Loupe/{{.Arch}}/stable"
+            - "app/org.gnome.Logs/{{.Arch}}/stable"
+            - "app/org.gnome.Maps/{{.Arch}}/stable"
+            - "app/org.fedoraproject.MediaWriter/{{.Arch}}/stable"
+            - "app/org.gnome.NautilusPreviewer/{{.Arch}}/stable"
+            - "app/org.gnome.Papers/{{.Arch}}/stable"
+            - "app/org.gnome.Weather/{{.Arch}}/stable"
+      conditions:
+        "there are no 45 runtimes":
+          when:
+            version_greater_or_equal: "45"
+          shallow_merge:
+            flatpaks:
+              - registry:
+                  remote_name: "fedora"
+                  url: "oci+https://registry.fedoraproject.org"
+                references:
+                  - "runtime/org.fedoraproject.Platform/{{.Arch}}/f44"
+                  - "runtime/org.fedoraproject.Platform.GL.default/{{.Arch}}/f44"
+                  - "app/org.gnome.baobab/{{.Arch}}/stable"
+                  - "app/org.gnome.Calculator/{{.Arch}}/stable"
+                  - "app/org.gnome.Calendar/{{.Arch}}/stable"
+                  - "app/org.gnome.Characters/{{.Arch}}/stable"
+                  - "app/org.gnome.Snapshot/{{.Arch}}/stable"
+                  - "app/org.gnome.clocks/{{.Arch}}/stable"
+                  - "app/org.gnome.Connections/{{.Arch}}/stable"
+                  - "app/org.gnome.Contacts/{{.Arch}}/stable"
+                  - "app/org.gnome.Extensions/{{.Arch}}/stable"
+                  - "app/org.gnome.font-viewer/{{.Arch}}/stable"
+                  - "app/org.gnome.TextEditor/{{.Arch}}/stable"
+                  - "app/org.gnome.Loupe/{{.Arch}}/stable"
+                  - "app/org.gnome.Logs/{{.Arch}}/stable"
+                  - "app/org.gnome.Maps/{{.Arch}}/stable"
+                  - "app/org.fedoraproject.MediaWriter/{{.Arch}}/stable"
+                  - "app/org.gnome.NautilusPreviewer/{{.Arch}}/stable"
+                  - "app/org.gnome.Papers/{{.Arch}}/stable"
+                  - "app/org.gnome.Weather/{{.Arch}}/stable"
 
   "sway-atomic-installer":
     <<: *atomic_installer_common

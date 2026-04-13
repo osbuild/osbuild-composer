@@ -135,10 +135,15 @@ func GenImagePrepareStages(pt *disk.PartitionTable, filename string, partTool Pa
 	stages = append(stages, stage)
 
 	// create the partition layout in the empty file
+	var sectorSize *uint64
+	if pt.SectorSize != 0 {
+		sectorSize = &pt.SectorSize
+	}
 	loopback := NewLoopbackDevice(
 		&LoopbackDeviceOptions{
-			Filename: filename,
-			Lock:     true,
+			Filename:   filename,
+			Lock:       true,
+			SectorSize: sectorSize,
 		},
 	)
 

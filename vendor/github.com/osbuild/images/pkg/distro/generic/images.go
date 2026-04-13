@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"math/rand"
 	"strings"
+	"sync"
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
+	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/customizations/anaconda"
 	"github.com/osbuild/images/pkg/customizations/bootc"
@@ -17,6 +19,7 @@ import (
 	"github.com/osbuild/images/pkg/customizations/subscription"
 	"github.com/osbuild/images/pkg/customizations/users"
 	"github.com/osbuild/images/pkg/distro"
+	"github.com/osbuild/images/pkg/flatpak"
 	"github.com/osbuild/images/pkg/image"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/osbuild"
@@ -397,7 +400,14 @@ func ostreeCommitServerCustomizations(t *imageType) manifest.OSTreeCommitServerC
 	return c
 }
 
+// We need a lock around applying/retrieving installer customizations as we run our test cases
+// with race detector and since the InstallerConfig/ExpandTemplates bits write to a slice.
+var installerCustomizationsMu sync.Mutex
+
 func installerCustomizations(t *imageType, c *blueprint.Customizations, o distro.ImageOptions) (manifest.InstallerCustomizations, error) {
+	installerCustomizationsMu.Lock()
+	defer installerCustomizationsMu.Unlock()
+
 	d := t.arch.distro.(*distribution)
 
 	// By default we get the preview state from the distro. When given through
@@ -460,6 +470,38 @@ func installerCustomizations(t *imageType, c *blueprint.Customizations, o distro
 				isc.Payload.Kickstart = *kickstart
 			}
 		}
+
+		for _, flatpaks := range installerConfig.Flatpaks {
+			if flatpaks == nil {
+				return isc, fmt.Errorf("flatpak object was nil")
+			}
+
+			if flatpaks.Registry == nil {
+				return isc, fmt.Errorf("registry is mandatory for flatpak")
+			}
+
+			registry, err := flatpak.NewRegistryFromURI(flatpaks.Registry.URL)
+			if err != nil {
+				return isc, err
+			}
+			registry.RemoteName = flatpaks.Registry.RemoteName
+
+			if len(flatpaks.References) == 0 {
+				return isc, fmt.Errorf("references are mandatory for flatpak")
+			}
+
+			for _, reference := range flatpaks.References {
+				ref, err := flatpak.NewReferenceFromString(reference)
+				if err != nil {
+					return isc, err
+				}
+
+				isc.Flatpaks = append(isc.Flatpaks, flatpak.SourceSpec{
+					Registry:  *registry,
+					Reference: ref,
+				})
+			}
+		}
 	}
 
 	installerCust, err := c.GetInstaller()
@@ -467,10 +509,49 @@ func installerCustomizations(t *imageType, c *blueprint.Customizations, o distro
 		return isc, err
 	}
 
-	if installerCust != nil && installerCust.Modules != nil {
-		isc.EnabledAnacondaModules = append(isc.EnabledAnacondaModules, installerCust.Modules.Enable...)
-		isc.DisabledAnacondaModules = append(isc.DisabledAnacondaModules, installerCust.Modules.Disable...)
+	if installerCust != nil {
+		if installerCust.Modules != nil {
+			isc.EnabledAnacondaModules = append(isc.EnabledAnacondaModules, installerCust.Modules.Enable...)
+			isc.DisabledAnacondaModules = append(isc.DisabledAnacondaModules, installerCust.Modules.Disable...)
+		}
+
+		if installerCust.Payload != nil && installerCust.Payload.Flatpaks != nil {
+			flatpakMeta := installerCust.Payload.Flatpaks
+
+			// if there's a list at all we want to reset the flatpaks, this is to allow
+			// a user to remove all flatpaks by using `force = []`
+			if flatpakMeta.Force != nil {
+				isc.Flatpaks = []flatpak.SourceSpec{}
+			}
+
+			for _, bpFlatpak := range flatpakMeta.Force {
+				// in the future (for non-forced flatpaks) we have a use for this; for now
+				// we don't
+				if bpFlatpak.Registry == nil {
+					return isc, fmt.Errorf("registry is mandatory for blueprint flatpak")
+				}
+
+				registry, err := flatpak.NewRegistryFromURI(bpFlatpak.Registry.URL)
+				if err != nil {
+					return isc, err
+				}
+
+				for _, reference := range bpFlatpak.References {
+					tpl := replaceBasicTemplate(reference, t.arch.arch)
+					ref, err := flatpak.NewReferenceFromString(tpl)
+					if err != nil {
+						return isc, err
+					}
+
+					isc.Flatpaks = append(isc.Flatpaks, flatpak.SourceSpec{
+						Registry:  *registry,
+						Reference: ref,
+					})
+				}
+			}
+		}
 	}
+
 	isc.KernelOptionsAppend = kernelOptions(t, c)
 
 	return isc, nil
@@ -1385,4 +1466,12 @@ func makeOSTreePayloadCommit(options *ostree.ImageOptions, defaultURL, defaultRe
 		Ref:  ref,
 		RHSM: rhsm,
 	}, nil
+}
+
+// replace basic variables that might come from blueprint(s), these are not intended to be
+// used elsewhere and are thus called only in specific places
+// concretely this is because we need to template the flatpak references coming from pungi
+// configs. they're currently only applied there; other places will need further discussion
+func replaceBasicTemplate(input string, architecture arch.Arch) string {
+	return strings.ReplaceAll(input, "$arch", architecture.String())
 }

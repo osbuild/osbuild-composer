@@ -2,5 +2,5 @@ package files
 
 import "embed"
 
-//go:embed pxetree/*
+//go:embed pxetree/* iso/*
 var Data embed.FS

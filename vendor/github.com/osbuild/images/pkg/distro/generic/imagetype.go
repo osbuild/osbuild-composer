@@ -215,7 +215,7 @@ func (t *imageType) getDefaultInstallerConfig() (*distro.InstallerConfig, error)
 		return nil, fmt.Errorf("image type %q is not an ISO", t.Name())
 	}
 	d := t.Arch().Distro()
-	return t.InstallerConfig(d.ID(), t.arch.arch.String()), nil
+	return t.InstallerConfig(d.ID(), t.arch.arch.String())
 }
 
 func (t *imageType) getDefaultISOConfig() (*distro.ISOConfig, error) {
