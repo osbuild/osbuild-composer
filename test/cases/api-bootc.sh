@@ -192,6 +192,33 @@ function verifyManifestContainerSourceType() {
     fi
 }
 
+function verifyImageDownload() {
+    ARTIFACT_PATH=$(echo "$UPLOAD_OPTIONS" | jq -r '.artifact_path')
+    test -n "$ARTIFACT_PATH"
+    test "$ARTIFACT_PATH" != "null"
+
+    DOWNLOAD_OUTPUT="${WORKDIR}/downloaded-image"
+    HTTPSTATUS=$(curl \
+        --silent \
+        --show-error \
+        --cacert /etc/osbuild-composer/ca-crt.pem \
+        --key /etc/osbuild-composer/client-key.pem \
+        --cert /etc/osbuild-composer/client-crt.pem \
+        --write-out '%{http_code}' \
+        --output "$DOWNLOAD_OUTPUT" \
+        "https://localhost/api/image-builder-composer/v2/composes/$COMPOSE_ID/download")
+    echo "Download HTTP status: $HTTPSTATUS"
+    test "$HTTPSTATUS" = "200"
+    test -s "$DOWNLOAD_OUTPUT"
+
+    # sudo is needed to access the artifact in the worker's private directory
+    ARTIFACT_SIZE=$(sudo stat --format='%s' "$ARTIFACT_PATH")
+    DOWNLOAD_SIZE=$(stat --format='%s' "$DOWNLOAD_OUTPUT")
+    echo "Artifact size: $ARTIFACT_SIZE"
+    echo "Download size: $DOWNLOAD_SIZE"
+    test "$ARTIFACT_SIZE" = "$DOWNLOAD_SIZE"
+}
+
 WORKDIR=$(mktemp -d)
 REQ="${WORKDIR}/compose_request.json"
 ARCH=$(uname -m)
@@ -226,4 +253,5 @@ curl \
     "https://localhost/api/image-builder-composer/v2/composes/$COMPOSE_ID"
 test "$UPLOAD_STATUS" = "success"
 
+verifyImageDownload
 verifyManifestContainerSourceType
