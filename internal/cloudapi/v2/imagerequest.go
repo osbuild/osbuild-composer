@@ -82,7 +82,7 @@ func newAWSS3Target(options UploadOptions, imageType distro.ImageType) (*target.
 	return t, nil
 }
 
-func newContainerTarget(options UploadOptions, request *ComposeRequest, imageType distro.ImageType) (*target.Target, error) {
+func newContainerTarget(options UploadOptions, imageType distro.ImageType) (*target.Target, error) {
 	var containerUploadOptions ContainerUploadOptions
 	jsonUploadOptions, err := json.Marshal(options)
 	if err != nil {
@@ -93,11 +93,7 @@ func newContainerTarget(options UploadOptions, request *ComposeRequest, imageTyp
 		return nil, HTTPError(ErrorJSONUnMarshallingError)
 	}
 
-	if request.Distribution == nil {
-		return nil, HTTPError(ErrorDistroMissing)
-	}
-
-	var name = *request.Distribution
+	var name = imageType.Arch().Distro().Name()
 	var tag = uuid.New().String()
 	if containerUploadOptions.Name != nil {
 		name = *containerUploadOptions.Name
@@ -374,7 +370,7 @@ func targetSupportMap() map[UploadTypes]map[ImageTypes]bool {
 
 // GetTargets returns the targets for the ImageRequest. Merges the
 // UploadTargets with the top-level default UploadOptions if specified.
-func (ir *ImageRequest) GetTargets(request *ComposeRequest, imageType distro.ImageType) ([]*target.Target, error) {
+func (ir *ImageRequest) GetTargets(imageType distro.ImageType) ([]*target.Target, error) {
 	tsm := targetSupportMap()
 	targets := make([]*target.Target, 0)
 	if ir.UploadTargets != nil {
@@ -383,7 +379,7 @@ func (ir *ImageRequest) GetTargets(request *ComposeRequest, imageType distro.Ima
 			if !tsm[ut.Type][ir.ImageType] {
 				return nil, HTTPError(ErrorInvalidUploadTarget)
 			}
-			trgt, err := getTarget(ut.Type, ut.UploadOptions, request, imageType)
+			trgt, err := getTarget(ut.Type, ut.UploadOptions, imageType)
 			if err != nil {
 				return nil, err
 			}
@@ -398,7 +394,7 @@ func (ir *ImageRequest) GetTargets(request *ComposeRequest, imageType distro.Ima
 		if err != nil {
 			return nil, err
 		}
-		trgt, err := getTarget(defTargetType, *ir.UploadOptions, request, imageType)
+		trgt, err := getTarget(defTargetType, *ir.UploadOptions, imageType)
 		if err != nil {
 			return nil, err
 		}
@@ -408,7 +404,7 @@ func (ir *ImageRequest) GetTargets(request *ComposeRequest, imageType distro.Ima
 	return targets, nil
 }
 
-func getTarget(targetType UploadTypes, options UploadOptions, request *ComposeRequest, imageType distro.ImageType) (irTarget *target.Target, err error) {
+func getTarget(targetType UploadTypes, options UploadOptions, imageType distro.ImageType) (irTarget *target.Target, err error) {
 	switch targetType {
 	case UploadTypesAws:
 		irTarget, err = newAWSTarget(options, imageType)
@@ -417,7 +413,7 @@ func getTarget(targetType UploadTypes, options UploadOptions, request *ComposeRe
 		irTarget, err = newAWSS3Target(options, imageType)
 
 	case UploadTypesContainer:
-		irTarget, err = newContainerTarget(options, request, imageType)
+		irTarget, err = newContainerTarget(options, imageType)
 
 	case UploadTypesGcp:
 		irTarget, err = newGCPTarget(options, imageType)

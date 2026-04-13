@@ -1325,7 +1325,7 @@ func (request *ComposeRequest) GetImageRequests(distroFactory *distrofactory.Fac
 			}
 		} else {
 			// Get the target for the selected image type
-			irTargets, err = ir.GetTargets(request, imageType)
+			irTargets, err = ir.GetTargets(imageType)
 			if err != nil {
 				return nil, err
 			}

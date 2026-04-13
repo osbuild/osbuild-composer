@@ -63,10 +63,6 @@ func TestGetTargets(t *testing.T) {
 	arch, err := r9.GetArch(arch.ARCH_X86_64.String())
 	at.NoError(err)
 
-	cr := &ComposeRequest{
-		Distribution: common.ToPtr(r9.Name()),
-	}
-
 	it, err := arch.GetImageType("qcow2")
 	at.NoError(err)
 
@@ -264,7 +260,7 @@ func TestGetTargets(t *testing.T) {
 				ir.UploadOptions = &uploadOptions
 			}
 
-			targets, err := ir.GetTargets(cr, it)
+			targets, err := ir.GetTargets(it)
 			if !testCase.fail {
 				at.NoError(err)
 				at.Equal(len(targets), len(testCase.expected))
