@@ -1,0 +1,19 @@
+# Snyk policy file
+# https://docs.snyk.io/scan-with-snyk/import-project-repository/exclude-directories-and-files-from-project-import
+ignore:
+  'SNYK_CODE_WARNING: error[go/PT]':
+    - 'cmd/osbuild-worker-executor/**':
+        reason: 'Runs in isolated untrusted environment'
+  'SNYK_CODE_WARNING: warning[go/PT]':
+    - 'cmd/osbuild-worker-executor/**':
+        reason: 'Runs in isolated untrusted environment'
+  'SNYK_CODE_WARNING: note[go/HardcodedPassword/test]':
+    - 'cmd/osbuild-composer/config_test.go':
+        reason: 'Test fixture - not a real password'
+    - 'internal/cloudapi/v2/compose_test.go':
+        reason: 'Test fixture - not a real password'
+
+exclude:
+  # Exclude vendor directory - third-party code not maintained by this project
+  global:
+    - vendor/**
