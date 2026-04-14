@@ -21,7 +21,7 @@ A service for building customized OS artifacts, such as VM images and OSTree
 commits, that uses osbuild under the hood. Besides building images for local
 usage, it can also upload images directly to cloud.
 
-It is compatible with composer-cli and cockpit-composer clients.
+It is compatible with weldr-client and cockpit-composer clients.
 }
 
 Name:           osbuild-composer
@@ -375,7 +375,7 @@ Requires:   %{name}
 %else
 Requires:   %{name} = %{version}-%{release}
 %endif
-Requires:   composer-cli
+Requires:   weldr-client
 Requires:   createrepo_c
 Requires:   xorriso
 Requires:   qemu-kvm-core
