@@ -22,5 +22,12 @@ for key in $(jq -r 'keys[]' /tmp/container_registries_login.json); do
     echo "Logging in to container registry $key (username: $USER)."
 
     PASSWORD=$(jq -r .[\""$key"\"].password /tmp/container_registries_login.json)
-    echo "$PASSWORD" | sudo podman login --username="$USER" --password-stdin "$key"
+    echo "$PASSWORD" | sudo podman login --username="$USER" --password-stdin --authfile /etc/osbuild-worker/container-registries-auth.json "$key"
 done
+
+sudo mkdir -p /etc/systemd/system/osbuild-remote-worker@.service.d
+sudo tee "/etc/systemd/system/osbuild-remote-worker@.service.d/registry-auth.conf" <<EOF
+[Service]
+Environment="REGISTRY_AUTH_FILE=/etc/osbuild-worker/container-registries-auth.json"
+EOF
+sudo systemctl daemon-reload
