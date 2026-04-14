@@ -10,7 +10,8 @@ type ZiplInstStageOptions struct {
 	// The offset of the partition containing /boot
 	Location uint64 `json:"location"`
 
-	SectorSize *uint64 `json:"sector-size,omitempty"`
+	// Block size (in bytes), defaults to 512
+	Blocksize *uint64 `json:"blocksize,omitempty"`
 }
 
 func (ZiplInstStageOptions) isStageOptions() {}
@@ -62,8 +63,15 @@ func NewZiplInstStageOptions(kernel string, pt *disk.PartitionTable) *ZiplInstSt
 	}
 
 	bootPart := pt.Partitions[bootIdx]
+
+	var blocksize *uint64
+	if pt.SectorSize != 0 {
+		blocksize = &pt.SectorSize
+	}
+
 	return &ZiplInstStageOptions{
-		Kernel:   kernel,
-		Location: pt.BytesToSectors(bootPart.Start),
+		Kernel:    kernel,
+		Location:  pt.BytesToSectors(bootPart.Start),
+		Blocksize: blocksize,
 	}
 }

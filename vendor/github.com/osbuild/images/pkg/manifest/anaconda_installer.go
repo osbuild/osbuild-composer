@@ -12,6 +12,7 @@ import (
 	"github.com/osbuild/images/pkg/customizations/fsnode"
 	"github.com/osbuild/images/pkg/customizations/kickstart"
 	"github.com/osbuild/images/pkg/depsolvednf"
+	"github.com/osbuild/images/pkg/flatpak"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/ostree"
 	"github.com/osbuild/images/pkg/platform"
@@ -102,6 +103,10 @@ type AnacondaInstaller struct {
 	ostreeCommitSpec   *ostree.CommitSpec
 
 	Kickstart *kickstart.Options
+
+	// Potential flatpaks to embed, the flatpak sources come from the
+	// customizations
+	flatpakSpecs []flatpak.Spec
 }
 
 func NewAnacondaInstaller(installerType AnacondaInstallerType,
@@ -129,16 +134,15 @@ func NewAnacondaInstaller(installerType AnacondaInstallerType,
 // TODO: refactor - what is required to boot and what to build, and
 // do they all belong in this pipeline?
 func (p *AnacondaInstaller) anacondaBootPackageSet() ([]string, error) {
-	packages := []string{
-		"grub2-tools",
-		"grub2-tools-extra",
-		"grub2-tools-minimal",
-		"efibootmgr",
-	}
+	var packages []string
 
 	switch p.platform.GetArch() {
 	case arch.ARCH_X86_64:
 		packages = append(packages,
+			"grub2-tools",
+			"grub2-tools-extra",
+			"grub2-tools-minimal",
+			"efibootmgr",
 			"grub2-efi-x64",
 			"grub2-efi-x64-cdboot",
 			"grub2-pc",
@@ -154,9 +158,24 @@ func (p *AnacondaInstaller) anacondaBootPackageSet() ([]string, error) {
 		}
 	case arch.ARCH_AARCH64:
 		packages = append(packages,
+			"grub2-tools",
+			"grub2-tools-extra",
+			"grub2-tools-minimal",
+			"efibootmgr",
 			"grub2-efi-aa64-cdboot",
 			"grub2-efi-aa64",
 			"shim-aa64",
+		)
+	case arch.ARCH_PPC64LE:
+		packages = append(packages,
+			"grub2-tools",
+			"grub2-tools-extra",
+			"grub2-tools-minimal",
+		)
+
+	case arch.ARCH_S390X:
+		packages = append(packages,
+			"s390utils-core",
 		)
 	default:
 		return nil, fmt.Errorf("unsupported arch: %s", p.platform.GetArch())
@@ -219,6 +238,10 @@ func (p *AnacondaInstaller) getBuildPackages(Distro) ([]string, error) {
 
 	if p.OSTreeCommitSource != nil {
 		packages = append(packages, "rpm-ostree")
+	}
+
+	if len(p.InstallerCustomizations.Flatpaks) > 0 {
+		packages = append(packages, "flatpak")
 	}
 
 	return packages, nil
@@ -303,6 +326,10 @@ func (p *AnacondaInstaller) serializeStart(inputs Inputs) error {
 		p.ostreeCommitSpec = &inputs.Commits[0]
 	}
 
+	if len(inputs.Flatpaks) > 0 {
+		p.flatpakSpecs = inputs.Flatpaks
+	}
+
 	return nil
 }
 
@@ -314,6 +341,7 @@ func (p *AnacondaInstaller) serializeEnd() {
 	p.depsolveResult = nil
 	p.bootcLivefsContainerSpecs = nil
 	p.ostreeCommitSpec = nil
+	p.flatpakSpecs = nil
 }
 
 func installerRootUser() osbuild.UsersStageOptionsUser {
@@ -385,6 +413,17 @@ func (p *AnacondaInstaller) serialize() (osbuild.Pipeline, error) {
 				pipeline.AddStages(kickstartStages...)
 			}
 		}
+
+		// Flatpaks are currently setup only to be supported on the RPM ostree payload in Anaconda; thus we
+		// need to only do this if we actually have an ostree payload. In the future we might be able to
+		// support this on more payload installer variants.
+		if p.ostreeCommitSpec != nil && len(p.flatpakSpecs) > 0 {
+			flatpakStages, err := p.flatpakStages()
+			if err != nil {
+				return osbuild.Pipeline{}, fmt.Errorf("cannot create flatpak stages: %w", err)
+			}
+			pipeline.AddStages(flatpakStages...)
+		}
 	}
 
 	pipeline.AddStage(osbuild.NewBuildstampStage(&osbuild.BuildstampStageOptions{
@@ -430,8 +469,15 @@ func (p *AnacondaInstaller) serialize() (osbuild.Pipeline, error) {
 func (p *AnacondaInstaller) ostreeCommitStages() ([]*osbuild.Stage, error) {
 	stages := make([]*osbuild.Stage, 0)
 
-	// Set up the payload ostree repo
-	stages = append(stages, osbuild.NewOSTreeInitStage(&osbuild.OSTreeInitStageOptions{Path: p.InstallerCustomizations.Payload.Path}))
+	// set up the payload ostree repo, if the commit is embedded here (on the anaconda tree)
+	// itself then we want to have a bare repository so the files are uncompressed, this lets
+	// erofs or squashfs be efficient, saving us ~500-750 MiB on the rootfs size
+	stages = append(stages, osbuild.NewOSTreeInitStage(
+		&osbuild.OSTreeInitStageOptions{
+			Path: p.InstallerCustomizations.Payload.Path,
+			Mode: osbuild.ModeBare,
+		},
+	))
 	stages = append(stages, osbuild.NewOSTreePullStage(
 		&osbuild.OSTreePullStageOptions{Repo: p.InstallerCustomizations.Payload.Path},
 		osbuild.NewOstreePullStageInputs("org.osbuild.source", p.ostreeCommitSpec.Checksum, p.ostreeCommitSpec.Ref),
@@ -458,6 +504,40 @@ func (p *AnacondaInstaller) ostreeKickstartStages() ([]*osbuild.Stage, error) {
 	}
 
 	stages = append(stages, osbuild.NewKickstartStage(kickstartOptions))
+
+	return stages, nil
+}
+
+func (p *AnacondaInstaller) flatpakStages() ([]*osbuild.Stage, error) {
+	stages := make([]*osbuild.Stage, 0)
+
+	// set up the flatpak ostree repo
+	stages = append(stages, osbuild.NewOSTreeInitStage(
+		// the repository gets put into a squashfs or erofs filesystem, this means it good for the files to not
+		// be compressed; hence we pick the *bare* mode
+		&osbuild.OSTreeInitStageOptions{
+			Path: "/flatpak/repo",
+			Mode: "bare",
+		},
+	))
+
+	for idx, flatpakSpec := range p.flatpakSpecs {
+		if flatpakSpec.ContainerSpec != nil {
+			image := osbuild.NewContainersInputForSingleSource(*p.flatpakSpecs[idx].ContainerSpec)
+			stage, err := osbuild.NewFlatpakBuildImportOCIStage(
+				&osbuild.FlatpakBuildImportOCIStageOptions{
+					Repository: "tree:///flatpak/repo",
+				},
+				&osbuild.FlatpakBuildImportOCIStageInputs{Containers: image},
+			)
+			if err != nil {
+				return nil, err
+			}
+			stages = append(stages, stage)
+		}
+		// when other remote types are added to flatpaks we'll expand here to embed ostree commits
+		// as well into the repository
+	}
 
 	return stages, nil
 }
@@ -688,4 +768,12 @@ func (p *AnacondaInstaller) getInline() []string {
 	}
 
 	return inlineData
+}
+
+func (p *AnacondaInstaller) getFlatpakSpecs() []flatpak.Spec {
+	return p.flatpakSpecs
+}
+
+func (p *AnacondaInstaller) getFlatpakSources() []flatpak.SourceSpec {
+	return p.InstallerCustomizations.Flatpaks
 }

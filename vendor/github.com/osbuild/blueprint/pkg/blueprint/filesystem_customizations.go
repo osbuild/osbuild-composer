@@ -42,7 +42,7 @@ func (fsc *FilesystemCustomization) UnmarshalTOML(data interface{}) error {
 		if err != nil {
 			return fmt.Errorf("TOML unmarshal: size is not valid filesystem size (%w)", err)
 		}
-		size = s
+		size = uint64(s)
 	case nil:
 		size = 0
 	default:
@@ -57,7 +57,7 @@ func (fsc *FilesystemCustomization) UnmarshalTOML(data interface{}) error {
 		if err != nil {
 			return fmt.Errorf("TOML unmarshal: minsize is not valid filesystem size (%w)", err)
 		}
-		minsize = s
+		minsize = uint64(s)
 	case nil:
 		minsize = 0
 	default:
@@ -109,7 +109,7 @@ func (fsc *FilesystemCustomization) UnmarshalJSON(data []byte) error {
 		if err != nil {
 			return fmt.Errorf("JSON unmarshal: size is not valid filesystem size (%w)", err)
 		}
-		fsc.MinSize = size
+		fsc.MinSize = uint64(size)
 	default:
 		return fmt.Errorf("JSON unmarshal: minsize must be float64 number or string, got %v of type %T", d["minsize"], d["minsize"])
 	}
@@ -122,7 +122,11 @@ func (fsc *FilesystemCustomization) UnmarshalJSON(data []byte) error {
 func decodeSize(size any) (uint64, error) {
 	switch s := size.(type) {
 	case string:
-		return datasizes.Parse(s)
+		parsed, err := datasizes.Parse(s)
+		if err != nil {
+			return 0, err
+		}
+		return uint64(parsed), nil
 	case int64:
 		if s < 0 {
 			return 0, fmt.Errorf("cannot be negative")

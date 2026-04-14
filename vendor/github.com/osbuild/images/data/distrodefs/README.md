@@ -238,6 +238,19 @@ this means that the image_config from the condition will be merged with
 the original config (but only as a shallow merge, i.e. only top-levels
 that are not already set will be merged).
 
+#### installer_config
+
+This maps directly to https://github.com/osbuild/images/blob/v0.253.0/pkg/distro/installer_config.go
+
+Conditions can be used and *only* the "shallow_merge" action is supported,
+this means that the installer_config from the condition will be merged with
+the original config (but only as a shallow merge, i.e. only top-levels
+that are not already set will be merged).
+
+The `payload.flatpaks` key has some templating; for the `references` under it
+the Go template `{{.Arch}}` (for architecture) and `{{.Distro.X}}` can be replace
+relevant bits.
+
 #### partition_table
 
 This maps directly to https://github.com/osbuild/images/blob/v0.154.0/pkg/disk/partition_table.go#L17

@@ -196,11 +196,15 @@ func getDevices(path []disk.Entity, filename string, lockLoopback bool) (map[str
 			if pt == nil {
 				panic("path does not contain partition table; this is a programming error")
 			}
+			var sectorSize *uint64
+			if pt.SectorSize != 0 {
+				sectorSize = &pt.SectorSize
+			}
 			lbopt := LoopbackDeviceOptions{
 				Filename:   filename,
 				Start:      pt.BytesToSectors(e.Start),
 				Size:       pt.BytesToSectors(e.Size.Uint64()),
-				SectorSize: nil,
+				SectorSize: sectorSize,
 				Lock:       lockLoopback,
 			}
 			name := deviceName(e.Payload)
