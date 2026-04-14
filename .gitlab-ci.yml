@@ -92,8 +92,12 @@ init:
   RUNNER:
     - aws/rhel-9.8-nightly-x86_64
     - aws/rhel-9.8-nightly-aarch64
+    - aws/rhel-9.9-nightly-x86_64
+    - aws/rhel-9.9-nightly-aarch64
     - aws/rhel-10.2-nightly-x86_64
     - aws/rhel-10.2-nightly-aarch64
+    - aws/rhel-10.3-nightly-x86_64
+    - aws/rhel-10.3-nightly-aarch64
   INTERNAL_NETWORK: ["true"]
 
 RPM:
@@ -193,7 +197,9 @@ Prepare-rhel-internal:
           # NOTE: 1 runner prepares for all arches b/c subsequent jobs download
           # artifacts from all previous jobs and the last one wins
           - aws/rhel-9.8-nightly-x86_64
+          - aws/rhel-9.9-nightly-x86_64
           - aws/rhel-10.2-nightly-x86_64
+          - aws/rhel-10.3-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
 
 Base:
@@ -351,8 +357,10 @@ regression-no-explicit-rootfs-definition:
     RUNNER:
       - aws/rhel-8.10-ga-x86_64
       - aws/rhel-9.7-ga-x86_64
+      - aws/rhel-9.9-nightly-x86_64
       - aws/rhel-10.1-ga-x86_64
       - aws/rhel-10.2-nightly-x86_64
+      - aws/rhel-10.3-nightly-x86_64
       - aws/centos-stream-9-x86_64
       - aws/centos-stream-10-x86_64
     INTERNAL_NETWORK: ["true"]
@@ -450,7 +458,9 @@ OpenShift_Virtualization:
     matrix:
       - RUNNER:
           - aws/rhel-9.8-nightly-x86_64
+          - aws/rhel-9.9-nightly-x86_64
           - aws/rhel-10.2-nightly-x86_64
+          - aws/rhel-10.3-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
 
 azure.sh:
@@ -528,10 +538,12 @@ filesystem.sh:
           - aws/rhel-9.7-ga-x86_64
           - aws/rhel-10.1-ga-x86_64
           - aws/rhel-10.2-nightly-x86_64
+          - aws/rhel-10.3-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
       - CUSTOMIZATION_TYPE: "disk-lvm"
         RUNNER:
           - aws/rhel-9.8-nightly-x86_64
+          - aws/rhel-9.9-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
       - CUSTOMIZATION_TYPE: "disk-lvm"
         RUNNER:
@@ -576,6 +588,7 @@ API:
           - aws/rhel-8.10-ga-x86_64
           - aws/rhel-9.7-ga-x86_64
           - aws/rhel-9.8-nightly-x86_64
+          - aws/rhel-9.9-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
       # el10 supports only a subset of image types
       # Edge is not supported anymore for RHEL 10 (no edge-commit, edge-commit generic.s3, edge-container)
@@ -589,6 +602,7 @@ API:
           # Add all RHEL 10 runners here to exclude Edge for them
           - aws/rhel-10.1-ga-x86_64
           - aws/rhel-10.2-nightly-x86_64
+          - aws/rhel-10.3-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
       - IMAGE_TYPE: ["iot-commit"]
         RUNNER:
@@ -658,7 +672,9 @@ API-module-hotfixes:
           - gcp/rhel-9.7-ga-x86_64
           - gcp/rhel-10.1-ga-x86_64
           - gcp/rhel-9.8-nightly-x86_64
+          - gcp/rhel-9.9-nightly-x86_64
           - gcp/rhel-10.2-nightly-x86_64
+          - gcp/rhel-10.3-nightly-x86_64
           - gcp/centos-stream-9-x86_64
         INTERNAL_NETWORK: ["true"]
 
@@ -684,6 +700,7 @@ ubi-wsl.sh:
           - aws/rhel-9.7-ga-x86_64
           - aws/rhel-10.1-ga-x86_64
           - aws/rhel-10.2-nightly-x86_64
+          - aws/rhel-10.3-nightly-x86_64
         INTERNAL_NETWORK: "true"
 
 weldr-distro-dot-notation+aliases:
@@ -701,6 +718,7 @@ weldr-distro-dot-notation+aliases:
       - RUNNER:
           - aws/rhel-8.8-ga-x86_64
           - aws/rhel-9.8-nightly-x86_64
+          - aws/rhel-9.9-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
 
 .generic_s3:
@@ -783,7 +801,10 @@ Upgrade:
     matrix:
       - RUNNER:
           - rhos-01/rhel-9.8-nightly-x86_64-large
+          - rhos-01/rhel-9.9-nightly-x86_64-large
           - rhos-01/rhel-10.2-nightly-x86_64-large
+          - rhos-01/rhel-10.3-nightly-x86_64-large
+
 
 NIGHTLY_FAIL:
   stage: finish
@@ -837,8 +858,10 @@ Installer:
     matrix:
       - RUNNER:
           - rhos-01/rhel-9.8-nightly-x86_64
+          - rhos-01/rhel-9.9-nightly-x86_64
           - rhos-01/centos-stream-9-x86_64
           - rhos-01/rhel-10.2-nightly-x86_64
+          - rhos-01/rhel-10.3-nightly-x86_64
           - rhos-01/centos-stream-10-x86_64
 
 ContainerUpload:
@@ -872,7 +895,9 @@ ContainerEmbedding:
         - aws/centos-stream-9-x86_64
         - aws/centos-stream-10-x86_64
         - aws/rhel-9.8-nightly-x86_64
+        - aws/rhel-9.9-nightly-x86_64
         - aws/rhel-10.2-nightly-x86_64
+        - aws/rhel-10.3-nightly-x86_64
 
 WorkerExecutor:
   stage: test
