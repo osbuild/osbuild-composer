@@ -1037,7 +1037,7 @@ func TestCompose(t *testing.T) {
 
 	rPkgs, rContainers, rCommits := ResolveContent(common.Must(manifest.GetPackageSetChains()), manifest.GetContainerSourceSpecs(), manifest.GetOSTreeSourceSpecs())
 
-	mf, err := manifest.Serialize(rPkgs, rContainers, rCommits, nil)
+	mf, err := manifest.Serialize(rPkgs, rContainers, rCommits, nil, nil)
 	require.NoError(t, err)
 
 	ostreeImgType, err := arch.GetImageType(test_distro.TestImageTypeOSTree)
@@ -1048,7 +1048,7 @@ func TestCompose(t *testing.T) {
 
 	rPkgs, rContainers, rCommits = ResolveContent(common.Must(ostreeManifest.GetPackageSetChains()), ostreeManifest.GetContainerSourceSpecs(), ostreeManifest.GetOSTreeSourceSpecs())
 
-	omf, err := ostreeManifest.Serialize(rPkgs, rContainers, rCommits, nil)
+	omf, err := ostreeManifest.Serialize(rPkgs, rContainers, rCommits, nil, nil)
 	require.NoError(t, err)
 
 	expectedComposeLocal := &weldrtypes.Compose{
@@ -1164,7 +1164,7 @@ func TestCompose(t *testing.T) {
 
 	rPkgs, rContainers, rCommits = ResolveContent(common.Must(ostreeManifestOther.GetPackageSetChains()), ostreeManifestOther.GetContainerSourceSpecs(), ostreeManifestOther.GetOSTreeSourceSpecs())
 
-	omfo, err := ostreeManifest.Serialize(rPkgs, rContainers, rCommits, nil)
+	omfo, err := ostreeManifest.Serialize(rPkgs, rContainers, rCommits, nil, nil)
 	require.NoError(t, err)
 	expectedComposeOSTreeOther := &weldrtypes.Compose{
 		Blueprint: &blueprint.Blueprint{
@@ -1207,7 +1207,7 @@ func TestCompose(t *testing.T) {
 	require.NoError(t, err)
 
 	rPkgs, rContainers, rCommits = ResolveContent(common.Must(manifest2.GetPackageSetChains()), manifest2.GetContainerSourceSpecs(), manifest2.GetOSTreeSourceSpecs())
-	mf2, err := manifest2.Serialize(rPkgs, rContainers, rCommits, nil)
+	mf2, err := manifest2.Serialize(rPkgs, rContainers, rCommits, nil, nil)
 	require.NoError(t, err)
 
 	expectedComposeGoodDistro := &weldrtypes.Compose{
@@ -2520,7 +2520,7 @@ func TestComposePOST_ImageTypeDenylist(t *testing.T) {
 	require.NoError(t, err)
 
 	rPkgs, rContainers, rCommits := ResolveContent(common.Must(manifest.GetPackageSetChains()), manifest.GetContainerSourceSpecs(), manifest.GetOSTreeSourceSpecs())
-	mf, err := manifest.Serialize(rPkgs, rContainers, rCommits, nil)
+	mf, err := manifest.Serialize(rPkgs, rContainers, rCommits, nil, nil)
 	require.NoError(t, err)
 
 	expectedComposeLocal := &weldrtypes.Compose{

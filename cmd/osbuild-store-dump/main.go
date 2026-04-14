@@ -39,7 +39,7 @@ func getManifest(bp blueprint.Blueprint, t distro.ImageType, a distro.Arch, d di
 		depsolved[name] = *res
 	}
 
-	mf, err := manifest.Serialize(depsolved, nil, nil, nil)
+	mf, err := manifest.Serialize(depsolved, nil, nil, nil, nil)
 	if err != nil {
 		panic(err)
 	}

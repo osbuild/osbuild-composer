@@ -59,7 +59,7 @@ func (suite *storeTest) SetupSuite() {
 	suite.myImageType, err = suite.myArch.GetImageType(test_distro.TestImageTypeName)
 	suite.NoError(err)
 	manifest, _, _ := suite.myImageType.Manifest(&suite.myBP, suite.myImageOptions, suite.myRepoConfig, nil)
-	suite.myManifest, _ = manifest.Serialize(nil, nil, nil, nil)
+	suite.myManifest, _ = manifest.Serialize(nil, nil, nil, nil, nil)
 	suite.mySourceConfig = SourceConfig{
 		Name: "testSourceConfig",
 	}
@@ -177,7 +177,7 @@ func (suite *storeTest) TestNewEmpty() {
 func (suite *storeTest) TestPushBlueprint() {
 	suite.myStore.PushBlueprint(suite.myBP, "testing commit")
 	suite.Equal(suite.myBP, suite.myStore.blueprints["testBP"])
-	//force a version bump
+	// force a version bump
 	suite.myStore.PushBlueprint(suite.myBP, "testing commit")
 	suite.Equal("0.0.2", suite.myStore.blueprints["testBP"].Version)
 }
@@ -197,15 +197,15 @@ func (suite *storeTest) TestPushBlueprintToWorkspace() {
 func (suite *storeTest) TestGetBlueprint() {
 	suite.myStore.blueprints["testBP"] = suite.myBP
 	suite.myStore.workspace["WIPtestBP"] = suite.myBP
-	//Get pushed BP
+	// Get pushed BP
 	actualBP, inWorkspace := suite.myStore.GetBlueprint("testBP")
 	suite.Equal(&suite.myBP, actualBP)
 	suite.False(inWorkspace)
-	//Get BP in worskapce
+	// Get BP in worskapce
 	actualBP, inWorkspace = suite.myStore.GetBlueprint("WIPtestBP")
 	suite.Equal(&suite.myBP, actualBP)
 	suite.True(inWorkspace)
-	//Try to get a non existing BP
+	// Try to get a non existing BP
 	actualBP, inWorkspace = suite.myStore.GetBlueprint("Non_existing_BP")
 	suite.Empty(actualBP)
 	suite.False(inWorkspace)
@@ -213,10 +213,10 @@ func (suite *storeTest) TestGetBlueprint() {
 
 func (suite *storeTest) TestGetBlueprintCommited() {
 	suite.myStore.blueprints["testBP"] = suite.myBP
-	//Get pushed BP
+	// Get pushed BP
 	actualBP := suite.myStore.GetBlueprintCommitted("testBP")
 	suite.Equal(&suite.myBP, actualBP)
-	//Try to get workspace BP
+	// Try to get workspace BP
 	actualBP = suite.myStore.GetBlueprintCommitted("WIPtestBP")
 	suite.Empty(actualBP)
 }
@@ -239,12 +239,12 @@ func (suite *storeTest) TestGetBlueprintChange() {
 	expectedChange := suite.myChange[0]
 	suite.Equal(&expectedChange, actualChange)
 
-	//Try to get non existing BP
+	// Try to get non existing BP
 	actualChange, err = suite.myStore.GetBlueprintChange("Non_existing_BP", suite.CommitHash[0])
 	suite.Nil(actualChange)
 	suite.EqualError(err, "Unknown blueprint")
 
-	//Try to get a non existing Commit
+	// Try to get a non existing Commit
 	actualChange, err = suite.myStore.GetBlueprintChange("testBP", "Non_existing_commit")
 	suite.Nil(actualChange)
 	suite.EqualError(err, "Unknown commit")
@@ -258,7 +258,7 @@ func (suite *storeTest) TestTagBlueprint() {
 	suite.myStore.blueprintsChanges["testBP"] = Commit
 	suite.myStore.blueprints["testBP"] = suite.myBPv3
 
-	//Check that the blueprint changes have no revisions
+	// Check that the blueprint changes have no revisions
 	suite.Nil(suite.myStore.blueprintsChanges["testBP"][suite.CommitHash[0]].Revision)
 	suite.Nil(suite.myStore.blueprintsChanges["testBP"][suite.CommitHash[1]].Revision)
 
@@ -280,7 +280,7 @@ func (suite *storeTest) TestTagBlueprint() {
 	suite.Equal(suite.myBPv3, actualBP)
 	suite.Equal(suite.myBPv3, suite.myStore.blueprints["testBP"])
 
-	//Try to tag it again (should not change)
+	// Try to tag it again (should not change)
 	suite.NoError(suite.myStore.TagBlueprint("testBP"))
 
 	actualRevision = suite.myStore.blueprintsChanges["testBP"][suite.CommitHash[0]].Revision
@@ -290,9 +290,9 @@ func (suite *storeTest) TestTagBlueprint() {
 	suite.Require().NotNil(actualRevision)
 	suite.Equal(1, *actualRevision)
 
-	//Try to tag a non existing BNP
+	// Try to tag a non existing BNP
 	suite.EqualError(suite.myStore.TagBlueprint("Non_existing_BP"), "Unknown blueprint")
-	//Remove commits from a blueprint and try to tag it
+	// Remove commits from a blueprint and try to tag it
 	suite.myStore.blueprintsCommits["testBP"] = []string{}
 	suite.EqualError(suite.myStore.TagBlueprint("testBP"), "No commits for blueprint")
 }
@@ -301,7 +301,7 @@ func (suite *storeTest) TestDeleteBlueprint() {
 	suite.myStore.blueprints["testBP"] = suite.myBP
 	suite.NoError(suite.myStore.DeleteBlueprint("testBP"))
 	suite.Empty(suite.myStore.blueprints)
-	//Try to delete again (should return an error)
+	// Try to delete again (should return an error)
 	suite.EqualError(suite.myStore.DeleteBlueprint("testBP"), "Unknown blueprint: testBP")
 }
 
@@ -309,7 +309,7 @@ func (suite *storeTest) TestDeleteBlueprintFromWorkspace() {
 	suite.myStore.workspace["WIPtestBP"] = suite.myBP
 	suite.NoError(suite.myStore.DeleteBlueprintFromWorkspace("WIPtestBP"))
 	suite.Empty(suite.myStore.workspace)
-	//Try to delete again (should return an error)
+	// Try to delete again (should return an error)
 	suite.EqualError(suite.myStore.DeleteBlueprintFromWorkspace("WIPtestBP"), "Unknown blueprint: WIPtestBP")
 }
 
