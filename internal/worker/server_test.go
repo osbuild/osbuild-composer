@@ -1433,7 +1433,9 @@ func TestJobHeartbeats(t *testing.T) {
 	}
 	jobId, err := server.EnqueueOSBuild(arch.Name(), &worker.OSBuildJob{Manifest: mf}, "")
 	require.NoError(t, err)
-	require.Equal(t, float64(1), promtest.ToFloat64(prometheus.PendingJobs))
+	require.Eventually(t, func() bool {
+		return promtest.ToFloat64(prometheus.PendingJobs) == 1
+	}, time.Second, time.Millisecond, "PendingJobs metric not updated after enqueue")
 
 	// Can request a job with worker ID
 	j, _, typ, args, dynamicArgs, err := server.RequestJob(context.Background(), arch.Name(), []string{worker.JobTypeOSBuild}, []string{""}, uuid.Nil)
@@ -1442,35 +1444,61 @@ func TestJobHeartbeats(t *testing.T) {
 	require.Equal(t, worker.JobTypeOSBuild, typ)
 	require.NotNil(t, args)
 	require.Nil(t, dynamicArgs)
-	require.Equal(t, float64(0), promtest.ToFloat64(prometheus.PendingJobs))
-	require.Equal(t, float64(1), promtest.ToFloat64(prometheus.RunningJobs))
+	require.Eventually(t, func() bool {
+		return promtest.ToFloat64(prometheus.PendingJobs) == 0
+	}, time.Second, time.Millisecond, "PendingJobs metric not updated after RequestJob")
+	require.Eventually(t, func() bool {
+		return promtest.ToFloat64(prometheus.RunningJobs) == 1
+	}, time.Second, time.Millisecond, "RunningJobs metric not updated after RequestJob")
 
-	var jobInfo *worker.JobInfo
+	// Wait for the job to be requeued up to maxHeartbeatRetries (2) times,
+	// then eventually fail with ErrorJobMissingHeartbeat.
+	// The heartbeat watcher runs every JobWatchFreq (100ms) and will requeue
+	// jobs that haven't sent a heartbeat within JobTimeout (1ms).
 	var jobRes worker.OSBuildJobResult
-	retries := 0
-	for i := 0; i < 3 && retries < 3; i++ {
-		// wait until job is completely failed
-		jobInfo, err = server.OSBuildJobInfo(j, &jobRes)
-		require.NoError(t, err)
-		if jobInfo.JobStatus.Started.IsZero() {
-			require.Equal(t, float64(1), promtest.ToFloat64(prometheus.PendingJobs))
-			require.Equal(t, float64(0), promtest.ToFloat64(prometheus.RunningJobs))
-			j, _, typ, args, dynamicArgs, err := server.RequestJob(context.Background(), arch.Name(), []string{worker.JobTypeOSBuild}, []string{""}, uuid.Nil)
+	for retries := 0; retries < 2; retries++ {
+		// Wait for the job to be requeued (Started becomes zero)
+		require.Eventually(t, func() bool {
+			jobInfo, err := server.OSBuildJobInfo(j, &jobRes)
 			require.NoError(t, err)
-			require.Equal(t, jobId, j)
-			require.Equal(t, worker.JobTypeOSBuild, typ)
-			require.NotNil(t, args)
-			require.Nil(t, dynamicArgs)
-			retries += 1
-		}
-		time.Sleep(time.Millisecond * 200)
+			return jobInfo.JobStatus.Started.IsZero()
+		}, time.Second*2, time.Millisecond*10, "Job was not requeued by heartbeat watcher (retry %d)", retries)
+
+		// Job has been requeued. Wait for prometheus metrics to be updated.
+		// Metrics are updated after the job state change in a separate goroutine,
+		// so we poll until they reflect the expected state.
+		require.Eventually(t, func() bool {
+			return promtest.ToFloat64(prometheus.PendingJobs) == 1
+		}, time.Second, time.Millisecond, "PendingJobs metric not updated after requeue")
+		require.Eventually(t, func() bool {
+			return promtest.ToFloat64(prometheus.RunningJobs) == 0
+		}, time.Second, time.Millisecond, "RunningJobs metric not updated after requeue")
+
+		j, _, typ, args, dynamicArgs, err := server.RequestJob(context.Background(), arch.Name(), []string{worker.JobTypeOSBuild}, []string{""}, uuid.Nil)
+		require.NoError(t, err)
+		require.Equal(t, jobId, j)
+		require.Equal(t, worker.JobTypeOSBuild, typ)
+		require.NotNil(t, args)
+		require.Nil(t, dynamicArgs)
 	}
+
+	// After maxHeartbeatRetries, wait for the job to fail completely (not requeue)
+	require.Eventually(t, func() bool {
+		jobInfo, err := server.OSBuildJobInfo(j, &jobRes)
+		require.NoError(t, err)
+		return !jobInfo.JobStatus.Finished.IsZero() && jobRes.JobError != nil
+	}, time.Second*2, time.Millisecond*10, "Job did not fail after max retries")
+
 	_, err = server.OSBuildJobInfo(j, &jobRes)
 	require.NoError(t, err)
 	require.NotNil(t, jobRes.JobError)
 	require.Equal(t, clienterrors.ErrorJobMissingHeartbeat, jobRes.JobError.ID)
-	require.Equal(t, float64(0), promtest.ToFloat64(prometheus.PendingJobs))
-	require.Equal(t, float64(0), promtest.ToFloat64(prometheus.RunningJobs))
+	require.Eventually(t, func() bool {
+		return promtest.ToFloat64(prometheus.PendingJobs) == 0
+	}, time.Second, time.Millisecond, "PendingJobs metric not updated after job failed")
+	require.Eventually(t, func() bool {
+		return promtest.ToFloat64(prometheus.RunningJobs) == 0
+	}, time.Second, time.Millisecond, "RunningJobs metric not updated after job failed")
 }
 
 func makeFakeArtifact(tempdir string, id uuid.UUID, filename string) error {
