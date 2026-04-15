@@ -222,6 +222,13 @@
     "dependencies": {
       "osbuild": {
         "commit": "d36f11818f6f7b301ba392c6f7378eb908c1f943"
+      },
+      "bootc": {
+        "guest-image": {
+          "x86_64": {
+            "base": "quay.io/redhat-services-prod/insights-management-tenant/image-builder-bootc-foundry/rhel-10.1-qcow2:latest"
+          }
+        }
       }
     }
   },
