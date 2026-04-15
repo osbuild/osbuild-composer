@@ -159,7 +159,7 @@ gpgcheck=0
 priority=10
 EOF
 
-ssh -oStrictHostKeyChecking=no -i "$KEYPAIR" "fedora@EXECUTOR_IP" sudo journalctl -f &
+ssh -oStrictHostKeyChecking=no -i "$KEYPAIR" "fedora@$EXECUTOR_IP" sudo journalctl -f &
 subprocessPIDs+=( $! )
 
 ssh -oStrictHostKeyChecking=no -i "$KEYPAIR" "fedora@$EXECUTOR_IP" sudo dnf install -y osbuild-composer osbuild
