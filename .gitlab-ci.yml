@@ -925,6 +925,19 @@ WorkerExecutorFailure:
     RUNNER: aws/fedora-42-x86_64
     IAM_INSTANCE_PROFILE: worker-executor
 
+API-bootc-service:
+  stage: test
+  extends: .terraform
+  timeout: 120m
+  rules:
+    - !reference [.upstream_and_ga_rules_all, rules]
+  script:
+    - schutzbot/deploy.sh
+    - /usr/libexec/tests/osbuild-composer/api-bootc-service.sh guest-image
+  variables:
+    RUNNER: aws/rhel-10.1-ga-x86_64
+    IAM_INSTANCE_PROFILE: worker-executor
+
 
 CleanStore:
   stage: test
