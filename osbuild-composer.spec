@@ -241,6 +241,9 @@ install -m 0755 -vp test/cases/*.sh                                %{buildroot}%
 install -m 0755 -vd                                                %{buildroot}%{_libexecdir}/tests/osbuild-composer/api
 install -m 0755 -vp test/cases/api/*.sh                            %{buildroot}%{_libexecdir}/tests/osbuild-composer/api/
 
+install -m 0755 -vd                                                %{buildroot}%{_libexecdir}/tests/osbuild-composer/api/bootc
+install -m 0755 -vp test/cases/api/bootc/*.sh                      %{buildroot}%{_libexecdir}/tests/osbuild-composer/api/bootc/
+
 install -m 0755 -vd                                                %{buildroot}%{_libexecdir}/tests/osbuild-composer/api/common
 install -m 0755 -vp test/cases/api/common/*.sh                     %{buildroot}%{_libexecdir}/tests/osbuild-composer/api/common/
 

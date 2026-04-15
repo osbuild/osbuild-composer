@@ -4,6 +4,7 @@ set -euo pipefail
 
 source /usr/libexec/osbuild-composer-test/set-env-variables.sh
 source /usr/libexec/tests/osbuild-composer/shared_lib.sh
+source /usr/libexec/tests/osbuild-composer/api/common/bootc.sh
 
 /usr/libexec/osbuild-composer-test/provision.sh
 
@@ -179,16 +180,10 @@ function verifyManifestContainerSourceType() {
         "https://localhost/api/image-builder-composer/v2/composes/$COMPOSE_ID/manifests")
     echo "compose MANIFESTS:"
     echo "$MANIFESTS"
-    HAS_SKOPEO=$(echo "$MANIFESTS" | jq -r '.manifests[0].sources | has("org.osbuild.skopeo")')
-    HAS_LOCAL=$(echo "$MANIFESTS" | jq -r '.manifests[0].sources | has("org.osbuild.containers-storage")')
-    echo "has org.osbuild.skopeo: $HAS_SKOPEO"
-    echo "has org.osbuild.containers-storage: $HAS_LOCAL"
     if [ "$BOOTC_USE_REMOTE_CONTAINER_SOURCE" = "true" ]; then
-        test "$HAS_SKOPEO" = "true"
-        test "$HAS_LOCAL" = "false"
+        verifyContainerSourceType "$MANIFESTS" "remote"
     else
-        test "$HAS_SKOPEO" = "false"
-        test "$HAS_LOCAL" = "true"
+        verifyContainerSourceType "$MANIFESTS" "local"
     fi
 }
 
