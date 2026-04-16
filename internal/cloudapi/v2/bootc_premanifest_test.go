@@ -298,7 +298,7 @@ func TestHandleBootcPreManifest_Errors(t *testing.T) {
 // enqueuePreManifestWithResolvedDep enqueues a bootc info-resolve job,
 // finishes it with a valid result, and enqueues a pre-manifest job that
 // depends on it. Returns the pre-manifest job ID.
-func enqueuePreManifestWithResolvedDep(t *testing.T, ws *worker.Server, arch string, specs []worker.BootcInfoResolveJobSpec, io distro.ImageOptions, uploadTargets []worker.BootcUploadTarget) uuid.UUID {
+func enqueuePreManifestWithResolvedDep(t *testing.T, ws *worker.Server, arch string, specs []worker.BootcInfoResolveJobSpec, io distro.ImageOptions, uploadTargets []worker.BootcUploadTarget, imageType string) uuid.UUID {
 	t.Helper()
 	infoResolveJob := &worker.BootcInfoResolveJob{
 		Specs: specs,
@@ -307,7 +307,7 @@ func enqueuePreManifestWithResolvedDep(t *testing.T, ws *worker.Server, arch str
 	require.NoError(t, err)
 
 	preManifestJob := &worker.BootcPreManifestJob{
-		ImageType:                  "qcow2",
+		ImageType:                  imageType,
 		Seed:                       42,
 		BootcInfoResolveDynArgsIdx: common.ToPtr(0),
 		ImageOptions:               io,
@@ -378,20 +378,24 @@ func TestHandleBootcPreManifest_HappyPath(t *testing.T) {
 
 	testCases := []struct {
 		name                     string
+		imageType                string // internal image type name (e.g. "qcow2", "ami")
 		useRemoteContainerSource bool
 		uploadTargets            []worker.BootcUploadTarget
 		expectedTargets          []expectedTarget
 	}{
 		{
 			name:                     "default/local_container_source",
+			imageType:                "qcow2",
 			useRemoteContainerSource: false,
 		},
 		{
 			name:                     "remote_container_source",
+			imageType:                "qcow2",
 			useRemoteContainerSource: true,
 		},
 		{
 			name:                     "aws_s3_upload_target",
+			imageType:                "qcow2",
 			useRemoteContainerSource: false,
 			uploadTargets: []worker.BootcUploadTarget{
 				{Type: "aws.s3", Options: json.RawMessage(`{"region":"us-east-1"}`)},
@@ -411,6 +415,7 @@ func TestHandleBootcPreManifest_HappyPath(t *testing.T) {
 		},
 		{
 			name:                     "local_upload_target",
+			imageType:                "qcow2",
 			useRemoteContainerSource: false,
 			uploadTargets: []worker.BootcUploadTarget{
 				{Type: "local", Options: json.RawMessage(`{}`)},
@@ -427,6 +432,7 @@ func TestHandleBootcPreManifest_HappyPath(t *testing.T) {
 		},
 		{
 			name:                     "multiple_upload_targets",
+			imageType:                "qcow2",
 			useRemoteContainerSource: false,
 			uploadTargets: []worker.BootcUploadTarget{
 				{Type: "aws.s3", Options: json.RawMessage(`{"region":"eu-west-1"}`)},
@@ -450,6 +456,42 @@ func TestHandleBootcPreManifest_HappyPath(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:                     "ami_image_type/aws",
+			imageType:                "ami",
+			useRemoteContainerSource: false,
+			uploadTargets: []worker.BootcUploadTarget{
+				{Type: "aws", Options: json.RawMessage(`{"region":"us-east-1", "share_with_accounts":["1234567890"]}`)},
+			},
+			expectedTargets: []expectedTarget{
+				{name: target.TargetNameAWS, verify: func(t *testing.T, tgt *target.Target) {
+					opts, ok := tgt.Options.(*target.AWSTargetOptions)
+					require.True(t, ok, "expected AWSTargetOptions")
+					assert.Equal(t, "us-east-1", opts.Region)
+					assert.Equal(t, []string{"1234567890"}, opts.ShareWithAccounts)
+				}},
+			},
+		},
+		{
+			name:                     "vhd_image_type/azure",
+			imageType:                "vhd",
+			useRemoteContainerSource: false,
+			uploadTargets: []worker.BootcUploadTarget{
+				{Type: "azure", Options: json.RawMessage(`{"tenant_id":"test-tenant","subscription_id":"test-sub","resource_group":"test-rg"}`)},
+			},
+			expectedTargets: []expectedTarget{
+				{
+					name: target.TargetNameAzureImage,
+					verify: func(t *testing.T, tgt *target.Target) {
+						opts, ok := tgt.Options.(*target.AzureImageTargetOptions)
+						require.True(t, ok, "expected AzureImageTargetOptions")
+						assert.Equal(t, "test-tenant", opts.TenantID)
+						assert.Equal(t, "test-sub", opts.SubscriptionID)
+						assert.Equal(t, "test-rg", opts.ResourceGroup)
+					},
+				},
+			},
+		},
 	}
 
 	for _, tc := range testCases {
@@ -466,7 +508,7 @@ func TestHandleBootcPreManifest_HappyPath(t *testing.T) {
 				Bootc: &distro.BootcImageOptions{
 					UseRemoteContainerSource: tc.useRemoteContainerSource,
 				},
-			}, tc.uploadTargets)
+			}, tc.uploadTargets, tc.imageType)
 
 			// Dequeue the pre-manifest job (it should be pending now)
 			jobID, preManifestToken, _, staticArgs, dynArgs, err := workerServer.RequestJob(
@@ -532,7 +574,7 @@ func TestBootcPreManifestLoop_PicksUpJob(t *testing.T) {
 	}
 	archi := arch.ARCH_X86_64.String()
 
-	preManifestJobID := enqueuePreManifestWithResolvedDep(t, workerServer, archi, specs, distro.ImageOptions{}, nil)
+	preManifestJobID := enqueuePreManifestWithResolvedDep(t, workerServer, archi, specs, distro.ImageOptions{}, nil, "qcow2")
 
 	// Wait for the loop to pick up and finish the pre-manifest job.
 	// Poll with timeout.
