@@ -22,6 +22,12 @@ func MockSerializeManifestFunc(f func(ctx context.Context, getManifestSource man
 	}
 }
 
+// BootcSupportedImageType exports the bootcSupportedImageType function for testing.
+var BootcSupportedImageType = bootcSupportedImageType
+
+// ImageTypeFromApiImageType exports imageTypeFromApiImageType for testing.
+var ImageTypeFromApiImageType = imageTypeFromApiImageType
+
 // HandleBootcPreManifest exports the handleBootcPreManifest function for testing.
 func HandleBootcPreManifest(workers *worker.Server, jobID uuid.UUID, token uuid.UUID, staticArgs json.RawMessage, dynArgs []json.RawMessage) {
 	handleBootcPreManifest(workers, jobID, token, staticArgs, dynArgs)
