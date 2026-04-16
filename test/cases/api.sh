@@ -21,18 +21,7 @@ CLOUD_PROVIDER_OCI="oci"
 #
 # Supported Image type names
 #
-export IMAGE_TYPE_AWS="aws"
-export IMAGE_TYPE_AZURE="azure"
-export IMAGE_TYPE_EDGE_COMMIT="edge-commit"
-export IMAGE_TYPE_EDGE_CONTAINER="edge-container"
-export IMAGE_TYPE_EDGE_INSTALLER="edge-installer"
-export IMAGE_TYPE_GCP="gcp"
-export IMAGE_TYPE_IMAGE_INSTALLER="image-installer"
-export IMAGE_TYPE_GUEST="guest-image"
-export IMAGE_TYPE_OCI="oci"
-export IMAGE_TYPE_VSPHERE="vsphere"
-export IMAGE_TYPE_IOT_COMMIT="iot-commit"
-export IMAGE_TYPE_IOT_BOOTABLE_CONTAINER="iot-bootable-container"
+source /usr/libexec/tests/osbuild-composer/api/common/image-types.sh
 
 if (( $# > 2 )); then
     echo "$0 does not support more than two arguments"
