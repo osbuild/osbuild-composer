@@ -71,18 +71,18 @@ func s3Request() string {
 }
 
 func bootcRequest() string {
-	return fmt.Sprintf(`
+	return `
 		{
 			"bootc": {
 				"reference": "registry.org/centos-bootc:tag"
 			},
 			"image_request": {
-				"architecture": "%s",
+				"architecture": "x86_64",
 				"repositories": [],
 				"image_type": "guest-image",
 				"upload_options": {}
 			}
-		}`, test_distro.TestArch3Name)
+		}`
 }
 
 var reqContextCallCount = 0
@@ -425,7 +425,7 @@ func TestBootcMultitenancyPreManifestProcessed(t *testing.T) {
 	// Finish the BootcInfoResolve job so the BootcPreManifest dependency is met.
 	// Dequeue it using the tenant channel via the worker server directly.
 	_, infoToken, _, _, _, err := workerServer.RequestJob(
-		context.Background(), test_distro.TestArch3Name,
+		context.Background(), "x86_64",
 		[]string{worker.JobTypeBootcInfoResolve}, []string{"org-" + orgID}, uuid.Nil,
 	)
 	require.NoError(t, err)

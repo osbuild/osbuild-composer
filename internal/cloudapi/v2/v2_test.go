@@ -3058,6 +3058,8 @@ func TestComposeBootc(t *testing.T) {
 
 	testCases := []struct {
 		name                          string
+		imageType                     string
+		expectedImageTypeName         string
 		bootcUseRemoteContainerSource bool
 		uploadJSON                    string   // upload_options or upload_targets JSON fragment
 		expectedStatus                int      // expected HTTP status code
@@ -3067,6 +3069,8 @@ func TestComposeBootc(t *testing.T) {
 		{
 			// Matches cockpit-image-builder on-prem: explicit local target
 			name:                          "default/local",
+			imageType:                     "guest-image",
+			expectedImageTypeName:         "qcow2",
 			bootcUseRemoteContainerSource: false,
 			uploadJSON:                    `"upload_targets": [{"type": "local", "upload_options": {}}]`,
 			expectedStatus:                http.StatusCreated,
@@ -3074,6 +3078,8 @@ func TestComposeBootc(t *testing.T) {
 		},
 		{
 			name:                          "remote_container_source",
+			imageType:                     "guest-image",
+			expectedImageTypeName:         "qcow2",
 			bootcUseRemoteContainerSource: true,
 			uploadJSON:                    `"upload_targets": [{"type": "local", "upload_options": {}}]`,
 			expectedStatus:                http.StatusCreated,
@@ -3082,6 +3088,8 @@ func TestComposeBootc(t *testing.T) {
 		{
 			// upload_options defaults to aws.s3 via getDefaultTarget
 			name:                          "default_upload_options_aws_s3",
+			imageType:                     "guest-image",
+			expectedImageTypeName:         "qcow2",
 			bootcUseRemoteContainerSource: false,
 			uploadJSON:                    `"upload_options": {}`,
 			expectedStatus:                http.StatusCreated,
@@ -3089,6 +3097,8 @@ func TestComposeBootc(t *testing.T) {
 		},
 		{
 			name:                          "aws_s3_upload_target",
+			imageType:                     "guest-image",
+			expectedImageTypeName:         "qcow2",
 			bootcUseRemoteContainerSource: false,
 			uploadJSON:                    `"upload_targets": [{"type": "aws.s3", "upload_options": {"region": "us-east-1"}}]`,
 			expectedStatus:                http.StatusCreated,
@@ -3096,13 +3106,35 @@ func TestComposeBootc(t *testing.T) {
 		},
 		{
 			name:                          "local_upload_target",
+			imageType:                     "guest-image",
+			expectedImageTypeName:         "qcow2",
 			bootcUseRemoteContainerSource: false,
 			uploadJSON:                    `"upload_targets": [{"type": "local", "upload_options": {}}]`,
 			expectedStatus:                http.StatusCreated,
 			expectedUploadTargetTypes:     []string{"local"},
 		},
 		{
+			name:                          "aws/aws",
+			imageType:                     "aws",
+			expectedImageTypeName:         "ami",
+			bootcUseRemoteContainerSource: false,
+			uploadJSON:                    `"upload_targets": [{"type": "aws", "upload_options": {"region": "us-east-1", "share_with_accounts": ["1234567890"]}}]`,
+			expectedStatus:                http.StatusCreated,
+			expectedUploadTargetTypes:     []string{"aws"},
+		},
+		{
+			name:                          "azure/azure",
+			imageType:                     "azure",
+			expectedImageTypeName:         "vhd",
+			bootcUseRemoteContainerSource: false,
+			uploadJSON:                    `"upload_targets": [{"type": "azure", "upload_options": {"tenant_id": "test-tenant","subscription_id":"test-sub","resource_group":"test-rg"}}]`,
+			expectedStatus:                http.StatusCreated,
+			expectedUploadTargetTypes:     []string{"azure"},
+		},
+		{
 			name:                          "invalid_azure_upload_target",
+			imageType:                     "guest-image",
+			expectedImageTypeName:         "qcow2",
 			bootcUseRemoteContainerSource: false,
 			uploadJSON:                    `"upload_targets": [{"type": "azure", "upload_options": {"tenant_id": "t", "subscription_id": "s", "resource_group": "rg"}}]`,
 			expectedStatus:                http.StatusBadRequest,
@@ -3116,6 +3148,8 @@ func TestComposeBootc(t *testing.T) {
 		},
 		{
 			name:                          "no_upload_target",
+			imageType:                     "guest-image",
+			expectedImageTypeName:         "qcow2",
 			bootcUseRemoteContainerSource: false,
 			uploadJSON:                    "",
 			expectedStatus:                http.StatusInternalServerError,
@@ -3125,6 +3159,19 @@ func TestComposeBootc(t *testing.T) {
 				"href": "/api/image-builder-composer/v2/errors/1004",
 				"kind": "Error",
 				"reason": "Failed to unmarshal struct"
+			}`,
+		},
+		{
+			name:                  "unsupported_bootc_image_type",
+			imageType:             "minimal-raw",
+			expectedImageTypeName: "minimal-raw",
+			expectedStatus:        http.StatusBadRequest,
+			expectedBody: `{
+				"code": "IMAGE-BUILDER-COMPOSER-6",
+				"details": "unsupported image type \"minimal-raw\" for bootc composes on \"x86_64\"",
+				"href": "/api/image-builder-composer/v2/errors/6",
+				"kind": "Error",
+				"reason": "Unsupported image type"
 			}`,
 		},
 	}
@@ -3148,11 +3195,11 @@ func TestComposeBootc(t *testing.T) {
 						"reference": "%s"
 						},
 				"image_request":{
-					"architecture": "%s",
+					"architecture": "x86_64",
 					"repositories": [],
-					"image_type": "guest-image"%s
+					"image_type": "%s"%s
 				}
-			}`, baseContainerRef, test_distro.TestArch3Name, uploadFragment)
+			}`, baseContainerRef, tc.imageType, uploadFragment)
 
 			expectedBody := tc.expectedBody
 			if expectedBody == "" {
@@ -3181,7 +3228,7 @@ func TestComposeBootc(t *testing.T) {
 			require.NoError(t, err)
 			osbuildJobTypeParts := strings.Split(osbuildJobType, ":")
 			require.Equal(t, worker.JobTypeOSBuild, osbuildJobTypeParts[0])
-			require.Equal(t, test_distro.TestArch3Name, osbuildJobTypeParts[1])
+			require.Equal(t, "x86_64", osbuildJobTypeParts[1])
 
 			// OSBuild job should have empty static targets and PreManifestDynArgsIdx set
 			var osbuildArgs worker.OSBuildJob
@@ -3233,7 +3280,7 @@ func TestComposeBootc(t *testing.T) {
 
 			var preManifestArgs worker.BootcPreManifestJob
 			require.NoError(t, json.Unmarshal(preManifestArgsJSON, &preManifestArgs))
-			require.Equal(t, "qcow2", preManifestArgs.ImageType)
+			require.Equal(t, tc.expectedImageTypeName, preManifestArgs.ImageType)
 
 			// Verify upload targets in pre-manifest args
 			require.Len(t, preManifestArgs.UploadTargets, len(tc.expectedUploadTargetTypes),
@@ -3265,7 +3312,7 @@ func TestComposeBootc(t *testing.T) {
 			// BootcInfoResolve uses arch suffix
 			bootcInfoResolveTypeParts := strings.Split(bootcInfoResolveJobType, ":")
 			require.Equal(t, worker.JobTypeBootcInfoResolve, bootcInfoResolveTypeParts[0])
-			require.Equal(t, test_distro.TestArch3Name, bootcInfoResolveTypeParts[1])
+			require.Equal(t, "x86_64", bootcInfoResolveTypeParts[1])
 
 			// Verify the BootcInfoResolve job args are set correctly
 			var bootcInfoResolveArgs worker.BootcInfoResolveJob
