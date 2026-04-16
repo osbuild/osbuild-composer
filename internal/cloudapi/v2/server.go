@@ -579,9 +579,8 @@ func (s *Server) enqueueBootcCompose(request ComposeRequest, channel string) (uu
 
 	imageTypeName := imageTypeFromApiImageType(ir.ImageType)
 
-	// TODO: Only qcow2 (guest-image) is supported for bootc composes for now.
-	if imageTypeName != "qcow2" {
-		return uuid.Nil, HTTPErrorWithDetails(ErrorUnsupportedImageType, nil, "only qcow2 (guest-image) is supported for bootc composes")
+	if err := bootcSupportedImageType(ir.Architecture, imageTypeName); err != nil {
+		return uuid.Nil, err
 	}
 
 	// Validate and normalize upload targets — consistent with non-bootc flow.
