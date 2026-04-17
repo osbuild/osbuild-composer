@@ -329,6 +329,7 @@ The core osbuild-composer binary. This is suitable both for spawning in containe
 
 %package worker
 Summary:    The worker for osbuild-composer
+Requires:   podman
 Requires:   systemd
 Requires:   qemu-img
 Requires:   osbuild >= %{min_osbuild_version}
