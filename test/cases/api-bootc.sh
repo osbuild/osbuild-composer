@@ -223,35 +223,41 @@ WORKDIR=$(mktemp -d)
 REQ="${WORKDIR}/compose_request.json"
 ARCH=$(uname -m)
 
-cat > "$REQ" << EOF
+# Get worker unit file so we can watch the journal.
+WORKER_UNIT=$(sudo systemctl list-units | grep -o -E "osbuild.*worker.*\.service")
+sudo journalctl -af -n 1 -u "${WORKER_UNIT}" &
+KILL_PIDS+=("$!")
+
+BOOTC_IMAGE_TYPES=("guest-image" "aws")
+
+for IMAGE_TYPE in "${BOOTC_IMAGE_TYPES[@]}"; do
+    greenprint "Testing bootc compose with image_type=${IMAGE_TYPE}"
+
+    cat > "$REQ" << EOF
 {
   "bootc": {
     "reference": "quay.io/centos-bootc/centos-bootc:stream9"
   },
   "image_request": {
     "architecture": "$ARCH",
-    "image_type": "guest-image",
+    "image_type": "$IMAGE_TYPE",
     "repositories": [],
     "upload_targets": [{"type": "local", "upload_options": {}}]
   }
 }
 EOF
 
-# Get worker unit file so we can watch the journal.
-WORKER_UNIT=$(sudo systemctl list-units | grep -o -E "osbuild.*worker.*\.service")
-sudo journalctl -af -n 1 -u "${WORKER_UNIT}" &
-KILL_PIDS+=("$!")
+    sendCompose "$REQ"
+    waitForState
+    echo "compose status:"
+    curl \
+        --show-error \
+        --cacert /etc/osbuild-composer/ca-crt.pem \
+        --key /etc/osbuild-composer/client-key.pem \
+        --cert /etc/osbuild-composer/client-crt.pem \
+        "https://localhost/api/image-builder-composer/v2/composes/$COMPOSE_ID"
+    test "$UPLOAD_STATUS" = "success"
 
-sendCompose "$REQ"
-waitForState
-echo "compose status:"
-curl \
-    --show-error \
-    --cacert /etc/osbuild-composer/ca-crt.pem \
-    --key /etc/osbuild-composer/client-key.pem \
-    --cert /etc/osbuild-composer/client-crt.pem \
-    "https://localhost/api/image-builder-composer/v2/composes/$COMPOSE_ID"
-test "$UPLOAD_STATUS" = "success"
-
-verifyImageDownload
-verifyManifestContainerSourceType
+    verifyImageDownload
+    verifyManifestContainerSourceType
+done
