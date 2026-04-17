@@ -45,3 +45,20 @@ function yellowprint {
 function redprint {
     echo -e "\033[1;31m[$(date -Isecond)] ${1}\033[0m" >&2
 }
+
+# Helper for GitLab foldable sections
+function section_start() {
+    local section_id="${1}_$$"
+    local section_title=$2
+    local collapsed=${3:-true}
+    local params=""
+    [ "$collapsed" = "true" ] && params="[collapsed=true]"
+
+    printf "\e[0Ksection_start:%s:%s%s\r\e[0K\e[1;36m%s\e[0m\n" "$(date +%s)" "$section_id" "$params" "$section_title"
+}
+
+# Helper for GitLab foldable sections
+function section_end() {
+    local section_id="${1}_$$"
+    printf "\e[0Ksection_end:%s:%s\r\e[0K\n" "$(date +%s)" "$section_id"
+}
