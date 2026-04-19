@@ -20,13 +20,13 @@ if [[ ${VERSION_ID%.*} == "8" ]]; then
   # install the leapp upgrade tool + other dependencies
   dnf install -y leapp-upgrade-el8toel9 vdo jq rpmdevtools
   # Get the COMPOSE_URL that we need
-  source /root/define-compose-url.sh 9.8
+  source /root/define-compose-url.sh 9.9
 elif [[ ${VERSION_ID%.*} == "9" ]]; then
   curl -k -o /etc/yum.repos.d/oam-group-leapp-rhel-9.repo https://gitlab.cee.redhat.com/oamg/upgrades-dev/oamg-rhel9-vagrant/-/raw/main/roles/init/files/leapp-copr.repo
   # install the leapp upgrade tool + other dependencies
   dnf install -y leapp-upgrade-el9toel10 vdo jq rpmdevtools
   # Get the COMPOSE_URL that we need
-  source /root/define-compose-url.sh 10.2
+  source /root/define-compose-url.sh 10.3
 else
   redprint "Running on unexpected VERSION_ID: ${VERSION_ID}"
   exit 1
