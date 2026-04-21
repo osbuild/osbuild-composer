@@ -32,3 +32,13 @@ func MockResolveBootcBuildInfoFunc(mockFunc ResolveBootcInfoFuncType) (restore f
 		resolveBootcBuildInfoFunc = saved
 	}
 }
+
+type RemoveContainerImageFuncType = removeContainerImageFuncType
+
+func MockRemoveContainerImageFunc(mockFunc RemoveContainerImageFuncType) (restore func()) {
+	saved := removeContainerImageFunc
+	removeContainerImageFunc = mockFunc
+	return func() {
+		removeContainerImageFunc = saved
+	}
+}
