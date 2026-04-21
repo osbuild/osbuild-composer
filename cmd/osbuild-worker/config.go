@@ -82,6 +82,14 @@ type repositoryMTLSConfig struct {
 	Proxy          string `toml:"proxy"`
 }
 
+type bootcInfoResolveConfig struct {
+	// NOTE: When enabled, the worker removes container images from local
+	// storage after resolving bootc info. This prevents storage buildup
+	// in SaaS deployments where the worker processes many different
+	// container refs over time.
+	CleanupImages bool `toml:"cleanup_images"`
+}
+
 type workerConfig struct {
 	Composer       *composerConfig             `toml:"composer"`
 	Koji           map[string]kojiServerConfig `toml:"koji"`
@@ -96,8 +104,9 @@ type workerConfig struct {
 	BasePath string `toml:"base_path"`
 	DNFJson  string `toml:"dnf-json"`
 	// default value: &{ Type: host }
-	OSBuildExecutor      *executorConfig       `toml:"osbuild_executor"`
-	RepositoryMTLSConfig *repositoryMTLSConfig `toml:"repository_mtls"`
+	OSBuildExecutor      *executorConfig         `toml:"osbuild_executor"`
+	RepositoryMTLSConfig *repositoryMTLSConfig   `toml:"repository_mtls"`
+	BootcInfoResolve     *bootcInfoResolveConfig `toml:"bootc_info_resolve"`
 	// something like "production" or "staging" to be added to logging
 	DeploymentChannel string `toml:"deployment_channel"`
 	// clean store between runs, this should only be used with workers running on AWS within an ASG
