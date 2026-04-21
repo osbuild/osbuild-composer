@@ -70,7 +70,10 @@ func TestBootcInfoResolveJobRun(t *testing.T) {
 		mockResolveFullInfo  main.ResolveBootcInfoFuncType                                                                    // if nil, use the default mock function
 		mockResolveBuildInfo main.ResolveBootcInfoFuncType                                                                    // if nil, use the default mock function
 		mockMockJobFunc      func(t *testing.T, jobType string, rawArgs json.RawMessage, dynamicArgs ...interface{}) *mockJob // if nil, use the default mock job creator
-		wantRunErrSubstr     string                                                                                           // if empty, no error is expected
+		cleanupImages        bool
+		mockRemoveImageFunc  main.RemoveContainerImageFuncType
+		wantCleanedUpRefs    []string
+		wantRunErrSubstr     string // if empty, no error is expected
 		verifyFinishResult   func(t *testing.T, result worker.BootcInfoResolveJobResult)
 	}{
 		{
@@ -194,7 +197,71 @@ func TestBootcInfoResolveJobRun(t *testing.T) {
 			verifyFinishResult: func(t *testing.T, result worker.BootcInfoResolveJobResult) {
 				assert.NotNil(t, result.JobError, "expected job error for unresolvable container")
 				assert.Nil(t, result.Infos)
-
+			},
+		},
+		{
+			name: "cleanup enabled: images are removed after successful resolution",
+			jobArgs: &worker.BootcInfoResolveJob{
+				Specs: []worker.BootcInfoResolveJobSpec{
+					{Ref: "localhost:1/image-a:latest", ResolveMode: worker.BootcInfoResolveModeFull},
+					{Ref: "localhost:1/image-b:latest", ResolveMode: worker.BootcInfoResolveModeBuild},
+				},
+			},
+			cleanupImages: true,
+			wantCleanedUpRefs: []string{
+				"localhost:1/image-b:latest",
+				"localhost:1/image-a:latest",
+			},
+			verifyFinishResult: func(t *testing.T, result worker.BootcInfoResolveJobResult) {
+				assert.Nil(t, result.JobError)
+				assert.Len(t, result.Infos, 2)
+			},
+		},
+		{
+			name: "cleanup enabled: only resolved images are cleaned up on failure",
+			jobArgs: &worker.BootcInfoResolveJob{
+				Specs: []worker.BootcInfoResolveJobSpec{
+					{Ref: "localhost:1/image-a:latest", ResolveMode: worker.BootcInfoResolveModeFull},
+					{Ref: "localhost:1/image-b:latest", ResolveMode: worker.BootcInfoResolveModeBuild},
+				},
+			},
+			cleanupImages: true,
+			mockResolveBuildInfo: func(ref string) (*bootc.Info, error) {
+				return nil, fmt.Errorf("pull failed for ref %s", ref)
+			},
+			wantRunErrSubstr:  "pull failed for ref",
+			wantCleanedUpRefs: []string{"localhost:1/image-a:latest"},
+			verifyFinishResult: func(t *testing.T, result worker.BootcInfoResolveJobResult) {
+				assert.NotNil(t, result.JobError)
+			},
+		},
+		{
+			name: "cleanup disabled: images are NOT removed",
+			jobArgs: &worker.BootcInfoResolveJob{
+				Specs: []worker.BootcInfoResolveJobSpec{
+					{Ref: "localhost:1/image-a:latest", ResolveMode: worker.BootcInfoResolveModeFull},
+				},
+			},
+			cleanupImages:     false,
+			wantCleanedUpRefs: nil,
+			verifyFinishResult: func(t *testing.T, result worker.BootcInfoResolveJobResult) {
+				assert.Nil(t, result.JobError)
+				assert.Len(t, result.Infos, 1)
+			},
+		},
+		{
+			name: "cleanup failure is logged but does not fail the job",
+			jobArgs: &worker.BootcInfoResolveJob{
+				Specs: []worker.BootcInfoResolveJobSpec{
+					{Ref: "localhost:1/image-a:latest", ResolveMode: worker.BootcInfoResolveModeFull},
+				},
+			},
+			cleanupImages:       true,
+			mockRemoveImageFunc: func(ref string) error { return fmt.Errorf("podman rmi failed") },
+			wantCleanedUpRefs:   []string{"localhost:1/image-a:latest"},
+			verifyFinishResult: func(t *testing.T, result worker.BootcInfoResolveJobResult) {
+				assert.Nil(t, result.JobError)
+				assert.Len(t, result.Infos, 1)
 			},
 		},
 	}
@@ -223,7 +290,19 @@ func TestBootcInfoResolveJobRun(t *testing.T) {
 			t.Cleanup(main.MockResolveBootcInfoFunc(tt.mockResolveFullInfo))
 			t.Cleanup(main.MockResolveBootcBuildInfoFunc(tt.mockResolveBuildInfo))
 
-			impl := &main.BootcInfoResolveJobImpl{}
+			var cleanedUpRefs []string
+			removeImageMock := func(ref string) error {
+				cleanedUpRefs = append(cleanedUpRefs, ref)
+				if tt.mockRemoveImageFunc != nil {
+					return tt.mockRemoveImageFunc(ref)
+				}
+				return nil
+			}
+			t.Cleanup(main.MockRemoveContainerImageFunc(removeImageMock))
+
+			impl := &main.BootcInfoResolveJobImpl{
+				CleanupImages: tt.cleanupImages,
+			}
 			runErr := impl.Run(jobMock)
 
 			if tt.wantRunErrSubstr != "" {
@@ -241,6 +320,8 @@ func TestBootcInfoResolveJobRun(t *testing.T) {
 			} else {
 				assert.Nil(t, jobMock.finishResult)
 			}
+
+			assert.Equal(t, tt.wantCleanedUpRefs, cleanedUpRefs)
 		})
 	}
 }
