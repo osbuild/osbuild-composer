@@ -1,2 +1,5 @@
 base_path = "/api/image-builder-worker/v1"
 clean_store = true
+
+[bootc_info_resolve]
+cleanup_images = true
