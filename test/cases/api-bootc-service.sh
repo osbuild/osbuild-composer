@@ -242,6 +242,9 @@ sudo tee -a /etc/osbuild-worker/osbuild-worker.toml > /dev/null <<EOF
 [osbuild_executor]
 type = "aws.ec2"
 key_name = "${EXECUTOR_KEY_NAME}"
+
+[bootc_info_resolve]
+cleanup_images = true
 EOF
 
 sudo systemctl daemon-reload
@@ -408,11 +411,11 @@ waitForState "success"
 test "$UPLOAD_STATUS" = "success"
 
 #
-# Post-compose verification: container ref should now be in local storage
+# Post-compose verification: container ref should NOT be in local storage (cleanup enabled)
 #
-section_start "verify-container-ref-post-compose" "Verifying container ref IS in local storage" true
-if ! sudo podman image exists "${BOOTC_CONTAINER_REF}" 2>/dev/null; then
-    redprint "Container ref ${BOOTC_CONTAINER_REF} was NOT pulled to local storage by BootcInfoResolveJob!"
+section_start "verify-container-ref-post-compose" "Verifying container ref is NOT in local storage" true
+if sudo podman image exists "${BOOTC_CONTAINER_REF}" 2>/dev/null; then
+    redprint "Container ref ${BOOTC_CONTAINER_REF} was NOT cleaned up from local storage by BootcInfoResolveJob!"
     exit 1
 fi
 section_end "verify-container-ref-post-compose"
