@@ -526,7 +526,9 @@ var run = func() {
 		worker.JobTypeAWSEC2Share: &AWSEC2ShareJobImpl{
 			AWSCreds: awsCredentials,
 		},
-		worker.JobTypeBootcInfoResolve: &BootcInfoResolveJobImpl{},
+		worker.JobTypeBootcInfoResolve: &BootcInfoResolveJobImpl{
+			CleanupImages: config.BootcInfoResolve != nil && config.BootcInfoResolve.CleanupImages,
+		},
 	}
 
 	acceptedJobTypes := []string{}
