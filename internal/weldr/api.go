@@ -2489,8 +2489,6 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		return
 	}
 
-	composeID := uuid.New()
-
 	var targets []*target.Target
 	// Always instruct the worker to upload the artifact back to the server
 	workerServerTarget := target.NewWorkerServerTarget()
@@ -2650,16 +2648,18 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 		return
 	}
 
+	var jobID uuid.UUID
 	weldrPackages := weldrtypes.RPMMDPackageListToDepsolvedPackageInfoList(packages)
 	if testMode == "1" {
+		jobID = uuid.New()
 		// Create a failed compose
-		err = api.store.PushTestCompose(composeID, mf, imageType, bp, size, targets, false, weldrPackages)
+		err = api.store.PushTestCompose(jobID, mf, imageType, bp, size, targets, false, weldrPackages)
 	} else if testMode == "2" {
+		jobID = uuid.New()
 		// Create a successful compose
-		err = api.store.PushTestCompose(composeID, mf, imageType, bp, size, targets, true, weldrPackages)
+		err = api.store.PushTestCompose(jobID, mf, imageType, bp, size, targets, true, weldrPackages)
 	} else {
-		var jobId uuid.UUID
-		jobId, err = api.workers.EnqueueOSBuild(archName, &worker.OSBuildJob{
+		jobID, err = api.workers.EnqueueOSBuild(archName, &worker.OSBuildJob{
 			Manifest: mf,
 			Targets:  targets,
 			PipelineNames: &worker.PipelineNames{
@@ -2669,7 +2669,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 			ImageBootMode: imageType.BootMode().String(),
 		}, "")
 		if err == nil {
-			err = api.store.PushCompose(composeID, mf, imageType, bp, size, targets, jobId, weldrPackages)
+			err = api.store.PushCompose(jobID, mf, imageType, bp, size, targets, weldrPackages)
 		}
 	}
 
@@ -2686,7 +2686,7 @@ func (api *API) composeHandler(writer http.ResponseWriter, request *http.Request
 	}
 
 	err = json.NewEncoder(writer).Encode(ComposeReply{
-		BuildID:  composeID,
+		BuildID:  jobID,
 		Status:   true,
 		Warnings: warnings,
 	})

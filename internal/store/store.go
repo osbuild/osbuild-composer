@@ -367,16 +367,15 @@ func (s *Store) GetAllComposes() map[uuid.UUID]weldrtypes.Compose {
 	return composes
 }
 
-func (s *Store) PushCompose(composeID uuid.UUID,
+func (s *Store) PushCompose(jobID uuid.UUID,
 	manifest manifest.OSBuildManifest,
 	imageType distro.ImageType,
 	bp *blueprint.Blueprint,
 	size uint64,
 	targets []*target.Target,
-	jobId uuid.UUID,
 	packages []weldrtypes.DepsolvedPackageInfo) error {
 
-	if _, exists := s.GetCompose(composeID); exists {
+	if _, exists := s.GetCompose(jobID); exists {
 		panic("a compose with this id already exists")
 	}
 
@@ -386,7 +385,7 @@ func (s *Store) PushCompose(composeID uuid.UUID,
 
 	// FIXME: handle or comment this possible error
 	_ = s.change(func() error {
-		s.composes[composeID] = weldrtypes.Compose{
+		s.composes[jobID] = weldrtypes.Compose{
 			Blueprint: bp,
 			ImageBuild: weldrtypes.ImageBuild{
 				Manifest:   manifest,
@@ -394,7 +393,7 @@ func (s *Store) PushCompose(composeID uuid.UUID,
 				Targets:    targets,
 				JobCreated: time.Now(),
 				Size:       size,
-				JobID:      jobId,
+				JobID:      jobID,
 			},
 			Packages: packages,
 		}

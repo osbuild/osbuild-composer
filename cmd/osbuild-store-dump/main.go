@@ -181,7 +181,6 @@ func main() {
 		[]*target.Target{
 			awsTarget,
 		},
-		id1,
 		weldrtypes.RPMMDPackageListToDepsolvedPackageInfoList(packages),
 	)
 	if err != nil {
@@ -196,7 +195,6 @@ func main() {
 		[]*target.Target{
 			awsTarget,
 		},
-		id2,
 		weldrtypes.RPMMDPackageListToDepsolvedPackageInfoList(packages),
 	)
 	if err != nil {

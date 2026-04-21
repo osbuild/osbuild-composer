@@ -315,16 +315,16 @@ func (suite *storeTest) TestDeleteBlueprintFromWorkspace() {
 
 func (suite *storeTest) TestPushCompose() {
 	testID := uuid.New()
-	err := suite.myStore.PushCompose(testID, suite.myManifest, suite.myImageType, &suite.myBP, 123, nil, uuid.New(), []weldrtypes.DepsolvedPackageInfo{})
+	err := suite.myStore.PushCompose(testID, suite.myManifest, suite.myImageType, &suite.myBP, 123, nil, []weldrtypes.DepsolvedPackageInfo{})
 	suite.NoError(err)
 	suite.Panics(func() {
-		err = suite.myStore.PushCompose(testID, suite.myManifest, suite.myImageType, &suite.myBP, 123, []*target.Target{suite.myTarget}, uuid.New(), []weldrtypes.DepsolvedPackageInfo{})
+		err = suite.myStore.PushCompose(testID, suite.myManifest, suite.myImageType, &suite.myBP, 123, []*target.Target{suite.myTarget}, []weldrtypes.DepsolvedPackageInfo{})
 	})
 	suite.NoError(err)
 
 	// Test with PackageSets
 	testID = uuid.New()
-	err = suite.myStore.PushCompose(testID, suite.myManifest, suite.myImageType, &suite.myBP, 123, nil, uuid.New(), suite.myPackages)
+	err = suite.myStore.PushCompose(testID, suite.myManifest, suite.myImageType, &suite.myBP, 123, nil, suite.myPackages)
 	suite.NoError(err)
 }
 
