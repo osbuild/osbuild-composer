@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os/exec"
 
 	"github.com/sirupsen/logrus"
 
@@ -11,12 +12,25 @@ import (
 )
 
 type resolveBootcInfoFuncType func(ref string) (*bootc.Info, error)
+type removeContainerImageFuncType func(ref string) error
 
 // variables to allow for testing
 var resolveBootcInfoFunc resolveBootcInfoFuncType = bootc.ResolveBootcInfo
 var resolveBootcBuildInfoFunc resolveBootcInfoFuncType = bootc.ResolveBootcBuildInfo
+var removeContainerImageFunc removeContainerImageFuncType = removeContainerImage
 
-type BootcInfoResolveJobImpl struct{}
+func removeContainerImage(ref string) error {
+	cmd := exec.Command("podman", "rmi", ref)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("podman rmi %q: %s: %w", ref, string(output), err)
+	}
+	return nil
+}
+
+type BootcInfoResolveJobImpl struct {
+	CleanupImages bool
+}
 
 func (impl *BootcInfoResolveJobImpl) Run(job worker.Job) error {
 	logWithId := logrus.WithField("jobId", job.Id())
@@ -66,6 +80,15 @@ func (impl *BootcInfoResolveJobImpl) Run(job worker.Job) error {
 			reason := fmt.Sprintf("failed to resolve bootc info for ref %q: %s", spec.Ref, err.Error())
 			result.JobError = clienterrors.New(clienterrors.ErrorBootcInfoResolve, reason, err)
 			return fmt.Errorf("failed to resolve bootc info for ref %q: %s", spec.Ref, err.Error())
+		}
+
+		if impl.CleanupImages {
+			ref := spec.Ref
+			defer func() {
+				if err := removeContainerImageFunc(ref); err != nil {
+					logWithId.Warnf("Failed to cleanup container image %q: %v", ref, err)
+				}
+			}()
 		}
 
 		// Convert vendor type to DTO for the job result
