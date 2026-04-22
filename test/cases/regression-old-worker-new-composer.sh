@@ -91,6 +91,13 @@ CURRENT_WORKER_VERSION=$(rpm -q --qf '%{version}\n' osbuild-composer-worker)
 # from the current version.
 
 OLD_WORKER_VERSION=$((CURRENT_WORKER_VERSION - 3))
+
+# NOTE: v168 release has the wrong version in the SPEC file, which would make this test fail. Use the previous version instead.
+# See https://github.com/osbuild/osbuild-composer/pull/5100
+if [[ "$OLD_WORKER_VERSION" == "168" ]]; then
+    OLD_WORKER_VERSION=$((OLD_WORKER_VERSION - 1))
+fi
+
 DESIRED_WORKER_RPM="osbuild-composer-worker-${OLD_WORKER_VERSION}"
 DESIRED_COMMIT_SHA=$(determine_composer_repo_sha "$OLD_WORKER_VERSION")
 
