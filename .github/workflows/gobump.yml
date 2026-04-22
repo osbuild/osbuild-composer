@@ -8,7 +8,7 @@ on:  # yamllint disable-line rule:truthy
     - cron: "0 6 * * 1"
 
 jobs:
-  bump-deps-without-images:
+  bump-images:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -23,8 +23,11 @@ jobs:
           include: "github.com/osbuild/images github.com/osbuild/blueprint"
           commit_message: "deps: bump osbuild/images dependency"
 
-      - name: Cleaup repository
-        run: "git reset --hard HEAD"
+  bump-deps:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
 
       - name: Run gobump-deps action - all other
         uses: lzap/gobump@main
