@@ -56,6 +56,8 @@ const (
 	ErrorDistroOrBootcNotBoth         ServiceErrorCode = 43
 	ErrorDistroAndBootcMissing        ServiceErrorCode = 44
 	ErrorDistroMissing                ServiceErrorCode = 45
+	ErrorIsoPayloadReferenceForbidden ServiceErrorCode = 46
+	ErrorBootcOnlyImageType           ServiceErrorCode = 47
 
 	// Internal errors, these are bugs
 	ErrorFailedToInitializeBlueprint              ServiceErrorCode = 1000
@@ -149,6 +151,8 @@ func getServiceErrors() serviceErrors {
 		serviceError{ErrorDistroOrBootcNotBoth, http.StatusBadRequest, "Invalid request, either bootc or distribution needs to be specified, but not both"},
 		serviceError{ErrorDistroAndBootcMissing, http.StatusBadRequest, "Invalid request, either bootc or distribution needs to be specified"},
 		serviceError{ErrorDistroMissing, http.StatusBadRequest, "Invalid request, distribution is required for this compose request"},
+		serviceError{ErrorIsoPayloadReferenceForbidden, http.StatusBadRequest, "iso_payload_reference must not be set for non-ISO bootc image types"},
+		serviceError{ErrorBootcOnlyImageType, http.StatusBadRequest, "bootable-container-iso image type requires a bootc compose request (use 'bootc' instead of 'distribution')"},
 
 		serviceError{ErrorFailedToInitializeBlueprint, http.StatusInternalServerError, "Failed to initialize blueprint"},
 		serviceError{ErrorFailedToGenerateManifestSeed, http.StatusInternalServerError, "Failed to generate manifest seed"},
