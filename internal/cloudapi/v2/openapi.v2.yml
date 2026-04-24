@@ -1388,6 +1388,14 @@ components:
         reference:
           type: string
           example: "quay.io/centos-bootc/centos-bootc:stream9"
+        iso_payload_reference:
+          type: string
+          description: |
+            Optional container image reference for a payload container to embed
+            in the ISO's container storage. When set, the payload container is
+            available at install/boot time. Only valid for bootable-container-iso
+            image type.
+          example: "quay.io/centos-bootc/centos-bootc:stream9"
     ImageRequest:
       additionalProperties: false
       required:
@@ -1442,6 +1450,7 @@ components:
         - azure-rhui
         - azure-sapapps-rhui
         - azure-sap-rhui
+        - bootable-container-iso
         - edge-commit
         - edge-container
         - edge-installer
