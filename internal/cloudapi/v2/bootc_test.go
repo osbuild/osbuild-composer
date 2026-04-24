@@ -51,6 +51,11 @@ func TestBootcSupportedImageType(t *testing.T) {
 			arch:          "x86_64",
 			imageTypeName: v2.ImageTypeFromApiImageType(v2.ImageTypesPxeTarXz),
 		},
+		{
+			name:          "bootc-generic-iso on x86_64",
+			arch:          "x86_64",
+			imageTypeName: v2.ImageTypeFromApiImageType(v2.ImageTypesBootableContainerIso),
+		},
 		// Supported on aarch64
 		{
 			name:          "guest-image on aarch64",

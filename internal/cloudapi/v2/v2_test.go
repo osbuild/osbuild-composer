@@ -933,6 +933,34 @@ func TestCompose(t *testing.T) {
 		"reason": "Unsupported architecture"
 	}`, "operation_id", "details")
 
+	// bootable-container-iso with distribution (non-bootc compose) — must be rejected
+	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
+	{
+		"distribution": "%s",
+		"image_request":{
+			"architecture": "%s",
+			"image_type": "bootable-container-iso",
+			"repositories": [{
+				"baseurl": "somerepo.org",
+				"rhsm": false
+			}],
+			"upload_targets": [{
+				"type": "aws.s3",
+				"upload_options": {
+					"region": "us-east-1"
+				}
+			}]
+		}
+	}`, testDistro.Name(), test_distro.TestArch3Name), http.StatusBadRequest, `
+	{
+		"href": "/api/image-builder-composer/v2/errors/47",
+		"id": "47",
+		"kind": "Error",
+		"code": "IMAGE-BUILDER-COMPOSER-47",
+		"reason": "bootable-container-iso image type requires a bootc compose request (use 'bootc' instead of 'distribution')",
+		"details": ""
+	}`, "operation_id")
+
 	// unsupported imagetype
 	test.TestRoute(t, srv.Handler("/api/image-builder-composer/v2"), false, "POST", "/api/image-builder-composer/v2/compose", fmt.Sprintf(`
 	{
@@ -3061,6 +3089,7 @@ func TestComposeBootc(t *testing.T) {
 		imageType                     string
 		expectedImageTypeName         string
 		bootcUseRemoteContainerSource bool
+		isoPayloadReference           string
 		uploadJSON                    string   // upload_options or upload_targets JSON fragment
 		expectedStatus                int      // expected HTTP status code
 		expectedBody                  string   // empty = default ComposeId success body
@@ -3174,6 +3203,40 @@ func TestComposeBootc(t *testing.T) {
 				"reason": "Unsupported image type"
 			}`,
 		},
+		{
+			name:                          "bootable-container-iso/aws.s3",
+			imageType:                     "bootable-container-iso",
+			expectedImageTypeName:         "bootc-generic-iso",
+			bootcUseRemoteContainerSource: true,
+			uploadJSON:                    `"upload_targets": [{"type": "aws.s3", "upload_options": {"region": "us-east-1"}}]`,
+			expectedStatus:                http.StatusCreated,
+			expectedUploadTargetTypes:     []string{"aws.s3"},
+		},
+		{
+			name:                          "bootable-container-iso/aws.s3_with_payload",
+			imageType:                     "bootable-container-iso",
+			expectedImageTypeName:         "bootc-generic-iso",
+			bootcUseRemoteContainerSource: true,
+			isoPayloadReference:           "registry.org/payload:tag",
+			uploadJSON:                    `"upload_targets": [{"type": "aws.s3", "upload_options": {"region": "us-east-1"}}]`,
+			expectedStatus:                http.StatusCreated,
+			expectedUploadTargetTypes:     []string{"aws.s3"},
+		},
+		{
+			name:                  "guest-image_with_forbidden_iso_payload_reference",
+			imageType:             "guest-image",
+			expectedImageTypeName: "qcow2",
+			isoPayloadReference:   "registry.org/payload:tag",
+			uploadJSON:            `"upload_targets": [{"type": "local", "upload_options": {}}]`,
+			expectedStatus:        http.StatusBadRequest,
+			expectedBody: `{
+				"code": "IMAGE-BUILDER-COMPOSER-46",
+				"details": "",
+				"href": "/api/image-builder-composer/v2/errors/46",
+				"kind": "Error",
+				"reason": "iso_payload_reference must not be set for non-ISO bootc image types"
+			}`,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -3189,17 +3252,22 @@ func TestComposeBootc(t *testing.T) {
 				uploadFragment = ", " + tc.uploadJSON
 			}
 
+			bootcJSON := fmt.Sprintf(`"reference": "%s"`, baseContainerRef)
+			if tc.isoPayloadReference != "" {
+				bootcJSON += fmt.Sprintf(`, "iso_payload_reference": "%s"`, tc.isoPayloadReference)
+			}
+
 			requestBody := fmt.Sprintf(`
 			{
 				"bootc": {
-						"reference": "%s"
+						%s
 						},
 				"image_request":{
 					"architecture": "x86_64",
 					"repositories": [],
 					"image_type": "%s"%s
 				}
-			}`, baseContainerRef, tc.imageType, uploadFragment)
+			}`, bootcJSON, tc.imageType, uploadFragment)
 
 			expectedBody := tc.expectedBody
 			if expectedBody == "" {
@@ -3302,6 +3370,11 @@ func TestComposeBootc(t *testing.T) {
 			require.NotNil(t, preManifestArgs.ImageOptions.Bootc)
 			require.Equal(t, tc.bootcUseRemoteContainerSource, preManifestArgs.ImageOptions.Bootc.UseRemoteContainerSource,
 				"BootcPreManifestJob.ImageOptions.Bootc.UseRemoteContainerSource should match server config")
+
+			if tc.isoPayloadReference != "" && tc.expectedStatus == http.StatusCreated {
+				require.Equal(t, tc.isoPayloadReference, preManifestArgs.ImageOptions.Bootc.InstallerPayloadRef,
+					"BootcPreManifestJob.ImageOptions.Bootc.InstallerPayloadRef should match request iso_payload_reference")
+			}
 
 			// BootcPreManifest depends on BootcInfoResolve
 			require.Len(t, preManifestDeps, 1)
