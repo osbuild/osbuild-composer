@@ -933,10 +933,15 @@ API-bootc-service:
     - !reference [.upstream_and_ga_rules_all, rules]
   script:
     - schutzbot/deploy.sh
-    - /usr/libexec/tests/osbuild-composer/api-bootc-service.sh guest-image
+    - /usr/libexec/tests/osbuild-composer/api-bootc-service.sh ${IMAGE_TYPE}
   variables:
     RUNNER: aws/rhel-10.1-ga-x86_64
     IAM_INSTANCE_PROFILE: worker-executor
+  parallel:
+    matrix:
+      - IMAGE_TYPE:
+        - guest-image
+        - bootable-container-iso
 
 
 CleanStore:
