@@ -583,6 +583,10 @@ func (s *Server) enqueueBootcCompose(request ComposeRequest, channel string) (uu
 		return uuid.Nil, err
 	}
 
+	if imageTypeName != "bootc-generic-iso" && request.Bootc.IsoPayloadReference != nil && *request.Bootc.IsoPayloadReference != "" {
+		return uuid.Nil, HTTPError(ErrorIsoPayloadReferenceForbidden)
+	}
+
 	// Validate and normalize upload targets — consistent with non-bootc flow.
 	// Error if no targets provided.
 	if ir.UploadOptions == nil && (ir.UploadTargets == nil || len(*ir.UploadTargets) == 0) {
@@ -642,10 +646,14 @@ func (s *Server) enqueueBootcCompose(request ComposeRequest, channel string) (uu
 	seed := bigSeed.Int64()
 
 	// Construct ImageOptions once — used by both BootcPreManifest and ManifestByID.
+	bootcOptions := &distro.BootcImageOptions{
+		UseRemoteContainerSource: s.config.BootcUseRemoteContainerSource,
+	}
+	if request.Bootc.IsoPayloadReference != nil {
+		bootcOptions.InstallerPayloadRef = *request.Bootc.IsoPayloadReference
+	}
 	imageOptions := distro.ImageOptions{
-		Bootc: &distro.BootcImageOptions{
-			UseRemoteContainerSource: s.config.BootcUseRemoteContainerSource,
-		},
+		Bootc: bootcOptions,
 	}
 
 	// 1. Handle Bootc info resolution job

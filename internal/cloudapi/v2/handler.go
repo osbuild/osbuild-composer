@@ -145,6 +145,9 @@ func (h *apiHandlers) PostCompose(ctx echo.Context) error {
 
 	var irs []imageRequest
 	if request.Distribution != nil {
+		if request.HasImageType(ImageTypesBootableContainerIso) {
+			return HTTPError(ErrorBootcOnlyImageType)
+		}
 		irs, err = request.GetImageRequests(h.server.distros, h.server.repos)
 		if err != nil {
 			return err
@@ -227,6 +230,8 @@ func imageTypeFromApiImageType(it ImageTypes) string {
 		return "ova"
 	case ImageTypesImageInstaller:
 		return "image-installer"
+	case ImageTypesBootableContainerIso:
+		return "bootc-generic-iso"
 	case ImageTypesEdgeCommit:
 		return "rhel-edge-commit"
 	case ImageTypesEdgeContainer:

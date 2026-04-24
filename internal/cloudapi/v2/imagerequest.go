@@ -295,6 +295,7 @@ func targetSupportMap() map[UploadTypes]map[ImageTypes]bool {
 			ImageTypesAwsSapRhui: true,
 		},
 		UploadTypesAwsS3: {
+			ImageTypesBootableContainerIso:       true,
 			ImageTypesEdgeCommit:                 true,
 			ImageTypesEdgeInstaller:              true,
 			ImageTypesGuestImage:                 true,

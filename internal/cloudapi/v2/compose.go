@@ -1476,3 +1476,17 @@ func decodeMinsize(size *Minsize) (uint64, error) {
 
 	return datasizes.Parse(*size)
 }
+
+func (request *ComposeRequest) HasImageType(imageType ImageTypes) bool {
+	if request.ImageRequests != nil {
+		for _, ir := range *request.ImageRequests {
+			if ir.ImageType == imageType {
+				return true
+			}
+		}
+	}
+	if request.ImageRequest != nil && request.ImageRequest.ImageType == imageType {
+		return true
+	}
+	return false
+}
