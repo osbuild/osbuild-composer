@@ -9,6 +9,7 @@
 
 export IMAGE_TYPE_AWS="aws"
 export IMAGE_TYPE_AZURE="azure"
+export IMAGE_TYPE_BOOTABLE_CONTAINER_ISO="bootable-container-iso"
 export IMAGE_TYPE_EDGE_COMMIT="edge-commit"
 export IMAGE_TYPE_EDGE_CONTAINER="edge-container"
 export IMAGE_TYPE_EDGE_INSTALLER="edge-installer"

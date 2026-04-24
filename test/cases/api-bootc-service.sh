@@ -19,7 +19,7 @@ source /usr/libexec/tests/osbuild-composer/api/common/executor.sh
 
 if (( $# != 1 )); then
     redprint "Usage: $0 <image-type>"
-    redprint "Supported image types: ${IMAGE_TYPE_GUEST}"
+    redprint "Supported image types: ${IMAGE_TYPE_GUEST}, ${IMAGE_TYPE_BOOTABLE_CONTAINER_ISO}"
     exit 1
 fi
 
@@ -29,6 +29,9 @@ IMAGE_TYPE="$1"
 case "${IMAGE_TYPE}" in
     "$IMAGE_TYPE_GUEST")
         source /usr/libexec/tests/osbuild-composer/api/bootc/guest.s3.sh
+        ;;
+    "$IMAGE_TYPE_BOOTABLE_CONTAINER_ISO")
+        source /usr/libexec/tests/osbuild-composer/api/bootc/container-iso.s3.sh
         ;;
     *)
         redprint "Unknown image type: ${IMAGE_TYPE}"
@@ -62,8 +65,28 @@ if [ -z "$BOOTC_CONTAINER_REF" ] || [ "$BOOTC_CONTAINER_REF" = "null" ]; then
 fi
 greenprint "Using bootc container ref: ${BOOTC_CONTAINER_REF}"
 
+# For bootable-container-iso, optionally resolve the payload container ref
+BOOTC_PAYLOAD_REF=""
+if [ "${IMAGE_TYPE}" = "${IMAGE_TYPE_BOOTABLE_CONTAINER_ISO}" ]; then
+    BOOTC_PAYLOAD_REF="${BOOTC_PAYLOAD_REF_OVERRIDE:-$(jq -r ".[\"${ID}-${VERSION_ID}\"].dependencies.bootc[\"${IMAGE_TYPE}\"][\"${ARCH}\"].payload" Schutzfile)}"
+
+    if [ "$BOOTC_PAYLOAD_REF" = "null" ] || [ -z "$BOOTC_PAYLOAD_REF" ]; then
+        BOOTC_PAYLOAD_REF=""
+        greenprint "No payload ref configured, bootable-container-iso will be built without embedded payload"
+    else
+        greenprint "Using payload ref: ${BOOTC_PAYLOAD_REF}"
+    fi
+fi
+
 # Extract registry host from the container ref (everything before the first /)
 REGISTRY_HOST="${BOOTC_CONTAINER_REF%%/*}"
+
+if [ -n "$BOOTC_PAYLOAD_REF" ]; then
+    if [ "${REGISTRY_HOST}" != "${BOOTC_PAYLOAD_REF%%/*}" ]; then
+        redprint "The base and payload container refs do not have the same registry host"
+        exit 1
+    fi
+fi
 
 #
 # Verify environment
@@ -291,7 +314,7 @@ section_end "verify-container-ref-pre-compose"
 # Compose execution
 #
 REQUEST_FILE="${WORKDIR}/compose_request.json"
-export REQUEST_FILE WORKDIR ARCH IMAGE_TYPE BOOTC_CONTAINER_REF
+export REQUEST_FILE WORKDIR ARCH IMAGE_TYPE BOOTC_CONTAINER_REF BOOTC_PAYLOAD_REF
 
 greenprint "Creating compose request"
 createReqFile
