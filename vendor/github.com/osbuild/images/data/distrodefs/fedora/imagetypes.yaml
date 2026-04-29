@@ -307,8 +307,7 @@
       - "rw"
       - "coreos.no_persist_ip"
 
-  rpm_ostree_imgtype_common: &rpm_ostree_imgtype_common
-    rpm_ostree: true
+  ostree_imgtype_common: &ostree_imgtype_common
     supported_partitioning_modes:
       - ""  # empty string means default partitioning mode
       - "auto-lvm"
@@ -388,7 +387,6 @@
           - "qed-firmware"
           - "realtek-firmware"
           - "tiwilink-firmware"
-          - "zd1211-firmware"
       build_packages:
         booting:
           - "shim-ia32"
@@ -397,6 +395,12 @@
       bootloader: "grub2"
       extra_uefi_architectures:
         - "ia32"
+    x86_64_installer_platform_compat: &x86_64_installer_platform_compat
+      <<: *x86_64_installer_platform
+      packages:
+        <<: *x86_64_installer_platform_packages
+        compat:
+          - "zd1211-firmware"
     aarch64_platform: &aarch64_platform
       arch: "aarch64"
       uefi_vendor: "fedora"
@@ -413,7 +417,7 @@
     aarch64_installer_platform: &aarch64_installer_platform
       arch: "aarch64"
       uefi_vendor: "fedora"
-      packages:
+      packages: &aarch64_installer_platform_packages
         <<: *aarch64_uefi_platform_packages
         booting:
           - "arm-image-installer"
@@ -442,8 +446,13 @@
           - "qed-firmware"
           - "realtek-firmware"
           - "tiwilink-firmware"
-          - "zd1211-firmware"
       bootloader: "grub2"
+    aarch64_installer_platform_compat: &aarch64_installer_platform_compat
+      <<: *aarch64_installer_platform
+      packages:
+        <<: *aarch64_installer_platform_packages
+        compat:
+          - "zd1211-firmware"
     ppc64le_bios_platform: &ppc64le_bios_platform
       arch: "ppc64le"
       bios_platform: "powerpc-ieee1275"
@@ -463,7 +472,7 @@
     ppc64le_installer_platform: &ppc64le_installer_platform
       <<: *ppc64le_bios_platform
       image_format: "qcow2"
-      packages:
+      packages: &ppc64le_installer_platform_packages
         <<: *ppc64le_bios_platform_packages
         booting:
           - "lsvpd"
@@ -489,6 +498,11 @@
           - "qed-firmware"
           - "realtek-firmware"
           - "tiwilink-firmware"
+    ppc64le_installer_platform_compat: &ppc64le_installer_platform_compat
+      <<: *ppc64le_installer_platform
+      packages:
+        <<: *ppc64le_installer_platform_packages
+        compat:
           - "zd1211-firmware"
     s390x_zipl_platform: &s390x_zipl_platform
       arch: "s390x"
@@ -1203,7 +1217,7 @@
     url: "mirrorlist=https://ostree.fedoraproject.org/mirrorlist"
 
   atomic_installer_common: &atomic_installer_common
-    <<: *rpm_ostree_imgtype_common
+    <<: *ostree_imgtype_common
     filename: "installer.iso"
     mime_type: "application/x-iso9660-image"
     boot_iso: true
@@ -1234,6 +1248,15 @@
     platforms:
       - *x86_64_installer_platform
       - *aarch64_installer_platform
+    platforms_override:
+      conditions:
+        "Fedora 45 and up no longer have zd1211-firmware":
+          when:
+            version_less_than: "45"
+          override:
+            - *x86_64_installer_platform_compat
+            - *aarch64_installer_platform_compat
+
     blueprint:
       supported_options:
         - "distro"
@@ -1245,21 +1268,26 @@
         - "customizations.timezone"
         - "customizations.locale"
 
-  atomic_disk_common: &atomic_qcow2_common
-    <<: *rpm_ostree_imgtype_common
-    filename: "image.qcow2"
-    mime_type: "application/x-qemu-disk"
+  atomic_disk_common: &atomic_disk_common
+    <<: *ostree_imgtype_common
     default_size: "10 GiB"
     bootable: true
     image_func: "ostree_disk"
     ostree: *ostree_atomic
-    exports: ["qcow2"]
     required_partition_sizes: *default_required_dir_sizes
     image_config:
       kernel_options: *ostree_deployment_kernel_options
       ignition_platform: "qemu"
     partition_table:
       <<: *iot_base_partition_tables
+    blueprint:
+      supported_options: *supported_options_ostree_disk
+
+  atomic_qcow2_common: &atomic_qcow2_common
+    <<: *atomic_disk_common
+    filename: "image.qcow2"
+    mime_type: "application/x-qemu-disk"
+    exports: ["qcow2"]
     platforms:
       - <<: *x86_64_uefi_platform
         image_format: "qcow2"
@@ -1268,8 +1296,18 @@
       - <<: *aarch64_platform
         image_format: "qcow2"
         qcow2_compat: "1.1"
-    blueprint:
-      supported_options: *supported_options_ostree_disk
+
+  atomic_raw_common: &atomic_raw_common
+    <<: *atomic_disk_common
+    filename: "image.raw.xz"
+    compression: "xz"
+    mime_type: "application/xz"
+    exports: ["xz"]
+    platforms:
+      - <<: *x86_64_uefi_platform
+        image_format: "raw"
+      - <<: *aarch64_platform
+        image_format: "raw"
 
 image_types:
   "generic-vagrant-libvirt": &generic_vagrant_libvirt
@@ -1500,7 +1538,7 @@ image_types:
   # NOTE: keep in sync with official fedora-iot definitions:
   # https://pagure.io/fedora-iot/ostree/blob/main/f/fedora-iot-base.yaml
   "iot-commit": &iot_commit
-    <<: *rpm_ostree_imgtype_common
+    <<: *ostree_imgtype_common
     name_aliases: ["fedora-iot-commit"]
     filename: "commit.tar"
     mime_type: "application/x-tar"
@@ -1530,6 +1568,14 @@ image_types:
     platforms:
       - *x86_64_installer_platform
       - *aarch64_installer_platform
+    platforms_override:
+      conditions:
+        "Fedora 45 and up no longer have zd1211-firmware":
+          when:
+            version_less_than: "45"
+          override:
+            - *x86_64_installer_platform_compat
+            - *aarch64_installer_platform_compat
     package_sets:
       os:
         - include:
@@ -1672,9 +1718,17 @@ image_types:
     platforms:
       - *x86_64_installer_platform
       - *aarch64_installer_platform
+    platforms_override:
+      conditions:
+        "Fedora 45 and up no longer have zd1211-firmware":
+          when:
+            version_less_than: "45"
+          override:
+            - *x86_64_installer_platform_compat
+            - *aarch64_installer_platform_compat
 
   "iot-raw-xz":
-    <<: *rpm_ostree_imgtype_common
+    <<: *ostree_imgtype_common
     name_aliases: ["iot-raw-image", "fedora-iot-raw-image"]
     filename: "image.raw.xz"
     compression: "xz"
@@ -1734,7 +1788,7 @@ image_types:
       supported_options: *supported_options_ostree_disk
 
   "iot-qcow2":
-    <<: *rpm_ostree_imgtype_common
+    <<: *ostree_imgtype_common
     name_aliases: ["iot-qcow2-image"]
     filename: "image.qcow2"
     mime_type: "application/x-qemu-disk"
@@ -1761,7 +1815,7 @@ image_types:
       supported_options: *supported_options_ostree_disk
 
   "iot-bootable-container":
-    <<: *rpm_ostree_imgtype_common
+    <<: *ostree_imgtype_common
     filename: "iot-bootable-container.tar"
     mime_type: "application/x-tar"
     image_func: "bootable_container"
@@ -2018,7 +2072,7 @@ image_types:
     exports: ["zstd"]
 
   "iot-installer":
-    <<: *rpm_ostree_imgtype_common
+    <<: *ostree_imgtype_common
     name_aliases: ["fedora-iot-installer"]
     filename: "installer.iso"
     mime_type: "application/x-iso9660-image"
@@ -2055,6 +2109,14 @@ image_types:
     platforms:
       - *x86_64_installer_platform
       - *aarch64_installer_platform
+    platforms_override:
+      conditions:
+        "Fedora 45 and up no longer have zd1211-firmware":
+          when:
+            version_less_than: "45"
+          override:
+            - *x86_64_installer_platform_compat
+            - *aarch64_installer_platform_compat
     blueprint:
       supported_options:
         - "distro"
@@ -2125,6 +2187,14 @@ image_types:
     platforms:
       - *x86_64_installer_platform
       - *aarch64_installer_platform
+    platforms_override:
+      conditions:
+        "Fedora 45 and up no longer have zd1211-firmware":
+          when:
+            version_less_than: "45"
+          override:
+            - *x86_64_installer_platform_compat
+            - *aarch64_installer_platform_compat
     blueprint:
       supported_options:
         - "distro"
@@ -2167,6 +2237,14 @@ image_types:
     platforms:
       - *x86_64_installer_platform
       - *aarch64_installer_platform
+    platforms_override:
+      conditions:
+        "Fedora 45 and up no longer have zd1211-firmware":
+          when:
+            version_less_than: "45"
+          override:
+            - *x86_64_installer_platform_compat
+            - *aarch64_installer_platform_compat
     package_sets:
       os:
         - *minimal_raw_pkgset
@@ -2372,7 +2450,7 @@ image_types:
       supported_options: *supported_options_container
 
   "iot-simplified-installer":
-    <<: *rpm_ostree_imgtype_common
+    <<: *ostree_imgtype_common
     filename: "simplified-installer.iso"
     mime_type: "application/x-iso9660-image"
     bootable: true
@@ -2544,6 +2622,16 @@ image_types:
       - *aarch64_installer_platform
       - *ppc64le_installer_platform
       - *s390x_installer_platform
+    platforms_override:
+      conditions:
+        "Fedora 45 and up no longer have zd1211-firmware":
+          when:
+            version_less_than: "45"
+          override:
+            - *x86_64_installer_platform_compat
+            - *aarch64_installer_platform_compat
+            - *ppc64le_installer_platform_compat
+            - *s390x_installer_platform
     blueprint:
       supported_options:
         - "distro"
@@ -3051,9 +3139,23 @@ image_types:
       <<: *ostree_atomic
       ref: "{{.Distro.Name}}/{{.Distro.MajorVersion}}/{{.Arch}}/kinoite"
 
-  "silverblue-qcow2":
-    <<: *atomic_qcow2_common
+  "kinoite-raw-xz":
+    <<: *atomic_raw_common
     variant: "Kinoite"
     ostree:
       <<: *ostree_atomic
       ref: "{{.Distro.Name}}/{{.Distro.MajorVersion}}/{{.Arch}}/kinoite"
+
+  "silverblue-qcow2":
+    <<: *atomic_qcow2_common
+    variant: "Silverblue"
+    ostree:
+      <<: *ostree_atomic
+      ref: "{{.Distro.Name}}/{{.Distro.MajorVersion}}/{{.Arch}}/silverblue"
+
+  "silverblue-raw-xz":
+    <<: *atomic_raw_common
+    variant: "Silverblue"
+    ostree:
+      <<: *ostree_atomic
+      ref: "{{.Distro.Name}}/{{.Distro.MajorVersion}}/{{.Arch}}/silverblue"

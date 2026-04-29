@@ -451,8 +451,6 @@ type ImageTypeYAML struct {
 	// XXX: or iso_variant?
 	Variant string `yaml:"variant"`
 
-	RPMOSTree bool `yaml:"rpm_ostree"`
-
 	OSTree struct {
 		Name       string `yaml:"name"`
 		RemoteName string `yaml:"remote_name"`
@@ -486,6 +484,10 @@ type ImageTypeYAML struct {
 
 	// name is set by the loader
 	name string
+}
+
+func (it *ImageTypeYAML) IsOSTreeBasedImageType() bool {
+	return it.OSTree.Name != "" || it.OSTree.RemoteName != "" || it.OSTree.Ref != "" || it.OSTree.URL != ""
 }
 
 func (it *ImageTypeYAML) Name() string {

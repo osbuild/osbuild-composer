@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
+	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/customizations/anaconda"
 	"github.com/osbuild/images/pkg/customizations/bootc"
@@ -41,7 +42,7 @@ func osCustomizations(t *imageType, osPackageSet rpmmd.PackageSet, options distr
 	osc := manifest.OSCustomizations{}
 
 	imageConfig := t.getDefaultImageConfig()
-	if t.ImageTypeYAML.Bootable || t.ImageTypeYAML.RPMOSTree {
+	if t.ImageTypeYAML.Bootable || t.ImageTypeYAML.IsOSTreeBasedImageType() {
 		// TODO: for now the only image types that define a default kernel are
 		// ones that use UKIs and don't allow overriding, so this works.
 		// However, if we ever need to specify default kernels for image types
@@ -208,7 +209,7 @@ func osCustomizations(t *imageType, osPackageSet rpmmd.PackageSet, options distr
 	// deployment, rather than the commit. Therefore the containers need to be
 	// stored in a different location, like `/usr/share`, and the container
 	// storage engine configured accordingly.
-	if t.ImageTypeYAML.RPMOSTree && len(containers) > 0 {
+	if t.ImageTypeYAML.IsOSTreeBasedImageType() && len(containers) > 0 {
 		storagePath := "/usr/share/containers/storage"
 		osc.ContainersStorage = &storagePath
 	}
@@ -246,7 +247,7 @@ func osCustomizations(t *imageType, osPackageSet rpmmd.PackageSet, options distr
 	}
 
 	if oscapConfig := c.GetOpenSCAP(); oscapConfig != nil {
-		if t.ImageTypeYAML.RPMOSTree {
+		if t.ImageTypeYAML.IsOSTreeBasedImageType() {
 			panic("unexpected oscap options for ostree image type")
 		}
 
@@ -536,7 +537,8 @@ func installerCustomizations(t *imageType, c *blueprint.Customizations, o distro
 				}
 
 				for _, reference := range bpFlatpak.References {
-					ref, err := flatpak.NewReferenceFromString(reference)
+					tpl := replaceBasicTemplate(reference, t.arch.arch)
+					ref, err := flatpak.NewReferenceFromString(tpl)
 					if err != nil {
 						return isc, err
 					}
@@ -647,7 +649,7 @@ func ostreeDeploymentCustomizations(
 	t *imageType,
 	c *blueprint.Customizations) (manifest.OSTreeDeploymentCustomizations, error) {
 
-	if !t.ImageTypeYAML.RPMOSTree || !t.ImageTypeYAML.Bootable {
+	if !t.ImageTypeYAML.IsOSTreeBasedImageType() || !t.ImageTypeYAML.Bootable {
 		return manifest.OSTreeDeploymentCustomizations{}, fmt.Errorf("ostree deployment customizations are only supported for bootable rpm-ostree images")
 	}
 	deploymentConf := manifest.OSTreeDeploymentCustomizations{}
@@ -1308,40 +1310,22 @@ func networkInstallerImage(t *imageType,
 
 	var err error
 	img.Kickstart, err = kickstart.New(customizations)
-
 	if err != nil {
 		return nil, err
 	}
-
-	// So this is slightly funky. Normally we set these kickstart options based on the
-	// OSCustomizations. I've explicitly chosen not to do that because the values in
-	// OSCustomizations can come either from the image config *or* from the blueprint.
-	// Since OSCustomizations *always* contains values we cannot determine based on it
-	// if we want a kickstart or not.
-
-	// With the duplication below we only add a kickstart if the user actually provided
-	// values through the blueprint instead of always.
-	language, keyboard := customizations.GetPrimaryLocale()
-
-	if language != nil {
-		img.Language = *language
-		img.Kickstart.Language = language
-	}
-
-	if keyboard != nil {
-		img.Kickstart.Keyboard = keyboard
-	}
-
-	timezone, _ := customizations.GetTimezoneSettings()
-	if timezone != nil {
-		img.Kickstart.Timezone = timezone
-	}
+	// NOTE: The network installer only supports adding users and groups
 
 	// If we have an empty kickstart options we don't want to put it on
 	// the image at all as an empty kickstart will create an empty kickstart
 	// file. In the netinst case we want *no* kickstart file at all.
 	if img.Kickstart.IsZero() {
 		img.Kickstart = nil
+	}
+
+	language, _ := customizations.GetPrimaryLocale()
+
+	if language != nil {
+		img.Language = *language
 	}
 
 	img.ExtraBasePackages = packageSets[installerPkgsKey]
@@ -1464,4 +1448,12 @@ func makeOSTreePayloadCommit(options *ostree.ImageOptions, defaultURL, defaultRe
 		Ref:  ref,
 		RHSM: rhsm,
 	}, nil
+}
+
+// replace basic variables that might come from blueprint(s), these are not intended to be
+// used elsewhere and are thus called only in specific places
+// concretely this is because we need to template the flatpak references coming from pungi
+// configs. they're currently only applied there; other places will need further discussion
+func replaceBasicTemplate(input string, architecture arch.Arch) string {
+	return strings.ReplaceAll(input, "$arch", architecture.String())
 }
