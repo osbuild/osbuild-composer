@@ -19,6 +19,8 @@ jobs:
         with:
           go_version: "1.24.12"
           token: ${{ secrets.SCHUTZBOT_GITHUB_ACCESS_TOKEN }}
+          exec: ./tools/prepare-source.sh
+          exec2: "make build"
           exec_pr: ./tools/prepare-source.sh
           include: "github.com/osbuild/images github.com/osbuild/blueprint"
           commit_message: "deps: bump osbuild/images dependency"
@@ -34,6 +36,8 @@ jobs:
         with:
           go_version: "1.24.12"
           token: ${{ secrets.SCHUTZBOT_GITHUB_ACCESS_TOKEN }}
+          exec: ./tools/prepare-source.sh
+          exec2: "make build"
           exec_pr: ./tools/prepare-source.sh
           exclude: "github.com/osbuild/images,github.com/osbuild/blueprint"
           commit_message: "deps: update dependencies (w/o osbuild/images)"
