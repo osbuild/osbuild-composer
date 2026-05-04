@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"sort"
+	"slices"
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -63,7 +63,7 @@ func ValidateResponse(ctx context.Context, input *ResponseValidationInput) error
 		return &ResponseError{Input: input, Reason: "response has not been resolved"}
 	}
 
-	opts := make([]openapi3.SchemaValidationOption, 0, 3) // 3 potential options here
+	opts := make([]openapi3.SchemaValidationOption, 0, 3+len(options.SchemaValidationOptions))
 	if options.MultiError {
 		opts = append(opts, openapi3.MultiErrors())
 	}
@@ -73,6 +73,8 @@ func ValidateResponse(ctx context.Context, input *ResponseValidationInput) error
 	if options.ExcludeWriteOnlyValidations {
 		opts = append(opts, openapi3.DisableWriteOnlyValidation())
 	}
+	// Append additional schema validation options (e.g., document-scoped format validators)
+	opts = append(opts, options.SchemaValidationOptions...)
 
 	headers := make([]string, 0, len(response.Headers))
 	for k := range response.Headers {
@@ -80,7 +82,7 @@ func ValidateResponse(ctx context.Context, input *ResponseValidationInput) error
 			headers = append(headers, k)
 		}
 	}
-	sort.Strings(headers)
+	slices.Sort(headers)
 	for _, headerName := range headers {
 		headerRef := response.Headers[headerName]
 		if err := validateResponseHeader(headerName, headerRef, input, opts); err != nil {

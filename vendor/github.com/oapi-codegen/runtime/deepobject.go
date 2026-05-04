@@ -2,6 +2,7 @@ package runtime
 
 import (
 	"bytes"
+	"encoding"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -55,8 +56,16 @@ func marshalDeepObject(in interface{}, path []string) ([]string, error) {
 		// into a deepObject style set of subscripts. [a, b, c] turns into
 		// [a][b][c]
 		prefix := "[" + strings.Join(path, "][") + "]"
+
+		var value string
+		if t == nil {
+			value = "null"
+		} else {
+			value = fmt.Sprintf("%v", t)
+		}
+
 		result = []string{
-			prefix + fmt.Sprintf("=%v", t),
+			prefix + fmt.Sprintf("=%s", value),
 		}
 	}
 	return result, nil
@@ -127,6 +136,10 @@ func makeFieldOrValue(paths [][]string, values []string) fieldOrValue {
 }
 
 func UnmarshalDeepObject(dst interface{}, paramName string, params url.Values) error {
+	return unmarshalDeepObject(dst, paramName, params, false)
+}
+
+func unmarshalDeepObject(dst interface{}, paramName string, params url.Values, required bool) error {
 	// Params are all the query args, so we need those that look like
 	// "paramName["...
 	var fieldNames []string
@@ -146,6 +159,14 @@ func UnmarshalDeepObject(dst interface{}, paramName string, params url.Values) e
 					fieldValues = append(fieldValues, value)
 				}
 			}
+		}
+	}
+
+	if len(fieldNames) == 0 {
+		if required {
+			return fmt.Errorf("query parameter '%s' is required", paramName)
+		} else {
+			return nil
 		}
 	}
 
@@ -256,6 +277,7 @@ func assignPathValues(dst interface{}, pathValues fieldOrValue) error {
 				dst = reflect.Indirect(aPtr)
 			}
 			dst.Set(reflect.ValueOf(date))
+			return nil
 		}
 		if it.ConvertibleTo(reflect.TypeOf(time.Time{})) {
 			var tm time.Time
@@ -276,6 +298,13 @@ func assignPathValues(dst interface{}, pathValues fieldOrValue) error {
 				dst = reflect.Indirect(aPtr)
 			}
 			dst.Set(reflect.ValueOf(tm))
+			return nil
+		}
+		// For other struct types that implement TextUnmarshaler (e.g. uuid.UUID),
+		// use that for binding. This comes after the legacy Date/time.Time checks
+		// above which have special fallback format handling.
+		if tu, ok := v.Interface().(encoding.TextUnmarshaler); ok {
+			return tu.UnmarshalText([]byte(pathValues.value))
 		}
 		fieldMap, err := fieldIndicesByJSONTag(iv.Interface())
 		if err != nil {
