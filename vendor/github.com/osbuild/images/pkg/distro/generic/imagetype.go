@@ -108,7 +108,7 @@ func (t *imageType) OSTreeRef() string {
 }
 
 func (t *imageType) OSTreeURL() string {
-	if t.ImageTypeYAML.RPMOSTree {
+	if t.ImageTypeYAML.IsOSTreeBasedImageType() {
 		return t.ImageTypeYAML.OSTree.URL
 	}
 
@@ -370,7 +370,7 @@ func (t *imageType) SupportedBlueprintOptions() []string {
 }
 
 func (t *imageType) expandOSTreeRefTemplate(ar *architecture, id distro.ID) error {
-	if t.ImageTypeYAML.RPMOSTree {
+	if t.ImageTypeYAML.IsOSTreeBasedImageType() {
 		subs := struct {
 			Arch   string
 			Distro distro.ID

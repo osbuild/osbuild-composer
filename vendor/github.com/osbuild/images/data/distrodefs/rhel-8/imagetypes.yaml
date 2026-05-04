@@ -2025,7 +2025,6 @@ image_types:
     name_aliases: ["rhel-edge-commit"]
     filename: "commit.tar"
     mime_type: "application/x-tar"
-    rpm_ostree: true
     image_func: "ostree_commit"
     exports: ["commit-archive"]
     platforms:
@@ -2206,7 +2205,6 @@ image_types:
     name_aliases: ["rhel-edge-installer"]
     filename: "installer.iso"
     mime_type: "application/x-iso9660-image"
-    rpm_ostree: true
     boot_iso: true
     # NOTE: RHEL 8 only supports the older Anaconda configs
     use_legacy_anaconda_config: true
@@ -2255,7 +2253,6 @@ image_types:
     compression: "xz"
     mime_type: "application/xz"
     default_size: "10 GiB"
-    rpm_ostree: true
     bootable: true
     image_func: "ostree_disk"
     ostree: *ostree_edge
@@ -2283,7 +2280,6 @@ image_types:
   "edge-simplified-installer":
     filename: "simplified-installer.iso"
     mime_type: "application/x-iso9660-image"
-    rpm_ostree: true
     bootable: true
     boot_iso: true
     # NOTE: RHEL 8 only supports the older Anaconda configs
@@ -2400,7 +2396,6 @@ image_types:
     name_aliases: ["rhel-edge-container"]
     filename: "container.tar"
     mime_type: "application/x-tar"
-    rpm_ostree: true
     image_func: "ostree_container"
     exports: ["container"]
     required_partition_sizes: *default_required_dir_sizes

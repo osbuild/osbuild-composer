@@ -475,7 +475,7 @@ func (p *AnacondaInstaller) ostreeCommitStages() ([]*osbuild.Stage, error) {
 	stages = append(stages, osbuild.NewOSTreeInitStage(
 		&osbuild.OSTreeInitStageOptions{
 			Path: p.InstallerCustomizations.Payload.Path,
-			Mode: osbuild.ModeBare,
+			Mode: osbuild.ModeBareUser,
 		},
 	))
 	stages = append(stages, osbuild.NewOSTreePullStage(
@@ -517,7 +517,7 @@ func (p *AnacondaInstaller) flatpakStages() ([]*osbuild.Stage, error) {
 		// be compressed; hence we pick the *bare* mode
 		&osbuild.OSTreeInitStageOptions{
 			Path: "/flatpak/repo",
-			Mode: "bare",
+			Mode: osbuild.ModeBareUser,
 		},
 	))
 
