@@ -7,6 +7,7 @@ import (
 	"math"
 	"math/big"
 	"reflect"
+	"slices"
 
 	"github.com/google/uuid"
 
@@ -1478,15 +1479,10 @@ func decodeMinsize(size *Minsize) (uint64, error) {
 }
 
 func (request *ComposeRequest) HasImageType(imageType ImageTypes) bool {
-	if request.ImageRequests != nil {
-		for _, ir := range *request.ImageRequests {
-			if ir.ImageType == imageType {
-				return true
-			}
-		}
-	}
-	if request.ImageRequest != nil && request.ImageRequest.ImageType == imageType {
+	if request.ImageRequests != nil && slices.ContainsFunc(*request.ImageRequests, func(ir ImageRequest) bool {
+		return ir.ImageType == imageType
+	}) {
 		return true
 	}
-	return false
+	return request.ImageRequest != nil && request.ImageRequest.ImageType == imageType
 }
