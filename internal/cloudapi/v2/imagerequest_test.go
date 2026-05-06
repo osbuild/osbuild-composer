@@ -237,6 +237,12 @@ func TestGetTargets(t *testing.T) {
 			includeDefault: false,
 			expected:       []target.TargetName{target.TargetNameWorkerServer},
 		},
+		"bootable-container-iso:default": {
+			imageType:      ImageTypesBootableContainerIso,
+			targets:        nil,
+			includeDefault: true,
+			expected:       []target.TargetName{target.TargetNameAWSS3},
+		},
 	}
 
 	for name := range testCases {
