@@ -55,14 +55,9 @@ function createReqFile() {
     "architecture": "$ARCH",
     "image_type": "${IMAGE_TYPE}",
     "repositories": [],
-    "upload_targets": [
-      {
-        "type": "aws.s3",
-        "upload_options": {
-          "region": "${AWS_REGION}"
-        }
-      }
-    ]
+    "upload_options": {
+      "region": "${AWS_REGION}"
+    }
   }
 }
 EOF
