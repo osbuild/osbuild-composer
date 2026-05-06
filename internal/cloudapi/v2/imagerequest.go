@@ -249,6 +249,8 @@ func getDefaultTarget(imageType ImageTypes) (UploadTypes, error) {
 		fallthrough
 	case ImageTypesVsphereOva:
 		fallthrough
+	case ImageTypesBootableContainerIso:
+		fallthrough
 	case ImageTypesWsl:
 		return UploadTypesAwsS3, nil
 
@@ -281,7 +283,7 @@ func getDefaultTarget(imageType ImageTypes) (UploadTypes, error) {
 		return UploadTypesOciObjectstorage, nil
 
 	default:
-		return "", HTTPError(ErrorUnsupportedImageType)
+		return "", HTTPErrorWithDetails(ErrorUnsupportedImageType, nil, fmt.Sprintf("image type %s does not have a default target", imageType))
 	}
 }
 
