@@ -34,6 +34,36 @@ pg_max_conns = 10
 EOF
 }
 
+# Write the JWT composer config with DB connection settings.
+function write_jwt_composer_config() {
+    cat <<EOF | sudo tee "/etc/osbuild-composer/osbuild-composer.toml"
+ignore_missing_repos = true
+[koji]
+enable_tls = false
+enable_mtls = false
+enable_jwt = true
+jwt_keys_urls = ["https://localhost:8082/certs"]
+jwt_ca_file = "/etc/osbuild-composer/ca-crt.pem"
+jwt_acl_file = ""
+jwt_tenant_provider_fields = ["rh-org-id"]
+[worker]
+enable_artifacts = false
+enable_tls = true
+enable_mtls = false
+enable_jwt = true
+jwt_keys_urls = ["https://localhost:8082/certs"]
+jwt_ca_file = "/etc/osbuild-composer/ca-crt.pem"
+jwt_tenant_provider_fields = ["rh-org-id"]
+pg_host = "localhost"
+pg_port = "5432"
+pg_database = "osbuildcomposer"
+pg_user = "postgres"
+pg_password = "foobar"
+pg_ssl_mode = "disable"
+pg_max_conns = 10
+EOF
+}
+
 function collectMetrics() {
     METRICS_OUTPUT=$(curl http://localhost:8008/metrics)
 
