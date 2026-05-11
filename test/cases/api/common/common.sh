@@ -1,5 +1,176 @@
 #!/usr/bin/bash
 # vim: sw=2:et:
+#
+# Shared API helpers for osbuild-composer Cloud API v2 tests.
+# Provides: sendCompose, waitForState, collectMetrics,
+#           write_tls_composer_config, and instance verification helpers.
+#
+# Auth mode: if TOKEN is set, Bearer/JWT over HTTP is used;
+# otherwise mTLS certs over HTTPS.
+#
+
+# ---------------------------------------------------------------------------
+# API helpers (sendCompose, waitForState, collectMetrics)
+# ---------------------------------------------------------------------------
+
+# Write the TLS composer config with DB connection settings.
+function write_tls_composer_config() {
+    cat <<EOF | sudo tee "/etc/osbuild-composer/osbuild-composer.toml"
+ignore_missing_repos = true
+log_level = "debug"
+[koji]
+allowed_domains = [ "localhost", "client.osbuild.org" ]
+ca = "/etc/osbuild-composer/ca-crt.pem"
+[worker]
+allowed_domains = [ "localhost", "worker.osbuild.org" ]
+ca = "/etc/osbuild-composer/ca-crt.pem"
+pg_host = "localhost"
+pg_port = "5432"
+pg_database = "osbuildcomposer"
+pg_user = "postgres"
+pg_password = "foobar"
+pg_ssl_mode = "disable"
+pg_max_conns = 10
+EOF
+}
+
+function collectMetrics() {
+    METRICS_OUTPUT=$(curl http://localhost:8008/metrics)
+
+    echo "$METRICS_OUTPUT" | grep "^image_builder_composer_request_count.*path=\"/api/image-builder-composer/v2/compose\"" | cut -f2 -d' ' || echo 0
+}
+
+# Send a compose request. Uses TOKEN for JWT auth if set, otherwise mTLS.
+# Sets COMPOSE_ID on success.
+function sendCompose() {
+    local OUTPUT HTTPSTATUS
+    local AUTH_ARGS=()
+    local URL
+
+    OUTPUT=$(mktemp)
+
+    if [ -n "${TOKEN:-}" ]; then
+        AUTH_ARGS=(--header "Authorization: Bearer ${TOKEN}")
+        URL="http://localhost:443/api/image-builder-composer/v2/compose"
+    else
+        AUTH_ARGS=(
+            --cacert /etc/osbuild-composer/ca-crt.pem
+            --key /etc/osbuild-composer/client-key.pem
+            --cert /etc/osbuild-composer/client-crt.pem
+        )
+        URL="https://localhost/api/image-builder-composer/v2/compose"
+    fi
+
+    HTTPSTATUS=$(curl \
+        --silent \
+        --show-error \
+        "${AUTH_ARGS[@]}" \
+        --header 'Content-Type: application/json' \
+        --request POST \
+        --data @"$1" \
+        --write-out '%{http_code}' \
+        --output "$OUTPUT" \
+        "$URL")
+
+    if [ "$HTTPSTATUS" != "201" ]; then
+        echo "Sending compose request failed:"
+        cat "$OUTPUT"
+        return 1
+    fi
+
+    COMPOSE_ID=$(jq -r '.id' "$OUTPUT")
+}
+
+# Poll compose status until it reaches DESIRED_STATE.
+# Uses TOKEN for JWT auth if set, otherwise mTLS.
+#
+# Usage: waitForState [desired_state] [sleep_interval] [max_iterations]
+#   desired_state  - status to wait for (default: "success")
+#   sleep_interval - seconds between polls (default: 30)
+#   max_iterations - max poll attempts (default: 120)
+#
+# Exports: UPLOAD_STATUS, UPLOAD_TYPE, UPLOAD_OPTIONS, UPLOAD_STATUSES
+function waitForState() {
+    local DESIRED_STATE="${1:-success}"
+    local SLEEP_INTERVAL="${2:-30}"
+    local MAX_ITERATIONS="${3:-120}"
+    local ITERATIONS=0
+    local OUTPUT COMPOSE_STATUS
+    local AUTH_ARGS=()
+    local URL_BASE
+
+    if [ -n "${TOKEN:-}" ]; then
+        AUTH_ARGS=(--header "Authorization: Bearer ${TOKEN}")
+        URL_BASE="http://localhost:443/api/image-builder-composer/v2/composes"
+    else
+        AUTH_ARGS=(
+            --cacert /etc/osbuild-composer/ca-crt.pem
+            --key /etc/osbuild-composer/client-key.pem
+            --cert /etc/osbuild-composer/client-crt.pem
+        )
+        URL_BASE="https://localhost/api/image-builder-composer/v2/composes"
+    fi
+
+    while [ "$ITERATIONS" -lt "$MAX_ITERATIONS" ]
+    do
+        ITERATIONS=$((ITERATIONS + 1))
+        OUTPUT=$(curl \
+            --silent \
+            --show-error \
+            "${AUTH_ARGS[@]}" \
+            "${URL_BASE}/${COMPOSE_ID}")
+
+        COMPOSE_STATUS=$(echo "$OUTPUT" | jq -r '.image_status.status')
+        UPLOAD_STATUS=$(echo "$OUTPUT" | jq -r '.image_status.upload_status.status')
+        UPLOAD_TYPE=$(echo "$OUTPUT" | jq -r '.image_status.upload_status.type')
+        UPLOAD_OPTIONS=$(echo "$OUTPUT" | jq -r '.image_status.upload_status.options')
+        UPLOAD_STATUSES=$(echo "$OUTPUT" | jq -r '.image_status.upload_statuses')
+
+        case "$COMPOSE_STATUS" in
+            "$DESIRED_STATE")
+                break
+                ;;
+            "pending"|"building"|"uploading"|"registering")
+                ;;
+            "success")
+                # Compose completed successfully; if we were waiting for
+                # a non-terminal state (e.g. "building"), accept it.
+                if [ "$DESIRED_STATE" != "failure" ]; then
+                    break
+                fi
+                echo "Compose succeeded unexpectedly (expected failure)"
+                echo "API output: $OUTPUT"
+                return 1
+                ;;
+            "failure")
+                echo "Image compose failed"
+                echo "API output: $OUTPUT"
+                if type -t dump_db &>/dev/null; then dump_db; fi
+                return 1
+                ;;
+            *)
+                echo "API returned unexpected image_status.status value: '$COMPOSE_STATUS'"
+                echo "API output: $OUTPUT"
+                if type -t dump_db &>/dev/null; then dump_db; fi
+                return 1
+                ;;
+        esac
+
+        sleep "$SLEEP_INTERVAL"
+    done
+
+    if [ "$ITERATIONS" -ge "$MAX_ITERATIONS" ]; then
+        echo "Timed out waiting for compose to reach state '${DESIRED_STATE}' after $((MAX_ITERATIONS * SLEEP_INTERVAL)) seconds"
+        if type -t dump_db &>/dev/null; then dump_db; fi
+        return 1
+    fi
+
+    export UPLOAD_STATUS UPLOAD_TYPE UPLOAD_OPTIONS UPLOAD_STATUSES
+}
+
+# ---------------------------------------------------------------------------
+# Instance verification helpers
+# ---------------------------------------------------------------------------
 
 # Reusable function, which waits for a given host to respond to SSH
 function _instanceWaitSSH() {

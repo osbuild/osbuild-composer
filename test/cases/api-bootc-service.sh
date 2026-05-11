@@ -14,6 +14,7 @@ set -euo pipefail
 source /usr/libexec/osbuild-composer-test/set-env-variables.sh
 source /usr/libexec/tests/osbuild-composer/shared_lib.sh
 source /usr/libexec/tests/osbuild-composer/api/common/image-types.sh
+source /usr/libexec/tests/osbuild-composer/api/common/common.sh
 source /usr/libexec/tests/osbuild-composer/api/common/bootc.sh
 source /usr/libexec/tests/osbuild-composer/api/common/executor.sh
 
@@ -318,86 +319,6 @@ export REQUEST_FILE WORKDIR ARCH IMAGE_TYPE BOOTC_CONTAINER_REF BOOTC_PAYLOAD_RE
 
 greenprint "Creating compose request"
 createReqFile
-
-function sendCompose() {
-    local OUTPUT HTTPSTATUS
-    OUTPUT=$(mktemp)
-    HTTPSTATUS=$(curl \
-        --silent \
-        --show-error \
-        --header "Authorization: Bearer ${TOKEN}" \
-        --header 'Content-Type: application/json' \
-        --request POST \
-        --data @"$1" \
-        --write-out '%{http_code}' \
-        --output "$OUTPUT" \
-        http://localhost:443/api/image-builder-composer/v2/compose)
-
-    if [ "$HTTPSTATUS" != "201" ]; then
-        redprint "Sending compose request failed:"
-        cat "$OUTPUT"
-    fi
-
-    test "$HTTPSTATUS" = "201"
-
-    COMPOSE_ID=$(jq -r '.id' "$OUTPUT")
-}
-
-function waitForState() {
-    local DESIRED_STATE="${1:-success}"
-    local MAX_ITERATIONS=120
-    local ITERATIONS=0
-    local OUTPUT COMPOSE_STATUS
-
-    local SECTION_ID
-    SECTION_ID="wait-for-state-$(uuidgen)"
-    section_start "${SECTION_ID}" "Waiting for compose to reach state '${DESIRED_STATE}'" true
-    while [ "$ITERATIONS" -lt "$MAX_ITERATIONS" ]
-    do
-        ITERATIONS=$((ITERATIONS + 1))
-        OUTPUT=$(curl \
-            --silent \
-            --show-error \
-            --fail \
-            --header "Authorization: Bearer ${TOKEN}" \
-            http://localhost:443/api/image-builder-composer/v2/composes/"$COMPOSE_ID")
-
-        COMPOSE_STATUS=$(echo "$OUTPUT" | jq -r '.image_status.status')
-        UPLOAD_STATUS=$(echo "$OUTPUT" | jq -r '.image_status.upload_status.status')
-        UPLOAD_OPTIONS=$(echo "$OUTPUT" | jq -r '.image_status.upload_status.options')
-
-        case "$COMPOSE_STATUS" in
-            "$DESIRED_STATE"|"success")
-                break
-                ;;
-            "pending"|"building"|"uploading"|"registering")
-                ;;
-            "failure")
-                redprint "Image compose failed"
-                echo "API output: $OUTPUT"
-                dump_db
-                exit 1
-                ;;
-            *)
-                redprint "API returned unexpected image_status.status value: '$COMPOSE_STATUS'"
-                echo "API output: $OUTPUT"
-                dump_db
-                exit 1
-                ;;
-        esac
-
-        sleep 30
-    done
-
-    if [ "$ITERATIONS" -ge "$MAX_ITERATIONS" ]; then
-        redprint "Timed out waiting for compose to reach state '${DESIRED_STATE}' after $((MAX_ITERATIONS * 30)) seconds"
-        dump_db
-        exit 1
-    fi
-
-    export UPLOAD_STATUS UPLOAD_OPTIONS
-    section_end "${SECTION_ID}"
-}
 
 function verifyManifestContainerSourceType() {
     MANIFESTS=$(curl \
