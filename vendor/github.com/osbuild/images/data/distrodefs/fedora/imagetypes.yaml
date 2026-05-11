@@ -619,6 +619,7 @@
         - "greenboot-task-runner"
         - "redboot-auto-reboot"
         - "redboot-task-runner"
+        - "bootloader-update"
       kernel_options: *ostree_deployment_kernel_options
       conditions:
         "f43 uses new greenboot":
@@ -630,6 +631,7 @@
               - "firewalld.service"
               - "sshd.service"
               - "greenboot-healthcheck"
+              - "bootloader-update"
 
     iot: &image_config_iot
       <<: *image_config_iot_enabled_services
