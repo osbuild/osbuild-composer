@@ -606,6 +606,21 @@ API-module-hotfixes:
         INTERNAL_NETWORK: ["true"]
         TEST_MODULE_HOTFIXES: [1]
 
+API-unit:
+  stage: test
+  extends: .terraform
+  rules:
+    - !reference [.upstream_and_ga_rules_all, rules]
+    - !reference [.ga_rules_all, rules]
+  script:
+    - schutzbot/deploy.sh
+    - /usr/libexec/tests/osbuild-composer/api-unit.sh
+  parallel:
+    matrix:
+      - RUNNER:
+          - aws/rhel-10.1-ga-x86_64
+        INTERNAL_NETWORK: ["true"]
+
 .libvirt_integration:
   stage: test
   extends: .terraform/gcp
