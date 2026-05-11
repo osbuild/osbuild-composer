@@ -1161,6 +1161,30 @@ func (CapacityManagerDataExportStatus) Values() []CapacityManagerDataExportStatu
 	}
 }
 
+type CapacityManagerMonitoredTagKeyStatus string
+
+// Enum values for CapacityManagerMonitoredTagKeyStatus
+const (
+	CapacityManagerMonitoredTagKeyStatusActivating   CapacityManagerMonitoredTagKeyStatus = "activating"
+	CapacityManagerMonitoredTagKeyStatusActivated    CapacityManagerMonitoredTagKeyStatus = "activated"
+	CapacityManagerMonitoredTagKeyStatusDeactivating CapacityManagerMonitoredTagKeyStatus = "deactivating"
+	CapacityManagerMonitoredTagKeyStatusSuspended    CapacityManagerMonitoredTagKeyStatus = "suspended"
+)
+
+// Values returns all known values for CapacityManagerMonitoredTagKeyStatus. Note
+// that this can be expanded in the future, and so it is only as up to date as the
+// client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (CapacityManagerMonitoredTagKeyStatus) Values() []CapacityManagerMonitoredTagKeyStatus {
+	return []CapacityManagerMonitoredTagKeyStatus{
+		"activating",
+		"activated",
+		"deactivating",
+		"suspended",
+	}
+}
+
 type CapacityManagerStatus string
 
 // Enum values for CapacityManagerStatus
@@ -1572,6 +1596,7 @@ const (
 	ClientVpnEndpointStatusCodeAvailable        ClientVpnEndpointStatusCode = "available"
 	ClientVpnEndpointStatusCodeDeleting         ClientVpnEndpointStatusCode = "deleting"
 	ClientVpnEndpointStatusCodeDeleted          ClientVpnEndpointStatusCode = "deleted"
+	ClientVpnEndpointStatusCodePending          ClientVpnEndpointStatusCode = "pending"
 )
 
 // Values returns all known values for ClientVpnEndpointStatusCode. Note that this
@@ -1584,6 +1609,7 @@ func (ClientVpnEndpointStatusCode) Values() []ClientVpnEndpointStatusCode {
 		"available",
 		"deleting",
 		"deleted",
+		"pending",
 	}
 }
 
@@ -1910,9 +1936,10 @@ type DefaultTargetCapacityType string
 
 // Enum values for DefaultTargetCapacityType
 const (
-	DefaultTargetCapacityTypeSpot          DefaultTargetCapacityType = "spot"
-	DefaultTargetCapacityTypeOnDemand      DefaultTargetCapacityType = "on-demand"
-	DefaultTargetCapacityTypeCapacityBlock DefaultTargetCapacityType = "capacity-block"
+	DefaultTargetCapacityTypeSpot             DefaultTargetCapacityType = "spot"
+	DefaultTargetCapacityTypeOnDemand         DefaultTargetCapacityType = "on-demand"
+	DefaultTargetCapacityTypeCapacityBlock    DefaultTargetCapacityType = "capacity-block"
+	DefaultTargetCapacityTypeReservedCapacity DefaultTargetCapacityType = "reserved-capacity"
 )
 
 // Values returns all known values for DefaultTargetCapacityType. Note that this
@@ -1924,6 +1951,7 @@ func (DefaultTargetCapacityType) Values() []DefaultTargetCapacityType {
 		"spot",
 		"on-demand",
 		"capacity-block",
+		"reserved-capacity",
 	}
 }
 
@@ -2655,6 +2683,7 @@ const (
 	FilterByDimensionResourceRegion                   FilterByDimension = "resource-region"
 	FilterByDimensionAvailabilityZoneId               FilterByDimension = "availability-zone-id"
 	FilterByDimensionAccountId                        FilterByDimension = "account-id"
+	FilterByDimensionAccountName                      FilterByDimension = "account-name"
 	FilterByDimensionInstanceFamily                   FilterByDimension = "instance-family"
 	FilterByDimensionInstanceType                     FilterByDimension = "instance-type"
 	FilterByDimensionInstancePlatform                 FilterByDimension = "instance-platform"
@@ -2680,6 +2709,7 @@ func (FilterByDimension) Values() []FilterByDimension {
 		"resource-region",
 		"availability-zone-id",
 		"account-id",
+		"account-name",
 		"instance-family",
 		"instance-type",
 		"instance-platform",
@@ -2874,6 +2904,23 @@ func (FleetReplacementStrategy) Values() []FleetReplacementStrategy {
 	}
 }
 
+type FleetReservationType string
+
+// Enum values for FleetReservationType
+const (
+	FleetReservationTypeInterruptibleCapacityReservation FleetReservationType = "interruptible-capacity-reservation"
+)
+
+// Values returns all known values for FleetReservationType. Note that this can be
+// expanded in the future, and so it is only as up to date as the client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (FleetReservationType) Values() []FleetReservationType {
+	return []FleetReservationType{
+		"interruptible-capacity-reservation",
+	}
+}
+
 type FleetStateCode string
 
 // Enum values for FleetStateCode
@@ -3063,6 +3110,7 @@ const (
 	GroupByResourceRegion                   GroupBy = "resource-region"
 	GroupByAvailabilityZoneId               GroupBy = "availability-zone-id"
 	GroupByAccountId                        GroupBy = "account-id"
+	GroupByAccountName                      GroupBy = "account-name"
 	GroupByInstanceFamily                   GroupBy = "instance-family"
 	GroupByInstanceType                     GroupBy = "instance-type"
 	GroupByInstancePlatform                 GroupBy = "instance-platform"
@@ -3088,6 +3136,7 @@ func (GroupBy) Values() []GroupBy {
 		"resource-region",
 		"availability-zone-id",
 		"account-id",
+		"account-name",
 		"instance-family",
 		"instance-type",
 		"instance-platform",
@@ -3731,8 +3780,9 @@ type InstanceLifecycle string
 
 // Enum values for InstanceLifecycle
 const (
-	InstanceLifecycleSpot     InstanceLifecycle = "spot"
-	InstanceLifecycleOnDemand InstanceLifecycle = "on-demand"
+	InstanceLifecycleSpot                             InstanceLifecycle = "spot"
+	InstanceLifecycleOnDemand                         InstanceLifecycle = "on-demand"
+	InstanceLifecycleInterruptibleCapacityReservation InstanceLifecycle = "interruptible-capacity-reservation"
 )
 
 // Values returns all known values for InstanceLifecycle. Note that this can be
@@ -3743,6 +3793,7 @@ func (InstanceLifecycle) Values() []InstanceLifecycle {
 	return []InstanceLifecycle{
 		"spot",
 		"on-demand",
+		"interruptible-capacity-reservation",
 	}
 }
 
@@ -8093,6 +8144,26 @@ func (ManagedBy) Values() []ManagedBy {
 	}
 }
 
+type ManagedResourceDefaultVisibility string
+
+// Enum values for ManagedResourceDefaultVisibility
+const (
+	ManagedResourceDefaultVisibilityHidden  ManagedResourceDefaultVisibility = "hidden"
+	ManagedResourceDefaultVisibilityVisible ManagedResourceDefaultVisibility = "visible"
+)
+
+// Values returns all known values for ManagedResourceDefaultVisibility. Note that
+// this can be expanded in the future, and so it is only as up to date as the
+// client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (ManagedResourceDefaultVisibility) Values() []ManagedResourceDefaultVisibility {
+	return []ManagedResourceDefaultVisibility{
+		"hidden",
+		"visible",
+	}
+}
+
 type MarketType string
 
 // Enum values for MarketType
@@ -11353,6 +11424,7 @@ const (
 	TransitGatewayAttachmentResourceTypePeering              TransitGatewayAttachmentResourceType = "peering"
 	TransitGatewayAttachmentResourceTypeTgwPeering           TransitGatewayAttachmentResourceType = "tgw-peering"
 	TransitGatewayAttachmentResourceTypeNetworkFunction      TransitGatewayAttachmentResourceType = "network-function"
+	TransitGatewayAttachmentResourceTypeClientVpn            TransitGatewayAttachmentResourceType = "client-vpn"
 )
 
 // Values returns all known values for TransitGatewayAttachmentResourceType. Note
@@ -11370,6 +11442,7 @@ func (TransitGatewayAttachmentResourceType) Values() []TransitGatewayAttachmentR
 		"peering",
 		"tgw-peering",
 		"network-function",
+		"client-vpn",
 	}
 }
 
@@ -11412,6 +11485,34 @@ func (TransitGatewayAttachmentState) Values() []TransitGatewayAttachmentState {
 		"rejected",
 		"rejecting",
 		"failing",
+	}
+}
+
+type TransitGatewayAttachmentStatusType string
+
+// Enum values for TransitGatewayAttachmentStatusType
+const (
+	TransitGatewayAttachmentStatusTypePendingAcceptance TransitGatewayAttachmentStatusType = "pending-acceptance"
+	TransitGatewayAttachmentStatusTypePending           TransitGatewayAttachmentStatusType = "pending"
+	TransitGatewayAttachmentStatusTypeRejected          TransitGatewayAttachmentStatusType = "rejected"
+	TransitGatewayAttachmentStatusTypeAvailable         TransitGatewayAttachmentStatusType = "available"
+	TransitGatewayAttachmentStatusTypeDeleting          TransitGatewayAttachmentStatusType = "deleting"
+	TransitGatewayAttachmentStatusTypeDeleted           TransitGatewayAttachmentStatusType = "deleted"
+)
+
+// Values returns all known values for TransitGatewayAttachmentStatusType. Note
+// that this can be expanded in the future, and so it is only as up to date as the
+// client.
+//
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (TransitGatewayAttachmentStatusType) Values() []TransitGatewayAttachmentStatusType {
+	return []TransitGatewayAttachmentStatusType{
+		"pending-acceptance",
+		"pending",
+		"rejected",
+		"available",
+		"deleting",
+		"deleted",
 	}
 }
 

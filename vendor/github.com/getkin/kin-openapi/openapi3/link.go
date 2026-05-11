@@ -68,7 +68,6 @@ func (link *Link) UnmarshalJSON(data []byte) error {
 	}
 	_ = json.Unmarshal(data, &x.Extensions)
 
-	delete(x.Extensions, originKey)
 	delete(x.Extensions, "operationRef")
 	delete(x.Extensions, "operationId")
 	delete(x.Extensions, "description")
@@ -98,6 +97,6 @@ func (link *Link) Validate(ctx context.Context, opts ...ValidationOption) error 
 
 // UnmarshalJSON sets Links to a copy of data.
 func (links *Links) UnmarshalJSON(data []byte) (err error) {
-	*links, _, err = unmarshalStringMapP[LinkRef](data)
+	*links, err = unmarshalStringMapP[LinkRef](data)
 	return
 }

@@ -9,7 +9,7 @@ import (
 	"math"
 	"math/big"
 	"reflect"
-	"sort"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -413,7 +413,6 @@ func (schema *Schema) UnmarshalJSON(data []byte) error {
 	}
 	_ = json.Unmarshal(data, &x.Extensions)
 
-	delete(x.Extensions, originKey)
 	delete(x.Extensions, "oneOf")
 	delete(x.Extensions, "anyOf")
 	delete(x.Extensions, "allOf")
@@ -1051,7 +1050,7 @@ func (schema *Schema) validate(ctx context.Context, stack []*Schema) ([]*Schema,
 	for name := range schema.Properties {
 		properties = append(properties, name)
 	}
-	sort.Strings(properties)
+	slices.Sort(properties)
 	for _, name := range properties {
 		ref := schema.Properties[name]
 		v := ref.Value
@@ -1299,7 +1298,7 @@ func (schema *Schema) visitNotOperation(settings *schemaValidationSettings, valu
 func (schema *Schema) visitXOFOperations(settings *schemaValidationSettings, value any) (err error, run bool) {
 	var visitedOneOf, visitedAnyOf, visitedAllOf bool
 	if v := schema.OneOf; len(v) > 0 {
-		var discriminatorRef string
+		var discriminatorRef MappingRef
 		if schema.Discriminator != nil {
 			pn := schema.Discriminator.PropertyName
 			if valuemap, okcheck := value.(map[string]any); okcheck {
@@ -1345,7 +1344,7 @@ func (schema *Schema) visitXOFOperations(settings *schemaValidationSettings, val
 				return foundUnresolvedRef(item.Ref), false
 			}
 
-			if discriminatorRef != "" && discriminatorRef != item.Ref {
+			if discriminatorRef.Ref != "" && discriminatorRef.Ref != item.Ref {
 				continue
 			}
 
@@ -1527,7 +1526,12 @@ func (schema *Schema) visitJSONNumber(settings *schemaValidationSettings, value 
 	format := schema.Format
 	if format != "" {
 		if requireInteger {
-			if f, ok := SchemaIntegerFormats[format]; ok {
+			// Check per-validation validators first, then fall back to global
+			f, ok := settings.integerFormats[format]
+			if !ok {
+				f, ok = SchemaIntegerFormats[format]
+			}
+			if ok {
 				if err := f.Validate(int64(value)); err != nil {
 					var reason string
 					schemaErr := &SchemaError{}
@@ -1541,7 +1545,12 @@ func (schema *Schema) visitJSONNumber(settings *schemaValidationSettings, value 
 				}
 			}
 		} else {
-			if f, ok := SchemaNumberFormats[format]; ok {
+			// Check per-validation validators first, then fall back to global
+			f, ok := settings.numberFormats[format]
+			if !ok {
+				f, ok = SchemaNumberFormats[format]
+			}
+			if ok {
 				if err := f.Validate(value); err != nil {
 					var reason string
 					schemaErr := &SchemaError{}
@@ -1767,7 +1776,12 @@ func (schema *Schema) visitJSONString(settings *schemaValidationSettings, value 
 	var formatStrErr string
 	var formatErr error
 	if format := schema.Format; format != "" {
-		if f, ok := SchemaStringFormats[format]; ok {
+		// Check per-validation validators first, then fall back to global
+		f, ok := settings.stringFormats[format]
+		if !ok {
+			f, ok = SchemaStringFormats[format]
+		}
+		if ok {
 			if err := f.Validate(value); err != nil {
 				var reason string
 				schemaErr := &SchemaError{}
@@ -1920,7 +1934,7 @@ func (schema *Schema) visitJSONObject(settings *schemaValidationSettings, value 
 		for propName := range schema.Properties {
 			properties = append(properties, propName)
 		}
-		sort.Strings(properties)
+		slices.Sort(properties)
 		for _, propName := range properties {
 			propSchema := schema.Properties[propName]
 			reqRO := settings.asreq && propSchema.Value.ReadOnly && !settings.readOnlyValidationDisabled
@@ -1992,7 +2006,7 @@ func (schema *Schema) visitJSONObject(settings *schemaValidationSettings, value 
 	for k := range value {
 		keys = append(keys, k)
 	}
-	sort.Strings(keys)
+	slices.Sort(keys)
 	for _, k := range keys {
 		v := value[k]
 		if properties != nil {
@@ -2144,6 +2158,9 @@ func markSchemaErrorKey(err error, key string) error {
 				if me, ok := unwrapped.(multiErrorForOneOf); ok {
 					_ = markSchemaErrorKey(MultiError(me), key)
 				}
+				if me, ok := unwrapped.(multiErrorForAllOf); ok {
+					_ = markSchemaErrorKey(MultiError(me), key)
+				}
 			}
 		}
 		return v
@@ -2257,6 +2274,6 @@ func unsupportedFormat(format string) error {
 
 // UnmarshalJSON sets Schemas to a copy of data.
 func (schemas *Schemas) UnmarshalJSON(data []byte) (err error) {
-	*schemas, _, err = unmarshalStringMapP[SchemaRef](data)
+	*schemas, err = unmarshalStringMapP[SchemaRef](data)
 	return
 }

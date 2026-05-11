@@ -158,6 +158,34 @@ func (d Decimal) Append(buf []byte, format string) []byte {
 	return d.format(buf, &args)
 }
 
+// AppendText implements the [encoding.TextAppender] interface.
+func (d Decimal) AppendText(buf []byte) ([]byte, error) {
+	if d.isSpecial() {
+		return d.appendSpecial(buf, 0, false, false, false), nil
+	}
+
+	var digs digits
+	d.digits(&digs)
+
+	prec := 0
+	if digs.ndig != 0 {
+		prec = digs.ndig - 1
+	}
+
+	exp := digs.exp + prec
+
+	if exp < -4 || exp >= 6 {
+		return digs.fmtE(buf, prec, 0, false, false, false, true, false, false, 'e'), nil
+	}
+
+	prec = 0
+	if digs.exp < 0 {
+		prec = -digs.exp
+	}
+
+	return digs.fmtF(buf, prec, 0, false, false, false, false, false), nil
+}
+
 // Format implements the [fmt.Formatter] interface. It supports the verbs 'e',
 // 'E', 'f', 'F', 'g', 'G', and 'v', along with the format flags '+', '-', '#',
 // ' ', and '0' and custom width and precision values. Decimal values interpret
@@ -207,30 +235,7 @@ func (d Decimal) Format(f fmt.State, verb rune) {
 
 // MarshalText implements the [encoding.TextMarshaler] interface.
 func (d Decimal) MarshalText() ([]byte, error) {
-	if d.isSpecial() {
-		return d.appendSpecial(nil, 0, false, false, false), nil
-	}
-
-	var digs digits
-	d.digits(&digs)
-
-	prec := 0
-	if digs.ndig != 0 {
-		prec = digs.ndig - 1
-	}
-
-	exp := digs.exp + prec
-
-	if exp < -4 || exp >= 6 {
-		return digs.fmtE(nil, prec, 0, false, false, false, true, false, false, 'e'), nil
-	}
-
-	prec = 0
-	if digs.exp < 0 {
-		prec = -digs.exp
-	}
-
-	return digs.fmtF(nil, prec, 0, false, false, false, false, false), nil
+	return d.AppendText(nil)
 }
 
 // String returns a string representation of the Decimal value.
@@ -725,7 +730,7 @@ func (d *digits) pad(buf []byte, width int, printSign, padSign, padRight, padZer
 	}
 
 	padChar := byte(' ')
-	if padZero {
+	if padZero && !padRight {
 		padChar = byte('0')
 	}
 
@@ -842,9 +847,8 @@ parseFlags:
 			args.printSign = true
 		case '-':
 			args.padRight = true
-			args.padZero = false
 		case '0':
-			args.padZero = !args.padRight
+			args.padZero = true
 		default:
 			break parseFlags
 		}
