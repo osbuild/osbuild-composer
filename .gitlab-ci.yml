@@ -318,17 +318,6 @@ regression-insecure-repo:
   variables:
     SCRIPT: regression-insecure-repo.sh
 
-
-regression-no-explicit-rootfs-definition:
-  extends: .regression
-  rules:
-    # BLACKLIST: Skipped on fedora systems & excluding GA runners from the PR pipeline
-    - if: $RUNNER !~ "/^.*(fedora).*$/" && $CI_PIPELINE_SOURCE != "schedule" && $RUNNER !~ /[\S]+rhel-[\S]+-(?:(?:ga)|(?:eus))[\S]+/
-    - !reference [.nightly_rules_all, rules]
-    - !reference [.ga_rules_all, rules]
-  variables:
-    SCRIPT: regression-no-explicit-rootfs-definition.sh
-
 # NB (thozza): The rhel-edge-ci job is currently disabled because the tests have been consistently failing for a while.
 # The tests need to be investigated and fixed before re-enabling the job.
 # See https://issues.redhat.com/browse/HMS-8719
@@ -524,38 +513,6 @@ gcp.sh:
 #     - !reference [.ga_rules_x86_64, rules]
 #   variables:
 #     SCRIPT: vmware.sh ova
-
-filesystem.sh:
-  extends: .integration
-  parallel:
-    matrix:
-      - CUSTOMIZATION_TYPE: "disk-btrfs"
-        RUNNER:
-          - aws/fedora-42-x86_64
-      - CUSTOMIZATION_TYPE: "filesystem"
-        RUNNER:
-          - aws/rhel-8.10-ga-x86_64
-        INTERNAL_NETWORK: ["true"]
-      - CUSTOMIZATION_TYPE: "disk-plain"
-        RUNNER:
-          - aws/rhel-9.7-ga-x86_64
-          - aws/rhel-10.1-ga-x86_64
-          - aws/rhel-10.2-nightly-x86_64
-          - aws/rhel-10.3-nightly-x86_64
-        INTERNAL_NETWORK: ["true"]
-      - CUSTOMIZATION_TYPE: "disk-lvm"
-        RUNNER:
-          - aws/rhel-9.8-nightly-x86_64
-          - aws/rhel-9.9-nightly-x86_64
-        INTERNAL_NETWORK: ["true"]
-      - CUSTOMIZATION_TYPE: "disk-lvm"
-        RUNNER:
-          - aws/centos-stream-9-x86_64
-      - CUSTOMIZATION_TYPE: "filesystem"
-        RUNNER:
-          - aws/centos-stream-10-x86_64
-  variables:
-    SCRIPT: filesystem.sh ${CUSTOMIZATION_TYPE}
 
 cross-distro.sh:
   extends: .integration
