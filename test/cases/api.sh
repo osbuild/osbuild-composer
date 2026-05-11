@@ -92,57 +92,14 @@ export CONTAINER_IMAGE_CLOUD_TOOLS="quay.io/osbuild/cloud-tools:latest-202509011
 #
 # Set up the database queue
 #
-if type -p podman 2>/dev/null >&2; then
-  CONTAINER_RUNTIME=podman
-elif type -p docker 2>/dev/null >&2; then
-  CONTAINER_RUNTIME=docker
-else
-  echo No container runtime found, install podman or docker.
-  exit 2
-fi
+source /usr/libexec/tests/osbuild-composer/api/common/composer-db.sh
+source /usr/libexec/tests/osbuild-composer/api/common/common.sh
 
-# Start the db
-DB_CONTAINER_NAME="osbuild-composer-db"
-sudo "${CONTAINER_RUNTIME}" run -d --name "${DB_CONTAINER_NAME}" \
-    --health-cmd "pg_isready -U postgres -d osbuildcomposer" --health-interval 2s \
-    --health-timeout 2s --health-retries 10 \
-    -e POSTGRES_USER=postgres \
-    -e POSTGRES_PASSWORD=foobar \
-    -e POSTGRES_DB=osbuildcomposer \
-    -p 5432:5432 \
-    --net host \
-    quay.io/osbuild/postgres:13-alpine
+greenprint "Setting up PostgreSQL database"
+setup_db
 
-# Dump the logs once to have a little more output
-sudo "${CONTAINER_RUNTIME}" logs osbuild-composer-db
-
-# Initialize a module in a temp dir so we can get tern without introducing
-# vendoring inconsistency
-pushd "$(mktemp -d)"
-sudo dnf install -y go
-go mod init temp
-go install github.com/jackc/tern@latest
-PGUSER=postgres PGPASSWORD=foobar PGDATABASE=osbuildcomposer PGHOST=localhost PGPORT=5432 \
-    "$(go env GOPATH)"/bin/tern migrate -m /usr/share/tests/osbuild-composer/schemas
-popd
-
-cat <<EOF | sudo tee "/etc/osbuild-composer/osbuild-composer.toml"
-ignore_missing_repos = true
-log_level = "debug"
-[koji]
-allowed_domains = [ "localhost", "client.osbuild.org" ]
-ca = "/etc/osbuild-composer/ca-crt.pem"
-[worker]
-allowed_domains = [ "localhost", "worker.osbuild.org" ]
-ca = "/etc/osbuild-composer/ca-crt.pem"
-pg_host = "localhost"
-pg_port = "5432"
-pg_database = "osbuildcomposer"
-pg_user = "postgres"
-pg_password = "foobar"
-pg_ssl_mode = "disable"
-pg_max_conns = 10
-EOF
+greenprint "Writing TLS composer config"
+write_tls_composer_config
 
 # Restart the worker as well to make sure it is registered against the psql DB
 sudo systemctl restart osbuild-composer osbuild-remote-worker@localhost:8700
@@ -211,8 +168,7 @@ function cleanups() {
   # database container
   sudo systemctl stop osbuild-remote-worker@localhost:8700 osbuild-composer
 
-  sudo "${CONTAINER_RUNTIME}" kill "${DB_CONTAINER_NAME}"
-  sudo "${CONTAINER_RUNTIME}" rm "${DB_CONTAINER_NAME}"
+  teardown_db
 
   sudo rm -rf "$WORKDIR"
 
@@ -555,84 +511,7 @@ createReqFile
 # the server's response in case of an error.
 #
 
-function collectMetrics(){
-    METRICS_OUTPUT=$(curl http://localhost:8008/metrics)
-
-    echo "$METRICS_OUTPUT" | grep "^image_builder_composer_request_count.*path=\"/api/image-builder-composer/v2/compose\"" | cut -f2 -d' '
-}
-
-function sendCompose() {
-    OUTPUT=$(mktemp)
-    HTTPSTATUS=$(curl \
-                 --silent \
-                 --show-error \
-                 --cacert /etc/osbuild-composer/ca-crt.pem \
-                 --key /etc/osbuild-composer/client-key.pem \
-                 --cert /etc/osbuild-composer/client-crt.pem \
-                 --header 'Content-Type: application/json' \
-                 --request POST \
-                 --data @"$1" \
-                 --write-out '%{http_code}' \
-                 --output "$OUTPUT" \
-                 https://localhost/api/image-builder-composer/v2/compose)
-
-    if [ "$HTTPSTATUS" != "201" ]; then
-        redprint "Sending compose request failed:"
-        cat "$OUTPUT"
-    fi
-
-    test "$HTTPSTATUS" = "201"
-
-    COMPOSE_ID=$(jq -r '.id' "$OUTPUT")
-}
-
-function waitForState() {
-    local DESIRED_STATE="${1:-success}"
-
-    while true
-    do
-        OUTPUT=$(curl \
-                     --silent \
-                     --show-error \
-                     --cacert /etc/osbuild-composer/ca-crt.pem \
-                     --key /etc/osbuild-composer/client-key.pem \
-                     --cert /etc/osbuild-composer/client-crt.pem \
-                     "https://localhost/api/image-builder-composer/v2/composes/$COMPOSE_ID")
-
-        COMPOSE_STATUS=$(echo "$OUTPUT" | jq -r '.image_status.status')
-        UPLOAD_STATUS=$(echo "$OUTPUT" | jq -r '.image_status.upload_status.status')
-        UPLOAD_TYPE=$(echo "$OUTPUT" | jq -r '.image_status.upload_status.type')
-        UPLOAD_OPTIONS=$(echo "$OUTPUT" | jq -r '.image_status.upload_status.options')
-
-        # get the upload_statuses array to compare the first element with the top level upload_status
-        UPLOAD_STATUSES=$(echo "$OUTPUT" | jq -r '.image_status.upload_statuses')
-
-        case "$COMPOSE_STATUS" in
-            "$DESIRED_STATE")
-                break
-                ;;
-            # all valid status values for a compose which hasn't finished yet
-            "pending"|"building"|"uploading"|"registering")
-                ;;
-            # default undesired state
-            "failure")
-                echo "Image compose failed"
-                echo "API output: $OUTPUT"
-                exit 1
-                ;;
-            *)
-                echo "API returned unexpected image_status.status value: '$COMPOSE_STATUS'"
-                echo "API output: $OUTPUT"
-                exit 1
-                ;;
-        esac
-
-        sleep 30
-    done
-
-    # export for use in subcases
-    export UPLOAD_OPTIONS
-}
+# sendCompose, waitForState, collectMetrics are provided by api/common/common.sh
 
 function sendImgFromCompose() {
     OUTPUT=$(mktemp)
@@ -692,53 +571,9 @@ function waitForImgState() {
     export IMG_UPLOAD_OPTIONS
 }
 
+# Failure path and job retry tests moved to api-unit.sh
+
 #
-# Make sure that requesting a non existing paquet results in failure
-# and if TEST_MODULE_HOTFIXES flag is passed, we verify, that without that flag the resolve fails
-#
-
-REQUEST_FILE2="${WORKDIR}/request2.json"
-jq '.customizations.packages = [ "jesuisunpaquetquinexistepas" ]' "$REQUEST_FILE" > "$REQUEST_FILE2"
-
-greenprint  "Sending compose: Fail test"
-sendCompose "$REQUEST_FILE2"
-waitForState "failure"
-
-if [ "$TEST_MODULE_HOTFIXES" = "1" ]; then
-  cat "$REQUEST_FILE"
-
-  jq 'del(.customizations.payload_repositories[] | select(.baseurl | match(".*public/el8/el8-.*-nginx-.*")) | .module_hotfixes)' "$REQUEST_FILE" > "$REQUEST_FILE2"
-  greenprint  "Sending compose: Fail depsolve test"
-  sendCompose "$REQUEST_FILE2"
-  waitForState "failure"
-fi
-
-# crashed/stopped/killed worker should result in the job being retried
-greenprint  "Sending compose: Retry test"
-sendCompose "$REQUEST_FILE"
-waitForState "building"
-sudo systemctl stop "osbuild-remote-worker@*"
-RETRIED=0
-for RETRY in {1..10}; do
-    ROWS=$(sudo "${CONTAINER_RUNTIME}" exec "${DB_CONTAINER_NAME}" psql -U postgres -d osbuildcomposer -c \
-                "SELECT retries FROM jobs WHERE id = '$COMPOSE_ID' AND retries = 1")
-    if grep -q "1 row" <<< "$ROWS"; then
-        RETRIED=1
-        break
-    else
-        echo "Waiting until job is retried ($RETRY/10)"
-        sleep 30
-    fi
-done
-if [ "$RETRIED" != 1 ]; then
-    echo "Job $COMPOSE_ID wasn't retried after killing the worker"
-    exit 1
-fi
-# remove the job from the queue so the worker doesn't pick it up again
-sudo "${CONTAINER_RUNTIME}" exec "${DB_CONTAINER_NAME}" psql -U postgres -d osbuildcomposer -c \
-     "DELETE FROM jobs WHERE id = '$COMPOSE_ID'"
-sudo systemctl start "osbuild-remote-worker@localhost:8700.service"
-
 # full integration case
 greenprint  "Sending compose: Full test"
 INIT_COMPOSES="$(collectMetrics)"
@@ -746,6 +581,7 @@ sendCompose "$REQUEST_FILE"
 waitForState
 SUBS_COMPOSES="$(collectMetrics)"
 
+# shellcheck disable=SC2153 # UPLOAD_STATUS set by waitForState() in common.sh
 test "$UPLOAD_STATUS" = "success"
 EXPECTED_UPLOAD_TYPE="$CLOUD_PROVIDER"
 if [ "${CLOUD_PROVIDER}" == "${CLOUD_PROVIDER_GENERIC_S3}" ]; then
@@ -754,11 +590,13 @@ fi
 if [ "${CLOUD_PROVIDER}" == "${CLOUD_PROVIDER_OCI}" ]; then
     EXPECTED_UPLOAD_TYPE="oci.objectstorage"
 fi
+# shellcheck disable=SC2153 # UPLOAD_TYPE set by waitForState() in common.sh
 test "$UPLOAD_TYPE" = "$EXPECTED_UPLOAD_TYPE"
 test $((INIT_COMPOSES+1)) = "$SUBS_COMPOSES"
 
 # test that the first element in the upload_statuses matches the top
 # upload_status
+# shellcheck disable=SC2153 # UPLOAD_STATUSES set by waitForState() in common.sh
 UPLOAD_STATUS_0=$(echo "$UPLOAD_STATUSES" | jq -r '.[0].status')
 test "$UPLOAD_STATUS_0" = "success"
 
@@ -766,6 +604,7 @@ UPLOAD_TYPE_0=$(echo "$UPLOAD_STATUSES" | jq -r '.[0].type')
 test "$UPLOAD_TYPE" = "$UPLOAD_TYPE_0"
 
 UPLOAD_OPTIONS_0=$(echo "$UPLOAD_STATUSES" | jq -r '.[0].options')
+# shellcheck disable=SC2153 # UPLOAD_OPTIONS set by waitForState() in common.sh
 test "$UPLOAD_OPTIONS" = "$UPLOAD_OPTIONS_0"
 
 
@@ -807,97 +646,7 @@ function verifyPackageList() {
 greenprint  "Verifying package list"
 verifyPackageList
 
-#
-# Verify oauth2
-#
-greenprint  "Verifying oauth2"
-cat <<EOF | sudo tee "/etc/osbuild-composer/osbuild-composer.toml"
-ignore_missing_repos = true
-[koji]
-enable_tls = false
-enable_mtls = false
-enable_jwt = true
-jwt_keys_urls = ["https://localhost:8080/certs"]
-jwt_ca_file = "/etc/osbuild-composer/ca-crt.pem"
-jwt_acl_file = ""
-jwt_tenant_provider_fields = ["rh-org-id"]
-[worker]
-pg_host = "localhost"
-pg_port = "5432"
-enable_artifacts = false
-pg_database = "osbuildcomposer"
-pg_user = "postgres"
-pg_password = "foobar"
-pg_ssl_mode = "disable"
-enable_tls = true
-enable_mtls = false
-enable_jwt = true
-jwt_keys_urls = ["https://localhost:8080/certs"]
-jwt_ca_file = "/etc/osbuild-composer/ca-crt.pem"
-jwt_tenant_provider_fields = ["rh-org-id"]
-EOF
-
-REFRESH_TOKEN="offlineToken"
-cat <<EOF | sudo tee "/etc/osbuild-worker/token"
-$REFRESH_TOKEN
-EOF
-
-cat <<EOF | sudo tee "/etc/osbuild-worker/osbuild-worker.toml"
-[authentication]
-oauth_url = http://localhost:8081/token
-client_id = "rhsm-api"
-offline_token = "/etc/osbuild-worker/token"
-EOF
-
-# Spin up an https instance for the composer-api and worker-api; the auth handler needs to hit an ssl `/certs` endpoint
-sudo /usr/libexec/osbuild-composer-test/osbuild-mock-openid-provider -rsaPubPem /etc/osbuild-composer/client-crt.pem -rsaPem /etc/osbuild-composer/client-key.pem -cert /etc/osbuild-composer/composer-crt.pem -key /etc/osbuild-composer/composer-key.pem &
-KILL_PIDS+=("$!")
-# Spin up an http instance for the worker client to bypass the need to specify an extra CA
-sudo /usr/libexec/osbuild-composer-test/osbuild-mock-openid-provider -a localhost:8081 -rsaPubPem /etc/osbuild-composer/client-crt.pem -rsaPem /etc/osbuild-composer/client-key.pem &
-KILL_PIDS+=("$!")
-
-sudo systemctl restart osbuild-composer
-
-until curl --data "grant_type=refresh_token" --output /dev/null --silent --fail localhost:8081/token; do
-    sleep 0.5
-done
-
-TOKEN="$(curl --request POST \
-        --data "grant_type=refresh_token" \
-        --data "refresh_token=$REFRESH_TOKEN" \
-        --header "Content-Type: application/x-www-form-urlencoded" \
-        --silent \
-        --show-error \
-        --fail \
-        localhost:8081/token | jq -r .access_token)"
-
-[ "$(curl \
-        --silent \
-        --output /dev/null \
-        --write-out '%{http_code}' \
-        --header "Authorization: Bearer $TOKEN" \
-        http://localhost:443/api/image-builder-composer/v2/openapi)" = "200" ]
-
-# /openapi doesn't need auth
-[ "$(curl \
-        --silent \
-        --output /dev/null \
-        --write-out '%{http_code}' \
-        --header "Authorization: Bearer badtoken" \
-        http://localhost:443/api/image-builder-composer/v2/openapi)" = "200" ]
-
-
-# /composes/$ID does need auth
-[ "$(curl \
-        --silent \
-        --output /dev/null \
-        --write-out '%{http_code}' \
-        --header "Authorization: Bearer badtoken" \
-        http://localhost:443/api/image-builder-composer/v2/composes/"$COMPOSE_ID")" = "401" ]
-
-
-sudo systemctl restart osbuild-remote-worker@localhost:8700.service
-sudo systemctl is-active --quiet osbuild-remote-worker@localhost:8700.service
+# OAuth2/JWT test moved to api-unit.sh
 
 IMAGE_BUILDER_EXPERIMENTAL="${IMAGE_BUILDER_EXPERIMENTAL:-}"
 if [[ "${IMAGE_BUILDER_EXPERIMENTAL}" != "" ]]; then
