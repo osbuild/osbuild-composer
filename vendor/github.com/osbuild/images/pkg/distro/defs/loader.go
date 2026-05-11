@@ -29,6 +29,8 @@ import (
 	"github.com/osbuild/images/pkg/platform"
 	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/images/pkg/runner"
+
+	"github.com/supakeen/yamlplus"
 )
 
 var (
@@ -271,7 +273,15 @@ func LoadDistroWithoutImageTypes(nameVer string) (*DistroYAML, error) {
 }
 
 func (d *DistroYAML) LoadImageTypes() error {
-	configs, err := loadImageTypeConfigs(d)
+	var configs []imageTypesYAML
+	var err error
+
+	if yamlplus := experimentalflags.Bool("yamlplus"); yamlplus {
+		configs, err = loadImageTypeConfigsPlus(d)
+	} else {
+		configs, err = loadImageTypeConfigs(d)
+	}
+
 	if err != nil {
 		return err
 	}
@@ -301,7 +311,50 @@ func loadImageTypeConfigs(d *DistroYAML) ([]imageTypesYAML, error) {
 		}
 
 		var toplevel imageTypesYAML
+
 		decoder := yaml.NewDecoder(reader)
+		decoder.KnownFields(true)
+		decodeErr := decoder.Decode(&toplevel)
+		if decodeErr != nil {
+			return nil, decodeErr
+		}
+
+		configs = append(configs, toplevel)
+	}
+
+	return configs, nil
+}
+
+func loadImageTypeConfigsPlus(d *DistroYAML) ([]imageTypesYAML, error) {
+	files, err := fs.Glob(dataFS(), filepath.Join(d.DefsPath, "[^_]*.yaml"))
+	if err != nil {
+		return nil, err
+	}
+
+	commonPath := filepath.Join(d.DefsPath, "_common.yaml")
+	commonContent, _ := fs.ReadFile(dataFS(), commonPath)
+
+	configs := make([]imageTypesYAML, 0, len(files))
+	for _, fileName := range files {
+		f, err := dataFS().Open(fileName)
+		if err != nil {
+			return nil, err
+		}
+		defer f.Close()
+
+		var reader io.Reader = f
+		if len(commonContent) > 0 {
+			reader = io.MultiReader(bytes.NewReader(commonContent), f)
+		}
+
+		loader := yamlplus.NewLoader(dataFS())
+		if err = loader.RegisterRecursively("."); err != nil {
+			return nil, err
+		}
+
+		var toplevel imageTypesYAML
+
+		decoder := loader.NewDecoder(reader)
 		decoder.KnownFields(true)
 		decodeErr := decoder.Decode(&toplevel)
 		if decodeErr != nil {
