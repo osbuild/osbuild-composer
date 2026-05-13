@@ -144,7 +144,8 @@ pg_ssl_mode = "disable"
 pg_max_conns = 10
 EOF
 
-sudo systemctl restart osbuild-composer
+# Restart the worker as well to make sure it is registered against the psql DB
+sudo systemctl restart osbuild-composer osbuild-remote-worker@localhost:8700
 
 greenprint "Using Cloud Provider / Target ${CLOUD_PROVIDER} for Image Type ${IMAGE_TYPE}"
 
