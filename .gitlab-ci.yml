@@ -861,27 +861,6 @@ ContainerUpload:
       - RUNNER:
           - aws/fedora-42-x86_64
 
-ContainerEmbedding:
-  stage: test
-  extends: .terraform
-  rules:
-    - !reference [.upstream_rules_all, rules]
-    - !reference [.nightly_rules_all, rules]
-    - !reference [.ga_rules_all, rules]
-  script:
-    - schutzbot/deploy.sh
-    - /usr/libexec/tests/osbuild-composer/container-embedding.sh
-  parallel:
-    matrix:
-      - INTERNAL_NETWORK: "true"
-        RUNNER:
-        - aws/centos-stream-9-x86_64
-        - aws/centos-stream-10-x86_64
-        - aws/rhel-9.8-nightly-x86_64
-        - aws/rhel-9.9-nightly-x86_64
-        - aws/rhel-10.2-nightly-x86_64
-        - aws/rhel-10.3-nightly-x86_64
-
 WorkerExecutor:
   stage: test
   extends: .terraform
