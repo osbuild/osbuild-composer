@@ -191,6 +191,7 @@ spec:
       - name: BUILD_ARGS
         value:
         - $(params.build-args[*])
+        - COMMIT=$(params.revision)
       - name: BUILD_ARGS_FILE
         value: $(params.build-args-file)
       - name: PRIVILEGED_NESTED
