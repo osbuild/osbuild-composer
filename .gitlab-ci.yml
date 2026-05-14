@@ -435,23 +435,20 @@ oci.sh:
           - aws/rhel-10.3-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
 
-# NOTE(akoutsou): Infra capacity issue is causing these to fail constantly. We
-# have an open SNOW ticket (UR0159317). Once it's resolved, we can enable the
-# test again.
-# OpenShift_Virtualization:
-#   extends: .integration_rhel
-#   rules:
-#     - !reference [.nightly_rules_x86_64, rules]
-#   variables:
-#     SCRIPT: openshift_virtualization.sh
-#   parallel:
-#     matrix:
-#       - RUNNER:
-#           - aws/rhel-9.8-ga-x86_64
-#           - aws/rhel-9.9-nightly-x86_64
-#           - aws/rhel-10.2-ga-x86_64
-#           - aws/rhel-10.3-nightly-x86_64
-#         INTERNAL_NETWORK: ["true"]
+OpenShift_Virtualization:
+  extends: .integration_rhel
+  rules:
+    - !reference [.nightly_rules_x86_64, rules]
+  variables:
+    SCRIPT: openshift_virtualization.sh
+  parallel:
+    matrix:
+      - RUNNER:
+          - aws/rhel-9.8-ga-x86_64
+          - aws/rhel-9.9-nightly-x86_64
+          - aws/rhel-10.2-ga-x86_64
+          - aws/rhel-10.3-nightly-x86_64
+        INTERNAL_NETWORK: ["true"]
 
 azure.sh:
   extends: .integration_rhel
