@@ -521,29 +521,32 @@ cross-distro.sh:
 
 .API_TESTS: &API_TESTS
   IMAGE_TYPE:
+    - guest-image
     - aws
     - azure
-    - edge-commit
     - gcp
-    - vsphere
-    - edge-commit generic.s3
-    - edge-container
     - oci
+    - image-installer
 
 API:
   stage: test
   extends: .terraform
   rules:
-    - !reference [.upstream_and_ga_rules_all, rules]
     - !reference [.ga_rules_all, rules]
-    # note: cloud API is not supported for on-prem installations so
-    # don't run this test case for nightly trees
   script:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/api.sh ${IMAGE_TYPE}
   parallel:
     matrix:
-      - <<: *API_TESTS
+      - IMAGE_TYPE:
+          - aws
+          - azure
+          - edge-commit
+          - gcp
+          - vsphere
+          - edge-commit generic.s3
+          - edge-container
+          - oci
         RUNNER:
           - aws/rhel-8.10-ga-x86_64
           - aws/rhel-9.7-ga-x86_64
@@ -559,7 +562,6 @@ API:
           - oci
           - vsphere
         RUNNER:
-          # Add all RHEL 10 runners here to exclude Edge for them
           - aws/rhel-10.1-ga-x86_64
           - aws/rhel-10.2-ga-x86_64
           - aws/rhel-10.3-nightly-x86_64
@@ -578,13 +580,20 @@ API:
           - aws/rhel-10.1-ga-aarch64
         INTERNAL_NETWORK: ["true"]
 
-      # single test config for experimental feature
-      # TODO: temporarily disabled until https://github.com/osbuild/osbuild-composer/issues/5000 is resolved
-      # - IMAGE_TYPE: ["aws"]
-      #   RUNNER:
-      #     - aws/rhel-10.1-ga-x86_64
-      #   IMAGE_BUILDER_EXPERIMENTAL: "image-builder-manifest-generation=1"
-      #   INTERNAL_NETWORK: ["true"]
+API (PR):
+  stage: test
+  extends: .terraform
+  rules:
+    - if: '$CI_PIPELINE_SOURCE != "schedule" && $RUNNER'
+  script:
+    - schutzbot/deploy.sh
+    - /usr/libexec/tests/osbuild-composer/api.sh ${IMAGE_TYPE}
+  parallel:
+    matrix:
+      - <<: *API_TESTS
+        RUNNER:
+          - aws/rhel-10.1-ga-x86_64
+        INTERNAL_NETWORK: ["true"]
 
 API-module-hotfixes:
   stage: test
