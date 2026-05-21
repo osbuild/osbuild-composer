@@ -19,42 +19,10 @@ actions:
 upstream_tag_include: 'v\d+'
 
 jobs:
-- job: bodhi_update
-  trigger: commit
-  dist_git_branches:
-    - fedora-branched # rawhide updates are created automatically
-- job: koji_build
-  trigger: commit
-  dist_git_branches:
-    - fedora-all
-- job: propose_downstream
-  trigger: release
-  dist_git_branches:
-    - fedora-all
 - job: copr_build
   trigger: pull_request
   targets: &build_targets
-    - centos-stream-9-aarch64
-    - centos-stream-9-s390x
-    - centos-stream-9-ppc64le
-    - centos-stream-9-x86_64
-    - centos-stream-10-aarch64
-    - centos-stream-10-s390x
-    - centos-stream-10-ppc64le
-    - centos-stream-10-x86_64
-    - fedora-all-aarch64
-    - fedora-all-s390x
-    - fedora-all-ppc64le
-    - fedora-all
-    - rhel-8-aarch64
-    - rhel-8-x86_64
     - rhel-9-aarch64
     - rhel-9-x86_64
     - rhel-10-x86_64
     - rhel-10-aarch64
-- job: copr_build
-  trigger: commit
-  branch: main
-  owner: "@osbuild" # copr repo namespace
-  project: osbuild-composer  # copr repo name so you can consume the builds
-  targets: *build_targets
