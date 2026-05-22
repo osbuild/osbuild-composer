@@ -539,35 +539,30 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 		Stderr:     os.Stderr,
 		JSONOutput: true,
 	}
+
 	osbuildJobResult.OSBuildOutput, err = executor.RunOSBuild(jobArgs.Manifest, logWithId, job, opts)
-	// First handle the case when "running" osbuild failed
+	// handle the case where something around running osbuild failed (starting, IO errors, etc.)
 	if err != nil {
-		osbuildJobResult.JobError = clienterrors.New(clienterrors.ErrorBuildJob, "osbuild build failed", err.Error())
+		osbuildJobResult.JobError = clienterrors.New(clienterrors.ErrorBuildJob, "running osbuild failed", err.Error())
 		return err
 	}
 
-	// Include pipeline stages output inside the worker's logs.
-	// Order pipelines based on PipelineNames from job
+	// Log all failed stages
 	for _, pipelineName := range osbuildJobResult.PipelineNames.All() {
-		pipelineLog, hasLog := osbuildJobResult.OSBuildOutput.Log[pipelineName]
-		if !hasLog {
-			// no pipeline output
-			continue
-		}
-		for _, stageResult := range pipelineLog {
-			if stageResult.Success {
-				logWithId.Infof("  %s success", stageResult.Type)
-			} else {
-				logWithId.Infof("  %s failure:", stageResult.Type)
-				stageOutput := strings.Split(stageResult.Output, "\n")
-				for _, line := range stageOutput {
-					logWithId.Infof("    %s", line)
+		if pipelineLog, hasLog := osbuildJobResult.OSBuildOutput.Log[pipelineName]; hasLog {
+			for _, stageResult := range pipelineLog {
+				if !stageResult.Success {
+					logWithId.Infof("failure in %s stage (%s pipeline):", stageResult.Type, pipelineName)
+					stageOutput := strings.Split(stageResult.Output, "\n")
+					for _, line := range stageOutput {
+						logWithId.Infof("  %s", line)
+					}
 				}
 			}
 		}
 	}
 
-	// Second handle the case when the build failed, but osbuild finished successfully
+	// handle the case where osbuild failed and returned a valid result
 	if !osbuildJobResult.OSBuildOutput.Success {
 		osbuildJobResult.JobError = makeJobErrorFromOsbuildOutput(osbuildJobResult.OSBuildOutput)
 		return nil
