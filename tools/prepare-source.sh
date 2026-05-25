@@ -6,12 +6,6 @@ set -eu
 GO_MINOR_VERSION="1.24"
 GO_VERSION="${GO_MINOR_VERSION}.12"
 
-# Check latest Go version for the minor we're using
-LATEST=$(curl -s https://endoflife.date/api/go/"${GO_MINOR_VERSION}".json  | jq -r .latest)
-if test "$LATEST" != "$GO_VERSION"; then
-    echo "NOTE: A new minor release is available (${LATEST}), consider bumping the project version (${GO_VERSION})"
-fi
-
 set -x
 
 # Pin Go and toolbox versions
