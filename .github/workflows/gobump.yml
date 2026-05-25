@@ -14,6 +14,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v5
 
+      - name: Install build dependencies
+        run: sudo apt-get update && sudo apt-get install -y libgpgme-dev libbtrfs-dev libdevmapper-dev libkrb5-dev
+
       - name: Run gobump-deps action - images
         uses: lzap/gobump@main
         with:
@@ -21,7 +24,6 @@ jobs:
           token: ${{ secrets.SCHUTZBOT_GITHUB_ACCESS_TOKEN }}
           exec: ./tools/prepare-source.sh
           exec2: "make build"
-          exec_pr: ./tools/prepare-source.sh
           include: "github.com/osbuild/images github.com/osbuild/blueprint"
           commit_message: "deps: bump osbuild/images dependency"
 
@@ -31,6 +33,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v5
 
+      - name: Install build dependencies
+        run: sudo apt-get update && sudo apt-get install -y libgpgme-dev libbtrfs-dev libdevmapper-dev libkrb5-dev
+
       - name: Run gobump-deps action - all other
         uses: lzap/gobump@main
         with:
@@ -38,6 +43,5 @@ jobs:
           token: ${{ secrets.SCHUTZBOT_GITHUB_ACCESS_TOKEN }}
           exec: ./tools/prepare-source.sh
           exec2: "make build"
-          exec_pr: ./tools/prepare-source.sh
           exclude: "github.com/osbuild/images,github.com/osbuild/blueprint"
           commit_message: "deps: update dependencies (w/o osbuild/images)"
