@@ -2,9 +2,9 @@
 
 set -eu
 
-# 1.24.12
-GO_MINOR_VERSION="1.24"
-GO_VERSION="${GO_MINOR_VERSION}.12"
+# 1.25.9
+GO_MINOR_VERSION="1.25"
+GO_VERSION="${GO_MINOR_VERSION}.9"
 
 # Check latest Go version for the minor we're using
 LATEST=$(curl -s https://endoflife.date/api/go/"${GO_MINOR_VERSION}".json  | jq -r .latest)
