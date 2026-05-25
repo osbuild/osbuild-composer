@@ -848,7 +848,7 @@ func (t *bootcImageType) genPartitionTableDiskCust(basept *disk.PartitionTable, 
 		RequiredMinSizes: requiredMinSizes,
 		Architecture:     t.arch.arch,
 	}
-	return disk.NewCustomPartitionTable(diskCust, partOptions, rng)
+	return disk.NewCustomPartitionTable(diskCust, partOptions, nil, rng)
 }
 
 func (t *bootcImageType) genPartitionTableFsCust(basept *disk.PartitionTable, fsCust []blueprint.FilesystemCustomization, rootfsMinSize uint64, rng *rand.Rand) (*disk.PartitionTable, error) {
