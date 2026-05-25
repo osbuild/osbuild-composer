@@ -17,7 +17,7 @@ jobs:
       - name: Run gobump-deps action - images
         uses: lzap/gobump@main
         with:
-          go_version: "1.24.12"
+          go_version: "1.25.9"
           token: ${{ secrets.SCHUTZBOT_GITHUB_ACCESS_TOKEN }}
           exec: ./tools/prepare-source.sh
           exec2: "make build"
@@ -34,7 +34,7 @@ jobs:
       - name: Run gobump-deps action - all other
         uses: lzap/gobump@main
         with:
-          go_version: "1.24.12"
+          go_version: "1.25.9"
           token: ${{ secrets.SCHUTZBOT_GITHUB_ACCESS_TOKEN }}
           exec: ./tools/prepare-source.sh
           exec2: "make build"

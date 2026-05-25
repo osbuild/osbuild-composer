@@ -1,8 +1,8 @@
 module github.com/osbuild/osbuild-composer/pkg/splunk_logger
 
-go 1.23
+go 1.25
 
-toolchain go1.24.12
+toolchain go1.25.9
 
 require (
 	github.com/hashicorp/go-retryablehttp v0.7.8
