@@ -50,6 +50,14 @@ run_test_case () {
 # Provision the software under test.
 /usr/libexec/osbuild-composer-test/provision.sh none
 
+# The weldr API tests dump all packages from all repos into memory via
+# osbuild-depsolve-dnf. On systems with CDN repos (e.g. RHEL GA), this can
+# exceed available RAM and get OOM-killed. Add swap to prevent this.
+sudo fallocate -l 4G /swapfile
+sudo chmod 600 /swapfile
+sudo mkswap /swapfile
+sudo swapon /swapfile
+
 # Explicitly install osbuild-depsolve-dnf in nightly pipeline until the
 # osbuild-composer version which has the dependency lands there (v101).
 if ! nvrGreaterOrEqual "osbuild-composer" "101"; then
