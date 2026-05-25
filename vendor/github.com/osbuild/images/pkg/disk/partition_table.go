@@ -32,6 +32,17 @@ type PartitionTable struct {
 	ExtraPadding uint64 `json:"extra_padding,omitempty" yaml:"extra_padding,omitempty"`
 	// Starting offset of the first partition in the table (in bytes)
 	StartOffset Offset `json:"start_offset,omitempty" yaml:"start_offset,omitempty"`
+
+	// Dictates if certain bits and bobs are required or not; uses the default
+	// policy if not set.
+	Policy *PartitionTablePolicy `json:"policy,omitempty" yaml:"policy,omitempty"`
+}
+
+type PartitionTablePolicy struct {
+	// Create an XBOOTLDR partition when the root filesystem is not generally
+	// readable by firmware (LVM, btrfs). When set to false an XBOOTLDR partition
+	// will not be created even for those filesystems.
+	EnsureXBOOTLDR bool `json:"ensure_xbootldr" yaml:"ensure_xbootldr"`
 }
 
 var _ = MountpointCreator(&PartitionTable{})
@@ -47,9 +58,19 @@ type Offset = datasizes.Size
 // specify one, but the image requires one to boot (/ is on btrfs, or an LV).
 const DefaultBootPartitionSize = 1 * datasizes.GiB
 
+// NewDefaultPartitionTablePolicy creates a default partition table policy.
+func NewDefaultPartitionTablePolicy() *PartitionTablePolicy {
+	return &PartitionTablePolicy{
+		EnsureXBOOTLDR: true,
+	}
+}
+
 // NewPartitionTable takes an existing base partition table and some parameters
 // and returns a new version of the base table modified to satisfy the
 // parameters.
+//
+// If the base partition table contains no policy then a default policy is used.
+// The policy on the partition table influences all the described behavior.
 //
 // Mountpoints: New filesystems and minimum partition sizes are defined in
 // mountpoints. By default, if new mountpoints are created, a partition table is
@@ -102,6 +123,11 @@ const DefaultBootPartitionSize = 1 * datasizes.GiB
 // Volume Group since they are trivial to grow on a live system.
 func NewPartitionTable(basePT *PartitionTable, mountpoints []blueprint.FilesystemCustomization, imageSize datasizes.Size, mode partition.PartitioningMode, architecture arch.Arch, requiredSizes map[string]datasizes.Size, defaultFs string, rng *rand.Rand) (*PartitionTable, error) {
 	newPT := basePT.Clone().(*PartitionTable)
+
+	// Default policy if no policy is present in the base partition table
+	if newPT.Policy == nil {
+		newPT.Policy = NewDefaultPartitionTablePolicy()
+	}
 
 	if basePT.features().LVM && (mode == partition.RawPartitioningMode || mode == partition.BtrfsPartitioningMode) {
 		return nil, fmt.Errorf("%s partitioning mode set for a base partition table with LVM, this is unsupported", mode)
@@ -196,6 +222,7 @@ func (pt *PartitionTable) Clone() Entity {
 		SectorSize:   pt.SectorSize,
 		ExtraPadding: pt.ExtraPadding,
 		StartOffset:  pt.StartOffset,
+		Policy:       pt.Policy,
 	}
 
 	for idx, partition := range pt.Partitions {
@@ -762,9 +789,16 @@ func (pt *PartitionTable) ensureLVM(defaultFS string) error {
 		panic("no root mountpoint for PartitionTable")
 	}
 
-	// we need a /boot partition to boot LVM, ensure one exists
+	// need a /boot partition to boot LVM, ensure one exists
 	bootPath := entityPath(pt, "/boot")
 	if bootPath == nil {
+		// for LVM we *always* need to create a /boot if none
+		// exists; if the policy explicitly tells us *not* to
+		// create one we error
+		if !pt.Policy.EnsureXBOOTLDR {
+			return fmt.Errorf("LVM partition table without /boot and policy says to not create one: manually create /boot")
+		}
+
 		_, err := pt.CreateMountpoint("/boot", defaultFS, DefaultBootPartitionSize)
 
 		if err != nil {
@@ -821,9 +855,9 @@ func (pt *PartitionTable) ensureBtrfs(defaultFS string, architecture arch.Arch) 
 		return fmt.Errorf("no root mountpoint for a partition table: %#v", pt)
 	}
 
-	// we need a /boot partition to boot btrfs, ensure one exists
+	// Depending on the policy we need a /boot partition to boot btrfs, ensure one exists
 	bootPath := entityPath(pt, "/boot")
-	if bootPath == nil {
+	if bootPath == nil && pt.Policy.EnsureXBOOTLDR {
 		_, err := pt.CreateMountpoint("/boot", defaultFS, DefaultBootPartitionSize)
 		if err != nil {
 			return fmt.Errorf("failed to create /boot partition when ensuring btrfs: %w", err)
@@ -1309,6 +1343,12 @@ func (options *CustomPartitionTableOptions) getfstype(fstype string) (string, er
 }
 
 func maybeAddBootPartition(pt *PartitionTable, disk *blueprint.DiskCustomization, defaultFSType FSType) error {
+	// We never add a boot partition when the policy doesn't require one to
+	// be created.
+	if !pt.Policy.EnsureXBOOTLDR {
+		return nil
+	}
+
 	// The boot type will be the default only if it's a supported filesystem
 	// type for /boot (ext4 or xfs). Otherwise, we default to xfs.
 	// FS_NONE also falls back to xfs.
@@ -1331,7 +1371,7 @@ func maybeAddBootPartition(pt *PartitionTable, disk *blueprint.DiskCustomization
 }
 
 // NewCustomPartitionTable creates a partition table based almost entirely on the disk customizations from a blueprint.
-func NewCustomPartitionTable(customizations *blueprint.DiskCustomization, options *CustomPartitionTableOptions, rng *rand.Rand) (*PartitionTable, error) {
+func NewCustomPartitionTable(customizations *blueprint.DiskCustomization, options *CustomPartitionTableOptions, policy *PartitionTablePolicy, rng *rand.Rand) (*PartitionTable, error) {
 	if options == nil {
 		options = &CustomPartitionTableOptions{}
 	}
@@ -1346,7 +1386,14 @@ func NewCustomPartitionTable(customizations *blueprint.DiskCustomization, option
 		return nil, fmt.Errorf("%s %w", errPrefix, err)
 	}
 
-	pt := &PartitionTable{}
+	// default policy when not passed
+	if policy == nil {
+		policy = NewDefaultPartitionTablePolicy()
+	}
+
+	pt := &PartitionTable{
+		Policy: policy,
+	}
 
 	switch customizations.Type {
 	case "dos":

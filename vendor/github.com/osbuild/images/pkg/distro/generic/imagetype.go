@@ -197,7 +197,7 @@ func (t *imageType) getPartitionTable(customizations *blueprint.Customizations, 
 			RequiredMinSizes:   t.ImageTypeYAML.RequiredPartitionSizes,
 			Architecture:       t.platform.GetArch(),
 		}
-		return disk.NewCustomPartitionTable(partitioning, partOptions, rng)
+		return disk.NewCustomPartitionTable(partitioning, partOptions, nil, rng)
 	}
 
 	mountpoints := customizations.GetFilesystems()
