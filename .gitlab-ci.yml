@@ -862,6 +862,16 @@ API-bootc-service:
         - guest-image
         - bootable-container-iso
 
+WorkerJournal:
+  stage: test
+  extends: .terraform
+  rules:
+    - !reference [.upstream_and_ga_rules_all, rules]
+  script:
+    - schutzbot/deploy.sh
+    - /usr/libexec/tests/osbuild-composer/worker-journal-failures.sh
+  variables:
+    RUNNER: aws/rhel-10.1-ga-x86_64
 
 CleanStore:
   stage: test
