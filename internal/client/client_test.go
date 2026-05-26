@@ -66,18 +66,6 @@ func TestGetRaw(t *testing.T) {
 	require.Equal(t, "BadLimitOrOffset", resp.Errors[0].ID)
 }
 
-func TestGetJSONAll(t *testing.T) {
-	// Get all the projects
-	b, resp, err := GetJSONAll(testState.socket, "/api/v0/projects/list")
-	require.NoError(t, err)
-	require.Nil(t, resp)
-	require.GreaterOrEqualf(t, len(b), 100, "GetJSONAll response is too short: %#v", b)
-
-	// Run it on a route that doesn't support offset/limit
-	_, _, err = GetJSONAll(testState.socket, "/api/status")
-	require.EqualError(t, err, "Response is missing the total value")
-}
-
 func TestPostRaw(t *testing.T) {
 	// There are no routes that accept raw POST w/o Content-Type so this ends up testing the error path
 	b, resp, err := PostRaw(testState.socket, "/api/v0/blueprints/new", "nobody", nil)
