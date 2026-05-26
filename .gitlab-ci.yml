@@ -314,6 +314,23 @@ aws_s3.sh:
   variables:
     SCRIPT: aws_s3.sh
 
+WorkerJournal:
+  stage: test
+  extends: .terraform
+  rules:
+    - !reference [.upstream_and_ga_rules_all, rules]
+  script:
+    - schutzbot/deploy.sh
+    - /usr/libexec/tests/osbuild-composer/worker-journal-failures.sh
+  variables:
+  parallel:
+    matrix:
+      - RUNNER:
+          - aws/rhel-9.8-ga-x86_64
+          - aws/rhel-9.8-ga-aarch64
+          - aws/rhel-10.2-ga-x86_64
+          - aws/rhel-10.2-ga-aarch64
+
 finish:
   stage: finish
   dependencies: []
