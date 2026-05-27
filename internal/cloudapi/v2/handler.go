@@ -1625,11 +1625,10 @@ func (h *apiHandlers) GetDistribution(ctx echo.Context, distroName string, param
 			partitionTable, err := imageType.BasePartitionTable()
 			if err != nil {
 				// Ignore errors about missing partition tables - still a valid image type
-				if errors.Is(err, defs.ErrNoPartitionTableForImgType) ||
-					errors.Is(err, defs.ErrNoPartitionTableForArch) {
-					continue
+				if !errors.Is(err, defs.ErrNoPartitionTableForImgType) &&
+					!errors.Is(err, defs.ErrNoPartitionTableForArch) {
+					return HTTPErrorWithInternal(ErrorGettingImageTypes, err)
 				}
-				return HTTPErrorWithInternal(ErrorGettingImageTypes, err)
 			}
 			if partitionTable != nil {
 				basePartTable, err = partitionTableToDisk(partitionTable)
