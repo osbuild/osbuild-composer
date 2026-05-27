@@ -24,7 +24,7 @@ fi
 
 if [ -n "$CI_COMMIT_BRANCH" ] && [ "$CI_COMMIT_BRANCH" == "main" ]; then
     # Schutzbot on main: build all except rhel
-    PACKER_ONLY_EXCEPT=--except=amazon-ebs.rhel-9-x86_64,amazon-ebs.rhel-9-aarch64
+    PACKER_ONLY_EXCEPT=--except=amazon-ebs.rhel-10-x86_64,amazon-ebs.rhel-10-aarch64
 else
     # Schutzbot but not main, build everything (use dummy except)
     PACKER_ONLY_EXCEPT=--except=amazon-ebs.dummy
