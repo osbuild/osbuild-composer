@@ -603,13 +603,6 @@ API-module-hotfixes:
           - aws
         RUNNER:
           - aws/rhel-8.10-ga-x86_64
-          - aws/rhel-8.10-ga-aarch64
-        INTERNAL_NETWORK: ["true"]
-        TEST_MODULE_HOTFIXES: [1]
-      - IMAGE_TYPE:
-          - vsphere
-        RUNNER:
-          - aws/rhel-8.10-ga-x86_64
         INTERNAL_NETWORK: ["true"]
         TEST_MODULE_HOTFIXES: [1]
 
