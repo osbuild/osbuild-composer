@@ -455,8 +455,8 @@ github.com/openshift-online/ocm-sdk-go v0.1.501 h1:7hSfgAb8uPXerMawv1OU50GCX2QQr
 github.com/openshift-online/ocm-sdk-go v0.1.501/go.mod h1:TfPLUn7T9KUoFS7UOoifHMSQ47owhzkkSHmRhK9Swbo=
 github.com/oracle/oci-go-sdk/v54 v54.0.0 h1:CDLjeSejv2aDpElAJrhKpi6zvT/zhZCZuXchUUZ+LS4=
 github.com/oracle/oci-go-sdk/v54 v54.0.0/go.mod h1:+t+yvcFGVp+3ZnztnyxqXfQDsMlq8U25faBLa+mqCMc=
-github.com/osbuild/blueprint v1.29.0 h1:ilXFgSgAg4nq8V0dCWK4hWg5umWckQJdu/cdtJpH4bY=
-github.com/osbuild/blueprint v1.29.0/go.mod h1:HPlJzkEl7q5g8hzaGksUk7ifFAy9QFw9LmzhuFOAVm4=
+github.com/osbuild/blueprint v1.30.0 h1:p8BpF4H5dJtvGCcvDaoyTzEdNVgVoJNh985ZyFKnJtk=
+github.com/osbuild/blueprint v1.30.0/go.mod h1:HPlJzkEl7q5g8hzaGksUk7ifFAy9QFw9LmzhuFOAVm4=
 github.com/osbuild/images v0.263.0 h1:i0snpZocSwXP60oa/PSVp47QkTfFEEdcoxdN4BcLBww=
 github.com/osbuild/images v0.263.0/go.mod h1:KbIq93dxz8WASGXEx1Mp2L1OjlpBKLru3UFSNvhAMYM=
 github.com/osbuild/osbuild-composer/pkg/splunk_logger v0.0.0-20240814102216-0239db53236d h1:r9BFPDv0uuA9k1947Jybcxs36c/pTywWS1gjeizvtcQ=
