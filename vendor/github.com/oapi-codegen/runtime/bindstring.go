@@ -49,6 +49,11 @@ type BindStringToObjectOptions struct {
 func BindStringToObjectWithOptions(src string, dst interface{}, opts BindStringToObjectOptions) error {
 	var err error
 
+	// Check if the destination implements Binder interface before any reflection
+	if binder, ok := dst.(Binder); ok {
+		return binder.Bind(src)
+	}
+
 	v := reflect.ValueOf(dst)
 	t := reflect.TypeOf(dst)
 
@@ -134,11 +139,6 @@ func BindStringToObjectWithOptions(src string, dst interface{}, opts BindStringT
 		}
 		fallthrough
 	case reflect.Struct:
-		// if this is not of type Time or of type Date look to see if this is of type Binder.
-		if dstType, ok := dst.(Binder); ok {
-			return dstType.Bind(src)
-		}
-
 		if t.ConvertibleTo(reflect.TypeOf(time.Time{})) {
 			// Don't fail on empty string.
 			if src == "" {
@@ -189,6 +189,21 @@ func BindStringToObjectWithOptions(src string, dst interface{}, opts BindStringT
 
 		// We fall through to the error case below if we haven't handled the
 		// destination type above.
+		fallthrough
+	case reflect.Map:
+		// A bool-keyed map (such as nullable.Nullable[T], which is
+		// map[bool]T) is treated as a nullable wrapper: bind src into a
+		// fresh value of the inner type and store it under map[true].
+		if t.Kind() == reflect.Map && t.Key().Kind() == reflect.Bool {
+			elemPtr := reflect.New(t.Elem())
+			if bindErr := BindStringToObjectWithOptions(src, elemPtr.Interface(), opts); bindErr != nil {
+				return bindErr
+			}
+			newMap := reflect.MakeMap(t)
+			newMap.SetMapIndex(reflect.ValueOf(true), elemPtr.Elem())
+			v.Set(newMap)
+			return nil
+		}
 		fallthrough
 	default:
 		// We've got a bunch of types unimplemented, don't fail silently.
