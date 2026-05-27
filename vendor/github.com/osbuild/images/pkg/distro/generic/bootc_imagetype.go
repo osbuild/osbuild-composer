@@ -101,6 +101,13 @@ func (t *bootcImageType) BootMode() platform.BootMode {
 		return platform.BOOT_UEFI
 	}
 
+	// Sealed images don't need a BIOSBOOT partition as they don't use bootupd
+	// (which requires it to exist), let's set ourselves to UEFI
+	bd := t.arch.distro.(*BootcDistro)
+	if bd.unifiedKernel {
+		return platform.BOOT_UEFI
+	}
+
 	return platform.BOOT_HYBRID
 }
 
@@ -210,6 +217,10 @@ func (t *bootcImageType) manifestForDisk(bp *blueprint.Blueprint, options distro
 	if opts := buildOptions(t); opts != nil {
 		img.BuildOptions = opts
 	}
+
+	img.Bootloader = bd.bootloader
+	img.UnifiedKernel = bd.unifiedKernel
+
 	img.OSCustomizations.Users = users.UsersFromBP(customizations.GetUsers())
 
 	groups, err := customizations.GetGroups()
@@ -779,6 +790,15 @@ func (t *bootcImageType) genPartitionTable(customizations *blueprint.Customizati
 
 	bd := t.arch.distro.(*BootcDistro)
 
+	// When there's a unified kernel we don't want to auto-create a /boot even *if* the
+	// root filesystem is btrfs or lvm. Set a policy that disables the creation. Otherwise
+	// the default partition table policy is used.
+	if bd.unifiedKernel {
+		basept.Policy = &disk.PartitionTablePolicy{
+			EnsureXBOOTLDR: false,
+		}
+	}
+
 	// Embedded disk customization applies if there was no local customization
 	if fsCust == nil && diskCust == nil && bd.sourceInfo != nil && bd.sourceInfo.ImageCustomization != nil {
 		imageCustomizations := bd.sourceInfo.ImageCustomization
@@ -848,7 +868,7 @@ func (t *bootcImageType) genPartitionTableDiskCust(basept *disk.PartitionTable, 
 		RequiredMinSizes: requiredMinSizes,
 		Architecture:     t.arch.arch,
 	}
-	return disk.NewCustomPartitionTable(diskCust, partOptions, rng)
+	return disk.NewCustomPartitionTable(diskCust, partOptions, nil, rng)
 }
 
 func (t *bootcImageType) genPartitionTableFsCust(basept *disk.PartitionTable, fsCust []blueprint.FilesystemCustomization, rootfsMinSize uint64, rng *rand.Rand) (*disk.PartitionTable, error) {

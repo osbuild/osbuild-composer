@@ -34,6 +34,7 @@ const (
 	DISTRO_EL8
 	DISTRO_EL7
 	DISTRO_FEDORA
+	DISTRO_ELN
 	_distro_count
 )
 
@@ -44,6 +45,7 @@ var distroNames = map[Distro]string{
 	DISTRO_EL8:    "rhel-8",
 	DISTRO_EL7:    "rhel-7",
 	DISTRO_FEDORA: "fedora",
+	DISTRO_ELN:    "eln",
 }
 
 func (d Distro) String() string {

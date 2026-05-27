@@ -24,6 +24,8 @@ type BootcDistro struct {
 	buildImageID    string
 	sourceInfo      *osinfo.Info
 	buildSourceInfo *osinfo.Info
+	unifiedKernel   bool
+	bootloader      *string
 
 	id            distro.ID
 	defaultFs     string
@@ -124,6 +126,8 @@ func NewBootc(name string, cinfo *bootc.Info) (*BootcDistro, error) {
 		defaultFs:       cinfo.DefaultRootFs,
 		releasever:      osInfo.OSRelease.VersionID,
 		rootfsMinSize:   cinfo.Size * containerSizeToDiskSizeMultiplier,
+		bootloader:      cinfo.Bootloader,
+		unifiedKernel:   cinfo.UnifiedKernel,
 	}
 
 	// load image types from bootc-generic-1

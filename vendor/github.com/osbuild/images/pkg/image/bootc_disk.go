@@ -21,6 +21,9 @@ type BootcDiskImage struct {
 	ContainerSource      *container.SourceSpec
 	BuildContainerSource *container.SourceSpec
 
+	Bootloader    *string
+	UnifiedKernel bool
+
 	// Customizations
 	OSCustomizations   manifest.OSCustomizations
 	DiskCustomizations manifest.DiskCustomizations
@@ -107,6 +110,8 @@ func (img *BootcDiskImage) InstantiateManifestFromContainers(m *manifest.Manifes
 	if customSourcePipeline != "" {
 		rawImage.SourcePipeline = customSourcePipeline
 	}
+	rawImage.Bootloader = img.Bootloader
+	rawImage.UnifiedKernel = img.UnifiedKernel
 	rawImage.PartitionTable = img.PartitionTable
 	rawImage.OSCustomizations = img.OSCustomizations
 	rawImage.DiskCustomizations = img.DiskCustomizations

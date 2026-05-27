@@ -24,4 +24,10 @@ type Info struct {
 
 	// The size of the container image
 	Size uint64
+
+	// Is the container using a unified kernel?
+	UnifiedKernel bool
+
+	// What bootloader should be passed?
+	Bootloader *string
 }

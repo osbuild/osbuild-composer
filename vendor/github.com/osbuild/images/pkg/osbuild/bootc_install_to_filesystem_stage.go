@@ -16,6 +16,10 @@ type BootcInstallToFilesystemOptions struct {
 
 	// option for --target-imgref
 	TargetImgref string `json:"target-imgref"`
+
+	Bootloader string `json:"bootloader,omitempty"`
+
+	ComposeFS *bool `json:"composefs,omitempty"`
 }
 
 func (BootcInstallToFilesystemOptions) isStageOptions() {}

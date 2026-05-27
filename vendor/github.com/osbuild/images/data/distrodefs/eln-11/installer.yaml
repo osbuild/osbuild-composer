@@ -1,0 +1,550 @@
+.common:
+  default_iso_config: &default_iso_config
+    rootfs_type: "squashfs"
+    conditions:
+      "x86_64 uses grub2":
+        when:
+          arch: "x86_64"
+        shallow_merge:
+          boot_type: "grub2"
+      "ppc64le uses grub2-ppc64le":
+        when:
+          arch: "ppc64le"
+        shallow_merge:
+          boot_type: "grub2-ppc64le"
+      "s390x uses s390-iso":
+        when:
+          arch: "s390x"
+        shallow_merge:
+          boot_type: "s390-iso"
+
+  default_installer_config: &default_installer_config
+    enabled_anaconda_modules:
+      - "org.fedoraproject.Anaconda.Modules.Network"
+      - "org.fedoraproject.Anaconda.Modules.Payloads"
+      - "org.fedoraproject.Anaconda.Modules.Runtime"
+      - "org.fedoraproject.Anaconda.Modules.Storage"
+    additional_dracut_modules:
+      - "nvdimm"  # non-volatile DIMM firmware (provides nfit, cuse, and nd_e820)
+      - "net-lib"
+    additional_drivers:
+      - "ipmi_devintf"
+      - "ipmi_msghandler"
+    default_menu: 1
+    lorax_template_package: lorax-templates-rhel
+    lorax_templates:
+      - path: 80-rhel/runtime-postinstall.tmpl
+      - path: 80-rhel/runtime-cleanup.tmpl
+        after_dracut: true
+    lorax_logos_package: redhat-logos
+    lorax_release_package: redhat-release
+    install_weak_deps: true
+
+  anaconda_boot_pkgset: &anaconda_boot_pkgset
+    conditions:
+      "x86 specific packages for the anaconda boot pkgset":
+        when:
+          arch: "x86_64"
+        append:
+          include:
+            # eficommon
+            - "efibootmgr"
+            # XXX: de-dup?
+            # grub-common
+            - "grub2-tools"
+            - "grub2-tools-extra"
+            - "grub2-tools-minimal"
+            # arch specific
+            - "grub2-efi-x64"
+            - "grub2-efi-x64-cdboot"
+            - "grub2-pc"
+            - "grub2-pc-modules"
+            - "shim-x64"
+            - "syslinux"
+            - "syslinux-nonlinux"
+      "aarch64 specific packages for the anaconda boot pkgset":
+        when:
+          arch: "aarch64"
+        append:
+          include:
+            # eficommon
+            - "efibootmgr"
+            # XXX: de-dup?
+            # grub-common
+            - "grub2-tools"
+            - "grub2-tools-extra"
+            - "grub2-tools-minimal"
+            # arch specific
+            - "grub2-efi-aa64-cdboot"
+            - "grub2-efi-aa64"
+            - "shim-aa64"
+
+  installer_pkgset: &installer_pkgset
+    include:
+      - "anaconda-dracut"
+      - "curl"
+      - "dracut-config-generic"
+      - "dracut-network"
+      - "hostname"
+      - "iwlegacy-firmware"
+      - "iwlwifi-dvm-firmware"
+      - "iwlwifi-mvm-firmware"
+      - "kernel"
+      - "less"
+      - "nfs-utils"
+      - "openssh-clients"
+      - "ostree"
+      - "plymouth"
+      - "prefixdevname"
+      - "rng-tools"
+      - "rpcbind"
+      - "selinux-policy-targeted"
+      - "systemd"
+      - "tar"
+      - "xfsprogs"
+      - "xz"
+      # Extra packages that are required by the dracut stage of all installers.
+      # These are weak deps of other packages in the list above, but lets be
+      # explicit about what we need and not rely on the weak deps. Relying
+      # on hard-dependencies for other modules is OK for now.
+      #
+      # TODO: add these dynamically based on the modules enabled by each
+      # pipeline.
+      - "mdadm"
+      - "nss-softokn"
+
+image_types:
+  "network-installer":
+    filename: "netinst.iso"
+    mime_type: "application/x-iso9660-image"
+    bootable: true
+    boot_iso: true
+    image_func: "network-installer"
+    # We don't know the variant of the OS pipeline being installed
+    iso_label: "Unknown"
+    exports: ["bootiso"]
+    required_partition_sizes: *default_required_dir_sizes
+    installer_config: *default_installer_config
+    iso_config: *default_iso_config
+    image_config:
+      locale: "en_US.UTF-8"
+    platforms:
+      - *x86_64_installer_platform
+      - *aarch64_installer_platform
+      - *ppc64le_installer_platform
+      - *s390x_installer_platform
+    platforms_override:
+      conditions:
+        "RHEL 10.1+ adds FIPS menu":
+          when:
+            version_greater_or_equal: "10.1"
+          override:
+            - <<: *x86_64_installer_platform
+              fips_menu: true
+            - <<: *aarch64_installer_platform
+              fips_menu: true
+            - <<: *ppc64le_installer_platform
+              fips_menu: true
+            # s390x iso has no boot menu
+            - <<: *s390x_installer_platform
+    package_sets:
+      installer:
+        - include:
+            - "anaconda"
+            - "anaconda-widgets"
+            - "kdump-anaconda-addon"
+            - "anaconda-install-img-deps"
+            # - "redhat-release-eula"
+            - "device-mapper-multipath"
+            - "dnf"
+            - "rpm-ostree"
+            - "ostree"
+            - "pigz"
+            - "kernel"
+            - "kernel-modules"
+            - "kernel-modules-extra"
+            - "grubby"
+            - "glibc-all-langpacks"
+            - "plymouth"
+            - "anaconda-dracut"
+            - "dracut-network"
+            - "dracut-config-generic"
+            - "initscripts"
+            - "cryptsetup"
+            - "rpcbind"
+            - "kbd"
+            - "kbd-misc"
+            - "tar"
+            - "xz"
+            - "curl"
+            - "bzip2"
+            - "rsvg-pixbuf-loader"
+            - "rsyslog"
+            - "xfsprogs"
+            - "dosfstools"
+            - "device-mapper-persistent-data"
+            - "xfsdump"
+            - "udisks2"
+            - "udisks2-iscsi"
+            - "hostname"
+            - "libblockdev-lvm-dbus"
+            - "volume_key"
+            - "nss-tools"
+            - "selinux-policy-targeted"
+            - "audit"
+            - "ethtool"
+            - "openssh-server"
+            - "nfs-utils"
+            - "openssh-clients"
+            - "net-tools"
+            - "ipcalc"
+            - "nmap-ncat"
+            - "prefixdevname"
+            - "pciutils"
+            - "usbutils"
+            - "ipmitool"
+            - "mt-st"
+            - "smartmontools"
+            - "hdparm"
+            - "rdma-core"
+            - "rng-tools"
+            - "nvme-cli"
+            - "default-fonts-core-sans"
+            - "default-fonts-other-sans"
+            - "google-noto-sans-cjk-fonts"
+            - "gdb-gdbserver"
+            - "python3-pyatspi"
+            - "nano"
+            - "vim-minimal"
+            - "strace"
+            - "lsof"
+            - "xz"
+            - "less"
+            - "wget"
+            - "rsync"
+            - "bind-utils"
+            # - "ftp"
+            - "mtr"
+            - "spice-vdagent"
+            - "hexedit"
+            - "sg3_utils"
+            - "perl-interpreter"
+            - "restore"
+    blueprint:
+      supported_options:
+        - "distro"
+        - "customizations.fips"
+        - "customizations.locale"
+
+  "image-installer":
+    filename: "installer.iso"
+    mime_type: "application/x-iso9660-image"
+    bootable: true
+    boot_iso: true
+    image_func: "image_installer"
+    # We don't know the variant of the OS pipeline being installed
+    iso_label: "Unknown"
+    exports: ["bootiso"]
+    required_partition_sizes: *default_required_dir_sizes
+    installer_config: *default_installer_config
+    iso_config: *default_iso_config
+    platforms:
+      - *x86_64_installer_platform
+      - *aarch64_platform
+    platforms_override:
+      conditions:
+        "RHEL 10.1+ adds FIPS menu":
+          when:
+            version_greater_or_equal: "10.1"
+          override:
+            - <<: *x86_64_installer_platform
+              fips_menu: true
+            - <<: *aarch64_platform
+              fips_menu: true
+    package_sets:
+      os:
+        - *distro_build_pkgset
+        - include:
+            - "@core"
+            - "chrony"
+            - "cockpit-system"
+            - "cockpit-ws"
+            - "dnf5-plugins"
+            - "dosfstools"
+            - "firewalld"
+            - "iwlegacy-firmware"
+            - "iwlwifi-dvm-firmware"
+            - "iwlwifi-mvm-firmware"
+            - "lvm2"
+            - "net-tools"
+            - "nfs-utils"
+            - "oddjob"
+            - "oddjob-mkhomedir"
+            - "policycoreutils"
+            - "psmisc"
+            - "python3-jsonschema"
+            - "qemu-guest-agent"
+            - "redhat-release"
+            # - "redhat-release-eula"
+            - "rsync"
+            - "tar"
+            - "tcpdump"
+            - "tuned"
+          exclude:
+            - "dracut-config-rescue"
+          conditions:
+            "add subscription-manager-cockpit on rhel":
+              when:
+                distro_name: "rhel"
+              append:
+                include:
+                  - "subscription-manager-cockpit"
+
+      installer:
+        - *installer_pkgset
+        - *anaconda_boot_pkgset
+        - include:
+            - "@hardware-support"
+            - "alsa-firmware"
+            - "alsa-tools-firmware"
+            - "anaconda"
+            - "anaconda-dracut"
+            - "anaconda-install-img-deps"
+            - "anaconda-widgets"
+            - "audit"
+            - "bind-utils"
+            - "bzip2"
+            - "cryptsetup"
+            - "curl"
+            - "dbus-x11"
+            - "default-fonts-core-sans"
+            - "default-fonts-other-sans"
+            - "dejavu-sans-fonts"
+            - "dejavu-sans-mono-fonts"
+            - "device-mapper-persistent-data"
+            - "dmidecode"
+            - "dnf"
+            - "dracut-config-generic"
+            - "dracut-network"
+            - "efibootmgr"
+            - "ethtool"
+            - "fcoe-utils"
+            # - "ftp"
+            - "gdb-gdbserver"
+            - "glibc-all-langpacks"
+            - "gnome-kiosk"
+            - "google-noto-sans-cjk-ttc-fonts"
+            - "grub2-tools"
+            - "grub2-tools-extra"
+            - "grub2-tools-minimal"
+            - "grubby"
+            - "gsettings-desktop-schemas"
+            - "hdparm"
+            - "hexedit"
+            - "hostname"
+            - "initscripts"
+            - "ipmitool"
+            - "iwlegacy-firmware"
+            - "iwlwifi-dvm-firmware"
+            - "iwlwifi-mvm-firmware"
+            - "jomolhari-fonts"
+            - "kbd"
+            - "kbd-misc"
+            - "kdump-anaconda-addon"
+            - "kernel"
+            - "less"
+            - "libblockdev-lvm-dbus"
+            - "libibverbs"
+            - "librsvg2"
+            - "linux-firmware"
+            - "lldpad"
+            - "lsof"
+            - "madan-fonts"
+            - "mtr"
+            - "mt-st"
+            - "net-tools"
+            - "nfs-utils"
+            - "nmap-ncat"
+            - "nm-connection-editor"
+            - "nss-tools"
+            - "openssh-clients"
+            - "openssh-server"
+            # the package is not yet available on c10s / el10
+            # "oscap-anaconda-addon"
+            - "ostree"
+            - "pciutils"
+            - "perl-interpreter"
+            - "pigz"
+            - "plymouth"
+            - "prefixdevname"
+            - "python3-pyatspi"
+            - "rdma-core"
+            # - "redhat-release-eula"
+            - "rng-tools"
+            - "rpcbind"
+            - "rpm-ostree"
+            - "rsync"
+            - "rsyslog"
+            - "selinux-policy-targeted"
+            - "sg3_utils"
+            - "sil-padauk-fonts"
+            - "smartmontools"
+            - "spice-vdagent"
+            - "strace"
+            - "systemd"
+            - "tar"
+            - "udisks2"
+            - "udisks2-iscsi"
+            - "usbutils"
+            - "vim-minimal"
+            - "volume_key"
+            - "wget"
+            - "xfsdump"
+            - "xfsprogs"
+            - "xz"
+          conditions:
+            "x86_64 specific pkgs for image installer":
+              when:
+                arch: "x86_64"
+              append:
+                include:
+                  - "biosdevname"
+                  - "dmidecode"
+                  - "grub2-tools-efi"
+                  - "memtest86+"
+            "aarch64 specific pkgs for image installer":
+              when:
+                arch: "aarch64"
+              append:
+                include:
+                  - "dmidecode"
+    blueprint:
+      supported_options:
+        - "distro"
+        - "packages"
+        - "modules"
+        - "groups"
+        - "enabled_modules"
+        - "containers"
+        - "customizations.installer"
+        - "customizations.cacerts"
+        - "customizations.dnf"
+        - "customizations.directories"
+        - "customizations.files"
+        - "customizations.firewall"
+        - "customizations.user"
+        - "customizations.sshkey"
+        - "customizations.group"
+        - "customizations.fips"
+        - "customizations.timezone"
+        - "customizations.hostname"
+        - "customizations.kernel.name"
+        - "customizations.locale"
+        - "customizations.openscap"
+        - "customizations.repositories"
+        - "customizations.rpm"
+        - "customizations.services"
+        - "customizations.rhsm"
+        - "customizations.kernel.append"
+
+  "bootc-rpm-installer":
+    # Note that this image type is partial and only used by
+    # bootc-image-builder not by the "images" library directly. We
+    # still keep the config here so that there is a single place for
+    # all imagetype configs.
+    installer_config: *default_installer_config
+    iso_config: *default_iso_config
+    package_sets:
+      installer:
+        - include:
+            - "@hardware-support"
+            - alsa-firmware
+            - alsa-tools-firmware
+            - anaconda
+            - anaconda-dracut
+            - anaconda-install-img-deps
+            - anaconda-widgets
+            - audit
+            - bind-utils
+            - bzip2
+            - cryptsetup
+            - curl
+            - dbus-x11
+            - dejavu-sans-fonts
+            - dejavu-sans-mono-fonts
+            - device-mapper-persistent-data
+            - dmidecode
+            - dnf
+            - dracut-config-generic
+            - dracut-network
+            - efibootmgr
+            - ethtool
+            - fcoe-utils
+            # - ftp
+            - gdb-gdbserver
+            - glibc-all-langpacks
+            - gnome-kiosk
+            - google-noto-sans-cjk-ttc-fonts
+            - grub2-tools
+            - grub2-tools-extra
+            - grub2-tools-minimal
+            - grubby
+            - gsettings-desktop-schemas
+            - hdparm
+            - hexedit
+            - hostname
+            - initscripts
+            - ipmitool
+            - jomolhari-fonts
+            - kbd
+            - kbd-misc
+            - kdump-anaconda-addon
+            - kernel
+            - less
+            - libblockdev-lvm-dbus
+            - libibverbs
+            - librsvg2
+            - linux-firmware
+            - lldpad
+            - lsof
+            - madan-fonts
+            - mt-st
+            - mtr
+            - net-tools
+            - nfs-utils
+            - nm-connection-editor
+            - nmap-ncat
+            - nss-tools
+            - openssh-clients
+            - openssh-server
+            - ostree
+            - pciutils
+            - perl-interpreter
+            - pigz
+            - plymouth
+            - prefixdevname
+            - python3-pyatspi
+            - rdma-core
+            - rng-tools
+            - rpcbind
+            - rpm-ostree
+            - rsync
+            - rsyslog
+            - selinux-policy-targeted
+            - sg3_utils
+            - sil-padauk-fonts
+            - smartmontools
+            - spice-vdagent
+            - strace
+            - systemd
+            - tar
+            - udisks2
+            - udisks2-iscsi
+            - usbutils
+            - vim-minimal
+            - volume_key
+            - wget
+            - xfsdump
+            - xfsprogs
+            - xrdb
+            - xz

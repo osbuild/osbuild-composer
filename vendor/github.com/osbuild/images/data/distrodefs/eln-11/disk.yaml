@@ -1,0 +1,657 @@
+image_types:
+  qcow2: &qcow2
+    name_aliases: ["guest-image"]
+    filename: "disk.qcow2"
+    mime_type: "application/x-qemu-disk"
+    # note that unlike fedora rhel does not use the environment.KVM
+    # for unknown reasons
+    bootable: true
+    default_size: "10 GiB"
+    image_func: "disk"
+    exports: ["qcow2"]
+    required_partition_sizes: *default_required_dir_sizes
+    platforms:
+      - <<: *x86_64_bios_platform
+        image_format: "qcow2"
+      - <<: *aarch64_platform
+        image_format: "qcow2"
+      - <<: *ppc64le_bios_platform
+        image_format: "qcow2"
+      - <<: *s390x_zipl_platform
+        image_format: "qcow2"
+    image_config: &qcow2_image_config
+      default_target: "multi-user.target"
+      kernel_options: ["console=tty0", "console=ttyS0,115200n8"]
+      conditions:
+        "tweak the rhsm config on rhel":
+          when:
+            distro_name: "rhel"
+          shallow_merge:
+            rhsm_config:
+              "no-subscription":
+                dnf_plugin:
+                  product_id:
+                    enabled: false
+                  subscription_manager:
+                    enabled: false
+    partition_table:
+      <<: *default_partition_tables
+    package_sets:
+      os:
+        - include:
+            - "@core"
+            - "chrony"
+            - "cloud-init"
+            - "cloud-utils-growpart"
+            - "cockpit-system"
+            - "cockpit-ws"
+            - "dnf5-plugins"
+            - "dosfstools"
+            - "nfs-utils"
+            - "oddjob"
+            - "oddjob-mkhomedir"
+            - "psmisc"
+            - "python3-jsonschema"
+            - "qemu-guest-agent"
+            - "redhat-release"
+            # - "redhat-release-eula"
+            - "rsync"
+            - "system-reinstall-bootc"
+            - "tar"
+            - "tuned"
+            - "tcpdump"
+          exclude:
+            - "aic94xx-firmware"
+            - "alsa-firmware"
+            - "alsa-lib"
+            - "alsa-tools-firmware"
+            - "biosdevname"
+            - "dnf-plugin-spacewalk"
+            - "dracut-config-rescue"
+            - "fedora-release"
+            - "fedora-repos"
+            - "firewalld"
+            - "iprutils"
+            - "ivtv-firmware"
+            - "iwlegacy-firmware"
+            - "iwlwifi-dvm-firmware"
+            - "iwlwifi-mvm-firmware"
+            - "langpacks-*"
+            - "langpacks-en"
+            - "libertas-sd8787-firmware"
+            - "plymouth"
+            - "rng-tools"
+            - "udisks2"
+          conditions:
+            "add insights pkgs on rhel":
+              when:
+                distro_name: "rhel"
+              append:
+                include:
+                  - "insights-client"
+                  - "subscription-manager-cockpit"
+    blueprint:
+      supported_options: *supported_options_disk
+
+  "vagrant-libvirt": &vagrant_libvirt
+    <<: *qcow2
+    # we have to reset the aliases otherwise this type
+    # will inherit the name aliases causing a conflict
+    name_aliases: []
+    filename: "vagrant-libvirt.box"
+    mime_type: "application/x-tar"
+    bootable: true
+    default_size: "10 GiB"
+    image_func: "disk"
+    exports: ["archive"]
+    required_partition_sizes: *default_required_dir_sizes
+    platforms:
+      - <<: *x86_64_bios_platform
+        image_format: "vagrant_libvirt"
+      - <<: *aarch64_platform
+        image_format: "vagrant_libvirt"
+    image_config:
+      <<: *qcow2_image_config
+      users:
+        - name: "vagrant"
+          # yamllint disable rule:line-length
+          key: |
+            ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA6NF8iallvQVp22WDkTkyrtvp9eWW6A8YVr+kz4TjGYe7gHzIw+niNltGEFHzD8+v1I2YJ6oXevct1YeS0o9HZyN1Q9qgCgzUFtdOKLv6IedplqoPkcmF0aYet2PkEDo3MlTBckFXPITAMzF8dJSIFo9D8HfdOV0IAdx4O7PtixWKn5y2hMNG0zQPyUecp4pzC6kivAIhyfHilFR61RGL+GPXQ2MWZWFYbAGjyiYJnAmCP3NOTd0jMZEnDkbUvxhMmBYSdETk1rRgm+R4LOzFUGaHqHDLKLX+FIPKcF96hrucXzcWyLbIbEgE98OHlnVYCzRdK8jlqm8tehUc9c9WhQ== vagrant insecure public key
+            ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIN1YdxBpNlzxDqfJyw/QKow1F+wvG9hXGoqiysfJOn5Y vagrant insecure public key
+          # yamllint enable rule:line-length
+      files:
+        - path: "/etc/sudoers.d/vagrant"
+          user: "root"
+          group: "root"
+          mode: 440
+          data: |
+            vagrant ALL=(ALL) NOPASSWD: ALL
+
+  "vagrant-virtualbox":
+    <<: *vagrant_libvirt
+    filename: "vagrant-virtualbox.box"
+    platforms:
+      - <<: *x86_64_bios_platform
+        image_format: "vagrant_virtualbox"
+    blueprint:
+      supported_options: *supported_options_disk
+
+  oci:
+    <<: *qcow2
+    # we have to reset the aliases otherwise this type
+    # will inherit the name aliases causing a conflict
+    name_aliases: []
+    platforms:
+      - <<: *x86_64_bios_platform
+        image_format: "qcow2"
+    image_config:
+      <<: *qcow2_image_config
+      kernel_options:
+        - "console=tty0"
+        - "console=ttyS0,115200n8"
+        - "netroot=iscsi"
+        - "rd.iscsi.firmware=1"
+      cloud_init:
+        - filename: "00-rhel-default-user.cfg"
+          config:
+            system_info:
+              default_user:
+                name: "opc"
+    blueprint:
+      supported_options: *supported_options_disk
+
+  vhd: &vhd
+    <<: *qcow2
+    # we have to reset the aliases otherwise this type
+    # will inherit the name aliases causing a conflict
+    name_aliases: []
+    filename: "disk.vhd"
+    mime_type: "application/x-vhd"
+    default_size: "4 GiB"
+    exports: ["vpc"]
+    # note that unlike fedora no "environment.Azure" is used here for
+    # unknown reasons
+    platforms:
+      - <<: *x86_64_bios_platform
+        image_format: "vhd"
+      - <<: *aarch64_platform
+        image_format: "vhd"
+    # based on https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/9/html/deploying_rhel_9_on_microsoft_azure/assembly_deploying-a-rhel-image-as-a-virtual-machine-on-microsoft-azure_cloud-content-azure#making-configuration-changes_configure-the-image-azure
+    image_config: &image_config_vhd
+      <<: *azure_image_config_base
+      time_synchronization:
+        refclocks:
+          - driver:
+              name: "PHC"
+              path: "/dev/ptp_hyperv"
+            poll: 3
+            dpoll: -2
+            offset: 0.0
+      cloud_init:
+        - filename: "10-azure-kvp.cfg"
+          config:
+            reporting:
+              logging:
+                type: "log"
+              telemetry:
+                type: "hyperv"
+        - filename: "91-azure_datasource.cfg"
+          config:
+            datasource:
+              azure:
+                apply_network_config: false
+            datasource_list:
+              - "Azure"
+    partition_table:
+      <<: *default_partition_tables
+    package_sets:
+      os:
+        - *azure_base_pkgset
+    blueprint:
+      supported_options: *supported_options_disk
+
+  "azure": &azure
+    <<: *vhd
+    exports: ["xz"]
+    compression: "xz"
+    filename: "disk.vhd.xz"
+    partition_table:
+      x86_64:
+        type: "gpt"
+        size: "64 GiB"
+        partitions:
+          - &azure_rhui_part_boot_efi
+            size: "500 MiB"
+            type: *efi_system_partition_guid
+            payload_type: "filesystem"
+            payload:
+              type: "vfat"
+              mountpoint: "/boot/efi"
+              fstab_options: "defaults,uid=0,gid=0,umask=077,shortname=winnt"
+              fstab_freq: 0
+              fstab_passno: 2
+          # NB: we currently don't support /boot on LVM
+          - &azure_rhui_part_boot
+            size: "1 GiB"
+            type: *filesystem_data_guid
+            payload_type: "filesystem"
+            payload:
+              type: "xfs"
+              mountpoint: "/boot"
+              fstab_options: "defaults"
+              fstab_freq: 0
+              fstab_passno: 0
+          - size: "2 MiB"
+            bootable: true
+            type: *bios_boot_partition_guid
+          - &azure_rhui_part_lvm
+            type: *lvm_partition_guid
+            payload_type: "lvm"
+            payload:
+              name: "rootvg"
+              description: "built with lvm2 and osbuild"
+              logical_volumes:
+                - size: "1 GiB"
+                  name: "homelv"
+                  payload_type: "filesystem"
+                  payload:
+                    type: "xfs"
+                    label: "home"
+                    mountpoint: "/home"
+                    fstab_options: "defaults"
+                - size: "2 GiB"
+                  name: "rootlv"
+                  payload_type: "filesystem"
+                  payload:
+                    type: "xfs"
+                    label: "root"
+                    mountpoint: "/"
+                    fstab_options: "defaults"
+                - size: "2 GiB"
+                  name: "tmplv"
+                  payload_type: "filesystem"
+                  payload:
+                    type: "xfs"
+                    label: "tmp"
+                    mountpoint: "/tmp"
+                    fstab_options: "defaults"
+                - size: "10 GiB"
+                  name: "usrlv"
+                  payload_type: "filesystem"
+                  payload:
+                    type: "xfs"
+                    label: "usr"
+                    mountpoint: "/usr"
+                    fstab_options: "defaults"
+                - size: "10 GiB"
+                  name: "varlv"
+                  payload_type: "filesystem"
+                  payload:
+                    type: "xfs"
+                    label: "var"
+                    mountpoint: "/var"
+                    fstab_options: "defaults"
+      aarch64:
+        type: "gpt"
+        size: "64 GiB"
+        partitions:
+          - *azure_rhui_part_boot_efi
+          # NB: we currently don't support /boot on LVM
+          - *azure_rhui_part_boot
+          - *azure_rhui_part_lvm
+    blueprint:
+      supported_options: *supported_options_disk
+
+  vmdk: &vmdk
+    name_aliases: ["vshpere"]
+    filename: "disk.vmdk"
+    mime_type: "application/x-vmdk"
+    bootable: true
+    default_size: "4 GiB"
+    image_func: "disk"
+    exports: ["vmdk"]
+    required_partition_sizes: *default_required_dir_sizes
+    platforms:
+      - <<: *x86_64_bios_platform
+        image_format: "vmdk"
+    image_config:
+      kernel_options:
+        - "ro"
+    partition_table:
+      <<: *default_partition_tables
+    package_sets:
+      os:
+        - include:
+            - "@core"
+            - "chrony"
+            - "cloud-init"
+            - "firewalld"
+            - "langpacks-en"
+            - "open-vm-tools"
+            - "tuned"
+          exclude:
+            - "dracut-config-rescue"
+            - "rng-tools"
+    blueprint:
+      supported_options: *supported_options_disk
+
+  ova:
+    <<: *vmdk
+    name_aliases: ["vsphere-ova"]
+    filename: "image.ova"
+    mime_type: "application/ovf"
+    exports: ["archive"]
+    platforms:
+      - <<: *x86_64_bios_platform
+        image_format: "ova"
+    blueprint:
+      supported_options: *supported_options_disk
+
+  ami: &ami
+    name_aliases: ['aws']
+    filename: "image.raw"
+    mime_type: "application/octet-stream"
+    image_func: "disk"
+    exports: ["image"]
+    bootable: true
+    default_size: "10 GiB"
+    required_partition_sizes: *default_required_dir_sizes
+    platforms:
+      - <<: *x86_64_bios_platform
+        image_format: "raw"
+      - <<: *aarch64_platform
+        image_format: "raw"
+    image_config: &ami_image_config
+      time_synchronization:
+        servers:
+          - hostname: "169.254.169.123"
+            prefer: true
+            iburst: true
+            minpoll: 4
+            maxpoll: 4
+        # empty string will remove any occurrences of the option
+        # from the configuration
+        leapsectz: ""
+      keyboard:
+        keymap: "us"
+        "x11-keymap":
+          layouts: ["us"]
+      enabled_services:
+        - "sshd"
+        - "NetworkManager"
+        - "nm-cloud-setup.service"
+        - "nm-cloud-setup.timer"
+        - "cloud-init-network"
+        - "cloud-config"
+        - "cloud-final"
+        - "cloud-init-local"
+        - "reboot.target"
+        - "tuned"
+      default_target: "multi-user.target"
+      update_default_kernel: true
+      default_kernel: "kernel"
+      sysconfig:
+        networking: true
+        no_zero_conf: true
+      systemd_logind:
+        - filename: "00-getty-fixes.conf"
+          config:
+            login:
+              nautovts: 0
+      cloud_init:
+        - filename: "00-rhel-default-user.cfg"
+          config:
+            system_info:
+              default_user:
+                name: "ec2-user"
+      modprobe:
+        - filename: "blacklist-nouveau.conf"
+          commands:
+            - command: blacklist
+              modulename: "nouveau"
+        - filename: "blacklist-amdgpu.conf"
+          commands:
+            - command: blacklist
+              modulename: "amdgpu"
+        # https://issues.redhat.com/browse/RHEL-71926
+        - filename: "blacklist-i2c_piix4.conf"
+          commands:
+            - command: blacklist
+              modulename: "i2c_piix4"
+      systemd_dropin:
+        # RHBZ#1822863
+        - unit: "nm-cloud-setup.service"
+          dropin: "10-rh-enable-for-ec2.conf"
+          config:
+            service:
+              environment:
+                - key: "NM_CLOUD_SETUP_EC2"
+                  value: "yes"
+      sshd_config:
+        config:
+          PasswordAuthentication: false
+      kernel_options:
+        - "console=tty0"
+        - "console=ttyS0,115200n8"
+        - "nvme_core.io_timeout=4294967295"
+      conditions: &ami_image_config_cond
+        "we need dracut conf with nvme/xen on x86":
+          when:
+            arch: "x86_64"
+          shallow_merge:
+            dracut_conf:
+              - filename: "ec2.conf"
+                config:
+                  add_drivers:
+                    - "nvme"
+                    - "xen-blkfront"
+    partition_table:
+      <<: *default_partition_tables
+    package_sets:
+      os:
+        - &ami_pkgset
+          include:
+            - "@core"
+            - "chrony"
+            - "cloud-init"
+            - "cloud-utils-growpart"
+            - "dhcpcd"
+            - "dnf5-plugins"
+            - "dracut-config-generic"
+            - "kdump-utils"
+            - "langpacks-en"
+            - "NetworkManager-cloud-setup"
+            - "redhat-release"
+            # - "redhat-release-eula"
+            - "rsync"
+            - "system-reinstall-bootc"
+            - "tuned"
+            - "tar"
+          exclude:
+            - "aic94xx-firmware"
+            - "alsa-firmware"
+            - "alsa-tools-firmware"
+            - "biosdevname"
+            - "firewalld"
+            - "iprutils"
+            - "ivtv-firmware"
+            - "iwlegacy-firmware"
+            - "iwlwifi-dvm-firmware"
+            - "iwlwifi-mvm-firmware"
+            - "libertas-sd8686-firmware"
+            - "libertas-sd8787-firmware"
+            - "libertas-usb8388-firmware"
+            - "plymouth"
+            # RHBZ#2064087
+            - "dracut-config-rescue"
+            # RHBZ#2075815
+            - "qemu-guest-agent"
+          conditions:
+            "add insights client on rhel":
+              when:
+                distro_name: "rhel"
+              append:
+                include:
+                  - "insights-client"
+    blueprint:
+      supported_options: *supported_options_disk
+
+  # RHEL internal-only x86_64 EC2 image type
+  ec2: &ec2
+    <<: *ami
+    # we have to reset the aliases otherwise this type
+    # will inherit the name aliases causing a conflict
+    name_aliases: []
+    exports: ["xz"]
+    filename: "image.raw.xz"
+    compression: "xz"
+    blueprint:
+      supported_options: *supported_options_disk
+
+  gce:
+    # this image type is set to `gcp` in image-builder-crc
+    # & `osbuild-composer`, so set the alias here
+    name_aliases: ["gcp"]
+    filename: "image.tar.gz"
+    mime_type: "application/gzip"
+    image_func: "disk"
+    exports: ["archive"]
+    bootable: true
+    default_size: "20 GiB"
+    required_partition_sizes: *default_required_dir_sizes
+    platforms:
+      - <<: *x86_64_uefi_platform
+        image_format: "gce"
+    image_config:
+      kernel_options: ["biosdevname=0", "scsi_mod.use_blk_mq=Y", "console=ttyS0,38400n8d"]
+      time_synchronization:
+        servers:
+          - hostname: "metadata.google.internal"
+      firewall:
+        default_zone: "trusted"
+      enabled_services:
+        - "sshd"
+        - "rngd"
+        - "dnf-automatic.timer"
+      disabled_services:
+        - "sshd-keygen@"
+        - "reboot.target"
+      default_target: "multi-user.target"
+      keyboard:
+        keymap: "us"
+      dnf_config:
+        options:
+          config:
+            main:
+              ipresolve: "4"
+      dnf_automatic_config:
+        config:
+          commands:
+            apply_updates: true
+            upgrade_type: "security"
+      yum_repos:
+        - filename: "google-cloud.repo"
+          repos:
+            - id: "google-compute-engine"
+              name: "Google Compute Engine"
+              baseurl:
+                - "https://packages.cloud.google.com/yum/repos/google-compute-engine-el10-x86-64-stable"
+              enabled: true
+              gpgcheck: true
+              repo_gpgcheck: false
+              gpgkey:
+                - "https://packages.cloud.google.com/yum/doc/rpm-package-key-v10.gpg"
+      sshd_config:
+        config:
+          PasswordAuthentication: false
+          ClientAliveInterval: 420
+          PermitRootLogin: false
+      update_default_kernel: true
+      default_kernel: "kernel-core"
+      # XXX: ensure the "old" behavior is preserved (that is
+      # likely a bug) where for GCE the sysconfig network
+      # options are not set because the merge of imageConfig
+      # is shallow and the previous setup was changing the
+      # kernel without also changing the network options.
+      sysconfig: {}
+      modprobe:
+        - filename: "blacklist-floppy.conf"
+          commands:
+            - command: blacklist
+              modulename: "floppy"
+      gcp_guest_agent_config:
+        config_scope: "distro"
+        config:
+          "InstanceSetup":
+            set_boto_config: false
+    partition_table:
+      # TODO: the base partition table still contains the BIOS boot
+      # partition, but the image is UEFI-only
+      <<: *default_partition_tables
+    package_sets:
+      os:
+        - include:
+            - "@core"
+            - "langpacks-en"  # not in Google's KS
+            - "acpid"
+            - "dnf-automatic"
+            - "net-tools"
+            - "python3"
+            - "rng-tools"
+            - "tar"
+            - "vim"
+            # GCE guest tools
+            # - "google-compute-engine"
+            # - "google-osconfig-agent"
+            # - "gce-disk-expand"
+            # Not explicitly included in GCP kickstart, but present on the image
+            # for time synchronization
+            - "chrony"
+            # - "timedatex"
+            # EFI
+            - "grub2-tools"
+            - "grub2-tools-minimal"
+            # Performance tuning
+            - "tuned"
+          exclude:
+            - "alsa-utils"
+            - "b43-fwcutter"
+            - "dmraid"
+            - "dracut-config-rescue"
+            - "eject"
+            - "gpm"
+            - "irqbalance"
+            - "microcode_ctl"
+            - "smartmontools"
+            - "aic94xx-firmware"
+            - "atmel-firmware"
+            - "b43-openfwwf"
+            - "bfa-firmware"
+            - "ipw2100-firmware"
+            - "ipw2200-firmware"
+            - "ivtv-firmware"
+            - "iwlegacy-firmware"
+            - "iwlwifi-dvm-firmware"
+            - "iwlwifi-mvm-firmware"
+            - "kernel-firmware"
+            - "libertas-usb8388-firmware"
+            - "ql2100-firmware"
+            - "ql2200-firmware"
+            - "ql23xx-firmware"
+            - "ql2400-firmware"
+            - "ql2500-firmware"
+            - "rt61pci-firmware"
+            - "rt73usb-firmware"
+            - "xorg-x11-drv-ati-firmware"
+            - "zd1211-firmware"
+            # RHBZ#2075815
+            - "qemu-guest-agent"
+          conditions:
+            "add insights client on rhel":
+              when:
+                distro_name: "rhel"
+              append:
+                include:
+                  - "insights-client"
+    blueprint:
+      supported_options: *supported_options_disk
