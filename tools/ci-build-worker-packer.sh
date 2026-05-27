@@ -17,18 +17,10 @@ if [ -n "$CI_COMMIT_BRANCH" ]; then
     COMMIT_BRANCH="$CI_COMMIT_BRANCH"
 fi
 
-# skip creating AMIs on PRs to save a ton of resources
-if [[ $COMMIT_BRANCH == PR-* ]]; then
-    SKIP_CREATE_AMI=true
-fi
-
-if [ -n "$CI_COMMIT_BRANCH" ] && [ "$CI_COMMIT_BRANCH" == "main" ]; then
-    # Schutzbot on main: build all except rhel
-    PACKER_ONLY_EXCEPT=--except=amazon-ebs.rhel-9-x86_64,amazon-ebs.rhel-9-aarch64
-else
-    # Schutzbot but not main, build everything (use dummy except)
-    PACKER_ONLY_EXCEPT=--except=amazon-ebs.dummy
-fi
+# skip creating AMIs to save a ton of resources
+SKIP_CREATE_AMI=true
+# build everything (use dummy except)
+PACKER_ONLY_EXCEPT=--except=amazon-ebs.dummy
 
 export COMMIT_SHA COMMIT_BRANCH SKIP_CREATE_AMI BUILD_RPMS ANSIBLE_TAGS PACKER_ONLY_EXCEPT
 tools/appsre-build-worker-packer.sh
