@@ -197,6 +197,15 @@ function provisionExecutor() {
 
     greenprint "Provisioning executor as ${SSH_USER}@${EXECUTOR_IP}"
 
+    # copy the subscription script to the executor and run it
+    source tools/set-env-variables.sh
+    if [[ "$ID" == rhel ]]; then
+        scp -oStrictHostKeyChecking=no -i "$EXECUTOR_KEYPAIR" \
+            "$V2_RHN_REGISTRATION_SCRIPT" "${SSH_USER}@${EXECUTOR_IP}:/home/${SSH_USER}/subscribe.sh"
+        ssh -oStrictHostKeyChecking=no -i "$EXECUTOR_KEYPAIR" \
+            "${SSH_USER}@${EXECUTOR_IP}" sudo bash "/home/${SSH_USER}/subscribe.sh"
+    fi
+
     # shellcheck disable=SC2087
     ssh -oStrictHostKeyChecking=no -i "$EXECUTOR_KEYPAIR" "${SSH_USER}@${EXECUTOR_IP}" sudo tee "/etc/yum.repos.d/osbuild.repo" <<EOF
 [osbuild-composer]
