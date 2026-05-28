@@ -8,6 +8,10 @@ import (
 	"strings"
 )
 
+// FirstbootCustomization specifies firstboot customizations to be executed
+// during the firstboot process. They are processed in order and if one of them
+// fails, the execution stops immediately. Scripts are executed via systemd and
+// their absolute ordering can be influenced by the `After/Before` fields.
 type FirstbootCustomization struct {
 	Scripts []FirstbootScriptCustomization `json:"scripts,omitempty" toml:"scripts,omitempty"`
 }
@@ -31,6 +35,20 @@ type FirstbootCommonCustomization struct {
 	// firstboot scripts are executed in order and if one of them fails, the
 	// execution stops immediately.
 	IgnoreFailure bool `json:"ignore_failure,omitempty" toml:"ignore_failure,omitempty"`
+
+	// Systemd After= ordering: startup of this firstboot job is ordered after the
+	// listed units when they participate in the same transaction. Each entry must
+	// be a full unit name, e.g. "network-online.target". This does not by itself add
+	// Requires= or Wants=; see systemd.unit(5). Relative order among firstboot
+	// scripts in the blueprint is still preserved.
+	After []string `json:"after,omitempty" toml:"after,omitempty"`
+
+	// Systemd Before= ordering: startup of this firstboot job is ordered before the
+	// listed units when they participate in the same transaction. Each entry must
+	// be a full unit name, e.g. "postgresql.service". This does not by itself add
+	// Requires= or Wants=; see systemd.unit(5). Relative order among firstboot
+	// scripts in the blueprint is still preserved.
+	Before []string `json:"before,omitempty" toml:"before,omitempty"`
 }
 
 // CustomFirstbootCustomization contains fields specific to custom firstboot
