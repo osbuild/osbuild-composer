@@ -1,0 +1,168 @@
+.common:
+  wsl_config: &wsl_config
+    config:
+      boot_systemd: true
+    distribution_config: &wsl_distribution_config
+      shortcut:
+        enabled: true
+        icon: /usr/share/pixmaps/fedora-logo.ico
+      oobe: &wsl_distribution_oobe_config
+        default_uid: 1000
+
+image_types:
+  wsl:
+    filename: "image.wsl"
+    mime_type: "application/x-tar"
+    image_func: "tar"
+    exports: ["xz"]
+    compression: "xz"
+    platforms:
+      - arch: "x86_64"
+      - arch: "aarch64"
+    image_config:
+      no_selinux: true
+      conditions:
+        "wsl config for rhel":
+          when:
+            distro_name: "rhel"
+          shallow_merge:
+            wsl:
+              <<: *wsl_config
+              distribution_config:
+                <<: *wsl_distribution_config
+                oobe:
+                  <<: *wsl_distribution_oobe_config
+                  default_name: RedHatEnterpriseLinux-%s
+        "wsl config for almalinux":
+          when:
+            distro_name: "almalinux"
+          shallow_merge:
+            wsl: &wsl_distribution_config_almalinux
+              <<: *wsl_config
+              distribution_config:
+                <<: *wsl_distribution_config
+                oobe:
+                  <<: *wsl_distribution_oobe_config
+                  default_name: AlmaLinux-%s
+        "wsl config for rocky":
+          when:
+            distro_name: "rocky"
+          shallow_merge:
+            wsl:
+              <<: *wsl_config
+              distribution_config:
+                <<: *wsl_distribution_config
+                oobe:
+                  <<: *wsl_distribution_oobe_config
+                  default_name: Rocky-%s
+        "wsl config for almalinuxkitten":
+          when:
+            distro_name: "almalinux_kitten"
+          shallow_merge:
+            wsl:
+              <<: *wsl_distribution_config_almalinux
+        "cloud-init config for non-centos":
+          when:
+            not_distro_name: "centos"
+          shallow_merge:
+            cloud_init:
+              - filename: "99_wsl.cfg"
+                config:
+                  datasource_list:
+                    - "WSL"
+                    - "None"
+                  network:
+                    config: "disabled"
+
+    package_sets:
+      os:
+        - include:
+            - "alternatives"
+            - "audit-libs"
+            - "basesystem"
+            - "bash"
+            - "ca-certificates"
+            - "coreutils-single"
+            - "crypto-policies-scripts"
+            - "curl-minimal"
+            - "dejavu-sans-fonts"
+            - "dnf"
+            - "filesystem"
+            - "findutils"
+            - "gdb-gdbserver"
+            # Differs from official UBI, as we don't include CRB repos
+            # - "gdbm"
+            - "glibc-minimal-langpack"
+            - "gmp"
+            - "gnupg2"
+            - "gobject-introspection"
+            - "hostname"
+            - "langpacks-en"
+            - "libcurl-minimal"
+            - "openssh-server"
+            - "openssl"
+            - "pam"
+            - "passwd"
+            - "procps-ng"
+            - "python3"
+            - "python3-inotify"
+            - "rootfiles"
+            - "rpm"
+            - "sed"
+            - "setup"
+            - "shadow-utils"
+            - "sudo"
+            - "systemd"
+            - "tar"
+            - "tpm2-tss"
+            - "tzdata"
+            - "util-linux"
+            - "vim-minimal"
+            - "yum"
+          exclude:
+            - "gawk-all-langpacks"
+            - "glibc-gconv-extra"
+            - "glibc-langpack-en"
+            - "openssl-pkcs11"
+            - "python-unversioned-command"
+            # - "redhat-release-eula"
+            - "rpm-plugin-systemd-inhibit"
+          conditions:
+            "subscription-manager, cloud-init, and redhat-* on rhel-likes except centos":
+              when:
+                not_distro_name: "centos"
+              append:
+                include:
+                  - "subscription-manager"
+                  - "cloud-init"
+                  - "redhat-logos"
+                  # - "redhat-release"
+            "wsl-setup, and centos-* on centos":
+              when:
+                distro_name: "centos"
+              append:
+                include:
+                  - "wsl-setup"
+                  - "centos-logos"
+                  - "centos-release"
+    blueprint:
+      supported_options:
+        - "distro"
+        - "packages"
+        - "modules"
+        - "groups"
+        - "enabled_modules"
+        - "containers"
+        - "customizations.dnf"
+        - "customizations.directories"
+        - "customizations.files"
+        - "customizations.firewall"
+        - "customizations.user"
+        - "customizations.sshkey"
+        - "customizations.group"
+        - "customizations.hostname"
+        - "customizations.locale"
+        - "customizations.repositories"
+        - "customizations.services"
+        - "customizations.timezone"
+        - "customizations.rhsm"

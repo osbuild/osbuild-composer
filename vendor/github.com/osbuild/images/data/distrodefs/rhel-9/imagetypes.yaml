@@ -1637,6 +1637,62 @@ image_types:
             system_info:
               default_user:
                 name: "opc"
+      dracut_conf:
+        - filename: "oci.conf"
+          config:
+            add_drivers:
+              - "mlx5_core"
+    partition_table:
+      x86_64:
+        type: "gpt"
+        size: "64 GiB"
+        partitions:
+          - size: "1 MiB"
+            bootable: true
+            type: *bios_boot_partition_guid
+          - &oci_part_boot_efi
+            size: "500 MiB"
+            type: *efi_system_partition_guid
+            payload_type: "filesystem"
+            payload:
+              type: "vfat"
+              mountpoint: "/boot/efi"
+              fstab_options: "defaults,uid=0,gid=0,umask=077,shortname=winnt"
+              fstab_freq: 0
+              fstab_passno: 2
+          - &oci_part_boot
+            size: "1 GiB"
+            type: *xboot_ldr_partition_guid
+            payload_type: "filesystem"
+            payload:
+              type: "xfs"
+              mountpoint: "/boot"
+              fstab_options: "defaults"
+              fstab_freq: 0
+              fstab_passno: 0
+          - &oci_part_lvm
+            type: *lvm_partition_guid
+            payload_type: "lvm"
+            payload:
+              name: "rootvg"
+              description: "built with lvm2 and osbuild"
+              logical_volumes:
+                - size: "1 GiB"
+                  name: "homelv"
+                  payload_type: "filesystem"
+                  payload:
+                    type: "xfs"
+                    label: "home"
+                    mountpoint: "/home"
+                    fstab_options: "defaults"
+                - size: "30 GiB"
+                  name: "rootlv"
+                  payload_type: "filesystem"
+                  payload:
+                    type: "xfs"
+                    label: "root"
+                    mountpoint: "/"
+                    fstab_options: "defaults"
     blueprint:
       supported_options: *supported_options_disk
 
@@ -2253,6 +2309,8 @@ image_types:
     image_config:
       locale: "en_US.UTF-8"
       no_selinux: true
+      enabled_services:
+        - "sshd.service"
       conditions:
         "wsl config for rhel":
           when:

@@ -448,6 +448,7 @@
       - &bios_boot_partition_guid "21686148-6449-6E6F-744E-656564454649"
       - &efi_system_partition_guid "C12A7328-F81F-11D2-BA4B-00A0C93EC93B"
       - &filesystem_data_guid "0FC63DAF-8483-4772-8E79-3D69D8477DE4"
+      - &xboot_ldr_partition_guid "BC13C2FF-59E6-4262-A352-B275FD6F7172"
       - &lvm_partition_guid "E6D6D379-F507-44C2-A23C-238F2A3DF928"
       - &root_partition_x86_64_guid "4F68BCE3-E8CD-4DB1-96E7-FBCAF984B709"
 
@@ -1141,6 +1142,62 @@ image_types:
             system_info:
               default_user:
                 name: "opc"
+      dracut_conf:
+        - filename: "oci.conf"
+          config:
+            add_drivers:
+              - "mlx5_core"
+    partition_table:
+      x86_64:
+        type: "gpt"
+        size: "64 GiB"
+        partitions:
+          - size: "1 MiB"
+            bootable: true
+            type: *bios_boot_partition_guid
+          - &oci_part_boot_efi
+            size: "500 MiB"
+            type: *efi_system_partition_guid
+            payload_type: "filesystem"
+            payload:
+              type: "vfat"
+              mountpoint: "/boot/efi"
+              fstab_options: "defaults,uid=0,gid=0,umask=077,shortname=winnt"
+              fstab_freq: 0
+              fstab_passno: 2
+          - &oci_part_boot
+            size: "1 GiB"
+            type: *xboot_ldr_partition_guid
+            payload_type: "filesystem"
+            payload:
+              type: "xfs"
+              mountpoint: "/boot"
+              fstab_options: "defaults"
+              fstab_freq: 0
+              fstab_passno: 0
+          - &oci_part_lvm
+            type: *lvm_partition_guid
+            payload_type: "lvm"
+            payload:
+              name: "rootvg"
+              description: "built with lvm2 and osbuild"
+              logical_volumes:
+                - size: "1 GiB"
+                  name: "homelv"
+                  payload_type: "filesystem"
+                  payload:
+                    type: "xfs"
+                    label: "home"
+                    mountpoint: "/home"
+                    fstab_options: "defaults"
+                - size: "30 GiB"
+                  name: "rootlv"
+                  payload_type: "filesystem"
+                  payload:
+                    type: "xfs"
+                    label: "root"
+                    mountpoint: "/"
+                    fstab_options: "defaults"
     blueprint:
       supported_options: *supported_options_disk
 
@@ -1742,6 +1799,8 @@ image_types:
       - arch: "aarch64"
     image_config:
       no_selinux: true
+      enabled_services:
+        - "sshd.service"
       conditions:
         "wsl config for rhel":
           when:

@@ -46,20 +46,24 @@ func (r *Registry) queryOCI(ref string) (*Spec, error) {
 		panic("uri missing oci+ prefix")
 	}
 
-	container, err := QueryOCIRegistryIndex(
-		uri,
-		ref,
-		"linux",
-		"latest",
-	)
-
+	idx, err := NewOCIRegistryIndex(uri, "linux", "latest")
 	if err != nil {
 		return nil, err
 	}
+	defer idx.Close()
 
-	return &Spec{
-		ContainerSpec: container,
-	}, nil
+	return r.queryOCIWithIndex(idx, ref)
+}
+
+// queryOCIWithIndex resolves ref using an existing index client (shared across
+// multiple refs in [ResolveAll]). idx must have been constructed from this
+// registry's oci+ URI (without the prefix).
+func (r *Registry) queryOCIWithIndex(idx *OCIRegistryIndex, ref string) (*Spec, error) {
+	containerSpec, err := idx.Query(ref)
+	if err != nil {
+		return nil, err
+	}
+	return &Spec{ContainerSpec: containerSpec}, nil
 }
 
 func (r *Registry) Query(ref string) (*Spec, error) {

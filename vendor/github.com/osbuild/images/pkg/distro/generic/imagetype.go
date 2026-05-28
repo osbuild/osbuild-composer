@@ -197,7 +197,7 @@ func (t *imageType) getPartitionTable(customizations *blueprint.Customizations, 
 			RequiredMinSizes:   t.ImageTypeYAML.RequiredPartitionSizes,
 			Architecture:       t.platform.GetArch(),
 		}
-		return disk.NewCustomPartitionTable(partitioning, partOptions, rng)
+		return disk.NewCustomPartitionTable(partitioning, partOptions, nil, rng)
 	}
 
 	mountpoints := customizations.GetFilesystems()
@@ -341,7 +341,7 @@ func (t *imageType) checkOptions(bp *blueprint.Blueprint, options distro.ImageOp
 
 	d := t.Arch().Distro()
 	switch idLike := d.IDLike(); idLike {
-	case manifest.DISTRO_FEDORA, manifest.DISTRO_EL7, manifest.DISTRO_EL10:
+	case manifest.DISTRO_FEDORA, manifest.DISTRO_ELN, manifest.DISTRO_EL7, manifest.DISTRO_EL10:
 		// no specific options checkers
 	case manifest.DISTRO_EL8:
 		if err := checkOptionsRhel8(t, bp); err != nil {

@@ -2,6 +2,7 @@ package flatpak
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/ostree"
@@ -33,11 +34,40 @@ func Resolve(source SourceSpec) (Spec, error) {
 }
 
 func ResolveAll(sources map[string][]SourceSpec) (map[string][]Spec, error) {
+	ociClients := make(map[string]*OCIRegistryIndex)
+	defer func() {
+		for _, c := range ociClients {
+			c.Close()
+		}
+	}()
+
 	flatpaks := make(map[string][]Spec, len(sources))
 
 	for name, srcList := range sources {
 		specs := make([]Spec, len(srcList))
 		for i, src := range srcList {
+			if src.Registry.Type == REGISTRY_TYPE_OCI {
+				uri, found := strings.CutPrefix(src.Registry.URI, "oci+")
+				if !found {
+					return nil, fmt.Errorf("flatpak registry %q: missing oci+ prefix", src.Registry.URI)
+				}
+				idx, ok := ociClients[uri]
+				if !ok {
+					var err error
+					idx, err = NewOCIRegistryIndex(uri, "linux", "latest")
+					if err != nil {
+						return nil, err
+					}
+					ociClients[uri] = idx
+				}
+				res, err := src.Registry.queryOCIWithIndex(idx, src.Reference.String())
+				if err != nil {
+					return nil, fmt.Errorf("failed to resolve flatpak: %w", err)
+				}
+				specs[i] = *res
+				continue
+			}
+
 			res, err := Resolve(src)
 			if err != nil {
 				return nil, fmt.Errorf("failed to resolve flatpak: %w", err)

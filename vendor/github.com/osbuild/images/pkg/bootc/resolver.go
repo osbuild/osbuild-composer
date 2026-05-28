@@ -192,11 +192,18 @@ func (c *Container) ResolveInfo() (*Info, error) {
 	}
 	bootcInfo.OSInfo = os
 
-	defaultFs, err := c.DefaultRootfsType()
+	bootcInstallConfig, err := c.InstallConfiguration()
 	if err != nil {
 		return nil, err
 	}
-	bootcInfo.DefaultRootFs = defaultFs
+	bootcInfo.DefaultRootFs = bootcInstallConfig.Filesystem.Root.Type
+	bootcInfo.Bootloader = bootcInstallConfig.Bootloader
+
+	unifiedKernel, err := c.UnifiedKernel()
+	if err != nil {
+		return nil, err
+	}
+	bootcInfo.UnifiedKernel = unifiedKernel
 
 	size, err := getContainerSize(c.ref, c.extraOpts)
 	if err != nil {
@@ -267,10 +274,19 @@ func (c *Container) ExecArgv() []string {
 	return args
 }
 
-// DefaultRootfsType returns the default rootfs type (e.g. "ext4") as
-// specified by the bootc container install configuration. An empty
-// string is valid and means the container sets no default.
-func (c *Container) DefaultRootfsType() (string, error) {
+type BootcInstallConfiguration struct {
+	Filesystem struct {
+		Root struct {
+			Type string `json:"type"`
+		} `json:"root"`
+	} `json:"filesystem"`
+
+	Bootloader *string `json:"bootloader"`
+}
+
+// InstallConfiguration returns the install configuration for bootc container
+// as given by `bootc install print-configuration`
+func (c *Container) InstallConfiguration() (BootcInstallConfiguration, error) {
 	args := []string{"exec"}
 	args = append(args, c.extraOpts...)
 	args = append(args, c.id, "bootc", "install", "print-configuration")
@@ -278,24 +294,24 @@ func (c *Container) DefaultRootfsType() (string, error) {
 	/* #nosec G204 */
 	output, err := exec.Command("podman", args...).Output()
 	if err != nil {
-		return "", fmt.Errorf("failed to run bootc install print-configuration: %w, output:\n%s", err, output)
+		return BootcInstallConfiguration{}, fmt.Errorf("failed to run bootc install print-configuration: %w, output:\n%s", err, output)
 	}
 
-	var bootcConfig struct {
-		Filesystem struct {
-			Root struct {
-				Type string `json:"type"`
-			} `json:"root"`
-		} `json:"filesystem"`
-	}
+	var bootcInstallConfig BootcInstallConfiguration
 
-	if err := json.Unmarshal(output, &bootcConfig); err != nil {
-		return "", fmt.Errorf("failed to unmarshal bootc configuration: %w", err)
+	if err := json.Unmarshal(output, &bootcInstallConfig); err != nil {
+		return BootcInstallConfiguration{}, fmt.Errorf("failed to unmarshal bootc install configuration: %w", err)
 	}
 
 	// filesystem.root.type is the preferred way instead of the old root-fs-type top-level key.
 	// See https://github.com/containers/bootc/commit/558cd4b1d242467e0ffec77fb02b35166469dcc7
-	fsType := bootcConfig.Filesystem.Root.Type
+	fsType := bootcInstallConfig.Filesystem.Root.Type
+
+	// Return early to skip validating the empty default root filesystem type
+	if fsType == "" {
+		return bootcInstallConfig, nil
+	}
+
 	// Note that these are the only filesystems that the "images" library
 	// knows how to handle, i.e. how to construct the required osbuild
 	// stages for.
@@ -303,15 +319,11 @@ func (c *Container) DefaultRootfsType() (string, error) {
 	// a single place that needs updating when we add e.g. btrfs or
 	// bcachefs
 	supportedFS := []string{"ext4", "xfs", "btrfs"}
-
-	if fsType == "" {
-		return "", nil
-	}
 	if !slices.Contains(supportedFS, fsType) {
-		return "", fmt.Errorf("unsupported root filesystem type: %s, supported: %s", fsType, strings.Join(supportedFS, ", "))
+		return BootcInstallConfiguration{}, fmt.Errorf("unsupported root filesystem type: %s, supported: %s", fsType, strings.Join(supportedFS, ", "))
 	}
 
-	return fsType, nil
+	return bootcInstallConfig, nil
 }
 
 // InitrdModules gets the list of modules from the container's initrd
@@ -330,6 +342,38 @@ func (c *Container) InitrdModules(kver string) ([]string, error) {
 	}
 
 	return strings.Split(strings.TrimRight(string(output), "\n"), "\n"), nil
+}
+
+// UnifiedKernel finds out if the kernel inside the bootc container is unified
+func (c *Container) UnifiedKernel() (bool, error) {
+	args := []string{"exec"}
+	args = append(args, c.extraOpts...)
+	args = append(args, c.id, "bootc", "container", "inspect", "--json")
+
+	/* #nosec G204 */
+	output, err := exec.Command("podman", args...).Output()
+	if err != nil {
+		if exitErr, ok := err.(*exec.ExitError); ok && exitErr.ExitCode() == 2 {
+			// NOTE: the 'bootc container inspect' was added in version 1.12.0, which was not in RHEL-10.1.
+			// Treat exit value '2' as a non-error, since it means the command is not available and return false.
+			return false, nil
+		}
+		return false, fmt.Errorf("failed to run bootc container inspect: %w, output:\n%s", err, output)
+	}
+
+	var bootcInspect struct {
+		Kargs  []string `json:"kargs"`
+		Kernel struct {
+			Version string `json:"version"`
+			Unified bool   `json:"unified"`
+		} `json:"kernel"`
+	}
+
+	if err := json.Unmarshal(output, &bootcInspect); err != nil {
+		return false, fmt.Errorf("failed to unmarshal bootc inspect : %w", err)
+	}
+
+	return bootcInspect.Kernel.Unified, nil
 }
 
 func findImageIdFor(cntId, ref string, extraOpts []string) (string, error) {

@@ -1,0 +1,62 @@
+---
+distros:
+  - &eln11
+    name: "eln-{{.MajorVersion}}"
+    match: 'eln-[1-9][0-9]+'
+    distro_like: eln
+    vendor: "fedora"
+    product: "Fedora ELN"
+    os_version: 11
+    release_version: 11
+    module_platform_id: "platform:eln11"
+    default_fs_type: "xfs"
+    defs_path: "eln-11"
+    iso_label_tmpl: "Fedora-ELN-{{.Distro.MajorVersion}}-0-BaseOS-{{.Arch}}"
+    runner:
+      name: "org.osbuild.rhel{{.MajorVersion}}"
+      build_packages: &rhel10_runner_build_packages
+        - "glibc"  # ldconfig
+        - "systemd"  # systemd-tmpfiles and systemd-sysusers
+        - "python3"  # osbuild
+    oscap_profiles_allowlist: &oscap_profile_allowlist_eln_11
+      - "xccdf_org.ssgproject.content_profile_anssi_bp28_enhanced"
+      - "xccdf_org.ssgproject.content_profile_anssi_bp28_high"
+      - "xccdf_org.ssgproject.content_profile_anssi_bp28_intermediary"
+      - "xccdf_org.ssgproject.content_profile_anssi_bp28_minimal"
+      - "xccdf_org.ssgproject.content_profile_bsi"
+      - "xccdf_org.ssgproject.content_profile_cis"
+      - "xccdf_org.ssgproject.content_profile_cis_server_l1"
+      - "xccdf_org.ssgproject.content_profile_cis_workstation_l1"
+      - "xccdf_org.ssgproject.content_profile_cis_workstation_l2"
+      - "xccdf_org.ssgproject.content_profile_e8"
+      - "xccdf_org.ssgproject.content_profile_hipaa"
+      - "xccdf_org.ssgproject.content_profile_ism_o"
+      - "xccdf_org.ssgproject.content_profile_ism_o_secret"
+      - "xccdf_org.ssgproject.content_profile_ism_o_top_secret"
+      - "xccdf_org.ssgproject.content_profile_ospp"
+      - "xccdf_org.ssgproject.content_profile_pci-dss"
+      - "xccdf_org.ssgproject.content_profile_stig"
+      - "xccdf_org.ssgproject.content_profile_stig_gui"
+    bootstrap_containers:
+      x86_64: "quay.io/fedora/eln-toolbox:latest"
+      aarch64: "quay.io/fedora/eln-toolbox:latest"
+      ppc64le: "quay.io/fedora/eln-toolbox:latest"
+      s390x: "quay.io/fedora/eln-toolbox:latest"
+    image_config:
+      default:
+        default_kernel: "kernel"
+        default_oscap_datastream: "/usr/share/xml/scap/ssg/content/ssg-rhel10-ds.xml"
+        install_weak_deps: true
+        locale: "C.UTF-8"
+        permissive_rhc: true
+        sysconfig:
+          networking: true
+          no_zero_conf: true
+        timezone: "UTC"
+        update_default_kernel: true
+      conditions:
+        "centos oscap datastream path":
+          when:
+            distro_name: "centos"
+          shallow_merge:
+            default_oscap_datastream: "/usr/share/xml/scap/ssg/content/ssg-cs10-ds.xml"
