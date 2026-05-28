@@ -34,6 +34,18 @@ jobs:
             -exec "./tools/prepare-source.sh" \
             -exec "make build test" \
             -verbose -format markdown | tee "/tmp/github_pr_body.txt"
+
+          # Check and update spec file version if needed
+          REQUIRED_VERSION=$(cat vendor/github.com/osbuild/images/data/dependencies/osbuild | tr -d '[:space:]')
+          CURRENT_VERSION=$(grep '^%global min_osbuild_version' osbuild-composer.spec | awk '{print $3}')
+          if [ "${CURRENT_VERSION}" != "${REQUIRED_VERSION}" ]; then
+            sed -i "s/^%global min_osbuild_version .*/%global min_osbuild_version ${REQUIRED_VERSION}/" osbuild-composer.spec
+            git add osbuild-composer.spec
+            git commit -m "chore: update spec with new images minimum version"
+          else
+            echo "Spec file version is already up to date (${CURRENT_VERSION})"
+          fi
+
           git log --oneline "main..${branch}"
           git push -f "https://$GH_TOKEN@github.com/schutzbot/osbuild-composer.git" "${branch}"
           gh pr create \
