@@ -1,0 +1,556 @@
+---
+.shared:
+  distro_build_pkgset: &distro_build_pkgset
+    include:
+      - "dnf"
+      - "dosfstools"
+      - "e2fsprogs"
+      - "glibc"
+      - "lvm2"
+      - "policycoreutils"
+      - "python3-iniparse"
+      - "qemu-img"
+      - "selinux-policy-targeted"
+      - "systemd"
+      - "tar"
+      - "xfsprogs"
+      - "xz"
+    conditions:
+      "x86_64 specific packages for build pkgsset":
+        when:
+          arch: "x86_64"
+        append:
+          include:
+            - "grub2-pc"
+      "ppc64le specific packages for build pkgsset":
+        when:
+          arch: "ppc64le"
+        append:
+          include:
+            - "grub2-ppc64le"
+            - "grub2-ppc64le-modules"
+
+  disk_sizes:
+    default_required_partition_sizes: &default_required_dir_sizes
+      "/": "1 GiB"
+      "/usr": "2 GiB"
+
+  platforms:
+    x86_64_uefi_platform: &x86_64_uefi_platform
+      arch: "x86_64"
+      bootloader: "grub2"
+      uefi_vendor: "{{.DistroVendor}}"
+      qcow2_compat: "1.1"
+      packages: &x86_64_uefi_platform_packages
+        uefi:
+          - "dracut-config-generic"
+          - "efibootmgr"
+          - "grub2"
+          - "grub2-efi-x64"
+          - "shim-x64"
+    x86_64_bios_platform: &x86_64_bios_platform
+      <<: *x86_64_uefi_platform
+      bios_platform: "i386-pc"
+      uefi_vendor: "{{.DistroVendor}}"
+      packages: &x86_64_bios_platform_packages
+        <<: *x86_64_uefi_platform_packages
+        bios:
+          - "dracut-config-generic"
+          - "grub2-pc"
+      build_packages:
+        bios:
+          - "grub2-pc"
+    x86_64_installer_platform: &x86_64_installer_platform
+      <<: *x86_64_bios_platform
+      image_format: "raw"
+      packages:
+        <<: *x86_64_bios_platform_packages
+        booting:
+          - "biosdevname"
+        firmware:
+          - "amd-gpu-firmware"
+          - "amd-ucode-firmware"
+          - "atheros-firmware"
+          - "brcmfmac-firmware"
+          - "intel-gpu-firmware"
+          - "iwlegacy-firmware"
+          - "iwlwifi-dvm-firmware"
+          - "iwlwifi-mvm-firmware"
+          - "libertas-firmware"
+          - "linux-firmware"
+          - "mt7xxx-firmware"
+          - "nvidia-gpu-firmware"
+          - "nxpwireless-firmware"
+          - "realtek-firmware"
+          - "tiwilink-firmware"
+    aarch64_platform: &aarch64_platform
+      arch: "aarch64"
+      bootloader: "grub2"
+      uefi_vendor: "{{.DistroVendor}}"
+      image_format: "qcow2"
+      qcow2_compat: "1.1"
+      packages: &aarch64_uefi_platform_packages
+        uefi:
+          - "dracut-config-generic"
+          - "efibootmgr"
+          - "grub2"
+          - "grub2-efi-aa64"
+          - "grub2-tools"
+          - "shim-aa64"
+    aarch64_installer_platform: &aarch64_installer_platform
+      <<: *aarch64_platform
+      packages:
+        <<: *aarch64_uefi_platform_packages
+        booting:
+          - "grub2-efi-aa64-cdboot"
+        firmware:
+          - "amd-gpu-firmware"
+          - "amd-ucode-firmware"
+          - "atheros-firmware"
+          - "brcmfmac-firmware"
+          - "intel-gpu-firmware"
+          - "iwlegacy-firmware"
+          - "iwlwifi-dvm-firmware"
+          - "iwlwifi-mvm-firmware"
+          - "libertas-firmware"
+          - "linux-firmware"
+          - "mt7xxx-firmware"
+          - "nvidia-gpu-firmware"
+          - "nxpwireless-firmware"
+          - "realtek-firmware"
+          - "tiwilink-firmware"
+    ppc64le_bios_platform: &ppc64le_bios_platform
+      arch: "ppc64le"
+      bootloader: "grub2"
+      bios_platform: "powerpc-ieee1275"
+      image_format: "qcow2"
+      qcow2_compat: "1.1"
+      packages: &ppc64le_bios_platform_packages
+        bios:
+          - "dracut-config-generic"
+          - "powerpc-utils"
+          - "grub2"
+          - "grub2-ppc64le"
+          - "grub2-ppc64le-modules"
+      build_packages:
+        bios:
+          - "grub2-ppc64le"
+          - "grub2-ppc64le-modules"
+    ppc64le_installer_platform: &ppc64le_installer_platform
+      <<: *ppc64le_bios_platform
+      image_format: "qcow2"
+      packages:
+        <<: *ppc64le_bios_platform_packages
+        booting:
+          - "lsvpd"
+          - "ppc64-diag"
+          - "grub2-tools"
+          - "grub2-tools-minimal"
+          - "grub2-tools-extra"
+        firmware:
+          - "amd-gpu-firmware"
+          - "amd-ucode-firmware"
+          - "atheros-firmware"
+          - "brcmfmac-firmware"
+          - "intel-gpu-firmware"
+          - "iwlegacy-firmware"
+          - "iwlwifi-dvm-firmware"
+          - "iwlwifi-mvm-firmware"
+          - "libertas-firmware"
+          - "linux-firmware"
+          - "mt7xxx-firmware"
+          - "nvidia-gpu-firmware"
+          - "nxpwireless-firmware"
+          - "realtek-firmware"
+          - "tiwilink-firmware"
+    s390x_zipl_platform: &s390x_zipl_platform
+      arch: "s390x"
+      # XXX: merge zipl_support/bootloader
+      bootloader: "zipl"
+      zipl_support: true
+      image_format: "qcow2"
+      qcow2_compat: "1.1"
+      packages:
+        zipl:
+          - "dracut-config-generic"
+          - "s390utils-base"
+          - "s390utils-core"
+      build_packages:
+        zipl:
+          - "s390utils-base"
+    s390x_installer_platform: &s390x_installer_platform
+      arch: "s390x"
+      image_format: "qcow2"
+      qcow2_compat: "1.1"
+      packages:
+        booting:
+          - "dracut-config-generic"
+          - "s390utils-base"
+          - "s390utils-core"
+      build_packages:
+        booting:
+          - "s390utils-base"
+      bootloader: "zipl"
+
+  partitioning:
+    ids:
+      - &prep_partition_dosid "41"
+    guids:
+      - &bios_boot_partition_guid "21686148-6449-6E6F-744E-656564454649"
+      - &efi_system_partition_guid "C12A7328-F81F-11D2-BA4B-00A0C93EC93B"
+      - &filesystem_data_guid "0FC63DAF-8483-4772-8E79-3D69D8477DE4"
+      - &lvm_partition_guid "E6D6D379-F507-44C2-A23C-238F2A3DF928"
+      - &root_partition_x86_64_guid "4F68BCE3-E8CD-4DB1-96E7-FBCAF984B709"
+
+    default_partition_tables: &default_partition_tables
+      x86_64:
+        type: "gpt"
+        partitions:
+          - size: "1 MiB"
+            bootable: true
+            type: *bios_boot_partition_guid
+          - &default_partition_table_part_efi
+            size: "200 MiB"
+            type: *efi_system_partition_guid
+            payload_type: "filesystem"
+            payload:
+              type: vfat
+              mountpoint: "/boot/efi"
+              label: "ESP"
+              fstab_options: "defaults,uid=0,gid=0,umask=077,shortname=winnt"
+              fstab_freq: 0
+              fstab_passno: 2
+          - &default_partition_table_part_root
+            size: "2 GiB"
+            type: *filesystem_data_guid
+            payload_type: "filesystem"
+            payload: &default_partition_table_part_root_payload
+              type: "xfs"
+              label: "root"
+              mountpoint: "/"
+              fstab_options: "defaults"
+              fstab_freq: 0
+              fstab_passno: 0
+      aarch64:
+        type: "gpt"
+        partitions:
+          - *default_partition_table_part_efi
+          - *default_partition_table_part_root
+      ppc64le:
+        type: "dos"
+        partitions:
+          - size: "4 MiB"
+            bootable: true
+            type: *prep_partition_dosid
+          - &default_partition_table_part_root_ppc64le
+            size: "2 GiB"
+            payload_type: "filesystem"
+            payload:
+              <<: *default_partition_table_part_root_payload
+              label: ""
+      s390x:
+        type: "dos"
+        partitions:
+          - <<: *default_partition_table_part_root_ppc64le
+            bootable: true
+
+  azure_common_grub2_config: &azure_common_grub2_config
+    disable_recovery: true
+    disable_submenu: true
+    distributor: "$(sed 's, release .*$,,g' /etc/system-release)"
+    serial: "serial --speed=115200 --unit=0 --word=8 --parity=no --stop=1"
+    timeout: 10
+    timeout_style: "countdown"
+
+  azure_image_config_base: &azure_image_config_base
+    keyboard:
+      keymap: "us"
+      "x11-keymap":
+        layouts: ["us"]
+    update_default_kernel: true
+    default_kernel: "kernel-core"
+    sysconfig:
+      networking: true
+      no_zero_conf: true
+    enabled_services:
+      - "firewalld"
+      - "nm-cloud-setup.service"
+      - "nm-cloud-setup.timer"
+      - "sshd"
+      - "waagent"
+    sshd_config:
+      config:
+        ClientAliveInterval: 180
+    modprobe:
+      - filename: "blacklist-amdgpu.conf"
+        commands:
+          - command: blacklist
+            modulename: "amdgpu"
+      - filename: "blacklist-intel-cstate.conf"
+        commands:
+          - command: blacklist
+            modulename: "intel_cstate"
+      - filename: "blacklist-floppy.conf"
+        commands:
+          - command: blacklist
+            modulename: "floppy"
+      - filename: "blacklist-nouveau.conf"
+        commands:
+          - command: blacklist
+            modulename: "nouveau"
+          - command: blacklist
+            modulename: "lbm-nouveau"
+      - filename: "blacklist-skylake-edac.conf"
+        commands:
+          - command: blacklist
+            modulename: "skx_edac"
+      - filename: "blacklist-intel_uncore.conf"
+        commands:
+          - command: blacklist
+            modulename: "intel_uncore"
+      - filename: "blacklist-acpi_cpufreq.conf"
+        commands:
+          - command: blacklist
+            modulename: "acpi_cpufreq"
+    pwquality:
+      config:
+        minlen: 6
+        minclass: 3
+        dcredit: 0
+        ucredit: 0
+        lcredit: 0
+        ocredit: 0
+    waagent_config:
+      config:
+        "ResourceDisk.Format": false
+        "ResourceDisk.EnableSwap": false
+    grub2_config:
+      disable_recovery: true
+      disable_submenu: true
+      distributor: "$(sed 's, release .*$,,g' /etc/system-release)"
+      terminal: ["serial", "console"]
+      serial: "serial --speed=115200 --unit=0 --word=8 --parity=no --stop=1"
+      timeout: 10
+      timeout_style: "countdown"
+    systemd_dropin:
+      - unit: "nm-cloud-setup.service"
+        dropin: "10-rh-enable-for-azure.conf"
+        config:
+          service:
+            environment:
+              - key: "NM_CLOUD_SETUP_AZURE"
+                value: "yes"
+    default_target: "multi-user.target"
+    network_manager:
+      path: "/etc/NetworkManager/conf.d/99-azure-unmanaged-devices.conf"
+      settings:
+        keyfile:
+          "unmanaged-devices":
+            - "driver:mlx4_core"
+            - "driver:mlx5_core"
+    conditions:
+      "rhel needs the rhel release rpm gpg key":
+        when:
+          distro_name: "rhel"
+        shallow_merge:
+          gpgkey_files:
+            - "/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release"
+      "x86_64 specific kernel commandline for rhel-10.2+":
+        when:
+          arch: "x86_64"
+          version_greater_or_equal: "10.2"
+        shallow_merge:
+          kernel_options:
+            # common
+            - "ro"
+            # x86
+            - "console=tty1"
+            - "console=ttyS0"
+            - "earlyprintk=ttyS0"
+            - "rootdelay=300"
+      "x86_64 specific kernel commandline for rhel-10.1":
+        when:
+          arch: "x86_64"
+          version_equal: "10.1"
+        shallow_merge:
+          kernel_options:
+            # common
+            - "ro"
+            - "nvme_core.io_timeout=240"
+            # x86
+            - "console=tty1"
+            - "console=ttyS0"
+            - "earlyprintk=ttyS0"
+            - "rootdelay=300"
+      "x86_64 specific kernel commandline for rhel-10.0":
+        when:
+          arch: "x86_64"
+          version_equal: "10.0"
+        shallow_merge:
+          kernel_options:
+            # common
+            - "ro"
+            - "loglevel=3"
+            - "nvme_core.io_timeout=240"
+            # x86
+            - "console=tty1"
+            - "console=ttyS0"
+            - "earlyprintk=ttyS0"
+            - "rootdelay=300"
+      "aarch64 specific kernel commandline for rhel-10.2+":
+        when:
+          arch: "aarch64"
+          version_greater_or_equal: "10.2"
+        shallow_merge:
+          kernel_options:
+            # common
+            - "ro"
+            # aarch64
+            - "console=ttyAMA0"
+      "aarch64 specific kernel commandline for rhel-10.1":
+        when:
+          arch: "aarch64"
+          version_equal: "10.1"
+        shallow_merge:
+          kernel_options:
+            # common
+            - "ro"
+            - "nvme_core.io_timeout=240"
+            # aarch64
+            - "console=ttyAMA0"
+      "aarch64 specific kernel commandline for rhel-10.0":
+        when:
+          arch: "aarch64"
+          version_equal: "10.0"
+        shallow_merge:
+          kernel_options:
+            # common
+            - "ro"
+            - "loglevel=3"
+            - "nvme_core.io_timeout=240"
+            # aarch64
+            - "console=ttyAMA0"
+      "x86_64 grub2 config terminal=serial":
+        when:
+          arch: "x86_64"
+        shallow_merge:
+          grub2_config:
+            <<: *azure_common_grub2_config
+            terminal: ["serial"]
+            terminal_input: ["serial"]
+            terminal_output: ["serial"]
+      "aarch64 grub2 config terminal=console":
+        when:
+          arch: "aarch64"
+        shallow_merge:
+          grub2_config:
+            <<: *azure_common_grub2_config
+            terminal: ["console"]
+  azure_base_pkgset: &azure_base_pkgset
+    include:
+      - "@Server"
+      - "bzip2"
+      - "cloud-init"
+      - "cloud-utils-growpart"
+      - "efibootmgr"
+      - "hyperv-daemons"
+      - "langpacks-en"
+      - "lvm2"
+      - "NetworkManager"
+      - "NetworkManager-cloud-setup"
+      - "nvme-cli"
+      - "patch"
+      - "rsync"
+      - "selinux-policy-targeted"
+      - "system-reinstall-bootc"
+      - "uuid"
+      - "WALinuxAgent"
+      - "dnf5-plugins"
+    exclude:
+      - "aic94xx-firmware"
+      - "alsa-firmware"
+      - "alsa-lib"
+      - "alsa-sof-firmware"
+      - "alsa-tools-firmware"
+      - "biosdevname"
+      - "bolt"
+      - "buildah"
+      - "cockpit-podman"
+      - "containernetworking-plugins"
+      - "dnf-plugin-spacewalk"
+      - "dracut-config-rescue"
+      - "glibc-all-langpacks"
+      - "iprutils"
+      - "ivtv-firmware"
+      - "iwlegacy-firmware"
+      - "iwlwifi-dvm-firmware"
+      - "iwlwifi-mvm-firmware"
+      - "libertas-sd8686-firmware"
+      - "libertas-sd8787-firmware"
+      - "libertas-usb8388-firmware"
+      - "microcode_ctl"
+      - "NetworkManager-config-server"
+      - "plymouth"
+      - "podman"
+      - "python3-dnf-plugin-spacewalk"
+      - "python3-hwdata"
+      - "python3-rhnlib"
+      - "rhn-check"
+      - "rhn-client-tools"
+      - "rhn-setup"
+      - "rhnlib"
+      - "rhnsd"
+      - "usb_modeswitch"
+    conditions:
+      "add insights client on rhel":
+        when:
+          distro_name: "rhel"
+        append:
+          include:
+            - "insights-client"
+      "x86_64 alone supports rngd":
+        when:
+          arch: "x86_64"
+        append:
+          include:
+            - "rng-tools"
+      "rhel-10.2+ gets azure-vm-utils and excludes initscripts-rename-device":
+        when:
+          version_greater_or_equal: "10.2"
+        append:
+          include:
+            - "azure-vm-utils"
+          exclude:
+            - "initscripts-rename-device"
+  supported_options_lists:
+    # Common options supported by all disk image types.
+    # This includes everything that is not specific to installers.
+    supported_options_disk: &supported_options_disk
+      - "distro"
+      - "packages"
+      - "modules"
+      - "groups"
+      - "enabled_modules"
+      - "containers"
+      - "customizations.cacerts"
+      - "customizations.directories"
+      - "customizations.disk"
+      - "customizations.dnf"
+      - "customizations.files"
+      - "customizations.filesystem"
+      - "customizations.partitioning_mode"
+      - "customizations.fips"
+      - "customizations.firewall"
+      - "customizations.user"
+      - "customizations.sshkey"
+      - "customizations.group"
+      - "customizations.hostname"
+      - "customizations.kernel"
+      - "customizations.locale"
+      - "customizations.openscap"
+      - "customizations.repositories"
+      - "customizations.rpm"
+      - "customizations.services"
+      - "customizations.timezone"
+      - "customizations.rhsm"
+      - "customizations.sshd"

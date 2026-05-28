@@ -294,8 +294,8 @@ func loadImageTypeConfigs(d *DistroYAML) ([]imageTypesYAML, error) {
 		return nil, err
 	}
 
-	commonPath := filepath.Join(d.DefsPath, "_common.yaml")
-	commonContent, _ := fs.ReadFile(dataFS(), commonPath)
+	sharedPath := filepath.Join(d.DefsPath, "_shared.yaml")
+	sharedContent, _ := fs.ReadFile(dataFS(), sharedPath)
 
 	configs := make([]imageTypesYAML, 0, len(files))
 	for _, fileName := range files {
@@ -306,8 +306,8 @@ func loadImageTypeConfigs(d *DistroYAML) ([]imageTypesYAML, error) {
 		defer f.Close()
 
 		var reader io.Reader = f
-		if len(commonContent) > 0 {
-			reader = io.MultiReader(bytes.NewReader(commonContent), f)
+		if len(sharedContent) > 0 {
+			reader = io.MultiReader(bytes.NewReader(sharedContent), f)
 		}
 
 		var toplevel imageTypesYAML
@@ -399,6 +399,7 @@ func mergeImageTypeConfigs(d *DistroYAML, configs []imageTypesYAML) error {
 type imageTypesYAML struct {
 	ImageTypes map[string]ImageTypeYAML `yaml:"image_types"`
 	Common     map[string]any           `yaml:".common,omitempty"`
+	Shared     map[string]any           `yaml:".shared,omitempty"`
 }
 
 type distroImageConfig struct {

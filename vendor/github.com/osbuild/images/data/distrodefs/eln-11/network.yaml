@@ -1,0 +1,53 @@
+.common:
+  # options supported by PXE image type
+  # Includes everything except disk, filesystem, and partitioning_mode
+  supported_options_pxe: &supported_options_pxe
+    - "distro"
+    - "packages"
+    - "modules"
+    - "groups"
+    - "enabled_modules"
+    - "containers"
+    - "customizations.cacerts"
+    - "customizations.directories"
+    - "customizations.files"
+    - "customizations.fips"
+    - "customizations.firewall"
+    - "customizations.user"
+    - "customizations.sshkey"
+    - "customizations.group"
+    - "customizations.hostname"
+    - "customizations.kernel"
+    - "customizations.locale"
+    - "customizations.openscap"
+    - "customizations.repositories"
+    - "customizations.rpm"
+    - "customizations.services"
+    - "customizations.timezone"
+    - "customizations.rhsm"
+
+image_types:
+  "pxe-tar-xz":
+    filename: "pxe.tar.xz"
+    compression: "xz"
+    mime_type: "application/x-tar"
+    image_func: "pxe_tar"
+    exports: ["xz"]
+    bootable: true
+    package_sets:
+      os:
+        - include:
+            - "bash"
+            - "coreutils"
+            - "dracut-live"
+            - "dracut-network"
+            - "dracut-config-generic"
+            # gawk provides /usr/bin/awk which is a runtime dependency of
+            # dracut's net-lib module. Without it, dracut fails to build the
+            # initramfs with network support.
+            - "gawk"
+    platforms:
+      - *x86_64_bios_platform
+      - *aarch64_platform
+    blueprint:
+      supported_options: *supported_options_pxe

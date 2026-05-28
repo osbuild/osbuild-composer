@@ -303,7 +303,6 @@
       - "earlyprintk=ttyS0"
       - "systemd.firstboot=off"
     ostree_deployment_kernel_options: &ostree_deployment_kernel_options
-      - "modprobe.blacklist=vc4"
       - "rw"
       - "coreos.no_persist_ip"
 
