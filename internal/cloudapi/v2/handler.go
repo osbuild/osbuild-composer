@@ -1613,7 +1613,16 @@ func (h *apiHandlers) GetDistribution(ctx echo.Context, distroName string, param
 
 		for _, imageType := range imageTypes {
 			if params.ImageType != nil && !slices.Contains(*params.ImageType, imageType.Name()) {
-				continue
+				aliasMatch := false
+				for _, alias := range imageType.Aliases() {
+					if slices.Contains(*params.ImageType, alias) {
+						aliasMatch = true
+						break
+					}
+				}
+				if !aliasMatch {
+					continue
+				}
 			}
 
 			var isoLabel *string
