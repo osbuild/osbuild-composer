@@ -54,7 +54,7 @@ build {
     launch_block_device_mappings {
       delete_on_termination = "true"
       device_name           = "/dev/sda1"
-      volume_size           = 10
+      volume_size           = 30
       volume_type           = "gp3"
     }
   }
@@ -92,7 +92,7 @@ build {
     launch_block_device_mappings {
       delete_on_termination = "true"
       device_name           = "/dev/sda1"
-      volume_size           = 10
+      volume_size           = 30
       volume_type           = "gp3"
     }
   }
@@ -122,7 +122,7 @@ build {
     launch_block_device_mappings {
       delete_on_termination = "true"
       device_name           = "/dev/sda1"
-      volume_size           = 6
+      volume_size           = 30
       volume_type           = "gp3"
     }
   }
@@ -152,7 +152,7 @@ build {
     launch_block_device_mappings {
       delete_on_termination = "true"
       device_name           = "/dev/sda1"
-      volume_size           = 6
+      volume_size           = 30
       volume_type           = "gp3"
     }
   }
