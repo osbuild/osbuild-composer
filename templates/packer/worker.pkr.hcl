@@ -27,7 +27,7 @@ build {
     # arm one: RHEL-10.0.0_HVM-20251030-x86_64-0-Access2-GP3
     source_ami = "ami-0d2cf1078cac15da9"
     ssh_username = "ec2-user"
-    instance_type = "c6a.large"
+    instance_type = "c6i.2xlarge"
     aws_polling {
       delay_seconds = 20
       max_attempts  = 180
@@ -65,7 +65,7 @@ build {
     # RHEL-10.1.0_HVM_GA-20251031-arm64-0-Access2-GP3
     source_ami = "ami-03d9eec0fe95df48d"
     ssh_username = "ec2-user"
-    instance_type = "c6g.large"
+    instance_type = "c6g.2xlarge"
     aws_polling {
       delay_seconds = 20
       max_attempts  = 180
@@ -103,7 +103,7 @@ build {
     # Fedora-Cloud-Base-AmazonEC2.x86_64-42-1.1
     source_ami = "ami-07df3bb06da88a158"
     ssh_username = "fedora"
-    instance_type = "c6a.large"
+    instance_type = "c6i.2xlarge"
 
     # Set a name for the resulting AMI.
     ami_name = "${var.image_name}-fedora-42-x86_64"
@@ -133,7 +133,7 @@ build {
     # Fedora-Cloud-Base-AmazonEC2.aarch64-42-1.1
     source_ami = "ami-045ca5703b2046e49"
     ssh_username = "fedora"
-    instance_type = "c6g.large"
+    instance_type = "c6g.2xlarge"
 
     # Set a name for the resulting AMI.
     ami_name = "${var.image_name}-fedora-42-aarch64"
