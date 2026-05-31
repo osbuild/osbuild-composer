@@ -1,6 +1,6 @@
 module github.com/osbuild/osbuild-composer
 
-go 1.24.12
+go 1.25.9
 
 exclude github.com/mattn/go-sqlite3 v2.0.3+incompatible
 

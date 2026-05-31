@@ -242,6 +242,8 @@ func (impl *OSBuildJobImpl) getOCI(tcp oci.ClientParams) (oci.Client, error) {
 
 func validateResult(result *worker.OSBuildJobResult, jobID string) {
 	logWithId := logrus.WithField("jobId", jobID)
+
+	// in case of failures JobError is expected to be set
 	if result.JobError != nil {
 		logWithId.Errorf("osbuild job failed: %s", result.JobError.Reason)
 		if result.JobError.Details != nil {
@@ -249,16 +251,15 @@ func validateResult(result *worker.OSBuildJobResult, jobID string) {
 		}
 		return
 	}
-	// if the job failed, but the JobError is
-	// nil, we still need to handle this as an error
-	if result.OSBuildOutput == nil || !result.OSBuildOutput.Success {
-		reason := "osbuild job was unsuccessful"
-		logWithId.Errorf("osbuild job failed: %s", reason)
+
+	// bug in case JobError is nil and the job is marked as failed
+	if result.OSBuildOutput == nil || !result.OSBuildOutput.Success || !result.Success {
+		reason := "osbuild job failed without errors, this is a bug"
+		logWithId.Error(reason)
 		result.JobError = clienterrors.New(clienterrors.ErrorBuildJob, reason, nil)
 		return
 	}
 	logWithId.Infof("osbuild job succeeded")
-	result.Success = true
 }
 
 func uploadToS3(a *awscloud.AWS, outputDirectory, exportPath, bucket, key, filename string, public bool) (string, *clienterrors.Error) {
@@ -317,31 +318,27 @@ func (impl *OSBuildJobImpl) getContainerClient(destination string, targetOptions
 	return client, nil
 }
 
-func makeJobErrorFromOsbuildOutput(osbuildOutput *osbuild.Result) *clienterrors.Error {
-	var osbErrors []string
-	if osbuildOutput.Error != nil {
-		osbErrors = append(osbErrors, fmt.Sprintf("osbuild error: %s", string(osbuildOutput.Error)))
-	}
-	if osbuildOutput.Errors != nil {
-		for _, err := range osbuildOutput.Errors {
-			osbErrors = append(osbErrors, fmt.Sprintf("manifest validation error: %v", err))
+func makeJobErrorFromOsbuildOutput(result *osbuild.Result) *clienterrors.Error {
+	var errors []string
+	// validation errors
+	if result.Errors != nil {
+		for _, err := range result.Errors {
+			errors = append(errors, fmt.Sprintf("validation error in %s: %s", strings.Join(err.Path, "."), err.Message))
 		}
 	}
-	var failedStage string
-	for _, pipelineLog := range osbuildOutput.Log {
-		for _, stageResult := range pipelineLog {
-			if !stageResult.Success {
-				failedStage = stageResult.Type
-				break
+	// use top-level error in case it is set, otherwise go digging
+	if result.Error != nil {
+		errors = append(errors, string(result.Error))
+	} else {
+		for _, pipelineLog := range result.Log {
+			for _, stageResult := range pipelineLog {
+				if !stageResult.Success {
+					errors = append(errors, stageResult.Output)
+				}
 			}
 		}
 	}
-
-	reason := "osbuild build failed"
-	if failedStage != "" {
-		reason += fmt.Sprintf(" in stage: %q", failedStage)
-	}
-	return clienterrors.New(clienterrors.ErrorBuildJob, reason, osbErrors)
+	return clienterrors.New(clienterrors.ErrorBuildJob, "build failure", errors)
 }
 
 func (impl *OSBuildJobImpl) Run(job worker.Job) error {
@@ -575,35 +572,30 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 		Stderr:     os.Stderr,
 		JSONOutput: true,
 	}
+
 	osbuildJobResult.OSBuildOutput, err = executor.RunOSBuild(jobArgs.Manifest, logWithId, job, opts)
-	// First handle the case when "running" osbuild failed
+	// handle the case where something around running osbuild failed (starting, IO errors, etc.)
 	if err != nil {
-		osbuildJobResult.JobError = clienterrors.New(clienterrors.ErrorBuildJob, "osbuild build failed", err.Error())
+		osbuildJobResult.JobError = clienterrors.New(clienterrors.ErrorBuildJob, "osbuild failed", err.Error())
 		return err
 	}
 
-	// Include pipeline stages output inside the worker's logs.
-	// Order pipelines based on PipelineNames from job
+	// Log all failed stages
 	for _, pipelineName := range osbuildJobResult.PipelineNames.All() {
-		pipelineLog, hasLog := osbuildJobResult.OSBuildOutput.Log[pipelineName]
-		if !hasLog {
-			// no pipeline output
-			continue
-		}
-		for _, stageResult := range pipelineLog {
-			if stageResult.Success {
-				logWithId.Infof("  %s success", stageResult.Type)
-			} else {
-				logWithId.Infof("  %s failure:", stageResult.Type)
-				stageOutput := strings.Split(stageResult.Output, "\n")
-				for _, line := range stageOutput {
-					logWithId.Infof("    %s", line)
+		if pipelineLog, hasLog := osbuildJobResult.OSBuildOutput.Log[pipelineName]; hasLog {
+			for _, stageResult := range pipelineLog {
+				if !stageResult.Success {
+					logWithId.Infof("failure in %s stage (%s pipeline):", stageResult.Type, pipelineName)
+					stageOutput := strings.Split(stageResult.Output, "\n")
+					for _, line := range stageOutput {
+						logWithId.Infof("  %s", line)
+					}
 				}
 			}
 		}
 	}
 
-	// Second handle the case when the build failed, but osbuild finished successfully
+	// handle the case where osbuild failed and returned a valid result
 	if !osbuildJobResult.OSBuildOutput.Success {
 		osbuildJobResult.JobError = makeJobErrorFromOsbuildOutput(osbuildJobResult.OSBuildOutput)
 		return nil

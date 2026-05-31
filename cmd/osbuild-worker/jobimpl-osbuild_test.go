@@ -34,7 +34,7 @@ func TestMakeJobErrorFromOsbuildOutput(t *testing.T) {
 					},
 				},
 			},
-			expected: `Code: 10, Reason: osbuild build failed in stage: "bad-stage", Details: []`,
+			expected: `Code: 10, Reason: build failure, Details: [bad-failure]`,
 		},
 		{
 			inputData: &osbuild.Result{
@@ -43,7 +43,7 @@ func TestMakeJobErrorFromOsbuildOutput(t *testing.T) {
 					"fake-os": []osbuild.StageResult{},
 				},
 			},
-			expected: `Code: 10, Reason: osbuild build failed, Details: []`,
+			expected: `Code: 10, Reason: build failure, Details: []`,
 		},
 		{
 			inputData: &osbuild.Result{
@@ -53,14 +53,14 @@ func TestMakeJobErrorFromOsbuildOutput(t *testing.T) {
 					"fake-os": []osbuild.StageResult{},
 				},
 			},
-			expected: `Code: 10, Reason: osbuild build failed, Details: [osbuild error: some_osbuild_error]`,
+			expected: `Code: 10, Reason: build failure, Details: [some_osbuild_error]`,
 		},
 		{
 			inputData: &osbuild.Result{
 				Errors: []osbuild.ValidationError{
 					{
 						Message: "validation error message",
-						Path:    []string{"error path"},
+						Path:    []string{"the", "error", "path"},
 					},
 				},
 				Success: false,
@@ -68,7 +68,7 @@ func TestMakeJobErrorFromOsbuildOutput(t *testing.T) {
 					"fake-os": []osbuild.StageResult{},
 				},
 			},
-			expected: `Code: 10, Reason: osbuild build failed, Details: [manifest validation error: {validation error message [error path]}]`,
+			expected: `Code: 10, Reason: build failure, Details: [validation error in the.error.path: validation error message]`,
 		},
 	}
 	for _, testData := range tests {
