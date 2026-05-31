@@ -208,7 +208,7 @@ if [ "$COMPOSE_STATUS" != "failure" ]; then
     exit 1
 fi
 
-if [ "$COMPOSE_ERROR" != "osbuild build failed" ]; then
+if [ "$COMPOSE_ERROR" != "osbuild failed" ]; then
     echo "expected build failure, got $STATUS"
     exit 1
 fi

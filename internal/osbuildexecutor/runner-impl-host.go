@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"os/exec"
 
 	"github.com/sirupsen/logrus"
 
@@ -41,17 +42,25 @@ func (he *hostExecutor) RunOSBuild(manifest []byte, logger logrus.FieldLogger, j
 	}
 
 	if err := cmd.Wait(); err != nil {
-		return nil, fmt.Errorf("error running osbuild: %w", err)
+		// ignore ExitError if output can be decoded correctly (only if running with --json)
+		if _, isExitError := err.(*exec.ExitError); !isExitError || !opts.JSONOutput {
+			return nil, fmt.Errorf("osbuild failed: %w, %s", err, stdoutBuffer.String())
+		}
 	}
 
-	// try to decode the output even though the job could have failed
-	if stdoutBuffer.Len() == 0 {
-		return nil, fmt.Errorf("osbuild did not return any output")
-	}
 	var result osbuild.Result
-	err = json.Unmarshal(stdoutBuffer.Bytes(), &result)
-	if err != nil {
-		return nil, fmt.Errorf("error decoding osbuild output: %w\nraw output:\n%s", err, stdoutBuffer.String())
+	if opts.JSONOutput {
+		// try to decode the output even though the job could have failed
+		if stdoutBuffer.Len() == 0 {
+			return nil, fmt.Errorf("osbuild did not return any output")
+		}
+		decodeErr := json.Unmarshal(stdoutBuffer.Bytes(), &result)
+		if decodeErr != nil {
+			return nil, fmt.Errorf("error decoding osbuild output: %w\nraw output:\n%s", decodeErr, stdoutBuffer.String())
+		}
+	} else {
+		// the command succeeded without json output, just set the result accordingly
+		result.Success = true
 	}
 
 	return &result, nil
