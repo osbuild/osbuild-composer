@@ -8,36 +8,37 @@ on:  # yamllint disable-line rule:truthy
     - cron: "0 6 * * 1"
 
 jobs:
-  bump-images:
+  update-and-push:
     runs-on: ubuntu-latest
+    container: registry.fedoraproject.org/fedora:43
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v5
+      - name: Prepare environment and run tests
+        run: |
+          set -xe
+          sudo dnf -y install git gh jq golang skopeo libvirt-devel gpgme-devel btrfs-progs-devel krb5-devel
+          git clone --depth 1 https://github.com/osbuild/osbuild-composer
+          cd osbuild-composer/
+          make build test
 
-      - name: Run gobump-deps action - images
-        uses: lzap/gobump@main
-        with:
-          go_version: "1.25.9"
-          token: ${{ secrets.SCHUTZBOT_GITHUB_ACCESS_TOKEN }}
-          exec: ./tools/prepare-source.sh
-          exec2: "make build"
-          exec_pr: ./tools/prepare-source.sh
-          include: "github.com/osbuild/images github.com/osbuild/blueprint"
-          commit_message: "deps: bump osbuild/images dependency"
-
-  bump-deps:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v5
-
-      - name: Run gobump-deps action - all other
-        uses: lzap/gobump@main
-        with:
-          go_version: "1.25.9"
-          token: ${{ secrets.SCHUTZBOT_GITHUB_ACCESS_TOKEN }}
-          exec: ./tools/prepare-source.sh
-          exec2: "make build"
-          exec_pr: ./tools/prepare-source.sh
-          exclude: "github.com/osbuild/images,github.com/osbuild/blueprint"
-          commit_message: "deps: update dependencies (w/o osbuild/images)"
+      - name: Run gobump and open a PR
+        env:
+          GH_TOKEN: ${{ secrets.SCHUTZBOT_GITHUB_ACCESS_TOKEN }}
+        run: |
+          set -xe
+          cd osbuild-composer/
+          git config user.name "schutzbot"
+          git config user.email "schutzbot@gmail.com"
+          branch="schutz-gobump-$(date -I)"
+          git checkout -b "${branch}"
+          go run github.com/lzap/gobump@latest \
+            -exec "./tools/prepare-source.sh" \
+            -exec "make build test" \
+            -verbose -format markdown | tee "/tmp/github_pr_body.txt"
+          git log --oneline "main..${branch}"
+          git push -f "https://$GH_TOKEN@github.com/schutzbot/osbuild-composer.git" "${branch}"
+          gh pr create \
+            -t "Update dependencies $(date -I)" \
+            -F "/tmp/github_pr_body.txt" \
+            --repo "osbuild/osbuild-composer" \
+            --base "main" \
+            --head "schutzbot:${branch}"
