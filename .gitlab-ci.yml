@@ -113,7 +113,6 @@ RPM:
       - RUNNER:
           - aws/fedora-44-x86_64
           - aws/fedora-44-aarch64
-          - aws/rhel-8.10-ga-x86_64
           - aws/centos-stream-9-x86_64
           - aws/centos-stream-9-aarch64
           - aws/centos-stream-10-x86_64
@@ -137,7 +136,6 @@ RPM (GA-only):
   parallel:
     matrix:
       - RUNNER:
-          - aws/rhel-8.10-ga-aarch64
           - aws/rhel-9.7-ga-aarch64
           - aws/rhel-9.8-ga-aarch64
           - aws/rhel-10.2-ga-x86_64
@@ -170,7 +168,7 @@ Container:
   parallel:
     matrix:
       - RUNNER:
-          - aws/rhel-8.10-ga-x86_64
+          - aws/rhel-9.8-ga-x86_64
 
 
 API-bootc:
@@ -236,8 +234,6 @@ Base:
       - RUNNER:
           - aws/fedora-44-x86_64
           - aws/fedora-44-aarch64
-          - aws/rhel-8.10-ga-x86_64
-          - aws/rhel-8.10-ga-aarch64
           - aws/centos-stream-9-x86_64
           - aws/centos-stream-9-aarch64
           - aws/centos-stream-10-x86_64
@@ -260,8 +256,6 @@ Base:
           - aws/fedora-44-x86_64
           - aws/fedora-44-aarch64
       - RUNNER:
-          - aws/rhel-8.10-ga-x86_64
-          - aws/rhel-8.10-ga-aarch64
           - aws/centos-stream-9-x86_64
           - aws/centos-stream-9-aarch64
           - aws/centos-stream-10-x86_64
@@ -288,7 +282,7 @@ regression-excluded-dependency:
   extends: .regression
   rules:
     # WHITELIST & BLACKLIST: excluding GA runners from the PR pipeline
-    - if: $RUNNER =~ "/^.*(rhel-8.*|rhel-9.*|centos-stream-*).*$/" && $CI_PIPELINE_SOURCE != "schedule" && $RUNNER !~ /[\S]+rhel-[\S]+-(?:(?:ga)|(?:eus))[\S]+/
+    - if: $RUNNER =~ "/^.*(rhel-9.*|centos-stream-*).*$/" && $CI_PIPELINE_SOURCE != "schedule" && $RUNNER !~ /[\S]+rhel-[\S]+-(?:(?:ga)|(?:eus))[\S]+/
     - !reference [.nightly_rules_all, rules]
     - !reference [.ga_rules_all, rules]
   variables:
@@ -311,7 +305,7 @@ regression-old-worker-new-composer:
   parallel:
     matrix:
       - RUNNER:
-          - aws/rhel-8.10-ga-x86_64
+          - aws/rhel-10.2-ga-x86_64
         INTERNAL_NETWORK: ["true"]
   extends: .regression
   variables:
@@ -353,7 +347,6 @@ regression-insecure-repo:
 
 .rhel_runners: &rhel_runners
     RUNNER:
-      - aws/rhel-8.10-ga-x86_64
       - aws/rhel-9.9-nightly-x86_64
       - aws/rhel-10.2-ga-x86_64
       - aws/rhel-10.3-nightly-x86_64
@@ -560,7 +553,6 @@ API:
           - edge-container
           - oci
         RUNNER:
-          - aws/rhel-8.10-ga-x86_64
           - aws/rhel-9.8-ga-x86_64
           - aws/rhel-9.9-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
@@ -583,10 +575,6 @@ API:
         RUNNER:
           - aws/fedora-44-x86_64
           - aws/fedora-44-aarch64
-      - IMAGE_TYPE: ["aws"]
-        RUNNER:
-          - aws/rhel-8.10-ga-aarch64
-        INTERNAL_NETWORK: ["true"]
 
 API (PR):
   stage: test
@@ -619,7 +607,7 @@ API-module-hotfixes:
       - IMAGE_TYPE:
           - aws
         RUNNER:
-          - aws/rhel-8.10-ga-x86_64
+          - aws/rhel-9.8-ga-x86_64
         INTERNAL_NETWORK: ["true"]
         TEST_MODULE_HOTFIXES: [1]
 
@@ -653,7 +641,6 @@ API-unit:
       - RUNNER:
           - rhos-01/fedora-44-x86_64
       - RUNNER:
-          - gcp/rhel-8.10-ga-x86_64
           - gcp/rhel-9.8-ga-x86_64
           - gcp/rhel-9.9-nightly-x86_64
           - gcp/rhel-10.2-ga-x86_64
@@ -679,7 +666,6 @@ weldr-distro-dot-notation+aliases:
   parallel:
     matrix:
       - RUNNER:
-          - aws/rhel-8.8-ga-x86_64
           - aws/rhel-9.8-ga-x86_64
           - aws/rhel-9.9-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
@@ -749,7 +735,7 @@ Multi-tenancy:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/multi-tenancy.sh
   variables:
-    RUNNER: aws/rhel-8.10-ga-x86_64
+    RUNNER: aws/rhel-9.8-ga-x86_64
     INTERNAL_NETWORK: "true"
 
 Upgrade:
