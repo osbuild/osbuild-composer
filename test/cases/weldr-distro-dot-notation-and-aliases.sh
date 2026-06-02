@@ -127,7 +127,7 @@ function _test_compose_bp() {
     sudo composer-cli --json compose start "${blueprint_name}" "${image_type}" | tee "${composestart}"
 
     local composeid
-    composeid=$(get_build_info '.build_id' "${composestart}")
+    composeid=$(get_compose_id "${composestart}")
     composestatus=$(wait_for_compose "${composeid}")
 
     # Did the compose finish with success?

@@ -42,7 +42,7 @@ sudo composer-cli blueprints push "$BLUEPRINT_FILE"
 sudo composer-cli blueprints depsolve nss-devel
 sudo composer-cli --json compose start nss-devel qcow2 | tee "${COMPOSE_START}"
 
-COMPOSE_ID=$(get_build_info '.build_id' "$COMPOSE_START")
+COMPOSE_ID=$(get_compose_id "$COMPOSE_START")
 COMPOSE_STATUS=$(wait_for_compose "${COMPOSE_ID}")
 
 sudo composer-cli compose delete "${COMPOSE_ID}" >/dev/null

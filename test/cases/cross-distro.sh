@@ -204,7 +204,7 @@ function start_compose() {
 
     greenprint "🚀 Starting compose of $image_type for $blueprint blueprint"
     sudo composer-cli --json compose start "$blueprint" "$image_type" | tee "$compose_start" >&2
-    compose_id=$(get_build_info ".build_id" "$compose_start")
+    compose_id=$(get_compose_id "$compose_start")
 
     greenprint "INFO: Compose started with ID: ${compose_id}"
     echo "$compose_id"

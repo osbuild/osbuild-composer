@@ -39,7 +39,7 @@ TEMPDIR=$(mktemp -d)
 COMPOSE_START=${TEMPDIR}/compose-start.json
 sudo composer-cli --json compose start basic wsl | tee "$COMPOSE_START"
 
-COMPOSE_ID=$(get_build_info ".build_id" "$COMPOSE_START")
+COMPOSE_ID=$(get_compose_id "$COMPOSE_START")
 wait_for_compose "${COMPOSE_ID}"
 
 # make sure the store is empty
@@ -54,7 +54,7 @@ sudo mkdir /var/cache/osbuild-worker/osbuild-store
 sudo chattr +a /var/cache/osbuild-worker/osbuild-store
 sudo composer-cli --json compose start basic wsl | tee "$COMPOSE_START"
 
-COMPOSE_ID=$(get_build_info ".build_id" "$COMPOSE_START")
+COMPOSE_ID=$(get_compose_id "$COMPOSE_START")
 wait_for_compose "${COMPOSE_ID}"
 
 sudo chattr -a /var/cache/osbuild-worker/osbuild-store

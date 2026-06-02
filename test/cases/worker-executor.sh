@@ -87,7 +87,7 @@ sudo journalctl -af -n 1 -u "${WORKER_UNIT}" &
 subprocessPIDs+=( $! )
 
 sudo composer-cli --json compose start bash container | tee "$COMPOSE_START"
-COMPOSE_ID=$(get_build_info ".build_id" "$COMPOSE_START")
+COMPOSE_ID=$(get_compose_id "$COMPOSE_START")
 
 EXECUTOR_IP=0
 for _ in {1..60}; do

@@ -154,7 +154,7 @@ if [[ "${dummysourceurl}" != "${expectedurl}" ]]; then
 fi
 
 sudo composer-cli --json compose start dummy qcow2 | tee "${composestart}"
-composeid=$(get_build_info '.build_id' "${composestart}")
+composeid=$(get_compose_id "${composestart}")
 composestatus=$(wait_for_compose "${composeid}")
 
 sudo composer-cli compose delete "${composeid}" >/dev/null

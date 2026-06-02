@@ -94,7 +94,7 @@ WORKER_JOURNAL_PID=$!
 greenprint "🚀 Starting compose with upload to $UPLOAD_TARGET"
 
 sudo composer-cli --json compose start container container "$UPLOAD_TARGET" "$UPLOAD_CONFIG" | tee "$COMPOSE_START"
-COMPOSE_ID=$(get_build_info ".build_id" "$COMPOSE_START")
+COMPOSE_ID=$(get_compose_id "$COMPOSE_START")
 COMPOSE_STATUS=$(wait_for_compose "${COMPOSE_ID}")
 
 # Capture the compose logs from osbuild.

@@ -77,7 +77,7 @@ trap 'sudo pkill -P ${WORKER_JOURNAL_PID}' EXIT
 greenprint "🚀 Starting compose"
 sudo composer-cli --json compose start ${BLUEPRINT_NAME} qcow2 "$TEST_ID" "$S3_PROVIDER_CONFIG_FILE" | tee "$COMPOSE_START"
 
-COMPOSE_ID=$(get_build_info ".build_id" "$COMPOSE_START")
+COMPOSE_ID=$(get_compose_id "$COMPOSE_START")
 wait_for_compose "${COMPOSE_ID}"
 
 # Capture the compose logs from osbuild.

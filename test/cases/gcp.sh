@@ -262,7 +262,7 @@ WORKER_JOURNAL_PID=$!
 greenprint "🚀 Starting compose"
 sudo composer-cli --json compose start "$BLUEPRINT_NAME" gce "$GCP_IMAGE_NAME" "$GCP_CONFIG" | tee "$COMPOSE_START"
 
-COMPOSE_ID=$(get_build_info ".build_id" "$COMPOSE_START")
+COMPOSE_ID=$(get_compose_id "$COMPOSE_START")
 COMPOSE_STATUS=$(wait_for_compose "${COMPOSE_ID}")
 
 # Capture the compose logs from osbuild.
