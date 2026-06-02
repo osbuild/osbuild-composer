@@ -118,7 +118,7 @@ composer-cli blueprints depsolve bash
 # build a qcow image to verify functionality
 composer-cli --json compose start bash qcow2 | tee "$COMPOSE_START"
 
-COMPOSE_ID=$(get_build_info ".build_id" "$COMPOSE_START")
+COMPOSE_ID=$(get_compose_id "$COMPOSE_START")
 COMPOSE_STATUS=$(wait_for_compose "${COMPOSE_ID}")
 
 # Capture the compose logs from osbuild.

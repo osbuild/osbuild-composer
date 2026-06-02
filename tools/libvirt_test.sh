@@ -173,7 +173,7 @@ EOF
     greenprint "🚀 Starting compose"
     sudo composer-cli --json compose start bp "$IMAGE_TYPE" | tee "$COMPOSE_START"
 
-    COMPOSE_ID=$(get_build_info ".build_id" "$COMPOSE_START")
+    COMPOSE_ID=$(get_compose_id "$COMPOSE_START")
     wait_for_compose "${COMPOSE_ID}"
 
     # Capture the compose logs from osbuild.
