@@ -33,6 +33,13 @@ function get_build_info() {
     jq -r "${key}" "${fname}"
 }
 
+# Returns the compose ID given the path to a file that contains the response
+# from a "compose start" call.
+function get_compose_id() {
+    local response_file="${1}"
+    get_build_info ".build_id" "${response_file}"
+}
+
 # Return the status of a compose given a compose ID.
 # This function handles response structure differences in various weldr-client
 # / composer-cli versions. The status string also differs for newer (>= v36.0)
