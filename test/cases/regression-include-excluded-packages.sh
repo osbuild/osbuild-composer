@@ -21,7 +21,6 @@ source /usr/libexec/tests/osbuild-composer/shared_lib.sh
 /usr/libexec/osbuild-composer-test/provision.sh none
 BLUEPRINT_FILE=/tmp/blueprint.toml
 COMPOSE_START=/tmp/compose-start.json
-COMPOSE_INFO=/tmp/compose-info.json
 
 # Write a basic blueprint for our image.
 tee "$BLUEPRINT_FILE" > /dev/null << EOF
@@ -42,29 +41,14 @@ EOF
 sudo composer-cli blueprints push "$BLUEPRINT_FILE"
 sudo composer-cli blueprints depsolve nss-devel
 sudo composer-cli --json compose start nss-devel qcow2 | tee "${COMPOSE_START}"
+
 COMPOSE_ID=$(get_build_info '.build_id' "$COMPOSE_START")
-
-# Wait for the compose to finish.
-echo "⏱ Waiting for compose to finish: ${COMPOSE_ID}"
-while true; do
-    sudo composer-cli --json compose info "${COMPOSE_ID}" | tee "$COMPOSE_INFO" > /dev/null
-    COMPOSE_STATUS=$(get_build_info '.queue_status' "$COMPOSE_INFO")
-
-    # Is the compose finished?
-    if [[ $COMPOSE_STATUS != RUNNING ]] && [[ $COMPOSE_STATUS != WAITING ]]; then
-        break
-    fi
-
-    # Wait 30 seconds and try again.
-    sleep 30
-done
+COMPOSE_STATUS=$(wait_for_compose "${COMPOSE_ID}")
 
 sudo composer-cli compose delete "${COMPOSE_ID}" >/dev/null
 
-jq . "${COMPOSE_INFO}"
-
 # Did the compose finish with success?
-if [[ $COMPOSE_STATUS == FINISHED ]]; then
+if [[ $COMPOSE_STATUS == FINISHED ]] || [[ $COMPOSE_STATUS == success ]]; then
     echo "Test passed!"
     exit 0
 else

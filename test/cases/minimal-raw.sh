@@ -76,7 +76,6 @@ BOOT_ARGS="uefi"
 TEMPDIR=$(mktemp -d)
 BLUEPRINT_FILE=${TEMPDIR}/blueprint.toml
 COMPOSE_START=${TEMPDIR}/compose-start-${IMAGE_KEY}.json
-COMPOSE_INFO=${TEMPDIR}/compose-info-${IMAGE_KEY}.json
 
 # SSH setup.
 SSH_OPTIONS=(-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=5)
@@ -147,23 +146,8 @@ build_image() {
     greenprint "🚀 Starting compose"
     sudo composer-cli --json compose start "$blueprint_name" "$image_type" | tee "$COMPOSE_START"
 
-    COMPOSE_ID=$(jq -r '.[0].body.build_id' "$COMPOSE_START")
-
-    # Wait for the compose to finish.
-    greenprint "⏱ Waiting for compose to finish: ${COMPOSE_ID}"
-    while true; do
-        sudo composer-cli --json compose info "${COMPOSE_ID}" | tee "$COMPOSE_INFO" > /dev/null
-
-        COMPOSE_STATUS=$(get_build_info ".queue_status" "$COMPOSE_INFO")
-
-        # Is the compose finished?
-        if [[ $COMPOSE_STATUS != RUNNING ]] && [[ $COMPOSE_STATUS != WAITING ]]; then
-            break
-        fi
-
-        # Wait 30 seconds and try again.
-        sleep 5
-    done
+    COMPOSE_ID=$(get_build_info ".build_id" "${COMPOSE_START}")
+    COMPOSE_STATUS=$(wait_for_compose "${COMPOSE_ID}")
 
     # Capture the compose logs from osbuild.
     greenprint "💬 Getting compose log and metadata"
@@ -174,7 +158,7 @@ build_image() {
     sudo pkill -P ${WORKER_JOURNAL_PID}
 
     # Did the compose finish with success?
-    if [[ $COMPOSE_STATUS != FINISHED ]]; then
+    if [[ $COMPOSE_STATUS != FINISHED ]] && [[ $COMPOSE_STATUS != success ]]; then
         redprint "Something went wrong with the compose. 😢"
         exit 1
     fi
@@ -343,7 +327,7 @@ ansible_python_interpreter=/usr/bin/python3
 ansible_user=admin
 ansible_private_key_file=${SSH_KEY}
 ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
-ansible_become=yes 
+ansible_become=yes
 ansible_become_method=sudo
 ansible_become_pass=${EDGE_USER_PASSWORD}
 EOF

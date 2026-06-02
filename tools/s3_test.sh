@@ -27,7 +27,6 @@ ARTIFACTS="${ARTIFACTS:-/tmp/artifacts}"
 BLUEPRINT_FILE=${TEMPDIR}/blueprint.toml
 BLUEPRINT_NAME=empty
 COMPOSE_START=${TEMPDIR}/compose-start-${TEST_ID}.json
-COMPOSE_INFO=${TEMPDIR}/compose-info-${TEST_ID}.json
 
 # Get the compose log.
 get_compose_log () {
@@ -77,22 +76,9 @@ trap 'sudo pkill -P ${WORKER_JOURNAL_PID}' EXIT
 # Start the compose and upload to AWS.
 greenprint "🚀 Starting compose"
 sudo composer-cli --json compose start ${BLUEPRINT_NAME} qcow2 "$TEST_ID" "$S3_PROVIDER_CONFIG_FILE" | tee "$COMPOSE_START"
+
 COMPOSE_ID=$(get_build_info ".build_id" "$COMPOSE_START")
-
-# Wait for the compose to finish.
-greenprint "⏱ Waiting for compose to finish: ${COMPOSE_ID}"
-while true; do
-    sudo composer-cli --json compose info "${COMPOSE_ID}" | tee "$COMPOSE_INFO" > /dev/null
-    COMPOSE_STATUS=$(get_build_info ".queue_status" "$COMPOSE_INFO")
-
-    # Is the compose finished?
-    if [[ $COMPOSE_STATUS != RUNNING ]] && [[ $COMPOSE_STATUS != WAITING ]]; then
-        break
-    fi
-
-    # Wait 30 seconds and try again.
-    sleep 30
-done
+wait_for_compose "${COMPOSE_ID}"
 
 # Capture the compose logs from osbuild.
 greenprint "💬 Getting compose log and metadata"
@@ -104,7 +90,8 @@ sudo pkill -P ${WORKER_JOURNAL_PID}
 trap - EXIT
 
 # Did the compose finish with success?
-if [[ $COMPOSE_STATUS != FINISHED ]]; then
+COMPOSE_STATUS=$(get_compose_status "${COMPOSE_ID}")
+if [[ $COMPOSE_STATUS != FINISHED ]] && [[ $COMPOSE_STATUS != success ]]; then
     echo "Something went wrong with the compose. 😢"
     exit 1
 fi

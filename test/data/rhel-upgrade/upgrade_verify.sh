@@ -49,7 +49,6 @@ get_compose_metadata () {
 
 IMAGE_KEY=osbuild-composer-upgrade-test
 COMPOSE_START=${WORKSPACE}/compose-start-${IMAGE_KEY}.json
-COMPOSE_INFO=${WORKSPACE}/compose-info-${IMAGE_KEY}.json
 
 # check installed osbuild-composer version
 rpm -qi osbuild-composer
@@ -118,21 +117,9 @@ composer-cli blueprints depsolve bash
 
 # build a qcow image to verify functionality
 composer-cli --json compose start bash qcow2 | tee "$COMPOSE_START"
+
 COMPOSE_ID=$(get_build_info ".build_id" "$COMPOSE_START")
-
-# Wait for the compose to finish.
-while true; do
-    composer-cli --json compose info "${COMPOSE_ID}" | tee "$COMPOSE_INFO" > /dev/null
-    COMPOSE_STATUS=$(get_build_info ".queue_status" "$COMPOSE_INFO")
-
-    # Is the compose finished?
-    if [[ $COMPOSE_STATUS != RUNNING ]] && [[ $COMPOSE_STATUS != WAITING ]]; then
-        break
-    fi
-
-    # Wait 30 seconds and try again.
-    sleep 30
-done
+COMPOSE_STATUS=$(wait_for_compose "${COMPOSE_ID}")
 
 # Capture the compose logs from osbuild.
 mkdir /root/logs
@@ -140,7 +127,7 @@ get_compose_log "$COMPOSE_ID"
 get_compose_metadata "$COMPOSE_ID"
 
 # if the compose succeds consider the test pass
-if [[ $COMPOSE_STATUS != FINISHED ]]; then
+if [[ $COMPOSE_STATUS != FINISHED ]] && [[ $COMPOSE_STATUS != success ]]; then
     echo "Something went wrong with the compose. 😢"
     exit 1
 else

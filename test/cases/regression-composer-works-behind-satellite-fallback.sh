@@ -84,7 +84,7 @@ function cleanup {
     sudo cat /var/log/httpd/error_log
 
     greenprint "Putting things back to their previous configuration"
-    
+
     sudo mv "${REPOSITORY_OVERRIDE}.backup" "${REPOSITORY_OVERRIDE}" || echo "no repo override backup"
     if [[ -d /etc/httpd/conf.d.backup ]];
     then
@@ -105,7 +105,7 @@ function cleanup {
     sudo mv "${REDHAT_CA_CERT_BACKUP}" "${REDHAT_CA_CERT}"
     sudo rm -rf "${ENTITLEMENTS_DIR}"
     sudo mv "${ENTITLEMENTS_DIR_BACKUP}" "${ENTITLEMENTS_DIR}"
-    
+
     set -eu
 }
 
@@ -249,7 +249,6 @@ STOPHERE
 
 function try_image_build {
     COMPOSE_START=/tmp/compose-start.json
-    COMPOSE_INFO=/tmp/compose-info.json
     sudo composer-cli blueprints push "$BLUEPRINT_FILE"
     if ! sudo composer-cli blueprints depsolve ${BLUEPRINT_NAME};
     then
@@ -264,23 +263,9 @@ function try_image_build {
         sudo journalctl -xe --unit "${WORKER_UNIT}"
         exit 1
     fi
+
     COMPOSE_ID=$(get_build_info ".build_id" "$COMPOSE_START")
-
-    # Wait for the compose to finish.
-    greenprint "⏱ Waiting for compose to finish: ${COMPOSE_ID}"
-    while true; do
-        sudo composer-cli --json compose info "${COMPOSE_ID}" | tee "${COMPOSE_INFO}" > /dev/null
-        COMPOSE_STATUS=$(get_build_info ".queue_status" "$COMPOSE_INFO")
-
-        # Is the compose finished?
-        if [[ $COMPOSE_STATUS != RUNNING ]] && [[ $COMPOSE_STATUS != WAITING ]]; then
-            break
-        fi
-
-        # Wait 30 seconds and try again.
-        sleep 30
-
-    done
+    COMPOSE_STATUS=$(wait_for_compose "${COMPOSE_ID}")
 
     sudo composer-cli compose delete "${COMPOSE_ID}" >/dev/null
 
@@ -289,7 +274,7 @@ function try_image_build {
     sudo journalctl -xe --unit "${WORKER_UNIT}"
 
     # Did the compose finish with success?
-    if [[ $COMPOSE_STATUS == FINISHED ]]; then
+    if [[ $COMPOSE_STATUS == FINISHED ]] || [[ $COMPOSE_STATUS == success ]]; then
         echo "Test passed!"
         exit 0
     else

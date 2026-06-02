@@ -2,7 +2,7 @@
 
 #
 # osbuild-composer can work with multiple subscriptions on the host system.
-# test this by simulating a custom repository with custom certificates and 
+# test this by simulating a custom repository with custom certificates and
 # verifies that an image can be built using those.
 #
 
@@ -290,7 +290,6 @@ STOPHERE
 
 function try_image_build {
     COMPOSE_START=/tmp/compose-start.json
-    COMPOSE_INFO=/tmp/compose-info.json
     sudo composer-cli blueprints push "$BLUEPRINT_FILE"
     if ! sudo composer-cli blueprints depsolve ${BLUEPRINT_NAME};
     then
@@ -305,23 +304,9 @@ function try_image_build {
         sudo journalctl -xe --unit "${WORKER_UNIT}"
         exit 1
     fi
+
     COMPOSE_ID=$(get_build_info ".build_id" "$COMPOSE_START")
-
-    # Wait for the compose to finish.
-    greenprint "⏱ Waiting for compose to finish: ${COMPOSE_ID}"
-    while true; do
-        sudo composer-cli --json compose info "${COMPOSE_ID}" | tee "${COMPOSE_INFO}" > /dev/null
-        COMPOSE_STATUS=$(get_build_info ".queue_status" "$COMPOSE_INFO")
-
-        # Is the compose finished?
-        if [[ $COMPOSE_STATUS != RUNNING ]] && [[ $COMPOSE_STATUS != WAITING ]]; then
-            break
-        fi
-
-        # Wait 30 seconds and try again.
-        sleep 30
-
-    done
+    COMPOSE_STATUS=$(wait_for_compose "${COMPOSE_ID}")
 
     sudo composer-cli compose delete "${COMPOSE_ID}" >/dev/null
 
@@ -330,7 +315,7 @@ function try_image_build {
     sudo journalctl -xe --unit "${WORKER_UNIT}"
 
     # Did the compose finish with success?
-    if [[ $COMPOSE_STATUS == FINISHED ]]; then
+    if [[ $COMPOSE_STATUS == FINISHED ]] || [[ $COMPOSE_STATUS == success ]]; then
         echo "Test passed!"
         exit 0
     else

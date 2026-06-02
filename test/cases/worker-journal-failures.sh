@@ -15,7 +15,6 @@ source /usr/libexec/tests/osbuild-composer/shared_lib.sh
 TEMPDIR=$(mktemp -d)
 BP=${TEMPDIR}/blueprint.toml
 COMPOSE_START=${TEMPDIR}/compose-start.json
-COMPOSE_INFO=${TEMPDIR}/compose-info.json
 
 tee "$BP" > /dev/null << EOF
 name = "bp"
@@ -31,20 +30,7 @@ sudo composer-cli blueprints push "$BP"
 
 sudo composer-cli --json compose start bp wsl | tee "$COMPOSE_START"
 COMPOSE_ID=$(get_build_info ".build_id" "$COMPOSE_START")
-
-greenprint "⏱ Waiting for compose to finish: ${COMPOSE_ID}"
-while true; do
-    sudo composer-cli --json compose info "${COMPOSE_ID}" | tee "$COMPOSE_INFO" > /dev/null
-    COMPOSE_STATUS=$(get_build_info ".queue_status" "$COMPOSE_INFO")
-
-    # Is the compose finished?
-    if [[ $COMPOSE_STATUS != RUNNING ]] && [[ $COMPOSE_STATUS != WAITING ]]; then
-        break
-    fi
-
-    # Wait 30 seconds and try again.
-    sleep 30
-done
+wait_for_compose "${COMPOSE_ID}"
 
 JOURNAL_OUTPUT=${TEMPDIR}/journal
 sudo journalctl -u osbuild-worker@1 --output cat | sudo tee "$JOURNAL_OUTPUT"
