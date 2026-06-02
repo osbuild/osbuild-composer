@@ -22,15 +22,15 @@ function nvrGreaterOrEqual {
 }
 
 function get_build_info() {
-    local key="$1"
+    local filter="$1"
     local fname="$2"
     if rpm -q --quiet weldr-client; then
-        key=".body${key}"
+        filter=".body${filter}"  # oldest structure, pre v35.6
         if nvrGreaterOrEqual "weldr-client" "35.6" 2> /dev/null; then
-            key=".[0]${key}"
+            filter=".[0]${filter}"  # changed to array in v35.6
         fi
     fi
-    jq -r "${key}" "${fname}"
+    jq -r "${filter}" "${fname}"
 }
 
 # Returns the compose ID given the path to a file that contains the response
