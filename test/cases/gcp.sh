@@ -70,7 +70,6 @@ GCP_CONFIG=${TEMPDIR}/gcp.toml
 BLUEPRINT_FILE=${TEMPDIR}/blueprint.toml
 BLUEPRINT_NAME="test"
 COMPOSE_START=${TEMPDIR}/compose-start-${TEST_ID}.json
-COMPOSE_INFO=${TEMPDIR}/compose-info-${TEST_ID}.json
 GCP_TEST_ID_HASH="$(echo -n "$TEST_ID" | sha224sum - | sed -E 's/([a-z0-9])\s+-/\1/')"
 GCP_IMAGE_NAME="image-$GCP_TEST_ID_HASH"
 SSH_USER="cloud-user"
@@ -262,22 +261,9 @@ WORKER_JOURNAL_PID=$!
 # Start the compose and upload to GCP.
 greenprint "🚀 Starting compose"
 sudo composer-cli --json compose start "$BLUEPRINT_NAME" gce "$GCP_IMAGE_NAME" "$GCP_CONFIG" | tee "$COMPOSE_START"
+
 COMPOSE_ID=$(get_build_info ".build_id" "$COMPOSE_START")
-
-# Wait for the compose to finish.
-greenprint "⏱ Waiting for compose to finish: ${COMPOSE_ID}"
-while true; do
-    sudo composer-cli --json compose info "${COMPOSE_ID}" | tee "$COMPOSE_INFO" > /dev/null
-    COMPOSE_STATUS=$(get_build_info ".queue_status" "$COMPOSE_INFO")
-
-    # Is the compose finished?
-    if [[ $COMPOSE_STATUS != RUNNING ]] && [[ $COMPOSE_STATUS != WAITING ]]; then
-        break
-    fi
-
-    # Wait 30 seconds and try again.
-    sleep 30
-done
+COMPOSE_STATUS=$(wait_for_compose "${COMPOSE_ID}")
 
 # Capture the compose logs from osbuild.
 greenprint "💬 Getting compose log and metadata"
@@ -288,7 +274,7 @@ get_compose_metadata "$COMPOSE_ID"
 sudo pkill -P ${WORKER_JOURNAL_PID}
 
 # Did the compose finish with success?
-if [[ $COMPOSE_STATUS != FINISHED ]]; then
+if [[ $COMPOSE_STATUS != FINISHED ]] && [[ $COMPOSE_STATUS != success ]]; then
     echo "❌ Something went wrong with the compose. 😢"
     exit 1
 fi

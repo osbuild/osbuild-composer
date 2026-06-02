@@ -37,21 +37,10 @@ sudo composer-cli blueprints push bp.toml
 
 TEMPDIR=$(mktemp -d)
 COMPOSE_START=${TEMPDIR}/compose-start.json
-COMPOSE_INFO=${TEMPDIR}/compose-info.json
 sudo composer-cli --json compose start basic wsl | tee "$COMPOSE_START"
-COMPOSE_ID=$(get_build_info ".build_id" "$COMPOSE_START")
-greenprint "⏱ Waiting for compose to finish: ${COMPOSE_ID}"
-while true; do
-    sudo composer-cli --json compose info "${COMPOSE_ID}" | tee "$COMPOSE_INFO" > /dev/null
-    COMPOSE_STATUS=$(get_build_info ".queue_status" "$COMPOSE_INFO")
-    # Is the compose finished?
-    if [[ $COMPOSE_STATUS != RUNNING ]] && [[ $COMPOSE_STATUS != WAITING ]]; then
-        break
-    fi
-    # Wait 5 seconds and try again.
-    sleep 5
-done
 
+COMPOSE_ID=$(get_build_info ".build_id" "$COMPOSE_START")
+wait_for_compose "${COMPOSE_ID}"
 
 # make sure the store is empty
 if [ -d /var/cache/osbuild-worker/osbuild-store ]; then
@@ -64,18 +53,10 @@ fi
 sudo mkdir /var/cache/osbuild-worker/osbuild-store
 sudo chattr +a /var/cache/osbuild-worker/osbuild-store
 sudo composer-cli --json compose start basic wsl | tee "$COMPOSE_START"
+
 COMPOSE_ID=$(get_build_info ".build_id" "$COMPOSE_START")
-greenprint "⏱ Waiting for compose to finish: ${COMPOSE_ID}"
-while true; do
-    sudo composer-cli --json compose info "${COMPOSE_ID}" | tee "$COMPOSE_INFO" > /dev/null
-    COMPOSE_STATUS=$(get_build_info ".queue_status" "$COMPOSE_INFO")
-    # Is the compose finished?
-    if [[ $COMPOSE_STATUS != RUNNING ]] && [[ $COMPOSE_STATUS != WAITING ]]; then
-        break
-    fi
-    # Wait 5 seconds and try again.
-    sleep 5
-done
+wait_for_compose "${COMPOSE_ID}"
+
 sudo chattr -a /var/cache/osbuild-worker/osbuild-store
 
 if sudo systemctl is-active osbuild-worker@1.service; then

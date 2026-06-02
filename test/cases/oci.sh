@@ -46,7 +46,6 @@ OCI_UPLOAD=${TEMPDIR}/oci.toml
 OCI_CONFIG=${TEMPDIR}/oci-config
 BLUEPRINT_FILE=${TEMPDIR}/blueprint.toml
 COMPOSE_START=${TEMPDIR}/compose-start-${TEST_ID}.json
-COMPOSE_INFO=${TEMPDIR}/compose-info-${TEST_ID}.json
 OCI_IMAGE_DATA=${TEMPDIR}/oci-image-data-${TEST_ID}.json
 SSH_DATA_DIR=$(tools/gen-ssh.sh)
 SSH_KEY=${SSH_DATA_DIR}/id_rsa
@@ -167,18 +166,9 @@ WORKER_JOURNAL_PID=$!
 
 greenprint "🚀 Starting compose"
 sudo composer-cli --json compose start bash oci "$TEST_ID" "$OCI_UPLOAD" | tee "$COMPOSE_START"
-COMPOSE_ID=$(get_build_info ".build_id" "$COMPOSE_START")
 
-greenprint "⏱ Waiting for compose to finish: ${COMPOSE_ID}"
-while true; do
-    sudo composer-cli --json compose info "${COMPOSE_ID}" | tee "$COMPOSE_INFO" > /dev/null
-    COMPOSE_STATUS=$(get_build_info ".queue_status" "$COMPOSE_INFO")
-    # Is the compose finished?
-    if [[ $COMPOSE_STATUS != RUNNING ]] && [[ $COMPOSE_STATUS != WAITING ]]; then
-        break
-    fi
-    sleep 30
-done
+COMPOSE_ID=$(get_build_info ".build_id" "$COMPOSE_START")
+COMPOSE_STATUS=$(wait_for_compose "${COMPOSE_ID}")
 
 greenprint "💬 Getting compose log and metadata"
 get_compose_log "$COMPOSE_ID"
@@ -187,7 +177,7 @@ get_compose_metadata "$COMPOSE_ID"
 # Kill the journal monitor immediately
 sudo pkill -P ${WORKER_JOURNAL_PID}
 
-if [[ $COMPOSE_STATUS != FINISHED ]]; then
+if [[ $COMPOSE_STATUS != FINISHED ]] && [[ $COMPOSE_STATUS != success ]]; then
     redprint "Something went wrong with the compose. 😢"
     exit 1
 fi

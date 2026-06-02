@@ -122,34 +122,16 @@ function _test_compose_bp() {
     local test_distro_alias="${5:-0}"
 
     local composestart="${tmpdir}/compose-start.json"
-    local composeinfo="${tmpdir}/compose-info.json"
 
     sudo composer-cli blueprints push "${blueprint}"
     sudo composer-cli --json compose start "${blueprint_name}" "${image_type}" | tee "${composestart}"
 
     local composeid
     composeid=$(get_build_info '.build_id' "${composestart}")
-
-    # Wait for the compose to finish.
-    local composestatus
-    echo "⏱ Waiting for compose to finish: ${composeid}"
-    while true; do
-        sudo composer-cli --json compose info "${composeid}" | tee "${composeinfo}" > /dev/null
-        composestatus=$(get_build_info '.queue_status' "${composeinfo}")
-
-        # Is the compose finished?
-        if [[ ${composestatus} != RUNNING ]] && [[ ${composestatus} != WAITING ]]; then
-            break
-        fi
-
-        # Wait 30 seconds and try again.
-        sleep 30
-    done
-
-    jq . "${composeinfo}"
+    composestatus=$(wait_for_compose "${composeid}")
 
     # Did the compose finish with success?
-    if [[ $composestatus != FINISHED ]]; then
+    if [[ $composestatus != FINISHED ]] && [[ $composestatus != success ]]; then
         echo "Something went wrong with the compose. 😢"
         exit 1
     fi

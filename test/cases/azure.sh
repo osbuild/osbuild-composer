@@ -74,7 +74,6 @@ ARTIFACTS="${ARTIFACTS:-/tmp/artifacts}"
 AZURE_CONFIG=${TEMPDIR}/azure.toml
 BLUEPRINT_FILE=${TEMPDIR}/blueprint.toml
 COMPOSE_START=${TEMPDIR}/compose-start-${IMAGE_KEY}.json
-COMPOSE_INFO=${TEMPDIR}/compose-info-${IMAGE_KEY}.json
 
 # Get the compose log.
 get_compose_log () {
@@ -163,22 +162,9 @@ WORKER_JOURNAL_PID=$!
 # Start the compose and upload to Azure.
 greenprint "🚀 Starting compose"
 sudo composer-cli --json compose start bash vhd "$IMAGE_KEY" "$AZURE_CONFIG" | tee "$COMPOSE_START"
+
 COMPOSE_ID=$(get_build_info ".build_id" "$COMPOSE_START")
-
-# Wait for the compose to finish.
-greenprint "⏱ Waiting for compose to finish: ${COMPOSE_ID}"
-while true; do
-    sudo composer-cli --json compose info "${COMPOSE_ID}" | tee "$COMPOSE_INFO" > /dev/null
-    COMPOSE_STATUS=$(get_build_info ".queue_status" "$COMPOSE_INFO")
-
-    # Is the compose finished?
-    if [[ $COMPOSE_STATUS != RUNNING ]] && [[ $COMPOSE_STATUS != WAITING ]]; then
-        break
-    fi
-
-    # Wait 30 seconds and try again.
-    sleep 30
-done
+COMPOSE_STATUS=$(wait_for_compose "${COMPOSE_ID}")
 
 # Capture the compose logs from osbuild.
 greenprint "💬 Getting compose log and metadata"
@@ -189,7 +175,7 @@ get_compose_metadata "$COMPOSE_ID"
 sudo pkill -P ${WORKER_JOURNAL_PID}
 
 # Did the compose finish with success?
-if [[ $COMPOSE_STATUS != FINISHED ]]; then
+if [[ $COMPOSE_STATUS != FINISHED ]] && [[ $COMPOSE_STATUS != success ]]; then
     redprint "Something went wrong with the compose. 😢"
     exit 1
 fi

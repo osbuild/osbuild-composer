@@ -15,7 +15,6 @@ CONTAINER_IMAGE_CLOUD_TOOLS="quay.io/osbuild/cloud-tools:latest"
 TEMPDIR=$(mktemp -d)
 BLUEPRINT_FILE=${TEMPDIR}/blueprint.toml
 COMPOSE_START=${TEMPDIR}/compose-start.json
-COMPOSE_INFO=${TEMPDIR}/compose-info.json
 DESCR_INST=${TEMPDIR}/descr-inst.json
 AUTH_SG=${TEMPDIR}/auth-sgrule.json
 DESCR_SGRULE=${TEMPDIR}/descr-sgrule.json
@@ -182,17 +181,7 @@ greenprint "🚀 Starting worker executor"
 ssh -oStrictHostKeyChecking=no -i "$KEYPAIR" "fedora@$EXECUTOR_IP" sudo /usr/libexec/osbuild-composer/osbuild-worker-executor -host 0.0.0.0 &
 subprocessPIDs+=( $! )
 
-# wait for compose to complete
-greenprint "⏱ Waiting for compose to finish: ${COMPOSE_ID}"
-while true; do
-    sudo composer-cli --json compose info "${COMPOSE_ID}" | tee "$COMPOSE_INFO" > /dev/null
-    COMPOSE_STATUS=$(get_build_info ".queue_status" "$COMPOSE_INFO")
-    # Is the compose finished?
-    if [[ $COMPOSE_STATUS != RUNNING ]] && [[ $COMPOSE_STATUS != WAITING ]]; then
-        break
-    fi
-    sleep 30
-done
+wait_for_compose "${COMPOSE_ID}"
 
 
 echo "COMPOSES"
