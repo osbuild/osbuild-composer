@@ -210,53 +210,6 @@ function start_compose() {
     echo "$compose_id"
 }
 
-# Function to wait for a compose to finish
-# TODO: This function should be moved to shared_lib.sh
-function wait_for_compose() {
-    local compose_id=$1
-    local timeout=${2:-1200}
-    local compose_status
-
-    if [[ -z "$compose_id" ]]; then
-        redprint "ERROR (wait_for_compose): No compose ID provided"
-        exit 1
-    fi
-
-    local compose_info
-    compose_info=$(mktemp)
-
-    greenprint "⏱ Waiting for compose to finish: ${compose_id}"
-    while [[ $timeout -gt 0 ]]; do
-        sudo composer-cli --json compose info "${compose_id}" | tee "$compose_info" > /dev/null
-        compose_status=$(get_build_info ".queue_status" "$compose_info")
-
-        # Is the compose finished?
-        if [[ $compose_status != "RUNNING" ]] && [[ $compose_status != "WAITING" ]]; then
-            break
-        fi
-
-        # Wait 30 seconds and try again.
-        sleep 30
-        timeout=$((timeout - 30))
-    done
-
-    # Get the last compose status if the compose was still running before the last sleep
-    if [[ $compose_status == "RUNNING" ]]; then
-        sudo composer-cli --json compose info "${compose_id}" | tee "$compose_info" > /dev/null
-        compose_status=$(get_build_info ".queue_status" "$compose_info")
-    fi
-
-    if [[ $compose_status == "RUNNING" || $compose_status == "WAITING" ]] && [[ timeout -le 0 ]]; then
-        redprint "ERROR: Compose did not finish in time"
-        exit 1
-    fi
-
-    greenprint "INFO: Compose finished with status: ${compose_status}"
-
-    # Return the status of the compose
-    echo "$compose_status"
-}
-
 # Get the compose log.
 # TODO: This function should be moved to shared_lib.sh
 function get_compose_log() {

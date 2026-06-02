@@ -52,6 +52,48 @@ function get_compose_status() {
     sudo composer-cli --json compose info "${compose_id}" | jq -r "${filter}"
 }
 
+# Function to wait for a compose to finish
+function wait_for_compose() {
+    local compose_id="$1"
+    local timeout=${2:-1200}
+    local compose_status
+
+    if [[ -z "$compose_id" ]]; then
+        redprint "ERROR (wait_for_compose): No compose ID provided"
+        exit 1
+    fi
+
+    greenprint "⏱ Waiting for compose to finish: ${compose_id}"
+    while [[ $timeout -gt 0 ]]; do
+        compose_status=$(get_compose_status "$compose_id")
+
+        # Is the compose finished?
+        if [[ $compose_status != "RUNNING" ]] && \
+            [[ $compose_status != "WAITING" ]] && \
+            [[ $compose_status != "pending" ]]; then
+            break
+        fi
+
+        # Wait 30 seconds and try again.
+        sleep 30
+        timeout=$((timeout - 30))
+    done
+
+    # Get the last compose status in case the loop above did not break but
+    # timed out
+    compose_status=$(get_compose_status "$compose_id")
+
+    if [[ $compose_status == "RUNNING" || $compose_status == "WAITING" || $compose_status == "pending" ]] && [[ $timeout -le 0 ]]; then
+        redprint "ERROR: Compose did not finish in time"
+        exit 1
+    fi
+
+    greenprint "INFO: Compose finished with status: ${compose_status}"
+
+    # Return the status of the compose
+    echo "$compose_status"
+}
+
 # Colorful timestamped output.
 function greenprint {
     echo -e "\033[1;32m[$(date -Isecond)] $*\033[0m" >&2
