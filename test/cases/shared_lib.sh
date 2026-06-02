@@ -33,6 +33,25 @@ function get_build_info() {
     jq -r "${key}" "${fname}"
 }
 
+# Return the status of a compose given a compose ID.
+# This function handles response structure differences in various weldr-client
+# / composer-cli versions. The status string also differs for newer (>= v36.0)
+# of the client.
+function get_compose_status() {
+    local compose_id="$1"
+
+    local filter=".body.queue_status"  # oldest structure, pre v35.6
+    if nvrGreaterOrEqual "weldr-client" "35.6" 2> /dev/null; then
+        filter=".[0].body.queue_status"  # changed to array in v35.6
+    fi
+
+    if nvrGreaterOrEqual "weldr-client" "36.0" 2> /dev/null; then
+        filter='.[].body | select(.kind == "ComposeStatus") | .status'  # changed using cloud API since v36.0
+    fi
+
+    sudo composer-cli --json compose info "${compose_id}" | jq -r "${filter}"
+}
+
 # Colorful timestamped output.
 function greenprint {
     echo -e "\033[1;32m[$(date -Isecond)] $*\033[0m" >&2
