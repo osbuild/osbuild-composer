@@ -431,8 +431,8 @@ func (s *Server) DeleteJob(ctx context.Context, id uuid.UUID) error {
 	if err != nil {
 		return err
 	}
-	if jobInfo.JobStatus.Finished.IsZero() {
-		return fmt.Errorf("Cannot delete job before job is finished: %s", id)
+	if jobInfo.JobStatus.Finished.IsZero() && !jobInfo.JobStatus.Canceled {
+		return fmt.Errorf("Cannot delete job before job is finished or cancelled: %s", id)
 	}
 
 	return s.jobs.DeleteJob(ctx, id)
