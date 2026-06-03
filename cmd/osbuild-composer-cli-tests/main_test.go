@@ -233,7 +233,35 @@ func startCompose(t *testing.T, name, outputType string) uuid.UUID {
 }
 
 func deleteCompose(t *testing.T, id uuid.UUID) {
+	t.Helper()
 	rawReply := runComposerJSON(t, "compose", "delete", id.String())
+
+	// weldr-client v36.0+ uses the cloud API directly. Try to parse the
+	// response into the API's struct first and then fall back to the older
+	// versions.
+	type cloudReply struct {
+		Method string `json:"method"`
+		Path   string `json:"path"`
+		Status int    `json:"status"`
+		Body   struct {
+			Kind string    `json:"kind"`
+			ID   uuid.UUID `json:"id"`
+		} `json:"body"`
+	}
+	var cr []cloudReply
+	if err := json.Unmarshal(rawReply, &cr); err == nil && len(cr) > 0 {
+		for _, item := range cr {
+			if item.Body.Kind == "ComposeDeleteStatus" {
+				if item.Body.ID != id {
+					require.Fail(t, "composer-cli cloud API response ComposeDeleteStatus returned unexpected compose ID: %s != %s", id, item.Body.ID)
+				}
+				return
+			}
+		}
+	}
+
+	// if the response failed to parse or didn't include a ComposeDeleteStatus,
+	// continue to the older structures
 
 	type deleteUUID struct {
 		ID     uuid.UUID `json:"uuid"`
@@ -274,7 +302,8 @@ func deleteCompose(t *testing.T, id uuid.UUID) {
 func waitForCompose(t *testing.T, uuid uuid.UUID) string {
 	for {
 		status := getComposeStatus(t, uuid)
-		if status == "FINISHED" || status == "FAILED" {
+		switch status {
+		case "FINISHED", "FAILED", "success", "failure":
 			return status
 		}
 		time.Sleep(time.Second)
@@ -282,7 +311,33 @@ func waitForCompose(t *testing.T, uuid uuid.UUID) string {
 }
 
 func getComposeStatus(t *testing.T, uuid uuid.UUID) string {
+	t.Helper()
 	rawReply := runComposerJSON(t, "compose", "info", uuid.String())
+
+	// weldr-client v36.0+ uses the cloud API directly. Try to parse the
+	// response into the API's struct first and then fall back to the older
+	// versions.
+	type cloudReply struct {
+		Method string `json:"method"`
+		Path   string `json:"path"`
+		Status int    `json:"status"`
+		Body   struct {
+			Kind   string `json:"kind"`
+			Status string `json:"status"`
+		} `json:"body"`
+	}
+	var cr []cloudReply
+	if err := json.Unmarshal(rawReply, &cr); err == nil && len(cr) > 0 {
+		// find the ComposeStatus and return its status
+		for _, item := range cr {
+			if item.Body.Kind == "ComposeStatus" {
+				return item.Body.Status
+			}
+		}
+	}
+
+	// if the response failed to parse or didn't include a ComposeStatus,
+	// continue to the older structures
 
 	type reply struct {
 		QueueStatus string `json:"queue_status"`
