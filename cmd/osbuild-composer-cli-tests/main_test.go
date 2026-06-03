@@ -23,6 +23,13 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/weldr"
 )
 
+type ComposeStatus uint
+
+const (
+	StatusFailed ComposeStatus = iota
+	StatusSucceeded
+)
+
 func TestComposeCommands(t *testing.T) {
 	// common setup
 	tmpdir := NewTemporaryWorkDir(t, "osbuild-tests-")
@@ -87,7 +94,7 @@ func TestComposeCommands(t *testing.T) {
 	runComposer(t, "compose", "cancel", uuid.String())
 	time.Sleep(20 * time.Second)
 	status := waitForCompose(t, uuid)
-	assert.Equal(t, "FAILED", status)
+	assert.Equal(t, StatusFailed, status)
 
 	// Check that reusing the cache works ok
 	uuid = buildCompose(t, "empty", "qcow2")
@@ -195,7 +202,7 @@ func buildCompose(t *testing.T, bpName string, outputType string) uuid.UUID {
 	// This check should prevent bugs where we lose logs for all stages.
 	assert.Contains(t, logs, "org.osbuild.rpm")
 
-	if !assert.Equalf(t, "FINISHED", status, "Unexpected compose result: %s", status) {
+	if !assert.Equalf(t, StatusSucceeded, status, "Unexpected compose result: %s", status) {
 		log.Print("logs from the build: ", logs)
 		t.FailNow()
 	}
@@ -299,12 +306,14 @@ func deleteCompose(t *testing.T, id uuid.UUID) {
 	require.Truef(t, body.IDs[0].Status, "Unexpected status %v", body.IDs[0].Status)
 }
 
-func waitForCompose(t *testing.T, uuid uuid.UUID) string {
+func waitForCompose(t *testing.T, uuid uuid.UUID) ComposeStatus {
 	for {
 		status := getComposeStatus(t, uuid)
 		switch status {
-		case "FINISHED", "FAILED", "success", "failure":
-			return status
+		case "FINISHED", "success":
+			return StatusSucceeded
+		case "FAILED", "failure":
+			return StatusFailed
 		}
 		time.Sleep(time.Second)
 	}
