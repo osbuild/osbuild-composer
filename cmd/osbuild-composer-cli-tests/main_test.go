@@ -139,15 +139,10 @@ func TestBlueprintCommands(t *testing.T) {
 	// blueprints changes is not supported by cloudapi
 	var changesWeldr []weldr.BlueprintsChangesV0Weldr
 	rawReply := runComposerJSON(t, "blueprints", "changes", "empty")
-	if isWeldrClientInstalled() {
-		err = json.Unmarshal(rawReply, &changesWeldr)
-		if err != nil {
-			changesWeldr = make([]weldr.BlueprintsChangesV0Weldr, 1)
-			err = json.Unmarshal(rawReply, &changesWeldr[0])
-		}
-	} else {
+	err = json.Unmarshal(rawReply, &changesWeldr)
+	if err != nil {
 		changesWeldr = make([]weldr.BlueprintsChangesV0Weldr, 1)
-		err = json.Unmarshal(rawReply, &changesWeldr[0].Body)
+		err = json.Unmarshal(rawReply, &changesWeldr[0])
 	}
 	require.Nilf(t, err, "Error searching for commits to undo: %v", err)
 	runComposer(t, "blueprints", "undo", "empty", changesWeldr[0].Body.BlueprintsChanges[0].Changes[0].Commit)
@@ -223,16 +218,10 @@ func startCompose(t *testing.T, name, outputType string) uuid.UUID {
 		Body reply `json:"body"`
 	}
 	var replyWeldr []replyWithBody
-	var err error
-	if isWeldrClientInstalled() {
-		err = json.Unmarshal(rawReply, &replyWeldr)
-		if err != nil {
-			replyWeldr = make([]replyWithBody, 1)
-			err = json.Unmarshal(rawReply, &replyWeldr[0])
-		}
-	} else {
+	err := json.Unmarshal(rawReply, &replyWeldr)
+	if err != nil {
 		replyWeldr = make([]replyWithBody, 1)
-		err = json.Unmarshal(rawReply, &replyWeldr[0].Body)
+		err = json.Unmarshal(rawReply, &replyWeldr[0])
 	}
 	require.Nilf(t, err, "Unexpected reply: %v", err)
 	require.Truef(t, replyWeldr[0].Body.Status, "Unexpected status %v", replyWeldr[0].Body.Status)
@@ -283,16 +272,10 @@ func deleteCompose(t *testing.T, id uuid.UUID) {
 		Body reply  `json:"body"`
 	}
 	var replyWeldr []replyWithBody
-	var err error
-	if isWeldrClientInstalled() {
-		err = json.Unmarshal(rawReply, &replyWeldr)
-		if err != nil {
-			replyWeldr = make([]replyWithBody, 1)
-			err = json.Unmarshal(rawReply, &replyWeldr[0])
-		}
-	} else {
+	err := json.Unmarshal(rawReply, &replyWeldr)
+	if err != nil {
 		replyWeldr = make([]replyWithBody, 1)
-		err = json.Unmarshal(rawReply, &replyWeldr[0].Body)
+		err = json.Unmarshal(rawReply, &replyWeldr[0])
 	}
 	require.Nilf(t, err, "Unexpected reply: %v", err)
 	// NOTE: The response may contain a cloudapi error in the first response
@@ -356,16 +339,10 @@ func getComposeStatus(t *testing.T, uuid uuid.UUID) string {
 		Body reply  `json:"body"`
 	}
 	var replyWeldr []replyWithBody
-	var err error
-	if isWeldrClientInstalled() {
-		err = json.Unmarshal(rawReply, &replyWeldr)
-		if err != nil {
-			replyWeldr = make([]replyWithBody, 1)
-			err = json.Unmarshal(rawReply, &replyWeldr[0])
-		}
-	} else {
+	err := json.Unmarshal(rawReply, &replyWeldr)
+	if err != nil {
 		replyWeldr = make([]replyWithBody, 1)
-		err = json.Unmarshal(rawReply, &replyWeldr[0].Body)
+		err = json.Unmarshal(rawReply, &replyWeldr[0])
 	}
 	require.Nilf(t, err, "Unexpected reply: %v", err)
 	// NOTE: The response may contain a cloudapi error in the first response
@@ -419,15 +396,10 @@ func pushBlueprint(t *testing.T, bp *blueprint.Blueprint) {
 		Body reply `json:"body"`
 	}
 	var replyWeldr []replyWithBody
-	if isWeldrClientInstalled() {
-		err = json.Unmarshal(rawReply, &replyWeldr)
-		if err != nil {
-			replyWeldr = make([]replyWithBody, 1)
-			err = json.Unmarshal(rawReply, &replyWeldr[0])
-		}
-	} else {
+	err = json.Unmarshal(rawReply, &replyWeldr)
+	if err != nil {
 		replyWeldr = make([]replyWithBody, 1)
-		err = json.Unmarshal(rawReply, &replyWeldr[0].Body)
+		err = json.Unmarshal(rawReply, &replyWeldr[0])
 	}
 	require.Nilf(t, err, "Unexpected reply: %v", err)
 	log.Printf("Mesasge: %v", replyWeldr[0].Body.Status)
@@ -446,16 +418,10 @@ func deleteBlueprint(t *testing.T, bp *blueprint.Blueprint) {
 		Body reply `json:"body"`
 	}
 	var replyWeldr []replyWithBody
-	var err error
-	if isWeldrClientInstalled() {
-		err = json.Unmarshal(rawReply, &replyWeldr)
-		if err != nil {
-			replyWeldr = make([]replyWithBody, 1)
-			err = json.Unmarshal(rawReply, &replyWeldr[0])
-		}
-	} else {
+	err := json.Unmarshal(rawReply, &replyWeldr)
+	if err != nil {
 		replyWeldr = make([]replyWithBody, 1)
-		err = json.Unmarshal(rawReply, &replyWeldr[0].Body)
+		err = json.Unmarshal(rawReply, &replyWeldr[0])
 	}
 	require.Nilf(t, err, "Unexpected reply: %v", err)
 	require.Truef(t, replyWeldr[0].Body.Status, "Unexpected status %v", replyWeldr[0].Body.Status)
@@ -558,15 +524,4 @@ func (d *TemporaryWorkDir) Close(t *testing.T) {
 
 	err = os.RemoveAll(d.Path)
 	require.Nilf(t, err, "os.RemoveAll: %v", err)
-}
-
-// This checks wheter weldr-client is installed or not
-func isWeldrClientInstalled() bool {
-	cmd := exec.Command("rpm", "-q", "weldr-client")
-	err := cmd.Run()
-	if err != nil {
-		return false
-	} else {
-		return true
-	}
 }
