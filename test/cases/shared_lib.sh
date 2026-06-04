@@ -21,15 +21,13 @@ function nvrGreaterOrEqual {
     false
 }
 
+# Returns the sub-structure or value defined by the filter argument given the
+# path to a file that contains the response from a "compose start" call.
 function get_build_info() {
     local filter="$1"
     local fname="$2"
-    if rpm -q --quiet weldr-client; then
-        filter=".body${filter}"  # oldest structure, pre v35.6
-        if nvrGreaterOrEqual "weldr-client" "35.6" 2> /dev/null; then
-            filter=".[0]${filter}"  # changed to array in v35.6
-        fi
-    fi
+
+    filter=".[0].body${filter}"  # responses are arrays since v35.6
     jq -r "${filter}" "${fname}"
 }
 
@@ -40,17 +38,14 @@ function get_compose_id() {
     get_build_info ".build_id" "${response_file}"
 }
 
-# Return the status of a compose given a compose ID.
-# This function handles response structure differences in various weldr-client
-# / composer-cli versions. The status string also differs for newer (>= v36.0)
-# of the client.
+# Return the status of a compose given a compose ID. This function handles
+# response structure differences in various weldr-client / composer-cli
+# versions. The structure and status string differ for newer (>= v36.0) of the
+# client.
 function get_compose_status() {
     local compose_id="$1"
 
-    local filter=".body.queue_status"  # oldest structure, pre v35.6
-    if nvrGreaterOrEqual "weldr-client" "35.6" 2> /dev/null; then
-        filter=".[0].body.queue_status"  # changed to array in v35.6
-    fi
+    filter=".[0].body.queue_status"  # oldest structure (since v35.6)
 
     if nvrGreaterOrEqual "weldr-client" "36.0" 2> /dev/null; then
         filter='.[].body | select(.kind == "ComposeStatus") | .status'  # changed using cloud API since v36.0
