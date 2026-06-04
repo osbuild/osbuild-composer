@@ -203,7 +203,7 @@ build_image() {
     greenprint "🚀 Starting compose"
     sudo composer-cli --json compose start "$blueprint_name" "$image_type" | tee "$COMPOSE_START"
     COMPOSE_ID=$(get_compose_id "$COMPOSE_START")
-    COMPOSE_STATUS=$(wait_for_compose "${COMPOSE_ID}")
+    COMPOSE_STATUS=$(wait_for_compose "${COMPOSE_ID}" 1800)  # installers can take a while to build
 
     # Capture the compose logs from osbuild.
     greenprint "💬 Getting compose log and metadata"
