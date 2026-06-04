@@ -178,11 +178,11 @@ greenprint "🚀 Starting worker executor"
 ssh -oStrictHostKeyChecking=no -i "$KEYPAIR" "fedora@$EXECUTOR_IP" sudo /usr/libexec/osbuild-composer/osbuild-worker-executor -host 0.0.0.0 &
 subprocessPIDs+=( $! )
 
-composestatus=$(wait_for_compose "${COMPOSE_ID}")
+COMPOSE_STATUS=$(wait_for_compose "${COMPOSE_ID}")
 
 
 # Did the compose finish with success?
-if [[ $composestatus != FINISHED ]] && [[ $composestatus != success ]]; then
+if [[ $COMPOSE_STATUS != FINISHED ]] && [[ $COMPOSE_STATUS != success ]]; then
     echo "Something went wrong with the compose. 😢"
     exit 1
 fi
