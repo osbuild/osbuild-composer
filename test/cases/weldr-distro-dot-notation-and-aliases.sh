@@ -126,23 +126,24 @@ function _test_compose_bp() {
     sudo composer-cli blueprints push "${blueprint}"
     sudo composer-cli --json compose start "${blueprint_name}" "${image_type}" | tee "${composestart}"
 
-    local composeid
-    composeid=$(get_compose_id "${composestart}")
-    composestatus=$(wait_for_compose "${composeid}")
+    local compose_id
+    compose_id=$(get_compose_id "${composestart}")
+    local compose_status
+    compose_status=$(wait_for_compose "${compose_id}")
 
     # Did the compose finish with success?
-    if [[ $composestatus != FINISHED ]] && [[ $composestatus != success ]]; then
+    if [[ $compose_status != FINISHED ]] && [[ $compose_status != success ]]; then
         echo "Something went wrong with the compose. 😢"
         exit 1
     fi
 
     if [[ "${test_distro_alias}" == "1" ]]; then
         pushd "${tmpdir}"
-        _verify_distro_alias_img "${composeid}"
+        _verify_distro_alias_img "${compose_id}"
         popd
     fi
 
-    sudo composer-cli compose delete "${composeid}" >/dev/null
+    sudo composer-cli compose delete "${compose_id}" >/dev/null
 }
 
 # Verify that the image contains /etc/dnf/vars/releasever with the expected

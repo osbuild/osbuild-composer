@@ -154,13 +154,13 @@ if [[ "${dummysourceurl}" != "${expectedurl}" ]]; then
 fi
 
 sudo composer-cli --json compose start dummy qcow2 | tee "${composestart}"
-composeid=$(get_compose_id "${composestart}")
-composestatus=$(wait_for_compose "${composeid}")
+COMPOSE_ID=$(get_compose_id "${composestart}")
+COMPOSE_STATUS=$(wait_for_compose "${COMPOSE_ID}")
 
-sudo composer-cli compose delete "${composeid}" >/dev/null
+sudo composer-cli compose delete "${COMPOSE_ID}" >/dev/null
 
 # Did the compose finish with success?
-if [[ $composestatus == FINISHED ]] || [[ $composestatus == success ]]; then
+if [[ $COMPOSE_STATUS == FINISHED ]] || [[ $COMPOSE_STATUS == success ]]; then
     echo "Test passed!"
     exit 0
 else
