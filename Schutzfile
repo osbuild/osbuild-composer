@@ -179,7 +179,7 @@
       }
     }
   },
-  "rhel-10.1": {
+  "rhel-10.2": {
     "dependencies": {
       "osbuild": {
         "commit": "9f832d9e6845e0d13f4d156bfba0b9c1439dbfe3"
@@ -196,13 +196,6 @@
             "payload": "quay.io/redhat-services-prod/insights-management-tenant/image-builder-bootc-foundry/rhel-10-qcow2:latest"
           }
         }
-      }
-    }
-  },
-  "rhel-10.2": {
-    "dependencies": {
-      "osbuild": {
-        "commit": "9f832d9e6845e0d13f4d156bfba0b9c1439dbfe3"
       }
     }
   },
