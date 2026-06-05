@@ -114,8 +114,6 @@ RPM:
           - aws/fedora-44-x86_64
           - aws/fedora-44-aarch64
           - aws/rhel-8.10-ga-x86_64
-          - aws/rhel-9.7-ga-x86_64
-          - aws/rhel-10.1-ga-x86_64
           - aws/centos-stream-9-x86_64
           - aws/centos-stream-9-aarch64
           - aws/centos-stream-10-x86_64
@@ -240,10 +238,6 @@ Base:
           - aws/fedora-44-aarch64
           - aws/rhel-8.10-ga-x86_64
           - aws/rhel-8.10-ga-aarch64
-          - aws/rhel-9.7-ga-x86_64
-          - aws/rhel-9.7-ga-aarch64
-          - aws/rhel-10.1-ga-x86_64
-          - aws/rhel-10.1-ga-aarch64
           - aws/centos-stream-9-x86_64
           - aws/centos-stream-9-aarch64
           - aws/centos-stream-10-x86_64
@@ -268,10 +262,6 @@ Base:
       - RUNNER:
           - aws/rhel-8.10-ga-x86_64
           - aws/rhel-8.10-ga-aarch64
-          - aws/rhel-9.7-ga-x86_64
-          - aws/rhel-9.7-ga-aarch64
-          - aws/rhel-10.1-ga-x86_64
-          - aws/rhel-10.1-ga-aarch64
           - aws/centos-stream-9-x86_64
           - aws/centos-stream-9-aarch64
           - aws/centos-stream-10-x86_64
@@ -322,8 +312,6 @@ regression-old-worker-new-composer:
     matrix:
       - RUNNER:
           - aws/rhel-8.10-ga-x86_64
-          - aws/rhel-9.7-ga-x86_64
-          - aws/rhel-10.1-ga-x86_64
         INTERNAL_NETWORK: ["true"]
   extends: .regression
   variables:
@@ -366,9 +354,7 @@ regression-insecure-repo:
 .rhel_runners: &rhel_runners
     RUNNER:
       - aws/rhel-8.10-ga-x86_64
-      - aws/rhel-9.7-ga-x86_64
       - aws/rhel-9.9-nightly-x86_64
-      - aws/rhel-10.1-ga-x86_64
       - aws/rhel-10.2-ga-x86_64
       - aws/rhel-10.3-nightly-x86_64
       - aws/centos-stream-9-x86_64
@@ -410,17 +396,17 @@ koji.sh (cloud upload):
   parallel:
     matrix:
       - RUNNER:
-          - aws/rhel-9.7-ga-x86_64
+          - aws/rhel-9.8-ga-x86_64
         INTERNAL_NETWORK: ["true"]
         CLOUD_TARGET: aws
         IMAGE_TYPE: aws-rhui
       - RUNNER:
-          - aws/rhel-9.7-ga-x86_64
+          - aws/rhel-9.8-ga-x86_64
         INTERNAL_NETWORK: ["true"]
         CLOUD_TARGET: azure
         IMAGE_TYPE: azure-rhui
       - RUNNER:
-          - aws/rhel-9.7-ga-x86_64
+          - aws/rhel-9.8-ga-x86_64
         INTERNAL_NETWORK: ["true"]
         CLOUD_TARGET: gcp
         IMAGE_TYPE: gcp-rhui
@@ -437,7 +423,7 @@ koji.sh (cloudapi):
     matrix:
       - *fedora_runners
       - RUNNER:
-          - aws/rhel-9.7-ga-x86_64
+          - aws/rhel-9.8-ga-x86_64
         INTERNAL_NETWORK: ["true"]
 
 aws.sh:
@@ -570,7 +556,6 @@ API:
           - oci
         RUNNER:
           - aws/rhel-8.10-ga-x86_64
-          - aws/rhel-9.7-ga-x86_64
           - aws/rhel-9.8-ga-x86_64
           - aws/rhel-9.9-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
@@ -583,7 +568,6 @@ API:
           - oci
           - vsphere
         RUNNER:
-          - aws/rhel-10.1-ga-x86_64
           - aws/rhel-10.2-ga-x86_64
           - aws/rhel-10.3-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
@@ -597,8 +581,6 @@ API:
       - IMAGE_TYPE: ["aws"]
         RUNNER:
           - aws/rhel-8.10-ga-aarch64
-          - aws/rhel-9.7-ga-aarch64
-          - aws/rhel-10.1-ga-aarch64
         INTERNAL_NETWORK: ["true"]
 
 API (PR):
@@ -613,7 +595,7 @@ API (PR):
     matrix:
       - <<: *API_TESTS
         RUNNER:
-          - aws/rhel-10.1-ga-x86_64
+          - aws/rhel-10.2-ga-x86_64
         INTERNAL_NETWORK: ["true"]
 
 API-module-hotfixes:
@@ -648,7 +630,7 @@ API-unit:
   parallel:
     matrix:
       - RUNNER:
-          - aws/rhel-10.1-ga-x86_64
+          - aws/rhel-10.2-ga-x86_64
         INTERNAL_NETWORK: ["true"]
 
 .libvirt_integration:
@@ -667,8 +649,6 @@ API-unit:
           - rhos-01/fedora-44-x86_64
       - RUNNER:
           - gcp/rhel-8.10-ga-x86_64
-          - gcp/rhel-9.7-ga-x86_64
-          - gcp/rhel-10.1-ga-x86_64
           - gcp/rhel-9.8-ga-x86_64
           - gcp/rhel-9.9-nightly-x86_64
           - gcp/rhel-10.2-ga-x86_64
@@ -703,7 +683,7 @@ weldr-distro-dot-notation+aliases:
   extends: .libvirt_integration
   rules:
     # BLACKLIST
-    - if: $RUNNER !~ "/^.*(rhel-9.7).*$/" && $CI_PIPELINE_SOURCE != "schedule" && $NIGHTLY != "true" && $RUNNER !~ /[\S]+rhel-[\S]+-(?:(?:ga)|(?:eus))[\S]+/
+    - if: $RUNNER !~ "/^.*(rhel-9.8).*$/" && $CI_PIPELINE_SOURCE != "schedule" && $NIGHTLY != "true" && $RUNNER !~ /[\S]+rhel-[\S]+-(?:(?:ga)|(?:eus))[\S]+/
     - !reference [.nightly_rules_all, rules]
     - !reference [.ga_rules_all, rules]
 
@@ -737,7 +717,7 @@ RHEL 8 on 9 (Koji):
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/koji.sh
   variables:
-    RUNNER: aws/rhel-9.7-ga-x86_64
+    RUNNER: aws/rhel-9.8-ga-x86_64
     INTERNAL_NETWORK: "true"
     DISTRO_CODE: rhel-8.10
 
@@ -751,9 +731,9 @@ RHEL 10 on 9 (Koji):
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/koji.sh
   variables:
-    RUNNER: aws/rhel-9.7-ga-x86_64
+    RUNNER: aws/rhel-9.8-ga-x86_64
     INTERNAL_NETWORK: "true"
-    DISTRO_CODE: rhel-10.1
+    DISTRO_CODE: rhel-10.2
 
 Multi-tenancy:
   stage: test
@@ -892,7 +872,7 @@ API-bootc-service:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/api-bootc-service.sh ${IMAGE_TYPE}
   variables:
-    RUNNER: aws/rhel-10.1-ga-x86_64
+    RUNNER: aws/rhel-10.2-ga-x86_64
     IAM_INSTANCE_PROFILE: worker-executor
   parallel:
     matrix:
@@ -909,7 +889,7 @@ WorkerJournal:
     - schutzbot/deploy.sh
     - /usr/libexec/tests/osbuild-composer/worker-journal-failures.sh
   variables:
-    RUNNER: aws/rhel-10.1-ga-x86_64
+    RUNNER: aws/rhel-10.2-ga-x86_64
 
 CleanStore:
   stage: test
