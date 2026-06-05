@@ -436,13 +436,18 @@ aws.sh:
     SCRIPT: aws.sh
 
 oci.sh:
-  extends: .integration
-  rules:
-    # Run only on x86_64
-    - !reference [.upstream_rules_x86_64, rules]
-    - !reference [.ga_rules_x86_64, rules]
   variables:
     SCRIPT: oci.sh
+  extends: .integration
+  parallel:
+    matrix:
+      - RUNNER:
+          # Run only on x86_64
+          - aws/rhel-9.8-ga-x86_64
+          - aws/rhel-9.9-nightly-x86_64
+          - aws/rhel-10.2-ga-x86_64
+          - aws/rhel-10.3-nightly-x86_64
+        INTERNAL_NETWORK: ["true"]
 
 # NOTE(akoutsou): Infra capacity issue is causing these to fail constantly. We
 # have an open SNOW ticket (UR0159317). Once it's resolved, we can enable the
