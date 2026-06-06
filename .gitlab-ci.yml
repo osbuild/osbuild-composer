@@ -114,16 +114,37 @@ RPM:
           - aws/fedora-42-x86_64
           - aws/fedora-42-aarch64
           - aws/rhel-8.10-ga-x86_64
-          - aws/rhel-8.10-ga-aarch64
           - aws/rhel-9.7-ga-x86_64
-          - aws/rhel-9.7-ga-aarch64
           - aws/rhel-10.1-ga-x86_64
-          - aws/rhel-10.1-ga-aarch64
           - aws/centos-stream-9-x86_64
           - aws/centos-stream-9-aarch64
           - aws/centos-stream-10-x86_64
           - aws/centos-stream-10-aarch64
-      - <<: *RPM_RUNNERS_RHEL
+      - RUNNER:
+          - aws/rhel-9.8-ga-x86_64
+          - aws/rhel-9.9-nightly-x86_64
+          - aws/rhel-9.9-nightly-aarch64
+          - aws/rhel-10.1-ga-aarch64
+          - aws/rhel-10.3-nightly-x86_64
+          - aws/rhel-10.3-nightly-aarch64
+        INTERNAL_NETWORK: ["true"]
+
+RPM (GA-only):
+  stage: rpmbuild
+  extends: .terraform
+  rules:
+    - !reference [.ga_rules_all, rules]
+  script:
+    - sh "schutzbot/mockbuild.sh"
+  parallel:
+    matrix:
+      - RUNNER:
+          - aws/rhel-8.10-ga-aarch64
+          - aws/rhel-9.7-ga-aarch64
+          - aws/rhel-9.8-ga-aarch64
+          - aws/rhel-10.2-ga-x86_64
+          - aws/rhel-10.2-ga-aarch64
+        INTERNAL_NETWORK: ["true"]
 
 Build -tests RPM for RHEL:
   stage: rpmbuild
