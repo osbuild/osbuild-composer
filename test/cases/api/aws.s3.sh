@@ -47,11 +47,11 @@ function installClient() {
 
 function createReqFile() {
     case ${IMAGE_TYPE} in
-        "$IMAGE_TYPE_EDGE_COMMIT"|"$IMAGE_TYPE_IOT_COMMIT"|"$IMAGE_TYPE_EDGE_CONTAINER"|"$IMAGE_TYPE_EDGE_INSTALLER"|"$IMAGE_TYPE_IMAGE_INSTALLER"|"$IMAGE_TYPE_IOT_BOOTABLE_CONTAINER")
+        "$IMAGE_TYPE_EDGE_COMMIT"|"$IMAGE_TYPE_IOT_COMMIT"|"$IMAGE_TYPE_EDGE_CONTAINER"|"$IMAGE_TYPE_EDGE_INSTALLER"|"$IMAGE_TYPE_IOT_BOOTABLE_CONTAINER")
             createReqFileEdge
             ;;
-        "$IMAGE_TYPE_VSPHERE")
-            createReqFileGuest
+        "$IMAGE_TYPE_GUEST"|"$IMAGE_TYPE_IMAGE_INSTALLER")
+            createReqFileGeneric
             ;;
         "$IMAGE_TYPE_VSPHERE")
             createReqFileVSphere

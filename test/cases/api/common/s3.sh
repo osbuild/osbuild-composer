@@ -59,7 +59,7 @@ function createReqFileEdge() {
 EOF
 }
 
-function createReqFileGuest() {
+function createReqFileGeneric() {
   cat > "$REQUEST_FILE" << EOF
 {
   "distribution": "$DISTRO",

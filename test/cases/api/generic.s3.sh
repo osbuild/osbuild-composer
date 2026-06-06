@@ -108,11 +108,11 @@ EOF
 # implementation
 function createReqFile() {
     case ${IMAGE_TYPE} in
-        "$IMAGE_TYPE_EDGE_COMMIT"|"$IMAGE_TYPE_EDGE_INSTALLER"|"$IMAGE_TYPE_IMAGE_INSTALLER")
+        "$IMAGE_TYPE_EDGE_COMMIT"|"$IMAGE_TYPE_EDGE_INSTALLER")
             AWS_REGION='' createReqFileEdge
             ;;
-        "$IMAGE_TYPE_VSPHERE")
-            AWS_REGION='' createReqFileGuest
+        "$IMAGE_TYPE_GUEST"|"$IMAGE_TYPE_IMAGE_INSTALLER")
+            AWS_REGION='' createReqFileGeneric
             ;;
         "$IMAGE_TYPE_VSPHERE")
             AWS_REGION='' createReqFileVSphere
