@@ -5,18 +5,10 @@ set -euo pipefail
 source /usr/libexec/osbuild-composer-test/set-env-variables.sh
 source /usr/libexec/tests/osbuild-composer/shared_lib.sh
 source /usr/libexec/tests/osbuild-composer/api/common/bootc.sh
+source /usr/libexec/tests/osbuild-composer/api/common/composer-db.sh
+source /usr/libexec/tests/osbuild-composer/api/common/common.sh
 
 /usr/libexec/osbuild-composer-test/provision.sh
-
-# Check available container runtime
-if type -p podman 2>/dev/null >&2; then
-    CONTAINER_RUNTIME=podman
-elif type -p docker 2>/dev/null >&2; then
-    CONTAINER_RUNTIME=docker
-else
-    echo No container runtime found, install podman or docker.
-    exit 2
-fi
 
 ARTIFACTS="${ARTIFACTS:-/tmp/artifacts}"
 
@@ -34,8 +26,7 @@ function cleanups() {
   # save manifest
   dump_db
 
-  sudo "${CONTAINER_RUNTIME}" kill "${DB_CONTAINER_NAME}"
-  sudo "${CONTAINER_RUNTIME}" rm "${DB_CONTAINER_NAME}"
+  teardown_db
 
   for P in "${KILL_PIDS[@]}"; do
       sudo pkill -P "$P"
@@ -45,45 +36,12 @@ function cleanups() {
 trap cleanups EXIT
 
 # Start the db
-DB_CONTAINER_NAME="osbuild-composer-db"
-sudo "${CONTAINER_RUNTIME}" run -d --name "${DB_CONTAINER_NAME}" \
-    --health-cmd "pg_isready -U postgres -d osbuildcomposer" --health-interval 2s \
-    --health-timeout 2s --health-retries 10 \
-    -e POSTGRES_USER=postgres \
-    -e POSTGRES_PASSWORD=foobar \
-    -e POSTGRES_DB=osbuildcomposer \
-    -p 5432:5432 \
-    --net host \
-    quay.io/osbuild/postgres:13-alpine
-
-sudo "${CONTAINER_RUNTIME}" logs osbuild-composer-db
-
-pushd "$(mktemp -d)"
-sudo dnf install -y go
-go mod init temp
-go install github.com/jackc/tern@latest
-PGUSER=postgres PGPASSWORD=foobar PGDATABASE=osbuildcomposer PGHOST=localhost PGPORT=5432 \
-    "$(go env GOPATH)"/bin/tern migrate -m /usr/share/tests/osbuild-composer/schemas
-popd
+setup_db
 
 BOOTC_USE_REMOTE_CONTAINER_SOURCE="${BOOTC_USE_REMOTE_CONTAINER_SOURCE:-false}"
 
-cat <<EOF | sudo tee "/etc/osbuild-composer/osbuild-composer.toml"
-ignore_missing_repos = true
-log_level = "debug"
-[koji]
-allowed_domains = [ "localhost", "client.osbuild.org" ]
-ca = "/etc/osbuild-composer/ca-crt.pem"
-[worker]
-allowed_domains = [ "localhost", "worker.osbuild.org" ]
-ca = "/etc/osbuild-composer/ca-crt.pem"
-pg_host = "localhost"
-pg_port = "5432"
-pg_database = "osbuildcomposer"
-pg_user = "postgres"
-pg_password = "foobar"
-pg_ssl_mode = "disable"
-pg_max_conns = 10
+write_tls_composer_config
+cat <<EOF | sudo tee -a "/etc/osbuild-composer/osbuild-composer.toml"
 [bootc]
 use_remote_container_source = ${BOOTC_USE_REMOTE_CONTAINER_SOURCE}
 EOF
@@ -98,76 +56,6 @@ curl \
     --cert /etc/osbuild-composer/client-crt.pem \
     https://localhost/api/image-builder-composer/v2/openapi | jq .
 
-
-function sendCompose() {
-    OUTPUT=$(mktemp)
-    HTTPSTATUS=$(curl \
-                 --silent \
-                 --show-error \
-                 --cacert /etc/osbuild-composer/ca-crt.pem \
-                 --key /etc/osbuild-composer/client-key.pem \
-                 --cert /etc/osbuild-composer/client-crt.pem \
-                 --header 'Content-Type: application/json' \
-                 --request POST \
-                 --data @"$1" \
-                 --write-out '%{http_code}' \
-                 --output "$OUTPUT" \
-                 https://localhost/api/image-builder-composer/v2/compose)
-
-    if [ "$HTTPSTATUS" != "201" ]; then
-        redprint "Sending compose request failed:"
-        cat "$OUTPUT"
-    fi
-
-    test "$HTTPSTATUS" = "201"
-
-    COMPOSE_ID=$(jq -r '.id' "$OUTPUT")
-}
-
-
-function waitForState() {
-    local DESIRED_STATE="success"
-
-    while true
-    do
-        OUTPUT=$(curl \
-                     --silent \
-                     --show-error \
-                     --cacert /etc/osbuild-composer/ca-crt.pem \
-                     --key /etc/osbuild-composer/client-key.pem \
-                     --cert /etc/osbuild-composer/client-crt.pem \
-                     "https://localhost/api/image-builder-composer/v2/composes/$COMPOSE_ID")
-
-        COMPOSE_STATUS=$(echo "$OUTPUT" | jq -r '.image_status.status')
-        UPLOAD_STATUS=$(echo "$OUTPUT" | jq -r '.image_status.upload_status.status')
-        UPLOAD_OPTIONS=$(echo "$OUTPUT" | jq -r '.image_status.upload_status.options')
-
-        case "$COMPOSE_STATUS" in
-            "$DESIRED_STATE")
-                break
-                ;;
-            # all valid status values for a compose which hasn't finished yet
-            "pending"|"building"|"uploading"|"registering")
-                ;;
-            # default undesired state
-            "failure")
-                echo "Image compose failed"
-                echo "API output: $OUTPUT"
-                exit 1
-                ;;
-            *)
-                echo "API returned unexpected image_status.status value: '$COMPOSE_STATUS'"
-                echo "API output: $OUTPUT"
-                exit 1
-                ;;
-        esac
-
-        sleep 30
-    done
-
-    # export for use in subcases
-    export UPLOAD_OPTIONS
-}
 
 # verify the container source type in the compose manifest is correct
 function verifyManifestContainerSourceType() {

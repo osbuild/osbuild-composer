@@ -13,6 +13,9 @@ ARTIFACTS="${ARTIFACTS:-/tmp/artifacts}"
 source /usr/libexec/osbuild-composer-test/set-env-variables.sh
 source /usr/libexec/tests/osbuild-composer/shared_lib.sh
 
+export COMPOSER_API_BASE="https://localhost:8080"
+source /usr/libexec/tests/osbuild-composer/api/common/common.sh
+
 # Only run this on x86
 if [ "$ARCH" != "x86_64" ] || [ "$ID" != rhel ] || ! sudo subscription-manager status; then
     echo "Test only supported on RHEL x86_64."
@@ -363,72 +366,6 @@ EOF
 
 greenprint "Request data"
 cat "${REQUEST_FILE}"
-
-#
-# Send the request and wait for the job to finish.
-#
-# Separate `curl` and `jq` commands here, because piping them together hides
-# the server's response in case of an error.
-#
-
-function sendCompose() {
-    OUTPUT=$(mktemp)
-    HTTPSTATUS=$(curl \
-                 --silent \
-                 --show-error \
-                 --cacert /etc/osbuild-composer/ca-crt.pem \
-                 --key /etc/osbuild-composer/client-key.pem \
-                 --cert /etc/osbuild-composer/client-crt.pem \
-                 --header 'Content-Type: application/json' \
-                 --request POST \
-                 --data @"$1" \
-                 --write-out '%{http_code}' \
-                 --output "$OUTPUT" \
-                 https://localhost:8080/api/image-builder-composer/v2/compose)
-
-    test "$HTTPSTATUS" = "201"
-    COMPOSE_ID=$(jq -r '.id' "$OUTPUT")
-}
-
-function waitForState() {
-    local DESIRED_STATE="${1:-success}"
-
-    while true
-    do
-        OUTPUT=$(curl \
-                     --silent \
-                     --show-error \
-                     --cacert /etc/osbuild-composer/ca-crt.pem \
-                     --key /etc/osbuild-composer/client-key.pem \
-                     --cert /etc/osbuild-composer/client-crt.pem \
-                     "https://localhost:8080/api/image-builder-composer/v2/composes/$COMPOSE_ID")
-
-        COMPOSE_STATUS=$(echo "$OUTPUT" | jq -r '.image_status.status')
-        UPLOAD_STATUS=$(echo "$OUTPUT" | jq -r '.image_status.upload_status.status')
-        UPLOAD_TYPE=$(echo "$OUTPUT" | jq -r '.image_status.upload_status.type')
-        UPLOAD_OPTIONS=$(echo "$OUTPUT" | jq -r '.image_status.upload_status.options')
-
-        case "$COMPOSE_STATUS" in
-            "$DESIRED_STATE")
-                break
-                ;;
-            # all valid status values for a compose which hasn't finished yet
-            "pending"|"building"|"uploading"|"registering")
-                ;;
-            # default undesired state
-            "failure")
-                echo "Image compose failed"
-                exit 1
-                ;;
-            *)
-                echo "API returned unexpected image_status.status value: '$COMPOSE_STATUS'"
-                exit 1
-                ;;
-        esac
-
-        sleep 30
-    done
-}
 
 greenprint "Sending compose request to composer"
 sendCompose "$REQUEST_FILE"

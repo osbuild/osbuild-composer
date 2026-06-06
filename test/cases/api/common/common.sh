@@ -10,6 +10,12 @@
 #
 
 # ---------------------------------------------------------------------------
+# Configurable API base URLs (override before sourcing or before calling)
+# ---------------------------------------------------------------------------
+COMPOSER_API_BASE="${COMPOSER_API_BASE:-https://localhost}"
+COMPOSER_API_BASE_JWT="${COMPOSER_API_BASE_JWT:-http://localhost:443}"
+
+# ---------------------------------------------------------------------------
 # API helpers (sendCompose, waitForState, collectMetrics)
 # ---------------------------------------------------------------------------
 
@@ -81,14 +87,14 @@ function sendCompose() {
 
     if [ -n "${TOKEN:-}" ]; then
         AUTH_ARGS=(--header "Authorization: Bearer ${TOKEN}")
-        URL="http://localhost:443/api/image-builder-composer/v2/compose"
+        URL="${COMPOSER_API_BASE_JWT}/api/image-builder-composer/v2/compose"
     else
         AUTH_ARGS=(
             --cacert /etc/osbuild-composer/ca-crt.pem
             --key /etc/osbuild-composer/client-key.pem
             --cert /etc/osbuild-composer/client-crt.pem
         )
-        URL="https://localhost/api/image-builder-composer/v2/compose"
+        URL="${COMPOSER_API_BASE}/api/image-builder-composer/v2/compose"
     fi
 
     HTTPSTATUS=$(curl \
@@ -131,14 +137,14 @@ function waitForState() {
 
     if [ -n "${TOKEN:-}" ]; then
         AUTH_ARGS=(--header "Authorization: Bearer ${TOKEN}")
-        URL_BASE="http://localhost:443/api/image-builder-composer/v2/composes"
+        URL_BASE="${COMPOSER_API_BASE_JWT}/api/image-builder-composer/v2/composes"
     else
         AUTH_ARGS=(
             --cacert /etc/osbuild-composer/ca-crt.pem
             --key /etc/osbuild-composer/client-key.pem
             --cert /etc/osbuild-composer/client-crt.pem
         )
-        URL_BASE="https://localhost/api/image-builder-composer/v2/composes"
+        URL_BASE="${COMPOSER_API_BASE}/api/image-builder-composer/v2/composes"
     fi
 
     while [ "$ITERATIONS" -lt "$MAX_ITERATIONS" ]
