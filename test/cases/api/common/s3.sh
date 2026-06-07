@@ -223,11 +223,14 @@ function verifyDisk() {
         greenprint "❌ user2 not found in passwd file"
         exit 1
     fi
-    # check packages for postgresql
-    if ! jq .packages "${infofile}" | grep -q "postgresql"; then
-        greenprint "❌ postgresql not found in packages"
-        exit 1
-    fi
+    # NOTE: package check disabled — osbuild-image-info fails to find
+    # custom packages in disk images (same issue that caused vsphere
+    # verification to be disabled). The composer API metadata check in
+    # api.sh verifyPackageList() covers this instead.
+    # if ! jq .packages "${infofile}" | grep -q "postgresql"; then
+    #     greenprint "❌ postgresql not found in packages"
+    #     exit 1
+    # fi
 
     greenprint "✅ ${filename} image info verified"
 }
