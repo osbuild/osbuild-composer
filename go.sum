@@ -451,8 +451,8 @@ github.com/opencontainers/runtime-spec v1.2.1 h1:S4k4ryNgEpxW1dzyqffOmhI1BHYcjzU
 github.com/opencontainers/runtime-spec v1.2.1/go.mod h1:jwyrGlmzljRJv/Fgzds9SsS/C5hL+LL3ko9hs6T5lQ0=
 github.com/opencontainers/selinux v1.12.0 h1:6n5JV4Cf+4y0KNXW48TLj5DwfXpvWlxXplUkdTrmPb8=
 github.com/opencontainers/selinux v1.12.0/go.mod h1:BTPX+bjVbWGXw7ZZWUbdENt8w0htPSrlgOOysQaU62U=
-github.com/openshift-online/ocm-sdk-go v0.1.501 h1:7hSfgAb8uPXerMawv1OU50GCX2QQrYnaxchLQdKLW90=
-github.com/openshift-online/ocm-sdk-go v0.1.501/go.mod h1:TfPLUn7T9KUoFS7UOoifHMSQ47owhzkkSHmRhK9Swbo=
+github.com/openshift-online/ocm-sdk-go v0.1.502 h1:LiCRIcImrqKXorTObR1UHSIhE5d5e6fu8zaMs4vmO34=
+github.com/openshift-online/ocm-sdk-go v0.1.502/go.mod h1:TfPLUn7T9KUoFS7UOoifHMSQ47owhzkkSHmRhK9Swbo=
 github.com/oracle/oci-go-sdk/v54 v54.0.0 h1:CDLjeSejv2aDpElAJrhKpi6zvT/zhZCZuXchUUZ+LS4=
 github.com/oracle/oci-go-sdk/v54 v54.0.0/go.mod h1:+t+yvcFGVp+3ZnztnyxqXfQDsMlq8U25faBLa+mqCMc=
 github.com/osbuild/blueprint v1.30.0 h1:p8BpF4H5dJtvGCcvDaoyTzEdNVgVoJNh985ZyFKnJtk=
