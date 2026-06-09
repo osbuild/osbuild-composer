@@ -663,21 +663,34 @@ weldr-distro-dot-notation+aliases:
           - aws/rhel-9.9-nightly-x86_64
         INTERNAL_NETWORK: ["true"]
 
-.generic_s3:
+generic_s3.sh:
+  stage: test
+  extends: .terraform
+  rules:
+    - !reference [.upstream_rules_all, rules]
+    - !reference [.nightly_rules_all, rules]
+    - !reference [.ga_rules_all, rules]
+  script:
+    - schutzbot/deploy.sh
+    - /usr/libexec/tests/osbuild-composer/generic_s3.sh
+  parallel:
+    matrix:
+      - RUNNER:
+          - aws/centos-stream-9-x86_64
+          - aws/centos-stream-10-x86_64
+          - aws/fedora-44-x86_64
+      - RUNNER:
+          - aws/rhel-9.9-nightly-x86_64
+          - aws/rhel-10.3-nightly-x86_64
+        INTERNAL_NETWORK: ["true"]
+
+aws_s3.sh:
   extends: .libvirt_integration
   rules:
     # BLACKLIST
-    - if: $RUNNER !~ "/^.*(rhel-9.8).*$/" && $CI_PIPELINE_SOURCE != "schedule" && $NIGHTLY != "true" && $RUNNER !~ /[\S]+rhel-[\S]+-(?:(?:ga)|(?:eus))[\S]+/
+    - if: $RUNNER !~ "/^.*(rhel-9.7).*$/" && $CI_PIPELINE_SOURCE != "schedule" && $NIGHTLY != "true" && $RUNNER !~ /[\S]+rhel-[\S]+-(?:(?:ga)|(?:eus))[\S]+/
     - !reference [.nightly_rules_all, rules]
     - !reference [.ga_rules_all, rules]
-
-generic_s3.sh:
-  extends: .generic_s3
-  variables:
-    SCRIPT: generic_s3.sh
-
-aws_s3.sh:
-  extends: .generic_s3
   variables:
     SCRIPT: aws_s3.sh
 
