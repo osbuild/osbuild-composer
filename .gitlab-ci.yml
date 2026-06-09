@@ -117,14 +117,7 @@ RPM:
           - aws/centos-stream-9-aarch64
           - aws/centos-stream-10-x86_64
           - aws/centos-stream-10-aarch64
-      - RUNNER:
-          - aws/rhel-9.8-ga-x86_64
-          - aws/rhel-9.9-nightly-x86_64
-          - aws/rhel-9.9-nightly-aarch64
-          - aws/rhel-10.1-ga-aarch64
-          - aws/rhel-10.3-nightly-x86_64
-          - aws/rhel-10.3-nightly-aarch64
-        INTERNAL_NETWORK: ["true"]
+      - <<: *RPM_RUNNERS_RHEL
 
 RPM (GA-only):
   stage: rpmbuild
