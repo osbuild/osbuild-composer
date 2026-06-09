@@ -671,20 +671,10 @@ weldr-distro-dot-notation+aliases:
     - !reference [.nightly_rules_all, rules]
     - !reference [.ga_rules_all, rules]
 
-generic_s3_http.sh:
+generic_s3.sh:
   extends: .generic_s3
   variables:
-    SCRIPT: generic_s3_http.sh
-
-generic_s3_https_secure.sh:
-  extends: .generic_s3
-  variables:
-    SCRIPT: generic_s3_https_secure.sh
-
-generic_s3_https_insecure.sh:
-  extends: .generic_s3
-  variables:
-    SCRIPT: generic_s3_https_insecure.sh
+    SCRIPT: generic_s3.sh
 
 aws_s3.sh:
   extends: .generic_s3
