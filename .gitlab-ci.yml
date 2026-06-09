@@ -32,17 +32,6 @@ stages:
   tags:
     - terraform
 
-.terraform/openstack:
-  extends: .base
-  tags:
-    - terraform/openstack
-
-.terraform/gcp:
-  extends: .base
-  tags:
-    - terraform/gcp
-
-
 init:
   stage: init
   interruptible: true
@@ -640,7 +629,7 @@ API-unit:
 
 .libvirt_integration:
   stage: test
-  extends: .terraform/gcp
+  extends: .terraform
   rules:
     - !reference [.upstream_rules_all, rules]
     - !reference [.nightly_rules_all, rules]
@@ -651,14 +640,14 @@ API-unit:
   parallel:
     matrix:
       - RUNNER:
-          - rhos-01/fedora-44-x86_64
+          - aws/fedora-44-x86_64-kvm
       - RUNNER:
-          - gcp/rhel-8.10-ga-x86_64
-          - gcp/rhel-9.8-ga-x86_64
-          - gcp/rhel-9.9-nightly-x86_64
-          - gcp/rhel-10.2-ga-x86_64
-          - gcp/rhel-10.3-nightly-x86_64
-          - gcp/centos-stream-9-x86_64
+          - aws/rhel-8.10-ga-x86_64-kvm
+          - aws/rhel-9.8-ga-x86_64-kvm
+          - aws/rhel-9.9-nightly-x86_64-kvm
+          - aws/rhel-10.2-ga-x86_64-kvm
+          - aws/rhel-10.3-nightly-x86_64-kvm
+          - aws/centos-stream-9-x86_64-kvm
         INTERNAL_NETWORK: ["true"]
 
 libvirt.sh:
@@ -754,7 +743,7 @@ Multi-tenancy:
 
 Upgrade:
   stage: test
-  extends: .terraform/openstack
+  extends: .terraform
   rules:
     - !reference [.nightly_rules_all, rules]
   script:
@@ -763,11 +752,10 @@ Upgrade:
   parallel:
     matrix:
       - RUNNER:
-          - rhos-01/rhel-9.8-ga-x86_64-large
-          - rhos-01/rhel-9.9-nightly-x86_64-large
-          - rhos-01/rhel-10.2-ga-x86_64-large
-          - rhos-01/rhel-10.3-nightly-x86_64-large
-
+          - aws/rhel-9.8-ga-x86_64-kvm
+          - aws/rhel-9.9-nightly-x86_64-kvm
+          - aws/rhel-10.2-ga-x86_64-kvm
+          - aws/rhel-10.3-nightly-x86_64-kvm
 
 NIGHTLY_FAIL:
   stage: finish
@@ -809,7 +797,7 @@ GA_SUCCESS:
 
 Installer:
   stage: test
-  extends: .terraform/openstack
+  extends: .terraform
   rules:
     - !reference [.upstream_rules_all, rules]
     - !reference [.nightly_rules_all, rules]
@@ -820,12 +808,12 @@ Installer:
   parallel:
     matrix:
       - RUNNER:
-          - rhos-01/rhel-9.8-ga-x86_64
-          - rhos-01/rhel-9.9-nightly-x86_64
-          - rhos-01/centos-stream-9-x86_64
-          - rhos-01/rhel-10.2-ga-x86_64
-          - rhos-01/rhel-10.3-nightly-x86_64
-          - rhos-01/centos-stream-10-x86_64
+          - aws/rhel-9.8-ga-x86_64-kvm
+          - aws/rhel-9.9-nightly-x86_64-kvm
+          - aws/centos-stream-9-x86_64-kvm
+          - aws/rhel-10.2-ga-x86_64-kvm
+          - aws/rhel-10.3-nightly-x86_64-kvm
+          - aws/centos-stream-10-x86_64-kvm
 
 ContainerUpload:
   stage: test
