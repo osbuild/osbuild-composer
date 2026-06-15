@@ -111,9 +111,9 @@ func (ts *Timestamp) UnmarshalJSON(b []byte) error {
 	case "-infinity":
 		*ts = Timestamp{Valid: true, InfinityModifier: -Infinity}
 	default:
-		// Parse time with or without timezonr
+		// Parse time with or without timezone
 		tss := *s
-		//		PostgreSQL uses ISO 8601 without timezone for to_json function and casting from a string to timestampt
+		// PostgreSQL uses ISO 8601 without timezone for to_json function and casting from a string to timestamp
 		tim, err := time.Parse(time.RFC3339Nano, tss)
 		if err == nil {
 			*ts = Timestamp{Time: tim, Valid: true}
@@ -218,7 +218,7 @@ func (encodePlanTimestampCodecText) Encode(value any, buf []byte) (newBuf []byte
 		s = t.Truncate(time.Microsecond).Format(pgTimestampFormat)
 
 		if bc {
-			s = s + " BC"
+			s += " BC"
 		}
 	case Infinity:
 		s = "infinity"
@@ -242,13 +242,11 @@ func discardTimeZone(t time.Time) time.Time {
 func (c *TimestampCodec) PlanScan(m *Map, oid uint32, format int16, target any) ScanPlan {
 	switch format {
 	case BinaryFormatCode:
-		switch target.(type) {
-		case TimestampScanner:
+		if _, ok := target.(TimestampScanner); ok {
 			return &scanPlanBinaryTimestampToTimestampScanner{location: c.ScanLocation}
 		}
 	case TextFormatCode:
-		switch target.(type) {
-		case TimestampScanner:
+		if _, ok := target.(TimestampScanner); ok {
 			return &scanPlanTextTimestampToTimestampScanner{location: c.ScanLocation}
 		}
 	}
