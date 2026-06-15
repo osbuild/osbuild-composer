@@ -670,6 +670,26 @@ func (m *validateOpAttachClassicLinkVpc) HandleInitialize(ctx context.Context, i
 	return next.HandleInitialize(ctx, in)
 }
 
+type validateOpAttachImageWatermark struct {
+}
+
+func (*validateOpAttachImageWatermark) ID() string {
+	return "OperationInputValidation"
+}
+
+func (m *validateOpAttachImageWatermark) HandleInitialize(ctx context.Context, in middleware.InitializeInput, next middleware.InitializeHandler) (
+	out middleware.InitializeOutput, metadata middleware.Metadata, err error,
+) {
+	input, ok := in.Parameters.(*AttachImageWatermarkInput)
+	if !ok {
+		return out, metadata, fmt.Errorf("unknown input parameters type %T", in.Parameters)
+	}
+	if err := validateOpAttachImageWatermarkInput(input); err != nil {
+		return out, metadata, err
+	}
+	return next.HandleInitialize(ctx, in)
+}
+
 type validateOpAttachInternetGateway struct {
 }
 
@@ -1165,6 +1185,26 @@ func (m *validateOpCreateCapacityReservationBySplitting) HandleInitialize(ctx co
 		return out, metadata, fmt.Errorf("unknown input parameters type %T", in.Parameters)
 	}
 	if err := validateOpCreateCapacityReservationBySplittingInput(input); err != nil {
+		return out, metadata, err
+	}
+	return next.HandleInitialize(ctx, in)
+}
+
+type validateOpCreateCapacityReservationCancellationQuote struct {
+}
+
+func (*validateOpCreateCapacityReservationCancellationQuote) ID() string {
+	return "OperationInputValidation"
+}
+
+func (m *validateOpCreateCapacityReservationCancellationQuote) HandleInitialize(ctx context.Context, in middleware.InitializeInput, next middleware.InitializeHandler) (
+	out middleware.InitializeOutput, metadata middleware.Metadata, err error,
+) {
+	input, ok := in.Parameters.(*CreateCapacityReservationCancellationQuoteInput)
+	if !ok {
+		return out, metadata, fmt.Errorf("unknown input parameters type %T", in.Parameters)
+	}
+	if err := validateOpCreateCapacityReservationCancellationQuoteInput(input); err != nil {
 		return out, metadata, err
 	}
 	return next.HandleInitialize(ctx, in)
@@ -5325,6 +5365,26 @@ func (m *validateOpDetachClassicLinkVpc) HandleInitialize(ctx context.Context, i
 		return out, metadata, fmt.Errorf("unknown input parameters type %T", in.Parameters)
 	}
 	if err := validateOpDetachClassicLinkVpcInput(input); err != nil {
+		return out, metadata, err
+	}
+	return next.HandleInitialize(ctx, in)
+}
+
+type validateOpDetachImageWatermark struct {
+}
+
+func (*validateOpDetachImageWatermark) ID() string {
+	return "OperationInputValidation"
+}
+
+func (m *validateOpDetachImageWatermark) HandleInitialize(ctx context.Context, in middleware.InitializeInput, next middleware.InitializeHandler) (
+	out middleware.InitializeOutput, metadata middleware.Metadata, err error,
+) {
+	input, ok := in.Parameters.(*DetachImageWatermarkInput)
+	if !ok {
+		return out, metadata, fmt.Errorf("unknown input parameters type %T", in.Parameters)
+	}
+	if err := validateOpDetachImageWatermarkInput(input); err != nil {
 		return out, metadata, err
 	}
 	return next.HandleInitialize(ctx, in)
@@ -10822,6 +10882,10 @@ func addOpAttachClassicLinkVpcValidationMiddleware(stack *middleware.Stack) erro
 	return stack.Initialize.Add(&validateOpAttachClassicLinkVpc{}, middleware.After)
 }
 
+func addOpAttachImageWatermarkValidationMiddleware(stack *middleware.Stack) error {
+	return stack.Initialize.Add(&validateOpAttachImageWatermark{}, middleware.After)
+}
+
 func addOpAttachInternetGatewayValidationMiddleware(stack *middleware.Stack) error {
 	return stack.Initialize.Add(&validateOpAttachInternetGateway{}, middleware.After)
 }
@@ -10920,6 +10984,10 @@ func addOpCreateCapacityManagerDataExportValidationMiddleware(stack *middleware.
 
 func addOpCreateCapacityReservationBySplittingValidationMiddleware(stack *middleware.Stack) error {
 	return stack.Initialize.Add(&validateOpCreateCapacityReservationBySplitting{}, middleware.After)
+}
+
+func addOpCreateCapacityReservationCancellationQuoteValidationMiddleware(stack *middleware.Stack) error {
+	return stack.Initialize.Add(&validateOpCreateCapacityReservationCancellationQuote{}, middleware.After)
 }
 
 func addOpCreateCapacityReservationFleetValidationMiddleware(stack *middleware.Stack) error {
@@ -11752,6 +11820,10 @@ func addOpDescribeVpcEndpointServicePermissionsValidationMiddleware(stack *middl
 
 func addOpDetachClassicLinkVpcValidationMiddleware(stack *middleware.Stack) error {
 	return stack.Initialize.Add(&validateOpDetachClassicLinkVpc{}, middleware.After)
+}
+
+func addOpDetachImageWatermarkValidationMiddleware(stack *middleware.Stack) error {
+	return stack.Initialize.Add(&validateOpDetachImageWatermark{}, middleware.After)
 }
 
 func addOpDetachInternetGatewayValidationMiddleware(stack *middleware.Stack) error {
@@ -14440,6 +14512,24 @@ func validateOpAttachClassicLinkVpcInput(v *AttachClassicLinkVpcInput) error {
 	}
 }
 
+func validateOpAttachImageWatermarkInput(v *AttachImageWatermarkInput) error {
+	if v == nil {
+		return nil
+	}
+	invalidParams := smithy.InvalidParamsError{Context: "AttachImageWatermarkInput"}
+	if v.ImageId == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("ImageId"))
+	}
+	if v.WatermarkName == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("WatermarkName"))
+	}
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	} else {
+		return nil
+	}
+}
+
 func validateOpAttachInternetGatewayInput(v *AttachInternetGatewayInput) error {
 	if v == nil {
 		return nil
@@ -14869,14 +14959,26 @@ func validateOpCreateCapacityReservationBySplittingInput(v *CreateCapacityReserv
 	}
 }
 
+func validateOpCreateCapacityReservationCancellationQuoteInput(v *CreateCapacityReservationCancellationQuoteInput) error {
+	if v == nil {
+		return nil
+	}
+	invalidParams := smithy.InvalidParamsError{Context: "CreateCapacityReservationCancellationQuoteInput"}
+	if v.CapacityReservationId == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("CapacityReservationId"))
+	}
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	} else {
+		return nil
+	}
+}
+
 func validateOpCreateCapacityReservationFleetInput(v *CreateCapacityReservationFleetInput) error {
 	if v == nil {
 		return nil
 	}
 	invalidParams := smithy.InvalidParamsError{Context: "CreateCapacityReservationFleetInput"}
-	if v.InstanceTypeSpecifications == nil {
-		invalidParams.Add(smithy.NewErrParamRequired("InstanceTypeSpecifications"))
-	}
 	if v.TotalTargetCapacity == nil {
 		invalidParams.Add(smithy.NewErrParamRequired("TotalTargetCapacity"))
 	}
@@ -18325,6 +18427,24 @@ func validateOpDetachClassicLinkVpcInput(v *DetachClassicLinkVpcInput) error {
 	}
 	if v.VpcId == nil {
 		invalidParams.Add(smithy.NewErrParamRequired("VpcId"))
+	}
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	} else {
+		return nil
+	}
+}
+
+func validateOpDetachImageWatermarkInput(v *DetachImageWatermarkInput) error {
+	if v == nil {
+		return nil
+	}
+	invalidParams := smithy.InvalidParamsError{Context: "DetachImageWatermarkInput"}
+	if v.ImageId == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("ImageId"))
+	}
+	if v.WatermarkKey == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("WatermarkKey"))
 	}
 	if invalidParams.Len() > 0 {
 		return invalidParams
