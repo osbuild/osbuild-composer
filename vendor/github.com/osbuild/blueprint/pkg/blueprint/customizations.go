@@ -39,6 +39,17 @@ type Customizations struct {
 	DNF                *DNFCustomization              `json:"dnf,omitempty" toml:"dnf,omitempty"`
 	ISO                *ISOCustomization              `json:"iso,omitempty" toml:"iso,omitempty"`
 	Sshd               *SshdCustomization             `json:"sshd,omitempty" toml:"sshd,omitempty"`
+	Bootloader         *BootloaderCustomization       `json:"bootloader,omitempty" toml:"bootloader,omitempty"`
+}
+
+type BootloaderCustomization struct {
+	Grub2 *Grub2Customization `json:"grub2,omitempty" toml:"grub2,omitempty"`
+}
+
+type Grub2Customization struct {
+	TerminalInput  []string `json:"terminal_input,omitempty" toml:"terminal_input,omitempty"`
+	TerminalOutput []string `json:"terminal_output,omitempty" toml:"terminal_output,omitempty"`
+	Serial         *string  `json:"serial,omitempty" toml:"serial,omitempty"`
 }
 
 type IgnitionCustomization struct {
@@ -320,6 +331,13 @@ func (c *Customizations) GetInstallationDevice() string {
 		return ""
 	}
 	return c.InstallationDevice
+}
+
+func (c *Customizations) GetBootloader() *BootloaderCustomization {
+	if c == nil {
+		return nil
+	}
+	return c.Bootloader
 }
 
 func (c *Customizations) GetFDO() *FDOCustomization {
