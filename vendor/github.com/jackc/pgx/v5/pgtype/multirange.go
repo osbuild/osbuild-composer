@@ -210,6 +210,11 @@ func (c *MultirangeCodec) decodeBinary(m *Map, multirangeOID uint32, src []byte,
 	elementCount := int(binary.BigEndian.Uint32(src[rp:]))
 	rp += 4
 
+	// Each element requires at least 4 bytes for its length prefix.
+	if elementCount > len(src)/4 {
+		return fmt.Errorf("multirange element count %d exceeds available data", elementCount)
+	}
+
 	err := multirange.SetLen(elementCount)
 	if err != nil {
 		return err
@@ -226,10 +231,16 @@ func (c *MultirangeCodec) decodeBinary(m *Map, multirangeOID uint32, src []byte,
 
 	for i := range elementCount {
 		elem := multirange.ScanIndex(i)
+		if len(src[rp:]) < 4 {
+			return fmt.Errorf("multirange body truncated at element %d", i)
+		}
 		elemLen := int(int32(binary.BigEndian.Uint32(src[rp:])))
 		rp += 4
 		var elemSrc []byte
 		if elemLen >= 0 {
+			if len(src[rp:]) < elemLen {
+				return fmt.Errorf("multirange element %d length %d exceeds remaining %d bytes", i, elemLen, len(src[rp:]))
+			}
 			elemSrc = src[rp : rp+elemLen]
 			rp += elemLen
 		}
