@@ -1388,6 +1388,12 @@ components:
         reference:
           type: string
           example: "quay.io/centos-bootc/centos-bootc:stream9"
+        build_reference:
+          type: string
+          description: |
+            Optional container image reference used as the build container.
+            When not set, the base reference is used for building as well.
+          example: "quay.io/centos-bootc/centos-bootc-build:stream9"
         iso_payload_reference:
           type: string
           description: |
