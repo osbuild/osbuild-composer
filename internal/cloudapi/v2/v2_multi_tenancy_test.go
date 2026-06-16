@@ -429,7 +429,7 @@ func TestBootcMultitenancyPreManifestProcessed(t *testing.T) {
 		[]string{worker.JobTypeBootcInfoResolve}, []string{"org-" + orgID}, uuid.Nil,
 	)
 	require.NoError(t, err)
-	err = workerServer.FinishJob(infoToken, rawValidBaseBootcInfoResult(t))
+	err = workerServer.FinishJob(infoToken, rawValidBaseBootcInfoResult(t, false))
 	require.NoError(t, err)
 
 	// Wait for the bootcPreManifestLoop to pick up and process the job.

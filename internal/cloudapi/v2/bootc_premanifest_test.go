@@ -43,7 +43,8 @@ func newTestWorkerServer(t *testing.T) *worker.Server {
 
 // rawValidBaseBootcInfoResult returns a marshaled BootcInfoResolveJobResult
 // matching the test container used across bootc pre-manifest handler tests.
-func rawValidBaseBootcInfoResult(t *testing.T) json.RawMessage {
+// If withBuildInfo is true, the result will contain a build container info.
+func rawValidBaseBootcInfoResult(t *testing.T, withBuildInfo bool) json.RawMessage {
 	t.Helper()
 	osInfo := &osinfo.Info{
 		OSRelease: osinfo.OSRelease{
@@ -58,7 +59,7 @@ func rawValidBaseBootcInfoResult(t *testing.T) json.RawMessage {
 	data, err := json.Marshal(osInfo)
 	require.NoError(t, err)
 
-	baseResult := worker.BootcInfoResolveJobResult{
+	result := worker.BootcInfoResolveJobResult{
 		Infos: []worker.BootcContainerInfo{
 			{
 				Imgref:        "quay.io/centos-bootc/centos-bootc:stream9",
@@ -70,7 +71,16 @@ func rawValidBaseBootcInfoResult(t *testing.T) json.RawMessage {
 			},
 		},
 	}
-	b, err := json.Marshal(baseResult)
+
+	if withBuildInfo {
+		result.Infos = append(result.Infos, worker.BootcContainerInfo{
+			Imgref:  "quay.io/centos-bootc/centos-bootc-build:stream9",
+			ImageID: "sha256:def456",
+			Arch:    "x86_64",
+		})
+	}
+
+	b, err := json.Marshal(result)
 	require.NoError(t, err)
 
 	return b
@@ -177,7 +187,7 @@ func TestHandleBootcPreManifest_Errors(t *testing.T) {
 			},
 			dynArgs: func(t *testing.T) []json.RawMessage {
 				t.Helper()
-				return []json.RawMessage{rawValidBaseBootcInfoResult(t)}
+				return []json.RawMessage{rawValidBaseBootcInfoResult(t, false)}
 			},
 			wantErrID:          clienterrors.ErrorManifestGeneration,
 			wantReasonContains: "base info index 5 is out of range (resolved 1 infos)",
@@ -192,7 +202,7 @@ func TestHandleBootcPreManifest_Errors(t *testing.T) {
 			},
 			dynArgs: func(t *testing.T) []json.RawMessage {
 				t.Helper()
-				return []json.RawMessage{rawValidBaseBootcInfoResult(t)}
+				return []json.RawMessage{rawValidBaseBootcInfoResult(t, false)}
 			},
 			wantErrID:          clienterrors.ErrorManifestGeneration,
 			wantReasonContains: "base info index -1 is out of range (resolved 1 infos)",
@@ -207,7 +217,7 @@ func TestHandleBootcPreManifest_Errors(t *testing.T) {
 			},
 			dynArgs: func(t *testing.T) []json.RawMessage {
 				t.Helper()
-				return []json.RawMessage{rawValidBaseBootcInfoResult(t)}
+				return []json.RawMessage{rawValidBaseBootcInfoResult(t, false)}
 			},
 			wantErrID:          clienterrors.ErrorManifestGeneration,
 			wantReasonContains: "build info index 5 is out of range (resolved 1 infos)",
@@ -222,7 +232,7 @@ func TestHandleBootcPreManifest_Errors(t *testing.T) {
 			},
 			dynArgs: func(t *testing.T) []json.RawMessage {
 				t.Helper()
-				return []json.RawMessage{rawValidBaseBootcInfoResult(t)}
+				return []json.RawMessage{rawValidBaseBootcInfoResult(t, false)}
 			},
 			wantErrID:          clienterrors.ErrorManifestGeneration,
 			wantReasonContains: "build info index -1 is out of range (resolved 1 infos)",
@@ -236,7 +246,7 @@ func TestHandleBootcPreManifest_Errors(t *testing.T) {
 			},
 			dynArgs: func(t *testing.T) []json.RawMessage {
 				t.Helper()
-				return []json.RawMessage{rawValidBaseBootcInfoResult(t)}
+				return []json.RawMessage{rawValidBaseBootcInfoResult(t, false)}
 			},
 			wantErrID:          clienterrors.ErrorManifestGeneration,
 			wantReasonContains: "Error generating bootc pre-manifest: getting image type \"nonexistent-image-type\": invalid image type: nonexistent-image-type",
@@ -253,7 +263,7 @@ func TestHandleBootcPreManifest_Errors(t *testing.T) {
 			},
 			dynArgs: func(t *testing.T) []json.RawMessage {
 				t.Helper()
-				return []json.RawMessage{rawValidBaseBootcInfoResult(t)}
+				return []json.RawMessage{rawValidBaseBootcInfoResult(t, false)}
 			},
 			wantErrID:          clienterrors.ErrorInvalidTargetConfig,
 			wantReasonContains: "Error constructing upload target",
@@ -302,7 +312,7 @@ func TestHandleBootcPreManifest_Errors(t *testing.T) {
 // enqueuePreManifestWithResolvedDep enqueues a bootc info-resolve job,
 // finishes it with a valid result, and enqueues a pre-manifest job that
 // depends on it. Returns the pre-manifest job ID.
-func enqueuePreManifestWithResolvedDep(t *testing.T, ws *worker.Server, arch string, specs []worker.BootcInfoResolveJobSpec, io distro.ImageOptions, uploadTargets []worker.BootcUploadTarget, imageType string) uuid.UUID {
+func enqueuePreManifestWithResolvedDep(t *testing.T, ws *worker.Server, arch string, specs []worker.BootcInfoResolveJobSpec, io distro.ImageOptions, uploadTargets []worker.BootcUploadTarget, imageType string, buildInfoIdx *int) uuid.UUID {
 	t.Helper()
 	infoResolveJob := &worker.BootcInfoResolveJob{
 		Specs: specs,
@@ -314,6 +324,7 @@ func enqueuePreManifestWithResolvedDep(t *testing.T, ws *worker.Server, arch str
 		ImageType:                  imageType,
 		Seed:                       42,
 		BootcInfoResolveDynArgsIdx: common.ToPtr(0),
+		BuildInfoIdx:               buildInfoIdx,
 		ImageOptions:               io,
 		UploadTargets:              uploadTargets,
 	}
@@ -328,7 +339,7 @@ func enqueuePreManifestWithResolvedDep(t *testing.T, ws *worker.Server, arch str
 	)
 	require.NoError(t, err)
 
-	err = ws.FinishJob(infoToken, rawValidBaseBootcInfoResult(t))
+	err = ws.FinishJob(infoToken, rawValidBaseBootcInfoResult(t, buildInfoIdx != nil))
 	require.NoError(t, err)
 
 	return preManifestJobID
@@ -337,12 +348,17 @@ func enqueuePreManifestWithResolvedDep(t *testing.T, ws *worker.Server, arch str
 // assertValidPreManifestResult checks that a BootcPreManifestJobResult
 // completed without error and contains the expected container resolve data
 // for the test fixture container (centos-bootc:stream9 on x86_64).
-func assertValidPreManifestResult(t *testing.T, result worker.BootcPreManifestJobResult, arch string, imageType string, hasPayload bool, specs []worker.BootcInfoResolveJobSpec, useRemoteContainerSource bool) {
+func assertValidPreManifestResult(t *testing.T, result worker.BootcPreManifestJobResult, arch string, imageType string, hasPayload bool, hasBuildContainer bool, specs []worker.BootcInfoResolveJobSpec, useRemoteContainerSource bool) {
 	t.Helper()
 
 	require.Nil(t, result.JobError, "expected no job error, got: %v", result.JobError)
 	assert.Equal(t, arch, result.ContainerResolveJobArgs.Arch)
-	assert.Len(t, result.ContainerResolveJobArgs.PipelineSpecs, 2, "expected 2 pipelines specs")
+
+	expectedPipelineCount := 2
+	if hasBuildContainer {
+		expectedPipelineCount = 3
+	}
+	assert.Len(t, result.ContainerResolveJobArgs.PipelineSpecs, expectedPipelineCount, "expected %d pipeline specs", expectedPipelineCount)
 	assert.Len(t, result.ContainerResolveJobArgs.PipelineSpecs["build"], 1, "expected 1 container spec in build pipeline")
 	switch imageType {
 	case "bootc-generic-iso":
@@ -353,6 +369,12 @@ func assertValidPreManifestResult(t *testing.T, result worker.BootcPreManifestJo
 		assert.Len(t, result.ContainerResolveJobArgs.PipelineSpecs["os-tree"], expectedOsTreeSpecs, "expected %d container spec(s) in os-tree pipeline", expectedOsTreeSpecs)
 	default:
 		assert.Len(t, result.ContainerResolveJobArgs.PipelineSpecs["image"], 1, "expected 1 container spec in image pipeline")
+	}
+	if hasBuildContainer {
+		assert.Contains(t, result.ContainerResolveJobArgs.PipelineSpecs, "target", "target pipeline should be present when using a separate build container")
+		assert.Len(t, result.ContainerResolveJobArgs.PipelineSpecs["target"], 1, "expected 1 container spec in target pipeline")
+	} else {
+		assert.NotContains(t, result.ContainerResolveJobArgs.PipelineSpecs, "target", "target pipeline should not be present without a separate build container")
 	}
 
 	// verify that all specs have the appropriate Local setting, based on the useRemoteContainerSource flag
@@ -394,6 +416,7 @@ func TestHandleBootcPreManifest_HappyPath(t *testing.T) {
 		imageType                string // internal image type name (e.g. "qcow2", "ami")
 		useRemoteContainerSource bool
 		isoPayloadReference      string
+		buildReference           string
 		uploadTargets            []worker.BootcUploadTarget
 		expectedTargets          []expectedTarget
 	}{
@@ -543,6 +566,11 @@ func TestHandleBootcPreManifest_HappyPath(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:           "separate_build_container",
+			imageType:      "qcow2",
+			buildReference: "quay.io/centos-bootc/centos-bootc-build:stream9",
+		},
 	}
 
 	for _, tc := range testCases {
@@ -554,6 +582,14 @@ func TestHandleBootcPreManifest_HappyPath(t *testing.T) {
 					ResolveMode: worker.BootcInfoResolveModeFull,
 				},
 			}
+			var buildInfoIdx *int
+			if tc.buildReference != "" {
+				specs = append(specs, worker.BootcInfoResolveJobSpec{
+					Ref:         tc.buildReference,
+					ResolveMode: worker.BootcInfoResolveModeBuild,
+				})
+				buildInfoIdx = common.ToPtr(1)
+			}
 			archi := arch.ARCH_X86_64.String()
 			bootcOpts := &distro.BootcImageOptions{
 				UseRemoteContainerSource: tc.useRemoteContainerSource,
@@ -563,7 +599,7 @@ func TestHandleBootcPreManifest_HappyPath(t *testing.T) {
 			}
 			preManifestJobID := enqueuePreManifestWithResolvedDep(t, workerServer, archi, specs, distro.ImageOptions{
 				Bootc: bootcOpts,
-			}, tc.uploadTargets, tc.imageType)
+			}, tc.uploadTargets, tc.imageType, buildInfoIdx)
 
 			// Dequeue the pre-manifest job (it should be pending now)
 			jobID, preManifestToken, _, staticArgs, dynArgs, err := workerServer.RequestJob(
@@ -582,7 +618,7 @@ func TestHandleBootcPreManifest_HappyPath(t *testing.T) {
 			require.NotNil(t, jobInfo)
 			assert.False(t, jobInfo.JobStatus.Finished.IsZero(), "job should be finished")
 
-			assertValidPreManifestResult(t, readResult, archi, tc.imageType, tc.isoPayloadReference != "", specs, tc.useRemoteContainerSource)
+			assertValidPreManifestResult(t, readResult, archi, tc.imageType, tc.isoPayloadReference != "", tc.buildReference != "", specs, tc.useRemoteContainerSource)
 
 			if len(tc.expectedTargets) > 0 {
 				require.Len(t, readResult.Targets, len(tc.expectedTargets), "expected %d targets", len(tc.expectedTargets))
@@ -629,7 +665,7 @@ func TestBootcPreManifestLoop_PicksUpJob(t *testing.T) {
 	}
 	archi := arch.ARCH_X86_64.String()
 
-	preManifestJobID := enqueuePreManifestWithResolvedDep(t, workerServer, archi, specs, distro.ImageOptions{}, nil, "qcow2")
+	preManifestJobID := enqueuePreManifestWithResolvedDep(t, workerServer, archi, specs, distro.ImageOptions{}, nil, "qcow2", nil)
 
 	// Wait for the loop to pick up and finish the pre-manifest job.
 	// Poll with timeout.
@@ -646,7 +682,7 @@ func TestBootcPreManifestLoop_PicksUpJob(t *testing.T) {
 		var readResult worker.BootcPreManifestJobResult
 		jobInfo, err := workerServer.BootcPreManifestJobInfo(preManifestJobID, &readResult)
 		if err == nil && !jobInfo.JobStatus.Finished.IsZero() {
-			assertValidPreManifestResult(t, readResult, archi, "qcow2", false, specs, false)
+			assertValidPreManifestResult(t, readResult, archi, "qcow2", false, false, specs, false)
 			return
 		}
 
