@@ -3090,6 +3090,7 @@ func TestComposeBootc(t *testing.T) {
 		expectedImageTypeName         string
 		bootcUseRemoteContainerSource bool
 		isoPayloadReference           string
+		buildReference                string
 		uploadJSON                    string   // upload_options or upload_targets JSON fragment
 		expectedStatus                int      // expected HTTP status code
 		expectedBody                  string   // empty = default ComposeId success body
@@ -3110,6 +3111,16 @@ func TestComposeBootc(t *testing.T) {
 			imageType:                     "guest-image",
 			expectedImageTypeName:         "qcow2",
 			bootcUseRemoteContainerSource: true,
+			uploadJSON:                    `"upload_targets": [{"type": "local", "upload_options": {}}]`,
+			expectedStatus:                http.StatusCreated,
+			expectedUploadTargetTypes:     []string{"local"},
+		},
+		{
+			name:                          "with_build_reference",
+			imageType:                     "guest-image",
+			expectedImageTypeName:         "qcow2",
+			bootcUseRemoteContainerSource: false,
+			buildReference:                "registry.org/centos-bootc-build:tag",
 			uploadJSON:                    `"upload_targets": [{"type": "local", "upload_options": {}}]`,
 			expectedStatus:                http.StatusCreated,
 			expectedUploadTargetTypes:     []string{"local"},
@@ -3256,6 +3267,9 @@ func TestComposeBootc(t *testing.T) {
 			if tc.isoPayloadReference != "" {
 				bootcJSON += fmt.Sprintf(`, "iso_payload_reference": "%s"`, tc.isoPayloadReference)
 			}
+			if tc.buildReference != "" {
+				bootcJSON += fmt.Sprintf(`, "build_reference": "%s"`, tc.buildReference)
+			}
 
 			requestBody := fmt.Sprintf(`
 			{
@@ -3363,8 +3377,12 @@ func TestComposeBootc(t *testing.T) {
 			require.NotNil(t, preManifestArgs.BootcInfoResolveDynArgsIdx)
 			require.Equal(t, 0, *preManifestArgs.BootcInfoResolveDynArgsIdx)
 			require.Equal(t, 0, preManifestArgs.BaseInfoIdx)
-			// TODO: adjust this once we add support for a separate build container
-			require.Nil(t, preManifestArgs.BuildInfoIdx, "single ref: no build info index")
+			if tc.buildReference != "" {
+				require.NotNil(t, preManifestArgs.BuildInfoIdx, "build ref set: build info index should be set")
+				require.Equal(t, 1, *preManifestArgs.BuildInfoIdx)
+			} else {
+				require.Nil(t, preManifestArgs.BuildInfoIdx, "no build ref: no build info index")
+			}
 
 			// Verify UseRemoteContainerSource is propagated to BootcPreManifestJob args
 			require.NotNil(t, preManifestArgs.ImageOptions.Bootc)
@@ -3390,10 +3408,17 @@ func TestComposeBootc(t *testing.T) {
 			// Verify the BootcInfoResolve job args are set correctly
 			var bootcInfoResolveArgs worker.BootcInfoResolveJob
 			require.NoError(t, json.Unmarshal(bootcInfoResolveArgsJSON, &bootcInfoResolveArgs))
-			require.Len(t, bootcInfoResolveArgs.Specs, 1)
-			require.Equal(t, baseContainerRef, bootcInfoResolveArgs.Specs[0].Ref)
-			require.Equal(t, worker.BootcInfoResolveModeFull, bootcInfoResolveArgs.Specs[0].ResolveMode)
-			// TODO: add check for build container once we add support for it
+			if tc.buildReference != "" {
+				require.Len(t, bootcInfoResolveArgs.Specs, 2, "should have base + build specs")
+				require.Equal(t, baseContainerRef, bootcInfoResolveArgs.Specs[0].Ref)
+				require.Equal(t, worker.BootcInfoResolveModeFull, bootcInfoResolveArgs.Specs[0].ResolveMode)
+				require.Equal(t, tc.buildReference, bootcInfoResolveArgs.Specs[1].Ref)
+				require.Equal(t, worker.BootcInfoResolveModeBuild, bootcInfoResolveArgs.Specs[1].ResolveMode)
+			} else {
+				require.Len(t, bootcInfoResolveArgs.Specs, 1)
+				require.Equal(t, baseContainerRef, bootcInfoResolveArgs.Specs[0].Ref)
+				require.Equal(t, worker.BootcInfoResolveModeFull, bootcInfoResolveArgs.Specs[0].ResolveMode)
+			}
 
 			// BootcInfoResolve has no dependencies
 			require.Empty(t, bootcInfoResolveDeps)
