@@ -7,7 +7,6 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
-	"io"
 	"maps"
 	"math"
 	"net"
@@ -83,7 +82,46 @@ type Config struct {
 	// that you close on FATAL errors by returning false.
 	OnPgError PgErrorHandler
 
+	// OAuthTokenProvider is a function that returns an OAuth token for authentication. If set, it will be used for
+	// OAUTHBEARER SASL authentication when the server requests it.
+	OAuthTokenProvider func(context.Context) (string, error)
+
+	// MinProtocolVersion is the minimum acceptable PostgreSQL protocol version.
+	// If the server does not support at least this version, the connection will fail.
+	// Valid values: "3.0", "3.2", "latest". Defaults to "3.0".
+	MinProtocolVersion string
+
+	// MaxProtocolVersion is the maximum PostgreSQL protocol version to request from the server.
+	// Valid values: "3.0", "3.2", "latest". Defaults to "3.0" for compatibility.
+	MaxProtocolVersion string
+
+	// ChannelBinding is the channel_binding parameter for SCRAM-SHA-256-PLUS authentication.
+	// Valid values: "disable", "prefer", "require". Defaults to "prefer".
+	ChannelBinding string
+
+	// RequireAuth restricts which authentication methods the client will accept from the server,
+	// matching libpq's require_auth parameter. It is a comma-separated list of method names
+	// (password, md5, gss, sspi, scram-sha-256, oauth, none). A leading "!" on every entry negates
+	// the list (forbid these methods, allow all others). Empty (the default) means all methods are
+	// accepted.
+	RequireAuth string
+
 	createdByParseConfig bool // Used to enforce created by ParseConfig rule.
+}
+
+// connStringKeyAliases maps libpq parameter keywords to the canonical key names this package
+// uses internally in the parsed-settings map. Most keywords are already canonical; this map
+// holds only those whose pgx-internal name differs from the libpq spelling.
+var connStringKeyAliases = map[string]string{
+	"dbname": "database",
+}
+
+// canonicalConnStringKey returns the canonical settings-map key for a libpq parameter keyword.
+func canonicalConnStringKey(k string) string {
+	if c, ok := connStringKeyAliases[k]; ok {
+		return c
+	}
+	return k
 }
 
 // ParseConfigOptions contains options that control how a config is built such as GetSSLPassword.
@@ -91,6 +129,25 @@ type ParseConfigOptions struct {
 	// GetSSLPassword gets the password to decrypt a SSL client certificate. This is analogous to the libpq function
 	// PQsetSSLKeyPassHook_OpenSSL.
 	GetSSLPassword GetSSLPasswordFunc
+
+	// ConnStringAllowedKeys, if non-nil, restricts which parameter keys may appear in connString
+	// itself. Any other key (whether connString is in keyword/value or URL form) causes
+	// ParseConfigWithOptions to return an error before any filesystem access or network
+	// resolution is attempted. Environment variables (PGHOST, PGSERVICEFILE, ...) and built-in
+	// defaults are not checked: only keys that originate from the connString argument.
+	//
+	// Keys may be given in either their libpq spelling ("dbname") or pgx-internal spelling
+	// ("database"); both are accepted.
+	//
+	// A nil slice (the default) applies no restriction and matches libpq behaviour. An empty
+	// non-nil slice rejects every key, i.e. connString must be empty.
+	//
+	// Use this when any part of connString is built from input the application does not fully
+	// control (tenant configuration, RPC parameters, admin UI fields). List only the keys that
+	// input is expected to supply. This fails closed: a future libpq parameter that pgconn learns
+	// to parse will be rejected unless the application has explicitly allowed it, rather than
+	// silently passing through.
+	ConnStringAllowedKeys []string
 }
 
 // Copy returns a deep copy of the config that is safe to use and modify.
@@ -213,6 +270,8 @@ func NetworkAddress(host string, port uint16) (network, address string) {
 //	PGCONNECT_TIMEOUT
 //	PGTARGETSESSIONATTRS
 //	PGTZ
+//	PGMINPROTOCOLVERSION
+//	PGMAXPROTOCOLVERSION
 //
 // See http://www.postgresql.org/docs/current/static/libpq-envars.html for details on the meaning of environment variables.
 //
@@ -233,6 +292,15 @@ func NetworkAddress(host string, port uint16) (network, address string) {
 // which does not use TLS. This can lead to an unexpected unencrypted connection if the main TLS config is manually
 // changed later but the unencrypted fallback is present. Ensure there are no stale fallbacks when manually setting
 // TLSConfig.
+//
+// Several connection parameters cause ParseConfig to read files from the local filesystem: servicefile, passfile,
+// sslkey, sslcert, and sslrootcert. Applications that build connection strings from untrusted input must not allow
+// these keys to be set by that input. In particular, servicefile (which pgconn accepts in the connection string;
+// libpq does not) is read as an INI file whose entries override other connection settings including host, port, and
+// sslmode, so an attacker who controls servicefile and service can redirect the connection. If any portion of the
+// connection string is externally supplied, use ParseConfigWithOptions and set ParseConfigOptions.ConnStringAllowedKeys
+// to an allow-list of the keys that input is expected to supply; any other key in the connection string is then
+// rejected before any filesystem access occurs.
 //
 // Other known differences with libpq:
 //
@@ -273,6 +341,18 @@ func ParseConfigWithOptions(connString string, options ParseConfigOptions) (*Con
 		}
 	}
 
+	if options.ConnStringAllowedKeys != nil {
+		allowed := make(map[string]struct{}, len(options.ConnStringAllowedKeys))
+		for _, k := range options.ConnStringAllowedKeys {
+			allowed[canonicalConnStringKey(k)] = struct{}{}
+		}
+		for k := range connStringSettings {
+			if _, ok := allowed[k]; !ok {
+				return nil, &ParseConfigError{ConnString: connString, msg: fmt.Sprintf("connection string key %q is not in ConnStringAllowedKeys", k)}
+			}
+		}
+	}
+
 	settings := mergeSettings(defaultSettings, envSettings, connStringSettings)
 	if service, present := settings["service"]; present {
 		serviceSettings, err := parseServiceSettings(settings["servicefile"], service)
@@ -289,9 +369,7 @@ func ParseConfigWithOptions(connString string, options ParseConfigOptions) (*Con
 		User:                 settings["user"],
 		Password:             settings["password"],
 		RuntimeParams:        make(map[string]string),
-		BuildFrontend: func(r io.Reader, w io.Writer) *pgproto3.Frontend {
-			return pgproto3.NewFrontend(r, w)
-		},
+		BuildFrontend:        pgproto3.NewFrontend,
 		BuildContextWatcherHandler: func(pgConn *PgConn) ctxwatch.Handler {
 			return &DeadlineContextWatcherHandler{Conn: pgConn.conn}
 		},
@@ -338,6 +416,10 @@ func ParseConfigWithOptions(connString string, options ParseConfigOptions) (*Con
 		"target_session_attrs": {},
 		"service":              {},
 		"servicefile":          {},
+		"min_protocol_version": {},
+		"max_protocol_version": {},
+		"channel_binding":      {},
+		"require_auth":         {},
 	}
 
 	// Adding kerberos configuration
@@ -430,6 +512,57 @@ func ParseConfigWithOptions(connString string, options ParseConfigOptions) (*Con
 		return nil, &ParseConfigError{ConnString: connString, msg: fmt.Sprintf("unknown target_session_attrs value: %v", tsa)}
 	}
 
+	minProto, err := parseProtocolVersion(settings["min_protocol_version"])
+	if err != nil {
+		return nil, &ParseConfigError{ConnString: connString, msg: fmt.Sprintf("invalid min_protocol_version: %q", settings["min_protocol_version"]), err: err}
+	}
+	maxProto, err := parseProtocolVersion(settings["max_protocol_version"])
+	if err != nil {
+		return nil, &ParseConfigError{ConnString: connString, msg: fmt.Sprintf("invalid max_protocol_version: %q", settings["max_protocol_version"]), err: err}
+	}
+
+	config.MinProtocolVersion = settings["min_protocol_version"]
+	config.MaxProtocolVersion = settings["max_protocol_version"]
+
+	if config.MinProtocolVersion == "" {
+		config.MinProtocolVersion = "3.0"
+	}
+
+	// When max_protocol_version is not explicitly set, default based on
+	// min_protocol_version. This matches libpq behavior: if min > 3.0,
+	// default max to latest; otherwise default to 3.0 for compatibility
+	// with older servers/poolers that don't support NegotiateProtocolVersion.
+	if config.MaxProtocolVersion == "" {
+		if minProto > pgproto3.ProtocolVersion30 {
+			config.MaxProtocolVersion = "latest"
+		} else {
+			config.MaxProtocolVersion = "3.0"
+		}
+	}
+
+	// Only error when max_protocol_version was explicitly set and conflicts
+	// with min_protocol_version. When max_protocol_version is not explicitly
+	// set, the auto-raise logic above already ensures a valid default.
+	if minProto > maxProto && settings["max_protocol_version"] != "" {
+		return nil, &ParseConfigError{ConnString: connString, msg: "min_protocol_version cannot be greater than max_protocol_version"}
+	}
+
+	switch channelBinding := settings["channel_binding"]; channelBinding {
+	case "", "prefer":
+		config.ChannelBinding = "prefer"
+	case "disable":
+		config.ChannelBinding = "disable"
+	case "require":
+		config.ChannelBinding = "require"
+	default:
+		return nil, &ParseConfigError{ConnString: connString, msg: fmt.Sprintf("unknown channel_binding value: %v", channelBinding)}
+	}
+
+	config.RequireAuth = settings["require_auth"]
+	if _, err := parseRequireAuth(config.RequireAuth); err != nil {
+		return nil, &ParseConfigError{ConnString: connString, msg: "invalid require_auth", err: err}
+	}
+
 	return config, nil
 }
 
@@ -467,6 +600,10 @@ func parseEnvSettings() map[string]string {
 		"PGSERVICEFILE":        "servicefile",
 		"PGTZ":                 "timezone",
 		"PGOPTIONS":            "options",
+		"PGMINPROTOCOLVERSION": "min_protocol_version",
+		"PGMAXPROTOCOLVERSION": "max_protocol_version",
+		"PGCHANNELBINDING":     "channel_binding",
+		"PGREQUIREAUTH":        "require_auth",
 	}
 
 	for envname, realname := range nameMap {
@@ -491,7 +628,9 @@ func parseURLSettings(connString string) (map[string]string, error) {
 	}
 
 	if parsedURL.User != nil {
-		settings["user"] = parsedURL.User.Username()
+		if u := parsedURL.User.Username(); u != "" {
+			settings["user"] = u
+		}
 		if password, present := parsedURL.User.Password(); present {
 			settings["password"] = password
 		}
@@ -531,16 +670,8 @@ func parseURLSettings(connString string) (map[string]string, error) {
 		settings["database"] = database
 	}
 
-	nameMap := map[string]string{
-		"dbname": "database",
-	}
-
 	for k, v := range parsedURL.Query() {
-		if k2, present := nameMap[k]; present {
-			k = k2
-		}
-
-		settings[k] = v[0]
+		settings[canonicalConnStringKey(k)] = v[0]
 	}
 
 	return settings, nil
@@ -555,10 +686,9 @@ var asciiSpace = [256]uint8{'\t': 1, '\n': 1, '\v': 1, '\f': 1, '\r': 1, ' ': 1}
 func parseKeywordValueSettings(s string) (map[string]string, error) {
 	settings := make(map[string]string)
 
-	nameMap := map[string]string{
-		"dbname": "database",
-	}
-
+	// Trim any leading whitespace so that the loop exits cleanly when only
+	// spaces remain (e.g. trailing spaces after the last value).
+	s = strings.TrimLeft(s, " \t\n\r\v\f")
 	for len(s) > 0 {
 		var key, val string
 		eqIdx := strings.IndexRune(s, '=')
@@ -568,8 +698,9 @@ func parseKeywordValueSettings(s string) (map[string]string, error) {
 
 		key = strings.Trim(s[:eqIdx], " \t\n\r\v\f")
 		s = strings.TrimLeft(s[eqIdx+1:], " \t\n\r\v\f")
-		if len(s) == 0 {
-		} else if s[0] != '\'' {
+		switch {
+		case len(s) == 0:
+		case s[0] != '\'':
 			end := 0
 			for ; end < len(s); end++ {
 				if asciiSpace[s[end]] == 1 {
@@ -582,13 +713,11 @@ func parseKeywordValueSettings(s string) (map[string]string, error) {
 					}
 				}
 			}
-			val = strings.Replace(strings.Replace(s[:end], "\\\\", "\\", -1), "\\'", "'", -1)
-			if end == len(s) {
-				s = ""
-			} else {
-				s = s[end+1:]
-			}
-		} else { // quoted string
+			val = strings.ReplaceAll(strings.ReplaceAll(s[:end], "\\\\", "\\"), "\\'", "'")
+			// Consume the value and trim any subsequent whitespace so that
+			// multiple trailing spaces don't cause a spurious parse failure.
+			s = strings.TrimLeft(s[end:], " \t\n\r\v\f")
+		default: // quoted string
 			s = s[1:]
 			end := 0
 			for ; end < len(s); end++ {
@@ -602,22 +731,20 @@ func parseKeywordValueSettings(s string) (map[string]string, error) {
 			if end == len(s) {
 				return nil, errors.New("unterminated quoted string in connection info string")
 			}
-			val = strings.Replace(strings.Replace(s[:end], "\\\\", "\\", -1), "\\'", "'", -1)
-			if end == len(s) {
-				s = ""
-			} else {
-				s = s[end+1:]
-			}
+			val = strings.ReplaceAll(strings.ReplaceAll(s[:end], "\\\\", "\\"), "\\'", "'")
+			// Consume the closing quote and any subsequent whitespace.
+			s = strings.TrimLeft(s[end+1:], " \t\n\r\v\f")
 		}
 
-		if k, ok := nameMap[key]; ok {
-			key = k
-		}
+		key = canonicalConnStringKey(key)
 
 		if key == "" {
 			return nil, errors.New("invalid keyword/value")
 		}
 
+		if key == "user" && val == "" {
+			continue
+		}
 		settings[key] = val
 	}
 
@@ -635,16 +762,9 @@ func parseServiceSettings(servicefilePath, serviceName string) (map[string]strin
 		return nil, fmt.Errorf("unable to find service: %v", serviceName)
 	}
 
-	nameMap := map[string]string{
-		"dbname": "database",
-	}
-
 	settings := make(map[string]string, len(service.Settings))
 	for k, v := range service.Settings {
-		if k2, present := nameMap[k]; present {
-			k = k2
-		}
-		settings[k] = v
+		settings[canonicalConnStringKey(k)] = v
 	}
 
 	return settings, nil
@@ -788,7 +908,7 @@ func configTLS(settings map[string]string, thisHost string, parseConfigOptions P
 			// Attempt decryption with pass phrase
 			// NOTE: only supports RSA (PKCS#1)
 			if sslpassword != "" {
-				decryptedKey, decryptedError = x509.DecryptPEMBlock(block, []byte(sslpassword))
+				decryptedKey, decryptedError = x509.DecryptPEMBlock(block, []byte(sslpassword)) //nolint:ineffassign
 			}
 			// if sslpassword not provided or has decryption error when use it
 			// try to find sslpassword with callback function
@@ -803,7 +923,7 @@ func configTLS(settings map[string]string, thisHost string, parseConfigOptions P
 			decryptedKey, decryptedError = x509.DecryptPEMBlock(block, []byte(sslpassword))
 			// Should we also provide warning for PKCS#1 needed?
 			if decryptedError != nil {
-				return nil, fmt.Errorf("unable to decrypt key: %w", err)
+				return nil, fmt.Errorf("unable to decrypt key: %w", decryptedError)
 			}
 
 			pemBytes := pem.Block{
@@ -954,4 +1074,15 @@ func ValidateConnectTargetSessionAttrsPreferStandby(ctx context.Context, pgConn 
 	}
 
 	return nil
+}
+
+func parseProtocolVersion(s string) (uint32, error) {
+	switch s {
+	case "", "3.0":
+		return pgproto3.ProtocolVersion30, nil
+	case "3.2", "latest":
+		return pgproto3.ProtocolVersion32, nil
+	default:
+		return 0, fmt.Errorf("invalid protocol version: %q", s)
+	}
 }

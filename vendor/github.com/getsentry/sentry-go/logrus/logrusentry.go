@@ -84,12 +84,16 @@ type Hook interface {
 	FlushWithContext(ctx context.Context) bool
 }
 
-// Deprecated: New just makes an underlying call to NewEventHook.
+// Deprecated: New creates issues/events from log entries. Errors should only be captured
+// using sentry.CaptureException instead of being converted from log entries.
+// Use [NewLogHook] for structured logging. Will be removed in 0.48.0.
 func New(levels []logrus.Level, opts sentry.ClientOptions) (Hook, error) {
 	return NewEventHook(levels, opts)
 }
 
-// Deprecated: NewFromClient just makes an underlying call to NewEventHookFromClient.
+// Deprecated: NewFromClient creates issues/events from log entries. Errors should only be
+// captured using sentry.CaptureException instead of being converted from log entries.
+// Use [NewLogHookFromClient] for structured logging. Will be removed in 0.48.0.
 func NewFromClient(levels []logrus.Level, client *sentry.Client) Hook {
 	return NewEventHookFromClient(levels, client)
 }
@@ -160,33 +164,31 @@ func (h *eventHook) Fire(entry *logrus.Entry) error {
 }
 
 func (h *eventHook) entryToEvent(l *logrus.Entry) *sentry.Event {
-	data := make(logrus.Fields, len(l.Data))
+	extra := make(logrus.Fields, len(l.Data))
 	for k, v := range l.Data {
-		data[k] = v
+		extra[k] = v
 	}
-	s := &sentry.Event{
-		Level:     levelMap[l.Level],
-		Extra:     data,
-		Message:   l.Message,
-		Timestamp: l.Time,
-		Logger:    name,
-	}
+	s := sentry.NewEvent()
+	s.Level = levelMap[l.Level]
+	s.Message = l.Message
+	s.Timestamp = l.Time
+	s.Logger = name
 
 	key := h.key(FieldRequest)
-	switch request := s.Extra[key].(type) {
+	switch request := extra[key].(type) {
 	case *http.Request:
-		delete(s.Extra, key)
+		delete(extra, key)
 		s.Request = sentry.NewRequest(request)
 	case sentry.Request:
-		delete(s.Extra, key)
+		delete(extra, key)
 		s.Request = &request
 	case *sentry.Request:
-		delete(s.Extra, key)
+		delete(extra, key)
 		s.Request = request
 	}
 
-	if err, ok := s.Extra[logrus.ErrorKey].(error); ok {
-		delete(s.Extra, logrus.ErrorKey)
+	if err, ok := extra[logrus.ErrorKey].(error); ok {
+		delete(extra, logrus.ErrorKey)
 
 		errorDepth := maxErrorDepth
 		if hub := h.hubProvider(); hub != nil {
@@ -198,29 +200,33 @@ func (h *eventHook) entryToEvent(l *logrus.Entry) *sentry.Event {
 	}
 
 	key = h.key(FieldUser)
-	switch user := s.Extra[key].(type) {
+	switch user := extra[key].(type) {
 	case sentry.User:
-		delete(s.Extra, key)
+		delete(extra, key)
 		s.User = user
 	case *sentry.User:
-		delete(s.Extra, key)
+		delete(extra, key)
 		s.User = *user
 	}
 
 	key = h.key(FieldTransaction)
-	if txn, ok := s.Extra[key].(string); ok {
-		delete(s.Extra, key)
+	if txn, ok := extra[key].(string); ok {
+		delete(extra, key)
 		s.Transaction = txn
 	}
 
 	key = h.key(FieldFingerprint)
-	if fp, ok := s.Extra[key].([]string); ok {
-		delete(s.Extra, key)
+	if fp, ok := extra[key].([]string); ok {
+		delete(extra, key)
 		s.Fingerprint = fp
 	}
 
-	delete(s.Extra, FieldGoVersion)
-	delete(s.Extra, FieldMaxProcs)
+	delete(extra, FieldGoVersion)
+	delete(extra, FieldMaxProcs)
+
+	for key, value := range extra {
+		s.Tags[key] = fmt.Sprint(value)
+	}
 	return s
 }
 
@@ -232,8 +238,9 @@ func (h *eventHook) FlushWithContext(ctx context.Context) bool {
 	return h.hubProvider().Client().FlushWithContext(ctx)
 }
 
-// NewEventHook initializes a new Logrus hook which sends events to a new Sentry client
-// configured according to opts.
+// Deprecated: NewEventHook creates issues/events from log entries. Errors should only be
+// captured using sentry.CaptureException instead of being converted from log entries.
+// Use [NewLogHook] for structured logging. Will be removed in 0.48.0.
 func NewEventHook(levels []logrus.Level, opts sentry.ClientOptions) (Hook, error) {
 	client, err := sentry.NewClient(opts)
 	if err != nil {
@@ -244,8 +251,9 @@ func NewEventHook(levels []logrus.Level, opts sentry.ClientOptions) (Hook, error
 	return NewEventHookFromClient(levels, client), nil
 }
 
-// NewEventHookFromClient initializes a new Logrus hook which sends events to the provided
-// sentry client.
+// Deprecated: NewEventHookFromClient creates issues/events from log entries. Errors should
+// only be captured using sentry.CaptureException instead of being converted from log
+// entries. Use [NewLogHookFromClient] for structured logging. Will be removed in 0.48.0.
 func NewEventHookFromClient(levels []logrus.Level, client *sentry.Client) Hook {
 	defaultHub := sentry.NewHub(client, sentry.NewScope())
 	return &eventHook{
