@@ -665,9 +665,12 @@ func (s *Server) enqueueBootcCompose(request ComposeRequest, channel string) (uu
 		},
 	}
 
-	// TODO: Add BuildReference to the Bootc API struct and add it here
-	// to bootcInfoResolveSpecs to support separate build containers.
-	// For now, base == build.
+	if request.Bootc.BuildReference != nil {
+		bootcInfoResolveSpecs = append(bootcInfoResolveSpecs, worker.BootcInfoResolveJobSpec{
+			Ref:         *request.Bootc.BuildReference,
+			ResolveMode: worker.BootcInfoResolveModeBuild,
+		})
+	}
 
 	bootcInfoResolveJobID, err := s.workers.EnqueueBootcInfoResolveJob(ir.Architecture, &worker.BootcInfoResolveJob{
 		Specs: bootcInfoResolveSpecs,
@@ -686,6 +689,9 @@ func (s *Server) enqueueBootcCompose(request ComposeRequest, channel string) (uu
 		BootcInfoResolveDynArgsIdx: common.ToPtr(0), // dynArgs[0] = BootcInfoResolve
 		BaseInfoIdx:                0,               // base container info index within the BootcInfoResolve job result infos slice
 		UploadTargets:              uploadTargetSpecs,
+	}
+	if request.Bootc.BuildReference != nil {
+		preManifestArgs.BuildInfoIdx = common.ToPtr(1)
 	}
 	preManifestJobID, err := s.workers.EnqueueBootcPreManifestJob(preManifestArgs, preManifestDeps, channel)
 	if err != nil {
