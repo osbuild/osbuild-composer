@@ -3,7 +3,7 @@ package v2
 import (
 	"testing"
 
-	"github.com/osbuild/images/pkg/container"
+	"github.com/osbuild/image-builder/pkg/container"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

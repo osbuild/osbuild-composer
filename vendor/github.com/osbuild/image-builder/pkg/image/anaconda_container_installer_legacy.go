@@ -1,0 +1,129 @@
+package image
+
+import (
+	"fmt"
+	"math/rand"
+
+	"github.com/osbuild/image-builder/pkg/arch"
+	"github.com/osbuild/image-builder/pkg/artifact"
+	"github.com/osbuild/image-builder/pkg/container"
+	"github.com/osbuild/image-builder/pkg/customizations/anaconda"
+	"github.com/osbuild/image-builder/pkg/customizations/kickstart"
+	"github.com/osbuild/image-builder/pkg/datasizes"
+	"github.com/osbuild/image-builder/pkg/disk"
+	"github.com/osbuild/image-builder/pkg/manifest"
+	"github.com/osbuild/image-builder/pkg/osbuild"
+	"github.com/osbuild/image-builder/pkg/platform"
+	"github.com/osbuild/image-builder/pkg/rpmmd"
+	"github.com/osbuild/image-builder/pkg/runner"
+)
+
+type AnacondaContainerInstallerLegacy struct {
+	Base
+	AnacondaInstallerBase
+
+	ExtraBasePackages rpmmd.PackageSet
+
+	ContainerSource           container.SourceSpec
+	ContainerRemoveSignatures bool
+
+	// Locale for the installer. This should be set to the same locale as the
+	// ISO OS payload, if known.
+	Locale string
+
+	// Filesystem type for the installed system as opposed to that of the ISO.
+	InstallRootfsType disk.FSType
+}
+
+func NewAnacondaContainerInstallerLegacy(platform platform.Platform, filename string, container container.SourceSpec) *AnacondaContainerInstallerLegacy {
+	return &AnacondaContainerInstallerLegacy{
+		Base:            NewBase("container-installer", platform, filename),
+		ContainerSource: container,
+	}
+}
+
+func (img *AnacondaContainerInstallerLegacy) InstantiateManifest(m *manifest.Manifest,
+	repos []rpmmd.RepoConfig,
+	runner runner.Runner,
+	rng *rand.Rand) (*artifact.Artifact, error) {
+
+	if img.BuildOptions == nil {
+		img.BuildOptions = &manifest.BuildOptions{}
+	}
+	img.BuildOptions.ContainerBuildable = true
+	buildPipeline := addBuildBootstrapPipelines(m, runner, repos, img.BuildOptions)
+	buildPipeline.Checkpoint()
+
+	img.InstallerCustomizations.Payload.Path = "/container"
+	img.InstallerCustomizations.Payload.ContainerRemoveSignatures = img.ContainerRemoveSignatures
+
+	anacondaPipeline := manifest.NewAnacondaInstaller(
+		manifest.AnacondaInstallerTypePayload,
+		buildPipeline,
+		img.platform,
+		repos,
+		"kernel",
+		img.InstallerCustomizations,
+		img.ISOCustomizations,
+	)
+
+	anacondaPipeline.ExtraPackages = img.ExtraBasePackages.Include
+	anacondaPipeline.ExcludePackages = img.ExtraBasePackages.Exclude
+	anacondaPipeline.ExtraRepos = img.ExtraBasePackages.Repositories
+	anacondaPipeline.Biosdevname = (img.platform.GetArch() == arch.ARCH_X86_64)
+	anacondaPipeline.Checkpoint()
+
+	if anacondaPipeline.InstallerCustomizations.FIPS {
+		anacondaPipeline.InstallerCustomizations.EnabledAnacondaModules = append(
+			anacondaPipeline.InstallerCustomizations.EnabledAnacondaModules,
+			anaconda.ModuleSecurity,
+		)
+	}
+
+	anacondaPipeline.Locale = img.Locale
+
+	var rootfsImagePipeline *manifest.ISORootfsImg
+	switch img.ISOCustomizations.RootfsType {
+	case manifest.SquashfsExt4Rootfs:
+		rootfsImagePipeline = manifest.NewISORootfsImg(buildPipeline, anacondaPipeline)
+		rootfsImagePipeline.Size = 4 * datasizes.GibiByte
+	default:
+	}
+
+	// Setup the kernel options for the container installer
+	if img.Kickstart == nil {
+		img.Kickstart = &kickstart.Options{}
+	}
+	if img.Kickstart.Path == "" {
+		img.Kickstart.Path = osbuild.KickstartPathOSBuild
+	}
+
+	kernelOpts := []string{fmt.Sprintf("inst.stage2=hd:LABEL=%s", img.ISOCustomizations.Label), fmt.Sprintf("inst.ks=hd:LABEL=%s:%s", img.ISOCustomizations.Label, img.Kickstart.Path)}
+	if anacondaPipeline.InstallerCustomizations.FIPS {
+		kernelOpts = append(kernelOpts, "fips=1")
+	}
+	kernelOpts = append(kernelOpts, img.InstallerCustomizations.KernelOptionsAppend...)
+
+	// Setup the bootloaders
+	bootloaders := img.Bootloaders(buildPipeline, img.platform, kernelOpts)
+
+	isoTreePipeline := manifest.NewAnacondaInstallerISOTree(
+		buildPipeline,
+		anacondaPipeline,
+		rootfsImagePipeline,
+		bootloaders,
+		img.InstallerCustomizations,
+		img.ISOCustomizations,
+	)
+	initIsoTreePipeline(isoTreePipeline, &img.AnacondaInstallerBase, rng)
+
+	// For ostree installers, always put the kickstart file in the root of the ISO
+	isoTreePipeline.ContainerSource = &img.ContainerSource
+	isoTreePipeline.InstallRootfsType = img.InstallRootfsType
+
+	isoPipeline := manifest.NewISO(buildPipeline, isoTreePipeline, img.ISOCustomizations)
+	isoPipeline.SetFilename(img.filename)
+	artifact := isoPipeline.Export()
+
+	return artifact, nil
+}

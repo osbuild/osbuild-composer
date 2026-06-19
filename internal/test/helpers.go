@@ -18,8 +18,8 @@ import (
 	"github.com/BurntSushi/toml"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/uuid"
-	"github.com/osbuild/images/pkg/arch"
-	"github.com/osbuild/images/pkg/distro"
+	"github.com/osbuild/image-builder/pkg/arch"
+	"github.com/osbuild/image-builder/pkg/distro"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

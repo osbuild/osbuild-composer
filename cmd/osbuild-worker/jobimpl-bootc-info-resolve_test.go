@@ -8,8 +8,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/osbuild/images/pkg/bib/osinfo"
-	"github.com/osbuild/images/pkg/bootc"
+	"github.com/osbuild/image-builder/pkg/bib/osinfo"
+	"github.com/osbuild/image-builder/pkg/bootc"
 	main "github.com/osbuild/osbuild-composer/cmd/osbuild-worker"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"

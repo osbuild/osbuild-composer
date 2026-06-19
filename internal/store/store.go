@@ -17,14 +17,14 @@ import (
 	"sync"
 	"time"
 
-	"github.com/osbuild/images/pkg/distro"
-	"github.com/osbuild/images/pkg/distrofactory"
-	"github.com/osbuild/images/pkg/manifest"
+	"github.com/osbuild/image-builder/pkg/distro"
+	"github.com/osbuild/image-builder/pkg/distrofactory"
+	"github.com/osbuild/image-builder/pkg/manifest"
 	"github.com/osbuild/osbuild-composer/internal/jsondb"
 	"github.com/osbuild/osbuild-composer/internal/weldrtypes"
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
-	"github.com/osbuild/images/pkg/rpmmd"
+	"github.com/osbuild/image-builder/pkg/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/target"
 

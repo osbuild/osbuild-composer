@@ -11,8 +11,8 @@ import (
 	"testing"
 
 	"github.com/gobwas/glob"
-	"github.com/osbuild/images/pkg/customizations/subscription"
-	"github.com/osbuild/images/pkg/rpmmd"
+	"github.com/osbuild/image-builder/pkg/customizations/subscription"
+	"github.com/osbuild/image-builder/pkg/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 	"github.com/stretchr/testify/assert"

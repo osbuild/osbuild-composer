@@ -6,7 +6,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/osbuild/images/pkg/osbuild"
+	"github.com/osbuild/image-builder/pkg/osbuild"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 )
 

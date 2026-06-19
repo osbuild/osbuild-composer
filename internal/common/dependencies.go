@@ -6,7 +6,7 @@ import (
 )
 
 const (
-	OSBuildImagesModulePath = "github.com/osbuild/images"
+	OSBuildImagesModulePath = "github.com/osbuild/image-builder"
 )
 
 // GetDepModuleInfoByPath returns the debug.Module for the dependency

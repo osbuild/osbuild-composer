@@ -6,9 +6,9 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/osbuild/blueprint/pkg/blueprint"
-	"github.com/osbuild/images/pkg/distro"
-	"github.com/osbuild/images/pkg/distro/test_distro"
-	"github.com/osbuild/images/pkg/distrofactory"
+	"github.com/osbuild/image-builder/pkg/distro"
+	"github.com/osbuild/image-builder/pkg/distro/test_distro"
+	"github.com/osbuild/image-builder/pkg/distrofactory"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/weldrtypes"

@@ -10,12 +10,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/osbuild/images/pkg/bib/osinfo"
-	"github.com/osbuild/images/pkg/bootc"
-	"github.com/osbuild/images/pkg/container"
-	"github.com/osbuild/images/pkg/depsolvednf"
-	"github.com/osbuild/images/pkg/rpmmd"
-	"github.com/osbuild/images/pkg/sbom"
+	"github.com/osbuild/image-builder/pkg/bib/osinfo"
+	"github.com/osbuild/image-builder/pkg/bootc"
+	"github.com/osbuild/image-builder/pkg/container"
+	"github.com/osbuild/image-builder/pkg/depsolvednf"
+	"github.com/osbuild/image-builder/pkg/rpmmd"
+	"github.com/osbuild/image-builder/pkg/sbom"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
@@ -1913,7 +1913,7 @@ func TestBootcPreManifestJobResultJSONRoundtrip(t *testing.T) {
 					OSBuildComposerVersion: "git-rev:abc123",
 					OSBuildComposerDeps: []*OSBuildComposerDepModule{
 						{
-							Path:    "github.com/osbuild/images",
+							Path:    "github.com/osbuild/image-builder",
 							Version: "v0.15.0",
 						},
 					},
@@ -1951,7 +1951,7 @@ func TestBootcPreManifestJobResultJSONRoundtrip(t *testing.T) {
 					OSBuildComposerVersion: "devel",
 					OSBuildComposerDeps: []*OSBuildComposerDepModule{
 						{
-							Path:    "github.com/osbuild/images",
+							Path:    "github.com/osbuild/image-builder",
 							Version: "v0.0.0",
 							Replace: &OSBuildComposerDepModule{
 								Path:    "../images",
@@ -2111,13 +2111,13 @@ func TestCompareManifestInfos(t *testing.T) {
 			upstreamInfo: ManifestInfo{
 				OSBuildComposerVersion: "git-rev:abc123",
 				OSBuildComposerDeps: []*OSBuildComposerDepModule{
-					{Path: "github.com/osbuild/images", Version: "v0.15.0"},
+					{Path: "github.com/osbuild/image-builder", Version: "v0.15.0"},
 				},
 			},
 			localInfo: ManifestInfo{
 				OSBuildComposerVersion: "git-rev:abc123",
 				OSBuildComposerDeps: []*OSBuildComposerDepModule{
-					{Path: "github.com/osbuild/images", Version: "v0.15.0"},
+					{Path: "github.com/osbuild/image-builder", Version: "v0.15.0"},
 				},
 			},
 			wantErr: false,
@@ -2138,13 +2138,13 @@ func TestCompareManifestInfos(t *testing.T) {
 			upstreamInfo: ManifestInfo{
 				OSBuildComposerVersion: "git-rev:abc123",
 				OSBuildComposerDeps: []*OSBuildComposerDepModule{
-					{Path: "github.com/osbuild/images", Version: "v0.15.0"},
+					{Path: "github.com/osbuild/image-builder", Version: "v0.15.0"},
 				},
 			},
 			localInfo: ManifestInfo{
 				OSBuildComposerVersion: "git-rev:abc123",
 				OSBuildComposerDeps: []*OSBuildComposerDepModule{
-					{Path: "github.com/osbuild/images", Version: "v0.16.0"},
+					{Path: "github.com/osbuild/image-builder", Version: "v0.16.0"},
 				},
 			},
 			wantErr:   true,
@@ -2155,7 +2155,7 @@ func TestCompareManifestInfos(t *testing.T) {
 			upstreamInfo: ManifestInfo{
 				OSBuildComposerVersion: "git-rev:abc123",
 				OSBuildComposerDeps: []*OSBuildComposerDepModule{
-					{Path: "github.com/osbuild/images", Version: "v0.15.0"},
+					{Path: "github.com/osbuild/image-builder", Version: "v0.15.0"},
 				},
 			},
 			localInfo: ManifestInfo{
@@ -2172,7 +2172,7 @@ func TestCompareManifestInfos(t *testing.T) {
 			localInfo: ManifestInfo{
 				OSBuildComposerVersion: "git-rev:abc123",
 				OSBuildComposerDeps: []*OSBuildComposerDepModule{
-					{Path: "github.com/osbuild/images", Version: "v0.15.0"},
+					{Path: "github.com/osbuild/image-builder", Version: "v0.15.0"},
 				},
 			},
 			wantErr:   true,
@@ -2205,7 +2205,7 @@ func TestCompareManifestInfos(t *testing.T) {
 				OSBuildComposerVersion: "devel",
 				OSBuildComposerDeps: []*OSBuildComposerDepModule{
 					{
-						Path:    "github.com/osbuild/images",
+						Path:    "github.com/osbuild/image-builder",
 						Version: "v0.0.0",
 						Replace: &OSBuildComposerDepModule{
 							Path:    "../images",
@@ -2218,7 +2218,7 @@ func TestCompareManifestInfos(t *testing.T) {
 				OSBuildComposerVersion: "devel",
 				OSBuildComposerDeps: []*OSBuildComposerDepModule{
 					{
-						Path:    "github.com/osbuild/images",
+						Path:    "github.com/osbuild/image-builder",
 						Version: "v0.15.0",
 					},
 				},
@@ -2232,7 +2232,7 @@ func TestCompareManifestInfos(t *testing.T) {
 				OSBuildComposerVersion: "devel",
 				OSBuildComposerDeps: []*OSBuildComposerDepModule{
 					{
-						Path:    "github.com/osbuild/images",
+						Path:    "github.com/osbuild/image-builder",
 						Version: "v0.0.0",
 						Replace: &OSBuildComposerDepModule{
 							Path:    "../images",
@@ -2245,7 +2245,7 @@ func TestCompareManifestInfos(t *testing.T) {
 				OSBuildComposerVersion: "devel",
 				OSBuildComposerDeps: []*OSBuildComposerDepModule{
 					{
-						Path:    "github.com/osbuild/images",
+						Path:    "github.com/osbuild/image-builder",
 						Version: "v0.0.0",
 						Replace: &OSBuildComposerDepModule{
 							Path:    "../images",
@@ -2267,14 +2267,14 @@ func TestCompareManifestInfos(t *testing.T) {
 			upstreamInfo: ManifestInfo{
 				OSBuildComposerVersion: "git-rev:abc123",
 				OSBuildComposerDeps: []*OSBuildComposerDepModule{
-					{Path: "github.com/osbuild/images", Version: "v0.15.0"},
+					{Path: "github.com/osbuild/image-builder", Version: "v0.15.0"},
 					{Path: "github.com/osbuild/osbuild-composer", Version: "v100"},
 				},
 			},
 			localInfo: ManifestInfo{
 				OSBuildComposerVersion: "git-rev:abc123",
 				OSBuildComposerDeps: []*OSBuildComposerDepModule{
-					{Path: "github.com/osbuild/images", Version: "v0.15.0"},
+					{Path: "github.com/osbuild/image-builder", Version: "v0.15.0"},
 					{Path: "github.com/osbuild/osbuild-composer", Version: "v100"},
 				},
 			},
@@ -2285,14 +2285,14 @@ func TestCompareManifestInfos(t *testing.T) {
 			upstreamInfo: ManifestInfo{
 				OSBuildComposerVersion: "git-rev:abc123",
 				OSBuildComposerDeps: []*OSBuildComposerDepModule{
-					{Path: "github.com/osbuild/images", Version: "v0.15.0"},
+					{Path: "github.com/osbuild/image-builder", Version: "v0.15.0"},
 					{Path: "github.com/osbuild/other", Version: "v1.0.0"},
 				},
 			},
 			localInfo: ManifestInfo{
 				OSBuildComposerVersion: "git-rev:abc123",
 				OSBuildComposerDeps: []*OSBuildComposerDepModule{
-					{Path: "github.com/osbuild/images", Version: "v0.15.0"},
+					{Path: "github.com/osbuild/image-builder", Version: "v0.15.0"},
 				},
 			},
 			wantErr:   true,

@@ -3,7 +3,7 @@ package v2
 import (
 	"fmt"
 
-	"github.com/osbuild/images/pkg/container"
+	"github.com/osbuild/image-builder/pkg/container"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 )
 

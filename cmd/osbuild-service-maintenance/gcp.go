@@ -11,7 +11,7 @@ import (
 	"golang.org/x/sync/semaphore"
 	"google.golang.org/api/iterator"
 
-	"github.com/osbuild/images/pkg/cloud/gcp"
+	"github.com/osbuild/image-builder/pkg/cloud/gcp"
 )
 
 func GCPCleanup(creds []byte, maxConcurrentRequests int, dryRun bool, cutoff time.Time) error {

@@ -13,10 +13,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/osbuild/images/pkg/arch"
-	"github.com/osbuild/images/pkg/bib/osinfo"
-	"github.com/osbuild/images/pkg/distro"
-	"github.com/osbuild/images/pkg/manifest"
+	"github.com/osbuild/image-builder/pkg/arch"
+	"github.com/osbuild/image-builder/pkg/bib/osinfo"
+	"github.com/osbuild/image-builder/pkg/distro"
+	"github.com/osbuild/image-builder/pkg/manifest"
 	v2 "github.com/osbuild/osbuild-composer/internal/cloudapi/v2"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/jobqueue/fsjobqueue"
@@ -636,7 +636,7 @@ func TestHandleBootcPreManifest_HappyPath(t *testing.T) {
 			// OSBuildComposerDeps may be nil in tests. See https://github.com/golang/go/issues/33976
 			if readResult.ManifestInfo.OSBuildComposerDeps != nil {
 				assert.Len(t, readResult.ManifestInfo.OSBuildComposerDeps, 1)
-				assert.Equal(t, "github.com/osbuild/images", readResult.ManifestInfo.OSBuildComposerDeps[0].Path)
+				assert.Equal(t, "github.com/osbuild/image-builder", readResult.ManifestInfo.OSBuildComposerDeps[0].Path)
 				assert.NotEmpty(t, readResult.ManifestInfo.OSBuildComposerDeps[0].Version)
 			}
 			assert.NotNil(t, readResult.ManifestInfo.PipelineNames)
@@ -722,7 +722,7 @@ func TestSerializeManifest_PreManifestErrors(t *testing.T) {
 				ManifestInfo: worker.ManifestInfo{
 					OSBuildComposerVersion: "git-rev:FAKE_DIFFERENT_VERSION",
 					OSBuildComposerDeps: []*worker.OSBuildComposerDepModule{
-						{Path: "github.com/osbuild/images", Version: "v999.999.999"},
+						{Path: "github.com/osbuild/image-builder", Version: "v999.999.999"},
 					},
 				},
 			},
@@ -735,7 +735,7 @@ func TestSerializeManifest_PreManifestErrors(t *testing.T) {
 					"local_version":    common.BuildVersion(),
 					"upstream_deps": []interface{}{
 						map[string]interface{}{
-							"path":    "github.com/osbuild/images",
+							"path":    "github.com/osbuild/image-builder",
 							"version": "v999.999.999",
 						},
 					},

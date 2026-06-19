@@ -8,12 +8,12 @@ import (
 	"github.com/google/uuid"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 	"github.com/osbuild/blueprint/pkg/blueprint"
-	repos "github.com/osbuild/images/data/repositories"
-	"github.com/osbuild/images/pkg/customizations/subscription"
-	"github.com/osbuild/images/pkg/datasizes"
-	"github.com/osbuild/images/pkg/disk/partition"
-	"github.com/osbuild/images/pkg/distrofactory"
-	"github.com/osbuild/images/pkg/reporegistry"
+	repos "github.com/osbuild/image-builder/data/repositories"
+	"github.com/osbuild/image-builder/pkg/customizations/subscription"
+	"github.com/osbuild/image-builder/pkg/datasizes"
+	"github.com/osbuild/image-builder/pkg/disk/partition"
+	"github.com/osbuild/image-builder/pkg/distrofactory"
+	"github.com/osbuild/image-builder/pkg/reporegistry"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/target"
 
@@ -23,8 +23,8 @@ import (
 
 // Change these when moving to a new release
 const (
-	TEST_DISTRO_NAME    = "fedora-42"
-	TEST_DISTRO_VERSION = "42"
+	TEST_DISTRO_NAME    = "fedora-44"
+	TEST_DISTRO_VERSION = "44"
 )
 
 // GetTestBlueprint returns a populated blueprint
@@ -868,7 +868,7 @@ func TestGetImageRequests_ImageTypeConversion(t *testing.T) {
 	// translated to the image type names as defined in the images library.
 	// Additionally, it covers that the default target is correctly set.
 
-	fedora := "fedora-41"
+	fedora := "fedora-44"
 	rhel8 := "rhel-8.10"
 	centos8 := "centos-8"
 	rhel9 := "rhel-9.10"
