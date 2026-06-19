@@ -1,5 +1,5 @@
-All repository data is imported via the "images" library, see
-https://github.com/osbuild/images/tree/main/data/repositories
+All repository data is imported via the "image-builder" library, see
+https://github.com/osbuild/image-builder/tree/main/data/repositories
 
 Most are imported via the "vendor" mechanism, but some special
 repositories are kept here, like the `*-no-aux-key.json` that is for

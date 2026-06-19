@@ -11,10 +11,10 @@ linters:
   settings:
     gomoddirectives:
       replace-local: true
-      # XXX: uncomment this to test osbuild/images changes from your fork,
+      # XXX: uncomment this to test osbuild/image-builder changes from your fork,
       # but never merge this change to main branch
       # replace-allow-list:
-      #  - github.com/osbuild/images
+      #  - github.com/osbuild/image-builder
     govet:
       disable:
         - shadow

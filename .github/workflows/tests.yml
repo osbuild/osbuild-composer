@@ -296,7 +296,7 @@ jobs:
         echo "manually enable it!"
 
   check-spec-images-deps:
-    name: "🔍 Check spec file osbuild/images dependencies"
+    name: "🔍 Check spec file osbuild/image-builder dependencies"
     runs-on: ubuntu-latest
     container: registry.fedoraproject.org/fedora:latest
     steps:
@@ -304,4 +304,4 @@ jobs:
       uses: actions/checkout@v5
 
     - name: Check dependencies in spec file
-      uses: osbuild/images@check-spec-deps-action
+      uses: osbuild/image-builder@check-spec-deps-action

@@ -36,7 +36,7 @@ jobs:
             -verbose -format markdown | tee "/tmp/github_pr_body.txt"
 
           # Check and update spec file version if needed
-          REQUIRED_VERSION=$(cat vendor/github.com/osbuild/images/data/dependencies/osbuild | tr -d '[:space:]')
+          REQUIRED_VERSION=$(cat vendor/github.com/osbuild/image-builder/data/dependencies/osbuild | tr -d '[:space:]')
           CURRENT_VERSION=$(grep '^%global min_osbuild_version' osbuild-composer.spec | awk '{print $3}')
           if [ "${CURRENT_VERSION}" != "${REQUIRED_VERSION}" ]; then
             sed -i "s/^%global min_osbuild_version .*/%global min_osbuild_version ${REQUIRED_VERSION}/" osbuild-composer.spec

@@ -60,17 +60,17 @@ tests, see `.github/workflows/tests.yml`.
 ## Testing new image definitions
 
 The distributions and images are defined in a separate repository at
-https://github.com/osbuild/images. When making changes in that repository, you
+https://github.com/osbuild/image-builder. When making changes in that repository, you
 may want to test them against osbuild-composer. You can update the vendored
-code for osbuild/images as follows:
+code for osbuild/image-builder as follows:
 ```
-go mod edit -replace github.com/osbuild/images=<path to your local checkout of osbuild/images>
+go mod edit -replace github.com/osbuild/image-builder=<path to your local checkout of osbuild/image-builder>
 ./tools/prepare-source.sh
 ```
 
 Alternatively, you can also use a remote fork/branch of the code:
 ```
-go mod edit -replace github.com/osbuild/images=github.com/<username>/images@<commit>
+go mod edit -replace github.com/osbuild/image-builder=github.com/<username>/image-builder@<commit>
 ./tools/prepare-source.sh
 ```
 
@@ -124,7 +124,7 @@ it uploads the image to Azure, boots it and tries to ssh into it.
    form". You can list all the locations with their machine-readable names
    using Azure CLI: `az account list-locations -o table`.
    E.g. the machine-readable name of US East location is `eastus`.
-   
+
    Note that terms *location* and *region* are synonyms in Azure's context.
 
 3) Storage time! Go to Storage accounts in the left-side menu. Click on
@@ -368,7 +368,7 @@ In Gitlab CI we're using rules to define which stages and jobs are ran when. For
 suite on internal RHEL builds we're using schedules that run the test suite on latest nightly using
 the rpms that are shipped with it.
 
-We're using a link to latest nightly build. It's possible to manually override it with `COMPOSE_URL` 
+We're using a link to latest nightly build. It's possible to manually override it with `COMPOSE_URL`
 to use a different build instead.
 This variable can be changed in the pipeline schedule settings. It is advised to create
 a new schedule if you want to try something or change the value, set it as inactive and then

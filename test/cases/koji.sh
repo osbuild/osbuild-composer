@@ -307,7 +307,7 @@ function verify_buildinfo() {
             exit 1
         fi
 
-        # check osbuild/images version info in the metadata
+        # check osbuild/image-builder version info in the metadata
         local osbuild_composer_deps
         osbuild_composer_deps="$(echo "${manifest_info}" | jq -r '.osbuild_composer_deps')"
         if [ "$(echo "${osbuild_composer_deps}" | jq 'length')" -ne 1 ]; then
@@ -315,13 +315,13 @@ function verify_buildinfo() {
                 Expected 1, got '$(echo "${osbuild_composer_deps}" | jq 'length')'"
             exit 1
         fi
-        if [ "$(echo "${osbuild_composer_deps}" | jq -r '.[0].path')" != "github.com/osbuild/images" ]; then
+        if [ "$(echo "${osbuild_composer_deps}" | jq -r '.[0].path')" != "github.com/osbuild/image-builder" ]; then
             echo "Manifest info for '${manifest_filename}' has unexpected osbuild-composer dependency path. \
-                Expected 'github.com/osbuild/images', got '$(echo "${osbuild_composer_deps}" | jq -r '.[0].path')'"
+                Expected 'github.com/osbuild/image-builder', got '$(echo "${osbuild_composer_deps}" | jq -r '.[0].path')'"
             exit 1
         fi
         if [ "$(echo "${osbuild_composer_deps}" | jq -r '.[0].version')" == "null" ]; then
-            echo "Manifest info for '${manifest_filename}' has missing 'github.com/osbuild/images' dependency version"
+            echo "Manifest info for '${manifest_filename}' has missing 'github.com/osbuild/image-builder' dependency version"
             exit 1
         fi
 
