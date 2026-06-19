@@ -23,12 +23,12 @@ import (
 	"github.com/coreos/go-systemd/v22/dbus"
 	"github.com/sirupsen/logrus"
 
-	"github.com/osbuild/images/pkg/arch"
-	"github.com/osbuild/images/pkg/cloud/azure"
-	"github.com/osbuild/images/pkg/depsolvednf"
-	"github.com/osbuild/images/pkg/olog"
-	"github.com/osbuild/images/pkg/upload/koji"
-	"github.com/osbuild/images/pkg/upload/oci"
+	"github.com/osbuild/image-builder/pkg/arch"
+	"github.com/osbuild/image-builder/pkg/cloud/azure"
+	"github.com/osbuild/image-builder/pkg/depsolvednf"
+	"github.com/osbuild/image-builder/pkg/olog"
+	"github.com/osbuild/image-builder/pkg/upload/koji"
+	"github.com/osbuild/image-builder/pkg/upload/oci"
 	"github.com/osbuild/osbuild-composer/internal/cloud/awscloud"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/worker"
@@ -603,7 +603,7 @@ func main() {
 		}
 	}()
 
-	olog.SetDefault(log.New(logrus.New().Writer(), "osbuild/images log: ", 0))
+	olog.SetDefault(log.New(logrus.New().Writer(), "osbuild/image-builder log: ", 0))
 
 	run()
 }

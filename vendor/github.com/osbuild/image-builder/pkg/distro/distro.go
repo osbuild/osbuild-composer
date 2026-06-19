@@ -1,0 +1,242 @@
+package distro
+
+import (
+	"math/rand"
+
+	"github.com/osbuild/blueprint/pkg/blueprint"
+	"github.com/osbuild/image-builder/pkg/arch"
+	"github.com/osbuild/image-builder/pkg/customizations/subscription"
+	"github.com/osbuild/image-builder/pkg/depsolvednf"
+	"github.com/osbuild/image-builder/pkg/disk"
+	"github.com/osbuild/image-builder/pkg/disk/partition"
+	"github.com/osbuild/image-builder/pkg/manifest"
+	"github.com/osbuild/image-builder/pkg/ostree"
+	"github.com/osbuild/image-builder/pkg/platform"
+	"github.com/osbuild/image-builder/pkg/rhsm/facts"
+	"github.com/osbuild/image-builder/pkg/rpmmd"
+	"github.com/osbuild/image-builder/pkg/runner"
+)
+
+const (
+	UnsupportedCustomizationError = "unsupported blueprint customizations found for image type %q: (allowed: %s)"
+	NoCustomizationsAllowedError  = "image type %q does not support customizations"
+)
+
+// A Distro represents composer's notion of what a given distribution is.
+type Distro interface {
+	// The distro ID (as in os-release(5)).
+	ID() ID
+
+	// The distro ID_LIKE (as in os-release(5)).
+	// NOTE: This will likely be removed. See [defs.DistroYAML].
+	IDLike() manifest.Distro
+
+	// Returns the name of the distro.
+	Name() string
+
+	// Returns the codename of the distro.
+	Codename() string
+
+	// Returns the release version of the distro. This is used in repo
+	// files on the host system and required for the subscription support.
+	Releasever() string
+
+	// Returns the OS version of the distro, which may contain minor versions
+	// if the distro supports them. This is used in various places where the
+	// minor version of the distro is needed to determine the correct
+	// configuration.
+	OsVersion() string
+
+	// Returns the module platform id of the distro. This is used by DNF
+	// for modularity support.
+	ModulePlatformID() string
+
+	// Returns the product name of the distro.
+	Product() string
+
+	// Returns a sorted list of the names of the architectures this distro
+	// supports.
+	ListArches() []string
+
+	// Returns an object representing the given architecture as support
+	// by this distro.
+	GetArch(arch string) (Arch, error)
+
+	GetTweaks() *Tweaks
+
+	// The distro-wide image config.
+	ImageConfig() *ImageConfig
+
+	// The osbuild runner for this distro.
+	Runner() runner.RunnerConf
+
+	// The ref for the bootstrap container for this distro for a specific
+	// architecture.
+	BootstrapContainer(a string) (string, error)
+}
+
+type CustomDepsolverDistro interface {
+	Distro
+
+	Depsolver(cacheDir string, archi arch.Arch) (solver *depsolvednf.Solver, cleanup func() error, err error)
+}
+
+// An Arch represents a given distribution's support for a given architecture.
+type Arch interface {
+	// Returns the name of the architecture.
+	Name() string
+
+	// Returns a sorted list of the names of the image types this architecture
+	// supports.
+	ListImageTypes() []string
+
+	// Returns an object representing a given image format for this architecture,
+	// on this distro.
+	GetImageType(imageType string) (ImageType, error)
+
+	// Returns the parent distro
+	Distro() Distro
+}
+
+// An ImageType represents a given distribution's support for a given Image Type
+// for a given architecture.
+type ImageType interface {
+	// Returns the name of the image type.
+	Name() string
+
+	// Returns the aliases for the image type.
+	Aliases() []string
+
+	// Returns the parent architecture
+	Arch() Arch
+
+	// Returns the canonical filename for the image type.
+	Filename() string
+
+	// Retrns the MIME-type for the image type.
+	MIMEType() string
+
+	// Returns the default OSTree ref for the image type.
+	OSTreeRef() string
+
+	// Returns the ISO Label for the image type. Returns an error if the image
+	// type is not an ISO.
+	ISOLabel() (string, error)
+
+	// Returns the proper image size for a given output format. If the input size
+	// is 0 the default value for the format will be returned.
+	Size(size uint64) uint64
+
+	// Returns the corresponding partion type ("gpt", "dos") or "" the image type
+	// has no partition table. Only support for RHEL 8.5+
+	PartitionType() disk.PartitionTableType
+
+	// Return the base partition tabe for the given image type, will
+	// return `nil` if there is none
+	BasePartitionTable() (*disk.PartitionTable, error)
+
+	// Returns the corresponding boot mode ("legacy", "uefi", "hybrid") or "none"
+	BootMode() platform.BootMode
+
+	// Returns the package set names safe to install custom packages via custom repositories.
+	PayloadPackageSets() []string
+
+	// Returns the names of the stages that will produce the build output.
+	Exports() []string
+
+	// A list of customization options that this image requires.
+	RequiredBlueprintOptions() []string
+
+	// A list of customization options that this image supports.
+	SupportedBlueprintOptions() []string
+
+	// Returns an osbuild manifest, containing the sources and pipeline necessary
+	// to build an image, given output format with all packages and customizations
+	// specified in the given blueprint; it also returns any warnings (e.g.
+	// deprecation notices) generated by the manifest.
+	// The packageSpecSets must be labelled in the same way as the originating PackageSets.
+	// A custom seed for the rng can be specified, if nil the seed will
+	// be random.
+	Manifest(bp *blueprint.Blueprint, options ImageOptions, repos []rpmmd.RepoConfig, seed *int64) (*manifest.Manifest, []string, error)
+}
+
+type BootcImageOptions struct {
+	InstallerPayloadRef string `json:"installer_payload_ref,omitempty"`
+
+	// We introduce default kernel arguments in bootc generic image types which
+	// can clash with certain user use cases. Normally we only allow appending
+	// to the default kernel arguments through blueprints. This option allows turning
+	// off the default arguments; leaving them up to the user (in the container).
+	// This is introduced as an option here as it's likely that in the future we want
+	// to entirely stop adding default kernel arguments to bootc images.
+	OmitDefaultKernelArgs bool `json:"omit_default_kernel_args,omitempty"`
+
+	// UseRemoteContainerSource controls whether the container source in the
+	// manifest uses org.osbuild.skopeo (true) or org.osbuild.containers-storage
+	// (false, default). The default (false) is backward-compatible with
+	// bootc-image-builder which requires the container in local podman storage.
+	// Set to true for service backends that pull containers via osbuild's
+	// skopeo source mechanism.
+	UseRemoteContainerSource bool `json:"use_remote_container_source,omitempty"`
+}
+
+// The ImageOptions specify options for a specific image build
+type ImageOptions struct {
+	Size             uint64                     `json:"size"`
+	OSTree           *ostree.ImageOptions       `json:"ostree,omitempty"`
+	Bootc            *BootcImageOptions         `json:"bootc,omitempty"`
+	Subscription     *subscription.ImageOptions `json:"subscription,omitempty"`
+	Facts            *facts.ImageOptions        `json:"facts,omitempty"`
+	PartitioningMode partition.PartitioningMode `json:"partitioning-mode,omitempty"`
+
+	UseBootstrapContainer bool `json:"use_bootstrap_container,omitempty"`
+
+	// Determines if the image being built is a preview image or not. When left
+	// empty (nil) the default from the distro is used. When set it overrides
+	// the default.
+	Preview *bool `json:"preview,omitempty"`
+}
+
+type BasePartitionTableMap map[string]disk.PartitionTable
+
+// Fallbacks: When a new method is added to an interface to provide to provide
+// information that isn't available for older implementations, the older
+// methods should return a fallback/default value by calling the appropriate
+// function from below.
+// Example: Exports() simply returns "assembler" for older image type
+// implementations that didn't produce v1 manifests that have named pipelines.
+
+func ExportsFallback() []string {
+	return []string{"assembler"}
+}
+
+func PayloadPackageSets() []string {
+	return []string{}
+}
+
+func SeedFrom(p *int64) int64 {
+	if p == nil {
+		// #nosec G404
+		return rand.Int63()
+	}
+	return *p
+}
+
+// Helper: Returns all image types supported by the given distro for the specified architecture.
+func GetImageTypes(d Distro, archName string) ([]ImageType, error) {
+	arch, err := d.GetArch(archName)
+	if err != nil {
+		return nil, err
+	}
+
+	imageTypeNames := arch.ListImageTypes()
+	imageTypes := make([]ImageType, len(imageTypeNames))
+	for i, imageTypeName := range imageTypeNames {
+		imageType, err := arch.GetImageType(imageTypeName)
+		if err != nil {
+			return nil, err
+		}
+		imageTypes[i] = imageType
+	}
+	return imageTypes, nil
+}

@@ -27,17 +27,17 @@ import (
 	"github.com/osbuild/blueprint/pkg/blueprint"
 	"github.com/osbuild/osbuild-composer/pkg/jobqueue"
 
-	"github.com/osbuild/images/pkg/arch"
-	"github.com/osbuild/images/pkg/bootc"
-	"github.com/osbuild/images/pkg/container"
-	"github.com/osbuild/images/pkg/depsolvednf"
-	"github.com/osbuild/images/pkg/distro"
-	"github.com/osbuild/images/pkg/distro/generic"
-	"github.com/osbuild/images/pkg/distrofactory"
-	"github.com/osbuild/images/pkg/manifest"
-	"github.com/osbuild/images/pkg/ostree"
-	"github.com/osbuild/images/pkg/reporegistry"
-	"github.com/osbuild/images/pkg/sbom"
+	"github.com/osbuild/image-builder/pkg/arch"
+	"github.com/osbuild/image-builder/pkg/bootc"
+	"github.com/osbuild/image-builder/pkg/container"
+	"github.com/osbuild/image-builder/pkg/depsolvednf"
+	"github.com/osbuild/image-builder/pkg/distro"
+	"github.com/osbuild/image-builder/pkg/distro/generic"
+	"github.com/osbuild/image-builder/pkg/distrofactory"
+	"github.com/osbuild/image-builder/pkg/manifest"
+	"github.com/osbuild/image-builder/pkg/ostree"
+	"github.com/osbuild/image-builder/pkg/reporegistry"
+	"github.com/osbuild/image-builder/pkg/sbom"
 	"github.com/osbuild/osbuild-composer/internal/auth"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/prometheus"
@@ -845,7 +845,7 @@ func serializeManifest(ctx context.Context, getManifestSource manifestSourceFunc
 		break
 	}
 
-	// add osbuild/images dependency info to job result
+	// add osbuild/image-builder dependency info to job result
 	osbuildImagesDep, err := common.GetDepModuleInfoByPath(common.OSBuildImagesModulePath)
 	if err != nil {
 		// do not fail here and just log the error, because the module info is not available in tests.

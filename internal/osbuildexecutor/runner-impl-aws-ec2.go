@@ -16,7 +16,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"golang.org/x/exp/slices"
 
-	"github.com/osbuild/images/pkg/osbuild"
+	"github.com/osbuild/image-builder/pkg/osbuild"
 
 	"github.com/osbuild/osbuild-composer/internal/cloud/awscloud"
 	"github.com/osbuild/osbuild-composer/internal/worker"

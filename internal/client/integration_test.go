@@ -11,7 +11,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/osbuild/images/pkg/distro"
+	"github.com/osbuild/image-builder/pkg/distro"
 	"github.com/osbuild/osbuild-composer/internal/test"
 )
 

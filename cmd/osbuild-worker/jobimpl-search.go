@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/osbuild/images/pkg/depsolvednf"
-	"github.com/osbuild/images/pkg/rpmmd"
+	"github.com/osbuild/image-builder/pkg/depsolvednf"
+	"github.com/osbuild/image-builder/pkg/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
 	"github.com/sirupsen/logrus"

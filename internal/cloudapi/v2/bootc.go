@@ -3,10 +3,10 @@ package v2
 import (
 	"fmt"
 
-	"github.com/osbuild/images/pkg/arch"
-	"github.com/osbuild/images/pkg/bib/osinfo"
-	"github.com/osbuild/images/pkg/bootc"
-	"github.com/osbuild/images/pkg/distro/generic"
+	"github.com/osbuild/image-builder/pkg/arch"
+	"github.com/osbuild/image-builder/pkg/bib/osinfo"
+	"github.com/osbuild/image-builder/pkg/bootc"
+	"github.com/osbuild/image-builder/pkg/distro/generic"
 )
 
 // bootcSupportedImageType checks whether the given image type name is supported
@@ -15,12 +15,12 @@ import (
 //
 // NOTE: This constructs a dummy bootc distro with placeholder values solely to
 // query the set of supported image types from the bootc-generic YAML definitions
-// in osbuild/images. The image type names and their availability are determined
+// in osbuild/image-builder. The image type names and their availability are determined
 // by the YAML and do not depend on the actual container metadata. The dummy
 // values for Imgref, DefaultRootFs, Size, and OSInfo are required by the
 // NewBootc constructor validation but are not used for image type listing.
 //
-// TODO: Consider adding a dedicated helper to the osbuild/images library
+// TODO: Consider adding a dedicated helper to the osbuild/image-builder library
 // (e.g. generic.BootcSupportedImageTypes) that returns the list of supported
 // image type names without requiring a full bootc.Info. This would eliminate
 // the need for dummy values and make the contract less fragile.

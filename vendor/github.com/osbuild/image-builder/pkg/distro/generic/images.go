@@ -1,0 +1,1472 @@
+package generic
+
+import (
+	"fmt"
+	"maps"
+	"math/rand"
+	"slices"
+	"strings"
+	"sync"
+
+	"github.com/osbuild/blueprint/pkg/blueprint"
+	"github.com/osbuild/image-builder/pkg/arch"
+	"github.com/osbuild/image-builder/pkg/container"
+	"github.com/osbuild/image-builder/pkg/customizations/anaconda"
+	"github.com/osbuild/image-builder/pkg/customizations/bootc"
+	"github.com/osbuild/image-builder/pkg/customizations/fdo"
+	"github.com/osbuild/image-builder/pkg/customizations/fsnode"
+	"github.com/osbuild/image-builder/pkg/customizations/ignition"
+	"github.com/osbuild/image-builder/pkg/customizations/kickstart"
+	"github.com/osbuild/image-builder/pkg/customizations/oscap"
+	"github.com/osbuild/image-builder/pkg/customizations/subscription"
+	"github.com/osbuild/image-builder/pkg/customizations/users"
+	"github.com/osbuild/image-builder/pkg/distro"
+	"github.com/osbuild/image-builder/pkg/flatpak"
+	"github.com/osbuild/image-builder/pkg/image"
+	"github.com/osbuild/image-builder/pkg/manifest"
+	"github.com/osbuild/image-builder/pkg/osbuild"
+	"github.com/osbuild/image-builder/pkg/ostree"
+	"github.com/osbuild/image-builder/pkg/repomigration"
+	"github.com/osbuild/image-builder/pkg/rpmmd"
+)
+
+func kernelOptions(t *imageType, c *blueprint.Customizations) []string {
+	imageConfig := t.getDefaultImageConfig()
+
+	kernelOptions := imageConfig.KernelOptions
+	if bpKernel := c.GetKernel(); bpKernel.Append != "" {
+		kernelOptions = append(kernelOptions, bpKernel.Append)
+	}
+	return kernelOptions
+}
+
+func osCustomizations(t *imageType, osPackageSet rpmmd.PackageSet, options distro.ImageOptions, containers []container.SourceSpec, bp *blueprint.Blueprint) (manifest.OSCustomizations, error) {
+	c := bp.Customizations
+	osc := manifest.OSCustomizations{}
+
+	imageConfig := t.getDefaultImageConfig()
+	if t.ImageTypeYAML.Bootable || t.ImageTypeYAML.IsOSTreeBasedImageType() {
+		// TODO: for now the only image types that define a default kernel are
+		// ones that use UKIs and don't allow overriding, so this works.
+		// However, if we ever need to specify default kernels for image types
+		// that allow overriding, we will need to change c.GetKernel() to take
+		// an argument as fallback or make it not return the standard "kernel"
+		// when it's unset.
+		osc.KernelName = c.GetKernel().Name
+		if imageConfig.DefaultKernelName != nil {
+			osc.KernelName = *imageConfig.DefaultKernelName
+		}
+		osc.KernelOptionsAppend = kernelOptions(t, c)
+		if imageConfig.KernelOptionsBootloader != nil {
+			osc.KernelOptionsBootloader = *imageConfig.KernelOptionsBootloader
+		}
+	}
+
+	osc.FIPS = c.GetFIPS()
+
+	osc.BasePackages = osPackageSet.Include
+	osc.ExcludeBasePackages = osPackageSet.Exclude
+	osc.ExtraBaseRepos = osPackageSet.Repositories
+	// false here means bootable=false which means the kernel
+	// package is excluded
+	osc.BlueprintPackages = bp.GetPackagesEx(false)
+	osc.BlueprintModules = bp.GetEnabledModules()
+	osc.Containers = containers
+
+	osc.GPGKeyFiles = imageConfig.GPGKeyFiles
+	if rpm := c.GetRPM(); rpm != nil && rpm.ImportKeys != nil {
+		osc.GPGKeyFiles = append(osc.GPGKeyFiles, rpm.ImportKeys.Files...)
+	}
+
+	if imageConfig.ExcludeDocs != nil {
+		osc.ExcludeDocs = *imageConfig.ExcludeDocs
+	}
+
+	if !t.ImageTypeYAML.BootISO {
+		// don't put users and groups in the payload of an installer
+		// add them via kickstart instead
+		groups, err := c.GetGroups()
+		if err != nil {
+			return osc, err
+		}
+		osc.Groups = users.GroupsFromBP(groups)
+
+		osc.Users = users.UsersFromBP(c.GetUsers())
+		osc.Users = append(osc.Users, imageConfig.Users...)
+
+		// we don't lock the root account on installer ISOs, in the
+		// future we might want to translate this to a kickstart
+		// instead
+		if imageConfig.LockRootUser != nil {
+			osc.LockRootUser = *imageConfig.LockRootUser
+		}
+	}
+
+	osc.EnabledServices = imageConfig.EnabledServices
+	osc.DisabledServices = imageConfig.DisabledServices
+	osc.MaskedServices = imageConfig.MaskedServices
+	if services := bp.Customizations.GetServices(); services != nil {
+		osc.EnabledServices = append(osc.EnabledServices, services.Enabled...)
+		osc.DisabledServices = append(osc.DisabledServices, services.Disabled...)
+		osc.MaskedServices = append(osc.MaskedServices, services.Masked...)
+	}
+
+	if imageConfig.DefaultTarget != nil {
+		osc.DefaultTarget = *imageConfig.DefaultTarget
+	}
+
+	osc.Firewall = imageConfig.Firewall
+	if fw := c.GetFirewall(); fw != nil {
+		options := osbuild.FirewallStageOptions{
+			Ports: fw.Ports,
+		}
+
+		if fw.Services != nil {
+			options.EnabledServices = fw.Services.Enabled
+			options.DisabledServices = fw.Services.Disabled
+		}
+		if fw.Zones != nil {
+			for _, z := range fw.Zones {
+				options.Zones = append(options.Zones, osbuild.FirewallZone{
+					Name:    *z.Name,
+					Sources: z.Sources,
+				})
+			}
+		}
+		osc.Firewall = &options
+	}
+
+	language, keyboard := c.GetPrimaryLocale()
+	if language != nil {
+		osc.Language = *language
+	} else if imageConfig.Locale != nil {
+		osc.Language = *imageConfig.Locale
+	}
+	if keyboard != nil {
+		osc.Keyboard = keyboard
+	} else if imageConfig.Keyboard != nil {
+		osc.Keyboard = &imageConfig.Keyboard.Keymap
+		if imageConfig.Keyboard.X11Keymap != nil {
+			osc.X11KeymapLayouts = imageConfig.Keyboard.X11Keymap.Layouts
+		}
+	}
+
+	if hostname := c.GetHostname(); hostname != nil {
+		osc.Hostname = *hostname
+	} else if imageConfig.Hostname != nil {
+		osc.Hostname = *imageConfig.Hostname
+	}
+
+	if imageConfig.InstallWeakDeps != nil {
+		osc.InstallWeakDeps = *imageConfig.InstallWeakDeps
+	}
+
+	osc.InstallLangs = imageConfig.InstallLangs
+
+	timezone, ntpServers := c.GetTimezoneSettings()
+	if timezone != nil {
+		osc.Timezone = *timezone
+	} else if imageConfig.Timezone != nil {
+		osc.Timezone = *imageConfig.Timezone
+	}
+
+	if len(ntpServers) > 0 {
+		chronyServers := make([]osbuild.ChronyConfigServer, 0, len(ntpServers))
+		for _, server := range ntpServers {
+			chronyServers = append(chronyServers, osbuild.ChronyConfigServer{Hostname: server})
+		}
+		osc.ChronyConfig = &osbuild.ChronyStageOptions{
+			Servers: chronyServers,
+		}
+	} else if imageConfig.TimeSynchronization != nil {
+		osc.ChronyConfig = imageConfig.TimeSynchronization
+	}
+
+	// Relabel the tree, unless the `NoSELinux` flag is explicitly set to `true`
+	if imageConfig.NoSELinux == nil || imageConfig.NoSELinux != nil && !*imageConfig.NoSELinux {
+		osc.SELinux = "targeted"
+		osc.SELinuxForceRelabel = imageConfig.SELinuxForceRelabel
+	}
+
+	// XXX: move into pure YAML
+	if strings.HasPrefix(t.Arch().Distro().Name(), "rhel-") && options.Facts != nil {
+		osc.RHSMFacts = options.Facts
+	}
+
+	var err error
+	osc.Directories, err = repomigration.DirectoryCustomizationsToFsNodeDirectories(c.GetDirectories())
+	if err != nil {
+		// In theory this should never happen, because the blueprint directory customizations
+		// should have been validated before this point.
+		panic(fmt.Sprintf("failed to convert directory customizations to fs node directories: %v", err))
+	}
+
+	osc.Files, err = repomigration.FileCustomizationsToFsNodeFiles(c.GetFiles())
+	if err != nil {
+		// In theory this should never happen, because the blueprint file customizations
+		// should have been validated before this point.
+		panic(fmt.Sprintf("failed to convert file customizations to fs node files: %v", err))
+	}
+
+	// OSTree commits do not include data in `/var` since that is tied to the
+	// deployment, rather than the commit. Therefore the containers need to be
+	// stored in a different location, like `/usr/share`, and the container
+	// storage engine configured accordingly.
+	if t.ImageTypeYAML.IsOSTreeBasedImageType() && len(containers) > 0 {
+		storagePath := "/usr/share/containers/storage"
+		osc.ContainersStorage = &storagePath
+	}
+
+	if containerStorage := c.GetContainerStorage(); containerStorage != nil {
+		osc.ContainersStorage = containerStorage.StoragePath
+	}
+	// set yum repos first, so it doesn't get overridden by
+	// imageConfig.YUMRepos
+	osc.YUMRepos = imageConfig.YUMRepos
+
+	customRepos, err := c.GetRepositories()
+	if err != nil {
+		// This shouldn't happen and since the repos
+		// should have already been validated
+		panic(fmt.Sprintf("failed to get custom repos: %v", err))
+	}
+
+	// This function returns a map of filename and corresponding yum repos
+	// and a list of fs node files for the inline gpg keys so we can save
+	// them to disk. This step also swaps the inline gpg key with the path
+	// to the file in the os file tree
+	yumRepos, gpgKeyFiles, err := repomigration.RepoCustomizationsToRepoConfigAndGPGKeyFiles(customRepos)
+	if err != nil {
+		panic(fmt.Sprintf("failed to convert inline gpgkeys to fs node files: %v", err))
+	}
+
+	// add the gpg key files to the list of files to be added to the tree
+	if len(gpgKeyFiles) > 0 {
+		osc.Files = append(osc.Files, gpgKeyFiles...)
+	}
+
+	for _, filename := range slices.Sorted(maps.Keys(yumRepos)) {
+		osc.YUMRepos = append(osc.YUMRepos, osbuild.NewYumReposStageOptions(filename, yumRepos[filename]))
+	}
+
+	if oscapConfig := c.GetOpenSCAP(); oscapConfig != nil {
+		if t.ImageTypeYAML.IsOSTreeBasedImageType() {
+			panic("unexpected oscap options for ostree image type")
+		}
+
+		oscapDataNode, err := fsnode.NewDirectory(oscap.DataDir, nil, nil, nil, true)
+		if err != nil {
+			panic(fmt.Sprintf("unexpected error creating required OpenSCAP directory: %s", oscap.DataDir))
+		}
+		osc.Directories = append(osc.Directories, oscapDataNode)
+
+		remediationConfig, err := oscap.NewConfigs(*oscapConfig, imageConfig.DefaultOSCAPDatastream)
+		if err != nil {
+			panic(fmt.Errorf("error creating OpenSCAP configs: %w", err))
+		}
+
+		osc.OpenSCAPRemediationConfig = remediationConfig
+	}
+
+	var subscriptionStatus subscription.RHSMStatus
+	if options.Subscription != nil {
+		subscriptionStatus = subscription.RHSMConfigWithSubscription
+		if options.Subscription.Proxy != "" {
+			osc.InsightsClientConfig = &osbuild.InsightsClientConfigStageOptions{Config: osbuild.InsightsClientConfig{Proxy: options.Subscription.Proxy}}
+		}
+		osc.PermissiveRHC = imageConfig.PermissiveRHC
+	} else {
+		subscriptionStatus = subscription.RHSMConfigNoSubscription
+	}
+	if rhsmConfig, exists := imageConfig.RHSMConfig[subscriptionStatus]; exists {
+		osc.RHSMConfig = rhsmConfig
+	}
+
+	if bpRhsmConfig := subscription.RHSMConfigFromBP(c.GetRHSM()); bpRhsmConfig != nil {
+		osc.RHSMConfig = osc.RHSMConfig.Update(bpRhsmConfig)
+	}
+
+	dnfConfig, err := imageConfig.DNFConfigOptions(t.arch.distro.OsVersion())
+	if err != nil {
+		panic(fmt.Errorf("error creating dnf configs: %w", err))
+	}
+	if bpDnf := c.GetDNF(); bpDnf != nil && bpDnf.Config != nil {
+		if dnfConfig == nil {
+			dnfConfig = &osbuild.DNFConfigStageOptions{}
+		}
+		if bpDnf.Config.SetReleaseVer {
+			// NOTE: currently this is either a no-op or an append (i.e. it
+			// will never change the value of an existing releasever), but will
+			// become useful if we ever support adding custom variables through
+			// the blueprint
+			dnfConfig.UpdateVar("releasever", t.arch.distro.OsVersion())
+		}
+	}
+
+	osc.DNFConfig = dnfConfig
+
+	osc.ShellInit = imageConfig.ShellInit
+	osc.Grub2Config = imageConfig.Grub2Config
+	osc.Sysconfig = imageConfig.SysconfigStageOptions()
+	osc.SystemdLogind = imageConfig.SystemdLogind
+	osc.CloudInit = imageConfig.CloudInit
+	osc.Modprobe = imageConfig.Modprobe
+	osc.DracutConf = imageConfig.DracutConf
+	osc.SystemdDropin = imageConfig.SystemdDropin
+	osc.SystemdUnit = imageConfig.SystemdUnit
+	osc.Authselect = imageConfig.Authselect
+	osc.SELinuxConfig = imageConfig.SELinuxConfig
+	osc.Tuned = imageConfig.Tuned
+	osc.Tmpfilesd = imageConfig.Tmpfilesd
+	osc.PamLimitsConf = imageConfig.PamLimitsConf
+	osc.Sysctld = imageConfig.Sysctld
+	osc.DNFAutomaticConfig = imageConfig.DNFAutomaticConfig
+	osc.YUMConfig = imageConfig.YumConfig
+	osc.SshdConfig = imageConfig.SshdConfig
+	osc.AuthConfig = imageConfig.Authconfig
+	osc.PwQuality = imageConfig.PwQuality
+	osc.Subscription = options.Subscription
+	osc.WAAgentConfig = imageConfig.WAAgentConfig
+	osc.UdevRules = imageConfig.UdevRules
+	osc.GCPGuestAgentConfig = imageConfig.GCPGuestAgentConfig
+	osc.NetworkManager = imageConfig.NetworkManager
+
+	if imageConfig.WSL != nil {
+		osc.WSLConfig = osbuild.NewWSLConfStageOptions(imageConfig.WSL.Config)
+		osc.WSLDistributionConfig = osbuild.NewWSLDistributionConfStageOptions(imageConfig.WSL.DistributionConfig)
+	}
+
+	osc.Files = append(osc.Files, imageConfig.Files...)
+	osc.Directories = append(osc.Directories, imageConfig.Directories...)
+
+	if imageConfig.NoBLS != nil {
+		osc.NoBLS = *imageConfig.NoBLS
+	}
+
+	ca, err := c.GetCACerts()
+	if err != nil {
+		panic(fmt.Sprintf("unexpected error checking CA certs: %v", err))
+	}
+	if ca != nil {
+		osc.CACerts = ca.PEMCerts
+	}
+
+	if imageConfig.InstallWeakDeps != nil {
+		osc.InstallWeakDeps = *imageConfig.InstallWeakDeps
+	}
+
+	if imageConfig.MachineIdUninitialized != nil {
+		osc.MachineIdUninitialized = *imageConfig.MachineIdUninitialized
+	}
+
+	osc.VersionlockPackages = imageConfig.VersionlockPackages
+
+	if tweaks := t.arch.distro.GetTweaks(); tweaks != nil && tweaks.RPMKeys != nil && tweaks.RPMKeys.BinPath != "" {
+		osc.RPMKeysBinary = tweaks.RPMKeys.BinPath
+	}
+
+	if sshdCust := c.GetSshd(); sshdCust != nil && imageConfig.SshdConfig != nil {
+		if sshdCust.PasswordAuthentication != nil {
+			osc.SshdConfig.Config.PasswordAuthentication = sshdCust.PasswordAuthentication
+		}
+		if sshdCust.KbdInteractiveAuthentication != nil {
+			osc.SshdConfig.Config.ChallengeResponseAuthentication = sshdCust.KbdInteractiveAuthentication
+		}
+		if sshdCust.ClientAliveInterval != nil {
+			osc.SshdConfig.Config.ClientAliveInterval = sshdCust.ClientAliveInterval
+		}
+		if sshdCust.PermitRootLogin != "" {
+			osc.SshdConfig.Config.PermitRootLogin = osbuild.PermitRootLoginValueStr(sshdCust.PermitRootLogin)
+		}
+	}
+
+	return osc, nil
+}
+
+func ociContainerCustomizations(t *imageType) manifest.OCIContainerCustomizations {
+	imageConfig := t.getDefaultImageConfig()
+
+	return manifest.OCIContainerCustomizations{
+		OCIArchiveConfig: osbuild.NewOCIArchiveConfig(imageConfig.OCI),
+	}
+}
+
+func ostreeCommitServerCustomizations(t *imageType) manifest.OSTreeCommitServerCustomizations {
+	imageConfig := t.getDefaultImageConfig()
+
+	c := manifest.OSTreeCommitServerCustomizations{}
+
+	if imageConfig.OSTreeServer != nil {
+		c.OSTreeServer = imageConfig.OSTreeServer
+	}
+
+	return c
+}
+
+// We need a lock around applying/retrieving installer customizations as we run our test cases
+// with race detector and since the InstallerConfig/ExpandTemplates bits write to a slice.
+var installerCustomizationsMu sync.Mutex
+
+func installerCustomizations(t *imageType, c *blueprint.Customizations, o distro.ImageOptions) (manifest.InstallerCustomizations, error) {
+	installerCustomizationsMu.Lock()
+	defer installerCustomizationsMu.Unlock()
+
+	d := t.arch.distro.(*distribution)
+
+	// By default we get the preview state from the distro. When given through
+	// the image options we set it explicitly to that value. This allows us to
+	// still mark next releases as 'preview' by default but also allows for a
+	// user to override this per-build (e.g. when a release candidate is produced
+	// by pungi).
+	preview := d.DistroYAML.Preview
+	if o.Preview != nil {
+		preview = *o.Preview
+	}
+
+	isc := manifest.InstallerCustomizations{
+		FIPS:                    c.GetFIPS(),
+		UseLegacyAnacondaConfig: t.ImageTypeYAML.UseLegacyAnacondaConfig,
+		Product:                 d.Product(),
+		OSVersion:               d.OsVersion(),
+		Release:                 fmt.Sprintf("%s %s", d.Product(), d.OsVersion()),
+		Preview:                 preview,
+		Variant:                 t.Variant,
+	}
+
+	installerConfig, err := t.getDefaultInstallerConfig()
+	if err != nil {
+		return isc, err
+	}
+
+	if installerConfig != nil {
+		isc.EnabledAnacondaModules = append(isc.EnabledAnacondaModules, installerConfig.EnabledAnacondaModules...)
+		isc.AdditionalDracutModules = append(isc.AdditionalDracutModules, installerConfig.AdditionalDracutModules...)
+		isc.AdditionalDrivers = append(isc.AdditionalDrivers, installerConfig.AdditionalDrivers...)
+
+		if menu := installerConfig.DefaultMenu; menu != nil {
+			isc.DefaultMenu = *menu
+		}
+
+		if installWeakDeps := installerConfig.InstallWeakDeps; installWeakDeps != nil {
+			isc.InstallWeakDeps = *installWeakDeps
+		}
+
+		isc.LoraxTemplates = installerConfig.LoraxTemplates
+		if pkg := installerConfig.LoraxTemplatePackage; pkg != nil {
+			isc.LoraxTemplatePackage = *pkg
+		}
+		if pkg := installerConfig.LoraxLogosPackage; pkg != nil {
+			isc.LoraxLogosPackage = *pkg
+		}
+		if pkg := installerConfig.LoraxReleasePackage; pkg != nil {
+			isc.LoraxReleasePackage = *pkg
+		}
+
+		isc.ISOFiles = append(isc.ISOFiles, installerConfig.ISOFiles...)
+
+		if installerConfig.Payload != nil {
+			if location := installerConfig.Payload.Location; location != nil {
+				isc.Payload.Location = *location
+			}
+
+			if kickstart := installerConfig.Payload.Kickstart; kickstart != nil {
+				isc.Payload.Kickstart = *kickstart
+			}
+		}
+
+		for _, flatpaks := range installerConfig.Flatpaks {
+			if flatpaks == nil {
+				return isc, fmt.Errorf("flatpak object was nil")
+			}
+
+			if flatpaks.Registry == nil {
+				return isc, fmt.Errorf("registry is mandatory for flatpak")
+			}
+
+			registry, err := flatpak.NewRegistryFromURI(flatpaks.Registry.URL)
+			if err != nil {
+				return isc, err
+			}
+			registry.RemoteName = flatpaks.Registry.RemoteName
+
+			if len(flatpaks.References) == 0 {
+				return isc, fmt.Errorf("references are mandatory for flatpak")
+			}
+
+			for _, reference := range flatpaks.References {
+				ref, err := flatpak.NewReferenceFromString(reference)
+				if err != nil {
+					return isc, err
+				}
+
+				isc.Flatpaks = append(isc.Flatpaks, flatpak.SourceSpec{
+					Registry:  *registry,
+					Reference: ref,
+				})
+			}
+		}
+	}
+
+	installerCust, err := c.GetInstaller()
+	if err != nil {
+		return isc, err
+	}
+
+	if installerCust != nil {
+		if installerCust.Modules != nil {
+			isc.EnabledAnacondaModules = append(isc.EnabledAnacondaModules, installerCust.Modules.Enable...)
+			isc.DisabledAnacondaModules = append(isc.DisabledAnacondaModules, installerCust.Modules.Disable...)
+		}
+
+		if installerCust.Payload != nil && installerCust.Payload.Flatpaks != nil {
+			flatpakMeta := installerCust.Payload.Flatpaks
+
+			// if there's a list at all we want to reset the flatpaks, this is to allow
+			// a user to remove all flatpaks by using `force = []`
+			if flatpakMeta.Force != nil {
+				isc.Flatpaks = []flatpak.SourceSpec{}
+			}
+
+			for _, bpFlatpak := range flatpakMeta.Force {
+				// in the future (for non-forced flatpaks) we have a use for this; for now
+				// we don't
+				if bpFlatpak.Registry == nil {
+					return isc, fmt.Errorf("registry is mandatory for blueprint flatpak")
+				}
+
+				registry, err := flatpak.NewRegistryFromURI(bpFlatpak.Registry.URL)
+				if err != nil {
+					return isc, err
+				}
+
+				for _, reference := range bpFlatpak.References {
+					tpl := replaceBasicTemplate(reference, t.arch.arch)
+					ref, err := flatpak.NewReferenceFromString(tpl)
+					if err != nil {
+						return isc, err
+					}
+
+					isc.Flatpaks = append(isc.Flatpaks, flatpak.SourceSpec{
+						Registry:  *registry,
+						Reference: ref,
+					})
+				}
+			}
+		}
+	}
+
+	isc.KernelOptionsAppend = kernelOptions(t, c)
+
+	return isc, nil
+}
+
+type ISOImageType interface {
+	ISOLabel() (string, error)
+	getDefaultISOConfig() (*distro.ISOConfig, error)
+}
+
+func isoCustomizations(t ISOImageType, c *blueprint.Customizations) (manifest.ISOCustomizations, error) {
+	isoLabel, err := t.ISOLabel()
+	if err != nil {
+		return manifest.ISOCustomizations{}, err
+	}
+
+	isc := manifest.ISOCustomizations{
+		Label: isoLabel,
+	}
+
+	isoConfig, err := t.getDefaultISOConfig()
+	if err != nil {
+		return isc, err
+	}
+
+	if isoConfig != nil {
+		if isoboot := isoConfig.BootType; isoboot != nil {
+			isc.BootType = *isoboot
+		}
+
+		if isoroot := isoConfig.RootfsType; isoroot != nil {
+			isc.RootfsType = *isoroot
+		}
+
+		if preparer := isoConfig.Preparer; preparer != nil {
+			isc.Preparer = *preparer
+		}
+
+		if publisher := isoConfig.Publisher; publisher != nil {
+			isc.Publisher = *publisher
+		}
+
+		if application := isoConfig.Application; application != nil {
+			isc.Application = *application
+		}
+
+		if erofsOptions := isoConfig.ErofsOptions; erofsOptions != nil {
+			isc.ErofsOptions = *erofsOptions
+		}
+
+		if excludePaths := isoConfig.ExcludePaths; len(excludePaths) > 0 {
+			isc.ExcludePaths = excludePaths
+		}
+
+	}
+
+	// No blueprint customizations, just return the defaults from the YAML
+	if c == nil {
+		return isc, nil
+	}
+
+	isoCust, err := c.GetISO()
+	if err != nil {
+		return isc, err
+	}
+	if isoCust != nil {
+		if isoCust.Publisher != "" {
+			isc.Publisher = isoCust.Publisher
+		}
+
+		if isoCust.VolumeID != "" {
+			isc.Label = isoCust.VolumeID
+		}
+
+		if isoCust.ApplicationID != "" {
+			isc.Application = isoCust.ApplicationID
+		}
+	}
+
+	return isc, nil
+}
+
+func diskCustomizations(t *imageType) (manifest.DiskCustomizations, error) {
+	diskCust := manifest.NewDiskCustomizations()
+
+	diskConfig, err := t.getDefaultDiskConfig()
+	if err != nil {
+		return diskCust, err
+	}
+
+	if diskConfig != nil {
+		if diskConfig.MountConfiguration != nil {
+			diskCust.MountConfiguration = *diskConfig.MountConfiguration
+		}
+
+		if diskConfig.PartitioningTool != nil {
+			diskCust.PartitioningTool = *diskConfig.PartitioningTool
+		}
+	}
+
+	return diskCust, nil
+}
+
+func ostreeDeploymentCustomizations(
+	t *imageType,
+	c *blueprint.Customizations) (manifest.OSTreeDeploymentCustomizations, error) {
+
+	if !t.ImageTypeYAML.IsOSTreeBasedImageType() || !t.ImageTypeYAML.Bootable {
+		return manifest.OSTreeDeploymentCustomizations{}, fmt.Errorf("ostree deployment customizations are only supported for bootable rpm-ostree images")
+	}
+	deploymentConf := manifest.OSTreeDeploymentCustomizations{}
+
+	imageConfig := t.getDefaultImageConfig()
+	kernelOptions := imageConfig.KernelOptions
+	if bpKernel := c.GetKernel(); bpKernel != nil && bpKernel.Append != "" {
+		kernelOptions = append(kernelOptions, bpKernel.Append)
+	}
+
+	if imageConfig.IgnitionPlatform != nil {
+		deploymentConf.IgnitionPlatform = *imageConfig.IgnitionPlatform
+	}
+
+	switch deploymentConf.IgnitionPlatform {
+	case "metal":
+		bpIgnition, err := c.GetIgnition()
+		if err != nil {
+			return deploymentConf, err
+		}
+		if bpIgnition != nil && bpIgnition.FirstBoot != nil && bpIgnition.FirstBoot.ProvisioningURL != "" {
+			kernelOptions = append(kernelOptions, "ignition.config.url="+bpIgnition.FirstBoot.ProvisioningURL)
+		}
+	}
+	deploymentConf.KernelOptionsAppend = kernelOptions
+
+	deploymentConf.FIPS = c.GetFIPS()
+
+	deploymentConf.Users = users.UsersFromBP(c.GetUsers())
+
+	var err error
+	groups, err := c.GetGroups()
+	if err != nil {
+		return manifest.OSTreeDeploymentCustomizations{}, err
+	}
+	deploymentConf.Groups = users.GroupsFromBP(groups)
+
+	deploymentConf.Directories, err = repomigration.DirectoryCustomizationsToFsNodeDirectories(c.GetDirectories())
+	if err != nil {
+		return manifest.OSTreeDeploymentCustomizations{}, err
+	}
+	deploymentConf.Files, err = repomigration.FileCustomizationsToFsNodeFiles(c.GetFiles())
+	if err != nil {
+		return manifest.OSTreeDeploymentCustomizations{}, err
+	}
+
+	language, keyboard := c.GetPrimaryLocale()
+	if language != nil {
+		deploymentConf.Locale = *language
+	} else if imageConfig.Locale != nil {
+		deploymentConf.Locale = *imageConfig.Locale
+	}
+	if keyboard != nil {
+		deploymentConf.Keyboard = *keyboard
+	} else if imageConfig.Keyboard != nil {
+		deploymentConf.Keyboard = imageConfig.Keyboard.Keymap
+	}
+
+	if imageConfig.OSTreeConfSysrootReadOnly != nil {
+		deploymentConf.SysrootReadOnly = *imageConfig.OSTreeConfSysrootReadOnly
+	}
+
+	if imageConfig.LockRootUser != nil {
+		deploymentConf.LockRootUser = *imageConfig.LockRootUser
+	}
+
+	for _, fs := range c.GetFilesystems() {
+		deploymentConf.CustomFileSystems = append(deploymentConf.CustomFileSystems, fs.Mountpoint)
+	}
+
+	return deploymentConf, nil
+}
+
+func buildOptions(t distro.ImageType) *manifest.BuildOptions {
+	buildOpts := &manifest.BuildOptions{}
+	if tweaks := t.Arch().Distro().GetTweaks(); tweaks != nil && tweaks.RPMKeys != nil && tweaks.RPMKeys.IgnoreBuildImportFailures {
+		buildOpts.RPMStageIgnoreGPGImportFailures = tweaks.RPMKeys.IgnoreBuildImportFailures
+	}
+	return buildOpts
+}
+
+// IMAGES
+
+func diskImage(t *imageType,
+	bp *blueprint.Blueprint,
+	options distro.ImageOptions,
+	packageSets map[string]rpmmd.PackageSet,
+	payloadRepos []rpmmd.RepoConfig,
+	containers []container.SourceSpec,
+	rng *rand.Rand) (image.ImageKind, error) {
+
+	img := image.NewDiskImage(t.platform, t.Filename())
+	if opts := buildOptions(t); opts != nil {
+		img.BuildOptions = opts
+	}
+	var err error
+	img.OSCustomizations, err = osCustomizations(t, packageSets[osPkgsKey], options, containers, bp)
+	if err != nil {
+		return nil, err
+	}
+	img.OSCustomizations.PayloadRepos = payloadRepos
+
+	img.DiskCustomizations, err = diskCustomizations(t)
+	if err != nil {
+		return nil, err
+	}
+
+	img.Environment = &t.ImageTypeYAML.Environment
+	img.Compression = t.ImageTypeYAML.Compression
+
+	// TODO: move generation into LiveImage
+	pt, err := t.getPartitionTable(bp.Customizations, options, rng)
+	if err != nil {
+		return nil, err
+	}
+	img.PartitionTable = pt
+
+	img.VPCForceSize = t.ImageTypeYAML.DiskImageVPCForceSize
+
+	if img.OSCustomizations.NoBLS {
+		img.OSProduct = t.Arch().Distro().Product()
+		img.OSVersion = t.Arch().Distro().OsVersion()
+		img.OSNick = t.Arch().Distro().Codename()
+	}
+
+	return img, nil
+}
+
+func tarImage(t *imageType,
+	bp *blueprint.Blueprint,
+	options distro.ImageOptions,
+	packageSets map[string]rpmmd.PackageSet,
+	payloadRepos []rpmmd.RepoConfig,
+	containers []container.SourceSpec,
+	rng *rand.Rand) (image.ImageKind, error) {
+	img := image.NewArchive(t.platform, t.Filename())
+	if opts := buildOptions(t); opts != nil {
+		img.BuildOptions = opts
+	}
+
+	var err error
+	img.OSCustomizations, err = osCustomizations(t, packageSets[osPkgsKey], options, containers, bp)
+	if err != nil {
+		return nil, err
+	}
+	img.OSCustomizations.PayloadRepos = payloadRepos
+
+	d := t.arch.distro
+
+	img.Environment = &t.ImageTypeYAML.Environment
+	img.Compression = t.ImageTypeYAML.Compression
+	img.OSVersion = d.OsVersion()
+
+	return img, nil
+}
+
+func containerImage(t *imageType,
+	bp *blueprint.Blueprint,
+	options distro.ImageOptions,
+	packageSets map[string]rpmmd.PackageSet,
+	payloadRepos []rpmmd.RepoConfig,
+	containers []container.SourceSpec,
+	rng *rand.Rand) (image.ImageKind, error) {
+	img := image.NewBaseContainer(t.platform, t.Filename())
+	if opts := buildOptions(t); opts != nil {
+		img.BuildOptions = opts
+	}
+
+	var err error
+	img.OSCustomizations, err = osCustomizations(t, packageSets[osPkgsKey], options, containers, bp)
+	if err != nil {
+		return nil, err
+	}
+	img.OSCustomizations.PayloadRepos = payloadRepos
+	img.Environment = &t.ImageTypeYAML.Environment
+
+	img.OCIContainerCustomizations = ociContainerCustomizations(t)
+
+	return img, nil
+}
+
+func liveInstallerImage(t *imageType,
+	bp *blueprint.Blueprint,
+	options distro.ImageOptions,
+	packageSets map[string]rpmmd.PackageSet,
+	payloadRepos []rpmmd.RepoConfig,
+	containers []container.SourceSpec,
+	rng *rand.Rand) (image.ImageKind, error) {
+
+	img := image.NewAnacondaLiveInstaller(t.platform, t.Filename())
+	if opts := buildOptions(t); opts != nil {
+		img.BuildOptions = opts
+	}
+
+	img.ExtraBasePackages = packageSets[installerPkgsKey]
+
+	imgConfig := t.getDefaultImageConfig()
+	if locale := imgConfig.Locale; locale != nil {
+		img.Locale = *locale
+	}
+
+	var err error
+	img.InstallerCustomizations, err = installerCustomizations(t, bp.Customizations, options)
+	if err != nil {
+		return nil, err
+	}
+
+	img.ISOCustomizations, err = isoCustomizations(t, bp.Customizations)
+	if err != nil {
+		return nil, err
+	}
+
+	if tweaks := t.arch.distro.GetTweaks(); tweaks != nil && tweaks.RPMKeys != nil && tweaks.RPMKeys.BinPath != "" {
+		img.InstallerCustomizations.RPMKeysBinary = tweaks.RPMKeys.BinPath
+	}
+
+	return img, nil
+}
+
+func imageInstallerImage(t *imageType,
+	bp *blueprint.Blueprint,
+	options distro.ImageOptions,
+	packageSets map[string]rpmmd.PackageSet,
+	payloadRepos []rpmmd.RepoConfig,
+	containers []container.SourceSpec,
+	rng *rand.Rand) (image.ImageKind, error) {
+
+	customizations := bp.Customizations
+
+	img := image.NewAnacondaTarInstaller(t.platform, t.Filename())
+	if opts := buildOptions(t); opts != nil {
+		img.BuildOptions = opts
+	}
+
+	var err error
+	img.OSCustomizations, err = osCustomizations(t, packageSets[osPkgsKey], options, containers, bp)
+	if err != nil {
+		return nil, err
+	}
+	img.OSCustomizations.PayloadRepos = payloadRepos
+
+	img.Kickstart, err = kickstart.New(customizations)
+	if err != nil {
+		return nil, err
+	}
+	img.Kickstart.Language = &img.OSCustomizations.Language
+	img.Kickstart.Keyboard = img.OSCustomizations.Keyboard
+	img.Kickstart.Timezone = &img.OSCustomizations.Timezone
+
+	img.ExtraBasePackages = packageSets[installerPkgsKey]
+
+	img.InstallerCustomizations, err = installerCustomizations(t, bp.Customizations, options)
+	if err != nil {
+		return nil, err
+	}
+
+	img.ISOCustomizations, err = isoCustomizations(t, bp.Customizations)
+	if err != nil {
+		return nil, err
+	}
+
+	installerConfig, err := t.getDefaultInstallerConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	// XXX these bits should move into the `installerCustomization` function
+	// XXX directly
+	img.InstallerCustomizations.EnabledAnacondaModules = append(img.InstallerCustomizations.EnabledAnacondaModules, anaconda.ModuleUsers)
+
+	if img.Kickstart.Unattended {
+		img.InstallerCustomizations.KernelOptionsAppend = append(installerConfig.KickstartUnattendedExtraKernelOpts, img.InstallerCustomizations.KernelOptionsAppend...)
+	}
+
+	if img.ISOCustomizations.RootfsType == manifest.ErofsRootfs {
+		img.RootfsCompression = img.ISOCustomizations.ErofsOptions.Compression.Method
+	} else {
+		img.RootfsCompression = "xz"
+	}
+
+	if tweaks := t.arch.distro.GetTweaks(); tweaks != nil && tweaks.RPMKeys != nil && tweaks.RPMKeys.BinPath != "" {
+		img.InstallerCustomizations.RPMKeysBinary = tweaks.RPMKeys.BinPath
+	}
+
+	return img, nil
+}
+
+func ostreeCommitImage(t *imageType,
+	bp *blueprint.Blueprint,
+	options distro.ImageOptions,
+	packageSets map[string]rpmmd.PackageSet,
+	payloadRepos []rpmmd.RepoConfig,
+	containers []container.SourceSpec,
+	rng *rand.Rand) (image.ImageKind, error) {
+
+	parentCommit, commitRef := makeOSTreeParentCommit(options.OSTree, t.OSTreeRef())
+	img := image.NewOSTreeArchive(t.platform, t.Filename(), commitRef)
+	if opts := buildOptions(t); opts != nil {
+		img.BuildOptions = opts
+	}
+
+	d := t.arch.distro
+
+	var err error
+	img.OSCustomizations, err = osCustomizations(t, packageSets[osPkgsKey], options, containers, bp)
+	if err != nil {
+		return nil, err
+	}
+	img.OSCustomizations.PayloadRepos = payloadRepos
+
+	imgConfig := t.getDefaultImageConfig()
+	img.OSCustomizations.Presets = imgConfig.Presets
+	if imgConfig.InstallWeakDeps != nil {
+		img.InstallWeakDeps = *imgConfig.InstallWeakDeps
+	}
+
+	img.Environment = &t.ImageTypeYAML.Environment
+	img.OSTreeParent = parentCommit
+	img.OSVersion = d.OsVersion()
+
+	// Enable bootupd metadata generation if configured
+	if imgConfig.BootupdGenMetadata != nil && *imgConfig.BootupdGenMetadata {
+		img.Bootupd = true
+	}
+
+	return img, nil
+}
+
+func bootableContainerImage(t *imageType,
+	bp *blueprint.Blueprint,
+	options distro.ImageOptions,
+	packageSets map[string]rpmmd.PackageSet,
+	payloadRepos []rpmmd.RepoConfig,
+	containers []container.SourceSpec,
+	rng *rand.Rand) (image.ImageKind, error) {
+
+	parentCommit, commitRef := makeOSTreeParentCommit(options.OSTree, t.OSTreeRef())
+	img := image.NewOSTreeArchive(t.platform, t.Filename(), commitRef)
+	if opts := buildOptions(t); opts != nil {
+		img.BuildOptions = opts
+	}
+
+	d := t.arch.distro
+
+	var err error
+	img.OSCustomizations, err = osCustomizations(t, packageSets[osPkgsKey], options, containers, bp)
+	if err != nil {
+		return nil, err
+	}
+	img.OSCustomizations.PayloadRepos = payloadRepos
+
+	img.Environment = &t.ImageTypeYAML.Environment
+	img.OSTreeParent = parentCommit
+	img.OSVersion = d.OsVersion()
+	img.InstallWeakDeps = false
+	img.BootContainer = true
+	id, err := distro.ParseID(d.Name())
+	if err != nil {
+		return nil, err
+	}
+	img.BootcConfig = &bootc.Config{
+		Filename:           fmt.Sprintf("20-%s.toml", id.Name),
+		RootFilesystemType: "ext4",
+	}
+
+	return img, nil
+}
+
+func ostreeContainerImage(t *imageType,
+	bp *blueprint.Blueprint,
+	options distro.ImageOptions,
+	packageSets map[string]rpmmd.PackageSet,
+	payloadRepos []rpmmd.RepoConfig,
+	containers []container.SourceSpec,
+	rng *rand.Rand) (image.ImageKind, error) {
+
+	parentCommit, commitRef := makeOSTreeParentCommit(options.OSTree, t.OSTreeRef())
+	img := image.NewOSTreeContainer(t.platform, t.Filename(), commitRef)
+	if opts := buildOptions(t); opts != nil {
+		img.BuildOptions = opts
+	}
+	d := t.arch.distro
+
+	var err error
+	img.OSCustomizations, err = osCustomizations(t, packageSets[osPkgsKey], options, containers, bp)
+	if err != nil {
+		return nil, err
+	}
+
+	imgConfig := t.getDefaultImageConfig()
+	img.OSCustomizations.Presets = imgConfig.Presets
+	if imgConfig.InstallWeakDeps != nil {
+		img.OSCustomizations.InstallWeakDeps = *imgConfig.InstallWeakDeps
+	}
+	img.OSCustomizations.PayloadRepos = payloadRepos
+
+	img.ContainerLanguage = img.OSCustomizations.Language
+	img.Environment = &t.ImageTypeYAML.Environment
+	img.OSTreeParent = parentCommit
+	img.OSVersion = d.OsVersion()
+	img.ExtraContainerPackages = packageSets[containerPkgsKey]
+
+	img.OCIContainerCustomizations = ociContainerCustomizations(t)
+	img.OSTreeCommitServerCustomizations = ostreeCommitServerCustomizations(t)
+
+	return img, nil
+}
+
+func ostreeInstallerImage(t *imageType,
+	bp *blueprint.Blueprint,
+	options distro.ImageOptions,
+	packageSets map[string]rpmmd.PackageSet,
+	payloadRepos []rpmmd.RepoConfig,
+	containers []container.SourceSpec,
+	rng *rand.Rand) (image.ImageKind, error) {
+
+	commit, err := makeOSTreePayloadCommit(options.OSTree, t.OSTreeURL(), t.OSTreeRef())
+	if err != nil {
+		return nil, fmt.Errorf("%s: %s", t.Name(), err.Error())
+	}
+
+	img := image.NewAnacondaOSTreeInstaller(t.platform, t.Filename(), commit)
+	if opts := buildOptions(t); opts != nil {
+		img.BuildOptions = opts
+	}
+
+	customizations := bp.Customizations
+	img.ExtraBasePackages = packageSets[installerPkgsKey]
+
+	img.InstallerCustomizations, err = installerCustomizations(t, bp.Customizations, options)
+	if err != nil {
+		return nil, err
+	}
+
+	img.ISOCustomizations, err = isoCustomizations(t, bp.Customizations)
+	if err != nil {
+		return nil, err
+	}
+
+	// set up the default kickstart based on customizations, this kickstart ends up
+	// in the root of the ISO if it is non-empty; otherwise it is omitted
+	// TODO: pretty function to know *beforehand* if the kickstart is going to be empty
+	img.Kickstart, err = kickstart.New(customizations)
+	if err != nil {
+		return nil, err
+	}
+
+	img.Kickstart.Language, img.Kickstart.Keyboard = customizations.GetPrimaryLocale()
+	// ignore ntp servers - we don't currently support setting these in the
+	// kickstart though kickstart does support setting them
+	img.Kickstart.Timezone, _ = customizations.GetTimezoneSettings()
+
+	// XXX these bits should move into the `installerCustomization` function
+	// XXX directly
+	if len(img.Kickstart.Users)+len(img.Kickstart.Groups) > 0 {
+		// only enable the users module if needed
+		img.InstallerCustomizations.EnabledAnacondaModules = append(img.InstallerCustomizations.EnabledAnacondaModules, anaconda.ModuleUsers)
+	}
+
+	// alternatively it is possible that we want to write a kickstart into the
+	// anaconda tree that is on the compressed root filesystem, we do that based
+	// on an image config setting
+
+	if img.InstallerCustomizations.Payload.Kickstart == manifest.PAYLOAD_KICKSTART_ROOT {
+		// when written to the root we can add this information to the default kickstart
+		// located on the ISO root; this makes it non-empty even when no customizations
+		// are put into it
+		img.Kickstart.OSTree = &kickstart.OSTree{
+			OSName: t.OSTree.Name,
+			Remote: t.OSTree.RemoteName,
+		}
+	} else {
+		// otherwise they go into the interactive defaults kickstart
+		img.InteractiveDefaultsKickstart, err = kickstart.New(nil)
+		if err != nil {
+			return nil, err
+		}
+
+		img.InteractiveDefaultsKickstart.OSTree = &kickstart.OSTree{
+			OSName: t.OSTree.Name,
+			Remote: t.OSTree.RemoteName,
+		}
+	}
+
+	// reset the kickstart to nil in case it is empty, this makes sure that we don't write
+	// any kernel arguments to it if there's no need. the kickstart is empty if there are
+	// no customizations and the payload kickstart is interactive defaults
+	if img.Kickstart.IsZero() {
+		img.Kickstart = nil
+	}
+
+	if img.ISOCustomizations.RootfsType == manifest.ErofsRootfs {
+		img.RootfsCompression = img.ISOCustomizations.ErofsOptions.Compression.Method
+	} else {
+		img.RootfsCompression = "xz"
+	}
+
+	imgConfig := t.getDefaultImageConfig()
+	if locale := imgConfig.Locale; locale != nil {
+		img.Locale = *locale
+	}
+
+	if tweaks := t.arch.distro.GetTweaks(); tweaks != nil && tweaks.RPMKeys != nil && tweaks.RPMKeys.BinPath != "" {
+		img.InstallerCustomizations.RPMKeysBinary = tweaks.RPMKeys.BinPath
+	}
+
+	return img, nil
+}
+
+func ostreeDiskImage(t *imageType,
+	bp *blueprint.Blueprint,
+	options distro.ImageOptions,
+	packageSets map[string]rpmmd.PackageSet,
+	payloadRepos []rpmmd.RepoConfig,
+	containers []container.SourceSpec,
+	rng *rand.Rand) (image.ImageKind, error) {
+
+	commit, err := makeOSTreePayloadCommit(options.OSTree, t.OSTreeURL(), t.OSTreeRef())
+	if err != nil {
+		return nil, fmt.Errorf("%s: %s", t.Name(), err.Error())
+	}
+	img := image.NewOSTreeDiskImageFromCommit(t.platform, t.Filename(), commit)
+	if opts := buildOptions(t); opts != nil {
+		img.BuildOptions = opts
+	}
+
+	customizations := bp.Customizations
+	deploymentConfig, err := ostreeDeploymentCustomizations(t, customizations)
+	if err != nil {
+		return nil, err
+	}
+	img.OSTreeDeploymentCustomizations = deploymentConfig
+	img.OSCustomizations.PayloadRepos = payloadRepos
+
+	img.Remote = ostree.Remote{
+		Name: t.ImageTypeYAML.OSTree.RemoteName,
+	}
+	// XXX: can we do better?
+	if t.ImageTypeYAML.UseOstreeRemotes {
+		img.Remote.URL = options.OSTree.URL
+		img.Remote.ContentURL = options.OSTree.ContentURL
+	}
+
+	img.OSName = t.ImageTypeYAML.OSTree.Name
+
+	// TODO: move generation into LiveImage
+	pt, err := t.getPartitionTable(customizations, options, rng)
+	if err != nil {
+		return nil, err
+	}
+	img.PartitionTable = pt
+
+	img.Compression = t.ImageTypeYAML.Compression
+
+	return img, nil
+}
+
+func ostreeSimplifiedInstallerImage(t *imageType,
+	bp *blueprint.Blueprint,
+	options distro.ImageOptions,
+	packageSets map[string]rpmmd.PackageSet,
+	payloadRepos []rpmmd.RepoConfig,
+	containers []container.SourceSpec,
+	rng *rand.Rand) (image.ImageKind, error) {
+
+	commit, err := makeOSTreePayloadCommit(options.OSTree, t.OSTreeURL(), t.OSTreeRef())
+	if err != nil {
+		return nil, fmt.Errorf("%s: %s", t.Name(), err.Error())
+	}
+	rawImg := image.NewOSTreeDiskImageFromCommit(t.platform, t.Filename(), commit)
+	if opts := buildOptions(t); opts != nil {
+		rawImg.BuildOptions = opts
+	}
+
+	customizations := bp.Customizations
+	deploymentConfig, err := ostreeDeploymentCustomizations(t, customizations)
+	if err != nil {
+		return nil, err
+	}
+	rawImg.OSTreeDeploymentCustomizations = deploymentConfig
+
+	rawImg.OSCustomizations.PayloadRepos = payloadRepos
+	rawImg.Remote = ostree.Remote{
+		Name: t.OSTree.RemoteName,
+	}
+	if t.ImageTypeYAML.UseOstreeRemotes {
+		rawImg.Remote.URL = options.OSTree.URL
+		rawImg.Remote.ContentURL = options.OSTree.ContentURL
+	}
+	rawImg.OSName = t.OSTree.Name
+
+	// TODO: move generation into LiveImage
+	pt, err := t.getPartitionTable(customizations, options, rng)
+	if err != nil {
+		return nil, err
+	}
+	rawImg.PartitionTable = pt
+
+	if tweaks := t.arch.distro.GetTweaks(); tweaks != nil && tweaks.RPMKeys != nil && tweaks.RPMKeys.BinPath != "" {
+		rawImg.OSCustomizations.RPMKeysBinary = tweaks.RPMKeys.BinPath
+	}
+
+	// XXX: can we take platform/filename in NewOSTreeSimplifiedInstaller from rawImg instead?
+	img := image.NewOSTreeSimplifiedInstaller(t.platform, t.Filename(), rawImg, customizations.InstallationDevice)
+	if opts := buildOptions(t); opts != nil {
+		img.BuildOptions = opts
+	}
+	img.ExtraBasePackages = packageSets[installerPkgsKey]
+	if bpFDO := customizations.GetFDO(); bpFDO != nil {
+		img.FDO = fdo.FromBP(*bpFDO)
+	}
+	// ignition configs from blueprint
+	bpIgnition, err := customizations.GetIgnition()
+	if err != nil {
+		return nil, err
+	}
+	if bpIgnition != nil && bpIgnition.Embedded != nil {
+		var err error
+		img.IgnitionEmbedded, err = ignition.EmbeddedOptionsFromBP(*bpIgnition.Embedded)
+		if err != nil {
+			return nil, err
+		}
+	}
+	img.InstallerCustomizations, err = installerCustomizations(t, bp.Customizations, options)
+	if err != nil {
+		return nil, err
+	}
+
+	img.ISOCustomizations, err = isoCustomizations(t, bp.Customizations)
+	if err != nil {
+		return nil, err
+	}
+
+	img.OSName = t.OSTree.Name
+
+	if tweaks := t.arch.distro.GetTweaks(); tweaks != nil && tweaks.RPMKeys != nil && tweaks.RPMKeys.BinPath != "" {
+		img.OSCustomizations.RPMKeysBinary = tweaks.RPMKeys.BinPath
+	}
+
+	return img, nil
+}
+
+// Make an Anaconda installer boot.iso
+func networkInstallerImage(t *imageType,
+	bp *blueprint.Blueprint,
+	options distro.ImageOptions,
+	packageSets map[string]rpmmd.PackageSet,
+	payloadRepos []rpmmd.RepoConfig,
+	containers []container.SourceSpec,
+	rng *rand.Rand) (image.ImageKind, error) {
+
+	customizations := bp.Customizations
+
+	img := image.NewAnacondaNetInstaller(t.platform, t.Filename())
+	if opts := buildOptions(t); opts != nil {
+		img.BuildOptions = opts
+	}
+
+	var err error
+	img.Kickstart, err = kickstart.New(customizations)
+	if err != nil {
+		return nil, err
+	}
+	// NOTE: The network installer only supports adding users and groups
+
+	// If we have an empty kickstart options we don't want to put it on
+	// the image at all as an empty kickstart will create an empty kickstart
+	// file. In the netinst case we want *no* kickstart file at all.
+	if img.Kickstart.IsZero() {
+		img.Kickstart = nil
+	}
+
+	language, _ := customizations.GetPrimaryLocale()
+
+	if language != nil {
+		img.Language = *language
+	}
+
+	img.ExtraBasePackages = packageSets[installerPkgsKey]
+
+	img.InstallerCustomizations, err = installerCustomizations(t, bp.Customizations, options)
+	if err != nil {
+		return nil, err
+	}
+
+	img.ISOCustomizations, err = isoCustomizations(t, bp.Customizations)
+	if err != nil {
+		return nil, err
+	}
+
+	if img.ISOCustomizations.RootfsType == manifest.ErofsRootfs {
+		img.RootfsCompression = img.ISOCustomizations.ErofsOptions.Compression.Method
+	} else {
+		img.RootfsCompression = "xz"
+	}
+
+	if tweaks := t.arch.distro.GetTweaks(); tweaks != nil && tweaks.RPMKeys != nil && tweaks.RPMKeys.BinPath != "" {
+		img.InstallerCustomizations.RPMKeysBinary = tweaks.RPMKeys.BinPath
+	}
+
+	return img, nil
+}
+
+func pxeTarImage(t *imageType,
+	bp *blueprint.Blueprint,
+	options distro.ImageOptions,
+	packageSets map[string]rpmmd.PackageSet,
+	payloadRepos []rpmmd.RepoConfig,
+	containers []container.SourceSpec,
+	rng *rand.Rand) (image.ImageKind, error) {
+	img := image.NewPXETar(t.platform, t.Filename())
+	if opts := buildOptions(t); opts != nil {
+		img.BuildOptions = opts
+	}
+
+	var err error
+	img.OSCustomizations, err = osCustomizations(t, packageSets[osPkgsKey], options, containers, bp)
+	if err != nil {
+		return nil, err
+	}
+	img.OSCustomizations.PayloadRepos = payloadRepos
+
+	d := t.arch.distro
+
+	img.Environment = &t.ImageTypeYAML.Environment
+	img.Compression = t.ImageTypeYAML.Compression
+	img.OSVersion = d.OsVersion()
+
+	return img, nil
+}
+
+// Create an ostree SourceSpec to define an ostree parent commit using the user
+// options and the default ref for the image type.  Additionally returns the
+// ref to be used for the new commit to be created.
+func makeOSTreeParentCommit(options *ostree.ImageOptions, defaultRef string) (*ostree.SourceSpec, string) {
+	commitRef := defaultRef
+	if options == nil {
+		// nothing to do
+		return nil, commitRef
+	}
+	if options.ImageRef != "" {
+		// user option overrides default commit ref
+		commitRef = options.ImageRef
+	}
+
+	var parentCommit *ostree.SourceSpec
+	if options.URL == "" {
+		// no parent
+		return nil, commitRef
+	}
+
+	// ostree URL specified: set source spec for parent commit
+	parentRef := options.ParentRef
+	if parentRef == "" {
+		// parent ref not set: use image ref
+		parentRef = commitRef
+
+	}
+	parentCommit = &ostree.SourceSpec{
+		URL:  options.URL,
+		Ref:  parentRef,
+		RHSM: options.RHSM,
+	}
+	return parentCommit, commitRef
+}
+
+// Create an ostree SourceSpec to define an ostree payload using the user options and the default ref for the image type.
+func makeOSTreePayloadCommit(options *ostree.ImageOptions, defaultURL, defaultRef string) (ostree.SourceSpec, error) {
+	url := defaultURL
+	if options != nil && options.URL != "" {
+		// user option overrides default URL
+		url = options.URL
+	}
+
+	if url == "" {
+		return ostree.SourceSpec{}, fmt.Errorf("ostree commit URL required")
+	}
+
+	ref := defaultRef
+	if options != nil && options.ImageRef != "" {
+		// user option overrides default commit ref
+		ref = options.ImageRef
+	}
+
+	if ref == "" {
+		return ostree.SourceSpec{}, fmt.Errorf("ostree commit ref required")
+	}
+
+	rhsm := false
+	if options != nil {
+		rhsm = options.RHSM
+	}
+
+	return ostree.SourceSpec{
+		URL:  url,
+		Ref:  ref,
+		RHSM: rhsm,
+	}, nil
+}
+
+// replace basic variables that might come from blueprint(s), these are not intended to be
+// used elsewhere and are thus called only in specific places
+// concretely this is because we need to template the flatpak references coming from pungi
+// configs. they're currently only applied there; other places will need further discussion
+func replaceBasicTemplate(input string, architecture arch.Arch) string {
+	return strings.ReplaceAll(input, "$arch", architecture.String())
+}

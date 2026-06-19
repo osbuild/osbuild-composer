@@ -1,0 +1,150 @@
+package image
+
+import (
+	"fmt"
+	"math/rand"
+
+	"github.com/osbuild/image-builder/pkg/arch"
+	"github.com/osbuild/image-builder/pkg/artifact"
+	"github.com/osbuild/image-builder/pkg/customizations/anaconda"
+	"github.com/osbuild/image-builder/pkg/customizations/subscription"
+	"github.com/osbuild/image-builder/pkg/datasizes"
+	"github.com/osbuild/image-builder/pkg/manifest"
+	"github.com/osbuild/image-builder/pkg/osbuild"
+	"github.com/osbuild/image-builder/pkg/ostree"
+	"github.com/osbuild/image-builder/pkg/platform"
+	"github.com/osbuild/image-builder/pkg/rpmmd"
+	"github.com/osbuild/image-builder/pkg/runner"
+)
+
+type AnacondaOSTreeInstaller struct {
+	Base
+	AnacondaInstallerBase
+
+	ExtraBasePackages rpmmd.PackageSet
+
+	// Subscription options to include
+	Subscription *subscription.ImageOptions
+
+	Commit ostree.SourceSpec
+
+	// Locale for the installer. This should be set to the same locale as the
+	// ISO OS payload, if known.
+	Locale string
+}
+
+func NewAnacondaOSTreeInstaller(platform platform.Platform, filename string, commit ostree.SourceSpec) *AnacondaOSTreeInstaller {
+	return &AnacondaOSTreeInstaller{
+		Base:   NewBase("ostree-installer", platform, filename),
+		Commit: commit,
+	}
+}
+
+func (img *AnacondaOSTreeInstaller) InstantiateManifest(m *manifest.Manifest,
+	repos []rpmmd.RepoConfig,
+	runner runner.Runner,
+	rng *rand.Rand) (*artifact.Artifact, error) {
+	buildPipeline := addBuildBootstrapPipelines(m, runner, repos, img.BuildOptions)
+	buildPipeline.Checkpoint()
+
+	img.InstallerCustomizations.Payload.Path = "/ostree/repo"
+
+	// ostree options can be in either kickstart but should be in at least one
+	if (img.Kickstart == nil || img.Kickstart.OSTree == nil) && (img.InteractiveDefaultsKickstart == nil || img.InteractiveDefaultsKickstart.OSTree == nil) {
+		return nil, fmt.Errorf("kickstart options not set for ostree installer")
+	}
+
+	// set the default paths for these kickstarts
+	if img.Kickstart != nil && img.Kickstart.Path == "" {
+		img.Kickstart.Path = osbuild.KickstartPathOSBuild
+	}
+
+	if img.InteractiveDefaultsKickstart != nil && img.InteractiveDefaultsKickstart.Path == "" {
+		img.InteractiveDefaultsKickstart.Path = osbuild.KickstartPathInteractiveDefaults
+	}
+
+	anacondaPipeline := manifest.NewAnacondaInstaller(
+		manifest.AnacondaInstallerTypePayload,
+		buildPipeline,
+		img.platform,
+		repos,
+		"kernel",
+		img.InstallerCustomizations,
+		img.ISOCustomizations,
+	)
+	anacondaPipeline.ExtraPackages = img.ExtraBasePackages.Include
+	anacondaPipeline.ExcludePackages = img.ExtraBasePackages.Exclude
+	anacondaPipeline.ExtraRepos = img.ExtraBasePackages.Repositories
+
+	if img.InteractiveDefaultsKickstart != nil {
+		anacondaPipeline.Kickstart = img.InteractiveDefaultsKickstart
+	}
+
+	anacondaPipeline.Biosdevname = (img.platform.GetArch() == arch.ARCH_X86_64)
+
+	if img.InstallerCustomizations.Payload.Location == manifest.PAYLOAD_LOCATION_ROOTFS {
+		anacondaPipeline.OSTreeCommitSource = &img.Commit
+	}
+
+	anacondaPipeline.Checkpoint()
+
+	if anacondaPipeline.InstallerCustomizations.FIPS {
+		anacondaPipeline.InstallerCustomizations.EnabledAnacondaModules = append(
+			anacondaPipeline.InstallerCustomizations.EnabledAnacondaModules,
+			anaconda.ModuleSecurity,
+		)
+	}
+
+	anacondaPipeline.Locale = img.Locale
+
+	var rootfsImagePipeline *manifest.ISORootfsImg
+	switch img.ISOCustomizations.RootfsType {
+	case manifest.SquashfsExt4Rootfs:
+		rootfsImagePipeline = manifest.NewISORootfsImg(buildPipeline, anacondaPipeline)
+		rootfsImagePipeline.Size = 4 * datasizes.GibiByte
+	default:
+	}
+
+	kernelOpts := []string{fmt.Sprintf("inst.stage2=hd:LABEL=%s", img.ISOCustomizations.Label)}
+
+	if img.Kickstart != nil {
+		kernelOpts = append(kernelOpts, fmt.Sprintf("inst.ks=hd:LABEL=%s:%s", img.ISOCustomizations.Label, img.Kickstart.Path))
+	}
+
+	if anacondaPipeline.InstallerCustomizations.FIPS {
+		kernelOpts = append(kernelOpts, "fips=1")
+	}
+
+	kernelOpts = append(kernelOpts, img.InstallerCustomizations.KernelOptionsAppend...)
+
+	// Setup the bootloaders
+	bootloaders := img.Bootloaders(buildPipeline, img.platform, kernelOpts)
+
+	var subscriptionPipeline *manifest.Subscription
+	if img.Subscription != nil {
+		// pipeline that will create subscription service and key file to be copied out
+		subscriptionPipeline = manifest.NewSubscription(buildPipeline, img.Subscription)
+	}
+
+	isoTreePipeline := manifest.NewAnacondaInstallerISOTree(
+		buildPipeline,
+		anacondaPipeline,
+		rootfsImagePipeline,
+		bootloaders,
+		img.InstallerCustomizations,
+		img.ISOCustomizations,
+	)
+	initIsoTreePipeline(isoTreePipeline, &img.AnacondaInstallerBase, rng)
+
+	if img.InstallerCustomizations.Payload.Location == manifest.PAYLOAD_LOCATION_ISO {
+		isoTreePipeline.OSTreeCommitSource = &img.Commit
+	}
+
+	isoTreePipeline.SubscriptionPipeline = subscriptionPipeline
+
+	isoPipeline := manifest.NewISO(buildPipeline, isoTreePipeline, img.ISOCustomizations)
+	isoPipeline.SetFilename(img.filename)
+	artifact := isoPipeline.Export()
+
+	return artifact, nil
+}

@@ -1,0 +1,63 @@
+---
+.shared:
+  disk_sizes:
+    default_required_partition_sizes: &default_required_dir_sizes
+      "/": "1 GiB"
+      "/usr": "2 GiB"
+
+  platforms:
+    x86_64_uefi_platform: &x86_64_uefi_platform
+      arch: "x86_64"
+      bootloader: "grub2"
+      uefi_vendor: "{{.DistroVendor}}"
+      qcow2_compat: "1.1"
+      packages: &x86_64_uefi_platform_packages
+        uefi:
+          - "dracut-config-generic"
+          - "efibootmgr"
+          - "grub2"
+          - "grub2-efi-x64"
+          - "shim-x64"
+    x86_64_bios_platform: &x86_64_bios_platform
+      <<: *x86_64_uefi_platform
+      bios_platform: "i386-pc"
+      uefi_vendor: "{{.DistroVendor}}"
+      packages: &x86_64_bios_platform_packages
+        <<: *x86_64_uefi_platform_packages
+        bios:
+          - "dracut-config-generic"
+          - "grub2-pc"
+      build_packages:
+        bios:
+          - "grub2-pc"
+    aarch64_platform: &aarch64_platform
+      arch: "aarch64"
+      bootloader: "grub2"
+      uefi_vendor: "{{.DistroVendor}}"
+      image_format: "qcow2"
+      qcow2_compat: "1.1"
+      packages: &aarch64_uefi_platform_packages
+        uefi:
+          - "dracut-config-generic"
+          - "efibootmgr"
+          - "grub2"
+          - "grub2-efi-aa64"
+          - "grub2-tools"
+          - "shim-aa64"
+    ppc64le_bios_platform: &ppc64le_bios_platform
+      arch: "ppc64le"
+      bootloader: "grub2"
+      bios_platform: "powerpc-ieee1275"
+      image_format: "qcow2"
+      qcow2_compat: "1.1"
+      packages: &ppc64le_bios_platform_packages
+        bios:
+          - "dracut-config-generic"
+          - "powerpc-utils"
+          - "grub2"
+          - "grub2-ppc64le"
+          - "grub2-ppc64le-modules"
+      build_packages:
+        bios:
+          - "grub2-ppc64le"
+          - "grub2-ppc64le-modules"

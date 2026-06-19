@@ -9,8 +9,8 @@ import (
 	"os/exec"
 	"path/filepath"
 
-	"github.com/osbuild/images/pkg/customizations/subscription"
-	"github.com/osbuild/images/pkg/rpmmd"
+	"github.com/osbuild/image-builder/pkg/customizations/subscription"
+	"github.com/osbuild/image-builder/pkg/rpmmd"
 )
 
 // TODO: remove this and the conversion functions below when

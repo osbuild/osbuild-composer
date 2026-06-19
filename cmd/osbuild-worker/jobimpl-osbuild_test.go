@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/osbuild/images/pkg/osbuild"
+	"github.com/osbuild/image-builder/pkg/osbuild"
 
 	main "github.com/osbuild/osbuild-composer/cmd/osbuild-worker"
 )

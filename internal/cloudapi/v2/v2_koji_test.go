@@ -11,8 +11,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
-	"github.com/osbuild/images/pkg/distro/test_distro"
-	"github.com/osbuild/images/pkg/osbuild"
+	"github.com/osbuild/image-builder/pkg/distro/test_distro"
+	"github.com/osbuild/image-builder/pkg/osbuild"
 	v2 "github.com/osbuild/osbuild-composer/internal/cloudapi/v2"
 	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/test"
