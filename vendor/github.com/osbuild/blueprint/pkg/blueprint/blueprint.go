@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/osbuild/images/pkg/crypt"
+	"github.com/osbuild/image-builder/pkg/crypt"
 
 	"github.com/coreos/go-semver/semver"
 )
