@@ -102,7 +102,13 @@ fi
 # determine the 'osbuild/image-builder' repository version used by the osbuild-composer
 sudo dnf install -y golang
 COMPOSER_DEPS=$(go version -m /usr/libexec/osbuild-composer/osbuild-composer)
-IMAGE_BUILDER_VERSION=$(echo "$COMPOSER_DEPS" | sed -n 's|^\t\+dep\t\+github\.com/osbuild/image-builder\t\+\(v[0-9.a-zA-Z-]\+\)\t\+$|\1|p')
+
+# osbuild-composer v174+ imports github.com/osbuild/image-builder, previously github.com/osbuild/images
+dep_pattern='s|^\t\+dep\t\+github\.com/osbuild/images\t\+\(v[0-9.a-zA-Z-]\+\)\t\+$|\1|p'
+if nvrGreaterOrEqual "osbuild-composer" "174"; then
+    dep_pattern='s|^\t\+dep\t\+github\.com/osbuild/image-builder\t\+v[0-9.a-zA-Z]\+-[0-9.]\+-\([0-9a-f]\+\)\t\+$|\1|p'
+fi
+IMAGE_BUILDER_VERSION=$(echo "$COMPOSER_DEPS" | sed -n "$dep_pattern")
 if [ -z "$IMAGE_BUILDER_VERSION" ]; then
     echo "ERROR: Unable to determine osbuild/image-builder version from osbuild-composer binary. Composer deps:"
     echo "$COMPOSER_DEPS"
