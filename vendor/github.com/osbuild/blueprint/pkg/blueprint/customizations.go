@@ -5,8 +5,8 @@ import (
 	"reflect"
 	"slices"
 
-	"github.com/osbuild/images/pkg/cert"
-	"github.com/osbuild/images/pkg/customizations/anaconda"
+	"github.com/osbuild/image-builder/pkg/cert"
+	"github.com/osbuild/image-builder/pkg/customizations/anaconda"
 )
 
 type Customizations struct {

@@ -12,8 +12,8 @@ import (
 	"unicode/utf16"
 
 	"github.com/google/uuid"
-	"github.com/osbuild/images/pkg/datasizes"
-	"github.com/osbuild/images/pkg/pathpolicy"
+	"github.com/osbuild/image-builder/pkg/datasizes"
+	"github.com/osbuild/image-builder/pkg/pathpolicy"
 )
 
 type DiskCustomization struct {
@@ -25,7 +25,7 @@ type DiskCustomization struct {
 	StartOffset uint64                   `json:"start_offset,omitempty" toml:"start_offset,omitempty"`
 	// Sector size in bytes. Common values are 512 (default) or 4096.
 	// Optional, defaults to 512 if not specified.
-	SectorSize  uint64                   `json:"sector_size,omitempty" toml:"sector_size,omitempty"`
+	SectorSize uint64 `json:"sector_size,omitempty" toml:"sector_size,omitempty"`
 }
 
 type diskCustomizationMarshaler struct {

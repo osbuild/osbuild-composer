@@ -11,8 +11,8 @@ import (
 	"strings"
 
 	"github.com/osbuild/blueprint/internal/common"
-	"github.com/osbuild/images/pkg/customizations/fsnode"
-	"github.com/osbuild/images/pkg/pathpolicy"
+	"github.com/osbuild/image-builder/pkg/customizations/fsnode"
+	"github.com/osbuild/image-builder/pkg/pathpolicy"
 )
 
 // validateModeString checks that the given string is a valid mode octal number
