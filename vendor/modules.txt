@@ -823,8 +823,8 @@ github.com/oracle/oci-go-sdk/v54/identity
 github.com/oracle/oci-go-sdk/v54/objectstorage
 github.com/oracle/oci-go-sdk/v54/objectstorage/transfer
 github.com/oracle/oci-go-sdk/v54/workrequests
-# github.com/osbuild/blueprint v1.31.0
-## explicit; go 1.23.9
+# github.com/osbuild/blueprint v1.32.0
+## explicit; go 1.24.12
 github.com/osbuild/blueprint/internal/common
 github.com/osbuild/blueprint/pkg/blueprint
 # github.com/osbuild/image-builder v0.274.1-0.20260619004246-4bef593e25f5
@@ -896,16 +896,6 @@ github.com/osbuild/image-builder/pkg/shutil
 github.com/osbuild/image-builder/pkg/upload/koji
 github.com/osbuild/image-builder/pkg/upload/oci
 github.com/osbuild/image-builder/pkg/upload/vmware
-# github.com/osbuild/images v0.171.0
-## explicit; go 1.23.9
-github.com/osbuild/images/internal/common
-github.com/osbuild/images/pkg/cert
-github.com/osbuild/images/pkg/crypt
-github.com/osbuild/images/pkg/customizations/anaconda
-github.com/osbuild/images/pkg/customizations/fsnode
-github.com/osbuild/images/pkg/datasizes
-github.com/osbuild/images/pkg/pathpolicy
-github.com/osbuild/images/pkg/rpmmd
 # github.com/osbuild/osbuild-composer/pkg/splunk_logger v0.0.0-20240814102216-0239db53236d
 ## explicit; go 1.21
 github.com/osbuild/osbuild-composer/pkg/splunk_logger

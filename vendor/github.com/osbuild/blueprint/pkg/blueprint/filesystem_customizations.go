@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/osbuild/images/pkg/datasizes"
-	"github.com/osbuild/images/pkg/pathpolicy"
+	"github.com/osbuild/image-builder/pkg/datasizes"
+	"github.com/osbuild/image-builder/pkg/pathpolicy"
 )
 
 type FilesystemCustomization struct {

@@ -393,12 +393,10 @@ github.com/openshift-online/ocm-sdk-go v0.1.503 h1:QN0PUvucEGHLXwjiMEI7nuoa2H6N/
 github.com/openshift-online/ocm-sdk-go v0.1.503/go.mod h1:SM9x+/m+JAigXnGzb/dY+tMbbgx5f5Oq9Nj5Grg1LVk=
 github.com/oracle/oci-go-sdk/v54 v54.0.0 h1:CDLjeSejv2aDpElAJrhKpi6zvT/zhZCZuXchUUZ+LS4=
 github.com/oracle/oci-go-sdk/v54 v54.0.0/go.mod h1:+t+yvcFGVp+3ZnztnyxqXfQDsMlq8U25faBLa+mqCMc=
-github.com/osbuild/blueprint v1.31.0 h1:1uWYkrnq0zI7RTuLiTr0WF8PecTHV2MDyYHv0UyG0qY=
-github.com/osbuild/blueprint v1.31.0/go.mod h1:HPlJzkEl7q5g8hzaGksUk7ifFAy9QFw9LmzhuFOAVm4=
+github.com/osbuild/blueprint v1.32.0 h1:5uZ2SDPI+pUdmFn5T5G6H8mUw18wK9NzxQGiJ0QQ70E=
+github.com/osbuild/blueprint v1.32.0/go.mod h1:zFiI1IULOe85F/OM8YPhHek7YCpWZENJoxZezJgRvto=
 github.com/osbuild/image-builder v0.274.1-0.20260619004246-4bef593e25f5 h1:FfET/krvO3snLaVJztMcWIiSWhwt+lYj1kCzlhgd8EI=
 github.com/osbuild/image-builder v0.274.1-0.20260619004246-4bef593e25f5/go.mod h1:TwomWamj40Bc+fGOGFgQXMsE5EXy3y1Wt84l+uRL5is=
-github.com/osbuild/images v0.171.0 h1:7lfYqIJUYh6QM6ioLW3cYLAzIu8lqPX5aGreyzEwRV8=
-github.com/osbuild/images v0.171.0/go.mod h1:uZAQRhxUB5G9aAczIcgU2d9VxLude4OXEdvtnKNgAEs=
 github.com/osbuild/osbuild-composer/pkg/splunk_logger v0.0.0-20240814102216-0239db53236d h1:r9BFPDv0uuA9k1947Jybcxs36c/pTywWS1gjeizvtcQ=
 github.com/osbuild/osbuild-composer/pkg/splunk_logger v0.0.0-20240814102216-0239db53236d/go.mod h1:zR1iu/hOuf+OQNJlk70tju9IqzzM4ycq0ectkFBm94U=
 github.com/perimeterx/marshmallow v1.1.5 h1:a2LALqQ1BlHM8PZblsDdidgv1mWi1DgC2UmX50IvK2s=
