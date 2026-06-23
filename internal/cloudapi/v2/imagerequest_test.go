@@ -3,9 +3,9 @@ package v2
 import (
 	"testing"
 
-	"github.com/osbuild/images/pkg/arch"
-	"github.com/osbuild/images/pkg/distro/test_distro"
-	"github.com/osbuild/images/pkg/distrofactory"
+	"github.com/osbuild/image-builder/pkg/arch"
+	"github.com/osbuild/image-builder/pkg/distro/test_distro"
+	"github.com/osbuild/image-builder/pkg/distrofactory"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/target"
 

@@ -1,0 +1,269 @@
+package manifest
+
+import (
+	"errors"
+	"fmt"
+	"slices"
+
+	"github.com/osbuild/image-builder/pkg/arch"
+	"github.com/osbuild/image-builder/pkg/customizations/fdo"
+	"github.com/osbuild/image-builder/pkg/customizations/ignition"
+	"github.com/osbuild/image-builder/pkg/depsolvednf"
+	"github.com/osbuild/image-builder/pkg/osbuild"
+	"github.com/osbuild/image-builder/pkg/platform"
+	"github.com/osbuild/image-builder/pkg/rpmmd"
+)
+
+type CoreOSInstaller struct {
+	Base
+
+	// Packages to install or exclude in addition to the ones required by the
+	// pipeline.
+	ExtraPackages   []string
+	ExcludePackages []string
+
+	// Extra repositories to install packages from
+	ExtraRepos []rpmmd.RepoConfig
+
+	platform platform.Platform
+	// depsolveRepos holds the repository configuration used by
+	// getPackageSetChain() for depsolving. After depsolving, use
+	// depsolveResult.Repos which contains only repos that provided packages.
+	depsolveRepos  []rpmmd.RepoConfig
+	depsolveResult *depsolvednf.DepsolveResult
+	kernelName     string
+	kernelVer      string
+	product        string
+	version        string
+	Variant        string
+
+	// Biosdevname indicates whether or not biosdevname should be used to
+	// name network devices when booting the installer. This may affect
+	// the naming of network devices on the target system.
+	Biosdevname bool
+
+	FDO *fdo.Options
+
+	// For the coreos-installer we only have EmbeddedOptions for ignition
+	Ignition *ignition.EmbeddedOptions
+
+	AdditionalDracutModules []string
+	AdditionalDrivers       []string
+
+	// Use this RPMKeysBinary from the tree instead of the default one
+	RPMKeysBinary string
+}
+
+// NewCoreOSInstaller creates an CoreOS installer pipeline object.
+func NewCoreOSInstaller(buildPipeline Build,
+	platform platform.Platform,
+	repos []rpmmd.RepoConfig,
+	kernelName,
+	product,
+	version string) *CoreOSInstaller {
+	name := "coi-tree"
+	p := &CoreOSInstaller{
+		Base:          NewBase(name, buildPipeline),
+		platform:      platform,
+		depsolveRepos: filterRepos(repos, name),
+		kernelName:    kernelName,
+		product:       product,
+		version:       version,
+	}
+	buildPipeline.addDependent(p)
+	return p
+}
+
+// TODO: refactor:
+// - what is required to boot and what to build?
+// - do they all belong in this pipeline?
+// - should these be moved to the platform for the image type?
+func (p *CoreOSInstaller) getBootPackages() ([]string, error) {
+	packages := []string{
+		"grub2-tools",
+		"grub2-tools-extra",
+		"grub2-tools-minimal",
+		"efibootmgr",
+	}
+
+	packages = append(packages, p.platform.GetPackages()...)
+
+	// TODO: Move these to the platform?
+	// For Fedora, this will add a lot of duplicates, but we also add them here
+	// for RHEL and CentOS.
+	switch p.platform.GetArch() {
+	case arch.ARCH_X86_64:
+		packages = append(packages,
+			"grub2-efi-x64",
+			"grub2-efi-x64-cdboot",
+			"grub2-pc",
+			"grub2-pc-modules",
+			"shim-x64",
+			"syslinux",
+			"syslinux-nonlinux",
+		)
+	case arch.ARCH_AARCH64:
+		packages = append(packages,
+			"grub2-efi-aa64-cdboot",
+			"grub2-efi-aa64",
+			"shim-aa64",
+		)
+	default:
+		return nil, fmt.Errorf("unsupported arch: %s", p.platform.GetArch())
+	}
+
+	if p.Biosdevname {
+		packages = append(packages, "biosdevname")
+	}
+
+	return packages, nil
+}
+
+func (p *CoreOSInstaller) getBuildPackages(Distro) ([]string, error) {
+	packages, err := p.getBootPackages()
+	if err != nil {
+		return nil, fmt.Errorf("cannot get boot packages for build packages: %w", err)
+	}
+	packages = append(packages,
+		"rpm",
+		"lorax-templates-generic",
+	)
+
+	if p.RPMKeysBinary != "" {
+		packages = append(packages, "pqrpm")
+	}
+
+	return packages, nil
+}
+
+func (p *CoreOSInstaller) getPackageSetChain(Distro) ([]rpmmd.PackageSet, error) {
+	packages, err := p.getBootPackages()
+	if err != nil {
+		return nil, fmt.Errorf("cannot boot package set for package set chain: %w", err)
+	}
+	return []rpmmd.PackageSet{
+		{
+			Include:         append(packages, p.ExtraPackages...),
+			Exclude:         p.ExcludePackages,
+			Repositories:    slices.Concat(p.depsolveRepos, p.ExtraRepos),
+			InstallWeakDeps: true,
+		},
+	}, nil
+}
+
+func (p *CoreOSInstaller) getPackageSpecs() rpmmd.PackageList {
+	if p.depsolveResult == nil {
+		return nil
+	}
+	return p.depsolveResult.Transactions.AllPackages()
+}
+
+func (p *CoreOSInstaller) serializeStart(inputs Inputs) error {
+	if p.depsolveResult != nil {
+		return errors.New("CoreOSInstaller: double call to serializeStart()")
+	}
+	p.depsolveResult = &inputs.Depsolved
+	if p.kernelName != "" {
+		kernelPkg, err := p.depsolveResult.Transactions.FindPackage(p.kernelName)
+		if err != nil {
+			return fmt.Errorf("CoreOSInstaller: %w", err)
+		}
+		p.kernelVer = kernelPkg.EVRA()
+	}
+	return nil
+}
+
+func (p *CoreOSInstaller) getInline() []string {
+	inlineData := []string{}
+	// inline data for FDO cert
+	if p.FDO != nil && p.FDO.DiunPubKeyRootCerts != "" {
+		inlineData = append(inlineData, p.FDO.DiunPubKeyRootCerts)
+	}
+	// inline data for ignition embedded (url or data)
+	if p.Ignition != nil {
+		if p.Ignition.Config != "" {
+			inlineData = append(inlineData, p.Ignition.Config)
+		}
+	}
+	return inlineData
+}
+
+func (p *CoreOSInstaller) serializeEnd() {
+	if p.depsolveResult == nil {
+		panic("serializeEnd() call when serialization not in progress")
+	}
+	p.kernelVer = ""
+	p.depsolveResult = nil
+}
+
+func (p *CoreOSInstaller) serialize() (osbuild.Pipeline, error) {
+	pipeline, err := p.Base.serialize()
+	if err != nil {
+		return osbuild.Pipeline{}, err
+	}
+
+	baseOptions := osbuild.RPMStageOptions{}
+	if p.RPMKeysBinary != "" {
+		baseOptions.RPMKeys = &osbuild.RPMKeys{
+			BinPath: p.RPMKeysBinary,
+		}
+	}
+
+	rpmStages, err := osbuild.GenRPMStagesFromTransactions(p.depsolveResult.Transactions, &baseOptions)
+	if err != nil {
+		return osbuild.Pipeline{}, err
+	}
+	pipeline.AddStages(rpmStages...)
+
+	pipeline.AddStage(osbuild.NewBuildstampStage(&osbuild.BuildstampStageOptions{
+		Arch:    p.platform.GetArch().String(),
+		Product: p.product,
+		Variant: p.Variant,
+		Version: p.version,
+		Final:   true,
+	}))
+	pipeline.AddStage(osbuild.NewLocaleStage(&osbuild.LocaleStageOptions{Language: "C.UTF-8"}))
+
+	dracutModules := append(
+		p.AdditionalDracutModules,
+		"systemd",
+		"systemd-initrd",
+		"fips",
+		"modsign",
+		"rescue",
+		"i18n",
+		"kernel-modules",
+		"kernel-modules-extra",
+		"network-manager",
+		"network",
+		"drm",
+		"coreos-installer",
+		"fdo",
+		"lvm",
+		"terminfo",
+		"fs-lib",
+		"dracut-systemd",
+		"debug",
+		"shutdown",
+	)
+	if p.Biosdevname {
+		dracutModules = append(dracutModules, "biosdevname")
+	}
+	drivers := p.AdditionalDrivers
+	dracutStageOptions := &osbuild.DracutStageOptions{
+		Kernel:     []string{p.kernelVer},
+		Modules:    dracutModules,
+		Install:    []string{"/.buildstamp"},
+		AddDrivers: drivers,
+	}
+	if p.FDO != nil && p.FDO.DiunPubKeyRootCerts != "" {
+		pipeline.AddStage(osbuild.NewFDOStageForRootCerts(p.FDO.DiunPubKeyRootCerts))
+		dracutStageOptions.Install = []string{"/fdo_diun_pub_key_root_certs.pem"}
+	}
+	pipeline.AddStage(osbuild.NewDracutStage(dracutStageOptions))
+	return pipeline, nil
+}
+
+func (p *CoreOSInstaller) Platform() platform.Platform {
+	return p.platform
+}

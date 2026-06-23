@@ -1,0 +1,145 @@
+package image
+
+import (
+	"fmt"
+	"math/rand"
+
+	"github.com/osbuild/image-builder/pkg/arch"
+	"github.com/osbuild/image-builder/pkg/artifact"
+	"github.com/osbuild/image-builder/pkg/container"
+	"github.com/osbuild/image-builder/pkg/customizations/anaconda"
+	"github.com/osbuild/image-builder/pkg/customizations/kickstart"
+	"github.com/osbuild/image-builder/pkg/datasizes"
+	"github.com/osbuild/image-builder/pkg/disk"
+	"github.com/osbuild/image-builder/pkg/manifest"
+	"github.com/osbuild/image-builder/pkg/osbuild"
+	"github.com/osbuild/image-builder/pkg/platform"
+	"github.com/osbuild/image-builder/pkg/runner"
+)
+
+type AnacondaContainerInstaller struct {
+	Base
+	AnacondaInstallerBase
+
+	ContainerSource           container.SourceSpec
+	InstallerPayload          container.SourceSpec
+	ContainerRemoveSignatures bool
+
+	// Locale for the installer. This should be set to the same locale as the
+	// ISO OS payload, if known.
+	Locale string
+
+	// Filesystem type for the installed system as opposed to that of the ISO.
+	InstallRootfsType disk.FSType
+
+	// KernelVer is needed so that dracut finds it files
+	KernelVer string
+	// {Kernel,Initramfs}Path is needed for grub2.iso
+	KernelPath    string
+	InitramfsPath string
+	// bootc installer cannot use /root as installer home
+	InstallerHome string
+}
+
+func NewAnacondaContainerInstaller(platform platform.Platform, filename string, container container.SourceSpec) *AnacondaContainerInstaller {
+	return &AnacondaContainerInstaller{
+		Base:            NewBase("bootc-installer", platform, filename),
+		ContainerSource: container,
+	}
+}
+
+func (img *AnacondaContainerInstaller) InstantiateManifestFromContainer(m *manifest.Manifest,
+	containers []container.SourceSpec,
+	runner runner.Runner,
+	rng *rand.Rand) (*artifact.Artifact, error) {
+	cnts := []container.SourceSpec{img.ContainerSource}
+	buildOptions := img.BuildOptions
+	if buildOptions == nil {
+		buildOptions = &manifest.BuildOptions{}
+	}
+	buildOptions.ContainerBuildable = true
+	buildPipeline := manifest.NewBuildFromContainer(m, runner, cnts, buildOptions)
+
+	img.InstallerCustomizations.Payload.Path = "/container"
+	img.InstallerCustomizations.Payload.ContainerRemoveSignatures = img.ContainerRemoveSignatures
+
+	anacondaPipeline := manifest.NewAnacondaInstaller(
+		manifest.AnacondaInstallerTypePayload,
+		buildPipeline,
+		img.platform,
+		nil, // repos
+		"kernel",
+		img.InstallerCustomizations,
+		img.ISOCustomizations,
+	)
+	// with bootc we need different kernel/initramfs paths
+	anacondaPipeline.BootcLivefsContainer = &img.ContainerSource
+	anacondaPipeline.KernelPath = img.KernelPath
+	anacondaPipeline.InitramfsPath = img.InitramfsPath
+	anacondaPipeline.SetKernelVer(img.KernelVer)
+	anacondaPipeline.InstallerHome = img.InstallerHome
+
+	anacondaPipeline.Biosdevname = (img.platform.GetArch() == arch.ARCH_X86_64)
+	anacondaPipeline.Checkpoint()
+
+	if anacondaPipeline.InstallerCustomizations.FIPS {
+		anacondaPipeline.InstallerCustomizations.EnabledAnacondaModules = append(
+			anacondaPipeline.InstallerCustomizations.EnabledAnacondaModules,
+			anaconda.ModuleSecurity,
+		)
+	}
+
+	anacondaPipeline.Locale = img.Locale
+
+	var rootfsImagePipeline *manifest.ISORootfsImg
+	switch img.ISOCustomizations.RootfsType {
+	case manifest.SquashfsExt4Rootfs:
+		rootfsImagePipeline = manifest.NewISORootfsImg(buildPipeline, anacondaPipeline)
+		rootfsImagePipeline.Size = 4 * datasizes.GibiByte
+	default:
+	}
+
+	// Setup the kernel options for the container installer
+	if img.Kickstart == nil {
+		img.Kickstart = &kickstart.Options{}
+	}
+	if img.Kickstart.Path == "" {
+		img.Kickstart.Path = osbuild.KickstartPathOSBuild
+	}
+
+	kernelOpts := []string{
+		fmt.Sprintf("inst.stage2=hd:LABEL=%s", img.ISOCustomizations.Label),
+		fmt.Sprintf("inst.ks=hd:LABEL=%s:%s", img.ISOCustomizations.Label, img.Kickstart.Path),
+		"console=tty0",
+		// XXX: we want the graphical installer eventually, just
+		// need to figure out the dependencies
+		"inst.text",
+	}
+	if anacondaPipeline.InstallerCustomizations.FIPS {
+		kernelOpts = append(kernelOpts, "fips=1")
+	}
+	kernelOpts = append(kernelOpts, img.InstallerCustomizations.KernelOptionsAppend...)
+
+	// Setup the bootloaders
+	bootloaders := img.Bootloaders(buildPipeline, img.platform, kernelOpts)
+
+	isoTreePipeline := manifest.NewAnacondaInstallerISOTree(
+		buildPipeline,
+		anacondaPipeline,
+		rootfsImagePipeline,
+		bootloaders,
+		img.InstallerCustomizations,
+		img.ISOCustomizations,
+	)
+	initIsoTreePipeline(isoTreePipeline, &img.AnacondaInstallerBase, rng)
+
+	// For ostree installers, always put the kickstart file in the root of the ISO
+	isoTreePipeline.ContainerSource = &img.InstallerPayload
+	isoTreePipeline.InstallRootfsType = img.InstallRootfsType
+
+	isoPipeline := manifest.NewISO(buildPipeline, isoTreePipeline, img.ISOCustomizations)
+	isoPipeline.SetFilename(img.filename)
+	artifact := isoPipeline.Export()
+
+	return artifact, nil
+}

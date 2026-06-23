@@ -20,17 +20,17 @@ import (
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 
-	"github.com/osbuild/images/pkg/arch"
-	"github.com/osbuild/images/pkg/cloud/azure"
-	"github.com/osbuild/images/pkg/cloud/gcp"
-	"github.com/osbuild/images/pkg/container"
-	"github.com/osbuild/images/pkg/distro"
-	"github.com/osbuild/images/pkg/osbuild"
-	"github.com/osbuild/images/pkg/platform"
-	"github.com/osbuild/images/pkg/sbom"
-	"github.com/osbuild/images/pkg/upload/koji"
-	"github.com/osbuild/images/pkg/upload/oci"
-	"github.com/osbuild/images/pkg/upload/vmware"
+	"github.com/osbuild/image-builder/pkg/arch"
+	"github.com/osbuild/image-builder/pkg/cloud/azure"
+	"github.com/osbuild/image-builder/pkg/cloud/gcp"
+	"github.com/osbuild/image-builder/pkg/container"
+	"github.com/osbuild/image-builder/pkg/distro"
+	"github.com/osbuild/image-builder/pkg/osbuild"
+	"github.com/osbuild/image-builder/pkg/platform"
+	"github.com/osbuild/image-builder/pkg/sbom"
+	"github.com/osbuild/image-builder/pkg/upload/koji"
+	"github.com/osbuild/image-builder/pkg/upload/oci"
+	"github.com/osbuild/image-builder/pkg/upload/vmware"
 	"github.com/osbuild/osbuild-composer/internal/cloud/awscloud"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/osbuildexecutor"
@@ -281,7 +281,11 @@ func uploadToS3(a *awscloud.AWS, outputDirectory, exportPath, bucket, key, filen
 			return "", clienterrors.New(clienterrors.ErrorUploadingImage, err.Error(), nil)
 		}
 
-		return result.Location, nil
+		if result.Location == nil {
+			return "", clienterrors.New(clienterrors.ErrorUploadingImage, "uploading to s3 failed: location is nil", nil)
+		}
+
+		return *result.Location, nil
 	}
 
 	url, err := a.S3ObjectPresignedURL(bucket, key)

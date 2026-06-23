@@ -5,8 +5,8 @@ import (
 	"slices"
 	"time"
 
-	"github.com/osbuild/images/pkg/depsolvednf"
-	"github.com/osbuild/images/pkg/rpmmd"
+	"github.com/osbuild/image-builder/pkg/depsolvednf"
+	"github.com/osbuild/image-builder/pkg/rpmmd"
 )
 
 // BaseFetchResult returns a mock list of packages for a repository.

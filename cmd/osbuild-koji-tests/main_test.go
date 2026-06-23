@@ -23,8 +23,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/osbuild/images/pkg/platform"
-	"github.com/osbuild/images/pkg/upload/koji"
+	"github.com/osbuild/image-builder/pkg/platform"
+	"github.com/osbuild/image-builder/pkg/upload/koji"
 )
 
 func TestKojiRefund(t *testing.T) {

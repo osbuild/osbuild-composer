@@ -3,7 +3,7 @@ package weldrtypes
 import (
 	"fmt"
 
-	"github.com/osbuild/images/pkg/rpmmd"
+	"github.com/osbuild/image-builder/pkg/rpmmd"
 )
 
 // DepsolvedPackageInfo is the API representation of a package that has been depsolved.

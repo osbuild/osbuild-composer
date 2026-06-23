@@ -60,17 +60,17 @@ tests, see `.github/workflows/tests.yml`.
 ## Testing new image definitions
 
 The distributions and images are defined in a separate repository at
-https://github.com/osbuild/images. When making changes in that repository, you
+https://github.com/osbuild/image-builder. When making changes in that repository, you
 may want to test them against osbuild-composer. You can update the vendored
-code for osbuild/images as follows:
+code for osbuild/image-builder as follows:
 ```
-go mod edit -replace github.com/osbuild/images=<path to your local checkout of osbuild/images>
+go mod edit -replace github.com/osbuild/image-builder=<path to your local checkout of osbuild/image-builder>
 ./tools/prepare-source.sh
 ```
 
 Alternatively, you can also use a remote fork/branch of the code:
 ```
-go mod edit -replace github.com/osbuild/images=github.com/<username>/images@<commit>
+go mod edit -replace github.com/osbuild/image-builder=github.com/<username>/images@<commit>
 ./tools/prepare-source.sh
 ```
 

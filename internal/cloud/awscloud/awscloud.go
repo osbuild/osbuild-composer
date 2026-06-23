@@ -15,11 +15,11 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/autoscaling"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
-	images_awscloud "github.com/osbuild/images/pkg/cloud/awscloud"
+	images_awscloud "github.com/osbuild/image-builder/pkg/cloud/awscloud"
 )
 
 type AWS struct {
-	// awscloud.AWS from the osbuild/images package implements all of the methods
+	// awscloud.AWS from the osbuild/image-builder package implements all of the methods
 	// related to image upload and sharing.
 	*images_awscloud.AWS
 

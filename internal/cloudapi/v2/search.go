@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/osbuild/images/pkg/distrofactory"
-	"github.com/osbuild/images/pkg/reporegistry"
-	"github.com/osbuild/images/pkg/rpmmd"
+	"github.com/osbuild/image-builder/pkg/distrofactory"
+	"github.com/osbuild/image-builder/pkg/reporegistry"
+	"github.com/osbuild/image-builder/pkg/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 )
 

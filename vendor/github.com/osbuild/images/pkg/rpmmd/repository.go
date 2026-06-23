@@ -6,17 +6,16 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"sort"
 	"strings"
+	"time"
 
-	"go.yaml.in/yaml/v3"
-
-	"github.com/osbuild/images/internal/common"
+	"github.com/gobwas/glob"
 )
 
-// repository is the presentation of a on-disk repository json file
 type repository struct {
 	Name           string   `json:"name"`
-	BaseURL        []string `json:"baseurl,omitempty"`
+	BaseURL        string   `json:"baseurl,omitempty"`
 	Metalink       string   `json:"metalink,omitempty"`
 	MirrorList     string   `json:"mirrorlist,omitempty"`
 	GPGKey         string   `json:"gpgkey,omitempty"`
@@ -30,45 +29,9 @@ type repository struct {
 	PackageSets    []string `json:"package_sets,omitempty"`
 }
 
-func (r *repository) UnmarshalJSON(data []byte) (err error) {
-	type repoAlias repository
-	var raw struct {
-		repoAlias
-		BaseURL interface{} `json:"baseurl,omitempty"`
-	}
-
-	if err = json.Unmarshal(data, &raw); err != nil {
-		return err
-	}
-	*r = repository(raw.repoAlias)
-
-	switch v := raw.BaseURL.(type) {
-	case string:
-		r.BaseURL = []string{v}
-	case []interface{}:
-		for _, u := range v {
-			s, ok := u.(string)
-			if !ok {
-				return fmt.Errorf("unexpected non-string value %v in baseurl list", u)
-			}
-			r.BaseURL = append(r.BaseURL, s)
-		}
-	case nil:
-		// BaseURL not present, do nothing
-	default:
-		return fmt.Errorf("unexpected type for baseurl: %T", v)
-	}
-
-	return nil
-}
-
-func (r *repository) UnmarshalYAML(unmarshal func(any) error) error {
-	return common.UnmarshalYAMLviaJSON(r, unmarshal)
-}
-
 type RepoConfig struct {
 	// the repo id is not always required and is ignored in some cases.
-	// For example, it is not required in osbuild-depsolve-dnf, but it is a required
+	// For example, it is not required in dnf-json, but it is a required
 	// field for creating a repo file in `/etc/yum.repos.d/`
 	Id             string   `json:"id,omitempty"`
 	Name           string   `json:"name,omitempty"`
@@ -127,6 +90,179 @@ func (r *RepoConfig) Hash() string {
 
 type DistrosRepoConfigs map[string]map[string][]RepoConfig
 
+type PackageList []Package
+
+type Package struct {
+	Name        string
+	Summary     string
+	Description string
+	URL         string
+	Epoch       uint
+	Version     string
+	Release     string
+	Arch        string
+	BuildTime   time.Time
+	License     string
+}
+
+func (pkg Package) ToPackageBuild() PackageBuild {
+	// Convert the time to the API time format
+	return PackageBuild{
+		Arch:           pkg.Arch,
+		BuildTime:      pkg.BuildTime.Format("2006-01-02T15:04:05"),
+		Epoch:          pkg.Epoch,
+		Release:        pkg.Release,
+		Changelog:      "CHANGELOG_NEEDED", // the same value as lorax-composer puts here
+		BuildConfigRef: "BUILD_CONFIG_REF", // the same value as lorax-composer puts here
+		BuildEnvRef:    "BUILD_ENV_REF",    // the same value as lorax-composer puts here
+		Source: PackageSource{
+			License:   pkg.License,
+			Version:   pkg.Version,
+			SourceRef: "SOURCE_REF", // the same value as lorax-composer puts here
+		},
+	}
+}
+
+func (pkg Package) ToPackageInfo() PackageInfo {
+	return PackageInfo{
+		Name:         pkg.Name,
+		Summary:      pkg.Summary,
+		Description:  pkg.Description,
+		Homepage:     pkg.URL,
+		UpstreamVCS:  "UPSTREAM_VCS", // the same value as lorax-composer puts here
+		Builds:       []PackageBuild{pkg.ToPackageBuild()},
+		Dependencies: nil,
+	}
+}
+
+// The inputs to depsolve, a set of packages to include and a set of packages
+// to exclude. The Repositories are used when depsolving this package set in
+// addition to the base repositories.
+type PackageSet struct {
+	Include         []string
+	Exclude         []string
+	EnabledModules  []string
+	Repositories    []RepoConfig
+	InstallWeakDeps bool
+}
+
+// Append the Include and Exclude package list from another PackageSet and
+// return the result.
+func (ps PackageSet) Append(other PackageSet) PackageSet {
+	ps.Include = append(ps.Include, other.Include...)
+	ps.Exclude = append(ps.Exclude, other.Exclude...)
+	ps.EnabledModules = append(ps.EnabledModules, other.EnabledModules...)
+	return ps
+}
+
+// TODO: the public API of this package should not be reused for serialization.
+type PackageSpec struct {
+	Name           string `json:"name"`
+	Epoch          uint   `json:"epoch"`
+	Version        string `json:"version,omitempty"`
+	Release        string `json:"release,omitempty"`
+	Arch           string `json:"arch,omitempty"`
+	RemoteLocation string `json:"remote_location,omitempty"`
+	Checksum       string `json:"checksum,omitempty"`
+	Secrets        string `json:"secrets,omitempty"`
+	CheckGPG       bool   `json:"check_gpg,omitempty"`
+	IgnoreSSL      bool   `json:"ignore_ssl,omitempty"`
+
+	Path   string `json:"path,omitempty"`
+	RepoID string `json:"repo_id,omitempty"`
+}
+
+type PackageSource struct {
+	License   string   `json:"license"`
+	Version   string   `json:"version"`
+	SourceRef string   `json:"source_ref"`
+	Metadata  struct{} `json:"metadata"` // it's just an empty struct in lorax-composer
+}
+
+type PackageBuild struct {
+	Arch           string        `json:"arch"`
+	BuildTime      string        `json:"build_time"`
+	Epoch          uint          `json:"epoch"`
+	Release        string        `json:"release"`
+	Source         PackageSource `json:"source"`
+	Changelog      string        `json:"changelog"`
+	BuildConfigRef string        `json:"build_config_ref"`
+	BuildEnvRef    string        `json:"build_env_ref"`
+	Metadata       struct{}      `json:"metadata"` // it's just an empty struct in lorax-composer
+}
+
+type PackageInfo struct {
+	Name         string         `json:"name"`
+	Summary      string         `json:"summary"`
+	Description  string         `json:"description"`
+	Homepage     string         `json:"homepage"`
+	UpstreamVCS  string         `json:"upstream_vcs"`
+	Builds       []PackageBuild `json:"builds"`
+	Dependencies []PackageSpec  `json:"dependencies,omitempty"`
+}
+
+type ModuleSpec struct {
+	ModuleConfigFile ModuleConfigFile   `json:"module-file"`
+	FailsafeFile     ModuleFailsafeFile `json:"failsafe-file"`
+}
+
+type ModuleConfigFile struct {
+	Path string           `json:"path"`
+	Data ModuleConfigData `json:"data"`
+}
+
+type ModuleConfigData struct {
+	Name     string   `json:"name"`
+	Stream   string   `json:"stream"`
+	Profiles []string `json:"profiles"`
+	State    string   `json:"state"`
+}
+
+type ModuleFailsafeFile struct {
+	Path string `json:"path"`
+	Data string `json:"data"`
+}
+
+// GetEVRA returns the package's Epoch:Version-Release.Arch string
+func (ps *PackageSpec) GetEVRA() string {
+	if ps.Epoch == 0 {
+		return fmt.Sprintf("%s-%s.%s", ps.Version, ps.Release, ps.Arch)
+	}
+	return fmt.Sprintf("%d:%s-%s.%s", ps.Epoch, ps.Version, ps.Release, ps.Arch)
+}
+
+// GetNEVRA returns the package's Name-Epoch:Version-Release.Arch string
+func (ps *PackageSpec) GetNEVRA() string {
+	return fmt.Sprintf("%s-%s", ps.Name, ps.GetEVRA())
+}
+
+func GetPackage(pkgs []PackageSpec, packageName string) (PackageSpec, error) {
+	for _, pkg := range pkgs {
+		if pkg.Name == packageName {
+			return pkg, nil
+		}
+	}
+
+	return PackageSpec{}, fmt.Errorf("package %q not found in the PackageSpec list", packageName)
+}
+
+func GetVerStrFromPackageSpecList(pkgs []PackageSpec, packageName string) (string, error) {
+	pkg, err := GetPackage(pkgs, packageName)
+	if err != nil {
+		return "", err
+	}
+
+	return pkg.GetEVRA(), nil
+}
+
+func GetVerStrFromPackageSpecListPanic(pkgs []PackageSpec, packageName string) string {
+	pkgVerStr, err := GetVerStrFromPackageSpecList(pkgs, packageName)
+	if err != nil {
+		panic(err)
+	}
+	return pkgVerStr
+}
+
 func LoadRepositoriesFromFile(filename string) (map[string][]RepoConfig, error) {
 	f, err := os.Open(filename)
 	if err != nil {
@@ -141,7 +277,7 @@ func LoadRepositoriesFromReader(r io.Reader) (map[string][]RepoConfig, error) {
 	var reposMap map[string][]repository
 	repoConfigs := make(map[string][]RepoConfig)
 
-	err := yaml.NewDecoder(r).Decode(&reposMap)
+	err := json.NewDecoder(r).Decode(&reposMap)
 	if err != nil {
 		return nil, err
 	}
@@ -149,6 +285,10 @@ func LoadRepositoriesFromReader(r io.Reader) (map[string][]RepoConfig, error) {
 	for arch, repos := range reposMap {
 		for idx := range repos {
 			repo := repos[idx]
+			var urls []string
+			if repo.BaseURL != "" {
+				urls = []string{repo.BaseURL}
+			}
 			var keys []string
 			if repo.GPGKey != "" {
 				keys = []string{repo.GPGKey}
@@ -158,7 +298,7 @@ func LoadRepositoriesFromReader(r io.Reader) (map[string][]RepoConfig, error) {
 			}
 			config := RepoConfig{
 				Name:           repo.Name,
-				BaseURLs:       repo.BaseURL,
+				BaseURLs:       urls,
 				Metalink:       repo.Metalink,
 				MirrorList:     repo.MirrorList,
 				GPGKeys:        keys,
@@ -175,4 +315,56 @@ func LoadRepositoriesFromReader(r io.Reader) (map[string][]RepoConfig, error) {
 	}
 
 	return repoConfigs, nil
+}
+
+func (packages PackageList) Search(globPatterns ...string) (PackageList, error) {
+	var globs []glob.Glob
+
+	for _, globPattern := range globPatterns {
+		g, err := glob.Compile(globPattern)
+		if err != nil {
+			return nil, err
+		}
+
+		globs = append(globs, g)
+	}
+
+	var foundPackages PackageList
+
+	for _, pkg := range packages {
+		for _, g := range globs {
+			if g.Match(pkg.Name) {
+				foundPackages = append(foundPackages, pkg)
+				break
+			}
+		}
+	}
+
+	sort.Slice(packages, func(i, j int) bool {
+		return packages[i].Name < packages[j].Name
+	})
+
+	return foundPackages, nil
+}
+
+func (packages PackageList) ToPackageInfos() []PackageInfo {
+	resultsNames := make(map[string]int)
+	var results []PackageInfo
+
+	for _, pkg := range packages {
+		if index, ok := resultsNames[pkg.Name]; ok {
+			foundPkg := &results[index]
+
+			foundPkg.Builds = append(foundPkg.Builds, pkg.ToPackageBuild())
+		} else {
+			newIndex := len(results)
+			resultsNames[pkg.Name] = newIndex
+
+			packageInfo := pkg.ToPackageInfo()
+
+			results = append(results, packageInfo)
+		}
+	}
+
+	return results
 }

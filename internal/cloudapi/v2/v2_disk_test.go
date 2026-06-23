@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/osbuild/images/pkg/distro/test_distro"
+	"github.com/osbuild/image-builder/pkg/distro/test_distro"
 	"github.com/osbuild/osbuild-composer/internal/test"
 )
 
