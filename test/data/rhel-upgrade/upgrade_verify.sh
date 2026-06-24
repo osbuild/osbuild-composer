@@ -79,19 +79,19 @@ tee "/etc/osbuild-composer/repositories/rhel-${VERSION_ID}.json" > /dev/null << 
         {
             "name": "baseos",
             "baseurl": "http://download.devel.redhat.com/rhel-${VERSION_ID%.*}/nightly/RHEL-${VERSION_ID%.*}/latest-RHEL-${VERSION_ID}/compose/BaseOS/x86_64/os/",
-            "check_gpg": true,
+            "check_gpg": false,
             "gpgkey": "${DISTRO_GPGKEY}"
         },
         {
             "name": "appstream",
             "baseurl": "http://download.devel.redhat.com/rhel-${VERSION_ID%.*}/nightly/RHEL-${VERSION_ID%.*}/latest-RHEL-${VERSION_ID}/compose/AppStream/x86_64/os/",
-            "check_gpg": true,
+            "check_gpg": false,
             "gpgkey": "${DISTRO_GPGKEY}"
         }
         ,{
             "name": "rt",
             "baseurl": "http://download.devel.redhat.com/rhel-${VERSION_ID%.*}/nightly/RHEL-${VERSION_ID%.*}/latest-RHEL-${VERSION_ID}/compose/RT/x86_64/os/",
-            "check_gpg": true,
+            "check_gpg": false,
             "gpgkey": "${DISTRO_GPGKEY}"
         }
     ]
