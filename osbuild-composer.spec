@@ -109,7 +109,7 @@ export LDFLAGS="${LDFLAGS} -X 'github.com/osbuild/osbuild-composer/internal/comm
 
 make man
 
-%if %{with tests} || 0%{?rhel}
+%if %{with tests} || (0%{?rhel} && 0%{?rhel} < 11)
 
 # Build test binaries with `go test -c`, so that they can take advantage of
 # golang's testing package. The golang rpm macros don't support building them
@@ -213,7 +213,7 @@ install -m 0755 -vd                                                %{buildroot}%
 install -m 0755 -vd                                                %{buildroot}%{_mandir}/man7
 install -m 0644 -vp docs/*.7                                       %{buildroot}%{_mandir}/man7/
 
-%if %{with tests} || 0%{?rhel}
+%if %{with tests} || (0%{?rhel} && 0%{?rhel} < 11)
 
 install -m 0755 -vd                                                %{buildroot}%{_libexecdir}/osbuild-composer-test
 install -m 0755 -vp _bin/osbuild-composer-cli-tests                %{buildroot}%{_libexecdir}/osbuild-composer-test/
@@ -370,7 +370,7 @@ fi
 # restart all the worker services
 %systemd_postun_with_restart "osbuild-worker@*.service" "osbuild-remote-worker@*.service"
 
-%if %{with tests} || 0%{?rhel}
+%if %{with tests} || (0%{?rhel} && 0%{?rhel} < 11)
 
 %package tests
 Summary:    Integration tests
