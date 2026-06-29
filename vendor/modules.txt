@@ -806,7 +806,7 @@ github.com/opencontainers/image-spec/specs-go/v1
 # github.com/opencontainers/runtime-spec v1.2.1
 ## explicit
 github.com/opencontainers/runtime-spec/specs-go
-# github.com/openshift-online/ocm-sdk-go v0.1.503
+# github.com/openshift-online/ocm-sdk-go v0.1.504
 ## explicit; go 1.24.0
 github.com/openshift-online/ocm-sdk-go/authentication
 github.com/openshift-online/ocm-sdk-go/errors
