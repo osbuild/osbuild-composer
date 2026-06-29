@@ -232,7 +232,7 @@ github.com/aws/aws-sdk-go-v2/internal/v4a/internal/v4
 github.com/aws/aws-sdk-go-v2/service/autoscaling
 github.com/aws/aws-sdk-go-v2/service/autoscaling/internal/endpoints
 github.com/aws/aws-sdk-go-v2/service/autoscaling/types
-# github.com/aws/aws-sdk-go-v2/service/ec2 v1.307.0
+# github.com/aws/aws-sdk-go-v2/service/ec2 v1.308.0
 ## explicit; go 1.24
 github.com/aws/aws-sdk-go-v2/service/ec2
 github.com/aws/aws-sdk-go-v2/service/ec2/internal/endpoints
@@ -278,7 +278,7 @@ github.com/aws/aws-sdk-go-v2/service/ssooidc/types
 github.com/aws/aws-sdk-go-v2/service/sts
 github.com/aws/aws-sdk-go-v2/service/sts/internal/endpoints
 github.com/aws/aws-sdk-go-v2/service/sts/types
-# github.com/aws/smithy-go v1.27.2
+# github.com/aws/smithy-go v1.27.3
 ## explicit; go 1.24
 github.com/aws/smithy-go
 github.com/aws/smithy-go/auth
@@ -526,7 +526,7 @@ github.com/getkin/kin-openapi/openapi3filter
 github.com/getkin/kin-openapi/routers
 github.com/getkin/kin-openapi/routers/legacy
 github.com/getkin/kin-openapi/routers/legacy/pathpattern
-# github.com/getsentry/sentry-go v0.46.2
+# github.com/getsentry/sentry-go v0.47.0
 ## explicit; go 1.25.0
 github.com/getsentry/sentry-go
 github.com/getsentry/sentry-go/attribute
@@ -543,7 +543,7 @@ github.com/getsentry/sentry-go/report
 # github.com/getsentry/sentry-go/echo v0.43.0
 ## explicit; go 1.24.0
 github.com/getsentry/sentry-go/echo
-# github.com/getsentry/sentry-go/logrus v0.46.2
+# github.com/getsentry/sentry-go/logrus v0.47.0
 ## explicit; go 1.25.0
 github.com/getsentry/sentry-go/logrus
 # github.com/go-jose/go-jose/v4 v4.1.4
@@ -719,10 +719,9 @@ github.com/kr/text
 ## explicit; go 1.11
 github.com/kylelemons/godebug/diff
 github.com/kylelemons/godebug/pretty
-# github.com/labstack/echo/v4 v4.15.3
+# github.com/labstack/echo/v4 v4.15.4
 ## explicit; go 1.25.0
 github.com/labstack/echo/v4
-github.com/labstack/echo/v4/internal/pathutil
 github.com/labstack/echo/v4/middleware
 # github.com/labstack/gommon v0.5.0
 ## explicit; go 1.23.0
@@ -742,7 +741,7 @@ github.com/letsencrypt/boulder/strictyaml
 github.com/mailru/easyjson/buffer
 github.com/mailru/easyjson/jlexer
 github.com/mailru/easyjson/jwriter
-# github.com/mattn/go-colorable v0.1.14
+# github.com/mattn/go-colorable v0.1.15
 ## explicit; go 1.18
 github.com/mattn/go-colorable
 # github.com/mattn/go-isatty v0.0.22
@@ -787,7 +786,7 @@ github.com/munnerz/goautoneg
 github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen
 github.com/oapi-codegen/oapi-codegen/v2/pkg/codegen
 github.com/oapi-codegen/oapi-codegen/v2/pkg/util
-# github.com/oapi-codegen/runtime v1.4.1
+# github.com/oapi-codegen/runtime v1.4.2
 ## explicit; go 1.24.0
 github.com/oapi-codegen/runtime
 github.com/oapi-codegen/runtime/types
@@ -807,7 +806,7 @@ github.com/opencontainers/image-spec/specs-go/v1
 # github.com/opencontainers/runtime-spec v1.2.1
 ## explicit
 github.com/opencontainers/runtime-spec/specs-go
-# github.com/openshift-online/ocm-sdk-go v0.1.503
+# github.com/openshift-online/ocm-sdk-go v0.1.504
 ## explicit; go 1.24.0
 github.com/openshift-online/ocm-sdk-go/authentication
 github.com/openshift-online/ocm-sdk-go/errors
@@ -1156,7 +1155,7 @@ go.yaml.in/yaml/v2
 # go.yaml.in/yaml/v3 v3.0.4
 ## explicit; go 1.16
 go.yaml.in/yaml/v3
-# golang.org/x/crypto v0.51.0
+# golang.org/x/crypto v0.53.0
 ## explicit; go 1.25.0
 golang.org/x/crypto/acme
 golang.org/x/crypto/acme/autocert
@@ -1185,13 +1184,13 @@ golang.org/x/crypto/sha3
 # golang.org/x/exp v0.0.0-20250103183323-7d7fa50e5329
 ## explicit; go 1.22.0
 golang.org/x/exp/slices
-# golang.org/x/mod v0.35.0
+# golang.org/x/mod v0.36.0
 ## explicit; go 1.25.0
 golang.org/x/mod/internal/lazyregexp
 golang.org/x/mod/modfile
 golang.org/x/mod/module
 golang.org/x/mod/semver
-# golang.org/x/net v0.55.0
+# golang.org/x/net v0.56.0
 ## explicit; go 1.25.0
 golang.org/x/net/html
 golang.org/x/net/html/atom
@@ -1220,7 +1219,7 @@ golang.org/x/oauth2/jwt
 ## explicit; go 1.25.0
 golang.org/x/sync/errgroup
 golang.org/x/sync/semaphore
-# golang.org/x/sys v0.45.0
+# golang.org/x/sys v0.46.0
 ## explicit; go 1.25.0
 golang.org/x/sys/cpu
 golang.org/x/sys/execabs
@@ -1228,10 +1227,10 @@ golang.org/x/sys/plan9
 golang.org/x/sys/unix
 golang.org/x/sys/windows
 golang.org/x/sys/windows/registry
-# golang.org/x/term v0.43.0
+# golang.org/x/term v0.44.0
 ## explicit; go 1.25.0
 golang.org/x/term
-# golang.org/x/text v0.37.0
+# golang.org/x/text v0.38.0
 ## explicit; go 1.25.0
 golang.org/x/text/cases
 golang.org/x/text/internal
@@ -1249,7 +1248,7 @@ golang.org/x/text/width
 # golang.org/x/time v0.15.0
 ## explicit; go 1.25.0
 golang.org/x/time/rate
-# golang.org/x/tools v0.44.0
+# golang.org/x/tools v0.45.0
 ## explicit; go 1.25.0
 golang.org/x/tools/go/ast/astutil
 golang.org/x/tools/imports
@@ -1261,7 +1260,7 @@ golang.org/x/tools/internal/gocommand
 golang.org/x/tools/internal/gopathwalk
 golang.org/x/tools/internal/imports
 golang.org/x/tools/internal/stdlib
-# google.golang.org/api v0.284.0
+# google.golang.org/api v0.286.0
 ## explicit; go 1.25.8
 google.golang.org/api/googleapi
 google.golang.org/api/googleapi/transport
@@ -1295,7 +1294,7 @@ google.golang.org/genproto/googleapis/api/expr/v1alpha1
 google.golang.org/genproto/googleapis/api/label
 google.golang.org/genproto/googleapis/api/metric
 google.golang.org/genproto/googleapis/api/monitoredres
-# google.golang.org/genproto/googleapis/rpc v0.0.0-20260526163538-3dc84a4a5aaa
+# google.golang.org/genproto/googleapis/rpc v0.0.0-20260610212136-7ab31c22f7ad
 ## explicit; go 1.25.0
 google.golang.org/genproto/googleapis/rpc/code
 google.golang.org/genproto/googleapis/rpc/errdetails
