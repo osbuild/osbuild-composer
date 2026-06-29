@@ -526,7 +526,7 @@ github.com/getkin/kin-openapi/openapi3filter
 github.com/getkin/kin-openapi/routers
 github.com/getkin/kin-openapi/routers/legacy
 github.com/getkin/kin-openapi/routers/legacy/pathpattern
-# github.com/getsentry/sentry-go v0.46.2
+# github.com/getsentry/sentry-go v0.47.0
 ## explicit; go 1.25.0
 github.com/getsentry/sentry-go
 github.com/getsentry/sentry-go/attribute
@@ -543,7 +543,7 @@ github.com/getsentry/sentry-go/report
 # github.com/getsentry/sentry-go/echo v0.43.0
 ## explicit; go 1.24.0
 github.com/getsentry/sentry-go/echo
-# github.com/getsentry/sentry-go/logrus v0.46.2
+# github.com/getsentry/sentry-go/logrus v0.47.0
 ## explicit; go 1.25.0
 github.com/getsentry/sentry-go/logrus
 # github.com/go-jose/go-jose/v4 v4.1.4
