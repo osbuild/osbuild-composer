@@ -106,7 +106,7 @@ func main() {
 
 	listeners, err := activation.ListenersWithNames()
 	if err != nil {
-		logrus.Fatalf("Could not get listening sockets: " + err.Error())
+		logrus.Fatalf("Could not get listening sockets: %s", err.Error())
 	}
 
 	if l, exists := listeners["osbuild-composer.socket"]; exists {
