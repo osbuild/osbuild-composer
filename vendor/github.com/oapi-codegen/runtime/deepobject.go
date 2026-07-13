@@ -360,6 +360,24 @@ func assignPathValues(dst interface{}, pathValues fieldOrValue) error {
 		err := assignPathValues(dstPtr, pathValues)
 		iv.Set(dstVal)
 		return err
+	case reflect.Interface:
+		// An empty interface carries no type information to bind against —
+		// this is the element type of the map[string]interface{} generated
+		// for `additionalProperties: true` (issue #138). Synthesize the
+		// generic value shapes encoding/json uses from the shape of the
+		// parsed fragment instead.
+		if it.NumMethod() != 0 {
+			// A non-empty interface can't be satisfied by a synthesized
+			// value; report it like any other unbindable destination.
+			return errors.New("unhandled type: " + it.String())
+		}
+		val := interfaceFromFieldOrValue(pathValues)
+		if val == nil {
+			iv.Set(reflect.Zero(it))
+		} else {
+			iv.Set(reflect.ValueOf(val))
+		}
+		return nil
 	case reflect.Bool:
 		val, err := strconv.ParseBool(pathValues.value)
 		if err != nil {
@@ -394,6 +412,68 @@ func assignPathValues(dst interface{}, pathValues fieldOrValue) error {
 	default:
 		return errors.New("unhandled type: " + it.String())
 	}
+}
+
+// interfaceFromFieldOrValue converts a parsed deepObject fragment into the
+// generic value shapes encoding/json produces: map[string]interface{} for
+// objects, []interface{} for arrays (consecutive integer subscripts, the
+// shape MarshalDeepObject emits), and JSON scalars for leaf values. This
+// round-trips a map[string]interface{} through MarshalDeepObject and back,
+// up to the inherent ambiguities of the untyped wire format: a string that
+// spells a JSON scalar ("true", "12.5") comes back as that scalar, and a
+// map whose keys are exactly "0".."n-1" comes back as an array.
+func interfaceFromFieldOrValue(fv fieldOrValue) interface{} {
+	if len(fv.fields) == 0 {
+		return jsonScalarFromString(fv.value)
+	}
+	if keys, ok := consecutiveIndices(fv.fields); ok {
+		arr := make([]interface{}, len(keys))
+		for i, key := range keys {
+			arr[i] = interfaceFromFieldOrValue(fv.fields[key])
+		}
+		return arr
+	}
+	m := make(map[string]interface{}, len(fv.fields))
+	for key, value := range fv.fields {
+		m[key] = interfaceFromFieldOrValue(value)
+	}
+	return m
+}
+
+// jsonScalarFromString maps raw query text to the value encoding/json would
+// produce for the same literal: true/false, null, or a number (float64).
+// Text that is not a JSON scalar stays a string — notably "00714", which the
+// JSON number grammar rejects (leading zero), so zip-code-like values keep
+// their exact form.
+func jsonScalarFromString(s string) interface{} {
+	switch s {
+	case "true":
+		return true
+	case "false":
+		return false
+	case "null":
+		return nil
+	}
+	var n float64
+	if err := json.Unmarshal([]byte(s), &n); err == nil {
+		return n
+	}
+	return s
+}
+
+// consecutiveIndices reports whether the field keys are exactly the integer
+// subscripts "0".."n-1" — the shape MarshalDeepObject emits for arrays —
+// and returns the keys in index order.
+func consecutiveIndices(fields map[string]fieldOrValue) ([]string, bool) {
+	keys := make([]string, len(fields))
+	for k := range fields {
+		i, err := strconv.Atoi(k)
+		if err != nil || i < 0 || i >= len(fields) || keys[i] != "" {
+			return nil, false
+		}
+		keys[i] = k
+	}
+	return keys, true
 }
 
 func assignSlice(dst reflect.Value, pathValues fieldOrValue) error {

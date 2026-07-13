@@ -13,8 +13,22 @@ import (
 	"github.com/oapi-codegen/runtime/types"
 )
 
-const tagName = "json"
+const jsonTagName = "json"
+const formTagName = "form"
 const jsonContentType = "application/json"
+
+// formFieldTag returns the struct tag value that names a field on the wire
+// for form encoding. The `form` tag is preferred when present and non-empty;
+// the `json` tag is the historical fallback, kept for compatibility with
+// generated and hand-written structs that carry only json tags. The full tag
+// value is returned, so `-` skips and the `,omitempty` option follow
+// whichever tag was selected.
+func formFieldTag(f reflect.StructField) string {
+	if tag, ok := f.Tag.Lookup(formTagName); ok && tag != "" {
+		return tag
+	}
+	return f.Tag.Get(jsonTagName)
+}
 
 type RequestBodyEncoding struct {
 	ContentType string
@@ -41,7 +55,7 @@ func BindForm(ptr interface{}, form map[string][]string, files map[string][]*mul
 
 	for i := 0; i < tValue.NumField(); i++ {
 		field := ptrVal.Field(i)
-		tag := tValue.Field(i).Tag.Get(tagName)
+		tag := formFieldTag(tValue.Field(i))
 		if !field.CanInterface() || tag == "-" {
 			continue
 		}
@@ -97,7 +111,7 @@ func MarshalForm(ptr interface{}, encodings map[string]RequestBodyEncoding) (url
 	result := make(url.Values)
 	for i := 0; i < tValue.NumField(); i++ {
 		field := ptrVal.Field(i)
-		tag := tValue.Field(i).Tag.Get(tagName)
+		tag := formFieldTag(tValue.Field(i))
 		if !field.CanInterface() || tag == "-" {
 			continue
 		}
@@ -175,7 +189,7 @@ func bindFormImpl(v reflect.Value, form map[string][]string, files map[string][]
 		}
 		for i := 0; i < v.NumField(); i++ {
 			field := v.Type().Field(i)
-			tag := field.Tag.Get(tagName)
+			tag := formFieldTag(field)
 			if field.Name == "AdditionalProperties" && field.Type.Kind() == reflect.Map && tag == "-" {
 				additionalPropertiesHasData, err := bindAdditionalProperties(v.Field(i), v, form, files, name)
 				if err != nil {
@@ -258,7 +272,7 @@ func bindAdditionalProperties(additionalProperties reflect.Value, parentStruct r
 	// store all fixed properties in a set
 	fieldsSet := make(map[string]struct{})
 	for i := 0; i < parentStruct.NumField(); i++ {
-		tag := parentStruct.Type().Field(i).Tag.Get(tagName)
+		tag := formFieldTag(parentStruct.Type().Field(i))
 		if !parentStruct.Field(i).CanInterface() || tag == "-" {
 			continue
 		}
@@ -383,7 +397,7 @@ func marshalFormImpl(v reflect.Value, result url.Values, name string) {
 	case reflect.Struct:
 		for i := 0; i < v.NumField(); i++ {
 			field := v.Type().Field(i)
-			tag := field.Tag.Get(tagName)
+			tag := formFieldTag(field)
 			if field.Name == "AdditionalProperties" && tag == "-" {
 				iter := v.MapRange()
 				for iter.Next() {

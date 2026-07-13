@@ -491,6 +491,15 @@ func primitiveToString(value interface{}) (string, error) {
 	default:
 		v, ok := value.(fmt.Stringer)
 		if !ok {
+			if kind == reflect.Struct || kind == reflect.Map {
+				// A nested object inside a styled parameter: OpenAPI
+				// style-based serialization is only defined for primitives,
+				// arrays and flat objects, so there is no wire format we
+				// could produce here.
+				return "", fmt.Errorf(
+					"cannot serialize nested object of type %s: style-based parameter serialization ('style'/'schema') is only defined for primitives, arrays, and flat objects; declare the parameter with 'content: application/json' instead, or map the schema to a Go type implementing fmt.Stringer",
+					reflect.TypeOf(value).String())
+			}
 			return "", fmt.Errorf("unsupported type %s", reflect.TypeOf(value).String())
 		}
 
