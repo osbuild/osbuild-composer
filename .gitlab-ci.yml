@@ -1,3 +1,6 @@
+variables:
+  FORCE_UPDATE_RUNNER: "1"
+
 stages:
   - init
   - rpmbuild
