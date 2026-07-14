@@ -83,10 +83,10 @@ init:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "schedule" && $RUNNER =~ /[\S]+rhel-[\S]+-(?:(?:ga)|(?:eus))[\S]+/ && $NIGHTLY == "false"'
 
-
-
-.RHEL810_RUNNERS: &RHEL810_RUNNERS
+.RPM_RUNNERS_RHEL: &RPM_RUNNERS_RHEL
   RUNNER:
+    - aws/rhel-9.4-ga-x86_64
+    - aws/rhel-9.4-ga-aarch64
     - aws/rhel-8.10-ga-x86_64
     - aws/rhel-8.10-ga-aarch64
   INTERNAL_NETWORK: ["true"]
@@ -100,7 +100,7 @@ RPM:
     - sh "schutzbot/mockbuild.sh"
   parallel:
     matrix:
-      - <<: *RHEL810_RUNNERS
+      - <<: *RPM_RUNNERS_RHEL
 
 Build -tests RPM for RHEL:
   stage: rpmbuild
@@ -115,7 +115,7 @@ Build -tests RPM for RHEL:
     - schutzbot/save_journal.sh
   parallel:
     matrix:
-      - <<: *RHEL810_RUNNERS
+      - <<: *RPM_RUNNERS_RHEL
 
 Prepare-rhel-internal:
   stage: prepare-rhel-internal
@@ -134,6 +134,7 @@ Prepare-rhel-internal:
       - RUNNER:
           # NOTE: 1 runner prepares for all arches b/c subsequent jobs download
           # artifacts from all previous jobs and the last one wins
+          - aws/rhel-9.4-ga-x86_64
           - aws/rhel-8.10-ga-x86_64
         INTERNAL_NETWORK: ["true"]
 
@@ -148,7 +149,7 @@ Base:
     - /usr/libexec/tests/osbuild-composer/base_tests.sh
   parallel:
     matrix:
-      - <<: *RHEL810_RUNNERS
+      - <<: *RPM_RUNNERS_RHEL
 
 .regression:
   stage: test
@@ -161,7 +162,7 @@ Base:
     - /usr/libexec/tests/osbuild-composer/${SCRIPT}
   parallel:
     matrix:
-      - <<: *RHEL810_RUNNERS
+      - <<: *RPM_RUNNERS_RHEL
 
 regression-bigiso:
   extends: .regression
@@ -240,7 +241,7 @@ Image Tests:
     - /usr/libexec/tests/osbuild-composer/image_tests.sh
   parallel:
     matrix:
-      - <<: *RHEL810_RUNNERS
+      - <<: *RPM_RUNNERS_RHEL
 
 
 .integration_base:
@@ -255,6 +256,8 @@ Image Tests:
 
 .rhel_runners: &rhel_runners
     RUNNER:
+      - aws/rhel-9.4-ga-x86_64
+      - aws/rhel-9.4-ga-aarch64
       - aws/rhel-8.10-ga-x86_64
       - aws/rhel-8.10-ga-aarch64
     INTERNAL_NETWORK: ["true"]
@@ -271,13 +274,6 @@ Image Tests:
     matrix:
       - *rhel_runners
 
-
-
-aws.sh:
-  extends: .integration
-  variables:
-    SCRIPT: aws.sh
-
 oci.sh:
   extends: .integration
   rules:
@@ -285,24 +281,6 @@ oci.sh:
     - !reference [.upstream_rules_x86_64, rules]
   variables:
     SCRIPT: oci.sh
-
-azure.sh:
-  extends: .integration
-  rules:
-    # Run only on x86_64
-    - !reference [.upstream_rules_x86_64, rules]
-    - !reference [.nightly_rules_x86_64, rules]
-  variables:
-    SCRIPT: azure.sh
-
-azure.sh_hyperv_gen2:
-  extends: .integration
-  rules:
-    # Run only on x86_64
-    - !reference [.upstream_rules_x86_64, rules]
-    - !reference [.nightly_rules_x86_64, rules]
-  variables:
-    SCRIPT: azure_hyperv_gen2.sh
 
 # The required GCE image type is not supported on Fedora
 gcp.sh:
@@ -322,42 +300,6 @@ filesystem.sh:
   variables:
     SCRIPT: filesystem.sh
 
-.libvirt_integration:
-  stage: test
-  extends: .terraform/gcp
-  rules:
-    - !reference [.upstream_rules_all, rules]
-    - !reference [.nightly_rules_all, rules]
-    - !reference [.ga_rules_all, rules]
-  script:
-    - schutzbot/deploy.sh
-    - /usr/libexec/tests/osbuild-composer/${SCRIPT}
-  parallel:
-    matrix:
-      - RUNNER:
-          - gcp/rhel-8.10-ga-x86_64
-        INTERNAL_NETWORK: ["true"]
-
-libvirt.sh:
-  extends: .libvirt_integration
-  variables:
-    SCRIPT: libvirt.sh
-
-ubi-wsl.sh:
-  stage: test
-  extends: .terraform
-  rules:
-    - !reference [.upstream_rules_all, rules]
-    - !reference [.nightly_rules_all, rules]
-  script:
-    - schutzbot/deploy.sh
-    - /usr/libexec/tests/osbuild-composer/ubi-wsl.sh
-  parallel:
-    matrix:
-      - RUNNER:
-          - aws/rhel-8.10-ga-x86_64
-        INTERNAL_NETWORK: "true"
-
 weldr-distro-dot-notation+aliases:
   stage: test
   extends: .terraform
@@ -371,6 +313,7 @@ weldr-distro-dot-notation+aliases:
     matrix:
       - RUNNER:
           - aws/rhel-8.10-ga-x86_64
+          - aws/rhel-9.4-ga-x86_64
         INTERNAL_NETWORK: ["true"]
 
 OpenSCAP:
@@ -384,6 +327,7 @@ OpenSCAP:
   parallel:
     matrix:
       - RUNNER:
+          - rhos-01/rhel-9.4-ga-x86_64
           - rhos-01/rhel-8.10-ga-x86_64
 
 NIGHTLY_FAIL:
@@ -418,22 +362,7 @@ Installer:
     matrix:
       - RUNNER:
           - rhos-01/rhel-8.10-ga-x86_64
-
-ContainerEmbedding:
-  stage: test
-  extends: .terraform
-  rules:
-    - !reference [.upstream_rules_all, rules]
-    - !reference [.nightly_rules_all, rules]
-  script:
-    - schutzbot/deploy.sh
-    - /usr/libexec/tests/osbuild-composer/container-embedding.sh
-  parallel:
-    matrix:
-      - INTERNAL_NETWORK: "true"
-        RUNNER:
-        - aws/rhel-8.10-ga-x86_64
-        - aws/rhel-8.10-ga-aarch64
+          - rhos-01/rhel-9.4-ga-x86_64
 
 finish:
   stage: finish
