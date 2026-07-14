@@ -98,11 +98,6 @@ GIT_COMMIT="${GIT_COMMIT:-${CI_COMMIT_SHA}}"
 
 setup_repo osbuild-composer "${GIT_COMMIT}" 5
 
-OSBUILD_GIT_COMMIT=$(cat Schutzfile | jq -r '.["'"${ID}-${VERSION_ID}"'"].dependencies.osbuild.commit')
-if [[ "${OSBUILD_GIT_COMMIT}" != "null" ]]; then
-  setup_repo osbuild "${OSBUILD_GIT_COMMIT}" 10
-fi
-
 if [[ "$PROJECT" != "osbuild-composer" ]]; then
   PROJECT_COMMIT=$(jq -r ".[\"${ID}-${VERSION_ID}\"].dependants[\"${PROJECT}\"].commit" Schutzfile)
   setup_repo "${PROJECT}" "${PROJECT_COMMIT}" 10
