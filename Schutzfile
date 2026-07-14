@@ -4,45 +4,6 @@
       "osbuild": {
         "commit": "150125315fb9276cb030c674042e131fd26aa423"
       }
-    },
-    "repos": [
-      {
-        "file": "/etc/yum.repos.d/rhel8internal.repo",
-        "x86_64": [
-          {
-            "title": "RHEL-8-RPMREPO-NIGHTLY-BaseOS",
-            "name": "baseos",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-baseos-n8.10-20240101"
-          },
-          {
-            "title": "RHEL-8-RPMREPO-NIGHTLY-AppStream",
-            "name": "appstream",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-appstream-n8.10-20240101"
-          },
-          {
-            "title": "RHEL-8-RPMREPO-NIGHTLY-CRB",
-            "name": "crb",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-x86_64-crb-n8.10-20240101"
-          }
-        ],
-        "aarch64": [
-          {
-            "title": "RHEL-8-RPMREPO-NIGHTLY-BaseOS",
-            "name": "baseos",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-aarch64-baseos-n8.10-20240101"
-          },
-          {
-            "title": "RHEL-8-RPMREPO-NIGHTLY-AppStream",
-            "name": "appstream",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-aarch64-appstream-n8.10-20240101"
-          },
-          {
-            "title": "RHEL-8-RPMREPO-NIGHTLY-CRB",
-            "name": "crb",
-            "baseurl": "https://rpmrepo.osbuild.org/v2/mirror/rhvpn/el8/el8-aarch64-crb-n8.10-20240101"
-          }
-        ]
-      }
-    ]
+    }
   }
 }
