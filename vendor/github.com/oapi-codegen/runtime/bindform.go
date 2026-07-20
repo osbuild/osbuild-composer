@@ -141,7 +141,7 @@ func bindFormImpl(v reflect.Value, form map[string][]string, files map[string][]
 	switch v.Kind() {
 	case reflect.Interface:
 		return bindFormImpl(v.Elem(), form, files, name)
-	case reflect.Ptr:
+	case reflect.Pointer:
 		ptrData := v.Elem()
 		if !ptrData.IsValid() {
 			ptrData = reflect.New(v.Type().Elem())
@@ -382,7 +382,7 @@ func bindFormMap(v reflect.Value, form map[string][]string, files map[string][]*
 
 func marshalFormImpl(v reflect.Value, result url.Values, name string) {
 	switch v.Kind() {
-	case reflect.Ptr:
+	case reflect.Pointer:
 		if v.IsNil() {
 			break
 		}

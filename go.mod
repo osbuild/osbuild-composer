@@ -29,7 +29,7 @@ require (
 	github.com/labstack/echo/v4 v4.15.4
 	github.com/labstack/gommon v0.5.0
 	github.com/oapi-codegen/oapi-codegen/v2 v2.6.0
-	github.com/oapi-codegen/runtime v1.5.0
+	github.com/oapi-codegen/runtime v1.6.0
 	github.com/openshift-online/ocm-sdk-go v0.1.505
 	github.com/osbuild/blueprint v1.32.0
 	github.com/osbuild/image-builder v0.274.1-0.20260619004246-4bef593e25f5

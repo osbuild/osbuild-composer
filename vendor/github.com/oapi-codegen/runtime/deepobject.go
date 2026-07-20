@@ -59,7 +59,7 @@ func marshalDeepObject(in interface{}, path []string) ([]string, error) {
 		// remain as structural delimiters.
 		encoded := make([]string, len(path))
 		for i, p := range path {
-			encoded[i] = url.QueryEscape(p)
+			encoded[i] = DefaultQueryEncoder.EscapeQueryValue(p, false)
 		}
 		prefix := "[" + strings.Join(encoded, "][") + "]"
 
@@ -67,7 +67,7 @@ func marshalDeepObject(in interface{}, path []string) ([]string, error) {
 		if t == nil {
 			value = "null"
 		} else {
-			value = url.QueryEscape(fmt.Sprintf("%v", t))
+			value = DefaultQueryEncoder.EscapeQueryValue(fmt.Sprintf("%v", t), false)
 		}
 
 		result = []string{
@@ -102,7 +102,7 @@ func MarshalDeepObject(i interface{}, paramName string) (string, error) {
 	// Prefix the param name to each subscripted field. The param name is
 	// percent-encoded to keep the wire output ASCII-clean even if the spec
 	// declares a non-identifier parameter name.
-	encodedParamName := url.QueryEscape(paramName)
+	encodedParamName := DefaultQueryEncoder.EscapeQueryValue(paramName, false)
 	for i := range fields {
 		fields[i] = encodedParamName + fields[i]
 	}
@@ -350,7 +350,7 @@ func assignPathValues(dst interface{}, pathValues fieldOrValue) error {
 			}
 		}
 		return nil
-	case reflect.Ptr:
+	case reflect.Pointer:
 		// If we have a pointer after redirecting, it means we're dealing with
 		// an optional field, such as *string, which was passed in as &foo. We
 		// will allocate it if necessary, and call ourselves with a different

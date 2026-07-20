@@ -58,13 +58,13 @@ func BindStringToObjectWithOptions(src string, dst interface{}, opts BindStringT
 	t := reflect.TypeOf(dst)
 
 	// We need to dereference pointers
-	if t.Kind() == reflect.Ptr {
+	if t.Kind() == reflect.Pointer {
 		v = reflect.Indirect(v)
 		t = v.Type()
 	}
 
 	// For some optional args
-	if t.Kind() == reflect.Ptr {
+	if t.Kind() == reflect.Pointer {
 		if v.IsNil() {
 			v.Set(reflect.New(t.Elem()))
 		}

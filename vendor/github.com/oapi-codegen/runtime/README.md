@@ -111,10 +111,43 @@ cases where round-tripping is not possible in principle.
 
 #### Encoding
 
+##### Configuring query encoding
+
+By default, spaces in query strings are encoded as `+`, following Go's
+`net/url` (the form-urlencoded convention used by browsers). This is accepted
+by most servers, but it is *not* RFC 3986 compliant — some servers (for
+example, OData endpoints expecting `?filter=name%20eq%20'x'`) reject `+` for a
+space with `400 Bad Request`.
+
+Generated clients route all query escaping through the package-level
+`DefaultQueryEncoder`, so you can control this behavior. Two encoders ship out
+of the box:
+
+- `NetURLQueryEncoder` — the default; encodes a space as `+`.
+- `RFC3986QueryEncoder` — encodes a space as `%20` for strict RFC 3986
+  compliance.
+
+To opt into RFC 3986 encoding, set the default once during program
+initialization (it is not safe to mutate concurrently with in-flight requests,
+the same contract as `http.DefaultClient`):
+
+```go
+func init() {
+    runtime.DefaultQueryEncoder = runtime.RFC3986QueryEncoder{}
+}
+```
+
+You may also supply your own `QueryEncoder` implementation (a single
+`EscapeQueryValue` method). The encoder governs query parameter values, names,
+and map keys (including `deepObject`); it does **not** affect path escaping or
+`application/x-www-form-urlencoded` request bodies, where `+` for a space is the
+correct, media-type-defined behavior.
+
 - **Query and path values are percent-encoded.** Reserved characters
   (`&`, `=`, `#`, `?`, etc.) and non-ASCII bytes are escaped via
   `url.QueryEscape` / `url.PathEscape`. Spaces in query values are encoded
-  as `+` (form-urlencoded convention), matching `url.Values.Encode()`.
+  as `+` (form-urlencoded convention), matching `url.Values.Encode()`,
+  unless `DefaultQueryEncoder` is changed (see above).
 - **Header values are passed through raw.** Per RFC 7230 §3.2.6, header
   field values may contain visible ASCII plus space/tab; bytes ≥ `0x80` are
   `obs-text` and explicitly marked obsolete in RFC 9110. There is no
