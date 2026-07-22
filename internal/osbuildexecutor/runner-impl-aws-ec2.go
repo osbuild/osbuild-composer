@@ -31,15 +31,14 @@ type awsEC2Executor struct {
 	tmpDir     string
 }
 
-func prepareSources(manifest []byte, logger logrus.FieldLogger, opts *osbuild.OSBuildOptions) error {
+func prepareSources(manifest []byte, logger logrus.FieldLogger, opts *osbuild.OSBuildOptions) (*osbuild.Result, error) {
 	hostExecutor := NewHostExecutor()
-	_, err := hostExecutor.RunOSBuild(manifest, logger, nil, &osbuild.OSBuildOptions{
+	return hostExecutor.RunOSBuild(manifest, logger, nil, &osbuild.OSBuildOptions{
 		StoreDir:   opts.StoreDir,
 		ExtraEnv:   opts.ExtraEnv,
 		Stderr:     opts.Stderr,
 		JSONOutput: true,
 	})
-	return err
 }
 
 // TODO extract this, also used in the osbuild-worker-executor unit
@@ -265,9 +264,12 @@ func extractOutputArchive(outputDirectory, outputTar string) error {
 }
 
 func (ec2e *awsEC2Executor) RunOSBuild(manifest []byte, logger logrus.FieldLogger, job worker.Job, opts *osbuild.OSBuildOptions) (*osbuild.Result, error) {
-	err := prepareSources(manifest, logger, opts)
+	prepSrcRes, err := prepareSources(manifest, logger, opts)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to prepare sources: %w", err)
+	}
+	if !prepSrcRes.Success {
+		return prepSrcRes, nil
 	}
 
 	region, err := awscloud.RegionFromInstanceMetadata()
