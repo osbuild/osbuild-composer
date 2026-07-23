@@ -18,6 +18,7 @@ import (
 
 	"github.com/osbuild/osbuild-composer/pkg/jobqueue"
 
+	"github.com/osbuild/image-builder/pkg/customizations/subscription"
 	"github.com/osbuild/image-builder/pkg/distro/test_distro"
 	"github.com/osbuild/image-builder/pkg/distrofactory"
 	"github.com/osbuild/image-builder/pkg/manifest"
@@ -3092,9 +3093,11 @@ func TestComposeBootc(t *testing.T) {
 		isoPayloadReference           string
 		buildReference                string
 		uploadJSON                    string   // upload_options or upload_targets JSON fragment
+		customizationsJSON            string   // customizations JSON object, empty = no customizations
 		expectedStatus                int      // expected HTTP status code
 		expectedBody                  string   // empty = default ComposeId success body
 		expectedUploadTargetTypes     []string // expected BootcUploadTarget.Type values in pre-manifest args
+		expectedSubscription          *subscription.ImageOptions
 	}{
 		{
 			// Matches cockpit-image-builder on-prem: explicit local target
@@ -3152,6 +3155,37 @@ func TestComposeBootc(t *testing.T) {
 			uploadJSON:                    `"upload_targets": [{"type": "local", "upload_options": {}}]`,
 			expectedStatus:                http.StatusCreated,
 			expectedUploadTargetTypes:     []string{"local"},
+		},
+		{
+			name:                          "guest-image_with_subscription",
+			imageType:                     "guest-image",
+			expectedImageTypeName:         "qcow2",
+			bootcUseRemoteContainerSource: false,
+			uploadJSON:                    `"upload_targets": [{"type": "local", "upload_options": {}}]`,
+			customizationsJSON: `{
+				"subscription": {
+					"organization": "2040324",
+					"activation_key": "my-secret-key",
+					"server_url": "subscription.rhsm.redhat.com",
+					"base_url": "http://cdn.redhat.com/",
+					"insights": true,
+					"rhc": true,
+					"insights_client_proxy": "http://proxy.example.com:3128",
+					"content_sets": ["rhel-9-for-x86_64-baseos-rpms"]
+				}
+			}`,
+			expectedStatus:            http.StatusCreated,
+			expectedUploadTargetTypes: []string{"local"},
+			expectedSubscription: &subscription.ImageOptions{
+				Organization:  "2040324",
+				ActivationKey: "my-secret-key",
+				ServerUrl:     "subscription.rhsm.redhat.com",
+				BaseUrl:       "http://cdn.redhat.com/",
+				Insights:      true,
+				Rhc:           true,
+				Proxy:         "http://proxy.example.com:3128",
+				ContentSets:   []string{"rhel-9-for-x86_64-baseos-rpms"},
+			},
 		},
 		{
 			name:                          "aws/aws",
@@ -3271,8 +3305,14 @@ func TestComposeBootc(t *testing.T) {
 				bootcJSON += fmt.Sprintf(`, "build_reference": "%s"`, tc.buildReference)
 			}
 
+			customizationsFragment := ""
+			if tc.customizationsJSON != "" {
+				customizationsFragment = fmt.Sprintf(`"customizations": %s,`, tc.customizationsJSON)
+			}
+
 			requestBody := fmt.Sprintf(`
 			{
+				%s
 				"bootc": {
 						%s
 						},
@@ -3281,7 +3321,7 @@ func TestComposeBootc(t *testing.T) {
 					"repositories": [],
 					"image_type": "%s"%s
 				}
-			}`, bootcJSON, tc.imageType, uploadFragment)
+			}`, customizationsFragment, bootcJSON, tc.imageType, uploadFragment)
 
 			expectedBody := tc.expectedBody
 			if expectedBody == "" {
@@ -3393,6 +3433,10 @@ func TestComposeBootc(t *testing.T) {
 				require.Equal(t, tc.isoPayloadReference, preManifestArgs.ImageOptions.Bootc.InstallerPayloadRef,
 					"BootcPreManifestJob.ImageOptions.Bootc.InstallerPayloadRef should match request iso_payload_reference")
 			}
+
+			// Verify subscription options are propagated to BootcPreManifestJob args
+			// (nil when the request has no subscription customization)
+			require.Equal(t, tc.expectedSubscription, preManifestArgs.ImageOptions.Subscription)
 
 			// BootcPreManifest depends on BootcInfoResolve
 			require.Len(t, preManifestDeps, 1)
