@@ -653,7 +653,8 @@ func (s *Server) enqueueBootcCompose(request ComposeRequest, channel string) (uu
 		bootcOptions.InstallerPayloadRef = *request.Bootc.IsoPayloadReference
 	}
 	imageOptions := distro.ImageOptions{
-		Bootc: bootcOptions,
+		Bootc:        bootcOptions,
+		Subscription: request.GetSubscription(),
 	}
 
 	// 1. Handle Bootc info resolution job
