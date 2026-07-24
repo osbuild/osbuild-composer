@@ -43,6 +43,9 @@ type DracutStageOptions struct {
 
 	// Extra arguments to directly pass to dracut
 	Extra []string `json:"extra,omitempty"`
+
+	// Paths to remove/exclude from the initramfs
+	Remove []string `json:"remove,omitempty"`
 }
 
 func (DracutStageOptions) isStageOptions() {}

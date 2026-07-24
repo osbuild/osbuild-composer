@@ -98,6 +98,7 @@ type ImageConfig struct {
 
 	Files       []*fsnode.File
 	Directories []*fsnode.Directory
+	Hostonly    *bool `yaml:"hostonly,omitempty"`
 
 	// KernelOptionsBootloader controls whether kernel command line options
 	// should be specified in the bootloader grubenv configuration. Otherwise
@@ -114,6 +115,8 @@ type ImageConfig struct {
 	// NoBLS configures the image bootloader with traditional menu entries
 	// instead of BLS. Required for legacy systems like RHEL 7.
 	NoBLS *bool `yaml:"no_bls,omitempty"`
+
+	SystemdBoot *osbuild.SystemdBootConfig `yaml:"systemd_boot,omitempty"`
 
 	// OSTree specific configuration
 

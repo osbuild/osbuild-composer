@@ -31,6 +31,7 @@ type ContainerBasedIso struct {
 
 	RootfsCompression string
 	RootfsType        manifest.ISORootfsType
+	RootfsExcludes    []string
 
 	KernelPath    string
 	KernelOpts    []string
@@ -110,6 +111,7 @@ func (img *ContainerBasedIso) InstantiateManifestFromContainer(m *manifest.Manif
 	isoTreePipeline.Version = img.Version
 	isoTreePipeline.RootfsCompression = img.RootfsCompression
 	isoTreePipeline.RootfsType = img.RootfsType
+	isoTreePipeline.RootfsExcludes = img.RootfsExcludes
 	isoTreePipeline.KernelPath = img.KernelPath
 	isoTreePipeline.InitramfsPath = img.InitramfsPath
 	isoTreePipeline.KernelOpts = kernelOpts

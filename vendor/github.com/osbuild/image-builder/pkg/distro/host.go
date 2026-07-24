@@ -62,6 +62,17 @@ func GetHostDistroName() (string, error) {
 		}
 	}
 
+	// Oracle Linux distro definition names only include the major version,
+	// so format the returned distro name accordingly.
+	if osrelease["ID"] == "ol" {
+		versionParts := strings.Split(osrelease["VERSION_ID"], ".")
+		// We only use versionParts[0], but check os-release is valid for safety
+		if len(versionParts) < 2 {
+			return "", errors.New("Failed to parse version from os-release, not enough dotted parts")
+		}
+		return osrelease["ID"] + "-" + versionParts[0], nil
+	}
+
 	name := osrelease["ID"] + "-" + osrelease["VERSION_ID"]
 
 	return name, nil

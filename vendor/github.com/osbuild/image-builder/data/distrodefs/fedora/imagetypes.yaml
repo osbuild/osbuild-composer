@@ -558,19 +558,33 @@
       - "net-lib"
       - "dbus-broker"
     default_menu: 1
-    lorax_template_package: lorax-templates-generic
-    lorax_templates:
-      - path: 99-generic/runtime-postinstall.tmpl
-      - path: 99-generic/runtime-cleanup.tmpl
-        after_dracut: true
-    lorax_logos_package: fedora-logos
-    lorax_release_package: fedora-release
     install_weak_deps: true
+    conditions: &default_installer_conditions
+      "below fedora 45 we use lorax":
+        when:
+          version_less_than: "45"
+        shallow_merge:
+          lorax_template_package: lorax-templates-generic
+          lorax_templates:
+            - path: 99-generic/runtime-postinstall.tmpl
+            - path: 99-generic/runtime-cleanup.tmpl
+              after_dracut: true
+          lorax_logos_package: fedora-logos
+          lorax_release_package: fedora-release
 
   iso_config: &default_iso_config
     preparer: "image-builder - https://osbuild.org/"
     publisher: "Fedora Project"
     rootfs_type: "squashfs"
+    rootfs_excludes:
+      - "boot/efi/.*"
+      - "boot/grub2/.*"
+      - "boot/config-.*"
+      - "boot/initramfs-.*"
+      - "boot/loader/.*"
+      - "boot/symvers-.*"
+      - "boot/System.map-.*"
+
     conditions: &default_iso_config_conditions
       "x86_64 uses grub2":
         when:
@@ -594,6 +608,22 @@
           arch: "s390x"
         shallow_merge:
           boot_type: "s390-iso"
+      "fedora < 45 excludes metadata":
+        when:
+          version_less_than: "45"
+        shallow_merge:
+          rootfs_excludes:
+            - "boot/efi/.*"
+            - "boot/grub2/.*"
+            - "boot/config-.*"
+            - "boot/initramfs-.*"
+            - "boot/loader/.*"
+            - "boot/symvers-.*"
+            - "boot/System.map-.*"
+            - "usr/lib/sysimage/rpm/.*"
+            - "var/lib/rpm/.*"
+            - "var/lib/yum/.*"
+            - "var/lib/dnf/.*"
 
   erofs_options: &default_erofs_options
     compression:
@@ -1077,6 +1107,7 @@
       - "customizations.disk"
       - "customizations.files"
       - "customizations.filesystem"
+      - "customizations.firstboot"
       - "customizations.partitioning_mode"
       - "customizations.fips"
       - "customizations.firewall"
@@ -1101,10 +1132,12 @@
       - "groups"
       - "enabled_modules"
       - "containers"
+      - "customizations.cacerts"
       - "customizations.directories"
       - "customizations.files"
       - "customizations.fips"
       - "customizations.firewall"
+      - "customizations.firstboot"
       - "customizations.user"
       - "customizations.sshkey"
       - "customizations.group"
@@ -1123,9 +1156,11 @@
       - "groups"
       - "enabled_modules"
       - "containers"
+      - "customizations.cacerts"
       - "customizations.directories"
       - "customizations.files"
       - "customizations.firewall"
+      - "customizations.firstboot"
       - "customizations.user"
       - "customizations.sshkey"
       - "customizations.group"
@@ -1138,10 +1173,12 @@
     # options supported by ostree disk (deployment) image types
     supported_options_ostree_disk: &supported_options_ostree_disk
       - "distro"
+      - "customizations.cacerts"
       - "customizations.files"
       - "customizations.directories"
       - "customizations.disk"
       - "customizations.filesystem"
+      - "customizations.firstboot"
       - "customizations.partitioning_mode"
       - "customizations.fips"
       - "customizations.user"
@@ -1164,6 +1201,7 @@
       - "customizations.files"
       - "customizations.fips"
       - "customizations.firewall"
+      - "customizations.firstboot"
       - "customizations.user"
       - "customizations.sshkey"
       - "customizations.group"
@@ -1654,7 +1692,6 @@ image_types:
             - "setup"
             - "shadow-utils"
             - "skopeo"
-            - "slirp4netns"
             - "sssd-client"
             - "sudo"
             - "systemd"
@@ -2309,6 +2346,7 @@ image_types:
         - "containers"
         - "customizations.installer"
         - "customizations.cacerts"
+        - "customizations.firstboot"
         - "customizations.directories"
         - "customizations.files"
         - "customizations.firewall"
@@ -3047,6 +3085,7 @@ image_types:
             - "app/org.kde.skanpage/{{.Arch}}/stable"
             - "app/org.kde.qrca/{{.Arch}}/stable"
       conditions:
+        <<: *default_installer_conditions
         "there are no 45 runtimes":
           when:
             version_greater_or_equal: "45"
@@ -3109,6 +3148,7 @@ image_types:
             - "app/org.gnome.Papers/{{.Arch}}/stable"
             - "app/org.gnome.Weather/{{.Arch}}/stable"
       conditions:
+        <<: *default_installer_conditions
         "there are no 45 runtimes":
           when:
             version_greater_or_equal: "45"

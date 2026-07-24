@@ -111,13 +111,13 @@ func (au *awsUploader) Check(status io.Writer) error {
 	return nil
 }
 
-func (au *awsUploader) UploadAndRegister(r io.Reader, _ uint64, status io.Writer) (err error) {
+func (au *awsUploader) UploadAndRegister(r io.Reader, _ uint64, status io.Writer) (result *cloud.UploadResult, err error) {
 	keyName := fmt.Sprintf("%s-%s", uuid.New().String(), au.imageName)
 	fmt.Fprintf(status, "Uploading %s to %s:%s\n", au.imageName, au.bucketName, keyName)
 
 	res, err := au.client.UploadFromReader(r, au.bucketName, keyName)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer func() {
 		if err != nil {
@@ -134,17 +134,17 @@ func (au *awsUploader) UploadAndRegister(r io.Reader, _ uint64, status io.Writer
 	fmt.Fprintf(status, "Registering AMI %s\n", au.imageName)
 	ami, snapshot, err := au.client.Register(au.imageName, au.bucketName, keyName, au.tags, nil, au.targetArch, au.bootMode, nil)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	fmt.Fprintf(status, "Deleted S3 object %s:%s\n", au.bucketName, keyName)
 	if err := au.client.DeleteObject(au.bucketName, keyName); err != nil {
-		return err
+		return nil, err
 	}
 	fmt.Fprintf(status, "AMI registered: %s\nSnapshot ID: %s\n", ami, snapshot)
-	if err != nil {
-		return err
-	}
 
-	return nil
+	return &cloud.UploadResult{
+		Provider: "aws",
+		ImageID:  ami,
+	}, nil
 }

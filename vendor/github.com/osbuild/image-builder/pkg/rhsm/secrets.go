@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/osbuild/image-builder/pkg/olog"
@@ -177,13 +178,31 @@ func parseRepoFile(content []byte) ([]subscription, error) {
 	return subscriptions, nil
 }
 
+// baseurlToRegex turns a redhat.repo baseurl into a matcher by replacing the yum
+// variables ($releasever, $arch, $basearch, $uuid) with a non-slash wildcard,
+// mirroring osbuild's util/rhsm.py so depsolve-time secret lookup agrees with
+// osbuild's download-time matching. Wildcarding $releasever rather than
+// substituting the major-only releasever is what lets both rolling (9) and
+// point-release (9.8) requests match; substituting would bind it to "9" and send
+// point releases to the fallback.
+func baseurlToRegex(baseurl string) (*regexp.Regexp, error) {
+	escaped := regexp.QuoteMeta(baseurl)
+	for _, variable := range []string{`\$releasever`, `\$arch`, `\$basearch`, `\$uuid`} {
+		escaped = strings.ReplaceAll(escaped, variable, `[^/]*`)
+	}
+	// anchored at the start only, matching Python's re.match
+	return regexp.Compile("^" + escaped)
+}
+
 // GetSecretsForBaseurl queries the Subscriptions structure for a RHSMSecrets of a single repository.
-func (s *Subscriptions) GetSecretsForBaseurl(baseurls []string, arch, releasever string) (*RHSMSecrets, error) {
+func (s *Subscriptions) GetSecretsForBaseurl(baseurls []string) (*RHSMSecrets, error) {
 	for _, subs := range s.available {
+		re, err := baseurlToRegex(subs.baseurl)
+		if err != nil {
+			return nil, fmt.Errorf("cannot match subscription baseurl %q: %w", subs.baseurl, err)
+		}
 		for _, baseurl := range baseurls {
-			url := strings.ReplaceAll(subs.baseurl, "$basearch", arch)
-			url = strings.ReplaceAll(url, "$releasever", releasever)
-			if url == baseurl {
+			if re.MatchString(baseurl) {
 				return &RHSMSecrets{
 					SSLCACert:     subs.sslCACert,
 					SSLClientKey:  subs.sslClientKey,

@@ -13,6 +13,7 @@
     - "customizations.files"
     - "customizations.fips"
     - "customizations.firewall"
+    - "customizations.firstboot"
     - "customizations.user"
     - "customizations.sshkey"
     - "customizations.group"

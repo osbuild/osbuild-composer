@@ -26,12 +26,23 @@ type PartitionTable struct {
 	Type       PartitionTableType `json:"type" yaml:"type"`
 	Partitions []Partition        `json:"partitions" yaml:"partitions"`
 
-	// Sector size in bytes
+	// Grain size for partition alignment (in bytes). 0 means DefaultGrainBytes.
+	GrainSize datasizes.Size `json:"grain_size,omitempty" yaml:"grain_size,omitempty"`
+	// Sector size in bytes. 0 means DefaultSectorSize.
 	SectorSize uint64 `json:"sector_size,omitempty" yaml:"sector_size,omitempty"`
 	// Extra space at the end of the partition table (sectors)
 	ExtraPadding uint64 `json:"extra_padding,omitempty" yaml:"extra_padding,omitempty"`
-	// Starting offset of the first partition in the table (in bytes)
+	// Starting offset of the first partition in the table (in bytes).
+	// By default this is added to the header size. When
+	// AbsoluteStartOffset is true, it is treated as a minimum absolute
+	// position (matching systemd-repart's use of libfdisk's first_lba).
 	StartOffset Offset `json:"start_offset,omitempty" yaml:"start_offset,omitempty"`
+	// Treat StartOffset as an absolute minimum start position rather
+	// than an additive offset on top of the header.
+	AbsoluteStartOffset bool `json:"absolute_start_offset,omitempty" yaml:"absolute_start_offset,omitempty"`
+	// Align the GPT footer to the grain size, ensuring the last partition's
+	// size is also grain-aligned. Matches systemd-repart behavior.
+	AlignFooter bool `json:"align_footer,omitempty" yaml:"align_footer,omitempty"`
 
 	// Dictates if certain bits and bobs are required or not; uses the default
 	// policy if not set.
@@ -215,14 +226,17 @@ func (pt *PartitionTable) Clone() Entity {
 	}
 
 	clone := &PartitionTable{
-		Size:         pt.Size,
-		UUID:         pt.UUID,
-		Type:         pt.Type,
-		Partitions:   make([]Partition, len(pt.Partitions)),
-		SectorSize:   pt.SectorSize,
-		ExtraPadding: pt.ExtraPadding,
-		StartOffset:  pt.StartOffset,
-		Policy:       pt.Policy,
+		Size:                pt.Size,
+		UUID:                pt.UUID,
+		Type:                pt.Type,
+		Partitions:          make([]Partition, len(pt.Partitions)),
+		SectorSize:          pt.SectorSize,
+		GrainSize:           pt.GrainSize,
+		ExtraPadding:        pt.ExtraPadding,
+		StartOffset:         pt.StartOffset,
+		AbsoluteStartOffset: pt.AbsoluteStartOffset,
+		AlignFooter:         pt.AlignFooter,
+		Policy:              pt.Policy,
 	}
 
 	for idx, partition := range pt.Partitions {
@@ -243,15 +257,22 @@ func (pt *PartitionTable) Clone() Entity {
 	return clone
 }
 
-// AlignUp will round up the given size value to the default grain if not
+func (pt *PartitionTable) grainSize() datasizes.Size {
+	if pt.GrainSize > 0 {
+		return pt.GrainSize
+	}
+	return DefaultGrainBytes
+}
+
+// AlignUp will round up the given size value to the grain size if not
 // already aligned.
 func (pt *PartitionTable) AlignUp(size datasizes.Size) datasizes.Size {
-	grain := DefaultGrainBytes
+	grain := pt.grainSize()
 	if size%grain == 0 {
 		// already aligned: return unchanged
 		return size
 	}
-	return ((size + grain) / grain) * grain
+	return (size - (size % grain)) + grain
 }
 
 // Convert the given bytes to the number of sectors.
@@ -506,9 +527,16 @@ func (pt *PartitionTable) relayout(size datasizes.Size) uint64 {
 	// The GPT header is also at the end of the partition table
 	if pt.Type == PT_GPT {
 		footer = header
+		if pt.AlignFooter {
+			footer = pt.AlignUp(footer)
+		}
 	}
 
-	start := pt.AlignUp(header + pt.StartOffset).Uint64()
+	startBase := header + pt.StartOffset
+	if pt.AbsoluteStartOffset && pt.StartOffset > header {
+		startBase = pt.StartOffset
+	}
+	start := pt.AlignUp(startBase).Uint64()
 
 	size = pt.AlignUp(size)
 
@@ -1697,46 +1725,58 @@ func needsBoot(disk *blueprint.DiskCustomization) bool {
 	}
 
 	var foundBtrfsOrLVM bool
+	var hasPlainRoot bool
+	var hasPlainBoot bool
+	var lvmOrBtrfsRootNeedsBoot bool
+	var hasBtrfsRootWithBootSubvol bool
+
+	// Do not use early returns in the loop below, we need to check all partitions.
 	for _, part := range disk.Partitions {
 		switch part.Type {
 		case "plain", "":
-			if part.Mountpoint == "/" {
-				return false
-			}
-			if part.Mountpoint == "/boot" {
-				return false
+			switch part.Mountpoint {
+			case "/":
+				hasPlainRoot = true
+			case "/boot":
+				hasPlainBoot = true
 			}
 		case "lvm":
 			foundBtrfsOrLVM = true
-			// check if any of the LVs is root
 			for _, lv := range part.LogicalVolumes {
 				if lv.Mountpoint == "/" {
-					return true
+					lvmOrBtrfsRootNeedsBoot = true
 				}
 			}
 		case "btrfs":
 			foundBtrfsOrLVM = true
-
-			// check if any of the subvols is root and no subvol is boot
 			hasRoot := false
-			hasBoot := false
+			hasBootSubvol := false
 
 			for _, subvol := range part.Subvolumes {
 				if subvol.Mountpoint == "/" {
 					hasRoot = true
 				}
 				if subvol.Mountpoint == "/boot" {
-					hasBoot = true
+					hasBootSubvol = true
 				}
 			}
 
-			if hasRoot {
-				return !hasBoot
+			if hasRoot && hasBootSubvol {
+				hasBtrfsRootWithBootSubvol = true
+			} else if hasRoot {
+				lvmOrBtrfsRootNeedsBoot = true
 			}
 
 		default:
 			// NOTE: invalid types should be validated elsewhere
 		}
+	}
+
+	if hasPlainRoot || hasPlainBoot || hasBtrfsRootWithBootSubvol {
+		return false
+	}
+	if lvmOrBtrfsRootNeedsBoot {
+		return true
 	}
 	return foundBtrfsOrLVM
 }

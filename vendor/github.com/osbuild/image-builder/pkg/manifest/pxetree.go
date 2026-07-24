@@ -17,6 +17,7 @@ type PXETree struct {
 	Base
 	RootfsCompression string
 	RootfsType        ISORootfsType
+	RootfsExcludes    []string
 
 	osPipeline *OS
 	files      []*fsnode.File // grub template and README files
@@ -93,7 +94,7 @@ func (p *PXETree) serialize() (osbuild.Pipeline, error) {
 
 		// TODO this is shared with the ISO, should it be?
 		// Clean up the root filesystem's /boot to save space
-		erofsOptions.ExcludePaths = installerBootExcludePaths
+		erofsOptions.ExcludePaths = p.RootfsExcludes
 		pipeline.AddStage(osbuild.NewErofsStage(erofsOptions, p.osPipeline.Name()))
 	} else {
 		var squashfsOptions osbuild.SquashfsStageOptions
@@ -109,7 +110,7 @@ func (p *PXETree) serialize() (osbuild.Pipeline, error) {
 
 		// TODO this is shared with the ISO, should it be?
 		// Clean up the root filesystem's /boot to save space
-		squashfsOptions.ExcludePaths = installerBootExcludePaths
+		squashfsOptions.ExcludePaths = p.RootfsExcludes
 		pipeline.AddStage(osbuild.NewSquashfsStage(&squashfsOptions, p.osPipeline.Name()))
 	}
 

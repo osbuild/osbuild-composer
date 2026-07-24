@@ -10,7 +10,6 @@ import (
 	"github.com/osbuild/image-builder/pkg/customizations/oscap"
 	"github.com/osbuild/image-builder/pkg/distro"
 	"github.com/osbuild/image-builder/pkg/policies"
-	"github.com/osbuild/image-builder/pkg/repomigration"
 )
 
 func checkOptionsCommon(t *imageType, bp *blueprint.Blueprint, options distro.ImageOptions) ([]string, error) {
@@ -91,10 +90,10 @@ func checkOptionsCommon(t *imageType, bp *blueprint.Blueprint, options distro.Im
 		return warnings, fmt.Errorf("%s: customizations.disk cannot be used with customizations.filesystem", errPrefix)
 	}
 
-	if err := repomigration.CheckMountpointsPolicy(mountpoints, policies.MountpointPolicies); err != nil {
+	if err := blueprint.CheckMountpointsPolicy(mountpoints, policies.MountpointPolicies); err != nil {
 		return warnings, fmt.Errorf("%s: %w", errPrefix, err)
 	}
-	if err := repomigration.CheckDiskMountpointsPolicy(partitioning, policies.MountpointPolicies); err != nil {
+	if err := blueprint.CheckDiskMountpointsPolicy(partitioning, policies.MountpointPolicies); err != nil {
 		return warnings, fmt.Errorf("%s: %w", errPrefix, err)
 	}
 	if err := partitioning.ValidateLayoutConstraints(); err != nil {
@@ -129,12 +128,12 @@ func checkOptionsCommon(t *imageType, bp *blueprint.Blueprint, options distro.Im
 		fcp = policies.OstreeCustomFilesPolicies
 	}
 
-	err = repomigration.CheckDirectoryCustomizationsPolicy(dc, dcp)
+	err = blueprint.CheckDirectoryCustomizationsPolicy(dc, dcp)
 	if err != nil {
 		return warnings, fmt.Errorf("%s: %w", errPrefix, err)
 	}
 
-	err = repomigration.CheckFileCustomizationsPolicy(fc, fcp)
+	err = blueprint.CheckFileCustomizationsPolicy(fc, fcp)
 	if err != nil {
 		return warnings, fmt.Errorf("%s: %w", errPrefix, err)
 	}

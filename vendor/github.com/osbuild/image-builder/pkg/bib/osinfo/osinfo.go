@@ -89,6 +89,19 @@ func (info *Info) HasModules(modules []string) (bool, error) {
 	return true, nil
 }
 
+// GetDiskYamlRootFs returns the root filesystem type from the partition table
+// defined in disk.yaml, or an empty string if not defined.
+func (info *Info) GetDiskYamlRootFs() string {
+	if info == nil || info.PartitionTable == nil {
+		return ""
+	}
+	rootMountable := info.PartitionTable.FindMountable("/")
+	if rootMountable != nil {
+		return rootMountable.GetFSType()
+	}
+	return ""
+}
+
 func validateOSRelease(osrelease map[string]string) error {
 	// VARIANT_ID, PLATFORM_ID are optional
 	for _, key := range []string{"ID", "VERSION_ID", "NAME"} {

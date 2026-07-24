@@ -15,6 +15,7 @@ type MkfsOptionGeometry struct {
 type MkfsOptions struct {
 	Verity   bool                `json:"verity,omitempty" yaml:"verity,omitempty"`
 	Geometry *MkfsOptionGeometry `json:"geometry,omitempty" yaml:"geometry,omitempty"`
+	AGCount  int                 `json:"agcount,omitempty" yaml:"agcount,omitempty"`
 }
 
 func (opts MkfsOptions) Clone() MkfsOptions {

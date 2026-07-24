@@ -80,7 +80,13 @@ func NewBootcWithLoader(loader *defs.Loader, name string, cinfo *bootc.Info) (*B
 	if cinfo.Arch == "" {
 		missing = append(missing, "Arch")
 	}
-	if cinfo.DefaultRootFs == "" {
+	// disk.yaml's partition table always takes priority over bootc install
+	// configuration as it is specific to this tool. Fall back to DefaultRootFs
+	// from bootc config if no partition table is provided.
+	diskYamlRootFs := cinfo.OSInfo.GetDiskYamlRootFs()
+	if diskYamlRootFs != "" {
+		cinfo.DefaultRootFs = diskYamlRootFs
+	} else if cinfo.DefaultRootFs == "" {
 		missing = append(missing, "DefaultRootFs")
 	}
 	if cinfo.Size == 0 {

@@ -17,7 +17,6 @@ import (
 	"github.com/osbuild/image-builder/pkg/image"
 	"github.com/osbuild/image-builder/pkg/manifest"
 	"github.com/osbuild/image-builder/pkg/platform"
-	"github.com/osbuild/image-builder/pkg/repomigration"
 	"github.com/osbuild/image-builder/pkg/rpmmd"
 )
 
@@ -285,7 +284,7 @@ func (t *imageType) Manifest(bp *blueprint.Blueprint,
 	if err != nil {
 		return nil, nil, err
 	}
-	installFromRepos := repomigration.RepoCustomizationsInstallFromOnly(customRepos)
+	installFromRepos := blueprint.RepoCustomizationsInstallFromOnly(customRepos)
 	payloadRepos = append(payloadRepos, installFromRepos...)
 
 	containerSources := make([]container.SourceSpec, len(bp.Containers))

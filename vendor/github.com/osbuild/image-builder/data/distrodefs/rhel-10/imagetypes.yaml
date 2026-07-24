@@ -216,6 +216,18 @@
 
   default_iso_config: &default_iso_config
     rootfs_type: "squashfs"
+    rootfs_excludes:
+      - "boot/efi/.*"
+      - "boot/grub2/.*"
+      - "boot/config-.*"
+      - "boot/initramfs-.*"
+      - "boot/loader/.*"
+      - "boot/symvers-.*"
+      - "boot/System.map-.*"
+      - "usr/lib/sysimage/rpm/.*"
+      - "var/lib/rpm/.*"
+      - "var/lib/yum/.*"
+      - "var/lib/dnf/.*"
     conditions:
       "x86_64 uses grub2":
         when:
@@ -853,6 +865,7 @@
       - "customizations.dnf"
       - "customizations.files"
       - "customizations.filesystem"
+      - "customizations.firstboot"
       - "customizations.partitioning_mode"
       - "customizations.fips"
       - "customizations.firewall"
@@ -884,6 +897,7 @@
       - "customizations.files"
       - "customizations.fips"
       - "customizations.firewall"
+      - "customizations.firstboot"
       - "customizations.user"
       - "customizations.sshkey"
       - "customizations.group"
@@ -905,9 +919,11 @@
       - "groups"
       - "enabled_modules"
       - "containers"
+      - "customizations.cacerts"
       - "customizations.directories"
       - "customizations.files"
       - "customizations.firewall"
+      - "customizations.firstboot"
       - "customizations.user"
       - "customizations.sshkey"
       - "customizations.group"
@@ -956,13 +972,10 @@ image_types:
             - "python3-jsonschema"
             - "qemu-guest-agent"
             - "redhat-release"
-            - "redhat-release-eula"
             - "rsync"
             - "tar"
             - "tcpdump"
             - "tuned"
-          exclude:
-            - "dracut-config-rescue"
           conditions:
             "add subscription-manager-cockpit on rhel":
               when:
@@ -970,7 +983,22 @@ image_types:
               append:
                 include:
                   - "subscription-manager-cockpit"
-
+            "include dracut-config-rescue exclude redhat-release-eula on Oracle Linux":
+              when:
+                distro_name: "ol"
+              append:
+                include:
+                  - "dracut-config-rescue"
+                exclude:
+                  - "redhat-release-eula"
+            "include redhat-release-eula exclude dracut-config-rescue when not Oracle Linux":
+              when:
+                not_distro_name: "ol"
+              append:
+                include:
+                  - "redhat-release-eula"
+                exclude:
+                  - "dracut-config-rescue"
   qcow2: &qcow2
     name_aliases: ["guest-image"]
     filename: "disk.qcow2"
@@ -991,10 +1019,20 @@ image_types:
         image_format: "qcow2"
       - <<: *s390x_zipl_platform
         image_format: "qcow2"
+    platforms_override:
+      conditions:
+        "overriding supported platforms for oracle linux images":
+          when:
+            distro_name: "ol"
+          override:
+            - <<: *x86_64_bios_platform
+              image_format: "qcow2"
+            - <<: *aarch64_platform
+              image_format: "qcow2"
     image_config: &qcow2_image_config
       default_target: "multi-user.target"
       kernel_options: ["console=tty0", "console=ttyS0,115200n8"]
-      conditions:
+      conditions: &qcow2_image_config_conditions
         "tweak the rhsm config on rhel":
           when:
             distro_name: "rhel"
@@ -1026,7 +1064,6 @@ image_types:
             - "python3-jsonschema"
             - "qemu-guest-agent"
             - "redhat-release"
-            - "redhat-release-eula"
             - "rsync"
             - "system-reinstall-bootc"
             - "tar"
@@ -1075,6 +1112,28 @@ image_types:
                 include:
                   - "insights-client"
                   - "subscription-manager-cockpit"
+            "exclude redhat-release-eula on Oracle Linux":
+              when:
+                distro_name: "ol"
+              append:
+                exclude:
+                  - "redhat-release-eula"
+            "include redhat-release-eula when not Oracle Linux":
+              when:
+                not_distro_name: "ol"
+              append:
+                include:
+                  - "redhat-release-eula"
+            "exclude rhn packages on Oracle Linux":
+              when:
+                distro_name: "ol"
+              append:
+                exclude:
+                  - "rhn-check"
+                  - "rhn-setup"
+                  - "rhnsd"
+                  - "dnf-plugin-spacewalk"
+
     blueprint:
       supported_options: *supported_options_disk
 
@@ -1147,6 +1206,13 @@ image_types:
           config:
             add_drivers:
               - "mlx5_core"
+      conditions:
+        <<: *qcow2_image_config_conditions
+        "oracle linux is hostonly":
+          when:
+            distro_name: "ol"
+          shallow_merge:
+            hostonly: true
     partition_table:
       x86_64:
         type: "gpt"
@@ -1394,6 +1460,14 @@ image_types:
       - arch: "aarch64"
       - arch: "ppc64le"
       - arch: "s390x"
+    platforms_override:
+      conditions:
+        "overriding supported platforms for oracle linux images":
+          when:
+            distro_name: "ol"
+          override:
+            - arch: "x86_64"
+            - arch: "aarch64"
     blueprint:
       supported_options:
         # We've never tested many options or customizations with this image type
@@ -1410,6 +1484,7 @@ image_types:
         - "customizations.dnf"
         - "customizations.files"
         - "customizations.firewall"
+        - "customizations.firstboot"
         - "customizations.user"
         - "customizations.sshkey"
         - "customizations.group"
@@ -1581,7 +1656,6 @@ image_types:
             - "langpacks-en"
             - "NetworkManager-cloud-setup"
             - "redhat-release"
-            - "redhat-release-eula"
             - "rsync"
             - "system-reinstall-bootc"
             - "tuned"
@@ -1625,6 +1699,12 @@ image_types:
               append:
                 include:
                   - "insights-client"
+            "include redhat-release-eula when not Oracle Linux":
+              when:
+                not_distro_name: "ol"
+              append:
+                include:
+                  - "redhat-release-eula"
     blueprint:
       supported_options: *supported_options_disk
 
@@ -1773,6 +1853,7 @@ image_types:
         - "customizations.dnf"
         - "customizations.files"
         - "customizations.filesystem"
+        - "customizations.firstboot"
         - "customizations.partitioning_mode"
         - "customizations.fips"
         - "customizations.firewall"
@@ -1933,10 +2014,12 @@ image_types:
         - "groups"
         - "enabled_modules"
         - "containers"
+        - "customizations.cacerts"
         - "customizations.dnf"
         - "customizations.directories"
         - "customizations.files"
         - "customizations.firewall"
+        - "customizations.firstboot"
         - "customizations.user"
         - "customizations.sshkey"
         - "customizations.group"
@@ -2063,7 +2146,6 @@ image_types:
             - "prefixdevname"
             - "python3-pyatspi"
             - "rdma-core"
-            - "redhat-release-eula"
             - "rng-tools"
             - "rpcbind"
             - "rpm-ostree"
@@ -2102,6 +2184,24 @@ image_types:
               append:
                 include:
                   - "dmidecode"
+            "add Oracle Linux UEK kernel":
+              when:
+                distro_name: "ol"
+              append:
+                include:
+                  - "kernel-uek"
+            "add dracut-config-rescue for Oracle Linux installer":
+              when:
+                distro_name: "ol"
+              append:
+                include:
+                  - "dracut-config-rescue"
+            "include redhat-release-eula when not Oracle Linux":
+              when:
+                not_distro_name: "ol"
+              append:
+                include:
+                  - "redhat-release-eula"
     blueprint:
       supported_options:
         - "distro"
@@ -2116,6 +2216,7 @@ image_types:
         - "customizations.directories"
         - "customizations.files"
         - "customizations.firewall"
+        - "customizations.firstboot"
         - "customizations.user"
         - "customizations.sshkey"
         - "customizations.group"
@@ -2383,6 +2484,7 @@ image_types:
         - "customizations.dnf"
         - "customizations.files"
         - "customizations.filesystem"
+        - "customizations.firstboot"
         - "customizations.partitioning_mode"
         - "customizations.fips"
         - "customizations.firewall"
@@ -2520,6 +2622,61 @@ image_types:
         - "distro"
         - "customizations.fips"
         - "customizations.locale"
+
+  "minimal-raw-xz":
+    filename: "image.raw.xz"
+    compression: "xz"
+    mime_type: "application/xz"
+    image_func: "disk"
+    exports: ["xz"]
+    bootable: true
+    required_partition_sizes: *default_required_dir_sizes
+    platforms:
+      - <<: *x86_64_uefi_platform
+        image_format: "raw"
+      - <<: *aarch64_platform
+        image_format: "raw"
+    package_sets:
+      os:
+        - include:
+            - "@core"
+            - "bash-completion"
+            - "grubby"
+            - "fwupd-efi"
+            - "libxkbcommon"
+            - "NetworkManager-wifi"
+            - "linux-firmware"
+            - "brcmfmac-firmware"
+            - "iwlwifi-mvm-firmware"
+            - "realtek-firmware"
+          exclude:
+            - "dracut-config-rescue"
+    partition_table:
+      x86_64: &partition_table_minimal_raw_x86_64
+        type: "gpt"
+        partitions:
+          - &minimal_raw_partition_table_part_efi
+            size: "200 MiB"
+            type: *efi_system_partition_guid
+            payload_type: "filesystem"
+            payload:
+              type: vfat
+              mountpoint: "/boot/efi"
+              label: "ESP"
+              fstab_options: "defaults,uid=0,gid=0,umask=077,shortname=winnt"
+              fstab_freq: 0
+              fstab_passno: 2
+          - &minimal_raw_partition_table_part_root
+            size: "2 GiB"
+            type: *filesystem_data_guid
+            payload_type: "filesystem"
+            payload:
+              <<: *default_partition_table_part_root_payload
+      aarch64:
+        start_offset: "16 MiB"
+        <<: *partition_table_minimal_raw_x86_64
+    blueprint:
+      supported_options: *supported_options_disk
 
   "pxe-tar-xz":
     filename: "pxe.tar.xz"

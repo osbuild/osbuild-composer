@@ -125,6 +125,10 @@ func NewClient(credentials Credentials, tenantID, subscriptionID string) (*Clien
 	}, nil
 }
 
+func (c *Client) SubscriptionID() string {
+	return c.subscription
+}
+
 // Tag is a name-value pair representing the tag structure in Azure
 type Tag struct {
 	Name  string

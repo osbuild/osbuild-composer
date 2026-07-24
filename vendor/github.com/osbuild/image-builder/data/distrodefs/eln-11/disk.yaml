@@ -297,6 +297,7 @@
     - "customizations.dnf"
     - "customizations.files"
     - "customizations.filesystem"
+    - "customizations.firstboot"
     - "customizations.partitioning_mode"
     - "customizations.fips"
     - "customizations.firewall"
@@ -826,7 +827,7 @@ image_types:
       enabled_services:
         - "sshd"
         - "rngd"
-        - "dnf-automatic.timer"
+        - "dnf5-automatic.timer"
       disabled_services:
         - "sshd-keygen@"
         - "reboot.target"
@@ -888,7 +889,7 @@ image_types:
             - "@core"
             - "langpacks-en"  # not in Google's KS
             - "acpid"
-            - "dnf-automatic"
+            - "dnf5-plugin-automatic"
             - "net-tools"
             - "python3"
             - "rng-tools"

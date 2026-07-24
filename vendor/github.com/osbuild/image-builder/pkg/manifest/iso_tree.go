@@ -25,6 +25,7 @@ type ISOTree struct {
 
 	RootfsCompression string
 	RootfsType        ISORootfsType
+	RootfsExcludes    []string
 	// set only when RootfsType is erofs
 	ErofsOptions *osbuild.ErofsStageOptions `yaml:"erofs_options,omitempty"`
 
@@ -79,7 +80,7 @@ func (p *ISOTree) NewSquashfsStage() (*osbuild.Stage, error) {
 	}
 
 	// Clean up the root filesystem's /boot to save space
-	squashfsOptions.ExcludePaths = installerBootExcludePaths
+	squashfsOptions.ExcludePaths = p.RootfsExcludes
 
 	return osbuild.NewSquashfsStage(&squashfsOptions, p.treePipeline.Name()), nil
 }
@@ -97,7 +98,7 @@ func (p *ISOTree) NewErofsStage() (*osbuild.Stage, error) {
 	erofsOptions.Filename = "LiveOS/squashfs.img"
 
 	// Clean up the root filesystem's /boot to save space
-	erofsOptions.ExcludePaths = installerBootExcludePaths
+	erofsOptions.ExcludePaths = p.RootfsExcludes
 
 	return osbuild.NewErofsStage(erofsOptions, p.treePipeline.Name()), nil
 }

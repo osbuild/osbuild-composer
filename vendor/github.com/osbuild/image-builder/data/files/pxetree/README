@@ -1,7 +1,7 @@
 # About this archive
 
 This archive contains files suitable for use with PXE booting or UEFI HTTP booting.
-It includes this following:
+It includes the following:
 
 * EFI/ directory tree of shim and Grub2 bootloader files
 * vmlinuz - kernel

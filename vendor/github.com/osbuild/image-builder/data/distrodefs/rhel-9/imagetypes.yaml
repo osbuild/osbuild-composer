@@ -278,7 +278,6 @@
       - "langpacks-en"
       - "NetworkManager-cloud-setup"
       - "redhat-release"
-      - "redhat-release-eula"
       - "rsync"
       - "tuned"
       - "tar"
@@ -317,6 +316,18 @@
     conditions:
       "insights client on rhel": *conditions_pkgsets_insights_client_on_rhel
       "system reinstall bootc": *conditions_pkgsets_system_reinstall_bootc
+      "exclude redhat-release-eula on Oracle Linux":
+        when:
+          distro_name: "ol"
+        append:
+          exclude:
+            - "redhat-release-eula"
+      "include redhat-release-eula when not Oracle Linux":
+        when:
+          not_distro_name: "ol"
+        append:
+          include:
+            - "redhat-release-eula"
 
   azure_base_pkgset: &azure_base_pkgset
     include:
@@ -574,6 +585,18 @@
         append:
           include:
             - "biosdevname"
+      "ol kernel":
+        when:
+          distro_name: "ol"
+        append:
+          include:
+            - "kernel-uek"
+      "add dracut-config-rescue for ol installer":
+        when:
+          distro_name: "ol"
+        append:
+          include:
+            - "dracut-config-rescue"
 
   wsl: &wsl_config
     config:
@@ -687,7 +710,6 @@
       - "prefixdevname"
       - "python3-pyatspi"
       - "rdma-core"
-      - "redhat-release-eula"
       - "rng-tools"
       - "rpcbind"
       - "rpm-ostree"
@@ -737,6 +759,24 @@
         append:
           include:
             - "dmidecode"
+      "exclude redhat-release-eula on Oracle Linux":
+        when:
+          distro_name: "ol"
+        append:
+          exclude:
+            - "redhat-release-eula"
+      "include redhat-release-eula when not Oracle Linux":
+        when:
+          not_distro_name: "ol"
+        append:
+          include:
+            - "redhat-release-eula"
+      "Add UEK kernel for Oracle Linux":
+        when:
+          distro_name: "ol"
+        append:
+          include:
+            - "kernel-uek"
 
   partitioning:
     ids:
@@ -1256,6 +1296,18 @@
     install_weak_deps: true
 
   default_iso_config: &default_iso_config
+    rootfs_excludes:
+      - "boot/efi/.*"
+      - "boot/grub2/.*"
+      - "boot/config-.*"
+      - "boot/initramfs-.*"
+      - "boot/loader/.*"
+      - "boot/symvers-.*"
+      - "boot/System.map-.*"
+      - "usr/lib/sysimage/rpm/.*"
+      - "var/lib/rpm/.*"
+      - "var/lib/yum/.*"
+      - "var/lib/dnf/.*"
     conditions:
       "x86_64 uses syslinux":
         when:
@@ -1290,6 +1342,7 @@
       - "customizations.dnf"
       - "customizations.files"
       - "customizations.filesystem"
+      - "customizations.firstboot"
       - "customizations.partitioning_mode"
       - "customizations.fips"
       - "customizations.firewall"
@@ -1315,11 +1368,13 @@
       - "groups"
       - "enabled_modules"
       - "containers"
+      - "customizations.cacerts"
       - "customizations.dnf"
       - "customizations.directories"
       - "customizations.files"
       - "customizations.fips"
       - "customizations.firewall"
+      - "customizations.firstboot"
       - "customizations.user"
       - "customizations.sshkey"
       - "customizations.group"
@@ -1334,11 +1389,13 @@
     # options supported by ostree disk (deployment) image types
     supported_options_ostree_disk: &supported_options_ostree_disk
       - "distro"
+      - "customizations.cacerts"
       - "customizations.files"
       - "customizations.directories"
       - "customizations.disk"
       - "customizations.dnf"
       - "customizations.filesystem"
+      - "customizations.firstboot"
       - "customizations.partitioning_mode"
       - "customizations.fips"
       - "customizations.user"
@@ -1362,6 +1419,7 @@
       - "customizations.files"
       - "customizations.fips"
       - "customizations.firewall"
+      - "customizations.firstboot"
       - "customizations.user"
       - "customizations.sshkey"
       - "customizations.group"
@@ -1383,9 +1441,11 @@
       - "groups"
       - "enabled_modules"
       - "containers"
+      - "customizations.cacerts"
       - "customizations.directories"
       - "customizations.files"
       - "customizations.firewall"
+      - "customizations.firstboot"
       - "customizations.user"
       - "customizations.sshkey"
       - "customizations.group"
@@ -1444,20 +1504,33 @@ image_types:
             - "python3-jsonschema"
             - "qemu-guest-agent"
             - "redhat-release"
-            - "redhat-release-eula"
             - "rsync"
             - "tar"
             - "tcpdump"
             - "tuned"
-          exclude:
-            - "dracut-config-rescue"
-          conditions:
+          conditions: &conditions_subscription_manager_cockpit
             "add subscription-manager-cockpit on rhel":
               when:
                 distro_name: "rhel"
               append:
                 include:
                   - "subscription-manager-cockpit"
+            "include dracut-config-rescue exclude redhat-release-eula on Oracle Linux":
+              when:
+                distro_name: "ol"
+              append:
+                include:
+                  - "dracut-config-rescue"
+                exclude:
+                  - "redhat-release-eula"
+            "include redhat-release-eula exclude dracut-config-rescue when not Oracle Linux":
+              when:
+                not_distro_name: "ol"
+              append:
+                include:
+                  - "redhat-release-eula"
+                exclude:
+                  - "dracut-config-rescue"
 
   qcow2: &qcow2
     name_aliases: ["guest-image"]
@@ -1479,13 +1552,23 @@ image_types:
         image_format: "qcow2"
       - <<: *s390x_zipl_platform
         image_format: "qcow2"
+    platforms_override:
+      conditions:
+        "overriding supported platforms for oracle linux images":
+          when:
+            distro_name: "ol"
+          override:
+            - <<: *x86_64_bios_platform
+              image_format: "qcow2"
+            - <<: *aarch64_platform
+              image_format: "qcow2"
     image_config: &qcow2_image_config
       default_target: "multi-user.target"
       kernel_options:
         - "console=tty0"
         - "console=ttyS0,115200n8"
         - "net.ifnames=0"
-      conditions:
+      conditions: &qcow2_image_config_conditions
         "tweak the rhsm config on rhel":
           when:
             distro_name: "rhel"
@@ -1501,7 +1584,8 @@ image_types:
       <<: *default_partition_tables
     package_sets:
       os:
-        - include:
+        - &qcow2_pkgset
+          include:
             - "@core"
             - "authselect-compat"
             - "chrony"
@@ -1518,7 +1602,6 @@ image_types:
             - "python3-jsonschema"
             - "qemu-guest-agent"
             - "redhat-release"
-            - "redhat-release-eula"
             - "rsync"
             - "tar"
             - "tuned"
@@ -1567,6 +1650,21 @@ image_types:
                 include:
                   - "insights-client"
                   - "subscription-manager-cockpit"
+            "exclude rhn packages on Oracle Linux":
+              when:
+                distro_name: "ol"
+              append:
+                exclude:
+                  - "rhn-check"
+                  - "rhn-setup"
+                  - "rhnsd"
+                  - "dnf-plugin-spacewalk"
+            "include redhat-release-eula when not Oracle Linux":
+              when:
+                not_distro_name: "ol"
+              append:
+                include:
+                  - "redhat-release-eula"
     blueprint:
       supported_options: *supported_options_disk
 
@@ -1642,6 +1740,13 @@ image_types:
           config:
             add_drivers:
               - "mlx5_core"
+      conditions:
+        <<: *qcow2_image_config_conditions
+        "oracle linux is hostonly":
+          when:
+            distro_name: "ol"
+          shallow_merge:
+            hostonly: true
     partition_table:
       x86_64:
         type: "gpt"
@@ -1890,6 +1995,14 @@ image_types:
       - arch: "aarch64"
       - arch: "ppc64le"
       - arch: "s390x"
+    platforms_override:
+      conditions:
+        "overriding supported platforms for oracle linux images":
+          when:
+            distro_name: "ol"
+          override:
+            - arch: "x86_64"
+            - arch: "aarch64"
     package_sets:
       os:
         - include:
@@ -1913,6 +2026,7 @@ image_types:
         - "customizations.directories"
         - "customizations.files"
         - "customizations.firewall"
+        - "customizations.firstboot"
         - "customizations.user"
         - "customizations.sshkey"
         - "customizations.group"
@@ -2281,6 +2395,7 @@ image_types:
         - "customizations.dnf"
         - "customizations.files"
         - "customizations.filesystem"
+        - "customizations.firstboot"
         - "customizations.partitioning_mode"
         - "customizations.fips"
         - "customizations.firewall"
@@ -2436,10 +2551,12 @@ image_types:
         - "groups"
         - "enabled_modules"
         - "containers"
+        - "customizations.cacerts"
         - "customizations.dnf"
         - "customizations.directories"
         - "customizations.files"
         - "customizations.firewall"
+        - "customizations.firstboot"
         - "customizations.user"
         - "customizations.sshkey"
         - "customizations.group"
@@ -2526,6 +2643,7 @@ image_types:
         - "customizations.directories"
         - "customizations.files"
         - "customizations.firewall"
+        - "customizations.firstboot"
         - "customizations.user"
         - "customizations.sshkey"
         - "customizations.group"
@@ -3259,9 +3377,11 @@ image_types:
     blueprint:
       supported_options:
         - "distro"
+        - "customizations.cacerts"
         - "customizations.dnf"
         - "customizations.installation_device"
         - "customizations.filesystem"
+        - "customizations.firstboot"
         - "customizations.disk"
         - "customizations.fdo"
         - "customizations.ignition"
@@ -3450,6 +3570,7 @@ image_types:
         - "customizations.dnf"
         - "customizations.files"
         - "customizations.filesystem"
+        - "customizations.firstboot"
         - "customizations.partitioning_mode"
         - "customizations.fips"
         - "customizations.firewall"

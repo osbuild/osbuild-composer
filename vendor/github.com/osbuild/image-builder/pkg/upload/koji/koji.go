@@ -335,10 +335,8 @@ type Transport struct {
 
 // RoundTrip implements the RoundTripper interface, using the default
 // transport. When a session has been established, also pass along the
-// session credentials. This may not be how the RoundTripper interface
-// is meant to be used, but the underlying XML-RPC helpers don't allow
-// us to adjust the URL per-call (these arguments should really be in
-// the body).
+// session credentials as HTTP headers (Koji >= 1.31). Koji 1.36 disables
+// the older URL query-parameter style by default (DisableURLSessions).
 func (rt *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	// Clone the request, so as not to alter the passed in value.
 	rClone := new(http.Request)
@@ -348,11 +346,10 @@ func (rt *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 		rClone.Header[idx] = append([]string(nil), header...)
 	}
 
-	values := rClone.URL.Query()
-	values.Add("session-id", fmt.Sprintf("%v", rt.sessionID))
-	values.Add("session-key", rt.sessionKey)
-	values.Add("callnum", fmt.Sprintf("%v", rt.callnum))
-	rClone.URL.RawQuery = values.Encode()
+	// Header names match the official Koji Python client.
+	rClone.Header.Set("Koji-Session-Id", fmt.Sprintf("%v", rt.sessionID))
+	rClone.Header.Set("Koji-Session-Key", rt.sessionKey)
+	rClone.Header.Set("Koji-Session-Callnum", fmt.Sprintf("%v", rt.callnum))
 
 	// Each call is given a unique callnum.
 	rt.callnum++

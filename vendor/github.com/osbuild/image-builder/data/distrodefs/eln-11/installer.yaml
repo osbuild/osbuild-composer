@@ -94,6 +94,18 @@
 
   default_iso_config: &default_iso_config
     rootfs_type: "erofs"
+    rootfs_excludes:
+      - "boot/efi/.*"
+      - "boot/grub2/.*"
+      - "boot/config-.*"
+      - "boot/initramfs-.*"
+      - "boot/loader/.*"
+      - "boot/symvers-.*"
+      - "boot/System.map-.*"
+      - "usr/lib/sysimage/rpm/.*"
+      - "var/lib/rpm/.*"
+      - "var/lib/yum/.*"
+      - "var/lib/dnf/.*"
     erofs_options:
       compression:
         method: "lzma"
@@ -136,8 +148,8 @@
       - path: 80-rhel/runtime-postinstall.tmpl
       - path: 80-rhel/runtime-cleanup.tmpl
         after_dracut: true
-    lorax_logos_package: redhat-logos
-    lorax_release_package: redhat-release
+    lorax_logos_package: fedora-eln-logos
+    lorax_release_package: fedora-eln-release
     install_weak_deps: true
 
   anaconda_boot_pkgset: &anaconda_boot_pkgset
@@ -242,7 +254,7 @@ image_types:
             - "anaconda-install-img-deps"
             # - "redhat-release-eula"
             - "device-mapper-multipath"
-            - "dnf"
+            - "dnf5"
             - "rpm-ostree"
             - "ostree"
             - "pigz"
@@ -264,7 +276,6 @@ image_types:
             - "xz"
             - "curl"
             - "bzip2"
-            - "rsvg-pixbuf-loader"
             - "rsyslog"
             - "xfsprogs"
             - "dosfstools"
@@ -399,7 +410,7 @@ image_types:
             - "dejavu-sans-mono-fonts"
             - "device-mapper-persistent-data"
             - "dmidecode"
-            - "dnf"
+            - "dnf5"
             - "dracut-config-generic"
             - "dracut-network"
             - "efibootmgr"
@@ -508,6 +519,7 @@ image_types:
         - "customizations.directories"
         - "customizations.files"
         - "customizations.firewall"
+        - "customizations.firstboot"
         - "customizations.user"
         - "customizations.sshkey"
         - "customizations.group"

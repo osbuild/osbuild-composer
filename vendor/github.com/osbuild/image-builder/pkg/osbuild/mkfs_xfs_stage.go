@@ -1,8 +1,9 @@
 package osbuild
 
 type MkfsXfsStageOptions struct {
-	UUID  string `json:"uuid"`
-	Label string `json:"label,omitempty"`
+	UUID    string `json:"uuid"`
+	Label   string `json:"label,omitempty"`
+	AGCount int    `json:"agcount,omitempty"`
 }
 
 func (MkfsXfsStageOptions) isStageOptions() {}

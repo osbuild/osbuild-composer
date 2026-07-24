@@ -120,6 +120,19 @@ func (img *BootcPXEImage) InstantiateManifestFromContainers(m *manifest.Manifest
 	rootfsPipeline := manifest.NewBootcRootFS(buildPipeline, rawImage, img.platform)
 	rootfsPipeline.ErofsOptions = img.ISOCustomizations.ErofsOptions
 	rootfsPipeline.RootfsType = img.ISOCustomizations.RootfsType
+	rootfsPipeline.RootfsExcludes = []string{
+		"boot/efi/.*",
+		"boot/grub2/.*",
+		"boot/config-.*",
+		"boot/initramfs-.*",
+		"boot/loader/.*",
+		"boot/symvers-.*",
+		"boot/System.map-.*",
+		"usr/lib/sysimage/rpm/.*",
+		"var/lib/rpm/.*",
+		"var/lib/yum/.*",
+		"var/lib/dnf/.*",
+	}
 
 	// Add the rootfs pipeline which compresses the bootc/ostree filesystem and copies
 	// out the kernel, initramfs, and EFI/ files needed for PXE booting it

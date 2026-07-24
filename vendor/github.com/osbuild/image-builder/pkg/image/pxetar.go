@@ -43,6 +43,22 @@ func (img *PXETar) InstantiateManifest(m *manifest.Manifest,
 	}
 
 	pxeTreePipeline := manifest.NewPXETree(buildPipeline, osPipeline)
+
+	// Hard-coded for now but specific to the PXE-tar
+	pxeTreePipeline.RootfsExcludes = []string{
+		"boot/efi/.*",
+		"boot/grub2/.*",
+		"boot/config-.*",
+		"boot/initramfs-.*",
+		"boot/loader/.*",
+		"boot/symvers-.*",
+		"boot/System.map-.*",
+		"usr/lib/sysimage/rpm/.*",
+		"var/lib/rpm/.*",
+		"var/lib/yum/.*",
+		"var/lib/dnf/.*",
+	}
+
 	// TODO
 	// - Setup compresstion (squashfs/erofs, etc.)
 

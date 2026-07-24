@@ -11,6 +11,7 @@ type BootcRootFS struct {
 	Base
 	RootfsCompression string
 	RootfsType        ISORootfsType
+	RootfsExcludes    []string
 	ErofsOptions      osbuild.ErofsStageOptions // set only when RootfsType is erofs
 
 	platform      platform.Platform
@@ -79,7 +80,7 @@ func (p *BootcRootFS) serialize() (osbuild.Pipeline, error) {
 
 		// TODO this is shared with the ISO, should it be?
 		// Clean up the root filesystem's /boot to save space
-		erofsOptions.ExcludePaths = installerBootExcludePaths
+		erofsOptions.ExcludePaths = p.RootfsExcludes
 		erofsOptions.Source = "mount://-/"
 		erofsStage := osbuild.NewErofsWithMountsStage(&erofsOptions, nil, devices, mounts)
 		pipeline.AddStage(erofsStage)

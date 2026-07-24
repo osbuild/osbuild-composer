@@ -88,6 +88,11 @@ distros:
             distro_name: "centos"
           shallow_merge:
             default_oscap_datastream: "/usr/share/xml/scap/ssg/content/ssg-cs10-ds.xml"
+        "oscap needs a different path on Oracle linux":
+          when:
+            distro_name: "ol"
+          shallow_merge:
+            default_oscap_datastream: "/usr/share/xml/scap/ssg/content/ssg-ol10-ds.xml"
 
   - <<: *rhel10
     name: "almalinux-{{.MajorVersion}}.{{.MinorVersion}}"
@@ -134,6 +139,43 @@ distros:
     release_version: 10
     module_platform_id: "platform:el10"
     vendor: "almalinux"
+
+  - <<: *rhel10
+    name: "ol-10"
+    match: 'ol-10\.[0-9]{1,2}'
+    product: "Oracle Linux"
+    os_version: "10"
+    module_platform_id: "platform:el10"
+    # Vendor is used in bootloader UEFI setup
+    # OL retains the redhat component in the EFI path
+    # Would be inherited from &rhel10, but state explicitly for clarity
+    vendor: "redhat"
+    iso_label_tmpl: "OracleLinux-{{.Distro.MajorVersion}}-{{.Distro.MinorVersion}}-{{.Arch}}-dvd"
+    runner:
+      name: org.osbuild.ol10
+      build_packages: *rhel10_runner_build_packages
+    conditions:
+      "some image types are not supported by Oracle Linux":
+        when:
+          distro_name: "ol"
+        ignore_image_types:
+          - edge-ami
+          - edge-commit
+          - edge-container
+          - edge-installer
+          - edge-raw-image
+          - edge-simplified-installer
+          - edge-vsphere
+          - openstack
+          - minimal-raw
+          - vmdk
+          - ova
+          - vagrant-libvirt
+          - vagrant-virtualbox
+          - ec2
+          - ec2-sap
+          - ec2-ha
+          - wsl
 
   - &rhel9
     name: "rhel-{{.MajorVersion}}.{{.MinorVersion}}"
@@ -235,6 +277,11 @@ distros:
             distro_name: "centos"
           shallow_merge:
             default_oscap_datastream: "/usr/share/xml/scap/ssg/content/ssg-cs9-ds.xml"
+        "oscap needs a different path on Oracle linux":
+          when:
+            distro_name: "ol"
+          shallow_merge:
+            default_oscap_datastream: "/usr/share/xml/scap/ssg/content/ssg-ol9-ds.xml"
 
   - <<: *rhel9
     name: "almalinux-{{.MajorVersion}}.{{.MinorVersion}}"
@@ -271,6 +318,43 @@ distros:
       aarch64: "quay.io/toolbx-images/centos-toolbox:stream{{.MajorVersion}}"
       s390x: "quay.io/toolbx-images/centos-toolbox:stream{{.MajorVersion}}"
       ppc64le: "quay.io/toolbx-images/centos-toolbox:stream{{.MajorVersion}}"
+
+  - <<: *rhel9
+    name: "ol-9"
+    match: 'ol-9\.[0-9]{1,2}'
+    product: "Oracle Linux"
+    os_version: 9
+    module_platform_id: "platform:el9"
+    # Vendor is used in bootloader UEFI setup
+    # OL retains the redhat component in the EFI path
+    # Would be inherited from &rhel9, but state explicitly for clarity
+    vendor: "redhat"
+    iso_label_tmpl: "OracleLinux-{{.Distro.MajorVersion}}-{{.Distro.MinorVersion}}-{{.Arch}}-dvd"
+    runner:
+      name: org.osbuild.ol9
+      build_packages: *rhel9_runner_build_packages
+    conditions:
+      "some images types are not supported by Oracle Linux":
+        when:
+          distro_name: "ol"
+        ignore_image_types:
+          - edge-ami
+          - edge-commit
+          - edge-container
+          - edge-installer
+          - edge-raw-image
+          - edge-simplified-installer
+          - edge-vsphere
+          - openstack
+          - minimal-raw
+          - vmdk
+          - ova
+          - vagrant-libvirt
+          - vagrant-virtualbox
+          - ec2
+          - ec2-sap
+          - ec2-ha
+          - wsl
 
   - &rhel8
     name: "rhel-{{.MajorVersion}}.{{.MinorVersion}}"

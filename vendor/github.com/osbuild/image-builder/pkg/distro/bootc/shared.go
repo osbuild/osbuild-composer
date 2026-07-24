@@ -101,6 +101,29 @@ func GetDistroAndRunner(osRelease osinfo.OSRelease) (manifest.Distro, runner.Run
 			return manifest.DISTRO_NULL, r, nil
 		}
 
+	case "ol":
+		versionParts := strings.Split(osRelease.VersionID, ".")
+		// We only use versionParts[0], but check osRelease is valid for safety
+		if len(versionParts) < 2 {
+			return manifest.DISTRO_NULL, nil, fmt.Errorf("invalid Oracle Linux version format: %s", osRelease.VersionID)
+		}
+		major, err := strconv.ParseUint(versionParts[0], 10, 64)
+		if err != nil {
+			return manifest.DISTRO_NULL, nil, fmt.Errorf("cannot parse Oracle Linux major version (%s): %w", versionParts[0], err)
+		}
+		r := &runner.Ol{
+			Version: major,
+		}
+		switch major {
+		case 9:
+			return manifest.DISTRO_EL9, r, nil
+		case 10:
+			return manifest.DISTRO_EL10, r, nil
+		default:
+			olog.Printf("Unknown Oracle Linux version %d, using default distro for manifest generation", major)
+			return manifest.DISTRO_NULL, r, nil
+		}
+
 	case "rhel":
 		versionParts := strings.Split(osRelease.VersionID, ".")
 		if len(versionParts) != 2 {

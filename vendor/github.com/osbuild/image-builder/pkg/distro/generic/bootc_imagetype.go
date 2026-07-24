@@ -28,7 +28,6 @@ import (
 	"github.com/osbuild/image-builder/pkg/pathpolicy"
 	"github.com/osbuild/image-builder/pkg/platform"
 	"github.com/osbuild/image-builder/pkg/policies"
-	"github.com/osbuild/image-builder/pkg/repomigration"
 	"github.com/osbuild/image-builder/pkg/rpmmd"
 	"github.com/osbuild/image-builder/pkg/runner"
 )
@@ -160,8 +159,7 @@ func (t *bootcImageType) Manifest(bp *blueprint.Blueprint, options distro.ImageO
 }
 
 func (t *bootcImageType) manifestWithoutValidation(bp *blueprint.Blueprint, options distro.ImageOptions) (*manifest.Manifest, []string, error) {
-	bd := t.arch.distro.(*BootcDistro)
-	seed, err := cmdutil.SeedArgFor(nil, t.arch.Name(), bd.Name())
+	seed, err := cmdutil.NewRNGSeed()
 	if err != nil {
 		return nil, nil, err
 	}
@@ -227,6 +225,7 @@ func (t *bootcImageType) manifestForDisk(bp *blueprint.Blueprint, options distro
 	img.Bootloader = bd.bootloader
 	img.UnifiedKernel = bd.unifiedKernel
 
+	img.OSCustomizations.Subscription = options.Subscription
 	img.OSCustomizations.Users = users.UsersFromBP(customizations.GetUsers())
 
 	groups, err := customizations.GetGroups()
@@ -257,6 +256,20 @@ func (t *bootcImageType) manifestForDisk(bp *blueprint.Blueprint, options distro
 		img.OSCustomizations.KernelOptionsAppend = append(img.OSCustomizations.KernelOptionsAppend, kopts.Append)
 	}
 
+	if bl := customizations.GetBootloader(); bl != nil && bl.Grub2 != nil {
+		grub2Cfg := &osbuild.GRUB2Config{}
+		if len(bl.Grub2.TerminalInput) > 0 {
+			grub2Cfg.TerminalInput = bl.Grub2.TerminalInput
+		}
+		if len(bl.Grub2.TerminalOutput) > 0 {
+			grub2Cfg.TerminalOutput = bl.Grub2.TerminalOutput
+		}
+		if bl.Grub2.Serial != nil {
+			grub2Cfg.Serial = *bl.Grub2.Serial
+		}
+		img.OSCustomizations.Grub2Config = grub2Cfg
+	}
+
 	rootfsMinSize := max(bd.rootfsMinSize, options.Size)
 
 	pt, err := t.genPartitionTable(customizations, rootfsMinSize, rng)
@@ -271,17 +284,17 @@ func (t *bootcImageType) manifestForDisk(bp *blueprint.Blueprint, options distro
 	if err := blueprint.ValidateDirFileCustomizations(dc, fc); err != nil {
 		return nil, nil, err
 	}
-	if err := repomigration.CheckDirectoryCustomizationsPolicy(dc, policies.OstreeCustomDirectoriesPolicies); err != nil {
+	if err := blueprint.CheckDirectoryCustomizationsPolicy(dc, policies.OstreeCustomDirectoriesPolicies); err != nil {
 		return nil, nil, err
 	}
-	if err := repomigration.CheckFileCustomizationsPolicy(fc, policies.OstreeCustomFilesPolicies); err != nil {
+	if err := blueprint.CheckFileCustomizationsPolicy(fc, policies.OstreeCustomFilesPolicies); err != nil {
 		return nil, nil, err
 	}
-	img.OSCustomizations.Files, err = repomigration.FileCustomizationsToFsNodeFiles(fc)
+	img.OSCustomizations.Files, err = blueprint.FileCustomizationsToFsNodeFiles(fc)
 	if err != nil {
 		return nil, nil, err
 	}
-	img.OSCustomizations.Directories, err = repomigration.DirectoryCustomizationsToFsNodeDirectories(dc)
+	img.OSCustomizations.Directories, err = blueprint.DirectoryCustomizationsToFsNodeDirectories(dc)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -358,6 +371,19 @@ func (t *bootcImageType) initAnacondaInstallerBaseFromSourceInfo(img *image.Anac
 
 	// see https://github.com/osbuild/bootc-image-builder/issues/733
 	img.ISOCustomizations.RootfsType = manifest.SquashfsRootfs
+	img.ISOCustomizations.RootfsExcludes = []string{
+		"boot/efi/.*",
+		"boot/grub2/.*",
+		"boot/config-.*",
+		"boot/initramfs-.*",
+		"boot/loader/.*",
+		"boot/symvers-.*",
+		"boot/System.map-.*",
+		"usr/lib/sysimage/rpm/.*",
+		"var/lib/rpm/.*",
+		"var/lib/yum/.*",
+		"var/lib/dnf/.*",
+	}
 
 	// Enabled by default to keep backwards compatibility
 	img.InstallerCustomizations.InstallWeakDeps = true
@@ -469,6 +495,19 @@ func (t *bootcImageType) manifestForGenericISO(options distro.ImageOptions, rng 
 	}
 	img.RootfsCompression = "zstd"
 	img.RootfsType = manifest.SquashfsRootfs
+	img.RootfsExcludes = []string{
+		"boot/efi/.*",
+		"boot/grub2/.*",
+		"boot/config-.*",
+		"boot/initramfs-.*",
+		"boot/loader/.*",
+		"boot/symvers-.*",
+		"boot/System.map-.*",
+		"usr/lib/sysimage/rpm/.*",
+		"var/lib/rpm/.*",
+		"var/lib/yum/.*",
+		"var/lib/dnf/.*",
+	}
 
 	// Potentially KernelInfo is nil when we couldn't read it from the container; handle that so
 	// we don't panic
@@ -518,11 +557,11 @@ func (t *bootcImageType) manifestForGenericISO(options distro.ImageOptions, rng 
 	return &mf, nil, err
 }
 
-// newDistroYAMLFrom() returns the distroYAML for the given sourceInfo,
+// NewDistroYAMLFrom() returns the distroYAML for the given sourceInfo,
 // if no direct match can be found it will it will use the ID_LIKE.
 // This should ensure we work on every bootc image that puts a correct
 // ID_LIKE= in /etc/os-release
-func newDistroYAMLFrom(loader *defs.Loader, sourceInfo *osinfo.Info) (*defs.DistroYAML, *distro.ID, error) {
+func NewDistroYAMLFrom(loader *defs.Loader, sourceInfo *osinfo.Info) (*defs.DistroYAML, *distro.ID, error) {
 	for _, distroID := range append([]string{sourceInfo.OSRelease.ID}, sourceInfo.OSRelease.IDLike...) {
 		nameVer := fmt.Sprintf("%s-%s", distroID, sourceInfo.OSRelease.VersionID)
 		id, err := distro.ParseID(nameVer)
@@ -556,7 +595,7 @@ func (t *bootcImageType) manifestForLegacyISO(bp *blueprint.Blueprint, options d
 	archStr := t.arch.Name()
 	sourceInfo := bd.sourceInfo
 
-	distroYAML, id, err := newDistroYAMLFrom(defs.BuiltinLoader(), bd.sourceInfo)
+	distroYAML, id, err := NewDistroYAMLFrom(defs.BuiltinLoader(), bd.sourceInfo)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -699,17 +738,17 @@ func (t *bootcImageType) manifestForPXETar(bp *blueprint.Blueprint, options dist
 	if err := blueprint.ValidateDirFileCustomizations(dc, fc); err != nil {
 		return nil, nil, err
 	}
-	if err := repomigration.CheckDirectoryCustomizationsPolicy(dc, policies.OstreeCustomDirectoriesPolicies); err != nil {
+	if err := blueprint.CheckDirectoryCustomizationsPolicy(dc, policies.OstreeCustomDirectoriesPolicies); err != nil {
 		return nil, nil, err
 	}
-	if err := repomigration.CheckFileCustomizationsPolicy(fc, policies.OstreeCustomFilesPolicies); err != nil {
+	if err := blueprint.CheckFileCustomizationsPolicy(fc, policies.OstreeCustomFilesPolicies); err != nil {
 		return nil, nil, err
 	}
-	img.OSCustomizations.Files, err = repomigration.FileCustomizationsToFsNodeFiles(fc)
+	img.OSCustomizations.Files, err = blueprint.FileCustomizationsToFsNodeFiles(fc)
 	if err != nil {
 		return nil, nil, err
 	}
-	img.OSCustomizations.Directories, err = repomigration.DirectoryCustomizationsToFsNodeDirectories(dc)
+	img.OSCustomizations.Directories, err = blueprint.DirectoryCustomizationsToFsNodeDirectories(dc)
 	if err != nil {
 		return nil, nil, err
 	}

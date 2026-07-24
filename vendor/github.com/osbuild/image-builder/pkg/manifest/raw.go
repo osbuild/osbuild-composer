@@ -121,6 +121,12 @@ func (p *RawImage) serialize() (osbuild.Pipeline, error) {
 		// an error it's empty and the stage options will omit it
 		opts.BootPath, _ = findXBootLDRMountpoint(p.treePipeline.PartitionTable)
 
+		if cfg := p.treePipeline.OSCustomizations.SystemdBoot; cfg != nil {
+			opts.RandomSeed = cfg.RandomSeed
+			opts.MakeEntryDirectory = cfg.MakeEntryDirectory
+			opts.EntryToken = cfg.EntryToken
+		}
+
 		pipeline.AddStage(osbuild.NewBootctlInstallRootStage(opts, bootctlDevices, bootctlMounts))
 	}
 

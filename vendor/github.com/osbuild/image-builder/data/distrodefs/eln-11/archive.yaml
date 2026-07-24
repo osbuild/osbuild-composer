@@ -32,6 +32,7 @@ image_types:
         - "customizations.dnf"
         - "customizations.files"
         - "customizations.firewall"
+        - "customizations.firstboot"
         - "customizations.user"
         - "customizations.sshkey"
         - "customizations.group"

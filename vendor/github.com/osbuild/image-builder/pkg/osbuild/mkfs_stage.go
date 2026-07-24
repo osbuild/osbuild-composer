@@ -45,6 +45,10 @@ func GenFsStages(pt *disk.PartitionTable, filename string, soucePipeline string)
 					UUID:  e.UUID,
 					Label: e.Label,
 				}
+				if mkfsOptions.AGCount != 0 {
+					options.AGCount = mkfsOptions.AGCount
+					mkfsOptions.AGCount = 0 // Handled
+				}
 				stages = append(stages, NewMkfsXfsStage(options, stageDevices))
 			case "vfat":
 				options := &MkfsFATStageOptions{
@@ -80,6 +84,9 @@ func GenFsStages(pt *disk.PartitionTable, filename string, soucePipeline string)
 			}
 			if mkfsOptions.Verity {
 				panic(fmt.Sprintf("fs type: %s does not support verity option", e.GetFSType()))
+			}
+			if mkfsOptions.AGCount != 0 {
+				panic(fmt.Sprintf("fs type: %s does not support agcount option", e.GetFSType()))
 			}
 
 		case *disk.Btrfs:

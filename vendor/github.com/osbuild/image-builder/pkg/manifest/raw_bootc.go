@@ -49,6 +49,8 @@ type RawBootcImage struct {
 
 	// DiskCustomizations can influence things in the base OS tree
 	DiskCustomizations DiskCustomizations
+
+	inlineData []string
 }
 
 func (p RawBootcImage) Filename() string {
@@ -261,6 +263,38 @@ func (p *RawBootcImage) serialize() (osbuild.Pipeline, error) {
 			postStages = append(postStages, stages...)
 		}
 
+		if p.OSCustomizations.Subscription != nil {
+			subStage, subDirs, subFiles, subServices, err := subscriptionService(
+				*p.OSCustomizations.Subscription,
+				&subscriptionServiceOptions{
+					// ostree based: unit in /etc (not /usr commit content),
+					// insights on boot
+					InsightsOnBoot: true,
+					UnitPath:       osbuild.EtcUnitPath,
+					// no-op for now: manifestForDisk never sets OSCustomizations.PermissiveRHC
+					PermissiveRHC: common.ValueOrEmpty(p.OSCustomizations.PermissiveRHC),
+				})
+			if err != nil {
+				return osbuild.Pipeline{}, err
+			}
+
+			subFileStages, err := p.genFileStagesAndRecordInlineData(subFiles)
+			if err != nil {
+				return osbuild.Pipeline{}, err
+			}
+			stages := []*osbuild.Stage{subStage}
+			stages = append(stages, osbuild.GenDirectoryNodesStages(subDirs)...)
+			stages = append(stages, subFileStages...)
+			stages = append(stages, osbuild.NewSystemdStage(&osbuild.SystemdStageOptions{
+				EnabledServices: subServices,
+			}))
+			for _, stage := range stages {
+				stage.Mounts = mounts
+				stage.Devices = devices
+			}
+			postStages = append(postStages, stages...)
+		}
+
 		// First create custom directories, because some of the custom files may depend on them
 		if len(p.OSCustomizations.Directories) > 0 {
 
@@ -273,7 +307,10 @@ func (p *RawBootcImage) serialize() (osbuild.Pipeline, error) {
 		}
 
 		if len(p.OSCustomizations.Files) > 0 {
-			stages := osbuild.GenFileNodesStages(p.OSCustomizations.Files)
+			stages, err := p.genFileStagesAndRecordInlineData(p.OSCustomizations.Files)
+			if err != nil {
+				return osbuild.Pipeline{}, err
+			}
 			for _, stage := range stages {
 				stage.Mounts = mounts
 				stage.Devices = devices
@@ -309,6 +346,23 @@ func (p *RawBootcImage) serialize() (osbuild.Pipeline, error) {
 			postStages = append(postStages, ignitionStage)
 		}
 
+		// Apply grub2 console configuration (terminal_input, terminal_output,
+		// serial) via the grub2.d stage which writes a drop-in config file
+		// under boot/grub2/. Like ignition, this writes to /boot so we use
+		// bootupd mounts.
+		if grub2dCfg := osbuild.NewGrub2DConfigFromGrub2Config(p.OSCustomizations.Grub2Config); grub2dCfg != nil {
+			grub2dOpts := &osbuild.Grub2DStageOptions{
+				Config: grub2dCfg,
+				Path:   "tree:///boot/grub2/console.cfg",
+			}
+			grub2dStage := osbuild.NewGrub2DStage(grub2dOpts)
+			grub2dStage.Devices, grub2dStage.Mounts, err = osbuild.GenBootupdDevicesMounts(p.filename, p.PartitionTable, p.platform)
+			if err != nil {
+				return osbuild.Pipeline{}, fmt.Errorf("gen devices for grub2.d stage failed %w", err)
+			}
+			postStages = append(postStages, grub2dStage)
+		}
+
 		pipeline.AddStages(postStages...)
 
 		// In case we created any files in the deploy directory we need to relabel
@@ -333,16 +387,24 @@ func (p *RawBootcImage) serialize() (osbuild.Pipeline, error) {
 	return pipeline, nil
 }
 
-// XXX: duplicated from os.go
 func (p *RawBootcImage) getInline() []string {
-	inlineData := []string{}
+	return p.inlineData
+}
 
-	// inline data for custom files
-	for _, file := range p.OSCustomizations.Files {
-		inlineData = append(inlineData, string(file.Data()))
+// genFileStagesAndRecordInlineData returns the stages that create the given
+// files and records their content as inline data for getInline().
+func (p *RawBootcImage) genFileStagesAndRecordInlineData(files []*fsnode.File) ([]*osbuild.Stage, error) {
+	for _, file := range files {
+		// files that come via an URI are not inline data, they
+		// would need to be added to the manifest sources via a
+		// fileRefs() implementation like the one in the OS pipeline
+		if file.URI() != "" {
+			return nil, fmt.Errorf("cannot create file %q from %q: files from an URI are not supported for bootc disk images", file.Path(), file.URI())
+		}
+		p.inlineData = append(p.inlineData, string(file.Data()))
 	}
 
-	return inlineData
+	return osbuild.GenFileNodesStages(files), nil
 }
 
 // XXX: copied from raw.go

@@ -15,6 +15,9 @@ type ISOConfig struct {
 	// is used
 	RootfsType *manifest.ISORootfsType `yaml:"rootfs_type,omitempty"`
 
+	// RootfsExcludes lists paths for exclusion from a rootfs
+	RootfsExcludes []string `yaml:"rootfs_excludes,omitempty"`
+
 	// set only when RootfsType is erofs
 	ErofsOptions *osbuild.ErofsStageOptions `yaml:"erofs_options,omitempty"`
 

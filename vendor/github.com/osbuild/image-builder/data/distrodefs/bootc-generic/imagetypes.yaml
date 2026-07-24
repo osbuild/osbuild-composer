@@ -87,6 +87,7 @@
 
   supported_options_lists:
     supported_options_disk: &supported_options_disk
+      - "customizations.bootloader"
       - "customizations.directories"
       - "customizations.disk"
       - "customizations.files"
@@ -118,7 +119,7 @@ image_types:
     exports: ["image"]
     required_partition_sizes: *default_required_dir_sizes
     partition_table: *default_bootc_partition_table
-    image_config:
+    image_config: &raw_image_config
       kernel_options: *bootc_kernel_options
     blueprint:
       supported_options: *supported_options_disk
@@ -127,11 +128,13 @@ image_types:
     <<: *raw_image_type
     filename: "disk.raw"
 
-  "qcow2":
+  "qcow2": &qcow2_image_type
     <<: *raw_image_type
     filename: "disk.qcow2"
     mime_type: "application/x-qemu-disk"
     exports: ["qcow2"]
+    image_config: &qcow2_image_config
+      <<: *raw_image_config
 
   "vmdk":
     <<: *raw_image_type
@@ -157,6 +160,12 @@ image_types:
     filename: "image.ova"
     mime_type: "application/ovf"
     exports: ["archive"]
+
+  oci:
+    <<: *qcow2_image_type
+    image_config:
+      <<: *qcow2_image_config
+      hostonly: true
 
   bootc-installer:
     mime_type: "application/x-iso9660-image"

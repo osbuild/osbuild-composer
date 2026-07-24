@@ -438,7 +438,7 @@ func (h *v2Handler) reposFromRPMMD(cfg *solverConfig, rpmRepos []rpmmd.RepoConfi
 
 			// NOTE: It is assumed that the s.subscriptions are not nil if the repo needs RHSM secrets
 			// because validateSubscriptionsForRepos() is called before makeDepsolveRequest().
-			secrets, err := cfg.subscriptions.GetSecretsForBaseurl(rr.BaseURLs, cfg.arch, cfg.releaseVer)
+			secrets, err := cfg.subscriptions.GetSecretsForBaseurl(rr.BaseURLs)
 			if err != nil {
 				return nil, fmt.Errorf("getting RHSM secrets for baseurl %s failed: %w", rr.BaseURLs, err)
 			}

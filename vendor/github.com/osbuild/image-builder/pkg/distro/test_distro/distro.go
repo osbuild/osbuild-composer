@@ -13,7 +13,6 @@ import (
 	"github.com/osbuild/image-builder/pkg/ostree"
 	"github.com/osbuild/image-builder/pkg/platform"
 	"github.com/osbuild/image-builder/pkg/policies"
-	"github.com/osbuild/image-builder/pkg/repomigration"
 	"github.com/osbuild/image-builder/pkg/rpmmd"
 	"github.com/osbuild/image-builder/pkg/runner"
 )
@@ -245,7 +244,7 @@ func (t *TestImageType) Manifest(b *blueprint.Blueprint, options distro.ImageOpt
 	if b != nil {
 		mountpoints := b.Customizations.GetFilesystems()
 
-		err := repomigration.CheckMountpointsPolicy(mountpoints, policies.MountpointPolicies)
+		err := blueprint.CheckMountpointsPolicy(mountpoints, policies.MountpointPolicies)
 		if err != nil {
 			return nil, nil, err
 		}

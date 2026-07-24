@@ -13,7 +13,7 @@ distros:
     defs_path: "eln-11"
     iso_label_tmpl: "Fedora-ELN-{{.Distro.MajorVersion}}-0-BaseOS-{{.Arch}}"
     runner:
-      name: "org.osbuild.rhel{{.MajorVersion}}"
+      name: "org.osbuild.eln{{.MajorVersion}}"
       build_packages: &rhel10_runner_build_packages
         - "glibc"  # ldconfig
         - "systemd"  # systemd-tmpfiles and systemd-sysusers

@@ -1,3 +1,37 @@
+# v0.3.1 (2026-07-08.2)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v0.3.0 (2026-07-08)
+
+* **Feature**: Add RequestChecksumCalculation config.
+
+# v0.2.14 (2026-07-06)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v0.2.13 (2026-07-01)
+
+* **Bug Fix**: Bump smithy-go to 1.27.3, fix JSON encorder for document.Number, endpoint host label format validation and CBOR union serialization on new serde
+* **Bug Fix**: Fix Transfer Manager error logic to preserve the first error found
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v0.2.12 (2026-06-29)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v0.2.11 (2026-06-16)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v0.2.10 (2026-06-10)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v0.2.9 (2026-06-08)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
 # v0.2.8 (2026-06-05.2)
 
 * **Bug Fix**: Fix the concurrent reader to return cached read error instead of panic when called again

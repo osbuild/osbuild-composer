@@ -18,9 +18,10 @@ type ISOCustomizations struct {
 	Publisher   string
 	Application string
 
-	RootfsType   ISORootfsType
-	ErofsOptions osbuild.ErofsStageOptions
-	BootType     ISOBootType
+	RootfsType     ISORootfsType
+	RootfsExcludes []string
+	ErofsOptions   osbuild.ErofsStageOptions
+	BootType       ISOBootType
 
 	ExcludePaths []string
 }

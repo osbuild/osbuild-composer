@@ -4,6 +4,13 @@ import (
 	"io"
 )
 
+// UploadResult contains the result of an upload operation.
+// Different cloud providers populate different fields.
+type UploadResult struct {
+	Provider string `json:"provider" yaml:"provider"`
+	ImageID  string `json:"image_id,omitempty" yaml:"image_id,omitempty"`
+}
+
 // Uploader is an interface that is returned from the actual
 // cloud implementation. The uploader will be parameterized
 // by the actual cloud implemntation, e.g.
@@ -22,5 +29,5 @@ type Uploader interface {
 	// To implement progress a proxy reader can be used.
 	// For more complex scenarios an optional uploadSize can be
 	// passed.
-	UploadAndRegister(r io.Reader, uploadSize uint64, status io.Writer) error
+	UploadAndRegister(r io.Reader, uploadSize uint64, status io.Writer) (*UploadResult, error)
 }

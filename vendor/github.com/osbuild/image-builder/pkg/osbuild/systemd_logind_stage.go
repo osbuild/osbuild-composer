@@ -29,13 +29,15 @@ type SystemdLogindConfigLoginSection struct {
 	// Configures how many virtual terminals (VTs) to allocate by default
 	// The option is optional, but zero is a valid value
 	NAutoVTs *int `json:"NAutoVTs,omitempty"`
+	// Configures how many virtual terminals (VTs) to reserve for the seat
+	ReserveVT *int `json:"ReserveVT,omitempty"`
 }
 
 // Unexported alias for use in SystemdLogindConfigLoginSection's MarshalJSON() to prevent recursion
 type systemdLogindConfigLoginSection SystemdLogindConfigLoginSection
 
 func (s SystemdLogindConfigLoginSection) MarshalJSON() ([]byte, error) {
-	if s.NAutoVTs == nil {
+	if s.NAutoVTs == nil && s.ReserveVT == nil {
 		return nil, fmt.Errorf("at least one 'Login' section option must be specified")
 	}
 	loginSection := systemdLogindConfigLoginSection(s)
