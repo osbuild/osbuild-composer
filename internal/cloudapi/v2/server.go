@@ -785,7 +785,7 @@ func serializeManifest(ctx context.Context, getManifestSource manifestSourceFunc
 	defer func() {
 		if r := recover(); r != nil {
 			logWithId.Errorf("Recovered from panic in serializeManifest: %v", r)
-			jobResult.JobError = clienterrors.New(clienterrors.ErrorManifestGeneration, "Error serializing manifest", r)
+			jobResult.JobError = clienterrors.New(clienterrors.ErrorManifestGeneration, "Error serializing manifest", fmt.Sprintf("%v", r))
 		}
 
 		// token == uuid.Nil indicates that no worker even started processing
