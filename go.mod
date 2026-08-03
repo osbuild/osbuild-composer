@@ -11,7 +11,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.32.34
 	github.com/aws/aws-sdk-go-v2/credentials v1.19.33
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.18.34
-	github.com/aws/aws-sdk-go-v2/service/autoscaling v1.69.1
+	github.com/aws/aws-sdk-go-v2/service/autoscaling v1.70.3
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.316.1
 	github.com/aws/smithy-go v1.27.6
 	github.com/coreos/go-systemd/v22 v22.7.0
