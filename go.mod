@@ -7,13 +7,13 @@ exclude github.com/mattn/go-sqlite3 v2.0.3+incompatible
 require (
 	cloud.google.com/go/compute v1.65.0
 	github.com/BurntSushi/toml v1.6.0
-	github.com/aws/aws-sdk-go-v2 v1.42.1
+	github.com/aws/aws-sdk-go-v2 v1.43.3
 	github.com/aws/aws-sdk-go-v2/config v1.32.30
 	github.com/aws/aws-sdk-go-v2/credentials v1.19.29
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.18.30
 	github.com/aws/aws-sdk-go-v2/service/autoscaling v1.69.1
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.316.1
-	github.com/aws/smithy-go v1.27.4
+	github.com/aws/smithy-go v1.27.6
 	github.com/coreos/go-systemd/v22 v22.7.0
 	github.com/getkin/kin-openapi v0.133.0
 	github.com/getsentry/sentry-go v0.48.0
