@@ -1753,3 +1753,31 @@ func Test_newImageBuildFromV0(t *testing.T) {
 		})
 	}
 }
+
+// TestSourceV0SSLPersistence verifies that SSL certificate fields are written
+// to and read back from the on-disk store JSON (sourceV0).  This is a
+// regression test: sourceV0 previously had no SSL fields so they were silently
+// dropped when the store was saved and reloaded.
+func TestSourceV0SSLPersistence(t *testing.T) {
+	dir := t.TempDir()
+	df := distrofactory.NewTestDefault()
+	s := New(&dir, df, nil)
+
+	s.PushSource("satellite-baseos", SourceConfig{
+		Name:          "BaseOS (Satellite)",
+		Type:          "yum-baseurl",
+		URL:           "https://satellite.example.com/rhel9/baseos",
+		CheckSSL:      true,
+		SSLCACert:     "/etc/rhsm/ca/katello-server-ca.pem",
+		SSLClientKey:  "/etc/pki/entitlement/1234-key.pem",
+		SSLClientCert: "/etc/pki/entitlement/1234.pem",
+	})
+
+	// Reload from the same state directory to exercise the JSON round-trip.
+	s2 := New(&dir, df, nil)
+	got := s2.GetSource("satellite-baseos")
+	require.NotNil(t, got)
+	assert.Equal(t, "/etc/rhsm/ca/katello-server-ca.pem", got.SSLCACert)
+	assert.Equal(t, "/etc/pki/entitlement/1234-key.pem", got.SSLClientKey)
+	assert.Equal(t, "/etc/pki/entitlement/1234.pem", got.SSLClientCert)
+}

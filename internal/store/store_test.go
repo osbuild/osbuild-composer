@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
@@ -537,4 +538,32 @@ func (suite *storeTest) TestSourceConfigGPGKeysTrueFalse() {
 
 func TestStore(t *testing.T) {
 	suite.Run(t, new(storeTest))
+}
+
+// TestSourceConfigSSLRoundTrip verifies that SSL certificate fields survive the
+// RepoConfig→SourceConfig→RepoConfig round-trip.  This is a regression test:
+// SourceConfig previously had no SSL fields so they were silently dropped,
+// causing DNF to fail against Satellite/mTLS repositories.
+func TestSourceConfigSSLRoundTrip(t *testing.T) {
+	checkGPG := true
+	ignoreSSL := false
+	original := rpmmd.RepoConfig{
+		Name:          "satellite-baseos",
+		BaseURLs:      []string{"https://satellite.example.com/rhel9/baseos"},
+		CheckGPG:      &checkGPG,
+		IgnoreSSL:     &ignoreSSL,
+		SSLCACert:     "/etc/rhsm/ca/katello-server-ca.pem",
+		SSLClientKey:  "/etc/pki/entitlement/1234-key.pem",
+		SSLClientCert: "/etc/pki/entitlement/1234.pem",
+	}
+
+	sc := NewSourceConfig(original, false)
+	assert.Equal(t, "/etc/rhsm/ca/katello-server-ca.pem", sc.SSLCACert)
+	assert.Equal(t, "/etc/pki/entitlement/1234-key.pem", sc.SSLClientKey)
+	assert.Equal(t, "/etc/pki/entitlement/1234.pem", sc.SSLClientCert)
+
+	repo := sc.RepoConfig("satellite-baseos")
+	assert.Equal(t, original.SSLCACert, repo.SSLCACert)
+	assert.Equal(t, original.SSLClientKey, repo.SSLClientKey)
+	assert.Equal(t, original.SSLClientCert, repo.SSLClientCert)
 }
