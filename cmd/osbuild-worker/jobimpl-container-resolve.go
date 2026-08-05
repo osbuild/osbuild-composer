@@ -69,7 +69,7 @@ func (impl *ContainerResolveJobImpl) Run(job worker.Job) error {
 	resolver := container.NewResolver(args.Arch)
 	resolver.AuthFilePath = impl.AuthFilePath
 
-	resolved, err := resolveContainers(resolver, args.PipelineSpecs)
+	resolved, err := ResolveContainers(resolver, args.PipelineSpecs)
 	if err != nil {
 		result.JobError = clienterrors.New(clienterrors.ErrorContainerResolution, err.Error(), nil)
 		return err
@@ -79,10 +79,10 @@ func (impl *ContainerResolveJobImpl) Run(job worker.Job) error {
 	return nil
 }
 
-// resolveContainers resolves container specs grouped by pipeline name.
+// ResolveContainers resolves container specs grouped by pipeline name.
 // Each container is resolved individually with Resolve() to preserve
 // positional ordering.
-func resolveContainers(resolver container.Resolver, pipelineSpecs map[string][]worker.ContainerSpec) (map[string][]worker.ContainerSpec, error) {
+func ResolveContainers(resolver container.Resolver, pipelineSpecs map[string][]worker.ContainerSpec) (map[string][]worker.ContainerSpec, error) {
 	result := make(map[string][]worker.ContainerSpec, len(pipelineSpecs))
 	for name, specs := range pipelineSpecs {
 		if len(specs) == 0 {
