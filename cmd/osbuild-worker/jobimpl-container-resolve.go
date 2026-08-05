@@ -77,10 +77,11 @@ func (impl *ContainerResolveJobImpl) Run(job worker.Job) error {
 }
 
 // resolveContainers resolves container specs grouped by pipeline name.
+// Each container is resolved individually with Resolve() to preserve
+// positional ordering.
 func resolveContainers(arch, authFilePath string, pipelineSpecs map[string][]worker.ContainerSpec) (map[string][]worker.ContainerSpec, error) {
-	// NOTE: container.Resolver.Finish() sorts results by digest, destroying Add() ordering.
-	// Use a separate resolver per pipeline because, positional slicing
-	// across pipelines would not work, due to the sorting by digest.
+	resolver := container.NewResolver(arch)
+	resolver.AuthFilePath = authFilePath
 
 	result := make(map[string][]worker.ContainerSpec, len(pipelineSpecs))
 	for name, specs := range pipelineSpecs {
@@ -88,21 +89,13 @@ func resolveContainers(arch, authFilePath string, pipelineSpecs map[string][]wor
 			continue
 		}
 
-		resolver := container.NewResolver(arch)
-		resolver.AuthFilePath = authFilePath
-
-		for _, s := range specs {
-			resolver.Add(s.ToVendorSourceSpec())
-		}
-
-		resolved, err := resolver.Finish()
-		if err != nil {
-			return nil, fmt.Errorf("Error resolving containers for pipeline %q: %w", name, err)
-		}
-
-		pipelineResult := make([]worker.ContainerSpec, len(resolved))
-		for i, spec := range resolved {
-			pipelineResult[i] = worker.ContainerSpecFromVendorSpec(spec)
+		pipelineResult := make([]worker.ContainerSpec, len(specs))
+		for i, s := range specs {
+			res, err := resolver.Resolve(s.ToVendorSourceSpec())
+			if err != nil {
+				return nil, fmt.Errorf("Error resolving containers for pipeline %q: %w", name, err)
+			}
+			pipelineResult[i] = worker.ContainerSpecFromVendorSpec(res)
 		}
 		result[name] = pipelineResult
 	}
