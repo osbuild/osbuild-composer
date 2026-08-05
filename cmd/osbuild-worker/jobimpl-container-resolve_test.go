@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/osbuild/image-builder/pkg/container"
 	main "github.com/osbuild/osbuild-composer/cmd/osbuild-worker"
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/worker"
@@ -283,4 +284,65 @@ func TestContainerResolveJobRun(t *testing.T) {
 			}
 		})
 	}
+}
+
+// mockResolver implements container.Resolver by returning a fixed digest
+// for each source, allowing tests to verify ordering without a registry.
+type mockResolver struct {
+	digests map[string]string
+}
+
+func (m *mockResolver) Add(container.SourceSpec) {}
+
+func (m *mockResolver) Finish() ([]container.Spec, error) {
+	return nil, fmt.Errorf("mockResolver: use Resolve()")
+}
+
+func (m *mockResolver) Resolve(src container.SourceSpec) (container.Spec, error) {
+	digest, ok := m.digests[src.Source]
+	if !ok {
+		return container.Spec{}, fmt.Errorf("unknown source %q", src.Source)
+	}
+	return container.Spec{
+		Source:    src.Source,
+		LocalName: src.Name,
+		Digest:    digest,
+	}, nil
+}
+
+func (m *mockResolver) ResolveAll(sources map[string][]container.SourceSpec) (map[string][]container.Spec, error) {
+	return nil, fmt.Errorf("mockResolver: use Resolve()")
+}
+
+func TestResolveContainersPreservesOrder(t *testing.T) {
+	resolver := &mockResolver{
+		digests: map[string]string{
+			"quay.io/os-tree:latest": "sha256:zzz",
+			"quay.io/payload:latest": "sha256:aaa",
+		},
+	}
+
+	pipelineSpecs := map[string][]worker.ContainerSpec{
+		"os-tree": {
+			{Source: "quay.io/os-tree:latest", Name: "quay.io/os-tree:latest"},
+			{Source: "quay.io/payload:latest", Name: "quay.io/payload:latest"},
+		},
+		"build": {
+			{Source: "quay.io/os-tree:latest", Name: "quay.io/os-tree:latest"},
+		},
+	}
+
+	result, err := main.ResolveContainers(resolver, pipelineSpecs)
+	require.NoError(t, err)
+
+	// os-tree pipeline: order must match input, not digest order
+	require.Len(t, result["os-tree"], 2)
+	assert.Equal(t, "quay.io/os-tree:latest", result["os-tree"][0].Source)
+	assert.Equal(t, "sha256:zzz", result["os-tree"][0].Digest)
+	assert.Equal(t, "quay.io/payload:latest", result["os-tree"][1].Source)
+	assert.Equal(t, "sha256:aaa", result["os-tree"][1].Digest)
+
+	// build pipeline: single entry
+	require.Len(t, result["build"], 1)
+	assert.Equal(t, "quay.io/os-tree:latest", result["build"][0].Source)
 }
