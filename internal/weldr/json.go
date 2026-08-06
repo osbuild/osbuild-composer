@@ -146,6 +146,9 @@ type SourceConfigV0 struct {
 	Proxy          string   `json:"proxy,omitempty" toml:"proxy,omitempty"`
 	GPGKeys        []string `json:"gpgkeys,omitempty" toml:"gpgkeys,omitempty"`
 	ModuleHotfixes *bool    `json:"module_hotfixes,omitempty"`
+	SSLCACert      string   `json:"sslcacert,omitempty" toml:"sslcacert,omitempty"`
+	SSLClientKey   string   `json:"sslclientkey,omitempty" toml:"sslclientkey,omitempty"`
+	SSLClientCert  string   `json:"sslclientcert,omitempty" toml:"sslclientcert,omitempty"`
 }
 
 // Key return the key, .Name in this case
@@ -171,6 +174,9 @@ func (s SourceConfigV0) SourceConfig() (ssc store.SourceConfig) {
 	ssc.URL = s.URL
 	ssc.CheckGPG = s.CheckGPG
 	ssc.CheckSSL = s.CheckSSL
+	ssc.SSLCACert = s.SSLCACert
+	ssc.SSLClientKey = s.SSLClientKey
+	ssc.SSLClientCert = s.SSLClientCert
 
 	return ssc
 }
@@ -197,6 +203,9 @@ func NewSourceConfigV1(id string, s store.SourceConfig) SourceConfigV1 {
 	sc.RHSM = s.RHSM
 	sc.CheckRepoGPG = s.CheckRepoGPG
 	sc.GPGKeys = s.GPGKeys
+	sc.SSLCACert = s.SSLCACert
+	sc.SSLClientKey = s.SSLClientKey
+	sc.SSLClientCert = s.SSLClientCert
 
 	return sc
 }
@@ -216,6 +225,9 @@ type SourceConfigV1 struct {
 	RHSM           bool     `json:"rhsm" toml:"rhsm"`
 	CheckRepoGPG   bool     `json:"check_repogpg" toml:"check_repogpg"`
 	ModuleHotfixes *bool    `json:"module_hotfixes,omitempty" toml:"module_hotfixes,omitempty"`
+	SSLCACert      string   `json:"sslcacert,omitempty" toml:"sslcacert,omitempty"`
+	SSLClientKey   string   `json:"sslclientkey,omitempty" toml:"sslclientkey,omitempty"`
+	SSLClientCert  string   `json:"sslclientcert,omitempty" toml:"sslclientcert,omitempty"`
 }
 
 // Key returns the key, .ID in this case
@@ -245,6 +257,9 @@ func (s SourceConfigV1) SourceConfig() (ssc store.SourceConfig) {
 	ssc.RHSM = s.RHSM
 	ssc.CheckRepoGPG = s.CheckRepoGPG
 	ssc.GPGKeys = s.GPGKeys
+	ssc.SSLCACert = s.SSLCACert
+	ssc.SSLClientKey = s.SSLClientKey
+	ssc.SSLClientCert = s.SSLClientCert
 
 	return ssc
 }

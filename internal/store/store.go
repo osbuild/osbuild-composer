@@ -69,6 +69,9 @@ type SourceConfig struct {
 	CheckRepoGPG   bool     `json:"check_repogpg" toml:"check_repogpg"`
 	GPGKeys        []string `json:"gpgkeys"`
 	ModuleHotfixes *bool    `json:"module_hotfixes,omitempty"`
+	SSLCACert      string   `json:"sslcacert,omitempty" toml:"sslcacert,omitempty"`
+	SSLClientKey   string   `json:"sslclientkey,omitempty" toml:"sslclientkey,omitempty"`
+	SSLClientCert  string   `json:"sslclientcert,omitempty" toml:"sslclientcert,omitempty"`
 }
 
 type NotFoundError struct {
@@ -589,6 +592,9 @@ func NewSourceConfig(repo rpmmd.RepoConfig, system bool) SourceConfig {
 		RHSM:           repo.RHSM,
 		GPGKeys:        repo.GPGKeys,
 		ModuleHotfixes: repo.ModuleHotfixes,
+		SSLCACert:      repo.SSLCACert,
+		SSLClientKey:   repo.SSLClientKey,
+		SSLClientCert:  repo.SSLClientCert,
 	}
 
 	if repo.CheckGPG != nil {
@@ -631,6 +637,9 @@ func (s *SourceConfig) RepoConfig(name string) rpmmd.RepoConfig {
 	repo.CheckRepoGPG = common.ToPtr(s.CheckRepoGPG)
 	repo.GPGKeys = s.GPGKeys
 	repo.ModuleHotfixes = s.ModuleHotfixes
+	repo.SSLCACert = s.SSLCACert
+	repo.SSLClientKey = s.SSLClientKey
+	repo.SSLClientCert = s.SSLClientCert
 
 	var urls []string
 	if s.URL != "" {
