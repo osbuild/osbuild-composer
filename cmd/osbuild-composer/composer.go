@@ -12,19 +12,25 @@ import (
 	"os"
 	"os/signal"
 	"path"
+	"path/filepath"
+	"strings"
 	"syscall"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	logrus "github.com/sirupsen/logrus"
+	"gopkg.in/ini.v1"
 
 	"github.com/osbuild/osbuild-composer/pkg/jobqueue"
 	"github.com/osbuild/osbuild-composer/pkg/jobqueue/dbjobqueue"
 
+	"github.com/osbuild/image-builder/pkg/arch"
 	"github.com/osbuild/image-builder/pkg/depsolvednf"
+	"github.com/osbuild/image-builder/pkg/distro"
 	"github.com/osbuild/image-builder/pkg/distrofactory"
 	"github.com/osbuild/image-builder/pkg/experimentalflags"
 	"github.com/osbuild/image-builder/pkg/reporegistry"
+	"github.com/osbuild/image-builder/pkg/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/auth"
 	"github.com/osbuild/osbuild-composer/internal/cloudapi"
 	v2 "github.com/osbuild/osbuild-composer/internal/cloudapi/v2"
@@ -83,12 +89,18 @@ func NewComposer(config *ComposerConfigFile, stateDir, cacheDir string) (*Compos
 	case nil:
 		// fine
 	case *reporegistry.NoReposLoadedError:
-		if !c.config.IgnoreMissingRepos {
-			return nil, fmt.Errorf("error loading repository definitions: %w", err)
+		// No osbuild-specific repo config files found; try to build the registry
+		// from the system's /etc/yum.repos.d/ so that the host's configured
+		// repositories are used automatically.
+		logrus.Info("No repository config files found in configured paths, falling back to /etc/yum.repos.d/")
+		c.repos, err = repoRegistryFromYumReposD("/etc/yum.repos.d")
+		if err != nil {
+			if !c.config.IgnoreMissingRepos {
+				return nil, fmt.Errorf("error loading repository definitions from /etc/yum.repos.d/: %w", err)
+			}
+			logrus.Infof("Failed to load repositories from /etc/yum.repos.d/: %v", err)
+			logrus.Info("ignore_missing_repos enabled: continuing")
 		}
-		// running without repositories is allowed: log message and continue
-		logrus.Info(err.Error())
-		logrus.Info("ignore_missing_repos enabled: continuing")
 	default:
 		return nil, fmt.Errorf("error loading repository definitions: %w", err)
 	}
@@ -490,4 +502,105 @@ func createTLSConfig(c *connectionConfig) (*tls.Config, error) {
 			return errors.New("domain not in allowlist")
 		},
 	}, nil
+}
+
+// repoRegistryFromYumReposD reads all *.repo files from reposDir (typically
+// /etc/yum.repos.d), converts each enabled section into an rpmmd.RepoConfig,
+// and returns a RepoRegistry keyed to the host distro and architecture.
+// This is used as a fallback when no osbuild-specific JSON/YAML repo config
+// files are found in the configured repository config paths.
+func repoRegistryFromYumReposD(reposDir string) (*reporegistry.RepoRegistry, error) {
+	hostDistroName, err := distro.GetHostDistroName()
+	if err != nil {
+		return nil, fmt.Errorf("failed to detect host distro: %w", err)
+	}
+	return repoRegistryFromYumReposDForDistroArch(reposDir, hostDistroName, arch.Current().String())
+}
+
+// repoRegistryFromYumReposDForDistroArch is the testable core of
+// repoRegistryFromYumReposD. It accepts the distro name and architecture
+// explicitly so tests can call it without a real /etc/os-release present.
+func repoRegistryFromYumReposDForDistroArch(reposDir, distroName, hostArch string) (*reporegistry.RepoRegistry, error) {
+	// filepath.Glob returns (nil, nil) for non-existent directories, so a
+	// missing reposDir is handled by the len(repos) == 0 check below.
+	files, err := filepath.Glob(filepath.Join(reposDir, "*.repo"))
+	if err != nil {
+		return nil, err
+	}
+
+	var repos []rpmmd.RepoConfig
+	for _, f := range files {
+		content, err := os.ReadFile(f)
+		if err != nil {
+			logrus.Warnf("repoRegistryFromYumReposD: skipping %s: %v", f, err)
+			continue
+		}
+		cfg, err := ini.Load(content)
+		if err != nil {
+			logrus.Warnf("repoRegistryFromYumReposD: failed to parse %s: %v", f, err)
+			continue
+		}
+		for _, section := range cfg.Sections() {
+			if section.Name() == "DEFAULT" {
+				continue
+			}
+			// Skip explicitly disabled repos
+			if enabled, e := section.GetKey("enabled"); e == nil && enabled.String() == "0" {
+				continue
+			}
+			repo := rpmmd.RepoConfig{
+				Id:   section.Name(),
+				Name: section.Name(),
+			}
+			if k, e := section.GetKey("name"); e == nil {
+				repo.Name = k.String()
+			}
+			if k, e := section.GetKey("baseurl"); e == nil {
+				// DNF supports multiple space/newline-separated URLs per section.
+				repo.BaseURLs = strings.Fields(k.String())
+			}
+			if k, e := section.GetKey("metalink"); e == nil {
+				repo.Metalink = k.String()
+			}
+			if k, e := section.GetKey("mirrorlist"); e == nil {
+				repo.MirrorList = k.String()
+			}
+			if k, e := section.GetKey("gpgkey"); e == nil {
+				// DNF supports multiple whitespace-separated keys per section.
+				repo.GPGKeys = strings.Fields(k.String())
+			}
+			if k, e := section.GetKey("gpgcheck"); e == nil {
+				v := k.String() == "1"
+				repo.CheckGPG = &v
+			}
+			if k, e := section.GetKey("sslcacert"); e == nil {
+				repo.SSLCACert = k.String()
+			}
+			if k, e := section.GetKey("sslclientkey"); e == nil {
+				repo.SSLClientKey = k.String()
+			}
+			if k, e := section.GetKey("sslclientcert"); e == nil {
+				repo.SSLClientCert = k.String()
+			}
+			if k, e := section.GetKey("sslverify"); e == nil {
+				ignoreSSL := k.String() == "0"
+				repo.IgnoreSSL = &ignoreSSL
+			}
+			if k, e := section.GetKey("metadata_expire"); e == nil {
+				repo.MetadataExpire = k.String()
+			}
+			repos = append(repos, repo)
+		}
+	}
+
+	if len(repos) == 0 {
+		return nil, fmt.Errorf("no enabled repositories found in %s", reposDir)
+	}
+
+	distrosRepoConfigs := rpmmd.DistrosRepoConfigs{
+		distroName: {
+			hostArch: repos,
+		},
+	}
+	return reporegistry.NewFromDistrosRepoConfigs(distrosRepoConfigs), nil
 }
