@@ -9,34 +9,33 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Cancels a bundling operation for an instance store-backed Windows instance.
-//
-// CancelBundleTask is no longer supported because [BundleInstance], the operation it cancels, is
-// no longer supported.
-//
-// [BundleInstance]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_BundleInstance.html
-func (c *Client) CancelBundleTask(ctx context.Context, params *CancelBundleTaskInput, optFns ...func(*Options)) (*CancelBundleTaskOutput, error) {
+// Deletes the specified transit gateway policy table entry.
+func (c *Client) DeleteTransitGatewayPolicyTableEntry(ctx context.Context, params *DeleteTransitGatewayPolicyTableEntryInput, optFns ...func(*Options)) (*DeleteTransitGatewayPolicyTableEntryOutput, error) {
 	if params == nil {
-		params = &CancelBundleTaskInput{}
+		params = &DeleteTransitGatewayPolicyTableEntryInput{}
 	}
 
-	result, metadata, err := c.invokeOperation(ctx, "CancelBundleTask", params, optFns, c.addOperationCancelBundleTaskMiddlewares)
+	result, metadata, err := c.invokeOperation(ctx, "DeleteTransitGatewayPolicyTableEntry", params, optFns, c.addOperationDeleteTransitGatewayPolicyTableEntryMiddlewares)
 	if err != nil {
 		return nil, err
 	}
 
-	out := result.(*CancelBundleTaskOutput)
+	out := result.(*DeleteTransitGatewayPolicyTableEntryOutput)
 	out.ResultMetadata = metadata
 	return out, nil
 }
 
-// Contains the parameters for CancelBundleTask.
-type CancelBundleTaskInput struct {
+type DeleteTransitGatewayPolicyTableEntryInput struct {
 
-	// The ID of the bundle task.
+	// The rule number of the policy table entry to delete.
 	//
 	// This member is required.
-	BundleId *string
+	PolicyRuleNumber *string
+
+	// The ID of the transit gateway policy table.
+	//
+	// This member is required.
+	TransitGatewayPolicyTableId *string
 
 	// Checks whether you have the required permissions for the action, without
 	// actually making the request, and provides an error response. If you have the
@@ -47,11 +46,10 @@ type CancelBundleTaskInput struct {
 	noSmithyDocumentSerde
 }
 
-// Contains the output of CancelBundleTask.
-type CancelBundleTaskOutput struct {
+type DeleteTransitGatewayPolicyTableEntryOutput struct {
 
-	// Information about the bundle task.
-	BundleTask *types.BundleTask
+	// Describes a transit gateway policy table entry
+	TransitGatewayPolicyTableEntry *types.TransitGatewayPolicyTableEntry
 
 	// Metadata pertaining to the operation's result.
 	ResultMetadata middleware.Metadata
@@ -59,12 +57,12 @@ type CancelBundleTaskOutput struct {
 	noSmithyDocumentSerde
 }
 
-func (c *Client) addOperationCancelBundleTaskMiddlewares(stack *middleware.Stack, options Options) (err error) {
-	err = stack.Serialize.Add(&awsEc2query_serializeOpCancelBundleTask{}, middleware.After)
+func (c *Client) addOperationDeleteTransitGatewayPolicyTableEntryMiddlewares(stack *middleware.Stack, options Options) (err error) {
+	err = stack.Serialize.Add(&awsEc2query_serializeOpDeleteTransitGatewayPolicyTableEntry{}, middleware.After)
 	if err != nil {
 		return err
 	}
-	err = stack.Deserialize.Add(&awsEc2query_deserializeOpCancelBundleTask{}, middleware.After)
+	err = stack.Deserialize.Add(&awsEc2query_deserializeOpDeleteTransitGatewayPolicyTableEntry{}, middleware.After)
 	if err != nil {
 		return err
 	}
@@ -93,10 +91,10 @@ func (c *Client) addOperationCancelBundleTaskMiddlewares(stack *middleware.Stack
 	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
-	if err = addOpCancelBundleTaskValidationMiddleware(stack); err != nil {
+	if err = addOpDeleteTransitGatewayPolicyTableEntryValidationMiddleware(stack); err != nil {
 		return err
 	}
-	if err = stack.Initialize.Add(newServiceMetadataMiddleware(options.Region, "CancelBundleTask"), middleware.Before); err != nil {
+	if err = stack.Initialize.Add(newServiceMetadataMiddleware(options.Region, "DeleteTransitGatewayPolicyTableEntry"), middleware.Before); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

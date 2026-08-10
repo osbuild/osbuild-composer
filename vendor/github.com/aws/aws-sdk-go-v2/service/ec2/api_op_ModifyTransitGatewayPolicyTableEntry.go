@@ -9,34 +9,33 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Cancels a bundling operation for an instance store-backed Windows instance.
-//
-// CancelBundleTask is no longer supported because [BundleInstance], the operation it cancels, is
-// no longer supported.
-//
-// [BundleInstance]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_BundleInstance.html
-func (c *Client) CancelBundleTask(ctx context.Context, params *CancelBundleTaskInput, optFns ...func(*Options)) (*CancelBundleTaskOutput, error) {
+// Modifies the specified transit gateway policy table entry.
+func (c *Client) ModifyTransitGatewayPolicyTableEntry(ctx context.Context, params *ModifyTransitGatewayPolicyTableEntryInput, optFns ...func(*Options)) (*ModifyTransitGatewayPolicyTableEntryOutput, error) {
 	if params == nil {
-		params = &CancelBundleTaskInput{}
+		params = &ModifyTransitGatewayPolicyTableEntryInput{}
 	}
 
-	result, metadata, err := c.invokeOperation(ctx, "CancelBundleTask", params, optFns, c.addOperationCancelBundleTaskMiddlewares)
+	result, metadata, err := c.invokeOperation(ctx, "ModifyTransitGatewayPolicyTableEntry", params, optFns, c.addOperationModifyTransitGatewayPolicyTableEntryMiddlewares)
 	if err != nil {
 		return nil, err
 	}
 
-	out := result.(*CancelBundleTaskOutput)
+	out := result.(*ModifyTransitGatewayPolicyTableEntryOutput)
 	out.ResultMetadata = metadata
 	return out, nil
 }
 
-// Contains the parameters for CancelBundleTask.
-type CancelBundleTaskInput struct {
+type ModifyTransitGatewayPolicyTableEntryInput struct {
 
-	// The ID of the bundle task.
+	// The rule number of the policy table entry to modify.
 	//
 	// This member is required.
-	BundleId *string
+	PolicyRuleNumber *string
+
+	// The ID of the transit gateway policy table.
+	//
+	// This member is required.
+	TransitGatewayPolicyTableId *string
 
 	// Checks whether you have the required permissions for the action, without
 	// actually making the request, and provides an error response. If you have the
@@ -44,14 +43,20 @@ type CancelBundleTaskInput struct {
 	// UnauthorizedOperation .
 	DryRun *bool
 
+	// The updated matching criteria for the policy table entry. Unspecified fields
+	// retain their current values.
+	PolicyRule *types.TransitGatewayRequestPolicyRule
+
+	// The ID of the transit gateway route table to use for traffic matching this rule.
+	TargetRouteTableId *string
+
 	noSmithyDocumentSerde
 }
 
-// Contains the output of CancelBundleTask.
-type CancelBundleTaskOutput struct {
+type ModifyTransitGatewayPolicyTableEntryOutput struct {
 
-	// Information about the bundle task.
-	BundleTask *types.BundleTask
+	// Describes a transit gateway policy table entry
+	TransitGatewayPolicyTableEntry *types.TransitGatewayPolicyTableEntry
 
 	// Metadata pertaining to the operation's result.
 	ResultMetadata middleware.Metadata
@@ -59,12 +64,12 @@ type CancelBundleTaskOutput struct {
 	noSmithyDocumentSerde
 }
 
-func (c *Client) addOperationCancelBundleTaskMiddlewares(stack *middleware.Stack, options Options) (err error) {
-	err = stack.Serialize.Add(&awsEc2query_serializeOpCancelBundleTask{}, middleware.After)
+func (c *Client) addOperationModifyTransitGatewayPolicyTableEntryMiddlewares(stack *middleware.Stack, options Options) (err error) {
+	err = stack.Serialize.Add(&awsEc2query_serializeOpModifyTransitGatewayPolicyTableEntry{}, middleware.After)
 	if err != nil {
 		return err
 	}
-	err = stack.Deserialize.Add(&awsEc2query_deserializeOpCancelBundleTask{}, middleware.After)
+	err = stack.Deserialize.Add(&awsEc2query_deserializeOpModifyTransitGatewayPolicyTableEntry{}, middleware.After)
 	if err != nil {
 		return err
 	}
@@ -93,10 +98,10 @@ func (c *Client) addOperationCancelBundleTaskMiddlewares(stack *middleware.Stack
 	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
-	if err = addOpCancelBundleTaskValidationMiddleware(stack); err != nil {
+	if err = addOpModifyTransitGatewayPolicyTableEntryValidationMiddleware(stack); err != nil {
 		return err
 	}
-	if err = stack.Initialize.Add(newServiceMetadataMiddleware(options.Region, "CancelBundleTask"), middleware.Before); err != nil {
+	if err = stack.Initialize.Add(newServiceMetadataMiddleware(options.Region, "ModifyTransitGatewayPolicyTableEntry"), middleware.Before); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
