@@ -9,36 +9,31 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Cancels a bundling operation for an instance store-backed Windows instance.
-//
-// CancelBundleTask is no longer supported because [BundleInstance], the operation it cancels, is
-// no longer supported.
-//
-// [BundleInstance]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_BundleInstance.html
-func (c *Client) CancelBundleTask(ctx context.Context, params *CancelBundleTaskInput, optFns ...func(*Options)) (*CancelBundleTaskOutput, error) {
+// Deletes an IPAM internet registry association. Before deleting, you must remove
+// all routing policy registrations associated with the internet registry.
+func (c *Client) DeleteIpamInternetRegistryAssociation(ctx context.Context, params *DeleteIpamInternetRegistryAssociationInput, optFns ...func(*Options)) (*DeleteIpamInternetRegistryAssociationOutput, error) {
 	if params == nil {
-		params = &CancelBundleTaskInput{}
+		params = &DeleteIpamInternetRegistryAssociationInput{}
 	}
 
-	result, metadata, err := c.invokeOperation(ctx, "CancelBundleTask", params, optFns, c.addOperationCancelBundleTaskMiddlewares)
+	result, metadata, err := c.invokeOperation(ctx, "DeleteIpamInternetRegistryAssociation", params, optFns, c.addOperationDeleteIpamInternetRegistryAssociationMiddlewares)
 	if err != nil {
 		return nil, err
 	}
 
-	out := result.(*CancelBundleTaskOutput)
+	out := result.(*DeleteIpamInternetRegistryAssociationOutput)
 	out.ResultMetadata = metadata
 	return out, nil
 }
 
-// Contains the parameters for CancelBundleTask.
-type CancelBundleTaskInput struct {
+type DeleteIpamInternetRegistryAssociationInput struct {
 
-	// The ID of the bundle task.
+	// The ID of the IPAM internet registry association to delete.
 	//
 	// This member is required.
-	BundleId *string
+	IpamInternetRegistryAssociationId *string
 
-	// Checks whether you have the required permissions for the action, without
+	// Checks whether you have the required permissions for the operation, without
 	// actually making the request, and provides an error response. If you have the
 	// required permissions, the error response is DryRunOperation . Otherwise, it is
 	// UnauthorizedOperation .
@@ -47,11 +42,10 @@ type CancelBundleTaskInput struct {
 	noSmithyDocumentSerde
 }
 
-// Contains the output of CancelBundleTask.
-type CancelBundleTaskOutput struct {
+type DeleteIpamInternetRegistryAssociationOutput struct {
 
-	// Information about the bundle task.
-	BundleTask *types.BundleTask
+	// Information about the deleted internet registry association.
+	IpamInternetRegistryAssociation *types.IpamInternetRegistryAssociation
 
 	// Metadata pertaining to the operation's result.
 	ResultMetadata middleware.Metadata
@@ -59,12 +53,12 @@ type CancelBundleTaskOutput struct {
 	noSmithyDocumentSerde
 }
 
-func (c *Client) addOperationCancelBundleTaskMiddlewares(stack *middleware.Stack, options Options) (err error) {
-	err = stack.Serialize.Add(&awsEc2query_serializeOpCancelBundleTask{}, middleware.After)
+func (c *Client) addOperationDeleteIpamInternetRegistryAssociationMiddlewares(stack *middleware.Stack, options Options) (err error) {
+	err = stack.Serialize.Add(&awsEc2query_serializeOpDeleteIpamInternetRegistryAssociation{}, middleware.After)
 	if err != nil {
 		return err
 	}
-	err = stack.Deserialize.Add(&awsEc2query_deserializeOpCancelBundleTask{}, middleware.After)
+	err = stack.Deserialize.Add(&awsEc2query_deserializeOpDeleteIpamInternetRegistryAssociation{}, middleware.After)
 	if err != nil {
 		return err
 	}
@@ -93,10 +87,10 @@ func (c *Client) addOperationCancelBundleTaskMiddlewares(stack *middleware.Stack
 	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
-	if err = addOpCancelBundleTaskValidationMiddleware(stack); err != nil {
+	if err = addOpDeleteIpamInternetRegistryAssociationValidationMiddleware(stack); err != nil {
 		return err
 	}
-	if err = stack.Initialize.Add(newServiceMetadataMiddleware(options.Region, "CancelBundleTask"), middleware.Before); err != nil {
+	if err = stack.Initialize.Add(newServiceMetadataMiddleware(options.Region, "DeleteIpamInternetRegistryAssociation"), middleware.Before); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
