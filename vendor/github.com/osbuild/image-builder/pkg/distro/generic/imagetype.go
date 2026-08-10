@@ -196,6 +196,9 @@ func (t *imageType) getPartitionTable(customizations *blueprint.Customizations, 
 			DefaultFSType:      defaultFsType,
 			RequiredMinSizes:   t.ImageTypeYAML.RequiredPartitionSizes,
 			Architecture:       t.platform.GetArch(),
+			// the ESP size is not customizable either, so keep the one the
+			// image type defines instead of falling back to a generic default
+			ESPSize: basePartitionTable.ESPSize(),
 		}
 		return disk.NewCustomPartitionTable(partitioning, partOptions, nil, rng)
 	}

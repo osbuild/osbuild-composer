@@ -1195,12 +1195,24 @@ image_types:
         - "console=ttyS0,115200n8"
         - "netroot=iscsi"
         - "rd.iscsi.firmware=1"
+      time_synchronization:
+        servers:
+          - hostname: "169.254.169.254"
+            prefer: true
+            iburst: true
+            minpoll: 4
+            maxpoll: 4
+        leapsectz: ""
       cloud_init:
         - filename: "00-rhel-default-user.cfg"
           config:
             system_info:
               default_user:
                 name: "opc"
+        - filename: "10_oracle.cfg"
+          config:
+            datasource_list:
+              - "Oracle"
       dracut_conf:
         - filename: "oci.conf"
           config:
@@ -1213,6 +1225,12 @@ image_types:
             distro_name: "ol"
           shallow_merge:
             hostonly: true
+        "rhel needs the rhel release rpm gpg key":
+          when:
+            distro_name: "rhel"
+          shallow_merge:
+            gpgkey_files:
+              - "/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release"
     partition_table:
       x86_64:
         type: "gpt"

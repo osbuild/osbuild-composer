@@ -1018,12 +1018,6 @@ func TestGetImageRequests_ImageTypeConversion(t *testing.T) {
 			expectedTargetName: target.TargetNameAWSS3,
 		},
 		{
-			requestedImageType: ImageTypesIotBootableContainer,
-			requestedDistros:   []string{fedora},
-			expectedImageType:  "iot-bootable-container",
-			expectedTargetName: target.TargetNameContainer,
-		},
-		{
 			requestedImageType: ImageTypesIotCommit,
 			requestedDistros:   []string{fedora},
 			expectedImageType:  "iot-commit",

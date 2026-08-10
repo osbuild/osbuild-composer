@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
-	"github.com/osbuild/image-builder/internal/cmdutil"
 	"github.com/osbuild/image-builder/internal/common"
 	"github.com/osbuild/image-builder/pkg/arch"
 	"github.com/osbuild/image-builder/pkg/bib/osinfo"
@@ -154,15 +153,12 @@ func (t *bootcImageType) checkOptions(bp *blueprint.Blueprint) []string {
 func (t *bootcImageType) Manifest(bp *blueprint.Blueprint, options distro.ImageOptions, repos []rpmmd.RepoConfig, seedp *int64) (*manifest.Manifest, []string, error) {
 	validationWarnings := t.checkOptions(bp)
 
-	mani, manifestWarnings, err := t.manifestWithoutValidation(bp, options)
+	mani, manifestWarnings, err := t.manifestWithoutValidation(bp, options, seedp)
 	return mani, append(validationWarnings, manifestWarnings...), err
 }
 
-func (t *bootcImageType) manifestWithoutValidation(bp *blueprint.Blueprint, options distro.ImageOptions) (*manifest.Manifest, []string, error) {
-	seed, err := cmdutil.NewRNGSeed()
-	if err != nil {
-		return nil, nil, err
-	}
+func (t *bootcImageType) manifestWithoutValidation(bp *blueprint.Blueprint, options distro.ImageOptions, seedp *int64) (*manifest.Manifest, []string, error) {
+	seed := distro.SeedFrom(seedp)
 	//nolint:gosec
 	rng := rand.New(rand.NewSource(seed))
 
@@ -698,6 +694,7 @@ func (t *bootcImageType) manifestForPXETar(bp *blueprint.Blueprint, options dist
 		img.BuildOptions = opts
 	}
 	img.Compression = t.ImageTypeYAML.Compression
+	img.OSCustomizations.Subscription = options.Subscription
 	img.OSCustomizations.Users = users.UsersFromBP(customizations.GetUsers())
 
 	groups, err := customizations.GetGroups()
@@ -936,6 +933,7 @@ func (t *bootcImageType) genPartitionTableDiskCust(basept *disk.PartitionTable, 
 		DefaultFSType:    defaultFSType,
 		RequiredMinSizes: requiredMinSizes,
 		Architecture:     t.arch.arch,
+		ESPSize:          basept.ESPSize(),
 	}
 	return disk.NewCustomPartitionTable(diskCust, partOptions, nil, rng)
 }

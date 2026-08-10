@@ -1,6 +1,59 @@
 ---
 distros:
   - &fedora_rawhide
+    name: fedora-46
+    distro_like: fedora
+    preview: true
+    os_version: 46
+    release_version: 46
+    module_platform_id: platform:f46
+    product: "Fedora"
+    iso_label_tmpl: "{{.Product}}-{{.Distro.MajorVersion}}-{{.ISOLabel}}-{{.Arch}}"
+    default_fs_type: "ext4"
+    defs_path: fedora
+    runner: &fedora_runner
+      name: org.osbuild.fedora46
+      build_packages:
+        - "glibc"  # ldconfig
+        - "systemd"  # systemd-tmpfiles and systemd-sysusers
+        - "python3"  # osbuild
+    oscap_profiles_allowlist:
+      - "xccdf_org.ssgproject.content_profile_ospp"
+      - "xccdf_org.ssgproject.content_profile_pci-dss"
+      - "xccdf_org.ssgproject.content_profile_standard"
+    bootstrap_containers:
+      x86_64: "registry.fedoraproject.org/fedora-toolbox:46"
+      aarch64: "registry.fedoraproject.org/fedora-toolbox:46"
+      ppc64le: "registry.fedoraproject.org/fedora-toolbox:46"
+      s390x: "registry.fedoraproject.org/fedora-toolbox:46"
+      # XXX: remove once fedora containers are part of the upstream
+      # fedora registry (and can be validated via tls)
+      riscv64: "ghcr.io/mvo5/fedora-buildroot:46"
+
+      # XXX: add repos here too, that requires some churn, see
+      # https://github.com/osbuild/images/compare/main...mvo5:yaml-distroconfig?expand=1
+      # and we will also need to think about backward compat, as currently
+      # dropping "$distro-$ver.json" files into
+      # /etc/osbuild-composer/repositories will define what distros are
+      # available via images and we will need to provide compatibility for
+      # that.
+      #
+      # Having the repos separated means when a new fedora release is out
+      # we will need to update two places which is clearly a regression from
+      # before.
+
+    image_config:
+      default:
+        default_oscap_datastream: "/usr/share/xml/scap/ssg/content/ssg-fedora-ds.xml"
+        hostname: "localhost.localdomain"
+        install_weak_deps: true
+        locale: "C.UTF-8"
+        machine_id_uninitialized: true
+        timezone: "UTC"
+        default_kernel: "kernel-core"
+        update_default_kernel: true
+
+  - &fedora_branched
     name: fedora-45
     distro_like: fedora
     preview: true
@@ -11,12 +64,9 @@ distros:
     iso_label_tmpl: "{{.Product}}-{{.Distro.MajorVersion}}-{{.ISOLabel}}-{{.Arch}}"
     default_fs_type: "ext4"
     defs_path: fedora
-    runner: &fedora_runner
+    runner:
+      <<: *fedora_runner
       name: org.osbuild.fedora45
-      build_packages:
-        - "glibc"  # ldconfig
-        - "systemd"  # systemd-tmpfiles and systemd-sysusers
-        - "python3"  # osbuild
     oscap_profiles_allowlist:
       - "xccdf_org.ssgproject.content_profile_ospp"
       - "xccdf_org.ssgproject.content_profile_pci-dss"

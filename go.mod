@@ -32,7 +32,7 @@ require (
 	github.com/oapi-codegen/runtime v1.6.0
 	github.com/openshift-online/ocm-sdk-go v0.1.508
 	github.com/osbuild/blueprint v1.32.0
-	github.com/osbuild/image-builder v0.274.1-0.20260723212957-3b93e67f2275
+	github.com/osbuild/image-builder v0.274.1-0.20260811094127-70d048a749ae
 	github.com/osbuild/osbuild-composer/pkg/splunk_logger v0.0.0-20240814102216-0239db53236d
 	github.com/prometheus/client_golang v1.24.1
 	github.com/segmentio/ksuid v1.0.4

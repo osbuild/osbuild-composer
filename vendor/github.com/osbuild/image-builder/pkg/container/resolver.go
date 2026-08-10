@@ -20,6 +20,8 @@ type Resolver interface {
 
 	Resolve(spec SourceSpec) (Spec, error)
 	ResolveAll(sources map[string][]SourceSpec) (map[string][]Spec, error)
+
+	SetAuthFilePath(path string)
 }
 
 type asyncResolver struct {
@@ -44,6 +46,7 @@ type SourceSpec struct {
 func NewResolver(arch string) *asyncResolver {
 	// NOTE: this should return the Resolver interface, but osbuild-composer
 	// sets the AuthFilePath and for now we don't want to break the API.
+	// Do the switch once composer switches to the SetAuthFilePath method.
 	return &asyncResolver{
 		queue: make(chan resolveResult, 2),
 		Arch:  arch,
@@ -76,6 +79,10 @@ func (r *asyncResolver) Add(spec SourceSpec) {
 		}
 		r.queue <- resolveResult{spec: spec, err: err}
 	}()
+}
+
+func (r *asyncResolver) SetAuthFilePath(path string) {
+	r.AuthFilePath = path
 }
 
 func (r *asyncResolver) Finish() ([]Spec, error) {
@@ -151,6 +158,10 @@ func NewBlockingResolver(arch string) Resolver {
 		Arch:      arch,
 		newClient: NewClient,
 	}
+}
+
+func (r *blockingResolver) SetAuthFilePath(path string) {
+	r.AuthFilePath = path
 }
 
 func (r *blockingResolver) Add(src SourceSpec) {

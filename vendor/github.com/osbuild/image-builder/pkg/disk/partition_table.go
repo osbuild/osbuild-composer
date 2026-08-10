@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"path/filepath"
 	"slices"
+	"strings"
 
 	"github.com/google/uuid"
 
@@ -40,9 +41,6 @@ type PartitionTable struct {
 	// Treat StartOffset as an absolute minimum start position rather
 	// than an additive offset on top of the header.
 	AbsoluteStartOffset bool `json:"absolute_start_offset,omitempty" yaml:"absolute_start_offset,omitempty"`
-	// Align the GPT footer to the grain size, ensuring the last partition's
-	// size is also grain-aligned. Matches systemd-repart behavior.
-	AlignFooter bool `json:"align_footer,omitempty" yaml:"align_footer,omitempty"`
 
 	// Dictates if certain bits and bobs are required or not; uses the default
 	// policy if not set.
@@ -54,6 +52,21 @@ type PartitionTablePolicy struct {
 	// readable by firmware (LVM, btrfs). When set to false an XBOOTLDR partition
 	// will not be created even for those filesystems.
 	EnsureXBOOTLDR bool `json:"ensure_xbootldr" yaml:"ensure_xbootldr"`
+
+	// Controls whether the root partition (the one containing "/") is
+	// grown to fill the remaining disk space during relayout. Defaults
+	// to true (nil means true) to preserve backward compatibility. Set
+	// to false to keep the root partition at its specified size.
+	GrowRootToFillDisk *bool `json:"grow_root_to_fill_disk,omitempty" yaml:"grow_root_to_fill_disk,omitempty"`
+}
+
+// growRootToFillDisk returns whether the root partition should be grown
+// to fill remaining disk space. Defaults to true when not explicitly set.
+func (pt *PartitionTable) growRootToFillDisk() bool {
+	if pt.Policy == nil || pt.Policy.GrowRootToFillDisk == nil {
+		return true
+	}
+	return *pt.Policy.GrowRootToFillDisk
 }
 
 var _ = MountpointCreator(&PartitionTable{})
@@ -130,8 +143,9 @@ func NewDefaultPartitionTablePolicy() *PartitionTablePolicy {
 //
 // In the case of raw partitioning (no LVM and no Btrfs), the partition
 // containing the root filesystem is grown to fill any left over space on the
-// partition table. Logical Volumes are not grown to fill the space in the
-// Volume Group since they are trivial to grow on a live system.
+// partition table, unless the base partition table has GrowRootToFillDisk set
+// to false. Logical Volumes are not grown to fill the space in the Volume
+// Group since they are trivial to grow on a live system.
 func NewPartitionTable(basePT *PartitionTable, mountpoints []blueprint.FilesystemCustomization, imageSize datasizes.Size, mode partition.PartitioningMode, architecture arch.Arch, requiredSizes map[string]datasizes.Size, defaultFs string, rng *rand.Rand) (*PartitionTable, error) {
 	newPT := basePT.Clone().(*PartitionTable)
 
@@ -225,6 +239,14 @@ func (pt *PartitionTable) Clone() Entity {
 		return nil
 	}
 
+	var policyClone *PartitionTablePolicy
+	if pt.Policy != nil {
+		policyClone = &PartitionTablePolicy{
+			EnsureXBOOTLDR:     pt.Policy.EnsureXBOOTLDR,
+			GrowRootToFillDisk: common.ClonePtr(pt.Policy.GrowRootToFillDisk),
+		}
+	}
+
 	clone := &PartitionTable{
 		Size:                pt.Size,
 		UUID:                pt.UUID,
@@ -235,8 +257,7 @@ func (pt *PartitionTable) Clone() Entity {
 		ExtraPadding:        pt.ExtraPadding,
 		StartOffset:         pt.StartOffset,
 		AbsoluteStartOffset: pt.AbsoluteStartOffset,
-		AlignFooter:         pt.AlignFooter,
-		Policy:              pt.Policy,
+		Policy:              policyClone,
 	}
 
 	for idx, partition := range pt.Partitions {
@@ -519,7 +540,8 @@ func (pt *PartitionTable) applyCustomization(mountpoints []blueprint.FilesystemC
 // Dynamically calculate and update the start point for each of the existing
 // partitions. Adjusts the overall size of image to either the supplied value
 // in `size` or to the sum of all partitions if that is larger. Will grow the
-// root partition if there is any empty space. Returns the updated start point.
+// root partition if there is any empty space, unless GrowRootToFillDisk is
+// set to false. Returns the updated start point.
 func (pt *PartitionTable) relayout(size datasizes.Size) uint64 {
 	header := pt.HeaderSize()
 	footer := datasizes.Size(0)
@@ -527,9 +549,7 @@ func (pt *PartitionTable) relayout(size datasizes.Size) uint64 {
 	// The GPT header is also at the end of the partition table
 	if pt.Type == PT_GPT {
 		footer = header
-		if pt.AlignFooter {
-			footer = pt.AlignUp(footer)
-		}
+		footer = pt.AlignUp(footer)
 	}
 
 	startBase := header + pt.StartOffset
@@ -562,11 +582,12 @@ func (pt *PartitionTable) relayout(size datasizes.Size) uint64 {
 	root := &pt.Partitions[rootIdx]
 	root.Start = start
 	root.fitTo(root.Size)
+	root.Size = pt.AlignUp(root.Size)
 
 	// add the extra padding specified in the partition table
 	footer += datasizes.Size(pt.ExtraPadding)
 
-	// If the sum of all partitions is bigger then the specified size,
+	// If the sum of all partitions is bigger than the specified size,
 	// we use that instead. Grow the partition table size if needed.
 	end := pt.AlignUp(datasizes.Size(root.Start) + footer + root.Size)
 	if end > size {
@@ -577,12 +598,11 @@ func (pt *PartitionTable) relayout(size datasizes.Size) uint64 {
 		pt.Size = datasizes.Size(size)
 	}
 
-	// If there is space left in the partition table, grow root
-	root.Size = pt.Size - datasizes.Size(root.Start)
-
-	// Finally we shrink the last partition, i.e. the root partition,
-	// to leave space for the footer, e.g. the secondary GPT header.
-	root.Size -= footer
+	if pt.growRootToFillDisk() {
+		// Grow root to fill remaining disk space, leaving room
+		// for the footer (e.g. the secondary GPT header).
+		root.Size = pt.Size - datasizes.Size(root.Start) - footer
+	}
 
 	// Sort partitions by start sector
 	pt.sortPartitions()
@@ -728,6 +748,25 @@ func (pt *PartitionTable) FindMountableOnPlain(mountpoint string) Mountable {
 
 	// first path element is guaranteed to be Mountable
 	return path[0].(Mountable)
+}
+
+// ESPSize returns the size of the EFI system partition in the PartitionTable.
+// Returns 0 if the table has no ESP.
+// For DOS partition tables we match type "ef" or "06" if mounted at /boot/efi.
+func (pt *PartitionTable) ESPSize() datasizes.Size {
+	var fat16ESP datasizes.Size
+	for _, part := range pt.Partitions {
+		if strings.EqualFold(part.Type, EFISystemPartitionGUID) ||
+			strings.EqualFold(part.Type, EFISystemPartitionDOSID) {
+			return part.Size
+		}
+		if strings.EqualFold(part.Type, FAT16BDOSID) && fat16ESP == 0 {
+			if mnt, ok := part.Payload.(Mountable); ok && mnt.GetMountpoint() == "/boot/efi" {
+				fat16ESP = part.Size
+			}
+		}
+	}
+	return fat16ESP
 }
 
 func clampFSSize(mountpoint string, size datasizes.Size) datasizes.Size {
@@ -1197,20 +1236,30 @@ func hasESP(disk *blueprint.DiskCustomization) bool {
 	return false
 }
 
+// defaultESPSize is the size of the automatically created EFI system partition
+// when the caller does not specify one in CustomPartitionTableOptions.
+const defaultESPSize = 200 * datasizes.MiB
+
 // addPartitionsForBootMode creates partitions to satisfy the boot mode requirements:
 //   - BIOS/legacy: adds a 1 MiB BIOS boot partition.
-//   - UEFI: adds a 200 MiB EFI system partition.
+//   - UEFI: adds an EFI system partition of options.ESPSize (or defaultESPSize).
 //   - Hybrid: adds both.
 //
 // The function will append the new partitions to the end of the existing
 // partition table therefore it is best to call this function early to put them
 // near the front (as is conventional).
-func addPartitionsForBootMode(pt *PartitionTable, disk *blueprint.DiskCustomization, bootMode platform.BootMode, architecture arch.Arch) error {
+func addPartitionsForBootMode(pt *PartitionTable, disk *blueprint.DiskCustomization, options *CustomPartitionTableOptions) error {
+	bootMode := options.BootMode
 	if bootMode == platform.BOOT_NONE {
 		return nil
 	}
 
-	switch architecture {
+	espSize := options.ESPSize
+	if espSize == 0 {
+		espSize = defaultESPSize
+	}
+
+	switch options.Architecture {
 	case arch.ARCH_PPC64LE:
 		// UEFI is not supported for PPC CPUs so we don't need to
 		// add an ESP partition there
@@ -1226,7 +1275,7 @@ func addPartitionsForBootMode(pt *PartitionTable, disk *blueprint.DiskCustomizat
 	case arch.ARCH_AARCH64, arch.ARCH_RISCV64:
 		// (our) aarch64/riscv64 only supports UEFI right now
 		if !hasESP(disk) {
-			part, err := mkESP(200*datasizes.MiB, pt.Type)
+			part, err := mkESP(espSize, pt.Type)
 			if err != nil {
 				return err
 			}
@@ -1246,7 +1295,7 @@ func addPartitionsForBootMode(pt *PartitionTable, disk *blueprint.DiskCustomizat
 		case platform.BOOT_UEFI:
 			// add ESP if needed
 			if !hasESP(disk) {
-				part, err := mkESP(200*datasizes.MiB, pt.Type)
+				part, err := mkESP(espSize, pt.Type)
 				if err != nil {
 					return err
 				}
@@ -1261,7 +1310,7 @@ func addPartitionsForBootMode(pt *PartitionTable, disk *blueprint.DiskCustomizat
 			}
 			pt.Partitions = append(pt.Partitions, bios)
 			if !hasESP(disk) {
-				esp, err := mkESP(200*datasizes.MiB, pt.Type)
+				esp, err := mkESP(espSize, pt.Type)
 				if err != nil {
 					return err
 				}
@@ -1272,7 +1321,7 @@ func addPartitionsForBootMode(pt *PartitionTable, disk *blueprint.DiskCustomizat
 			return fmt.Errorf("unknown or unsupported boot mode type with enum value %d", bootMode)
 		}
 	default:
-		return fmt.Errorf("unknown or unsupported architecture %v", architecture)
+		return fmt.Errorf("unknown or unsupported architecture %v", options.Architecture)
 	}
 }
 
@@ -1354,6 +1403,13 @@ type CustomPartitionTableOptions struct {
 	// enable automatic discovery. It has no effect and is not required when
 	// the PartitionTableType is PT_DOS.
 	Architecture arch.Arch
+
+	// ESPSize is the size of the EFI system partition that gets created
+	// automatically when the boot mode requires one and the customizations
+	// don't define one. Callers should set this to the ESP size of the image
+	// type's own partition table so that customizing the partitioning does not
+	// silently change it. If unset, defaultESPSize is used.
+	ESPSize datasizes.Size
 }
 
 // Returns the default filesystem type if the fstype is empty. If both are
@@ -1446,7 +1502,7 @@ func NewCustomPartitionTable(customizations *blueprint.DiskCustomization, option
 	// add any partition(s) that are needed for booting (like /boot/efi)
 	// if needed
 	//
-	if err := addPartitionsForBootMode(pt, customizations, options.BootMode, options.Architecture); err != nil {
+	if err := addPartitionsForBootMode(pt, customizations, options); err != nil {
 		return nil, fmt.Errorf("%s %w", errPrefix, err)
 	}
 	// add the /boot partition (if it is needed)

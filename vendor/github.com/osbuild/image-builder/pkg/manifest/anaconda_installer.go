@@ -636,6 +636,7 @@ func (p *AnacondaInstaller) payloadStages() ([]*osbuild.Stage, error) {
 
 	// These steps were historically performed by Lorax; we need to do them ourselves at least
 	// temporarily until they land in Anaconda or other relevant places.
+	// See: https://github.com/weldr/lorax/blob/35496d033edfcfbf43e4640707029a0f2d57e6c6/share/templates.d/99-generic/runtime-postinstall.tmpl#L61-L64
 	if len(p.InstallerCustomizations.LoraxTemplatePackage) == 0 {
 		// This can likely in the future be replaced by an Alias in the anaconda-shell@.service
 		stages = append(stages, &osbuild.Stage{
@@ -648,9 +649,10 @@ func (p *AnacondaInstaller) payloadStages() ([]*osbuild.Stage, error) {
 			},
 		})
 
-		// Because Anaconda starts wayland on tty6 and systemd by default reserves VTs until
-		// tty6 we need to lower the amount of reserved VTs. This can likely in the future be
-		// replaced by Anaconda starting wayland on a different tty.
+		// Because Anaconda starts wayland on tty6 and systemd by default reserves a VT on
+		// tty6 we need to pick a different reserved VT. This can likely in the future be
+		// replaced by Anaconda starting wayland on a different tty or shipping the logind
+		// dropin itself.
 		reserveVT := 2
 		stages = append(stages, osbuild.NewSystemdLogindStage(&osbuild.SystemdLogindStageOptions{
 			Filename: "10-reserve-vt.conf",
