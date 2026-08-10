@@ -123,11 +123,6 @@ func GetDefaultConfig() *ComposerConfigFile {
 						"gce-rhui",
 					},
 				},
-				"fedora-*": {
-					ImageTypeDenyList: []string{
-						"iot-bootable-container",
-					},
-				},
 			},
 		},
 		DistroAliases: map[string]string{

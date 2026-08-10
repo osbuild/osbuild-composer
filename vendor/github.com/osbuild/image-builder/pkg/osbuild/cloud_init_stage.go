@@ -94,7 +94,7 @@ func (c CloudInitConfigFile) validate() error {
 		}
 	}
 
-	allowedDatasources := []string{"Azure", "Ec2", "WSL", "NoCloud", "None"}
+	allowedDatasources := []string{"Azure", "Oracle", "Ec2", "WSL", "NoCloud", "None"}
 	if len(c.DatasourceList) > 0 {
 		for _, d := range c.DatasourceList {
 			if !slices.Contains(allowedDatasources, d) {

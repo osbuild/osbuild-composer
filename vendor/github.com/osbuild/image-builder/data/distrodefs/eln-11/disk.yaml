@@ -817,6 +817,8 @@ image_types:
     platforms:
       - <<: *x86_64_uefi_platform
         image_format: "gce"
+      - <<: *aarch64_platform
+        image_format: "gce"
     image_config:
       kernel_options: ["biosdevname=0", "scsi_mod.use_blk_mq=Y", "console=ttyS0,38400n8d"]
       time_synchronization:

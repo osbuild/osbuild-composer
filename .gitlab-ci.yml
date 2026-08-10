@@ -561,10 +561,6 @@ API:
       - IMAGE_TYPE: ["iot-commit"]
         RUNNER:
           - aws/fedora-44-x86_64
-      - IMAGE_TYPE: ["iot-bootable-container"]
-        RUNNER:
-          - aws/fedora-44-x86_64
-          - aws/fedora-44-aarch64
 
 API (PR):
   stage: test

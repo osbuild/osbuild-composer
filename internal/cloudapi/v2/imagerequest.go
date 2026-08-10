@@ -256,8 +256,6 @@ func getDefaultTarget(imageType ImageTypes) (UploadTypes, error) {
 
 	case ImageTypesEdgeContainer:
 		fallthrough
-	case ImageTypesIotBootableContainer:
-		fallthrough
 	case ImageTypesIotContainer:
 		return UploadTypesContainer, nil
 
@@ -302,7 +300,6 @@ func targetSupportMap() map[UploadTypes]map[ImageTypes]bool {
 			ImageTypesEdgeInstaller:              true,
 			ImageTypesGuestImage:                 true,
 			ImageTypesImageInstaller:             true,
-			ImageTypesIotBootableContainer:       true,
 			ImageTypesIotCommit:                  true,
 			ImageTypesIotInstaller:               true,
 			ImageTypesIotRawImage:                true,
@@ -317,9 +314,8 @@ func targetSupportMap() map[UploadTypes]map[ImageTypes]bool {
 			ImageTypesWsl:                        true,
 		},
 		UploadTypesContainer: {
-			ImageTypesEdgeContainer:        true,
-			ImageTypesIotBootableContainer: true,
-			ImageTypesIotContainer:         true,
+			ImageTypesEdgeContainer: true,
+			ImageTypesIotContainer:  true,
 		},
 		UploadTypesGcp: {
 			ImageTypesGcp:     true,
@@ -353,7 +349,6 @@ func targetSupportMap() map[UploadTypes]map[ImageTypes]bool {
 			ImageTypesEdgeInstaller:              true,
 			ImageTypesGuestImage:                 true,
 			ImageTypesImageInstaller:             true,
-			ImageTypesIotBootableContainer:       true,
 			ImageTypesIotCommit:                  true,
 			ImageTypesIotInstaller:               true,
 			ImageTypesIotRawImage:                true,

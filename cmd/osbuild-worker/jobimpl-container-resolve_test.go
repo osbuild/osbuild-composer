@@ -294,6 +294,8 @@ type mockResolver struct {
 
 func (m *mockResolver) Add(container.SourceSpec) {}
 
+func (m *mockResolver) SetAuthFilePath(string) {}
+
 func (m *mockResolver) Finish() ([]container.Spec, error) {
 	return nil, fmt.Errorf("mockResolver: use Resolve()")
 }
