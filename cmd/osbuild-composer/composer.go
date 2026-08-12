@@ -158,9 +158,6 @@ func (c *Composer) InitWeldr(weldrListener net.Listener, distrosImageTypeDenylis
 		return err
 	}
 	c.weldrListener = weldrListener
-
-	// Preload the Metadata for all the supported distros
-	c.weldr.PreloadMetadata()
 	return nil
 }
 
