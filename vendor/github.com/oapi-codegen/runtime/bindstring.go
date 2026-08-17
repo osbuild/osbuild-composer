@@ -42,6 +42,28 @@ type BindStringToObjectOptions struct {
 	// When set to "byte" and the destination is []byte, the source string is
 	// base64-decoded rather than treated as a generic slice.
 	Format string
+	// Types is the OpenAPI 3.1 multi-type union member list of the parameter
+	// (e.g. ["string", "integer"]). A "null" entry — the 3.1 nullability
+	// marker, not a union member — is ignored, whether or not the generator
+	// already stripped it. (Type, which the runtime does not currently read,
+	// carries no meaning when Types is set.)
+	//
+	// Types is only consulted when the destination is an empty interface
+	// (`any`): the source string is bound to the first member that parses,
+	// trying boolean, integer, number, then string (most restrictive grammar
+	// first — the always-succeeding string member would otherwise shadow the
+	// rest). Numeric detection uses the JSON number production (RFC 8259
+	// section 6), so tokens like "007" and "+1" bind as strings. The bound
+	// value's dynamic type is one of exactly bool, int64, float64, string,
+	// or, with Format "byte", []byte; width formats (int32, float, ...) are
+	// annotation-only unless the application opts into narrowing via the
+	// NarrowUnionNumericFormats package variable.
+	//
+	// Concrete destinations ignore this field and keep the reflection-driven
+	// behavior. Array element binding does not yet support unions, and
+	// deepObject-style binding does not consult this field (its JSON decode
+	// path produces float64 for all numbers).
+	Types []string
 }
 
 // BindStringToObjectWithOptions takes a string, and attempts to assign it to the destination
@@ -89,8 +111,12 @@ func BindStringToObjectWithOptions(src string, dst interface{}, opts BindStringT
 			v.SetBytes(decoded)
 			return nil
 		}
-		// Non-binary slices fall through to the default error case.
-		fallthrough
+		// Non-binary slices have no string representation to parse, so they
+		// get the same unhandled-type error as the default case below. This
+		// can not be a fallthrough: the next case is the integer one, and a
+		// source string that parses as an integer would reach v.OverflowInt
+		// on a slice value, which panics.
+		err = fmt.Errorf("can not bind to destination of type: %s", t.Kind())
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		var val int64
 		val, err = strconv.ParseInt(src, 10, 64)
@@ -189,6 +215,22 @@ func BindStringToObjectWithOptions(src string, dst interface{}, opts BindStringT
 
 		// We fall through to the error case below if we haven't handled the
 		// destination type above.
+		fallthrough
+	case reflect.Interface:
+		// An interface destination normally can't be bound: there is no
+		// type information to parse with, so it falls to the error below.
+		// The exception is an empty interface (`any`) destination for a
+		// declared OpenAPI 3.1 multi-type union — opts.Types names the
+		// member types, and the value binds to the first member that
+		// parses. See bindStringToUnionMember for the exact semantics.
+		if t.Kind() == reflect.Interface && t.NumMethod() == 0 && len(opts.Types) > 0 {
+			bound, bindErr := bindStringToUnionMember(src, opts)
+			if bindErr != nil {
+				return fmt.Errorf("error binding string parameter: %w", bindErr)
+			}
+			v.Set(reflect.ValueOf(bound))
+			return nil
+		}
 		fallthrough
 	case reflect.Map:
 		// A bool-keyed map (such as nullable.Nullable[T], which is
