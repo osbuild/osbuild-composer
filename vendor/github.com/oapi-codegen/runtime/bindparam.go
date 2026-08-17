@@ -80,6 +80,18 @@ type BindStyledParameterOptions struct {
 	// When set to "byte" and the destination is []byte, the value is
 	// base64-decoded rather than treated as a generic slice.
 	Format string
+	// Types is the OpenAPI 3.1 multi-type union member list of the parameter
+	// (e.g. ["string", "integer"]). It is only consulted when the
+	// destination is an empty interface (`any`): the value binds to the
+	// first member that parses, trying boolean, integer, number, then
+	// string, with numeric detection following the JSON number production.
+	// The bound value's dynamic type is one of exactly bool, int64, float64,
+	// string, or, with Format "byte", []byte (widths narrow only under the
+	// NarrowUnionNumericFormats package variable). Concrete destinations ignore
+	// it and keep the reflection-driven behavior; arrays of unions and
+	// deepObject-style binding are not covered. See
+	// BindStringToObjectOptions.Types for the full semantics and scope.
+	Types []string
 	// AllowReserved, when true, indicates that the parameter value may
 	// contain RFC 3986 reserved characters without percent-encoding.
 	AllowReserved bool
@@ -193,7 +205,11 @@ func BindStyledParameterWithOptions(style string, paramName string, value string
 		}
 		value = parts[0]
 	}
-	return BindStringToObject(value, dest)
+	return BindStringToObjectWithOptions(value, dest, BindStringToObjectOptions{
+		Type:   opts.Type,
+		Format: opts.Format,
+		Types:  opts.Types,
+	})
 }
 
 // This is a complex set of operations, but each given parameter style can be
@@ -386,6 +402,18 @@ type BindQueryParameterOptions struct {
 	// When set to "byte" and the destination is []byte, the value is
 	// base64-decoded rather than treated as a generic slice.
 	Format string
+	// Types is the OpenAPI 3.1 multi-type union member list of the parameter
+	// (e.g. ["string", "integer"]). It is only consulted when the
+	// destination is an empty interface (`any`): the value binds to the
+	// first member that parses, trying boolean, integer, number, then
+	// string, with numeric detection following the JSON number production.
+	// The bound value's dynamic type is one of exactly bool, int64, float64,
+	// string, or, with Format "byte", []byte (widths narrow only under the
+	// NarrowUnionNumericFormats package variable). Concrete destinations ignore
+	// it and keep the reflection-driven behavior; arrays of unions and
+	// deepObject-style binding are not covered. See
+	// BindStringToObjectOptions.Types for the full semantics and scope.
+	Types []string
 	// AllowReserved, when true, indicates that the parameter value may
 	// contain RFC 3986 reserved characters without percent-encoding.
 	AllowReserved bool
@@ -520,7 +548,11 @@ func BindQueryParameterWithOptions(style string, explode bool, required bool, pa
 						return nil
 					}
 				}
-				err = BindStringToObject(values[0], output)
+				err = BindStringToObjectWithOptions(values[0], output, BindStringToObjectOptions{
+					Type:   opts.Type,
+					Format: opts.Format,
+					Types:  opts.Types,
+				})
 			}
 			if err != nil {
 				return err
@@ -552,7 +584,11 @@ func BindQueryParameterWithOptions(style string, explode bool, required bool, pa
 			// is only meaningful for array and object types.
 			// See: https://swagger.io/docs/specification/serialization/
 			if k != reflect.Slice && k != reflect.Struct && k != reflect.Map {
-				err := BindStringToObject(values[0], output)
+				err := BindStringToObjectWithOptions(values[0], output, BindStringToObjectOptions{
+					Type:   opts.Type,
+					Format: opts.Format,
+					Types:  opts.Types,
+				})
 				if err != nil {
 					return err
 				}
