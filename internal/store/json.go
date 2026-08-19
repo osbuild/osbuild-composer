@@ -74,6 +74,9 @@ type sourceV0 struct {
 	CheckRepoGPG   bool     `json:"check_repogpg"`
 	GPGKeys        []string `json:"gpgkeys"`
 	ModuleHotfixes *bool    `json:"module_hotfixes,omitempty"`
+	SSLCACert      string   `json:"sslcacert,omitempty"`
+	SSLClientKey   string   `json:"sslclientkey,omitempty"`
+	SSLClientCert  string   `json:"sslclientcert,omitempty"`
 }
 
 type sourcesV0 map[string]sourceV0
@@ -198,7 +201,22 @@ func newSourceConfigsFromV0(sourcesStruct sourcesV0) map[string]SourceConfig {
 	sources := make(map[string]SourceConfig)
 
 	for name, source := range sourcesStruct {
-		sources[name] = SourceConfig(source)
+		sources[name] = SourceConfig{
+			Name:           source.Name,
+			Type:           source.Type,
+			URL:            source.URL,
+			CheckGPG:       source.CheckGPG,
+			CheckSSL:       source.CheckSSL,
+			System:         source.System,
+			Distros:        source.Distros,
+			RHSM:           source.RHSM,
+			CheckRepoGPG:   source.CheckRepoGPG,
+			GPGKeys:        source.GPGKeys,
+			ModuleHotfixes: source.ModuleHotfixes,
+			SSLCACert:      source.SSLCACert,
+			SSLClientKey:   source.SSLClientKey,
+			SSLClientCert:  source.SSLClientCert,
+		}
 	}
 
 	return sources
@@ -330,7 +348,22 @@ func newComposesV0(composes map[uuid.UUID]weldrtypes.Compose) composesV0 {
 func newSourcesV0(sources map[string]SourceConfig) sourcesV0 {
 	sourcesStruct := make(sourcesV0)
 	for name, source := range sources {
-		sourcesStruct[name] = sourceV0(source)
+		sourcesStruct[name] = sourceV0{
+			Name:           source.Name,
+			Type:           source.Type,
+			URL:            source.URL,
+			CheckGPG:       source.CheckGPG,
+			CheckSSL:       source.CheckSSL,
+			System:         source.System,
+			Distros:        source.Distros,
+			RHSM:           source.RHSM,
+			CheckRepoGPG:   source.CheckRepoGPG,
+			GPGKeys:        source.GPGKeys,
+			ModuleHotfixes: source.ModuleHotfixes,
+			SSLCACert:      source.SSLCACert,
+			SSLClientKey:   source.SSLClientKey,
+			SSLClientCert:  source.SSLClientCert,
+		}
 	}
 	return sourcesStruct
 }

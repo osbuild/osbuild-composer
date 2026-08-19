@@ -28,6 +28,9 @@ type repository struct {
 	MetadataExpire string   `json:"metadata_expire,omitempty"`
 	ImageTypeTags  []string `json:"image_type_tags,omitempty"`
 	PackageSets    []string `json:"package_sets,omitempty"`
+	SSLCACert      string   `json:"sslcacert,omitempty"`
+	SSLClientKey   string   `json:"sslclientkey,omitempty"`
+	SSLClientCert  string   `json:"sslclientcert,omitempty"`
 }
 
 func (r *repository) UnmarshalJSON(data []byte) (err error) {
@@ -168,6 +171,9 @@ func LoadRepositoriesFromReader(r io.Reader) (map[string][]RepoConfig, error) {
 				ModuleHotfixes: repo.ModuleHotfixes,
 				ImageTypeTags:  repo.ImageTypeTags,
 				PackageSets:    repo.PackageSets,
+				SSLCACert:      repo.SSLCACert,
+				SSLClientKey:   repo.SSLClientKey,
+				SSLClientCert:  repo.SSLClientCert,
 			}
 
 			repoConfigs[arch] = append(repoConfigs[arch], config)
