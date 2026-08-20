@@ -133,9 +133,6 @@ name = "bash"
 
 [[packages]]
 name = "cloud-init"
-
-[customizations.services]
-enabled = ["sshd", "cloud-init", "cloud-init-local", "cloud-config", "cloud-final"]
 EOF
 
 # Make sure the specified storage account exists
