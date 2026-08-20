@@ -99,9 +99,6 @@ name = "bash"
 [[packages]]
 name = "cloud-init"
 
-[customizations.services]
-enabled = ["sshd", "cloud-init", "cloud-init-local", "cloud-config", "cloud-final"]
-
 [[customizations.user]]
 name = "admin"
 description = "admin"
