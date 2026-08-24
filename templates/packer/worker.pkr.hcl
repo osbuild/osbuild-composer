@@ -23,9 +23,8 @@ build {
   source "amazon-ebs.image_builder" {
     name = "rhel-10-x86_64"
 
-    # For some reason there's no RHEL-10.1, though this one was rebuilt around the same time as the
-    # arm one: RHEL-10.0.0_HVM-20251030-x86_64-0-Access2-GP3
-    source_ami = "ami-0d2cf1078cac15da9"
+    # RHEL-10.2.0_HVM-20260728-x86_64-0-Access2-GP3
+    source_ami = "ami-0a77e6c2fd84dc452"
     ssh_username = "ec2-user"
     instance_type = "c6a.large"
     aws_polling {
@@ -62,8 +61,8 @@ build {
   source "amazon-ebs.image_builder" {
     name = "rhel-10-aarch64"
 
-    # RHEL-10.1.0_HVM_GA-20251031-arm64-0-Access2-GP3
-    source_ami = "ami-03d9eec0fe95df48d"
+    # RHEL-10.2.0_HVM-20260728-arm64-0-Access2-GP3
+    source_ami = "ami-0917952fda31cb610"
     ssh_username = "ec2-user"
     instance_type = "c6g.large"
     aws_polling {
