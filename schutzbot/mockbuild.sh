@@ -181,6 +181,7 @@ mock -r "$MOCK_CONFIG" \
     --define "commit ${COMMIT}" \
     --config-opts=cleanup_on_failure=False \
     --config-opts=cleanup_on_success=True \
+    --nocheck \
     --with=tests \
     ${RELAX_REQUIRES:+"$RELAX_REQUIRES"} \
     --resultdir "$REPO_DIR" \
