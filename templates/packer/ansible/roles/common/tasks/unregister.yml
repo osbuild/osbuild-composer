@@ -4,5 +4,6 @@
   become: yes
   tags:
     - rhel
+    - ci
   shell: >-
     subscription-manager unregister

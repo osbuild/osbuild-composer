@@ -4,6 +4,7 @@
 - name: Subscribe
   tags:
     - rhel
+    - ci
   community.general.redhat_subscription:
     activationkey: "{{ RH_ACTIVATION_KEY }}"
     org_id: "{{ RH_ORG_ID }}"
@@ -15,6 +16,7 @@
   become: yes
   tags:
     - rhel
+    - ci
   shell: >-
     subscription-manager config --rhsm.manage_repos 1
 
@@ -22,6 +24,7 @@
   become: yes
   tags:
     - rhel
+    - ci
   shell: >-
     subscription-manager repos \
       --enable rhel-10-for-{{ ansible_architecture }}-appstream-rpms \
