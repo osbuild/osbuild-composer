@@ -500,9 +500,16 @@ type AWSEC2CloneCompose struct {
 
 // AWSEC2UploadOptions defines model for AWSEC2UploadOptions.
 type AWSEC2UploadOptions struct {
-	Region            string   `json:"region"`
-	ShareWithAccounts []string `json:"share_with_accounts"`
-	SnapshotName      *string  `json:"snapshot_name,omitempty"`
+	Region            string    `json:"region"`
+	ShareWithAccounts []string  `json:"share_with_accounts"`
+	SnapshotName      *string   `json:"snapshot_name,omitempty"`
+	Tags              *[]AWSTag `json:"tags,omitempty"`
+}
+
+// AWSTag defines model for AWSTag.
+type AWSTag struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
 }
 
 // AWSEC2UploadStatus defines model for AWSEC2UploadStatus.
