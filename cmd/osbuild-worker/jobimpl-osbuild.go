@@ -21,6 +21,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/osbuild/image-builder/pkg/arch"
+	ibawscloud "github.com/osbuild/image-builder/pkg/cloud/awscloud"
 	"github.com/osbuild/image-builder/pkg/cloud/azure"
 	"github.com/osbuild/image-builder/pkg/cloud/gcp"
 	"github.com/osbuild/image-builder/pkg/container"
@@ -739,7 +740,12 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				}
 			}
 
-			ami, _, err := a.Register(jobTarget.ImageName, bucket, targetOptions.Key, nil, targetOptions.ShareWithAccounts, arch.Current(), bootMode, nil)
+			var tags []ibawscloud.AWSTag
+			for _, tag := range targetOptions.Tags {
+				tags = append(tags, ibawscloud.AWSTag{Name: tag.Key, Value: tag.Value})
+			}
+
+			ami, _, err := a.Register(jobTarget.ImageName, bucket, targetOptions.Key, tags, targetOptions.ShareWithAccounts, arch.Current(), bootMode, nil)
 			if err != nil {
 				targetResult.TargetError = clienterrors.New(clienterrors.ErrorImportingImage, err.Error(), nil)
 				break
