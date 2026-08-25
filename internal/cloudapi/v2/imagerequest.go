@@ -42,11 +42,22 @@ func newAWSTarget(options UploadOptions, imageType distro.ImageType) (*target.Ta
 		amiBootMode = common.ToPtr(string(ec2types.BootModeValuesLegacyBios))
 	}
 
+	var tags []target.AWSTag
+	if awsUploadOptions.Tags != nil {
+		for _, tag := range *awsUploadOptions.Tags {
+			tags = append(tags, target.AWSTag{Key: tag.Key, Value: tag.Value})
+		}
+	}
+	// Keep a stable composer-api tag so maintenance can find images even when
+	// snapshot_name / AMI Name is a user-chosen value.
+	tags = append(tags, target.AWSTag{Key: "composer-api", Value: key})
+
 	t := target.NewAWSTarget(&target.AWSTargetOptions{
 		Region:            awsUploadOptions.Region,
 		Key:               key,
 		ShareWithAccounts: awsUploadOptions.ShareWithAccounts,
 		BootMode:          amiBootMode,
+		Tags:              tags,
 	})
 	if awsUploadOptions.SnapshotName != nil {
 		t.ImageName = *awsUploadOptions.SnapshotName
