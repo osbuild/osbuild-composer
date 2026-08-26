@@ -6,6 +6,7 @@ import (
 )
 
 const vmdkRegex = "^[a-zA-Z0-9+_.-]*$"
+const vhwvRegex = "^vmx-[0-9]+$"
 
 type OVFStageOptions struct {
 	Vmdk       string                     `json:"vmdk"`
@@ -14,7 +15,8 @@ type OVFStageOptions struct {
 }
 
 type OVFVMWareStageOptions struct {
-	OSType string `json:"os_type,omitempty"`
+	OSType                 string `json:"os_type,omitempty" yaml:"os_type,omitempty"`
+	VirtualHardwareVersion string `json:"virtual_hardware_version,omitempty" yaml:"virtual_hardware_version,omitempty"`
 }
 
 type OVFVirtualBoxStageOptions struct {
@@ -31,6 +33,13 @@ func (o OVFStageOptions) validate() error {
 	exp := regexp.MustCompile(vmdkRegex)
 	if !exp.MatchString(o.Vmdk) {
 		return fmt.Errorf("'vmdk' name %q doesn't conform to schema (%s)", o.Vmdk, exp.String())
+	}
+
+	if o.VMWare != nil && o.VMWare.VirtualHardwareVersion != "" {
+		exp = regexp.MustCompile(vhwvRegex)
+		if !exp.MatchString(o.VMWare.VirtualHardwareVersion) {
+			return fmt.Errorf("'vmdk' name %q doesn't conform to schema (%s)", o.Vmdk, exp.String())
+		}
 	}
 
 	return nil

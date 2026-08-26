@@ -135,6 +135,7 @@ type InstallerCustomizations struct {
 	InstallWeakDeps bool
 
 	DefaultMenu int
+	MenuTimeout *int
 
 	Product   string
 	Variant   string

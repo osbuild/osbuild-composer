@@ -1765,6 +1765,11 @@ image_types:
           shallow_merge:
             gpgkey_files:
               - "/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release"
+    package_sets:
+      os:
+        - *qcow2_pkgset
+        - conditions:
+            "system reinstall bootc": *conditions_pkgsets_system_reinstall_bootc
     partition_table:
       x86_64:
         type: "gpt"
@@ -2098,6 +2103,10 @@ image_types:
     platforms:
       - <<: *x86_64_bios_platform
         image_format: "ova"
+    disk_config:
+      ovf_vmware:
+        os_type: "rhel9_64Guest"
+        virtual_hardware_version: "vmx-18"
     blueprint:
       supported_options: *supported_options_disk
 

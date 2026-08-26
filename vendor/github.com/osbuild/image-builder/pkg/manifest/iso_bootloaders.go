@@ -63,6 +63,8 @@ type Grub2X86Boot struct {
 
 	// Default Grub2 menu on the ISO
 	DefaultMenu int
+	// Default Grub2 menu timeout on the ISO
+	MenuTimeout *int
 	// Custom menu entries (overrides all default entries)
 	Custom []ISOGrub2MenuEntry
 }
@@ -84,6 +86,15 @@ func (boot *Grub2X86Boot) GetISOBootStages(inputName string, _ *disk.PartitionTa
 	if boot.DefaultMenu > 0 {
 		grub2config = &osbuild.Grub2Config{
 			Default: boot.DefaultMenu,
+		}
+	}
+	if boot.MenuTimeout != nil {
+		if grub2config == nil {
+			grub2config = &osbuild.Grub2Config{
+				Timeout: *boot.MenuTimeout,
+			}
+		} else {
+			grub2config.Timeout = *boot.MenuTimeout
 		}
 	}
 	options := &osbuild.Grub2ISOLegacyStageOptions{
@@ -142,6 +153,8 @@ type Grub2PPC64Boot struct {
 
 	// Default Grub2 menu on the ISO
 	DefaultMenu int
+	// Default Grub2 menu timeout on the ISO
+	MenuTimeout *int
 	// Custom menu entries (overrides all default entries)
 	Custom []ISOGrub2MenuEntry
 }
@@ -163,6 +176,15 @@ func (boot *Grub2PPC64Boot) GetISOBootStages(inputName string, _ *disk.Partition
 	if boot.DefaultMenu > 0 {
 		grub2config = &osbuild.Grub2Config{
 			Default: boot.DefaultMenu,
+		}
+	}
+	if boot.MenuTimeout != nil {
+		if grub2config == nil {
+			grub2config = &osbuild.Grub2Config{
+				Timeout: *boot.MenuTimeout,
+			}
+		} else {
+			grub2config.Timeout = *boot.MenuTimeout
 		}
 	}
 	options := &osbuild.Grub2ISOLegacyStageOptions{

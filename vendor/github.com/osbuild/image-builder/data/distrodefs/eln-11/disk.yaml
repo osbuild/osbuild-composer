@@ -651,6 +651,13 @@ image_types:
     platforms:
       - <<: *x86_64_bios_platform
         image_format: "ova"
+    disk_config:
+      ovf_vmware:
+        # Ideally we would use rhel10_64Guest, but this requires vmx-22 (vcenter 9+). And many users
+        # are trying to use vcenter 8 for as long as possible. If this should change at some point
+        # in future, it should become part of the blueprint.
+        os_type: "rhel9_64Guest"
+        virtual_hardware_version: "vmx-21"
     blueprint:
       supported_options: *supported_options_disk
 

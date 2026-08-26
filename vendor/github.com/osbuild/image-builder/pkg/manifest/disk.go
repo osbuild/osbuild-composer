@@ -11,6 +11,8 @@ type DiskCustomizations struct {
 
 	// Which partitioning tooling is used to create the disk image(s)
 	PartitioningTool osbuild.PartTool
+
+	OVFVMWare osbuild.OVFVMWareStageOptions
 }
 
 func NewDiskCustomizations() DiskCustomizations {

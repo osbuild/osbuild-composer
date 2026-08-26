@@ -2,6 +2,7 @@ package osbuild
 
 import (
 	"fmt"
+	"maps"
 	"slices"
 
 	"github.com/osbuild/image-builder/internal/common"
@@ -34,6 +35,9 @@ type RPMStageOptions struct {
 	InstallLangs []string `json:"install_langs,omitempty"`
 
 	RPMKeys *RPMKeys `json:"rpmkeys,omitempty"`
+
+	// Set generic environment variables for RPM scriptlets
+	GenericEnv map[string]string `json:"generic_env,omitempty"`
 }
 
 func (o *RPMStageOptions) Clone() *RPMStageOptions {
@@ -51,6 +55,7 @@ func (o *RPMStageOptions) Clone() *RPMStageOptions {
 		KernelInstallEnv: common.ClonePtr(o.KernelInstallEnv),
 		InstallLangs:     slices.Clone(o.InstallLangs),
 		RPMKeys:          common.ClonePtr(o.RPMKeys),
+		GenericEnv:       maps.Clone(o.GenericEnv),
 	}
 }
 

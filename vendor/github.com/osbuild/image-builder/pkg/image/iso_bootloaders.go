@@ -37,6 +37,7 @@ func (img *ISOBootloaders) Bootloaders(buildPipeline manifest.Build, platform pl
 		grub2.ISOLabel = img.ISOCustomizations.Label
 		grub2.KernelOpts = kernelOpts
 		grub2.DefaultMenu = img.InstallerCustomizations.DefaultMenu
+		grub2.MenuTimeout = img.InstallerCustomizations.MenuTimeout
 
 		for _, entry := range img.Custom {
 			grub2.Custom = append(grub2.Custom, manifest.ISOGrub2MenuEntry{
@@ -55,6 +56,7 @@ func (img *ISOBootloaders) Bootloaders(buildPipeline manifest.Build, platform pl
 		grub2ppc64.ISOLabel = img.ISOCustomizations.Label
 		grub2ppc64.KernelOpts = kernelOpts
 		grub2ppc64.DefaultMenu = img.InstallerCustomizations.DefaultMenu
+		grub2ppc64.MenuTimeout = img.InstallerCustomizations.MenuTimeout
 
 		for _, entry := range img.Custom {
 			grub2ppc64.Custom = append(grub2ppc64.Custom, manifest.ISOGrub2MenuEntry{
@@ -80,6 +82,7 @@ func (img *ISOBootloaders) Bootloaders(buildPipeline manifest.Build, platform pl
 		efiPipeline.UEFIVendor = platform.GetUEFIVendor()
 		efiPipeline.ISOLabel = img.ISOCustomizations.Label
 		efiPipeline.DefaultMenu = img.InstallerCustomizations.DefaultMenu
+		efiPipeline.MenuTimeout = img.InstallerCustomizations.MenuTimeout
 		efiPipeline.KernelOpts = kernelOpts
 
 		for _, entry := range img.Custom {

@@ -99,6 +99,8 @@ func (img *DiskImage) InstantiateManifest(m *manifest.Manifest,
 	case platform.FORMAT_OVA:
 		vmdkPipeline := manifest.NewVMDK(buildPipeline, rawImagePipeline)
 		ovfPipeline := manifest.NewOVF(buildPipeline, vmdkPipeline)
+		ovfPipeline.VMWareOSType = img.DiskCustomizations.OVFVMWare.OSType
+		ovfPipeline.VMWareVirtualHardwareVersion = img.DiskCustomizations.OVFVMWare.VirtualHardwareVersion
 		tarPipeline := manifest.NewTar(buildPipeline, ovfPipeline, "archive")
 		tarPipeline.Format = osbuild.TarArchiveFormatUstar
 		tarPipeline.SetFilename(img.filename)

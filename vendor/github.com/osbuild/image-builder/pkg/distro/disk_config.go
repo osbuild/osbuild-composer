@@ -14,6 +14,8 @@ type DiskConfig struct {
 
 	// Mostly for RHEL7 compat though might be purposed in the future
 	PartitioningTool *osbuild.PartTool `yaml:"partitioning_tool,omitempty"`
+
+	OVFVMWare *osbuild.OVFVMWareStageOptions `yaml:"ovf_vmware,omitempty"`
 }
 
 // InheritFrom inherits unset values from the provided parent configuration and
