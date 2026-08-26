@@ -68,6 +68,18 @@ if [[ $ID == "rhel" && ${VERSION_ID%.*} == "9" ]]; then
   sudo systemctl stop tmp.mount && sudo systemctl mask tmp.mount
 fi
 
+if [[ $ID == "fedora" && ${RUNNER:-} == gcp/* ]]; then
+  # Expand the root partition to use the entire 60GB disk size
+  greenprint "Growing root partition to use full disk"
+  ROOT_DEVICE=$(findmnt -n -o SOURCE /)
+  DISK=$(lsblk -n -o PKNAME "${ROOT_DEVICE}")
+  PART_NUM=$(lsblk -n -o PARTN "${ROOT_DEVICE}" | xargs)
+  greenprint "Root: ${ROOT_DEVICE} on /dev/${DISK} partition ${PART_NUM}"
+  sudo growpart "/dev/${DISK}" "${PART_NUM}"
+  sudo resize2fs "${ROOT_DEVICE}" || sudo xfs_growfs /
+  df -hT /
+fi
+
 if [[ $ID == "centos" && $VERSION_ID == "8" ]]; then
     # Workaround for https://bugzilla.redhat.com/show_bug.cgi?id=2065292
     # Remove when podman-4.0.2-2.el8 is in Centos 8 repositories
