@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"strconv"
 
 	"github.com/osbuild/image-builder/internal/common"
 )
@@ -17,6 +18,19 @@ type Size uint64
 // it is strictly equivalent to uint64(Size(1))
 func (si Size) Uint64() uint64 {
 	return uint64(si)
+}
+
+func (si *Size) UnmarshalText(data []byte) error {
+	value, err := Parse(string(data))
+	if err != nil {
+		return fmt.Errorf("error decoding size: %w", err)
+	}
+	*si = Size(value)
+	return nil
+}
+
+func (si Size) MarshalText() ([]byte, error) {
+	return []byte(strconv.FormatUint(si.Uint64(), 10)), nil
 }
 
 func (si *Size) UnmarshalTOML(data interface{}) error {

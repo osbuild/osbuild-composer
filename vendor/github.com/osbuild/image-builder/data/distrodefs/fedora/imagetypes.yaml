@@ -60,7 +60,6 @@
       - "anaconda"
       - "anaconda-dracut"
       - "anaconda-install-img-deps"
-      - "anaconda-widgets"
       - "atheros-firmware"
       - "audit"
       - "bind-utils"
@@ -195,7 +194,6 @@
   network_installer_pkgset: &network_installer_pkgset
     include:
       - anaconda
-      - anaconda-widgets
       - anaconda-install-img-deps
       - ostree
       - rpm-ostree
@@ -1568,6 +1566,10 @@ image_types:
     name_aliases: ["ova", "vsphere-ova"]
     filename: "image.ova"
     mime_type: "application/ovf"
+    disk_config:
+      ovf_vmware:
+        os_type: "fedora64Guest"
+        virtual_hardware_version: "vmx-21"
     exports: ["archive"]
     platforms:
       - <<: *x86_64_bios_platform
@@ -2798,7 +2800,6 @@ image_types:
             - anaconda
             - anaconda-dracut
             - anaconda-install-img-deps
-            - anaconda-widgets
             - atheros-firmware
             - audit
             - bind-utils

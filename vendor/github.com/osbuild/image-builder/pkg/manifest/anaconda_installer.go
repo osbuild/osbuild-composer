@@ -248,6 +248,10 @@ func (p *AnacondaInstaller) getBuildPackages(Distro) ([]string, error) {
 		packages = append(packages, "flatpak")
 	}
 
+	// get the packages as defined in the YAML platform
+	// definitions
+	packages = append(packages, p.platform.GetBuildPackages()...)
+
 	return packages, nil
 }
 

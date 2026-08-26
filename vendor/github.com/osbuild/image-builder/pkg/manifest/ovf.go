@@ -11,6 +11,9 @@ type OVF struct {
 	Base
 
 	imgPipeline *VMDK
+
+	VMWareOSType                 string
+	VMWareVirtualHardwareVersion string
 }
 
 // NewOVF creates a new OVF pipeline. imgPipeline is the pipeline producing the vmdk image.
@@ -47,9 +50,16 @@ func (p *OVF) serialize() (osbuild.Pipeline, error) {
 		osbuild.NewPipelineTreeInputs(inputName, p.imgPipeline.Name()),
 	))
 
-	pipeline.AddStage(osbuild.NewOVFStage(&osbuild.OVFStageOptions{
+	options := &osbuild.OVFStageOptions{
 		Vmdk: p.imgPipeline.Filename(),
-	}))
+	}
+	if p.VMWareOSType != "" || p.VMWareVirtualHardwareVersion != "" {
+		options.VMWare = &osbuild.OVFVMWareStageOptions{
+			OSType:                 p.VMWareOSType,
+			VirtualHardwareVersion: p.VMWareVirtualHardwareVersion,
+		}
+	}
+	pipeline.AddStage(osbuild.NewOVFStage(options))
 
 	return pipeline, nil
 }

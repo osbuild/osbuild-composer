@@ -73,11 +73,11 @@ func (r *asyncResolver) Add(spec SourceSpec) {
 	go func() {
 		ctx, cancelTimeout := context.WithTimeout(context.Background(), 60*time.Second)
 		defer cancelTimeout()
-		spec, err := client.Resolve(ctx, spec.Name, spec.Local)
+		resolved, err := client.Resolve(ctx, spec.Name, spec.Local)
 		if err != nil {
 			err = fmt.Errorf("'%s': %w", spec.Source, err)
 		}
-		r.queue <- resolveResult{spec: spec, err: err}
+		r.queue <- resolveResult{spec: resolved, err: err}
 	}()
 }
 

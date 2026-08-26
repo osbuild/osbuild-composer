@@ -138,20 +138,31 @@ func (p *BuildrootFromPackages) getPackageSetChain(distro Distro) ([]rpmmd.Packa
 	// TODO: make the /usr/bin/cp dependency conditional
 	// TODO: make the /usr/bin/xz dependency conditional
 	policyPackage := fmt.Sprintf("selinux-policy-%s", p.selinuxPolicy)
-	packages := []string{
+	seen := map[string]bool{}
+	var packages []string
+	addPkgs := func(pkgs ...string) {
+		for _, pkg := range pkgs {
+			if !seen[pkg] {
+				seen[pkg] = true
+				packages = append(packages, pkg)
+			}
+		}
+	}
+
+	addPkgs(
 		policyPackage, // needed to build the build pipeline
 		"coreutils",   // /usr/bin/cp - used all over
 		"xz",          // usage unclear
-	}
+	)
 
-	packages = append(packages, p.runner.GetBuildPackages()...)
+	addPkgs(p.runner.GetBuildPackages()...)
 
 	for _, pipeline := range p.dependents {
 		pipelineBuildPackages, err := pipeline.getBuildPackages(distro)
 		if err != nil {
 			return nil, fmt.Errorf("cannot get build packages for %s: %w", distro, err)
 		}
-		packages = append(packages, pipelineBuildPackages...)
+		addPkgs(pipelineBuildPackages...)
 	}
 
 	return []rpmmd.PackageSet{

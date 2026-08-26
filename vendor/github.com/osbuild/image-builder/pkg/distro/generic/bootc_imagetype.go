@@ -343,9 +343,14 @@ func (t *bootcImageType) initAnacondaInstallerBaseFromSourceInfo(img *image.Anac
 	if err != nil {
 		return err
 	}
-	if instCust != nil && instCust.Modules != nil {
-		img.InstallerCustomizations.EnabledAnacondaModules = append(img.InstallerCustomizations.EnabledAnacondaModules, instCust.Modules.Enable...)
-		img.InstallerCustomizations.DisabledAnacondaModules = append(img.InstallerCustomizations.DisabledAnacondaModules, instCust.Modules.Disable...)
+	if instCust != nil {
+		if instCust.Modules != nil {
+			img.InstallerCustomizations.EnabledAnacondaModules = append(img.InstallerCustomizations.EnabledAnacondaModules, instCust.Modules.Enable...)
+			img.InstallerCustomizations.DisabledAnacondaModules = append(img.InstallerCustomizations.DisabledAnacondaModules, instCust.Modules.Disable...)
+		}
+		if instCust.Bootloader != nil && instCust.Bootloader.Grub2 != nil {
+			img.InstallerCustomizations.MenuTimeout = instCust.Bootloader.Grub2.MenuTimeout
+		}
 	}
 	img.InstallerCustomizations.EnabledAnacondaModules = append(img.InstallerCustomizations.EnabledAnacondaModules,
 		anaconda.ModuleUsers,
