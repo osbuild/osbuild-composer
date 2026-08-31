@@ -19,7 +19,7 @@ require (
 	github.com/getsentry/sentry-go v0.49.0
 	github.com/getsentry/sentry-go/echo v0.43.0
 	github.com/getsentry/sentry-go/logrus v0.49.0
-	github.com/gobwas/glob v0.2.3
+	github.com/gobwas/glob v1.0.0
 	github.com/golang-jwt/jwt/v4 v4.5.2
 	github.com/google/go-cmp v0.7.0
 	github.com/google/uuid v1.6.0
