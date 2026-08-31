@@ -191,81 +191,6 @@ if nvrGreaterOrEqual "osbuild-composer" "83"; then
     esac
 fi
 
-# CIV tests temporarily disabled.  See https://issues.redhat.com/browse/HMS-9868
-# if [[ "$ID" == "fedora" ]]; then
-#   # fedora uses fedora
-#   SSH_USER="fedora"
-# else
-#   # RHEL and centos use ec2-user
-#   SSH_USER="ec2-user"
-# fi
-
-# greenprint "Pulling cloud-image-val container"
-
-# if [[ "$CI_PROJECT_NAME" =~ "cloud-image-val" ]]; then
-#   # If running on CIV, get dev container
-#   TAG=${CI_COMMIT_REF_SLUG}
-# else
-#   # If not, get prod container
-#   TAG="prod"
-# fi
-
-# CONTAINER_CLOUD_IMAGE_VAL="quay.io/cloudexperience/cloud-image-val:$TAG"
-
-# sudo "${CONTAINER_RUNTIME}" pull "${CONTAINER_CLOUD_IMAGE_VAL}"
-
-# greenprint "Running cloud-image-val on generated image"
-
-# tee "${TEMPDIR}/resource-file.json" <<EOF
-# {
-#     "provider": "aws",
-#     "instances": [
-#         {
-#             "ami": "$AMI_IMAGE_ID",
-#             "region": "us-east-1",
-#             "instance_type": "t3.medium",
-#             "username": "$SSH_USER",
-#             "name": "civ-testing-image",
-#             "spot_instance": true
-#         }
-#     ]
-# }
-# EOF
-
-# if [ "$ARCH" == "aarch64" ]; then
-#     sed -i s/t3.medium/m6g.medium/ "${TEMPDIR}/resource-file.json"
-# fi
-
-# if [ -z "$CIV_CONFIG_FILE" ]; then
-#     redprint "ERROR: please provide the variable CIV_CONFIG_FILE"
-#     exit 1
-# fi
-
-# cp "${CIV_CONFIG_FILE}" "${TEMPDIR}/civ_config.yml"
-
-# # temporary workaround for
-# # https://issues.redhat.com/browse/CLOUDX-488
-# if nvrGreaterOrEqual "osbuild-composer" "83"; then
-#     sudo "${CONTAINER_RUNTIME}" run \
-#         --net=host \
-#         -a stdout -a stderr \
-#         -e AWS_ACCESS_KEY_ID="${V2_AWS_ACCESS_KEY_ID}" \
-#         -e AWS_SECRET_ACCESS_KEY="${V2_AWS_SECRET_ACCESS_KEY}" \
-#         -e AWS_REGION="${AWS_REGION}" \
-#         -e JIRA_PAT="${JIRA_PAT}" \
-#         -v "${TEMPDIR}":/tmp:Z \
-#         "${CONTAINER_CLOUD_IMAGE_VAL}" \
-#         python cloud-image-val.py \
-#         -c /tmp/civ_config.yml \
-#         && RESULTS=1 || RESULTS=0
-
-#     mv "${TEMPDIR}"/report.html "${ARTIFACTS}"
-# else
-#     RESULTS=1
-# fi
-
-RESULTS=1  # NOTE: remove when re-enabling CIV
-
 # Clean up our mess.
 greenprint "🧼 Cleaning up"
 $AWS_CMD ec2 deregister-image --image-id "${AMI_IMAGE_ID}"
@@ -273,15 +198,5 @@ $AWS_CMD ec2 delete-snapshot --snapshot-id "${SNAPSHOT_ID}"
 
 # Also delete the compose so we don't run out of disk space
 sudo composer-cli compose delete "${COMPOSE_ID}" > /dev/null
-
-# Use the return code of the smoke test to determine if we passed or failed.
-# On rhel continue with the cloudapi test
-if [[ $RESULTS == 1 ]]; then
-    greenprint "💚 Success"
-    exit 0
-elif [[ $RESULTS != 1 ]]; then
-    redprint "❌ Failed"
-    exit 1
-fi
 
 exit 0
