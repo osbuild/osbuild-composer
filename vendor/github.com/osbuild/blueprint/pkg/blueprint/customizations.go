@@ -77,8 +77,9 @@ type FDOCustomization struct {
 }
 
 type KernelCustomization struct {
-	Name   string `json:"name,omitempty" toml:"name,omitempty"`
-	Append string `json:"append,omitempty" toml:"append,omitempty"`
+	Name    string `json:"name,omitempty" toml:"name,omitempty"`
+	Version string `json:"version,omitempty" toml:"version,omitempty"`
+	Append  string `json:"append,omitempty" toml:"append,omitempty"`
 }
 
 type SSHKeyCustomization struct {
@@ -260,9 +261,10 @@ func (c *Customizations) GetTimezoneSettings() (*string, []string) {
 }
 
 func (c *Customizations) GetKernel() *KernelCustomization {
-	var kernelName, kernelAppend string
+	var kernelName, kernelVersion, kernelAppend string
 	if c != nil && c.Kernel != nil {
 		kernelName = c.Kernel.Name
+		kernelVersion = c.Kernel.Version
 		kernelAppend = c.Kernel.Append
 	}
 
@@ -271,8 +273,9 @@ func (c *Customizations) GetKernel() *KernelCustomization {
 	}
 
 	return &KernelCustomization{
-		Name:   kernelName,
-		Append: kernelAppend,
+		Name:    kernelName,
+		Version: kernelVersion,
+		Append:  kernelAppend,
 	}
 }
 
