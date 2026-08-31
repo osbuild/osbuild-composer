@@ -1,3 +1,35 @@
+# v1.325.1 (2026-08-28)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.325.0 (2026-08-27)
+
+* **Feature**: EC2 allows AMI owners to define compatible instance types on their AMIs, blocking RunInstances calls automatically for launches on non-permitted instance types.
+* **Feature**: Support connection read timeouts in the SDK. This is currently available on an opt-in basis by setting env `AWS_ENABLE_DEFAULT_SOCKET_TIMEOUT_2026=true`.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.324.0 (2026-08-26)
+
+* **Feature**: Adds deleting state to possible VPC States.
+* **Feature**: Stop registering the `ComputeContentLength` middleware in generated clients. `Content-Length` is now set when the request body is set via `SetStream`.
+* **Dependency Update**: Update to smithy-go v1.28.0.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.323.0 (2026-08-25)
+
+* **Feature**: Fleet feature to support Capacity Reservation Resource Groups with Amazon EC2 Capacity Blocks and interruptible Capacity Reservations
+* **Dependency Update**: Update to smithy-go v1.27.10.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.322.0 (2026-08-20)
+
+* **Feature**: EC2 marks UEFI instance metadata field as sensitive.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.321.3 (2026-08-18)
+
+* **Documentation**: Doc release for CreateImage support for instances with local snapshots in Outpost
+
 # v1.321.2 (2026-08-14)
 
 * **Dependency Update**: Update to smithy-go v1.27.8.
