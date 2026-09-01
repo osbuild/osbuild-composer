@@ -9,10 +9,6 @@ function greenprint {
 # function to override template respositores with system repositories which contain rpmrepos snapshots
 function template_override {
     sudo dnf -y install jq
-    if sudo subscription-manager status; then
-        greenprint "📋 Running on subscribed RHEL machine, no mock template override done."
-        return 0
-    fi
 
     # TODO: remove this, once mock-core-configs ships a template for RHEL-10
     # Use RHEL-9 template as the baseline for now.

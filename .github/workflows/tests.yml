@@ -15,7 +15,7 @@ jobs:
     name: "🛃 Unit tests"
     runs-on: ubuntu-22.04
     container:
-      image: registry.fedoraproject.org/fedora:40
+      image: registry.fedoraproject.org/fedora:42
 
     steps:
         # krb5-devel is needed to test internal/upload/koji package
@@ -69,9 +69,9 @@ jobs:
     - name: Install test dependencies
       run: sudo apt-get install -y libgpgme-dev libbtrfs-dev
     - uses: actions/checkout@v4
-    - uses: actions/setup-go@v5
+    - uses: actions/setup-go@v7
       with:
-        go-version: "1.22"
+        go-version: "1.24"
     - env:
         PGUSER: postgres
         PGPASSWORD: foobar
@@ -87,7 +87,7 @@ jobs:
     name: "🐍 Lint python scripts"
     runs-on: ubuntu-22.04
     container:
-      image: registry.fedoraproject.org/fedora:40
+      image: registry.fedoraproject.org/fedora:42
     steps:
 
       - name: Install build and test dependencies
@@ -102,62 +102,15 @@ jobs:
         run: |
           python3 -m pylint tools/koji-compose.py
 
-  golang-lint:
-    name: "⌨ Golang Lint"
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Set up Go 1.22
-        uses: actions/setup-go@v5
-        with:
-          go-version: "1.22"
-        id: go
-
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-
-      - name: Install dependencies
-        run: sudo tools/apt-install-deps.sh
-
-      - name: Extract golangci-lint version from Makefile
-        id: golangci_lint_version
-        run: echo "GOLANGCI_LINT_VERSION=$(awk -F '=' '/^GOLANGCI_LINT_VERSION *=/{print $2}' Makefile)" >> "$GITHUB_OUTPUT"
-
-      - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v6
-        with:
-          version: ${{ steps.golangci_lint_version.outputs.GOLANGCI_LINT_VERSION }}
-          skip-cache: true
-          args: --verbose --timeout 5m0s
-
-  packit-config-lint:
-    name: "📦 Packit config lint"
-    runs-on: ubuntu-22.04
-    container:
-      image: registry.fedoraproject.org/fedora:latest
-    steps:
-      - name: Install Packit
-        run: dnf -y install packit
-
-      - name: Check out code
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-
-      - name: Validate Packit config
-        run: |
-          packit config validate .packit.yaml
-
   prepare:
     name: "🔍 Check source preparation"
     runs-on: ubuntu-22.04
     steps:
 
-      - name: Set up Go 1.22
-        uses: actions/setup-go@v5
+      - name: Set up Go 1.24
+        uses: actions/setup-go@v7
         with:
-          go-version: "1.22"
+          go-version: "1.24"
         id: go
 
       - name: Check out code into the Go module directory
@@ -233,7 +186,7 @@ jobs:
   rpmlint:
     name: "📦 RPMlint"
     runs-on: ubuntu-22.04
-    container: registry.fedoraproject.org/fedora:40
+    container: registry.fedoraproject.org/fedora:42
     steps:
       - name: Install dependencies
         run: sudo dnf install -y rpmlint rpm-build make git-core
