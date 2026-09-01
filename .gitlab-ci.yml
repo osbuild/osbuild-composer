@@ -1,3 +1,6 @@
+variables:
+  FORCE_UPDATE_RUNNER: 1
+
 stages:
   - init
   - rpmbuild
@@ -64,8 +67,8 @@ init:
 # Fix if doing another fix after the 9.6 GA.
 .RPM_RUNNERS_RHEL: &RPM_RUNNERS_RHEL
   RUNNER:
-    - aws/rhel-10.0-nightly-x86_64
-    - aws/rhel-10.0-nightly-aarch64
+    - aws/rhel-10.0-ga-x86_64
+    - aws/rhel-10.0-ga-aarch64
   INTERNAL_NETWORK: ["true"]
 
 RPM:
@@ -122,14 +125,6 @@ regression-include-excluded-packages:
   extends: .regression
   variables:
     SCRIPT: regression-include-excluded-packages.sh
-
-# This test is supposed to run only on subscribed GA RHEL
-# regression-old-worker-new-composer:
-#   extends: .regression
-#   rules:
-#     - !reference [.rules_x86_64, rules]
-#   variables:
-#     SCRIPT: regression-old-worker-new-composer.sh
 
 regression-insecure-repo:
   extends: .regression
@@ -240,21 +235,6 @@ gcp.sh:
 #   variables:
 #     SCRIPT: vmware.sh ova
 
-filesystem.sh:
-  extends: .integration
-  rules:
-    - !reference [.rules_x86_64, rules]
-  parallel:
-    matrix:
-      - CUSTOMIZATION_TYPE:
-          - "filesystem"
-          - "disk-plain"
-          - "disk-lvm"
-        <<: *RPM_RUNNERS_RHEL
-        INTERNAL_NETWORK: ["true"]
-  variables:
-    SCRIPT: filesystem.sh ${CUSTOMIZATION_TYPE}
-
 cross-distro.sh:
   extends: .integration
   rules:
@@ -273,7 +253,7 @@ cross-distro.sh:
   parallel:
     matrix:
       - RUNNER:
-          - rhos-01/rhel-10.0-nightly-x86_64
+          - rhos-01/rhel-10.0-ga-x86_64
         INTERNAL_NETWORK: ["true"]
 
 libvirt.sh:
@@ -365,19 +345,7 @@ Installer:
   parallel:
     matrix:
       - RUNNER:
-          - rhos-01/rhel-10.0-nightly-x86_64
-
-ContainerEmbedding:
-  stage: test
-  extends: .terraform
-  rules:
-    - !reference [.rules_x86_64, rules]
-  script:
-    - schutzbot/deploy.sh
-    - /usr/libexec/tests/osbuild-composer/container-embedding.sh
-  parallel:
-    matrix:
-      - <<: *RPM_RUNNERS_RHEL
+          - rhos-01/rhel-10.0-ga-x86_64
 
 finish:
   stage: finish

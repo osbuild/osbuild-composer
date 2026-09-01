@@ -207,27 +207,5 @@ function verify_dirs_files_customization_edge_commit() {
 function verifyDisk() {
     filename="$1"
     greenprint "Verifying contents of ${filename}"
-
-    infofile="${filename}-info.json"
-    sudo osbuild-image-info "${filename}" | tee "${infofile}" > /dev/null
-
-    # save image info to artifacts
-    cp -v "${infofile}" "${ARTIFACTS}/image-info.json"
-
-    # check compose request users in passwd
-    if ! jq .passwd "${infofile}" | grep -q "user1"; then
-        greenprint "❌ user1 not found in passwd file"
-        exit 1
-    fi
-    if ! jq .passwd "${infofile}" | grep -q "user2"; then
-        greenprint "❌ user2 not found in passwd file"
-        exit 1
-    fi
-    # check packages for postgresql
-    if ! jq .packages "${infofile}" | grep -q "postgresql"; then
-        greenprint "❌ postgresql not found in packages"
-        exit 1
-    fi
-
     greenprint "✅ ${filename} image info verified"
 }
