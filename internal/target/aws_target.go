@@ -13,6 +13,7 @@ type AWSTargetOptions struct {
 	Bucket            string   `json:"bucket"`
 	Key               string   `json:"key"`
 	ShareWithAccounts []string `json:"shareWithAccounts"`
+	Tags              []AWSTag `json:"tags,omitempty"`
 
 	// Boot mode of the AMI (optional)
 	// Supported values:
@@ -22,6 +23,12 @@ type AWSTargetOptions struct {
 	// If not provided, then the Boot mode will be determined by the default
 	// boot mode of the instance provisioned from the AMI.
 	BootMode *string `json:"bootMode,omitempty"`
+}
+
+// AWSTag is a key/value pair applied to the AMI and snapshot.
+type AWSTag struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
 }
 
 func (AWSTargetOptions) isTargetOptions() {}
