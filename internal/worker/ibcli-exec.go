@@ -29,6 +29,9 @@ type repository struct {
 	MetadataExpire string   `json:"metadata_expire,omitempty"`
 	ImageTypeTags  []string `json:"image_type_tags,omitempty"`
 	PackageSets    []string `json:"package_sets,omitempty"`
+	SSLCACert      string   `json:"sslcacert,omitempty"`
+	SSLClientKey   string   `json:"sslclientkey,omitempty"`
+	SSLClientCert  string   `json:"sslclientcert,omitempty"`
 }
 
 func rpmmdRepoConfigToDiskFormat(repo rpmmd.RepoConfig) repository {
@@ -58,6 +61,9 @@ func rpmmdRepoConfigToDiskFormat(repo rpmmd.RepoConfig) repository {
 		MetadataExpire: repo.MetadataExpire,
 		ImageTypeTags:  repo.ImageTypeTags,
 		PackageSets:    repo.PackageSets,
+		SSLCACert:      repo.SSLCACert,
+		SSLClientKey:   repo.SSLClientKey,
+		SSLClientCert:  repo.SSLClientCert,
 	}
 }
 
