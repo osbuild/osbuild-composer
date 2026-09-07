@@ -11210,6 +11210,26 @@ func (m *validateOpUpdateInterruptibleCapacityReservationAllocation) HandleIniti
 	return next.HandleInitialize(ctx, in)
 }
 
+type validateOpValidateSecurityGroupQuotasForInterface struct {
+}
+
+func (*validateOpValidateSecurityGroupQuotasForInterface) ID() string {
+	return "OperationInputValidation"
+}
+
+func (m *validateOpValidateSecurityGroupQuotasForInterface) HandleInitialize(ctx context.Context, in middleware.InitializeInput, next middleware.InitializeHandler) (
+	out middleware.InitializeOutput, metadata middleware.Metadata, err error,
+) {
+	input, ok := in.Parameters.(*ValidateSecurityGroupQuotasForInterfaceInput)
+	if !ok {
+		return out, metadata, fmt.Errorf("unknown input parameters type %T", in.Parameters)
+	}
+	if err := validateOpValidateSecurityGroupQuotasForInterfaceInput(input); err != nil {
+		return out, metadata, err
+	}
+	return next.HandleInitialize(ctx, in)
+}
+
 type validateOpWithdrawByoipCidr struct {
 }
 
@@ -13468,6 +13488,10 @@ func addOpUpdateCapacityManagerOrganizationsAccessValidationMiddleware(stack *mi
 
 func addOpUpdateInterruptibleCapacityReservationAllocationValidationMiddleware(stack *middleware.Stack) error {
 	return stack.Initialize.Add(&validateOpUpdateInterruptibleCapacityReservationAllocation{}, middleware.After)
+}
+
+func addOpValidateSecurityGroupQuotasForInterfaceValidationMiddleware(stack *middleware.Stack) error {
+	return stack.Initialize.Add(&validateOpValidateSecurityGroupQuotasForInterface{}, middleware.After)
 }
 
 func addOpWithdrawByoipCidrValidationMiddleware(stack *middleware.Stack) error {
@@ -23926,8 +23950,20 @@ func validateOpUpdateInterruptibleCapacityReservationAllocationInput(v *UpdateIn
 	if v.CapacityReservationId == nil {
 		invalidParams.Add(smithy.NewErrParamRequired("CapacityReservationId"))
 	}
-	if v.TargetInstanceCount == nil {
-		invalidParams.Add(smithy.NewErrParamRequired("TargetInstanceCount"))
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	} else {
+		return nil
+	}
+}
+
+func validateOpValidateSecurityGroupQuotasForInterfaceInput(v *ValidateSecurityGroupQuotasForInterfaceInput) error {
+	if v == nil {
+		return nil
+	}
+	invalidParams := smithy.InvalidParamsError{Context: "ValidateSecurityGroupQuotasForInterfaceInput"}
+	if v.SecurityGroupIds == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("SecurityGroupIds"))
 	}
 	if invalidParams.Len() > 0 {
 		return invalidParams
