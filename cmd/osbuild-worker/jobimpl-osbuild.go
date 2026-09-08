@@ -240,8 +240,8 @@ func (impl *OSBuildJobImpl) getOCI(tcp oci.ClientParams) (oci.Client, error) {
 	return oci.NewClient(&cp)
 }
 
-func validateResult(result *worker.OSBuildJobResult, jobID string) {
-	logWithId := logrus.WithField("jobId", jobID)
+func validateResult(result *worker.OSBuildJobResult, logger logrus.FieldLogger) {
+	logWithId := logger
 
 	// in case of failures JobError is expected to be set
 	if result.JobError != nil {
@@ -346,7 +346,7 @@ func makeJobErrorFromOsbuildOutput(result *osbuild.Result) *clienterrors.Error {
 }
 
 func (impl *OSBuildJobImpl) Run(job worker.Job) error {
-	logWithId := logrus.WithField("jobId", job.Id().String())
+	logWithId := jobLog(job)
 	// Initialize variable needed for reporting back to osbuild-composer.
 	var osbuildJobResult *worker.OSBuildJobResult = &worker.OSBuildJobResult{
 		Success: false,
@@ -376,7 +376,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 				nil,
 			)
 		}
-		validateResult(osbuildJobResult, job.Id().String())
+		validateResult(osbuildJobResult, logWithId)
 
 		err := job.Finish(osbuildJobResult)
 		if err != nil {

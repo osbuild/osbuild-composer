@@ -264,6 +264,14 @@ func NewWithConfig(url string, config Config) (*DBJobQueue, error) {
 	return q, nil
 }
 
+func (q *DBJobQueue) jobLogArgs(id uuid.UUID, args ...string) []string {
+	cid, err := q.ComposeID(id)
+	if err == nil && cid != uuid.Nil {
+		args = append(args, "compose_id", cid.String())
+	}
+	return args
+}
+
 func (q *DBJobQueue) ComposeID(id uuid.UUID) (uuid.UUID, error) {
 	conn, err := q.pool.Acquire(context.Background())
 	if err != nil {
@@ -396,7 +404,7 @@ func (q *DBJobQueue) Enqueue(jobType string, args interface{}, dependencies []uu
 		return uuid.Nil, fmt.Errorf("unable to commit database transaction: %v", err)
 	}
 
-	q.logger.Info("Enqueued job", "job_type", jobType, "job_id", id.String(), "job_dependencies", fmt.Sprintf("%+v", dependencies))
+	q.logger.Info("Enqueued job", "job_type", jobType, "job_id", id.String(), "compose_id", p.ComposeID.String(), "job_dependencies", fmt.Sprintf("%+v", dependencies))
 
 	return id, nil
 }
@@ -482,7 +490,7 @@ func (q *DBJobQueue) tryDequeue(ctx context.Context, token, workerID uuid.UUID, 
 		return uuid.Nil, nil, "", nil, fmt.Errorf("error committing the transaction for dequeueing job %s: %w", id.String(), err)
 	}
 
-	q.logger.Info("Dequeued job", "job_type", jobType, "job_id", id.String(), "job_dependencies", fmt.Sprintf("%+v", dependencies))
+	q.logger.Info("Dequeued job", q.jobLogArgs(id, "job_type", jobType, "job_id", id.String(), "job_dependencies", fmt.Sprintf("%+v", dependencies))...)
 
 	return id, dependencies, jobType, args, nil
 }
@@ -568,7 +576,7 @@ func (q *DBJobQueue) DequeueByID(ctx context.Context, id, workerID uuid.UUID) (u
 		return uuid.Nil, nil, "", nil, fmt.Errorf("error committing a transaction: %w", err)
 	}
 
-	q.logger.Info("Dequeued job", "job_type", jobType, "job_id", id.String(), "job_dependencies", fmt.Sprintf("%+v", dependencies))
+	q.logger.Info("Dequeued job", q.jobLogArgs(id, "job_type", jobType, "job_id", id.String(), "job_dependencies", fmt.Sprintf("%+v", dependencies))...)
 
 	return token, dependencies, jobType, args, nil
 }
@@ -698,10 +706,10 @@ func (q *DBJobQueue) RequeueOrFinishJob(id uuid.UUID, maxRetries uint64, result 
 	}
 
 	if retries >= maxRetries {
-		q.logger.Info("Finished job", "job_type", jobType, "job_id", id.String())
+		q.logger.Info("Finished job", q.jobLogArgs(id, "job_type", jobType, "job_id", id.String())...)
 		return false, nil
 	} else {
-		q.logger.Info("Requeued job", "job_type", jobType, "job_id", id.String())
+		q.logger.Info("Requeued job", q.jobLogArgs(id, "job_type", jobType, "job_id", id.String())...)
 		return true, nil
 	}
 }
@@ -723,7 +731,7 @@ func (q *DBJobQueue) CancelJob(id uuid.UUID) error {
 		return fmt.Errorf("error canceling job %s: %w", id, err)
 	}
 
-	q.logger.Info("Cancelled job", "job_type", jobType, "job_id", id.String())
+	q.logger.Info("Cancelled job", q.jobLogArgs(id, "job_type", jobType, "job_id", id.String())...)
 
 	return nil
 }
@@ -749,7 +757,7 @@ func (q *DBJobQueue) FailJob(id uuid.UUID, result interface{}) error {
 		return fmt.Errorf("that should never happen, I wanted to set %s to failed but got %s back from DB", id, resultId)
 	}
 
-	q.logger.Info("Job set to failed", "job_type", jobType, "job_id", id.String())
+	q.logger.Info("Job set to failed", q.jobLogArgs(id, "job_type", jobType, "job_id", id.String())...)
 
 	return nil
 }
@@ -1106,6 +1114,8 @@ func (q *DBJobQueue) DeleteJob(ctx context.Context, id uuid.UUID) error {
 		}
 	}()
 
+	logArgs := q.jobLogArgs(id, "job_id", id.String())
+
 	// Start it off with an empty parent
 	err = q.deleteJobs(ctx, tx, uuid.UUID{}, id)
 	if err != nil {
@@ -1116,7 +1126,7 @@ func (q *DBJobQueue) DeleteJob(ctx context.Context, id uuid.UUID) error {
 		return fmt.Errorf("unable to commit database transaction: %v", err)
 	}
 
-	q.logger.Info("Deleted job", "job_id", id.String())
+	q.logger.Info("Deleted job", logArgs...)
 
 	return nil
 }
