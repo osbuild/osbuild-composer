@@ -29,7 +29,7 @@ const (
 	sqlListen   = `LISTEN jobs`
 	sqlUnlisten = `UNLISTEN jobs`
 
-	sqlEnqueue = `INSERT INTO jobs(id, type, args, queued_at, channel) VALUES ($1, $2, $3, statement_timestamp(), $4)`
+	sqlEnqueue = `INSERT INTO jobs(id, type, args, queued_at, channel, compose_id) VALUES ($1, $2, $3, statement_timestamp(), $4, $5)`
 	sqlDequeue = `
 		UPDATE jobs
 		SET token = $1, started_at = statement_timestamp()
@@ -98,6 +98,10 @@ const (
 		WHERE id = $1`
 	sqlQueryJobStatus = `
 		SELECT type, channel, result, queued_at, started_at, finished_at, canceled
+		FROM jobs
+		WHERE id = $1`
+	sqlQueryComposeID = `
+		SELECT compose_id
 		FROM jobs
 		WHERE id = $1`
 	sqlQueryRunningId = `
@@ -260,6 +264,24 @@ func NewWithConfig(url string, config Config) (*DBJobQueue, error) {
 	return q, nil
 }
 
+func (q *DBJobQueue) ComposeID(id uuid.UUID) (uuid.UUID, error) {
+	conn, err := q.pool.Acquire(context.Background())
+	if err != nil {
+		return uuid.Nil, err
+	}
+	defer conn.Release()
+
+	var cid *uuid.UUID
+	err = conn.QueryRow(context.Background(), sqlQueryComposeID, id).Scan(&cid)
+	if err != nil {
+		return uuid.Nil, err
+	}
+	if cid == nil {
+		return uuid.Nil, nil
+	}
+	return *cid, nil
+}
+
 func (q *DBJobQueue) listen(ctx context.Context, ready chan<- struct{}) {
 	ready <- struct{}{}
 
@@ -322,7 +344,18 @@ func (q *DBJobQueue) Close() {
 	q.pool.Close()
 }
 
-func (q *DBJobQueue) Enqueue(jobType string, args interface{}, dependencies []uuid.UUID, channel string) (uuid.UUID, error) {
+func (q *DBJobQueue) Enqueue(jobType string, args interface{}, dependencies []uuid.UUID, channel string, params ...jobqueue.EnqueueParams) (uuid.UUID, error) {
+	var p jobqueue.EnqueueParams
+	if len(params) > 0 {
+		p = params[0]
+	}
+	if p.ID == uuid.Nil {
+		p.ID = uuid.New()
+	}
+	if p.ComposeID == uuid.Nil {
+		p.ComposeID = p.ID
+	}
+
 	conn, err := q.pool.Acquire(context.Background())
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("error connecting to database: %v", err)
@@ -340,8 +373,8 @@ func (q *DBJobQueue) Enqueue(jobType string, args interface{}, dependencies []uu
 		}
 	}()
 
-	id := uuid.New()
-	_, err = tx.Exec(context.Background(), sqlEnqueue, id, jobType, args, channel)
+	id := p.ID
+	_, err = tx.Exec(context.Background(), sqlEnqueue, id, jobType, args, channel, p.ComposeID)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("error enqueuing job: %v", err)
 	}

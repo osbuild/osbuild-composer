@@ -97,8 +97,14 @@ func testMigrationPath(t *testing.T, makeJobQueue func(migration string, clean b
 	defer stop()
 	require.NoError(t, err)
 
-	id, err := q.Enqueue("test", "{\"arg\": \"impormtanmt\"}", nil, "")
+	conn, err := pgx.Connect(context.Background(), jobqueuetest.TestDbURL())
 	require.NoError(t, err)
+	id := uuid.New()
+	_, err = conn.Exec(context.Background(),
+		`INSERT INTO jobs(id, type, args, queued_at, channel) VALUES ($1, $2, $3, statement_timestamp(), $4)`,
+		id, "test", []byte(`{"arg": "impormtanmt"}`), "")
+	require.NoError(t, err)
+	require.NoError(t, conn.Close(context.Background()))
 	require.NotEmpty(t, id)
 	id, tok, _, _, _, err := q.Dequeue(context.Background(), uuid.Nil, []string{"test"}, []string{""})
 	require.NoError(t, err)
