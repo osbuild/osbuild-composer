@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// SPDX-FileCopyrightText: © 2015 LabStack LLC and Echo contributors
+
 package middleware
 
 import (
@@ -9,37 +12,35 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-type (
-	// BasicAuthConfig defines the config for BasicAuth middleware.
-	BasicAuthConfig struct {
-		// Skipper defines a function to skip middleware.
-		Skipper Skipper
+// BasicAuthConfig defines the config for BasicAuth middleware.
+type BasicAuthConfig struct {
+	// Skipper defines a function to skip middleware.
+	Skipper Skipper
 
-		// Validator is a function to validate BasicAuth credentials.
-		// Required.
-		Validator BasicAuthValidator
+	// Validator is a function to validate BasicAuth credentials.
+	// Required.
+	Validator BasicAuthValidator
 
-		// Realm is a string to define realm attribute of BasicAuth.
-		// Default value "Restricted".
-		Realm string
-	}
+	// Realm is a string to define realm attribute of BasicAuth.
+	// Default value "Restricted".
+	Realm string
+}
 
-	// BasicAuthValidator defines a function to validate BasicAuth credentials.
-	BasicAuthValidator func(string, string, echo.Context) (bool, error)
-)
+// BasicAuthValidator defines a function to validate BasicAuth credentials.
+// The function should return a boolean indicating whether the credentials are valid,
+// and an error if any error occurs during the validation process.
+type BasicAuthValidator func(string, string, echo.Context) (bool, error)
 
 const (
 	basic        = "basic"
 	defaultRealm = "Restricted"
 )
 
-var (
-	// DefaultBasicAuthConfig is the default BasicAuth middleware config.
-	DefaultBasicAuthConfig = BasicAuthConfig{
-		Skipper: DefaultSkipper,
-		Realm:   defaultRealm,
-	}
-)
+// DefaultBasicAuthConfig is the default BasicAuth middleware config.
+var DefaultBasicAuthConfig = BasicAuthConfig{
+	Skipper: DefaultSkipper,
+	Realm:   defaultRealm,
+}
 
 // BasicAuth returns an BasicAuth middleware.
 //
@@ -65,6 +66,9 @@ func BasicAuthWithConfig(config BasicAuthConfig) echo.MiddlewareFunc {
 		config.Realm = defaultRealm
 	}
 
+	// Pre-compute the quoted realm for WWW-Authenticate header (RFC 7617)
+	quotedRealm := strconv.Quote(config.Realm)
+
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			if config.Skipper(c) {
@@ -83,27 +87,21 @@ func BasicAuthWithConfig(config BasicAuthConfig) echo.MiddlewareFunc {
 				}
 
 				cred := string(b)
-				for i := 0; i < len(cred); i++ {
-					if cred[i] == ':' {
-						// Verify credentials
-						valid, err := config.Validator(cred[:i], cred[i+1:], c)
-						if err != nil {
-							return err
-						} else if valid {
-							return next(c)
-						}
-						break
+				user, pass, ok := strings.Cut(cred, ":")
+				if ok {
+					// Verify credentials
+					valid, err := config.Validator(user, pass, c)
+					if err != nil {
+						return err
+					} else if valid {
+						return next(c)
 					}
 				}
 			}
 
-			realm := defaultRealm
-			if config.Realm != defaultRealm {
-				realm = strconv.Quote(config.Realm)
-			}
-
 			// Need to return `401` for browsers to pop-up login box.
-			c.Response().Header().Set(echo.HeaderWWWAuthenticate, basic+" realm="+realm)
+			// Realm is case-insensitive, so we can use "basic" directly. See RFC 7617.
+			c.Response().Header().Set(echo.HeaderWWWAuthenticate, basic+" realm="+quotedRealm)
 			return echo.ErrUnauthorized
 		}
 	}

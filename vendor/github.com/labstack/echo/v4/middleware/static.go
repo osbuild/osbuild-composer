@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// SPDX-FileCopyrightText: © 2015 LabStack LLC and Echo contributors
+
 package middleware
 
 import (
@@ -11,43 +14,42 @@ import (
 	"strings"
 
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/internal/pathutil"
 	"github.com/labstack/gommon/bytes"
 )
 
-type (
-	// StaticConfig defines the config for Static middleware.
-	StaticConfig struct {
-		// Skipper defines a function to skip middleware.
-		Skipper Skipper
+// StaticConfig defines the config for Static middleware.
+type StaticConfig struct {
+	// Skipper defines a function to skip middleware.
+	Skipper Skipper
 
-		// Root directory from where the static content is served.
-		// Required.
-		Root string `yaml:"root"`
+	// Root directory from where the static content is served.
+	// Required.
+	Root string `yaml:"root"`
 
-		// Index file for serving a directory.
-		// Optional. Default value "index.html".
-		Index string `yaml:"index"`
+	// Index file for serving a directory.
+	// Optional. Default value "index.html".
+	Index string `yaml:"index"`
 
-		// Enable HTML5 mode by forwarding all not-found requests to root so that
-		// SPA (single-page application) can handle the routing.
-		// Optional. Default value false.
-		HTML5 bool `yaml:"html5"`
+	// Enable HTML5 mode by forwarding all not-found requests to root so that
+	// SPA (single-page application) can handle the routing.
+	// Optional. Default value false.
+	HTML5 bool `yaml:"html5"`
 
-		// Enable directory browsing.
-		// Optional. Default value false.
-		Browse bool `yaml:"browse"`
+	// Enable directory browsing.
+	// Optional. Default value false.
+	Browse bool `yaml:"browse"`
 
-		// Enable ignoring of the base of the URL path.
-		// Example: when assigning a static middleware to a non root path group,
-		// the filesystem path is not doubled
-		// Optional. Default value false.
-		IgnoreBase bool `yaml:"ignoreBase"`
+	// Enable ignoring of the base of the URL path.
+	// Example: when assigning a static middleware to a non root path group,
+	// the filesystem path is not doubled
+	// Optional. Default value false.
+	IgnoreBase bool `yaml:"ignoreBase"`
 
-		// Filesystem provides access to the static content.
-		// Optional. Defaults to http.Dir(config.Root)
-		Filesystem http.FileSystem `yaml:"-"`
-	}
-)
+	// Filesystem provides access to the static content.
+	// Optional. Defaults to http.Dir(config.Root)
+	Filesystem http.FileSystem `yaml:"-"`
+}
 
 const html = `
 <!DOCTYPE html>
@@ -121,13 +123,11 @@ const html = `
 </html>
 `
 
-var (
-	// DefaultStaticConfig is the default Static middleware config.
-	DefaultStaticConfig = StaticConfig{
-		Skipper: DefaultSkipper,
-		Index:   "index.html",
-	}
-)
+// DefaultStaticConfig is the default Static middleware config.
+var DefaultStaticConfig = StaticConfig{
+	Skipper: DefaultSkipper,
+	Index:   "index.html",
+}
 
 // Static returns a Static middleware to serves static content from the provided
 // root directory.
@@ -171,10 +171,23 @@ func StaticWithConfig(config StaticConfig) echo.MiddlewareFunc {
 			if strings.HasSuffix(c.Path(), "*") { // When serving from a group, e.g. `/static*`.
 				p = c.Param("*")
 			}
+			// The router matched on the raw, still-encoded path, so an encoded path separator in
+			// the wildcard would only now become a real separator and resolve a file the matched
+			// route never authorized, bypassing route-level middleware. Reject it before unescaping
+			// (see echo.StaticDirectoryHandler).
+			if pathutil.HasEncodedPathSeparator(p) {
+				return echo.ErrNotFound
+			}
 			p, err = url.PathUnescape(p)
 			if err != nil {
 				return
 			}
+			// Security: We use path.Clean() (not filepath.Clean()) because:
+			// 1. HTTP URLs always use forward slashes, regardless of server OS
+			// 2. path.Clean() provides platform-independent behavior for URL paths
+			// 3. The "/" prefix forces absolute path interpretation, removing ".." components
+			// 4. Backslashes are treated as literal characters (not path separators), preventing traversal
+			// See static_windows.go for Go 1.20+ filepath.Clean compatibility notes
 			name := path.Join(config.Root, path.Clean("/"+p)) // "/"+ for security
 
 			if config.IgnoreBase {

@@ -1,6 +1,10 @@
+// SPDX-License-Identifier: MIT
+// SPDX-FileCopyrightText: © 2015 LabStack LLC and Echo contributors
+
 package middleware
 
 import (
+	"math"
 	"net/http"
 	"sync"
 	"time"
@@ -9,39 +13,34 @@ import (
 	"golang.org/x/time/rate"
 )
 
-type (
-	// RateLimiterStore is the interface to be implemented by custom stores.
-	RateLimiterStore interface {
-		// Stores for the rate limiter have to implement the Allow method
-		Allow(identifier string) (bool, error)
-	}
-)
+// RateLimiterStore is the interface to be implemented by custom stores.
+type RateLimiterStore interface {
+	// Stores for the rate limiter have to implement the Allow method
+	Allow(identifier string) (bool, error)
+}
 
-type (
-	// RateLimiterConfig defines the configuration for the rate limiter
-	RateLimiterConfig struct {
-		Skipper    Skipper
-		BeforeFunc BeforeFunc
-		// IdentifierExtractor uses echo.Context to extract the identifier for a visitor
-		IdentifierExtractor Extractor
-		// Store defines a store for the rate limiter
-		Store RateLimiterStore
-		// ErrorHandler provides a handler to be called when IdentifierExtractor returns an error
-		ErrorHandler func(context echo.Context, err error) error
-		// DenyHandler provides a handler to be called when RateLimiter denies access
-		DenyHandler func(context echo.Context, identifier string, err error) error
-	}
-	// Extractor is used to extract data from echo.Context
-	Extractor func(context echo.Context) (string, error)
-)
+// RateLimiterConfig defines the configuration for the rate limiter
+type RateLimiterConfig struct {
+	Skipper    Skipper
+	BeforeFunc BeforeFunc
+	// IdentifierExtractor uses echo.Context to extract the identifier for a visitor
+	IdentifierExtractor Extractor
+	// Store defines a store for the rate limiter
+	Store RateLimiterStore
+	// ErrorHandler provides a handler to be called when IdentifierExtractor returns an error
+	ErrorHandler func(context echo.Context, err error) error
+	// DenyHandler provides a handler to be called when RateLimiter denies access
+	DenyHandler func(context echo.Context, identifier string, err error) error
+}
 
-// errors
-var (
-	// ErrRateLimitExceeded denotes an error raised when rate limit is exceeded
-	ErrRateLimitExceeded = echo.NewHTTPError(http.StatusTooManyRequests, "rate limit exceeded")
-	// ErrExtractorError denotes an error raised when extractor function is unsuccessful
-	ErrExtractorError = echo.NewHTTPError(http.StatusForbidden, "error while extracting identifier")
-)
+// Extractor is used to extract data from echo.Context
+type Extractor func(context echo.Context) (string, error)
+
+// ErrRateLimitExceeded denotes an error raised when rate limit is exceeded
+var ErrRateLimitExceeded = echo.NewHTTPError(http.StatusTooManyRequests, "rate limit exceeded")
+
+// ErrExtractorError denotes an error raised when extractor function is unsuccessful
+var ErrExtractorError = echo.NewHTTPError(http.StatusForbidden, "error while extracting identifier")
 
 // DefaultRateLimiterConfig defines default values for RateLimiterConfig
 var DefaultRateLimiterConfig = RateLimiterConfig{
@@ -150,25 +149,24 @@ func RateLimiterWithConfig(config RateLimiterConfig) echo.MiddlewareFunc {
 	}
 }
 
-type (
-	// RateLimiterMemoryStore is the built-in store implementation for RateLimiter
-	RateLimiterMemoryStore struct {
-		visitors map[string]*Visitor
-		mutex    sync.Mutex
-		rate     rate.Limit // for more info check out Limiter docs - https://pkg.go.dev/golang.org/x/time/rate#Limit.
+// RateLimiterMemoryStore is the built-in store implementation for RateLimiter
+type RateLimiterMemoryStore struct {
+	visitors map[string]*Visitor
+	mutex    sync.Mutex
+	rate     rate.Limit // for more info check out Limiter docs - https://pkg.go.dev/golang.org/x/time/rate#Limit.
 
-		burst       int
-		expiresIn   time.Duration
-		lastCleanup time.Time
+	burst       int
+	expiresIn   time.Duration
+	lastCleanup time.Time
 
-		timeNow func() time.Time
-	}
-	// Visitor signifies a unique user's limiter details
-	Visitor struct {
-		*rate.Limiter
-		lastSeen time.Time
-	}
-)
+	timeNow func() time.Time
+}
+
+// Visitor signifies a unique user's limiter details
+type Visitor struct {
+	*rate.Limiter
+	lastSeen time.Time
+}
 
 /*
 NewRateLimiterMemoryStore returns an instance of RateLimiterMemoryStore with
@@ -194,7 +192,7 @@ NewRateLimiterMemoryStoreWithConfig returns an instance of RateLimiterMemoryStor
 with the provided configuration. Rate must be provided. Burst will be set to the rounded down value of
 the configured rate if not provided or set to 0.
 
-The build-in memory store is usually capable for modest loads. For higher loads other
+The built-in memory store is usually capable for modest loads. For higher loads other
 store implementations should be considered.
 
 Characteristics:
@@ -218,7 +216,7 @@ func NewRateLimiterMemoryStoreWithConfig(config RateLimiterMemoryStoreConfig) (s
 		store.expiresIn = DefaultRateLimiterMemoryStoreConfig.ExpiresIn
 	}
 	if config.Burst == 0 {
-		store.burst = int(config.Rate)
+		store.burst = int(math.Max(1, math.Ceil(float64(config.Rate))))
 	}
 	store.visitors = make(map[string]*Visitor)
 	store.timeNow = time.Now
@@ -252,8 +250,9 @@ func (store *RateLimiterMemoryStore) Allow(identifier string) (bool, error) {
 	if now.Sub(store.lastCleanup) > store.expiresIn {
 		store.cleanupStaleVisitors()
 	}
+	allowed := limiter.AllowN(now, 1)
 	store.mutex.Unlock()
-	return limiter.AllowN(store.timeNow(), 1), nil
+	return allowed, nil
 }
 
 /*
