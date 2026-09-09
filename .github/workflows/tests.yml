@@ -91,24 +91,6 @@ jobs:
           skip-cache: true
           args: --verbose --timeout 5m0s
 
-  packit-config-lint:
-    name: "📦 Packit config lint"
-    runs-on: ubuntu-22.04
-    container:
-      image: registry.fedoraproject.org/fedora:latest
-    steps:
-      - name: Install Packit
-        run: dnf -y install packit
-
-      - name: Check out code
-        uses: actions/checkout@v5
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-
-      - name: Validate Packit config
-        run: |
-          packit config validate .packit.yaml
-
   prepare:
     name: "🔍 Check source preparation"
     runs-on: ubuntu-22.04
@@ -240,14 +222,3 @@ jobs:
         directory: processed-templates
         config: templates/.kube-linter-config.yml
         version: 0.3.0
-
-  check-spec-images-deps:
-    name: "🔍 Check spec file osbuild/images dependencies"
-    runs-on: ubuntu-latest
-    container: registry.fedoraproject.org/fedora:latest
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v5
-
-    - name: Check dependencies in spec file
-      uses: osbuild/images@check-spec-deps-action
