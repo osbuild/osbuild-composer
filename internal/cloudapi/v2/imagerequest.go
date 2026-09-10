@@ -26,10 +26,9 @@ func newAWSTarget(options UploadOptions, imageType distro.ImageType) (*target.Ta
 		return nil, HTTPError(ErrorJSONUnMarshallingError)
 	}
 
-	// For service maintenance, images are discovered by the "Name:composer-api-*"
-	// tag filter. Currently all image names in the service are generated, so they're
-	// guaranteed to be unique as well. If users are ever allowed to name their images,
-	// an extra tag should be added.
+	// Service maintenance discovers leftover images by the composer-api tag
+       // (and, during transition, also by Name=composer-api-*). The Name tag may
+      // be a user-chosen AMI name, so uniqueness is not enforced here.
 	key := fmt.Sprintf("composer-api-%s", uuid.New().String())
 
 	var amiBootMode *string
