@@ -387,8 +387,8 @@ github.com/opencontainers/image-spec v1.1.1 h1:y0fUlFfIZhPF1W537XOLg0/fcx6zcHCJw
 github.com/opencontainers/image-spec v1.1.1/go.mod h1:qpqAh3Dmcf36wStyyWU+kCeDgrGnAve2nCC8+7h8Q0M=
 github.com/opencontainers/runtime-spec v1.2.1 h1:S4k4ryNgEpxW1dzyqffOmhI1BHYcjzU8lpJfSlR0xww=
 github.com/opencontainers/runtime-spec v1.2.1/go.mod h1:jwyrGlmzljRJv/Fgzds9SsS/C5hL+LL3ko9hs6T5lQ0=
-github.com/openshift-online/ocm-sdk-go v0.1.510 h1:oPwgGHPi6LeY+RANXUhJwVvkY4yvddyRqHHThHZZRyM=
-github.com/openshift-online/ocm-sdk-go v0.1.510/go.mod h1:7zNO9AaTPxnqb7/pynAJqKWaxB/GSJePnOndlQJWk60=
+github.com/openshift-online/ocm-sdk-go v0.1.511 h1:TNCk8OJ46MAoRrJi/+abamMX7NPMakQPOmQSgh+3mCw=
+github.com/openshift-online/ocm-sdk-go v0.1.511/go.mod h1:ek++9SX2vT44xZTHLH9tCH6INxQW2ebQtPsb63STGPM=
 github.com/oracle/oci-go-sdk/v54 v54.0.0 h1:CDLjeSejv2aDpElAJrhKpi6zvT/zhZCZuXchUUZ+LS4=
 github.com/oracle/oci-go-sdk/v54 v54.0.0/go.mod h1:+t+yvcFGVp+3ZnztnyxqXfQDsMlq8U25faBLa+mqCMc=
 github.com/osbuild/blueprint v1.33.0 h1:TewO/XA3QZ/HBYKPycsLBOSz7x++o9iay4wyG8sGYOQ=
