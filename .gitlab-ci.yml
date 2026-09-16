@@ -236,11 +236,6 @@ filesystem.sh:
   variables:
     SCRIPT: filesystem.sh ${CUSTOMIZATION_TYPE}
 
-cross-distro.sh:
-  extends: .integration
-  variables:
-    SCRIPT: cross-distro.sh
-
 .libvirt_integration:
   stage: test
   extends: .terraform/gcp
