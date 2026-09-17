@@ -48,21 +48,27 @@ func isPodmanRootless() (bool, error) {
 	return false, nil
 }
 
+func isUnprivileged() bool {
+	return os.Geteuid() != 0
+}
+
 // Container is a simpler wrapper around a running podman container.
 // This type isn't meant as a general-purpose container management tool, but
 // as an opinonated library for bootc-image-builder.
 type Container struct {
-	ref       string
-	id        string
-	root      string
-	arch      string
-	storeOpts []string
+	ref          string
+	id           string
+	root         string
+	arch         string
+	storeOpts    []string
+	unprivileged bool
 }
 
 // Initialise a new container from the given image reference.
 func NewContainer(ref string) (*Container, error) {
 	cnt := &Container{
-		ref: ref,
+		ref:          ref,
+		unprivileged: isUnprivileged(),
 	}
 	if err := cnt.start("none", false); err != nil {
 		return nil, err
@@ -75,7 +81,8 @@ func NewContainer(ref string) (*Container, error) {
 // host networking and mount secrets from the host if available.
 func NewContainerWithRepos(ref string) (*Container, error) {
 	cnt := &Container{
-		ref: ref,
+		ref:          ref,
+		unprivileged: isUnprivileged(),
 	}
 	if err := cnt.start("host", true); err != nil {
 		return nil, err
@@ -92,7 +99,10 @@ func (cnt *Container) start(network string, mountSecrets bool) error {
 		"--entrypoint", "sleep", // The entrypoint might be arbitrary, so let's just override it with sleep, we don't want to run anything
 	}
 
-	if isRootless, _ := isPodmanRootless(); isRootless {
+	// If the store location is overridden via the environment (CONTAINERS_GRAPHROOT
+	// / CONTAINERS_RUNROOT), podman picks those up on its own, so leave storeOpts
+	// empty and don't add flags that would override them.
+	if isRootless, _ := isPodmanRootless(); isRootless && os.Getenv("CONTAINERS_GRAPHROOT") == "" {
 		// When running bc-i-b In a rootless container, its typically the case that /var/lib/containers/storage
 		// is a bind-mount of ~/.local/share/containers/storage, and we can't use this directly with podman
 		// because it will complain:
@@ -100,6 +110,7 @@ func (cnt *Container) start(network string, mountSecrets bool) error {
 		//     static dir "/var/lib/containers/storage/libpod": database configuration mismatch
 		// To avoid this we use an empty graphroot, and point --imagestore at /var/lib/containers/storage.
 		// This means the database is in the right place, and we only look at the image layers in the real store.
+		// We don't do this if a custom CONTAINERS_GRAPHROOT is in use though.
 		cnt.storeOpts = []string{
 			"--root=/run/osbuild/containers/store",
 			"--imagestore=/var/lib/containers/storage",
@@ -147,7 +158,11 @@ func (cnt *Container) start(network string, mountSecrets bool) error {
 		return err
 	}
 
-	args = []string{"mount"}
+	args = []string{}
+	if cnt.unprivileged {
+		args = append(args, "unshare", "podman")
+	}
+	args = append(args, "mount")
 	args = append(args, cnt.storeOpts...)
 	args = append(args, cnt.id)
 
@@ -199,7 +214,7 @@ func (c *Container) ResolveInfo() (*Info, error) {
 		Arch:    c.Arch(),
 	}
 
-	os, err := osinfo.Load(c.Root())
+	os, err := osinfo.Load(c.RootFS())
 	if err != nil {
 		return nil, err
 	}
@@ -245,9 +260,11 @@ func (c *Container) ResolveBuildInfo() (*Info, error) {
 	}, nil
 }
 
-// Root returns the root directory of the container as available on the host.
-func (c *Container) Root() string {
-	return c.root
+func (c *Container) RootFS() fs.FS {
+	if c.unprivileged {
+		return newPodmanUnshareFS(c.root)
+	}
+	return os.DirFS(c.root)
 }
 
 // Arch returns the architecture of the container
@@ -550,6 +567,10 @@ func (cnt *Container) setupRunSecrets() error {
 }
 
 func (cnt *Container) NewContainerSolver(cacheRoot string, architecture arch.Arch, sourceInfo *osinfo.Info) (*depsolvednf.Solver, error) {
+	if cnt.unprivileged {
+		return nil, errors.New("Container depsolver is only supported when running as root")
+	}
+
 	solver := depsolvednf.NewSolver(
 		sourceInfo.OSRelease.PlatformID,
 		sourceInfo.OSRelease.VersionID,

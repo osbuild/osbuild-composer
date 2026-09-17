@@ -177,6 +177,8 @@ func (p *AnacondaInstaller) anacondaBootPackageSet() ([]string, error) {
 		packages = append(packages,
 			"s390utils-core",
 		)
+	case arch.ARCH_RISCV64:
+		return packages, nil
 	default:
 		return nil, fmt.Errorf("unsupported arch: %s", p.platform.GetArch())
 	}

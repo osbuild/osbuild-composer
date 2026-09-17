@@ -6,7 +6,7 @@ import (
 	"github.com/osbuild/image-builder/pkg/arch"
 	"github.com/osbuild/image-builder/pkg/bib/osinfo"
 	"github.com/osbuild/image-builder/pkg/bootc"
-	"github.com/osbuild/image-builder/pkg/distro/generic"
+	"github.com/osbuild/image-builder/pkg/distro/defs"
 )
 
 // bootcSupportedImageType checks whether the given image type name is supported
@@ -21,7 +21,7 @@ import (
 // NewBootc constructor validation but are not used for image type listing.
 //
 // TODO: Consider adding a dedicated helper to the osbuild/image-builder library
-// (e.g. generic.BootcSupportedImageTypes) that returns the list of supported
+// (e.g. defs.BootcSupportedImageTypes) that returns the list of supported
 // image type names without requiring a full bootc.Info. This would eliminate
 // the need for dummy values and make the contract less fragile.
 func bootcSupportedImageType(archName string, imageTypeName string) error {
@@ -49,7 +49,7 @@ func bootcSupportedImageType(archName string, imageTypeName string) error {
 		},
 	}
 
-	bootcDistro, err := generic.NewBootc("bootc", dummyInfo)
+	bootcDistro, err := defs.NewBootc("bootc", dummyInfo)
 	if err != nil {
 		return HTTPErrorWithDetails(
 			ErrorUnsupportedImageType, nil,

@@ -1673,7 +1673,7 @@ image_types:
     # we have to reset the aliases otherwise this type
     # will inherit the name aliases causing a conflict
     name_aliases: []
-    filename: "vagrant-libvirt.box"
+    filename: "image.vagrant-libvirt.box"
     mime_type: "application/x-tar"
     bootable: true
     default_size: "10 GiB"
@@ -1706,7 +1706,7 @@ image_types:
 
   "vagrant-virtualbox":
     <<: *vagrant_libvirt
-    filename: "vagrant-virtualbox.box"
+    filename: "image.vagrant-virtualbox.box"
     platforms:
       - <<: *x86_64_bios_platform
         image_format: "vagrant_virtualbox"
@@ -2696,6 +2696,7 @@ image_types:
     exports: ["archive"]
     bootable: true
     default_size: "20 GiB"
+    disk_image_gib_aligned: true
     required_partition_sizes: *default_required_dir_sizes
     platforms:
       - <<: *x86_64_uefi_platform
@@ -3193,7 +3194,7 @@ image_types:
 
   "edge-container":
     name_aliases: ["rhel-edge-container"]
-    filename: "container.tar"
+    filename: "container.oci.tar"
     mime_type: "application/x-tar"
     image_func: "ostree_container"
     exports: ["container"]
@@ -3917,7 +3918,7 @@ image_types:
             - xz
 
   container: &container
-    filename: "container.tar"
+    filename: "container.oci.tar"
     mime_type: "application/x-tar"
     image_func: "container"
     bootable: false
@@ -3931,8 +3932,19 @@ image_types:
     image_config:
       no_selinux: true
       exclude_docs: true
+      install_weak_deps: false
       locale: "C.UTF-8"
       timezone: "Etc/UTC"
+      # build-time macros
+      install_langs:
+        - "C.UTF-8"
+      # installed rpm config
+      rpm:
+        macros:
+          - filename: "/etc/rpm/macros.image-language-conf"
+            macros:
+              _install_langs:
+                - "C.UTF-8"
     package_sets:
       os:
         - include:
@@ -3971,7 +3983,7 @@ image_types:
 
   container-minimal:
     <<: *container
-    filename: "container-minimal.tar"
+    filename: "container-minimal.oci.tar"
     package_sets:
       os:
         - include:

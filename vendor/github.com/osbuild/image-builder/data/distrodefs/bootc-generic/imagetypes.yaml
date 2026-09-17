@@ -153,6 +153,7 @@ image_types:
     filename: "image.tar.gz"
     mime_type: "application/gzip"
     exports: ["gce"]
+    disk_image_gib_aligned: true
 
   ova:
     <<: *raw_image_type

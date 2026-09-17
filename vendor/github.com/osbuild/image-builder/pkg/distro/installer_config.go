@@ -39,6 +39,9 @@ type InstallerConfig struct {
 	// array of source (in anaconda-tree) and destination (in iso-tree).
 	ISOFiles [][2]string `yaml:"iso_files"`
 
+	// CopyDTBs copies device tree blobs from the anaconda tree into /images/dtbs/ on the ISO
+	CopyDTBs *bool `yaml:"copy_dtbs,omitempty"`
+
 	Payload *struct {
 		Location  *manifest.PayloadLocation  `yaml:"location,omitempty"`
 		Kickstart *manifest.PayloadKickstart `yaml:"kickstart,omitempty"`

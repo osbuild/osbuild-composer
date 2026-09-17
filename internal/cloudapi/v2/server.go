@@ -32,7 +32,7 @@ import (
 	"github.com/osbuild/image-builder/pkg/container"
 	"github.com/osbuild/image-builder/pkg/depsolvednf"
 	"github.com/osbuild/image-builder/pkg/distro"
-	"github.com/osbuild/image-builder/pkg/distro/generic"
+	"github.com/osbuild/image-builder/pkg/distro/defs"
 	"github.com/osbuild/image-builder/pkg/distrofactory"
 	"github.com/osbuild/image-builder/pkg/manifest"
 	"github.com/osbuild/image-builder/pkg/ostree"
@@ -534,7 +534,7 @@ func buildBootcManifestSource(
 		}
 	}
 
-	bootcDistro, err := generic.NewBootc("bootc", baseInfo)
+	bootcDistro, err := defs.NewBootc("bootc", baseInfo)
 	if err != nil {
 		return nil, nil, fmt.Errorf("creating bootc distro: %w", err)
 	}

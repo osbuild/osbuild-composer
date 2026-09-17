@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 	"text/template"
 
 	"go.yaml.in/yaml/v3"
@@ -103,7 +104,8 @@ type DistroYAML struct {
 	// image types file/directory.
 	DefsPath string `yaml:"defs_path"`
 
-	BootstrapContainers map[arch.Arch]string `yaml:"bootstrap_containers"`
+	BootstrapContainers map[arch.Arch]string   `yaml:"bootstrap_containers"`
+	BootstrapPkgs       map[arch.Arch][]string `yaml:"bootstrap_packages"`
 
 	OscapProfilesAllowList []oscap.Profile `yaml:"oscap_profiles_allowlist"`
 
@@ -286,6 +288,8 @@ func (l *Loader) LoadDistroWithoutImageTypes(nameVer string) (*DistroYAML, error
 		return nil, err
 	}
 	foundDistro.ID = *id
+	foundDistro.ID.ImageID = experimentalflags.String("image-id")
+	foundDistro.ID.ImageVersion = experimentalflags.String("image-version")
 	foundDistro.loader = l
 	if err := foundDistro.runTemplates(*id); err != nil {
 		return nil, err
@@ -438,6 +442,7 @@ type whenCondition struct {
 	DistroName            string `yaml:"distro_name,omitempty"`
 	NotDistroName         string `yaml:"not_distro_name,omitempty"`
 	Architecture          string `yaml:"arch,omitempty"`
+	NotArchitecture       string `yaml:"not_arch,omitempty"`
 	VersionLessThan       string `yaml:"version_less_than,omitempty"`
 	VersionGreaterOrEqual string `yaml:"version_greater_or_equal,omitempty"`
 	VersionEqual          string `yaml:"version_equal,omitempty"`
@@ -454,6 +459,9 @@ func (wc *whenCondition) Eval(id distro.ID, archStr string) bool {
 	}
 	if wc.Architecture != "" {
 		match = match && (wc.Architecture == archStr)
+	}
+	if wc.NotArchitecture != "" {
+		match = match && (wc.NotArchitecture != archStr)
 	}
 	if wc.VersionLessThan != "" {
 		match = match && (common.VersionLessThan(versionStringForVerCmp(id), wc.VersionLessThan))
@@ -554,6 +562,7 @@ type ImageTypeYAML struct {
 	InstallWeakDeps *bool `yaml:"install_weak_deps"`
 
 	DiskImageVPCForceSize *bool `yaml:"disk_image_vpc_force_size"`
+	DiskImageGiBAligned   bool  `yaml:"disk_image_gib_aligned"`
 
 	SupportedPartitioningModes []partition.PartitioningMode `yaml:"supported_partitioning_modes"`
 
@@ -632,6 +641,52 @@ func (it *ImageTypeYAML) runTemplates(distro *DistroYAML) error {
 					return err
 				}
 				cond.Override[idx].UEFIVendor = newVendor
+			}
+		}
+	}
+
+	if err := it.templatePartitionLabels(distro); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (it *ImageTypeYAML) templatePartitionLabels(d *DistroYAML) error {
+	subsLabels := func(pts map[string]*disk.PartitionTable) error {
+		for archName, pt := range pts {
+			subs := struct {
+				Arch   string
+				Distro distro.ID
+			}{
+				Arch:   archName,
+				Distro: d.ID,
+			}
+			for idx := range pt.Partitions {
+				p := &pt.Partitions[idx]
+				if !strings.Contains(p.Label, "{{") {
+					continue
+				}
+				templ, err := template.New("part-label").Option("missingkey=error").Parse(p.Label)
+				if err != nil {
+					return fmt.Errorf("cannot parse template for partition label %q: %w", p.Label, err)
+				}
+				var buf bytes.Buffer
+				if err := templ.Execute(&buf, subs); err != nil {
+					return fmt.Errorf("cannot execute template for partition label %q: %w", p.Label, err)
+				}
+				p.Label = buf.String()
+			}
+		}
+		return nil
+	}
+	if err := subsLabels(it.PartitionTables); err != nil {
+		return err
+	}
+	if it.PartitionTablesOverrides != nil {
+		for _, cond := range it.PartitionTablesOverrides.Conditions {
+			if err := subsLabels(cond.Override); err != nil {
+				return err
 			}
 		}
 	}
@@ -763,7 +818,7 @@ type partitionTablesOverwriteCondition struct {
 // version for our version compare (centos is always "rolling").
 //
 // TODO: this should become an explicit chose in "imagetypes.yaml" but until
-// we have everything converted to generic.Distro accessing the properites
+// we have everything converted to defs.Distro accessing the properites
 // from an image type is very hard so we start here.
 func versionStringForVerCmp(u distro.ID) string {
 	if u.MinorVersion == -1 {
@@ -807,7 +862,7 @@ func (imgType *ImageTypeYAML) PackageSets(id distro.ID, archName string) map[str
 // PartitionTable returns the partionTable for the given distro/imgType.
 func (imgType *ImageTypeYAML) PartitionTable(id distro.ID, archName string) (*disk.PartitionTable, error) {
 	if imgType.PartitionTables == nil {
-		return nil, fmt.Errorf("%w: %q", ErrNoPartitionTableForImgType, id)
+		return nil, fmt.Errorf("%w: %q", ErrNoPartitionTableForImgType, imgType.name)
 	}
 	pt, ok := imgType.PartitionTables[archName]
 	if !ok {

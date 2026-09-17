@@ -445,6 +445,28 @@ func (p *AnacondaInstallerISOTree) serialize() (osbuild.Pipeline, error) {
 	copyStage := osbuild.NewCopyStageSimple(copyStageOptions, copyStageInputs)
 	pipeline.AddStage(copyStage)
 
+	if p.InstallerCustomizations.CopyDTBs {
+		pipeline.AddStage(osbuild.NewMkdirStage(&osbuild.MkdirStageOptions{
+			Paths: []osbuild.MkdirStagePath{
+				{Path: "/images/dtbs"},
+			},
+		}))
+
+		dtbSrc := fmt.Sprintf("boot/dtb-%s/", p.anacondaPipeline.kernelVer)
+		dtbCopyStage := osbuild.NewCopyStageSimple(
+			&osbuild.CopyStageOptions{
+				Paths: []osbuild.CopyStagePath{
+					{
+						From: fmt.Sprintf("input://%s/%s", inputName, dtbSrc),
+						To:   "tree:///images/dtbs/",
+					},
+				},
+			},
+			osbuild.NewPipelineTreeInputs(inputName, p.anacondaPipeline.Name()),
+		)
+		pipeline.AddStage(dtbCopyStage)
+	}
+
 	// Add the selected roofs stage
 	switch p.RootfsType {
 	case SquashfsExt4Rootfs, SquashfsRootfs:

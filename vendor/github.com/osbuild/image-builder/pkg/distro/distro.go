@@ -73,6 +73,10 @@ type Distro interface {
 	// The ref for the bootstrap container for this distro for a specific
 	// architecture.
 	BootstrapContainer(a string) (string, error)
+
+	// The packages to install for the bootstrap buildroot for a specific
+	// architecture using ignorearch.
+	BootstrapPackages(a string) ([]string, error)
 }
 
 type CustomDepsolverDistro interface {

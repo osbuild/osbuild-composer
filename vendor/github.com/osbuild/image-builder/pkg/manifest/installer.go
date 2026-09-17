@@ -131,6 +131,9 @@ type InstallerCustomizations struct {
 	// array of source (in anaconda-tree) and destination (in iso-tree).
 	ISOFiles [][2]string
 
+	// CopyDTBs copies device tree blobs from the anaconda tree into /images/dtbs/ on the ISO
+	CopyDTBs bool
+
 	// Install weak dependencies in the installer environment
 	InstallWeakDeps bool
 

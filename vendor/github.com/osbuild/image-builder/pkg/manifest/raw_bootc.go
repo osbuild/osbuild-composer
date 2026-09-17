@@ -145,6 +145,22 @@ func (p *RawBootcImage) serialize() (osbuild.Pipeline, error) {
 		pipeline.AddStage(stage)
 	}
 
+	// Label the root and /boot mount points before bootc install so that
+	// all files in the ostree repository and /boot hierarchy are properly
+	// labeled. Without this, the mount point directories end up as
+	// unlabeled_t and every file written by bootc inherits that label.
+	// See https://github.com/coreos/fedora-coreos-tracker/issues/1771
+	// and https://github.com/coreos/fedora-coreos-tracker/issues/1772
+	if p.OSCustomizations.SELinux != "" {
+		selinuxStages, err := p.genMountpointSELinuxStages()
+		if err != nil {
+			return osbuild.Pipeline{}, err
+		}
+		for _, stage := range selinuxStages {
+			pipeline.AddStage(stage)
+		}
+	}
+
 	if len(p.containerSpecs) != 1 {
 		return osbuild.Pipeline{}, fmt.Errorf("expected a single container input got %v", p.containerSpecs)
 	}
@@ -387,6 +403,112 @@ func (p *RawBootcImage) serialize() (osbuild.Pipeline, error) {
 	return pipeline, nil
 }
 
+// genMountpointSELinuxStages creates stages that label the root and /boot
+// mount point directories with proper SELinux contexts before bootc install.
+//
+// Without this, the mount point directories on the freshly created
+// filesystems are unlabeled (unlabeled_t) and bootc install inherits
+// that label for all files it writes.
+//
+// The approach mirrors what COSA does:
+//  1. Create /boot (and /boot/efi on UEFI) directories on the root filesystem
+//  2. Label the root mount (without /boot mounted) so the /boot directory
+//     mountpoint itself gets the correct label
+//  3. Label /boot (with /boot mounted) so /boot/efi gets labeled correctly
+//
+// The file_contexts used for labeling come from the source pipeline (the
+// extracted container tree) via an input reference.
+func (p *RawBootcImage) genMountpointSELinuxStages() ([]*osbuild.Stage, error) {
+	stages := make([]*osbuild.Stage, 0, 3)
+
+	devices, allMounts, err := osbuild.GenBootupdDevicesMounts(p.filename, p.PartitionTable, p.platform)
+	if err != nil {
+		return nil, fmt.Errorf("generating devices/mounts for mountpoint SELinux labeling: %w", err)
+	}
+
+	// Partition mounts by target for selective mounting.
+	// Note: rootAndBootMounts intentionally excludes the EFI mount - we only
+	// need to mount /boot to create and label the /boot/efi directory, the
+	// EFI partition itself is not mounted during pre-install labeling.
+	var rootMounts []osbuild.Mount
+	var rootAndBootMounts []osbuild.Mount
+	hasBootPartition := false
+	hasEFIPartition := false
+	for _, mnt := range allMounts {
+		switch mnt.Target {
+		case "/":
+			rootMounts = append(rootMounts, mnt)
+			rootAndBootMounts = append(rootAndBootMounts, mnt)
+		case "/boot":
+			hasBootPartition = true
+			rootAndBootMounts = append(rootAndBootMounts, mnt)
+		case "/boot/efi":
+			hasEFIPartition = true
+		}
+	}
+
+	// 1a. Create /boot directory on root filesystem (only root mounted,
+	//     so /boot is just a directory on the root fs, not a mount point)
+	mkdirBootStage := osbuild.NewMkdirStage(&osbuild.MkdirStageOptions{
+		Paths: []osbuild.MkdirStagePath{
+			{
+				Path: "mount://-/boot",
+				Mode: common.ToPtr(os.FileMode(0755)),
+			},
+		},
+	})
+	mkdirBootStage.Devices = devices
+	mkdirBootStage.Mounts = rootMounts
+	stages = append(stages, mkdirBootStage)
+
+	// 1b. Create /boot/efi directory on the boot filesystem (needs both
+	//     root and boot mounted so the boot partition is accessible)
+	if hasEFIPartition && hasBootPartition {
+		mkdirEfiStage := osbuild.NewMkdirStage(&osbuild.MkdirStageOptions{
+			Paths: []osbuild.MkdirStagePath{
+				{
+					Path: "mount://boot/efi",
+					Mode: common.ToPtr(os.FileMode(0755)),
+				},
+			},
+		})
+		mkdirEfiStage.Devices = devices
+		mkdirEfiStage.Mounts = rootAndBootMounts
+		stages = append(stages, mkdirEfiStage)
+	}
+
+	// Tree input for file_contexts from the source pipeline
+	fileContextsInputName := "tree"
+	fileContextsInput := osbuild.NewPipelineTreeInputs(fileContextsInputName, p.SourcePipeline)
+	fileContextsPath := fmt.Sprintf("input://%s/etc/selinux/%s/contexts/files/file_contexts",
+		fileContextsInputName, p.OSCustomizations.SELinux)
+
+	// 2. Label root mount point (without /boot mounted so that the
+	//    /boot directory mountpoint gets labeled)
+	rootSELinuxStage := osbuild.NewSELinuxStage(&osbuild.SELinuxStageOptions{
+		FileContexts: fileContextsPath,
+		Target:       "mount://-/",
+	})
+	rootSELinuxStage.Devices = devices
+	rootSELinuxStage.Mounts = rootMounts
+	rootSELinuxStage.Inputs = fileContextsInput
+	stages = append(stages, rootSELinuxStage)
+
+	// 3. Label /boot mount point (with /boot mounted so that /boot/efi
+	//    gets labeled)
+	if hasBootPartition {
+		bootSELinuxStage := osbuild.NewSELinuxStage(&osbuild.SELinuxStageOptions{
+			FileContexts: fileContextsPath,
+			Target:       "mount://-/boot/",
+		})
+		bootSELinuxStage.Devices = devices
+		bootSELinuxStage.Mounts = rootAndBootMounts
+		bootSELinuxStage.Inputs = fileContextsInput
+		stages = append(stages, bootSELinuxStage)
+	}
+
+	return stages, nil
+}
 func (p *RawBootcImage) getInline() []string {
 	return p.inlineData
 }

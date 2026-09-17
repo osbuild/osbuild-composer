@@ -36,6 +36,10 @@ type RPMStageOptions struct {
 
 	RPMKeys *RPMKeys `json:"rpmkeys,omitempty"`
 
+	// Allow installation even if the architectures of the binary
+	// package and host don't match
+	IgnoreArch bool `json:"ignorearch,omitempty"`
+
 	// Set generic environment variables for RPM scriptlets
 	GenericEnv map[string]string `json:"generic_env,omitempty"`
 }
@@ -55,6 +59,7 @@ func (o *RPMStageOptions) Clone() *RPMStageOptions {
 		KernelInstallEnv: common.ClonePtr(o.KernelInstallEnv),
 		InstallLangs:     slices.Clone(o.InstallLangs),
 		RPMKeys:          common.ClonePtr(o.RPMKeys),
+		IgnoreArch:       o.IgnoreArch,
 		GenericEnv:       maps.Clone(o.GenericEnv),
 	}
 }
