@@ -3,9 +3,7 @@ ENV GOBIN=/opt/app-root/src/go/bin
 # extra packages are needed
 # to compile osbuild
 RUN dnf install -y golang \
-  krb5-devel \
-  gpgme-devel \
-  libassuan-devel
+  krb5-devel
 WORKDIR /osbuild-composer
 COPY . /osbuild-composer
 ENV GOFLAGS=-mod=vendor
