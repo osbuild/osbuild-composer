@@ -1,9 +1,4 @@
 FROM registry.access.redhat.com/ubi9/go-toolset:latest AS builder
-# We need to be root to install packages, but ubi9/go-toolset defaults to uid 1001
-USER 0
-# The go package `proglottis/gpgme` a dependency of `containers/image/v5` package
-# uses `libgpgme` so we need to install it and its build dependencies
-RUN dnf install -y gpgme-devel libassuan-devel device-mapper-devel
 USER 1001
 # ubi9/go-toolset defaults to uid 1001. Let's copy the files with this UID as well.
 # Otherwise, VCS stamping will fail because git >= 2.35.2 refuses to work in
@@ -26,7 +21,7 @@ FROM registry.access.redhat.com/ubi9/ubi-minimal:latest
 # We need to manually install all dependencies of osbuild-composer manually
 # due to building the binary in a separate container and not installing an
 # actual RPM.
-RUN microdnf install -y python3 python3-dnf gpgme libassuan device-mapper-libs
+RUN microdnf install -y python3 python3-dnf
 RUN mkdir -p "/usr/libexec/osbuild-composer"
 RUN mkdir -p "/etc/osbuild-composer/"
 RUN mkdir -p "/run/osbuild-composer/"
