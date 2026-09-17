@@ -72,11 +72,9 @@
       - "dejavu-sans-fonts"
       - "dejavu-sans-mono-fonts"
       - "device-mapper-persistent-data"
-      - "dmidecode"
       - "dnf"
       - "dracut-config-generic"
       - "dracut-network"
-      - "efibootmgr"
       - "ethtool"
       - "fcoe-utils"
       - "ftp"
@@ -85,9 +83,6 @@
       - "glibc-all-langpacks"
       - "gnome-kiosk"
       - "google-noto-sans-cjk-ttc-fonts"
-      - "grub2-tools"
-      - "grub2-tools-extra"
-      - "grub2-tools-minimal"
       - "grubby"
       - "gsettings-desktop-schemas"
       - "hdparm"
@@ -175,6 +170,15 @@
       - "xrdb"
       - "xz"
     conditions:
+      "grub common packages anaconda pkgs":
+        when:
+          # grub2 is used on all architectures, except s390x
+          not_arch: "s390x"
+        append:
+          include:
+            - "grub2-tools"
+            - "grub2-tools-extra"
+            - "grub2-tools-minimal"
       "x86_64 specific anaconda pkgs":
         when:
           arch: "x86_64"
@@ -182,6 +186,7 @@
           include:
             - "biosdevname"
             - "dmidecode"
+            - "efibootmgr"
             - "grub2-tools-efi"
             - "memtest86+"
       "aarch64 specific anaconda pkgs":
@@ -190,6 +195,7 @@
         append:
           include:
             - "dmidecode"
+            - "efibootmgr"
 
   network_installer_pkgset: &network_installer_pkgset
     include:
@@ -529,9 +535,9 @@
       bootloader: "zipl"
     riscv64_uefi_platform: &riscv64_uefi_platform
       arch: "riscv64"
-      uefi_vendor: "uefi"
+      uefi_vendor: "fedora"
       image_format: "raw"
-      packages:
+      packages: &riscv64_uefi_platform_packages
         # XXX: this is needed to get a generic bootkernel,
         # this should probably be part of any bootable img
         # packagelist
@@ -541,7 +547,23 @@
           - "grub2-efi-riscv64-modules"
           - "shim-unsigned-riscv64"
       bootloader: "grub2"
-
+    riscv64_installer_platform: &riscv64_installer_platform
+      arch: "riscv64"
+      uefi_vendor: "fedora"
+      image_format: "qcow2"
+      qcow2_compat: "1.1"
+      packages:
+        <<: *riscv64_uefi_platform_packages
+        booting:
+          - "grub2-efi-riscv64-cdboot"
+        firmware:
+          - "linux-firmware"
+      build_packages:
+        booting:
+          - "shim-unsigned-riscv64"
+          - "grub2-efi-riscv64"
+          - "grub2-efi-riscv64-cdboot"
+          - "grub2-efi-riscv64-modules"
 
   installer_config: &default_installer_config
     enabled_anaconda_modules: &install_config_enabled_anaconda_modules
@@ -569,6 +591,7 @@
               after_dracut: true
           lorax_logos_package: fedora-logos
           lorax_release_package: fedora-release
+
 
   iso_config: &default_iso_config
     preparer: "image-builder - https://osbuild.org/"
@@ -688,6 +711,7 @@
       - &efi_system_partition_guid "C12A7328-F81F-11D2-BA4B-00A0C93EC93B"
       - &filesystem_data_guid "0FC63DAF-8483-4772-8E79-3D69D8477DE4"
       - &xboot_ldr_partition_guid "BC13C2FF-59E6-4262-A352-B275FD6F7172"
+      - &lvm_partition_guid "E6D6D379-F507-44C2-A23C-238F2A3DF928"
       - &root_partition_guid_x86_64 "4f68bce3-e8cd-4db1-96e7-fbcaf984b709"
       - &root_partition_guid_aarch64 "b921b045-1df0-41c3-af44-4c6f280d3fae"
       - &root_partition_guid_ppc64le "c31c45e6-3f39-412e-80fb-4809c4980599"
@@ -805,6 +829,7 @@
           <<: *default_partition_table_part_boot_payload
           type: "xfs"
       - &server_partition_table_part_root
+        type: *lvm_partition_guid
         payload_type: "lvm"
         payload:
           name: "systemVG"
@@ -864,23 +889,20 @@
           - *server_partition_table_part_bios
           - *server_partition_table_part_efi
           - *server_partition_table_part_boot
-          - <<: *server_partition_table_part_root
-            type: *root_partition_guid_x86_64
+          - *server_partition_table_part_root
       aarch64:
         type: "gpt"
         partitions:
           - *server_partition_table_part_efi
           - *server_partition_table_part_boot
-          - <<: *server_partition_table_part_root
-            type: *root_partition_guid_aarch64
+          - *server_partition_table_part_root
       ppc64le:
         type: "gpt"
         partitions:
           - size: "8 MiB"
             type: *prep_boot_partition_guid
           - *server_partition_table_part_boot
-          - <<: *server_partition_table_part_root
-            type: *root_partition_guid_ppc64le
+          - *server_partition_table_part_root
       s390x:
         type: "dos"
         partitions:
@@ -1347,7 +1369,7 @@
 
 image_types:
   "generic-vagrant-libvirt": &generic_vagrant_libvirt
-    filename: "vagrant-libvirt.box"
+    filename: "image.vagrant-libvirt.box"
     mime_type: "application/x-tar"
     environment: *kvm_env
     bootable: true
@@ -1402,7 +1424,7 @@ image_types:
 
   "generic-vagrant-virtualbox": &generic_vagrant_virtualbox
     <<: *generic_vagrant_libvirt
-    filename: "vagrant-virtualbox.box"
+    filename: "image.vagrant-virtualbox.box"
     platforms:
       - <<: *x86_64_bios_platform
         image_format: "vagrant_virtualbox"
@@ -1735,7 +1757,7 @@ image_types:
   "iot-container":
     <<: *iot_commit
     name_aliases: ["fedora-iot-container"]
-    filename: "container.tar"
+    filename: "container.oci.tar"
     mime_type: "application/x-tar"
     image_func: "ostree_container"
     exports: ["container"]
@@ -1982,7 +2004,6 @@ image_types:
             - "@core"
             - "bash-completion"
             - "grubby"
-            - "fwupd-efi"
             - "initial-setup"
             - "libxkbcommon"
             - "NetworkManager-wifi"
@@ -1999,6 +2020,18 @@ image_types:
               append:
                 exclude:
                   - "firewalld"
+            "x86_64 uefi packages":
+              when:
+                arch: "x86_64"
+              append:
+                include:
+                  - "fwupd-efi"
+            "aarch64 uefi packages":
+              when:
+                arch: "aarch64"
+              append:
+                include:
+                  - "fwupd-efi"
     blueprint:
       supported_options: *supported_options_disk
 
@@ -2175,6 +2208,8 @@ image_types:
     platforms:
       - *x86_64_installer_platform
       - *aarch64_installer_platform
+      - *ppc64le_installer_platform
+      - *s390x_installer_platform
     platforms_override:
       conditions:
         "Fedora 45 and up no longer have zd1211-firmware":
@@ -2183,6 +2218,8 @@ image_types:
           override:
             - *x86_64_installer_platform_compat
             - *aarch64_installer_platform_compat
+            - *ppc64le_installer_platform_compat
+            - *s390x_installer_platform
     package_sets:
       os:
         - *minimal_raw_pkgset
@@ -2218,7 +2255,7 @@ image_types:
 
   "generic-container": &generic_container
     name_aliases: ["container"]
-    filename: "container.tar"
+    filename: "container.oci.tar"
     mime_type: "application/x-tar"
     image_func: "container"
     bootable: false
@@ -2547,6 +2584,13 @@ image_types:
         - ["/usr/share/licenses/fedora-release-common/Fedora-Legal-README.txt", "/Fedora-Legal-README.txt"]
         - ["/usr/share/licenses/fedora-release-common/LICENSE", "/LICENSE"]
       install_weak_deps: false
+      conditions:
+        <<: *default_installer_conditions
+        "riscv64 needs device tree blobs on the ISO":
+          when:
+            arch: "riscv64"
+          shallow_merge:
+            copy_dtbs: true
     iso_config:
       <<: *default_iso_config
       rootfs_type: "erofs"
@@ -2561,6 +2605,7 @@ image_types:
       - *aarch64_installer_platform
       - *ppc64le_installer_platform
       - *s390x_installer_platform
+      - *riscv64_installer_platform
     platforms_override:
       conditions:
         "Fedora 45 and up no longer have zd1211-firmware":
@@ -2571,6 +2616,7 @@ image_types:
             - *aarch64_installer_platform_compat
             - *ppc64le_installer_platform_compat
             - *s390x_installer_platform
+            - *riscv64_installer_platform
     blueprint:
       supported_options:
         - "distro"
@@ -2765,6 +2811,7 @@ image_types:
     filename: "image.tar.gz"
     mime_type: "application/gzip"
     exports: ["archive"]
+    disk_image_gib_aligned: true
     # Note the larger size here, upstream descriptions mention that GCE has bad perf with small disks
     default_size: "10 GiB"
     package_sets:

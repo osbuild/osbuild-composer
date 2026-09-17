@@ -22,7 +22,7 @@ type repository struct {
 	GPGKey         string   `json:"gpgkey,omitempty"`
 	GPGKeys        []string `json:"gpgkeys,omitempty"`
 	CheckGPG       bool     `json:"check_gpg,omitempty"`
-	IgnoreSSL      bool     `json:"ignore_ssl,omitempty"`
+	IgnoreSSL      *bool    `json:"ignore_ssl,omitempty"`
 	RHSM           bool     `json:"rhsm,omitempty"`
 	ModuleHotfixes *bool    `json:"module_hotfixes,omitempty"`
 	MetadataExpire string   `json:"metadata_expire,omitempty"`
@@ -163,6 +163,7 @@ func LoadRepositoriesFromReader(r io.Reader) (map[string][]RepoConfig, error) {
 				MirrorList:     repo.MirrorList,
 				GPGKeys:        keys,
 				CheckGPG:       &repo.CheckGPG,
+				IgnoreSSL:      repo.IgnoreSSL,
 				RHSM:           repo.RHSM,
 				MetadataExpire: repo.MetadataExpire,
 				ModuleHotfixes: repo.ModuleHotfixes,

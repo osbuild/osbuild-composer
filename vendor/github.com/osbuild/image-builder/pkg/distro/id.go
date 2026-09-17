@@ -14,6 +14,9 @@ type ID struct {
 	MajorVersion int
 	// MinorVersion is -1 if not specified
 	MinorVersion int
+
+	ImageID      string
+	ImageVersion string
 }
 
 func (id ID) VersionString() string {

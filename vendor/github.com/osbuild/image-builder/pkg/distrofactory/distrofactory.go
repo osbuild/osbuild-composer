@@ -6,7 +6,6 @@ import (
 
 	"github.com/osbuild/image-builder/pkg/distro"
 	"github.com/osbuild/image-builder/pkg/distro/defs"
-	"github.com/osbuild/image-builder/pkg/distro/generic"
 	"github.com/osbuild/image-builder/pkg/distro/test_distro"
 )
 
@@ -106,7 +105,7 @@ func New(factories ...FactoryFunc) *Factory {
 // distros.
 func NewDefault() *Factory {
 	return New(
-		generic.DistroFactory,
+		defs.DistroFactory,
 	)
 }
 
@@ -114,7 +113,7 @@ func NewDefault() *Factory {
 // the given Loader's filesystem.
 func NewDefaultWithLoader(loader *defs.Loader) *Factory {
 	return New(
-		generic.DistroFactoryWithLoader(loader),
+		defs.DistroFactoryWithLoader(loader),
 	)
 }
 

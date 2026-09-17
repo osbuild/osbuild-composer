@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 
+	"github.com/osbuild/image-builder/pkg/arch"
 	"github.com/osbuild/image-builder/pkg/artifact"
 	"github.com/osbuild/image-builder/pkg/container"
 	"github.com/osbuild/image-builder/pkg/disk"
@@ -116,9 +117,14 @@ func (img *ContainerBasedIso) InstantiateManifestFromContainer(m *manifest.Manif
 	isoTreePipeline.InitramfsPath = img.InitramfsPath
 	isoTreePipeline.KernelOpts = kernelOpts
 
+	bootType := manifest.Grub2UEFIOnlyISOBoot
+	if img.platform.GetArch() == arch.ARCH_X86_64 {
+		bootType = manifest.Grub2ISOBoot
+	}
+
 	isoCustomizations := manifest.ISOCustomizations{
 		Label:    img.ISOLabel,
-		BootType: manifest.Grub2ISOBoot,
+		BootType: bootType,
 	}
 
 	isoPipeline := manifest.NewISO(buildPipeline, isoTreePipeline, isoCustomizations)

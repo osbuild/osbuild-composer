@@ -26,9 +26,11 @@ distros:
       aarch64: "registry.fedoraproject.org/fedora-toolbox:46"
       ppc64le: "registry.fedoraproject.org/fedora-toolbox:46"
       s390x: "registry.fedoraproject.org/fedora-toolbox:46"
-      # XXX: remove once fedora containers are part of the upstream
-      # fedora registry (and can be validated via tls)
-      riscv64: "ghcr.io/mvo5/fedora-buildroot:46"
+    bootstrap_packages:
+      riscv64:
+        - python3
+        - rpm
+        - coreutils
 
       # XXX: add repos here too, that requires some churn, see
       # https://github.com/osbuild/images/compare/main...mvo5:yaml-distroconfig?expand=1
@@ -76,9 +78,11 @@ distros:
       aarch64: "registry.fedoraproject.org/fedora-toolbox:45"
       ppc64le: "registry.fedoraproject.org/fedora-toolbox:45"
       s390x: "registry.fedoraproject.org/fedora-toolbox:45"
-      # XXX: remove once fedora containers are part of the upstream
-      # fedora registry (and can be validated via tls)
-      riscv64: "ghcr.io/mvo5/fedora-buildroot:45"
+    bootstrap_packages:
+      riscv64:
+        - python3
+        - rpm
+        - coreutils
 
       # XXX: add repos here too, that requires some churn, see
       # https://github.com/osbuild/images/compare/main...mvo5:yaml-distroconfig?expand=1
@@ -119,6 +123,8 @@ distros:
       aarch64: "registry.fedoraproject.org/fedora-toolbox:{{.MajorVersion}}"
       ppc64le: "registry.fedoraproject.org/fedora-toolbox:{{.MajorVersion}}"
       s390x: "registry.fedoraproject.org/fedora-toolbox:{{.MajorVersion}}"
-      # XXX: remove once fedora containers are part of the upstream
-      # fedora registry (and can be validated via tls)
-      riscv64: "ghcr.io/mvo5/fedora-buildroot:{{.MajorVersion}}"
+    bootstrap_packages:
+      riscv64:
+        - python3
+        - rpm
+        - coreutils

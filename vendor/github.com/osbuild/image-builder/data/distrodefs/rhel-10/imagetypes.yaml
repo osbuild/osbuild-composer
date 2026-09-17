@@ -416,6 +416,15 @@
 
   anaconda_boot_pkgset: &anaconda_boot_pkgset
     conditions:
+      "grub common packages for the anaconda boot pkgset":
+        when:
+          # grub2 is used on all architectures, except s390x
+          not_arch: "s390x"
+        append:
+          include:
+            - "grub2-tools"
+            - "grub2-tools-extra"
+            - "grub2-tools-minimal"
       "x86 specific packages for the anaconda boot pkgset":
         when:
           arch: "x86_64"
@@ -423,16 +432,12 @@
           include:
             # eficommon
             - "efibootmgr"
-            # XXX: de-dup?
-            # grub-common
-            - "grub2-tools"
-            - "grub2-tools-extra"
-            - "grub2-tools-minimal"
             # arch specific
             - "grub2-efi-x64"
             - "grub2-efi-x64-cdboot"
             - "grub2-pc"
             - "grub2-pc-modules"
+            - "grub2-tools-efi"
             - "shim-x64"
             - "syslinux"
             - "syslinux-nonlinux"
@@ -443,11 +448,6 @@
           include:
             # eficommon
             - "efibootmgr"
-            # XXX: de-dup?
-            # grub-common
-            - "grub2-tools"
-            - "grub2-tools-extra"
-            - "grub2-tools-minimal"
             # arch specific
             - "grub2-efi-aa64-cdboot"
             - "grub2-efi-aa64"
@@ -1142,7 +1142,7 @@ image_types:
     # we have to reset the aliases otherwise this type
     # will inherit the name aliases causing a conflict
     name_aliases: []
-    filename: "vagrant-libvirt.box"
+    filename: "image.vagrant-libvirt.box"
     mime_type: "application/x-tar"
     bootable: true
     default_size: "10 GiB"
@@ -1173,7 +1173,7 @@ image_types:
 
   "vagrant-virtualbox":
     <<: *vagrant_libvirt
-    filename: "vagrant-virtualbox.box"
+    filename: "image.vagrant-virtualbox.box"
     platforms:
       - <<: *x86_64_bios_platform
         image_format: "vagrant_virtualbox"
@@ -2069,7 +2069,9 @@ image_types:
     iso_config: *default_iso_config
     platforms:
       - *x86_64_installer_platform
-      - *aarch64_platform
+      - *aarch64_installer_platform
+      - *ppc64le_installer_platform
+      - *s390x_installer_platform
     platforms_override:
       conditions:
         "RHEL 10.1+ adds FIPS menu":
@@ -2078,8 +2080,12 @@ image_types:
           override:
             - <<: *x86_64_installer_platform
               fips_menu: true
-            - <<: *aarch64_platform
+            - <<: *aarch64_installer_platform
               fips_menu: true
+            - <<: *ppc64le_installer_platform
+              fips_menu: true
+            # s390x iso has no boot menu
+            - <<: *s390x_installer_platform
     package_sets:
       <<: *bare_metal_pkgset
       installer:
@@ -2104,11 +2110,9 @@ image_types:
             - "dejavu-sans-fonts"
             - "dejavu-sans-mono-fonts"
             - "device-mapper-persistent-data"
-            - "dmidecode"
             - "dnf"
             - "dracut-config-generic"
             - "dracut-network"
-            - "efibootmgr"
             - "ethtool"
             - "fcoe-utils"
             - "ftp"
@@ -2116,9 +2120,6 @@ image_types:
             - "glibc-all-langpacks"
             - "gnome-kiosk"
             - "google-noto-sans-cjk-ttc-fonts"
-            - "grub2-tools"
-            - "grub2-tools-extra"
-            - "grub2-tools-minimal"
             - "grubby"
             - "gsettings-desktop-schemas"
             - "hdparm"
@@ -2201,7 +2202,6 @@ image_types:
                 include:
                   - "biosdevname"
                   - "dmidecode"
-                  - "grub2-tools-efi"
                   - "memtest86+"
             "aarch64 specific pkgs for image installer":
               when:
@@ -2267,6 +2267,7 @@ image_types:
     exports: ["archive"]
     bootable: true
     default_size: "20 GiB"
+    disk_image_gib_aligned: true
     required_partition_sizes: *default_required_dir_sizes
     platforms:
       - <<: *x86_64_uefi_platform
@@ -2831,7 +2832,7 @@ image_types:
             - xz
 
   container: &container
-    filename: "container.tar"
+    filename: "container.oci.tar"
     mime_type: "application/x-tar"
     image_func: "container"
     bootable: false
@@ -2845,8 +2846,19 @@ image_types:
     image_config:
       no_selinux: true
       exclude_docs: true
+      install_weak_deps: false
       locale: "C.UTF-8"
       timezone: "Etc/UTC"
+      # build-time macros
+      install_langs:
+        - "C.UTF-8"
+      # installed rpm config
+      rpm:
+        macros:
+          - filename: "/etc/rpm/macros.image-language-conf"
+            macros:
+              _install_langs:
+                - "C.UTF-8"
     package_sets:
       os:
         - include:
@@ -2888,7 +2900,7 @@ image_types:
 
   container-minimal:
     <<: *container
-    filename: "container-minimal.tar"
+    filename: "container-minimal.oci.tar"
     package_sets:
       os:
         - include:

@@ -58,6 +58,8 @@ type BuildrootFromPackages struct {
 	selinuxPolicy string
 
 	rpmStageIgnoreGPGImportFailures bool
+	ignoreArch                      bool
+	extraPackages                   []string
 }
 
 type BuildOptions struct {
@@ -88,6 +90,10 @@ type BuildOptions struct {
 
 	// Ignore gpg import failures
 	RPMStageIgnoreGPGImportFailures bool
+
+	// IgnoreArch allows installing packages for a different
+	// architecture than the host, used for cross-arch builds
+	IgnoreArch bool
 }
 
 // policy or default returns the selinuxPolicy or (if unset) the
@@ -119,6 +125,7 @@ func NewBuild(m *Manifest, runner runner.Runner, repos []rpmmd.RepoConfig, opts 
 		disableSelinux:                  opts.DisableSELinux,
 		selinuxPolicy:                   policyOrDefault(opts.SELinuxPolicy),
 		rpmStageIgnoreGPGImportFailures: opts.RPMStageIgnoreGPGImportFailures,
+		ignoreArch:                      opts.IgnoreArch,
 	}
 
 	m.addPipeline(pipeline)
@@ -149,13 +156,16 @@ func (p *BuildrootFromPackages) getPackageSetChain(distro Distro) ([]rpmmd.Packa
 		}
 	}
 
+	if !p.disableSelinux {
+		addPkgs(policyPackage)
+	}
 	addPkgs(
-		policyPackage, // needed to build the build pipeline
-		"coreutils",   // /usr/bin/cp - used all over
-		"xz",          // usage unclear
+		"coreutils", // /usr/bin/cp - used all over
+		"xz",        // usage unclear
 	)
 
 	addPkgs(p.runner.GetBuildPackages()...)
+	addPkgs(p.extraPackages...)
 
 	for _, pipeline := range p.dependents {
 		pipelineBuildPackages, err := pipeline.getBuildPackages(distro)
@@ -207,7 +217,9 @@ func (p *BuildrootFromPackages) serialize() (osbuild.Pipeline, error) {
 
 	pipeline.Runner = p.runner.String()
 
-	baseOptions := osbuild.RPMStageOptions{}
+	baseOptions := osbuild.RPMStageOptions{
+		IgnoreArch: p.ignoreArch,
+	}
 	if p.rpmStageIgnoreGPGImportFailures {
 		baseOptions.RPMKeys = &osbuild.RPMKeys{
 			IgnoreImportFailures: true,
@@ -397,6 +409,25 @@ func (p *BuildrootFromContainer) serialize() (osbuild.Pipeline, error) {
 	}
 
 	return pipeline, nil
+}
+
+// NewBootstrapFromPackages creates a bootstrap buildroot by installing
+// packages with ignorearch. This is used for cross-arch builds where
+// the bootstrap root is assembled from RPMs instead of a container.
+func NewBootstrapFromPackages(m *Manifest, repos []rpmmd.RepoConfig, packages []string) Build {
+	name := "bootstrap-buildroot"
+	pipeline := &BuildrootFromPackages{
+		Base:               NewBase(name, nil),
+		runner:             &runner.Linux{},
+		dependents:         make([]Pipeline, 0),
+		depsolveRepos:      filterRepos(repos, name),
+		containerBuildable: true,
+		disableSelinux:     true,
+		ignoreArch:         true,
+	}
+	pipeline.extraPackages = packages
+	m.addPipeline(pipeline)
+	return pipeline
 }
 
 // NewBootstrap creates a new bootstrap build pipeline from the given
