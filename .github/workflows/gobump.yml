@@ -15,7 +15,7 @@ jobs:
       - name: Prepare environment and run tests
         run: |
           set -xe
-          sudo dnf -y install git gh jq golang skopeo libvirt-devel gpgme-devel btrfs-progs-devel krb5-devel
+          sudo dnf -y install git gh jq golang skopeo libvirt-devel krb5-devel
           git clone --depth 1 https://github.com/osbuild/osbuild-composer
           cd osbuild-composer/
           make build test
