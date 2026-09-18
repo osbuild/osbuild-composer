@@ -148,6 +148,10 @@ func (d *TestDistro) BootstrapContainer(a string) (string, error) {
 	return "", nil
 }
 
+func (d *TestDistro) BootstrapPackages(a string) ([]string, error) {
+	return nil, nil
+}
+
 // TestArch
 
 func (a *TestArch) Name() string {

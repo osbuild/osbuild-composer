@@ -46,6 +46,7 @@ type v2Repository struct {
 	SSLClientCert  string   `json:"sslclientcert,omitempty"`
 	MetadataExpire string   `json:"metadata_expire,omitempty"`
 	ModuleHotfixes *bool    `json:"module_hotfixes,omitempty"`
+	Priority       *int     `json:"priority,omitempty"`
 	RHSM           bool     `json:"rhsm,omitempty"`
 }
 
@@ -423,6 +424,7 @@ func (h *v2Handler) reposFromRPMMD(cfg *solverConfig, rpmRepos []rpmmd.RepoConfi
 			SSLClientKey:   rr.SSLClientKey,
 			SSLClientCert:  rr.SSLClientCert,
 			ModuleHotfixes: common.ClonePtr(rr.ModuleHotfixes),
+			Priority:       common.ClonePtr(rr.Priority),
 		}
 
 		if rr.IgnoreSSL != nil {

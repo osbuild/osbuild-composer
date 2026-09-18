@@ -2415,7 +2415,7 @@ image_types:
 
   "edge-container":
     name_aliases: ["rhel-edge-container"]
-    filename: "container.tar"
+    filename: "container.oci.tar"
     mime_type: "application/x-tar"
     image_func: "ostree_container"
     exports: ["container"]
@@ -2502,6 +2502,7 @@ image_types:
     exports: ["archive"]
     bootable: true
     default_size: "20 GiB"
+    disk_image_gib_aligned: true
     # The configuration for non-RHUI images does not touch the RHSM configuration at all.
     # https://issues.redhat.com/browse/COMPOSER-2157
     image_config: &gce_image_config

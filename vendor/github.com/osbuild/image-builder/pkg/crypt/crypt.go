@@ -42,13 +42,13 @@ func genSalt(length int) (string, error) {
 // PasswordIsCrypted returns true if the password appears to be an encrypted
 // one, according to a very simple heuristic.
 //
-// Any string starting with one of $2$, $6$ or $5$ is considered to be
+// Any string starting with one of $2$, $6$, $5$ or $y$ is considered to be
 // encrypted. Any other string is consdirede to be unencrypted.
 //
 // This functionality is taken from pylorax.
 func PasswordIsCrypted(s string) bool {
 	// taken from lorax src: src/pylorax/api/compose.py:533
-	prefixes := [...]string{"$2b$", "$6$", "$5$"}
+	prefixes := [...]string{"$2b$", "$6$", "$5$", "$y$"}
 
 	for _, prefix := range prefixes {
 		if strings.HasPrefix(s, prefix) {

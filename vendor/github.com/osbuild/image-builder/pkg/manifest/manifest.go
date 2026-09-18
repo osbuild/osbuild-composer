@@ -109,12 +109,22 @@ type Manifest struct {
 	// different distributions and version.
 	Distro Distro
 
-	// DistroBootstrapRef defines if a bootstrap container should be used
-	// to generate the buildroot
-	// XXX: ideally we would have "Distro distro.Distro" here and a
-	// "BoostrapContainerRef()" method on this but we cannot because of
-	// circular imports so we use the same workaround as Distro above.
-	DistroBootstrapRef string
+	// Bootstrap defines the cross-arch bootstrap strategy for
+	// generating the buildroot. Either a container ref or a list
+	// of packages (installed with ignorearch) can be used.
+	Bootstrap *BootstrapConfig
+}
+
+// BootstrapConfig defines how to bootstrap a cross-arch buildroot.
+// Exactly one of ContainerRef or Packages should be set.
+type BootstrapConfig struct {
+	// ContainerRef is a container image reference to deploy as the
+	// bootstrap root
+	ContainerRef string
+
+	// Packages is a list of packages to install with ignorearch
+	// to create the bootstrap root
+	Packages []string
 }
 
 func New() Manifest {

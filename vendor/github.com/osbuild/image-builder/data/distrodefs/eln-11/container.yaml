@@ -35,7 +35,7 @@
 
 image_types:
   container: &container
-    filename: "container.tar"
+    filename: "container.oci.tar"
     mime_type: "application/x-tar"
     image_func: "container"
     bootable: false
@@ -80,7 +80,7 @@ image_types:
 
   container-minimal:
     <<: *container
-    filename: "container-minimal.tar"
+    filename: "container-minimal.oci.tar"
     package_sets:
       os:
         - *common_container_exclude

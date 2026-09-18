@@ -5,6 +5,7 @@ package container
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -14,18 +15,10 @@ import (
 	"strconv"
 	"strings"
 
-	_ "github.com/containers/image/v5/docker/archive"
-	_ "github.com/containers/image/v5/oci/archive"
-	_ "github.com/containers/image/v5/oci/layout"
 	"golang.org/x/sys/unix"
 
-	"github.com/containers/common/pkg/retry"
-	"github.com/containers/image/v5/copy"
-	"github.com/containers/image/v5/docker"
 	"github.com/containers/image/v5/docker/reference"
 	"github.com/containers/image/v5/manifest"
-	"github.com/containers/image/v5/signature"
-	"github.com/containers/image/v5/transports"
 	"github.com/containers/image/v5/types"
 	"github.com/opencontainers/go-digest"
 
@@ -36,8 +29,7 @@ import (
 )
 
 const (
-	DefaultUserAgent  = "osbuild-composer/1.0"
-	DefaultPolicyPath = "/etc/containers/policy.json"
+	DefaultUserAgent = "osbuild-composer/1.0"
 )
 
 // GetDefaultAuthFile returns the authentication file to use for the
@@ -110,10 +102,52 @@ type Client struct {
 	UserAgent string // user agent string to use for requests, defaults to DefaultUserAgent
 
 	// internal state
-	policy *signature.Policy
 	sysCtx *types.SystemContext
 
-	store string // another store location other than the main one, useful for testing
+	store   string // graphroot of the container storage
+	runroot string // runroot of the container storage
+}
+
+func getXdgDataDir() string {
+	dataHome := os.Getenv("XDG_DATA_HOME")
+	if dataHome == "" {
+		home := os.Getenv("HOME")
+		if home != "" {
+			dataHome = filepath.Join(home, ".local", "share")
+		}
+	}
+	return dataHome
+}
+
+func getXdgRuntimeDir() string {
+	runtimeDir := os.Getenv("XDG_RUNTIME_DIR")
+	if runtimeDir == "" {
+		runtimeDir = fmt.Sprintf("/run/user/%d", os.Getuid())
+	}
+	return runtimeDir
+}
+
+func defaultStorePaths() (string, string) {
+	graphRoot := "/var/lib/containers/storage"
+	runRoot := "/run/containers/storage"
+	if os.Geteuid() != 0 {
+		dataDir := getXdgDataDir()
+		if dataDir != "" {
+			graphRoot = filepath.Join(dataDir, "containers", "storage")
+			runRoot = filepath.Join(getXdgRuntimeDir(), "containers")
+		}
+	}
+
+	// Allow callers to point us at a custom store (e.g. a build-image store)
+	// via the environment, overriding the computed defaults.
+	if v := os.Getenv("CONTAINERS_GRAPHROOT"); v != "" {
+		graphRoot = v
+	}
+	if v := os.Getenv("CONTAINERS_RUNROOT"); v != "" {
+		runRoot = v
+	}
+
+	return graphRoot, runRoot
 }
 
 // NewClient constructs a new Client for target with default options.
@@ -123,20 +157,6 @@ func NewClient(target string) (*Client, error) {
 	ref, err := reference.ParseNormalizedNamed(target)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse '%s': %w", target, err)
-	}
-
-	var policy *signature.Policy
-	if _, err := os.Stat(DefaultPolicyPath); err == nil {
-		policy, err = signature.NewPolicyFromFile(DefaultPolicyPath)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		policy = &signature.Policy{
-			Default: []signature.PolicyRequirement{
-				signature.NewPRInsecureAcceptAnything(),
-			},
-		}
 	}
 
 	client := Client{
@@ -156,9 +176,8 @@ func NewClient(target string) (*Client, error) {
 
 			AuthFilePath: GetDefaultAuthFile(),
 		},
-		policy: policy,
-		store:  "/var/lib/containers/storage",
 	}
+	client.store, client.runroot = defaultStorePaths()
 
 	// default to the host architecture
 	client.SetArchitectureChoice(arch.Current().String())
@@ -253,90 +272,118 @@ func (cl *Client) SkipTLSVerify() {
 	cl.SetTLSVerify(common.ToPtr(false))
 }
 
-func parseImageName(name string) (types.ImageReference, error) {
-
-	parts := strings.SplitN(name, ":", 2)
-	if len(parts) != 2 {
-		return nil, fmt.Errorf("invalid image name '%s'", name)
+// CreateTempAuthFile creates a temporary authfile from a username and password
+// for a given registry.
+func CreateTempAuthFile(registry, username, password string) (*os.File, error) {
+	authFile, err := os.CreateTemp("", "image-builder-container-upload-auth-*")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create auth file for container registry: %w", err)
+	}
+	authEncoded := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", username, password)))
+	authObject := map[string]map[string]map[string]string{
+		"auths": map[string]map[string]string{
+			registry: map[string]string{
+				"auth": authEncoded,
+			},
+		},
 	}
 
-	transport := transports.Get(parts[0])
-	if transport == nil {
-		return nil, fmt.Errorf("unknown transport '%s'", parts[0])
+	authJson, err := json.Marshal(authObject)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal credentials for container registry auth file: %w", err)
 	}
 
-	return transport.ParseReference(parts[1])
+	if _, err := authFile.Write(authJson); err != nil {
+		return nil, fmt.Errorf("failed to write credentials for container registry auth file: %w", err)
+	}
+	if err := authFile.Close(); err != nil {
+		return nil, fmt.Errorf("failed to close auth file after writing: %w", err)
+	}
+
+	return authFile, err
 }
 
-// UploadImage takes an container image located at from and uploads it
-// to the Target of Client. If tag is set, i.e. not the empty string,
-// it will replace any previously set tag or digest of the target.
-// Returns the digest of the manifest that was written to the server.
+// UploadImage takes a container image located at from and uploads it to the
+// Target of Client. If tag is set, i.e. not the empty string, it will replace
+// any previously set tag or digest of the target. Returns the digest of the
+// manifest that was written to the server.
 func (cl *Client) UploadImage(ctx context.Context, from, tag string) (digest.Digest, error) {
-
-	targetCtx := *cl.sysCtx
-	targetCtx.DockerRegistryPushPrecomputeDigests = cl.PrecomputeDigests
-
-	policyContext, err := signature.NewPolicyContext(cl.policy)
-
-	if err != nil {
-		return "", err
-	}
-
-	srcRef, err := parseImageName(from)
-	if err != nil {
-		return "", fmt.Errorf("invalid source name '%s': %w", from, err)
-	}
-
 	target := cl.Target
 
 	if tag != "" {
 		target = reference.TrimNamed(target)
+
+		var err error
 		target, err = reference.WithTag(target, tag)
 		if err != nil {
-			return "", fmt.Errorf("error creating reference with tag '%s': %w", tag, err)
+			return "", fmt.Errorf("failed to create reference with tag '%s': %w", tag, err)
 		}
 	}
 
-	destRef, err := docker.NewReference(target)
+	// start building skopeo copy command
+	cmd := exec.CommandContext(ctx, "skopeo")
+	cmd.Args = append(cmd.Args, "copy", "--all")
+
+	// write the digest to a file so we can return it
+	digestFile, err := os.CreateTemp("", "image-builder-container-upload-digest-*")
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to create digest file for upload: %w", err)
+	}
+	defer os.Remove(digestFile.Name())
+	digestFile.Close()
+	cmd.Args = append(cmd.Args, fmt.Sprintf("--digestfile=%s", digestFile.Name()))
+
+	if cl.PrecomputeDigests {
+		cmd.Args = append(cmd.Args, "--dest-precompute-digests")
 	}
 
-	retryOpts := retry.RetryOptions{
-		MaxRetry: cl.MaxRetries,
+	if cl.MaxRetries > 0 {
+		cmd.Args = append(cmd.Args, fmt.Sprintf("--retry-times=%d", cl.MaxRetries))
 	}
 
-	var manifestDigest digest.Digest
+	if tls := cl.GetTLSVerify(); tls != nil && !*tls {
+		cmd.Args = append(cmd.Args, "--dest-tls-verify=false")
+	}
 
-	err = retry.RetryIfNecessary(ctx, func() error {
-		manifestBytes, err := copy.Image(ctx, policyContext, destRef, srcRef, &copy.Options{
-			RemoveSignatures:      false,
-			SignBy:                "",
-			SignPassphrase:        "",
-			ReportWriter:          cl.ReportWriter,
-			SourceCtx:             cl.sysCtx,
-			DestinationCtx:        &targetCtx,
-			ForceManifestMIMEType: "",
-			ImageListSelection:    copy.CopyAllImages,
-			PreserveDigests:       false,
-		})
+	if authfile := cl.GetAuthFilePath(); authfile != "" {
+		cmd.Args = append(cmd.Args, fmt.Sprintf("--authfile=%s", authfile))
+	}
 
+	if dockerAuth := cl.sysCtx.DockerAuthConfig; dockerAuth != nil {
+		registry := reference.Domain(target)
+		authfile, err := CreateTempAuthFile(registry, dockerAuth.Username, dockerAuth.Password)
 		if err != nil {
-			return err
+			return "", err
 		}
-
-		manifestDigest, err = manifest.Digest(manifestBytes)
-
-		return err
-
-	}, &retryOpts)
-
-	if err != nil {
-		return "", err
+		defer os.Remove(authfile.Name())
+		cmd.Args = append(cmd.Args, fmt.Sprintf("--authfile=%s", authfile.Name()))
 	}
 
-	return manifestDigest, nil
+	if certPath := cl.sysCtx.DockerCertPath; certPath != "" {
+		cmd.Args = append(cmd.Args, fmt.Sprintf("--dest-cert-dir=%s", certPath))
+	}
+
+	cmd.Args = append(cmd.Args, from, fmt.Sprintf("docker://%s", target.String()))
+
+	cmd.Stdout = cl.ReportWriter
+	cmd.Stderr = cl.ReportWriter
+
+	if err := cmd.Run(); err != nil {
+		return "", fmt.Errorf("skopeo copy (upload) failed: %w", err)
+	}
+
+	digestData, err := os.ReadFile(digestFile.Name())
+	if err != nil {
+		return "", fmt.Errorf("failed to read digest file: %w", err)
+	}
+
+	// parse the digest to verify it's valid
+	uploadedDigest, err := digest.Parse(strings.TrimSpace(string(digestData)))
+	if err != nil {
+		return "", fmt.Errorf("failed to parse digest after upload %q: %w", string(digestData), err)
+	}
+
+	return uploadedDigest, nil
 }
 
 // A RawManifest contains the raw manifest Data and its MimeType
@@ -397,7 +444,7 @@ func (cl *Client) getLocalManifest(ctx context.Context, instanceDigest digest.Di
 		}
 		target = fmt.Sprintf("@%s", imageId)
 	}
-	data, err := cl.skopeoInspect(fmt.Sprintf("containers-storage:[overlay@%s+/run/containers/storage]%s", cl.store, target))
+	data, err := cl.skopeoInspect(fmt.Sprintf("containers-storage:[overlay@%s+%s]%s", cl.store, cl.runroot, target))
 	if err != nil {
 		return RawManifest{}, err
 	}
@@ -564,7 +611,7 @@ func (cl *Client) getLocalImageID(digest string) (string, error) {
 	// up the image ID and use that instead.
 	store := cl.store
 
-	cmd := exec.Command("podman", "--root", store, "image", "ls", "--format=json")
+	cmd := exec.Command("podman", "--root", store, "--runroot", cl.runroot, "image", "ls", "--format=json")
 	var stdout bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = os.Stderr

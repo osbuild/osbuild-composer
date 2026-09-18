@@ -72,6 +72,11 @@ type OSCustomizations struct {
 	// package.
 	KernelName string
 
+	// KernelVersion optionally pins the kernel to a specific version.
+	// When set, the version is appended to KernelName as a DNF version
+	// constraint for depsolving (e.g. "kernel-6.12.0-211").
+	KernelVersion string
+
 	// KernelOptionsAppend are appended to the kernel commandline
 	KernelOptionsAppend []string
 
@@ -201,8 +206,18 @@ type OSCustomizations struct {
 	// InstallLangs determines which locale files are installed by RPMs
 	InstallLangs []string
 
+	// RPMMacros defines persistent RPM macro files to write into the image
+	RPMMacros []osbuild.RPMMacrosStageOptions
+
 	// Use this RPMKeysBinary from the tree instead of the default one
 	RPMKeysBinary string
+
+	// Environmental bits that can be set during the RPM stage to affect
+	// the installation of certain packages, for example when a distros
+	// `-release` package uses this to adjust what it writes into
+	// `os-release` or if we want to adjust `os-release ourselves.
+	ImageID      string
+	ImageVersion string
 }
 
 // OS represents the filesystem tree of the target image. This roughly
@@ -283,8 +298,11 @@ func (p *OS) getPackageSetChain(Distro) ([]rpmmd.PackageSet, error) {
 	}
 
 	if p.OSCustomizations.KernelName != "" {
-		// kernel is considered part of the platform package set
-		platformPackages = append(platformPackages, p.OSCustomizations.KernelName)
+		kernelSpec := p.OSCustomizations.KernelName
+		if p.OSCustomizations.KernelVersion != "" {
+			kernelSpec += "-" + p.OSCustomizations.KernelVersion
+		}
+		platformPackages = append(platformPackages, kernelSpec)
 	}
 
 	customizationPackages := make([]string, 0)
@@ -552,6 +570,7 @@ func (p *OS) serialize() (osbuild.Pipeline, error) {
 	}
 
 	baseRPMOptions := &osbuild.RPMStageOptions{}
+
 	if p.OSCustomizations.ExcludeDocs {
 		baseRPMOptions.Exclude = &osbuild.Exclude{Docs: true}
 	}
@@ -573,6 +592,22 @@ func (p *OS) serialize() (osbuild.Pipeline, error) {
 		baseRPMOptions.DisableDracut = true
 	}
 	baseRPMOptions.InstallLangs = p.OSCustomizations.InstallLangs
+
+	if len(p.OSCustomizations.ImageID) > 0 {
+		if baseRPMOptions.GenericEnv == nil {
+			baseRPMOptions.GenericEnv = make(map[string]string)
+		}
+
+		baseRPMOptions.GenericEnv["IMAGE_ID"] = p.OSCustomizations.ImageID
+	}
+
+	if len(p.OSCustomizations.ImageVersion) > 0 {
+		if baseRPMOptions.GenericEnv == nil {
+			baseRPMOptions.GenericEnv = make(map[string]string)
+		}
+
+		baseRPMOptions.GenericEnv["IMAGE_VERSION"] = p.OSCustomizations.ImageVersion
+	}
 
 	bootloader := p.platform.GetBootloader()
 
@@ -616,6 +651,10 @@ func (p *OS) serialize() (osbuild.Pipeline, error) {
 		return osbuild.Pipeline{}, err
 	}
 	pipeline.AddStages(rpmStages...)
+
+	for idx := range p.OSCustomizations.RPMMacros {
+		pipeline.AddStage(osbuild.NewRPMMacrosStage(&p.OSCustomizations.RPMMacros[idx]))
+	}
 
 	if !p.OSCustomizations.NoBLS {
 		fixBLSOptions := &osbuild.FixBLSStageOptions{}

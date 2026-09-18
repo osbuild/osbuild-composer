@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
-	"path"
 	"strconv"
 	"strings"
 )
@@ -106,13 +106,20 @@ func readOSRelease(r io.Reader) (map[string]string, error) {
 // According to os-release(5), the os-release file should be located in either /etc/os-release or /usr/lib/os-release,
 // so both locations are tried, with the former taking precedence.
 func ReadOSReleaseFromTree(root string) (map[string]string, error) {
+	return ReadOSReleaseFromFS(os.DirFS(root))
+}
+
+// ReadOSReleaseFromFS reads the os-release file from the given fs.FS.
+// According to os-release(5), the os-release file should be located in either /etc/os-release or /usr/lib/os-release,
+// so both locations are tried, with the former taking precedence.
+func ReadOSReleaseFromFS(fsys fs.FS) (map[string]string, error) {
 	locations := []string{
 		"etc/os-release",
 		"usr/lib/os-release",
 	}
 	var errs []string
 	for _, location := range locations {
-		f, err := os.Open(path.Join(root, location))
+		f, err := fsys.Open(location)
 		if err == nil {
 			defer f.Close()
 			return readOSRelease(f)

@@ -156,6 +156,12 @@ type ImageConfig struct {
 	// /usr/lib/ostree-boot into bootupd-compatible update metadata.
 	// Only set this to true if the bootupd package is available in the image.
 	BootupdGenMetadata *bool `yaml:"bootupd_gen_metadata,omitempty"`
+
+	RPM *RPMConfig `yaml:"rpm,omitempty"`
+}
+
+type RPMConfig struct {
+	Macros []osbuild.RPMMacrosStageOptions `yaml:"macros,omitempty"`
 }
 
 // shallowMerge creates a new struct by merging a child and a parent.

@@ -42,6 +42,25 @@ type ConsumerSecrets struct {
 	ConsumerCert string
 }
 
+// defaultCACert picks the CA certificate to use when a repo does not set
+// sslcacert explicitly. On Satellite-registered hosts content is served through
+// the Satellite content proxy whose TLS certificate is signed by the Katello CA;
+// the default redhat-uep.pem only holds the Red Hat CDN CA and cannot validate
+// it. When katello-server-ca.pem is present (installed by Satellite
+// registration) it contains the CA chain needed for the content proxy, so prefer
+// it; otherwise fall back to redhat-uep.pem. A repo's explicit sslcacert still
+// takes precedence over this default (see GetSecretsForBaseurl).
+// katelloCACert is a variable so tests can point it at a temp file; production
+// code never reassigns it.
+var katelloCACert = "/etc/rhsm/ca/katello-server-ca.pem"
+
+func defaultCACert() string {
+	if _, err := os.Stat(katelloCACert); err == nil {
+		return katelloCACert
+	}
+	return "/etc/rhsm/ca/redhat-uep.pem"
+}
+
 func getRHSMSecrets() (*RHSMSecrets, error) {
 	// search /etc first to allow container users to override the entitlements
 	globs := []string{
@@ -58,7 +77,7 @@ func getRHSMSecrets() (*RHSMSecrets, error) {
 			cert := strings.TrimSuffix(key, "-key.pem") + ".pem"
 			if _, err := os.Stat(cert); err == nil {
 				return &RHSMSecrets{
-					SSLCACert:     "/etc/rhsm/ca/redhat-uep.pem",
+					SSLCACert:     defaultCACert(),
 					SSLClientKey:  key,
 					SSLClientCert: cert,
 				}, nil

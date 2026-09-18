@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 
@@ -101,6 +102,24 @@ func loadConfig(path string) (*blueprint.Blueprint, error) {
 // filename
 func Load(path string) (*blueprint.Blueprint, error) {
 	return loadConfig(path)
+}
+
+// LoadFS loads the blueprint at path from the given fs.FS, it auto
+// detects if the blueprint is in json/toml based on the filename.
+func LoadFS(fsys fs.FS, path string) (*blueprint.Blueprint, error) {
+	data, err := fs.ReadFile(fsys, path)
+	if err != nil {
+		return nil, err
+	}
+
+	switch filepath.Ext(path) {
+	case ".json":
+		return decodeJsonBuildConfig(bytes.NewReader(data), path)
+	case ".toml":
+		return decodeTomlBuildConfig(bytes.NewReader(data), path)
+	default:
+		return nil, fmt.Errorf("unsupported file extension for %q", path)
+	}
 }
 
 func readWithFallback(userConfig string) (*blueprint.Blueprint, error) {

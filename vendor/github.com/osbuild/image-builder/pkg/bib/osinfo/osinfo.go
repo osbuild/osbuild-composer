@@ -4,9 +4,9 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path"
-	"path/filepath"
 	"slices"
 	"strings"
 
@@ -20,11 +20,17 @@ import (
 	"github.com/osbuild/image-builder/pkg/osbuild"
 )
 
-// paths we check for configuration files, first one to match is the
-// the one used.
 var searchPaths = [2]string{
 	"usr/lib/image-builder/bootc",
 	"usr/lib/bootc-image-builder",
+}
+
+func resolvePrefix(fsys fs.FS) string {
+	_, err := fs.Stat(fsys, searchPaths[0])
+	if err == nil {
+		return searchPaths[0]
+	}
+	return searchPaths[1]
 }
 
 type OSRelease struct {
@@ -112,19 +118,19 @@ func validateOSRelease(osrelease map[string]string) error {
 	return nil
 }
 
-func uefiVendor(root string) (string, error) {
+func uefiVendor(fsys fs.FS) (string, error) {
 	var searchPath = []string{
 		"usr/lib/bootupd/updates/EFI/*",
 		"usr/lib/efi/shim/*/EFI/*",
 	}
 	for _, baseDir := range searchPath {
-		dents, err := filepath.Glob(filepath.Join(root, baseDir))
+		dents, err := fs.Glob(fsys, baseDir)
 		if err != nil {
 			return "", err
 		}
 		// best-effort search: return the first directory that's not "BOOT"
 		for _, p := range dents {
-			entry, err := os.Stat(p)
+			entry, err := fs.Stat(fsys, p)
 			if err != nil {
 				return "", err
 			}
@@ -141,9 +147,9 @@ func uefiVendor(root string) (string, error) {
 	return "", fmt.Errorf("cannot find UEFI vendor in %s", searchPath)
 }
 
-func readSelinuxPolicy(root string) (string, error) {
+func readSelinuxPolicy(fsys fs.FS) (string, error) {
 	configPath := "etc/selinux/config"
-	f, err := os.Open(path.Join(root, configPath))
+	f, err := fsys.Open(configPath)
 	if err != nil {
 		return "", fmt.Errorf("cannot read selinux config %s: %w", configPath, err)
 	}
@@ -174,18 +180,18 @@ func readSelinuxPolicy(root string) (string, error) {
 	return policy, nil
 }
 
-func readImageCustomization(root string) (*blueprint.Customizations, error) {
+func readImageCustomization(fsys fs.FS) (*blueprint.Customizations, error) {
 	// note that we only look at the 'old' search path here, we do want to
 	// look in the new path as well but i'd like to only support the actual
 	// blueprint format there instead of buildconfig as well
-	prefix := path.Join(root, searchPaths[1])
+	prefix := searchPaths[1]
 
-	config, err := blueprintload.Load(path.Join(prefix, "config.json"))
+	config, err := blueprintload.LoadFS(fsys, path.Join(prefix, "config.json"))
 	if err != nil && !os.IsNotExist(err) {
 		return nil, err
 	}
 	if config == nil {
-		config, err = blueprintload.Load(path.Join(prefix, "config.toml"))
+		config, err = blueprintload.LoadFS(fsys, path.Join(prefix, "config.toml"))
 		if err != nil && !os.IsNotExist(err) {
 			return nil, err
 		}
@@ -203,27 +209,23 @@ type diskYAML struct {
 	PartitionTable     *disk.PartitionTable        `json:"partition_table" yaml:"partition_table"`
 }
 
-func readDiskYaml(root string) (*diskYAML, error) {
-	for _, prefixPath := range searchPaths {
-		var disk diskYAML
-		p := path.Join(root, prefixPath, "disk.yaml")
-		f, err := os.Open(p)
-		if err != nil {
-			if os.IsNotExist(err) {
-				continue
-			}
-			return nil, fmt.Errorf("cannot load disk definitions from %q: %w", p, err)
+func readDiskYaml(fsys fs.FS, prefix string) (*diskYAML, error) {
+	var disk diskYAML
+	p := path.Join(prefix, "disk.yaml")
+	f, err := fsys.Open(p)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, nil
 		}
-		defer f.Close()
+		return nil, fmt.Errorf("cannot load disk definitions from %q: %w", p, err)
+	}
+	defer f.Close()
 
-		if err := yaml.NewDecoder(f).Decode(&disk); err != nil {
-			return nil, fmt.Errorf("cannot parse disk definitions from %q: %w", p, err)
-		}
-
-		return &disk, nil
+	if err := yaml.NewDecoder(f).Decode(&disk); err != nil {
+		return nil, fmt.Errorf("cannot parse disk definitions from %q: %w", p, err)
 	}
 
-	return nil, nil
+	return &disk, nil
 }
 
 type isoYAML struct {
@@ -240,32 +242,28 @@ type isoYAML struct {
 	} `json:"grub2" yaml:"grub2"`
 }
 
-func readISOYaml(root string) (*isoYAML, error) {
-	for _, prefixPath := range searchPaths {
-		var iso isoYAML
-		p := path.Join(root, prefixPath, "iso.yaml")
-		f, err := os.Open(p)
-		if err != nil {
-			if os.IsNotExist(err) {
-				continue
-			}
-			return nil, fmt.Errorf("cannot load iso definitions from %q: %w", p, err)
+func readISOYaml(fsys fs.FS, prefix string) (*isoYAML, error) {
+	var iso isoYAML
+	p := path.Join(prefix, "iso.yaml")
+	f, err := fsys.Open(p)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, nil
 		}
-		defer f.Close()
+		return nil, fmt.Errorf("cannot load iso definitions from %q: %w", p, err)
+	}
+	defer f.Close()
 
-		if err := yaml.NewDecoder(f).Decode(&iso); err != nil {
-			return nil, fmt.Errorf("cannot parse iso definitions from %q: %w", p, err)
-		}
-
-		return &iso, nil
+	if err := yaml.NewDecoder(f).Decode(&iso); err != nil {
+		return nil, fmt.Errorf("cannot parse iso definitions from %q: %w", p, err)
 	}
 
-	return nil, nil
+	return &iso, nil
 }
 
-func readKernelInfo(root string) (*KernelInfo, error) {
-	modulesDir := path.Join(root, "usr/lib/modules")
-	entries, err := os.ReadDir(modulesDir)
+func readKernelInfo(fsys fs.FS) (*KernelInfo, error) {
+	modulesDir := "usr/lib/modules"
+	entries, err := fs.ReadDir(fsys, modulesDir)
 	if err != nil {
 		return nil, err
 	}
@@ -280,11 +278,11 @@ func readKernelInfo(root string) (*KernelInfo, error) {
 		// pick the first here
 		kernelDir := path.Join(modulesDir, e.Name())
 		kernelPath := path.Join(kernelDir, "vmlinuz")
-		_, err := os.Stat(kernelPath)
+		_, err := fs.Stat(fsys, kernelPath)
 		if err == nil {
 
 			abootPath := path.Join(kernelDir, "aboot.img")
-			_, err := os.Stat(abootPath)
+			_, err := fs.Stat(fsys, abootPath)
 			hasAbootImg := err == nil
 			return &KernelInfo{
 				Version:     e.Name(),
@@ -296,8 +294,8 @@ func readKernelInfo(root string) (*KernelInfo, error) {
 	return nil, fmt.Errorf("no valid kernel modules directory")
 }
 
-func Load(root string) (*Info, error) {
-	osrelease, err := distro.ReadOSReleaseFromTree(root)
+func Load(fsys fs.FS) (*Info, error) {
+	osrelease, err := distro.ReadOSReleaseFromFS(fsys)
 	if err != nil {
 		return nil, err
 	}
@@ -305,17 +303,23 @@ func Load(root string) (*Info, error) {
 		return nil, err
 	}
 
-	vendor, err := uefiVendor(root)
+	if _, err := fs.Stat(fsys, searchPaths[1]); err == nil {
+		olog.Printf("WARNING: /%s found in container, this path is deprecated, please use /%s", searchPaths[1], searchPaths[0])
+	}
+
+	vendor, err := uefiVendor(fsys)
 	if err != nil {
 		olog.Printf("cannot read UEFI vendor: %v, setting it to none", err)
 	}
 
-	customization, err := readImageCustomization(root)
+	prefix := resolvePrefix(fsys)
+
+	customization, err := readImageCustomization(fsys)
 	if err != nil {
 		return nil, err
 	}
 
-	diskYaml, err := readDiskYaml(root)
+	diskYaml, err := readDiskYaml(fsys, prefix)
 	if err != nil {
 		return nil, err
 	}
@@ -326,7 +330,7 @@ func Load(root string) (*Info, error) {
 		pt = diskYaml.PartitionTable
 	}
 
-	isoYaml, err := readISOYaml(root)
+	isoYaml, err := readISOYaml(fsys, prefix)
 	if err != nil {
 		return nil, err
 	}
@@ -348,12 +352,12 @@ func Load(root string) (*Info, error) {
 		}
 	}
 
-	kernelInfo, err := readKernelInfo(root)
+	kernelInfo, err := readKernelInfo(fsys)
 	if err != nil {
 		olog.Printf("cannot read kernel info: %v", err)
 	}
 
-	selinuxPolicy, err := readSelinuxPolicy(root)
+	selinuxPolicy, err := readSelinuxPolicy(fsys)
 	if err != nil {
 		olog.Printf("cannot read selinux policy: %v, setting it to none", err)
 	}

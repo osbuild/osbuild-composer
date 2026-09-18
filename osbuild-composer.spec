@@ -8,7 +8,7 @@
 %bcond_with relax_requires
 
 # The minimum required osbuild version
-%global min_osbuild_version 190
+%global min_osbuild_version 193
 
 %global goipath         github.com/osbuild/osbuild-composer
 
@@ -42,16 +42,9 @@ BuildRequires:  systemd
 BuildRequires:  krb5-devel
 BuildRequires:  python3-docutils
 BuildRequires:  make
-# Build requirements of 'theproglottis/gpgme' package
-BuildRequires:  gpgme-devel
-BuildRequires:  libassuan-devel
-# Build requirements of 'github.com/containers/storage' package
-BuildRequires:  device-mapper-devel
 %if 0%{?fedora}
 BuildRequires:  systemd-rpm-macros
 BuildRequires:  git
-# Build requirements of 'github.com/containers/storage' package
-BuildRequires:  btrfs-progs-devel
 # DO NOT REMOVE the BUNDLE_START and BUNDLE_END markers as they are used by 'tools/rpm_spec_add_provides_bundle.sh' to generate the Provides: bundled list
 # BUNDLE_START
 # BUNDLE_END
@@ -89,11 +82,6 @@ export GOFLAGS+=" -mod=vendor"
 # Fedora and RHEL versions disable Go modules by default, but we want to use them.
 # Unconditionally undefine the macro which disables it to use the default behavior.
 %undefine gomodulesmode
-
-# btrfs-progs-devel is not available on RHEL
-%if 0%{?rhel}
-GOTAGS="exclude_graphdriver_btrfs"
-%endif
 
 # Set the commit hash so that composer can report what source version
 # was used to build it. This has to be set explicitly when calling rpmbuild,
