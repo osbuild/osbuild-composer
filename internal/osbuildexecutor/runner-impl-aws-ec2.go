@@ -4,8 +4,10 @@ import (
 	"archive/tar"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"os"
 	"os/exec"
@@ -22,14 +24,27 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/worker"
 )
 
-const OSBuildResultFilename = "osbuild-result.json"
+const (
+	OSBuildResultFilename     = "osbuild-result.json"
+	maxSecureInstanceAttempts = 2
+	retryProgressMessage      = "Retrying on a new secure instance"
+)
+
+type secureInstanceClient interface {
+	RunSecureInstance(iamProfile, keyName, hostname string) (*awscloud.SecureInstance, error)
+	TerminateSecureInstance(si *awscloud.SecureInstance) error
+}
 
 type awsEC2Executor struct {
-	iamProfile string
-	keyName    string
-	hostname   string
-	tmpDir     string
+	iamProfile   string
+	keyName      string
+	hostname     string
+	tmpDir       string
+	siClient     secureInstanceClient
+	readyTimeout time.Duration
 }
+
+var runPrepareSources = prepareSources
 
 func prepareSources(manifest []byte, logger logrus.FieldLogger, opts *osbuild.OSBuildOptions) (*osbuild.Result, error) {
 	hostExecutor := NewHostExecutor()
@@ -66,7 +81,7 @@ func waitForSI(ctx context.Context, host string) bool {
 		}
 		select {
 		case <-ctx.Done():
-			logrus.Error("Timeout waiting for secure instance to spin up")
+			logrus.Warn("Timeout waiting for secure instance to spin up")
 			return false
 		default:
 			time.Sleep(time.Second)
@@ -263,8 +278,105 @@ func extractOutputArchive(outputDirectory, outputTar string) error {
 
 }
 
+func executorHostFromSI(si *awscloud.SecureInstance) (string, error) {
+	if si == nil || si.Instance == nil || si.Instance.PrivateIpAddress == nil || *si.Instance.PrivateIpAddress == "" {
+		return "", fmt.Errorf("secure instance has no private IP")
+	}
+	addr := *si.Instance.PrivateIpAddress
+	// Tests may set host:port (httptest). Production IPv4 addresses have no port.
+	if _, _, err := net.SplitHostPort(addr); err == nil {
+		return "http://" + addr, nil
+	}
+	return fmt.Sprintf("http://%s:8001", addr), nil
+}
+
+func (ec2e *awsEC2Executor) secureInstanceClient() (secureInstanceClient, error) {
+	if ec2e.siClient != nil {
+		return ec2e.siClient, nil
+	}
+	region, err := awscloud.RegionFromInstanceMetadata()
+	if err != nil {
+		return nil, fmt.Errorf("Failed to get region from instance metadata: %w", err)
+	}
+	aws, err := awscloud.NewDefault(region)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to get default aws client in %s region: %w", region, err)
+	}
+	return aws, nil
+}
+
+func (ec2e *awsEC2Executor) waitForSITimeout() time.Duration {
+	if ec2e.readyTimeout > 0 {
+		return ec2e.readyTimeout
+	}
+	return time.Minute * 10
+}
+
+func (ec2e *awsEC2Executor) runSecureInstanceAttempt(client secureInstanceClient, inputArchive string, logger logrus.FieldLogger, job worker.Job, opts *osbuild.OSBuildOptions) (*osbuild.Result, error) {
+	si, err := client.RunSecureInstance(ec2e.iamProfile, ec2e.keyName, ec2e.hostname)
+	if err != nil {
+		return nil, fmt.Errorf("Unable to start secure instance: %w", err)
+	}
+	defer func() {
+		if termErr := client.TerminateSecureInstance(si); termErr != nil {
+			logrus.Errorf("Error terminating secure instance: %v", termErr)
+		}
+	}()
+
+	executorHost, err := executorHostFromSI(si)
+	if err != nil {
+		return nil, err
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), ec2e.waitForSITimeout())
+	defer cancel()
+	if !waitForSI(ctx, executorHost) {
+		return nil, fmt.Errorf("%w: timeout waiting for executor to come online", ErrSecureInstanceGone)
+	}
+
+	if err := handleBuild(inputArchive, executorHost, logger, job); err != nil {
+		log, logErr := fetchLog(executorHost)
+		if isSecureInstanceGone(err, logErr) {
+			return nil, wrapSecureInstanceGone(err, logErr)
+		}
+		if logErr != nil {
+			logger.Errorf("something went wrong during the executor's build: %v, unable to fetch log: %v", err, logErr)
+			return nil, fmt.Errorf("something went wrong during the executor's build: %w, unable to fetch log: %w", err, logErr)
+		}
+		logger.WithField("osbuild_output", log).Errorf("something went wrong handling the executor's build: %v\nosbuild log: %v", err, log)
+		return nil, fmt.Errorf("osbuild failed: %s", log)
+	}
+
+	outputArchive, err := fetchOutputArchive(ec2e.tmpDir, executorHost)
+	if err != nil {
+		if isSecureInstanceGone(nil, err) {
+			return nil, wrapSecureInstanceGone(nil, err)
+		}
+		logger.Errorf("Unable to fetch executor output: %v", err)
+		return nil, err
+	}
+
+	err = extractOutputArchive(opts.OutputDir, outputArchive)
+	if err != nil {
+		logger.Errorf("Unable to extract executor output: %v", err)
+		return nil, err
+	}
+
+	resultData, err := os.ReadFile(filepath.Join(opts.OutputDir, OSBuildResultFilename))
+	if err != nil {
+		logger.Errorf("Unable to find and read osbuild result: %v", err)
+		return nil, err
+	}
+	var result osbuild.Result
+	if err := json.Unmarshal(resultData, &result); err != nil {
+		logger.Errorf("Unable to unmarshal json result: %v\nraw output:\n%s", err, resultData)
+		return nil, fmt.Errorf("error decoding osbuild output: %w\nraw output:\n%s", err, resultData)
+	}
+	return &result, nil
+}
+
 func (ec2e *awsEC2Executor) RunOSBuild(manifest []byte, logger logrus.FieldLogger, job worker.Job, opts *osbuild.OSBuildOptions) (*osbuild.Result, error) {
-	prepSrcRes, err := prepareSources(manifest, logger, opts)
+	prepSrcRes, err := runPrepareSources(manifest, logger, opts)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to prepare sources: %w", err)
 	}
@@ -272,81 +384,60 @@ func (ec2e *awsEC2Executor) RunOSBuild(manifest []byte, logger logrus.FieldLogge
 		return prepSrcRes, nil
 	}
 
-	region, err := awscloud.RegionFromInstanceMetadata()
+	client, err := ec2e.secureInstanceClient()
 	if err != nil {
-		return nil, fmt.Errorf("Failed to get region from instance metadata: %w", err)
-	}
-
-	aws, err := awscloud.NewDefault(region)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to get default aws client in %s region: %w", region, err)
-	}
-
-	si, err := aws.RunSecureInstance(ec2e.iamProfile, ec2e.keyName, ec2e.hostname)
-	if err != nil {
-		return nil, fmt.Errorf("Unable to start secure instance: %w", err)
-	}
-	defer func() {
-		err := aws.TerminateSecureInstance(si)
-		if err != nil {
-			logrus.Errorf("Error terminating secure instance: %v", err)
-		}
-	}()
-
-	executorHost := fmt.Sprintf("http://%s:8001", *si.Instance.PrivateIpAddress)
-
-	ctx, cancel := context.WithTimeout(context.Background(), time.Minute*10)
-	defer cancel()
-	if !waitForSI(ctx, executorHost) {
-		return nil, fmt.Errorf("Timeout waiting for executor to come online")
+		return nil, err
 	}
 
 	inputArchive, err := writeInputArchive(ec2e.tmpDir, opts.StoreDir, opts.Exports, manifest)
 	if err != nil {
-		logrus.Errorf("Unable to write input archive: %v", err)
+		logger.Errorf("Unable to write input archive: %v", err)
 		return nil, err
 	}
 
-	if err := handleBuild(inputArchive, executorHost, logger, job); err != nil {
-		log, logErr := fetchLog(executorHost)
-		if logErr != nil {
-			logrus.Errorf("something went wrong during the executor's build: %v, unable to fetch log: %v", err, logErr)
-			return nil, fmt.Errorf("something went wrong during the executor's build: %w, unable to fetch log: %w", err, logErr)
+	// job.Update last-write-wins overwrites jobs.result. CRC/HCC progress
+	// will jump backwards (e.g. 4/4 Finished pipeline image, then the retry
+	// message / 0/4 on the new SI). That is expected; do not clamp progress
+	// so it only increases.
+	var result *osbuild.Result
+	for attempt := 1; attempt <= maxSecureInstanceAttempts; attempt++ {
+		result, err = ec2e.runSecureInstanceAttempt(client, inputArchive, logger, job, opts)
+		if err == nil {
+			return result, nil
 		}
-		logrus.WithField("osbuild_output", string(log)).Errorf("something went wrong handling the executor's build: %v\nosbuild log: %v", err, log)
-		return nil, fmt.Errorf("osbuild failed: %s", log)
-	}
+		if !errors.Is(err, ErrSecureInstanceGone) || attempt == maxSecureInstanceAttempts {
+			if errors.Is(err, ErrSecureInstanceGone) {
+				logger.Errorf("something went wrong during the executor's build: %v", err)
+			}
+			return nil, err
+		}
 
-	outputArchive, err := fetchOutputArchive(ec2e.tmpDir, executorHost)
-	if err != nil {
-		logrus.Errorf("Unable to fetch executor output: %v", err)
-		return nil, err
+		logger.WithField("attempt", attempt+1).Warn("Secure instance died, retrying osbuild")
+		if job == nil {
+			continue
+		}
+		canceled, cErr := job.Canceled()
+		if cErr != nil {
+			logger.Errorf("Unable to check if job was canceled: %s", cErr.Error())
+		} else if canceled {
+			return nil, fmt.Errorf("job was canceled")
+		}
+		if uErr := job.Update(worker.JobResult{
+			Progress: &worker.JobProgress{
+				Message: retryProgressMessage,
+			},
+		}); uErr != nil {
+			logger.Errorf("Unable to update job: %s", uErr.Error())
+		}
 	}
-
-	err = extractOutputArchive(opts.OutputDir, outputArchive)
-	if err != nil {
-		logrus.Errorf("Unable to extract executor output: %v", err)
-		return nil, err
-	}
-
-	resultData, err := os.ReadFile(filepath.Join(opts.OutputDir, OSBuildResultFilename))
-	if err != nil {
-		logrus.Errorf("Unable to find and read osbuild result: %v", err)
-		return nil, err
-	}
-	var result osbuild.Result
-	if err := json.Unmarshal(resultData, &result); err != nil {
-		logrus.Errorf("Unable to unmarshal json result: %v\nraw output:\n%s", err, resultData)
-		return nil, fmt.Errorf("error decoding osbuild output: %w\nraw output:\n%s", err, resultData)
-	}
-	return &result, nil
+	return nil, err
 }
 
 func NewAWSEC2Executor(iamProfile, keyName, hostname, tmpDir string) Executor {
 	return &awsEC2Executor{
-		iamProfile,
-		keyName,
-		hostname,
-		tmpDir,
+		iamProfile: iamProfile,
+		keyName:    keyName,
+		hostname:   hostname,
+		tmpDir:     tmpDir,
 	}
 }

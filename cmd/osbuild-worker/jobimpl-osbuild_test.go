@@ -2,6 +2,8 @@ package main_test
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -9,6 +11,8 @@ import (
 	"github.com/osbuild/image-builder/pkg/osbuild"
 
 	main "github.com/osbuild/osbuild-composer/cmd/osbuild-worker"
+	"github.com/osbuild/osbuild-composer/internal/osbuildexecutor"
+	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
 )
 
 func TestMakeJobErrorFromOsbuildOutput(t *testing.T) {
@@ -77,4 +81,18 @@ func TestMakeJobErrorFromOsbuildOutput(t *testing.T) {
 		wce := main.MakeJobErrorFromOsbuildOutput(fakeOsbuildResult)
 		require.Equal(t, testData.expected, wce.String())
 	}
+}
+
+func TestJobErrorFromOSBuildRun(t *testing.T) {
+	gone := fmt.Errorf("%w: connection refused", osbuildexecutor.ErrSecureInstanceGone)
+	err := main.JobErrorFromOSBuildRun(gone)
+	require.Equal(t, clienterrors.ErrorSecureInstance, err.ID)
+	require.Equal(t, "secure instance died", err.Reason)
+	require.Equal(t, gone.Error(), err.Details)
+
+	other := errors.New("osbuild failed: log")
+	err = main.JobErrorFromOSBuildRun(other)
+	require.Equal(t, clienterrors.ErrorBuildJob, err.ID)
+	require.Equal(t, "osbuild failed", err.Reason)
+	require.Equal(t, other.Error(), err.Details)
 }
