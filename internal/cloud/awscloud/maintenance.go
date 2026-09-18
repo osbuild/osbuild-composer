@@ -10,9 +10,9 @@ import (
 	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 )
 
-// For service maintenance images are discovered by the "Name:composer-api-*" tag filter. Currently
-// all image names in the service are generated, so they're guaranteed to be unique as well. If
-// users are ever allowed to name their images, an extra tag should be added.
+// For service maintenance images are discovered by the "composer-api" tag.
+// User-chosen AMI names are stored in the Name tag; composer-api remains the
+// stable identifier for cleanup.
 func (a *AWS) DescribeImagesByTag(tagKey, tagValue string) ([]ec2types.Image, error) {
 	imgs, err := a.ec2.DescribeImages(
 		context.Background(),
