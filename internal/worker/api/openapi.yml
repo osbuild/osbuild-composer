@@ -316,6 +316,9 @@ components:
             type: string
           type:
             type: string
+          compose_id:
+            type: string
+            description: Root job UUID (CRC compose id) for this job graph
           args:
             x-go-type: json.RawMessage
           dynamic_args:

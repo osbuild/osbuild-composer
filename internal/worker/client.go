@@ -49,6 +49,7 @@ type ClientConfig struct {
 
 type Job interface {
 	Id() uuid.UUID
+	ComposeId() uuid.UUID
 	Type() string
 	Args(args interface{}) error
 	DynamicArgs(i int, args interface{}) error
@@ -64,6 +65,7 @@ var ErrClientRequestJobTimeout = errors.New("Dequeue timed out, retry")
 type job struct {
 	client           *Client
 	id               uuid.UUID
+	composeID        uuid.UUID
 	location         string
 	artifactLocation string
 	jobType          string
@@ -389,6 +391,14 @@ func (c *Client) RequestJob(types []string, arch string) (Job, error) {
 		return nil, fmt.Errorf("error parsing job id in response: %v", err)
 	}
 
+	composeID := uuid.Nil
+	if jr.ComposeId != nil && *jr.ComposeId != "" {
+		composeID, err = uuid.Parse(*jr.ComposeId)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing compose id in response: %v", err)
+		}
+	}
+
 	args := json.RawMessage{}
 	if jr.Args != nil {
 		args = *jr.Args
@@ -401,6 +411,7 @@ func (c *Client) RequestJob(types []string, arch string) (Job, error) {
 	return &job{
 		client:           c,
 		id:               jobId,
+		composeID:        composeID,
 		jobType:          jr.Type,
 		args:             args,
 		dynamicArgs:      dynamicArgs,
@@ -411,6 +422,10 @@ func (c *Client) RequestJob(types []string, arch string) (Job, error) {
 
 func (j *job) Id() uuid.UUID {
 	return j.id
+}
+
+func (j *job) ComposeId() uuid.UUID {
+	return j.composeID
 }
 
 func (j *job) Type() string {

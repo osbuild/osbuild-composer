@@ -191,72 +191,72 @@ func (s *Server) WatchWorkers() {
 	}
 }
 
-func (s *Server) EnqueueOSBuild(arch string, job *OSBuildJob, channel string) (uuid.UUID, error) {
-	return s.enqueue(JobTypeOSBuild+":"+arch, job, nil, channel)
+func (s *Server) EnqueueOSBuild(arch string, job *OSBuildJob, channel string, params ...jobqueue.EnqueueParams) (uuid.UUID, error) {
+	return s.enqueue(JobTypeOSBuild+":"+arch, job, nil, channel, params...)
 }
 
-func (s *Server) EnqueueOSBuildAsDependency(arch string, job *OSBuildJob, dependencies []uuid.UUID, channel string) (uuid.UUID, error) {
-	return s.enqueue(JobTypeOSBuild+":"+arch, job, dependencies, channel)
+func (s *Server) EnqueueOSBuildAsDependency(arch string, job *OSBuildJob, dependencies []uuid.UUID, channel string, params ...jobqueue.EnqueueParams) (uuid.UUID, error) {
+	return s.enqueue(JobTypeOSBuild+":"+arch, job, dependencies, channel, params...)
 }
 
-func (s *Server) EnqueueKojiInit(job *KojiInitJob, channel string) (uuid.UUID, error) {
-	return s.enqueue(JobTypeKojiInit, job, nil, channel)
+func (s *Server) EnqueueKojiInit(job *KojiInitJob, channel string, params ...jobqueue.EnqueueParams) (uuid.UUID, error) {
+	return s.enqueue(JobTypeKojiInit, job, nil, channel, params...)
 }
 
-func (s *Server) EnqueueKojiFinalize(job *KojiFinalizeJob, initID uuid.UUID, buildIDs []uuid.UUID, channel string) (uuid.UUID, error) {
-	return s.enqueue(JobTypeKojiFinalize, job, append([]uuid.UUID{initID}, buildIDs...), channel)
+func (s *Server) EnqueueKojiFinalize(job *KojiFinalizeJob, initID uuid.UUID, buildIDs []uuid.UUID, channel string, params ...jobqueue.EnqueueParams) (uuid.UUID, error) {
+	return s.enqueue(JobTypeKojiFinalize, job, append([]uuid.UUID{initID}, buildIDs...), channel, params...)
 }
 
-func (s *Server) EnqueueDepsolve(job *DepsolveJob, channel string) (uuid.UUID, error) {
-	return s.enqueue(JobTypeDepsolve, job, nil, channel)
+func (s *Server) EnqueueDepsolve(job *DepsolveJob, channel string, params ...jobqueue.EnqueueParams) (uuid.UUID, error) {
+	return s.enqueue(JobTypeDepsolve, job, nil, channel, params...)
 }
 
-func (s *Server) EnqueueSearchPackages(job *SearchPackagesJob, channel string) (uuid.UUID, error) {
-	return s.enqueue(JobTypeSearchPackages, job, nil, channel)
+func (s *Server) EnqueueSearchPackages(job *SearchPackagesJob, channel string, params ...jobqueue.EnqueueParams) (uuid.UUID, error) {
+	return s.enqueue(JobTypeSearchPackages, job, nil, channel, params...)
 }
 
-func (s *Server) EnqueueManifestJobByID(job *ManifestJobByID, dependencies []uuid.UUID, channel string) (uuid.UUID, error) {
+func (s *Server) EnqueueManifestJobByID(job *ManifestJobByID, dependencies []uuid.UUID, channel string, params ...jobqueue.EnqueueParams) (uuid.UUID, error) {
 	if len(dependencies) == 0 {
 		panic("EnqueueManifestJobByID has no dependencies, expected at least one dependency")
 	}
-	return s.enqueue(JobTypeManifestIDOnly, job, dependencies, channel)
+	return s.enqueue(JobTypeManifestIDOnly, job, dependencies, channel, params...)
 }
 
-func (s *Server) EnqueueContainerResolveJob(job *ContainerResolveJob, dependencies []uuid.UUID, channel string) (uuid.UUID, error) {
-	return s.enqueue(JobTypeContainerResolve, job, dependencies, channel)
+func (s *Server) EnqueueContainerResolveJob(job *ContainerResolveJob, dependencies []uuid.UUID, channel string, params ...jobqueue.EnqueueParams) (uuid.UUID, error) {
+	return s.enqueue(JobTypeContainerResolve, job, dependencies, channel, params...)
 }
 
-func (s *Server) EnqueueFileResolveJob(job *FileResolveJob, channel string) (uuid.UUID, error) {
-	return s.enqueue(JobTypeFileResolve, job, nil, channel)
+func (s *Server) EnqueueFileResolveJob(job *FileResolveJob, channel string, params ...jobqueue.EnqueueParams) (uuid.UUID, error) {
+	return s.enqueue(JobTypeFileResolve, job, nil, channel, params...)
 }
 
-func (s *Server) EnqueueOSTreeResolveJob(job *OSTreeResolveJob, channel string) (uuid.UUID, error) {
-	return s.enqueue(JobTypeOSTreeResolve, job, nil, channel)
+func (s *Server) EnqueueOSTreeResolveJob(job *OSTreeResolveJob, channel string, params ...jobqueue.EnqueueParams) (uuid.UUID, error) {
+	return s.enqueue(JobTypeOSTreeResolve, job, nil, channel, params...)
 }
 
-func (s *Server) EnqueueAWSEC2CopyJob(job *AWSEC2CopyJob, parent uuid.UUID, channel string) (uuid.UUID, error) {
-	return s.enqueue(JobTypeAWSEC2Copy, job, []uuid.UUID{parent}, channel)
+func (s *Server) EnqueueAWSEC2CopyJob(job *AWSEC2CopyJob, parent uuid.UUID, channel string, params ...jobqueue.EnqueueParams) (uuid.UUID, error) {
+	return s.enqueue(JobTypeAWSEC2Copy, job, []uuid.UUID{parent}, channel, params...)
 }
 
-func (s *Server) EnqueueAWSEC2ShareJob(job *AWSEC2ShareJob, parent uuid.UUID, channel string) (uuid.UUID, error) {
-	return s.enqueue(JobTypeAWSEC2Share, job, []uuid.UUID{parent}, channel)
+func (s *Server) EnqueueAWSEC2ShareJob(job *AWSEC2ShareJob, parent uuid.UUID, channel string, params ...jobqueue.EnqueueParams) (uuid.UUID, error) {
+	return s.enqueue(JobTypeAWSEC2Share, job, []uuid.UUID{parent}, channel, params...)
 }
 
-func (s *Server) EnqueueImageBuilderManifestJob(job *ImageBuilderManifestJob, channel string) (uuid.UUID, error) {
-	return s.enqueue(JobTypeImageBuilderManifest, job, nil, channel)
+func (s *Server) EnqueueImageBuilderManifestJob(job *ImageBuilderManifestJob, channel string, params ...jobqueue.EnqueueParams) (uuid.UUID, error) {
+	return s.enqueue(JobTypeImageBuilderManifest, job, nil, channel, params...)
 }
 
-func (s *Server) EnqueueBootcInfoResolveJob(arch string, job *BootcInfoResolveJob, channel string) (uuid.UUID, error) {
-	return s.enqueue(JobTypeBootcInfoResolve+":"+arch, job, nil, channel)
+func (s *Server) EnqueueBootcInfoResolveJob(arch string, job *BootcInfoResolveJob, channel string, params ...jobqueue.EnqueueParams) (uuid.UUID, error) {
+	return s.enqueue(JobTypeBootcInfoResolve+":"+arch, job, nil, channel, params...)
 }
 
-func (s *Server) EnqueueBootcPreManifestJob(job *BootcPreManifestJob, dependencies []uuid.UUID, channel string) (uuid.UUID, error) {
-	return s.enqueue(JobTypeBootcPreManifest, job, dependencies, channel)
+func (s *Server) EnqueueBootcPreManifestJob(job *BootcPreManifestJob, dependencies []uuid.UUID, channel string, params ...jobqueue.EnqueueParams) (uuid.UUID, error) {
+	return s.enqueue(JobTypeBootcPreManifest, job, dependencies, channel, params...)
 }
 
-func (s *Server) enqueue(jobType string, job interface{}, dependencies []uuid.UUID, channel string) (uuid.UUID, error) {
+func (s *Server) enqueue(jobType string, job interface{}, dependencies []uuid.UUID, channel string, params ...jobqueue.EnqueueParams) (uuid.UUID, error) {
 	prometheus.EnqueueJobMetrics(strings.Split(jobType, ":")[0], channel)
-	return s.jobs.Enqueue(jobType, job, dependencies, channel)
+	return s.jobs.Enqueue(jobType, job, dependencies, channel, params...)
 }
 
 // DependencyChainErrors recursively gathers all errors from job's dependencies,
@@ -1235,6 +1235,10 @@ func (h *apiHandlers) RequestJob(ctx echo.Context) error {
 		Type:             jobType,
 		Args:             respArgs,
 		DynamicArgs:      respDynArgs,
+	}
+	if cid, err := h.server.jobs.ComposeID(jobId); err == nil && cid != uuid.Nil {
+		s := cid.String()
+		response.ComposeId = &s
 	}
 	return ctx.JSON(http.StatusCreated, response)
 }
