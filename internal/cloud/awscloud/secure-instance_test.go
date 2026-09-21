@@ -218,3 +218,81 @@ func TestDoCreateFleetRetry(t *testing.T) {
 	require.False(t, retry)
 	require.Equal(t, []string{"InsufficientInstanceCapacity: Msg", "Already launched instance ([instance-id]), aborting create fleet"}, fmtErrs)
 }
+
+func tagMap(tags []ec2types.Tag) map[string]string {
+	out := make(map[string]string, len(tags))
+	for _, t := range tags {
+		out[aws.ToString(t.Key)] = aws.ToString(t.Value)
+	}
+	return out
+}
+
+func fleetTagMap(t *testing.T, input *ec2.CreateFleetInput, resourceType ec2types.ResourceType) map[string]string {
+	t.Helper()
+	require.NotNil(t, input)
+	for _, spec := range input.TagSpecifications {
+		if spec.ResourceType == resourceType {
+			return tagMap(spec.Tags)
+		}
+	}
+	t.Fatalf("no TagSpecification for %s", resourceType)
+	return nil
+}
+
+func TestSecureInstanceTags(t *testing.T) {
+	parentID := "instance-id"
+
+	tests := []struct {
+		name       string
+		parentTags []ec2types.Tag
+		want       map[string]string
+	}{
+		{
+			name: "inherits ITPC trio and sets executor Cost Category tags",
+			parentTags: []ec2types.Tag{
+				{Key: aws.String("app-code"), Value: aws.String("IMGB-001")},
+				{Key: aws.String("service-phase"), Value: aws.String("prod")},
+				{Key: aws.String("cost-center"), Value: aws.String("148")},
+				{Key: aws.String("ServiceName"), Value: aws.String("image-builder-worker")},
+				{Key: aws.String("app"), Value: aws.String("image-builder")},
+				{Key: aws.String("Name"), Value: aws.String("worker")},
+			},
+			want: map[string]string{
+				"parent":           parentID,
+				"Name":             "Executor-for-" + parentID,
+				"ServiceName":      "image-builder-executor",
+				"ServiceComponent": "executor",
+				"app-code":         "IMGB-001",
+				"service-phase":    "prod",
+				"cost-center":      "148",
+			},
+		},
+		{
+			name:       "missing parent tags still sets executor Cost Category tags",
+			parentTags: nil,
+			want: map[string]string{
+				"parent":           parentID,
+				"Name":             "Executor-for-" + parentID,
+				"ServiceName":      "image-builder-executor",
+				"ServiceComponent": "executor",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			require.Equal(t, tt.want, tagMap(awscloud.SecureInstanceTags(tt.parentTags, parentID)))
+
+			m := newEc2Mock(t)
+			m.parentTags = tt.parentTags
+			awsClient := awscloud.NewForTest(m, &ec2imdsmock{t, parentID, "region1"})
+			require.NotNil(t, awsClient)
+
+			si, err := awsClient.RunSecureInstance("iam-profile", "key-name", "hostname")
+			require.NoError(t, err)
+			require.NotNil(t, si)
+			require.Equal(t, tt.want, fleetTagMap(t, m.lastCreateFleetInput, ec2types.ResourceTypeInstance))
+			require.Equal(t, tt.want, fleetTagMap(t, m.lastCreateFleetInput, ec2types.ResourceTypeVolume))
+		})
+	}
+}
