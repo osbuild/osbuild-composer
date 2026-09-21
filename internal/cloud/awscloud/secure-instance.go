@@ -51,6 +51,50 @@ write_files:
 %s`, additionalFiles)
 }
 
+// ServiceName includes the component because AWS Cost Categories cannot
+// filter/group by ServiceComponent (as of 2026-09).
+const (
+	secureInstanceServiceName      = "image-builder-executor"
+	secureInstanceServiceComponent = "executor"
+)
+
+var inheritedSecureInstanceTagKeys = []string{"app-code", "service-phase", "cost-center"}
+
+func secureInstanceTags(parentTags []ec2types.Tag, parentInstanceID string) []ec2types.Tag {
+	tags := []ec2types.Tag{
+		{
+			Key:   aws.String("parent"),
+			Value: aws.String(parentInstanceID),
+		},
+		{
+			Key:   aws.String("Name"),
+			Value: aws.String(fmt.Sprintf("Executor-for-%s", parentInstanceID)),
+		},
+		{
+			Key:   aws.String("ServiceName"),
+			Value: aws.String(secureInstanceServiceName),
+		},
+		{
+			Key:   aws.String("ServiceComponent"),
+			Value: aws.String(secureInstanceServiceComponent),
+		},
+	}
+
+	for _, t := range parentTags {
+		if t.Key == nil || t.Value == nil {
+			continue
+		}
+		if slices.Contains(inheritedSecureInstanceTagKeys, *t.Key) {
+			tags = append(tags, ec2types.Tag{
+				Key:   t.Key,
+				Value: t.Value,
+			})
+		}
+	}
+
+	return tags
+}
+
 // Runs an instance with a security group that only allows traffic to
 // the host. Will replace resources if they already exists.
 func (a *AWS) RunSecureInstance(iamProfile, keyName, hostname string) (*SecureInstance, error) {
@@ -74,9 +118,11 @@ func (a *AWS) RunSecureInstance(iamProfile, keyName, hostname string) (*SecureIn
 	if len(descrInstancesOutput.Reservations) != 1 || len(descrInstancesOutput.Reservations[0].Instances) != 1 {
 		return nil, fmt.Errorf("Expected exactly one reservation (got %d) with one instance (got %d)", len(descrInstancesOutput.Reservations), len(descrInstancesOutput.Reservations[0].Instances))
 	}
-	vpcID := *descrInstancesOutput.Reservations[0].Instances[0].VpcId
-	imageID := *descrInstancesOutput.Reservations[0].Instances[0].ImageId
-	subnetID := *descrInstancesOutput.Reservations[0].Instances[0].SubnetId
+	parentInstance := descrInstancesOutput.Reservations[0].Instances[0]
+	vpcID := *parentInstance.VpcId
+	imageID := *parentInstance.ImageId
+	subnetID := *parentInstance.SubnetId
+	siTags := secureInstanceTags(parentInstance.Tags, identity.InstanceID)
 
 	secureInstance := &SecureInstance{}
 	defer func() {
@@ -147,18 +193,13 @@ func (a *AWS) RunSecureInstance(iamProfile, keyName, hostname string) (*SecureIn
 			},
 		},
 		TagSpecifications: []ec2types.TagSpecification{
-			ec2types.TagSpecification{
+			{
 				ResourceType: ec2types.ResourceTypeInstance,
-				Tags: []ec2types.Tag{
-					ec2types.Tag{
-						Key:   aws.String("parent"),
-						Value: aws.String(identity.InstanceID),
-					},
-					ec2types.Tag{
-						Key:   aws.String("Name"),
-						Value: aws.String(fmt.Sprintf("Executor-for-%s", identity.InstanceID)),
-					},
-				},
+				Tags:         siTags,
+			},
+			{
+				ResourceType: ec2types.ResourceTypeVolume,
+				Tags:         siTags,
 			},
 		},
 		TargetCapacitySpecification: &ec2types.TargetCapacitySpecificationRequest{

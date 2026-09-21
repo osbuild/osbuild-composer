@@ -34,6 +34,9 @@ type ec2mock struct {
 	imageName  string
 	snapshotId string
 
+	parentTags           []ec2types.Tag
+	lastCreateFleetInput *ec2.CreateFleetInput
+
 	calledFn map[string]int
 	failFn   map[string]error
 }
@@ -185,6 +188,7 @@ func (m *ec2mock) DescribeInstances(ctx context.Context, input *ec2.DescribeInst
 						VpcId:      aws.String("vpc-id"),
 						ImageId:    aws.String("image-id"),
 						SubnetId:   aws.String("subnet-id"),
+						Tags:       m.parentTags,
 						State: &ec2types.InstanceState{
 							Name: state,
 						},
@@ -226,6 +230,7 @@ func (m *ec2mock) TerminateInstances(ctx context.Context, input *ec2.TerminateIn
 
 func (m *ec2mock) CreateFleet(ctx context.Context, input *ec2.CreateFleetInput, optfns ...func(*ec2.Options)) (*ec2.CreateFleetOutput, error) {
 	m.calledFn["CreateFleet"] += 1
+	m.lastCreateFleetInput = input
 
 	if err, ok := m.failFn["CreateFleet"]; ok {
 		if err != nil {
