@@ -5,9 +5,13 @@ source "amazon-ebs" "image_builder" {
   region = var.region
 
   # Apply tags to the instance that is building our image.
+  # ServiceName includes the component because AWS Cost Categories cannot
+  # filter/group by ServiceComponent (as of 2026-09).
   run_tags = {
     AppCode = "IMGB-001"
     Name = "packer-builder-for-${var.image_name}-${source.name}"
+    ServiceName = "image-builder-worker"
+    ServiceComponent = "worker"
   }
 
   # Share the resulting AMI with accounts
@@ -36,6 +40,8 @@ build {
     ami_name = "${var.image_name}-rhel-10-x86_64"
 
     # Apply tags to the resulting AMI/EBS snapshot.
+    # ServiceName includes the component because AWS Cost Categories cannot
+    # filter/group by ServiceComponent (as of 2026-09).
     tags = {
       AppCode = "IMGB-001"
       Name = "${var.image_name}"
@@ -47,6 +53,8 @@ build {
       app = "image-builder"
       managed_by_integration = "app-sre/infra"
       cost-center = "${var.cost_center}"
+      ServiceName = "image-builder-worker"
+      ServiceComponent = "worker"
     }
 
     # Ensure that the EBS snapshot used for the AMI meets our requirements.
@@ -74,6 +82,8 @@ build {
     ami_name = "${var.image_name}-rhel-10-aarch64"
 
     # Apply tags to the resulting AMI/EBS snapshot.
+    # ServiceName includes the component because AWS Cost Categories cannot
+    # filter/group by ServiceComponent (as of 2026-09).
     tags = {
       AppCode = "IMGB-001"
       Name = "${var.image_name}"
@@ -85,6 +95,8 @@ build {
       app = "image-builder"
       managed_by_integration = "app-sre/infra"
       cost-center = "${var.cost_center}"
+      ServiceName = "image-builder-worker"
+      ServiceComponent = "worker"
     }
 
     # Ensure that the EBS snapshot used for the AMI meets our requirements.
