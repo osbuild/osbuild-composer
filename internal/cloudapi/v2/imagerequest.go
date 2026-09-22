@@ -27,8 +27,8 @@ func newAWSTarget(options UploadOptions, imageType distro.ImageType) (*target.Ta
 	}
 
 	// Service maintenance discovers leftover images by the composer-api tag
-       // (and, during transition, also by Name=composer-api-*). The Name tag may
-      // be a user-chosen AMI name, so uniqueness is not enforced here.
+	// (and, during transition, also by Name=composer-api-*). The Name tag may
+	// be a user-chosen AMI name, so uniqueness is not enforced here.
 	key := fmt.Sprintf("composer-api-%s", uuid.New().String())
 
 	var amiBootMode *string

@@ -56,29 +56,28 @@ func AWSCleanup(maxConcurrentRequests int, dryRun bool, accessKeyID, accessKey s
 		var wg sync.WaitGroup
 		sem := semaphore.NewWeighted(int64(maxConcurrentRequests))
 		byName, err := a.DescribeImagesByTag("Name", "composer-api-*")
-if err != nil {
-	log.Printf("Unable to describe images by Name for region %s: %v", region, err)
-	continue
-}
-byTag, err := a.DescribeImagesByTag("composer-api", "*")
-if err != nil {
-	log.Printf("Unable to describe images by composer-api tag for region %s: %v", region, err)
-	continue
-}
+		if err != nil {
+			log.Printf("Unable to describe images by Name for region %s: %v", region, err)
+			continue
+		}
+		byTag, err := a.DescribeImagesByTag("composer-api", "*")
+		if err != nil {
+			log.Printf("Unable to describe images by composer-api tag for region %s: %v", region, err)
+			continue
+		}
 
-seen := make(map[string]struct{})
-var images []ec2types.Image
-for _, image := range append(byName, byTag...) {
-	if image.ImageId == nil {
-		continue
-	}
-	if _, ok := seen[*image.ImageId]; ok {
-		continue
-	}
-	seen[*image.ImageId] = struct{}{}
-	images = append(images, image)
-}
-		
+		seen := make(map[string]struct{})
+		var images []ec2types.Image
+		for _, image := range append(byName, byTag...) {
+			if image.ImageId == nil {
+				continue
+			}
+			if _, ok := seen[*image.ImageId]; ok {
+				continue
+			}
+			seen[*image.ImageId] = struct{}{}
+			images = append(images, image)
+		}
 
 		for index, image := range images {
 			// TODO are these actual concerns?
