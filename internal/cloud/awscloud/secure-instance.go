@@ -203,11 +203,8 @@ func (a *AWS) RunSecureInstance(iamProfile, keyName, hostname string) (*SecureIn
 			},
 		},
 		TargetCapacitySpecification: &ec2types.TargetCapacitySpecificationRequest{
-			DefaultTargetCapacityType: ec2types.DefaultTargetCapacityTypeSpot,
+			DefaultTargetCapacityType: ec2types.DefaultTargetCapacityTypeOnDemand,
 			TotalTargetCapacity:       aws.Int32(1),
-		},
-		SpotOptions: &ec2types.SpotOptionsRequest{
-			AllocationStrategy: ec2types.SpotAllocationStrategyPriceCapacityOptimized,
 		},
 		Type: ec2types.FleetTypeInstant,
 	})
@@ -716,26 +713,12 @@ func (a *AWS) createFleet(input *ec2.CreateFleetInput) (*ec2.CreateFleetOutput, 
 	logCreateFleetInput(input)
 	createFleetOutput, err := a.ec2.CreateFleet(context.Background(), input)
 	if err != nil {
-		return createFleetOutput, fmt.Errorf("Unable to create spot fleet: %w", err)
+		return createFleetOutput, fmt.Errorf("Unable to create on demand fleet: %w", err)
 	}
 
 	retry, fleetErrs := doCreateFleetRetry(createFleetOutput)
 	if len(fleetErrs) > 0 && retry {
-		logrus.Warnf("Received errors (%s) from CreateFleet, retrying CreateFleet with OnDemand instance", strings.Join(fleetErrs, "; "))
-		input.SpotOptions = nil
-		input.TargetCapacitySpecification.DefaultTargetCapacityType = ec2types.DefaultTargetCapacityTypeOnDemand
-		logCreateFleetInput(input)
-		createFleetOutput, err = a.ec2.CreateFleet(context.Background(), input)
-		if err != nil {
-			return createFleetOutput, fmt.Errorf("Unable to create on demand fleet: %w", err)
-		}
-	} else {
-		logrus.Infof("Won't retry CreateFleet with OnDemand instance, retry: %v, errors: %s", retry, strings.Join(fleetErrs, "; "))
-	}
-
-	retry, fleetErrs = doCreateFleetRetry(createFleetOutput)
-	if len(fleetErrs) > 0 && retry {
-		logrus.Warnf("Received errors (%s) from CreateFleet with OnDemand instance option, retrying across availability zones", strings.Join(fleetErrs, "; "))
+		logrus.Warnf("Received errors (%s) from CreateFleet, retrying across availability zones", strings.Join(fleetErrs, "; "))
 		input.LaunchTemplateConfigs[0].Overrides = nil
 		logCreateFleetInput(input)
 		createFleetOutput, err = a.ec2.CreateFleet(context.Background(), input)
