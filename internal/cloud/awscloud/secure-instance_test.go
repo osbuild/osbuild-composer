@@ -69,6 +69,9 @@ func TestSIRunSecureInstance(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, si)
 	require.Equal(t, 1, m.calledFn["CreateFleet"])
+	require.NotNil(t, m.lastCreateFleetInput)
+	require.Nil(t, m.lastCreateFleetInput.SpotOptions)
+	require.Equal(t, ec2types.DefaultTargetCapacityTypeOnDemand, m.lastCreateFleetInput.TargetCapacitySpecification.DefaultTargetCapacityType)
 	require.Equal(t, 1, m.calledFn["CreateSecurityGroup"])
 	require.Equal(t, 1, m.calledFn["CreateLaunchTemplate"])
 	require.Equal(t, 1, m.calledFn["AuthorizeSecurityGroupEgress"])
@@ -135,12 +138,12 @@ func TestSICreateFleetFailures(t *testing.T) {
 	aws := awscloud.NewForTest(m, &ec2imdsmock{t, "instance-id", "region1"})
 	require.NotNil(t, aws)
 
-	// create fleet error should call create fleet thrice
+	// capacity errors retry once across availability zones
 	m.failFn["CreateFleet"] = nil
 	si, err := aws.RunSecureInstance("iam-profile", "key-name", "hostname")
 	require.Error(t, err)
 	require.Nil(t, si)
-	require.Equal(t, 3, m.calledFn["CreateFleet"])
+	require.Equal(t, 2, m.calledFn["CreateFleet"])
 	require.Equal(t, 1, m.calledFn["CreateSecurityGroup"])
 	require.Equal(t, 1, m.calledFn["CreateLaunchTemplate"])
 	require.Equal(t, 2, m.calledFn["DeleteSecurityGroup"])
@@ -151,7 +154,7 @@ func TestSICreateFleetFailures(t *testing.T) {
 	si, err = aws.RunSecureInstance("iam-profile", "key-name", "hostname")
 	require.Error(t, err)
 	require.Nil(t, si)
-	require.Equal(t, 4, m.calledFn["CreateFleet"])
+	require.Equal(t, 3, m.calledFn["CreateFleet"])
 	require.Equal(t, 2, m.calledFn["CreateSecurityGroup"])
 	require.Equal(t, 2, m.calledFn["CreateLaunchTemplate"])
 	require.Equal(t, 4, m.calledFn["DeleteSecurityGroup"])
