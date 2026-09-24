@@ -20,3 +20,13 @@ func TestErrorBuildVersionMismatch(t *testing.T) {
 	statusCode := GetStatusCode(err)
 	assert.Equal(t, StatusCode(JobStatusInternalError), statusCode)
 }
+
+func TestErrorSecureInstance(t *testing.T) {
+	err := New(ErrorSecureInstance, "secure instance died", "connection refused")
+
+	assert.Equal(t, ErrorSecureInstance, err.ID)
+	assert.Equal(t, "secure instance died", err.Reason)
+	assert.Equal(t, "connection refused", err.Details)
+	assert.False(t, err.IsDependencyError())
+	assert.Equal(t, StatusCode(JobStatusInternalError), GetStatusCode(err))
+}
