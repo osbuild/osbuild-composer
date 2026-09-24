@@ -21,6 +21,7 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/coreos/go-systemd/v22/dbus"
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 
 	"github.com/osbuild/image-builder/pkg/arch"
@@ -86,13 +87,13 @@ func createTLSConfig(config *connectionConfig) (*tls.Config, error) {
 // It would be cleaner to kill the osbuild process using (`exec.CommandContext`
 // or similar), but osbuild does not currently support this. Exiting here will
 // make systemd clean up the whole cgroup and restart this service.
-func WatchJob(ctx context.Context, job worker.Job) {
+func WatchJob(ctx context.Context, job worker.Job, log *logrus.Entry) {
 	for {
 		select {
 		case <-time.After(15 * time.Second):
 			canceled, err := job.Canceled()
 			if err == nil && canceled {
-				logrus.Info("Job was canceled. Exiting.")
+				log.Info("Job was canceled. Exiting.")
 				os.Exit(0)
 			}
 		case <-ctx.Done():
@@ -129,6 +130,17 @@ func setProtection(protected bool) {
 	}
 }
 
+func jobLog(job worker.Job) *logrus.Entry {
+	f := logrus.Fields{
+		"job_id":   job.Id().String(),
+		"job_type": job.Type(),
+	}
+	if cid := job.ComposeId(); cid != uuid.Nil {
+		f["compose_id"] = cid.String()
+	}
+	return logrus.WithFields(f)
+}
+
 // Requests and runs 1 job of specified type(s)
 // Returning an error here will result in the worker backing off for a while and retrying
 func RequestAndRunJob(client *worker.Client, acceptedJobTypes []string, jobImpls map[string]JobImplementation) error {
@@ -143,9 +155,10 @@ func RequestAndRunJob(client *worker.Client, acceptedJobTypes []string, jobImpls
 		return err
 	}
 
+	log := jobLog(job)
 	impl, exists := jobImpls[job.Type()]
 	if !exists {
-		logrus.Errorf("Ignoring job with unknown type %s", job.Type())
+		log.Errorf("Ignoring job with unknown type %s", job.Type())
 		return err
 	}
 
@@ -156,20 +169,20 @@ func RequestAndRunJob(client *worker.Client, acceptedJobTypes []string, jobImpls
 		defer setProtection(false)
 	}
 
-	logrus.Infof("Running job '%s' (%s)\n", job.Id(), job.Type()) // DO NOT EDIT/REMOVE: used for Splunk dashboard
+	log.Infof("Running job '%s' (%s)\n", job.Id(), job.Type()) // DO NOT EDIT/REMOVE: used for Splunk dashboard
 
 	ctx, cancelWatcher := context.WithCancel(context.Background())
-	go WatchJob(ctx, job)
+	go WatchJob(ctx, job, log)
 
 	err = impl.Run(job)
 	cancelWatcher()
 	if err != nil {
-		logrus.Warnf("Job '%s' (%s) failed: %v", job.Id(), job.Type(), err) // DO NOT EDIT/REMOVE: used for Splunk dashboard
+		log.Warnf("Job '%s' (%s) failed: %v", job.Id(), job.Type(), err) // DO NOT EDIT/REMOVE: used for Splunk dashboard
 		// Don't return this error so the worker picks up the next job immediately
 		return nil
 	}
 
-	logrus.Infof("Job '%s' (%s) finished", job.Id(), job.Type()) // DO NOT EDIT/REMOVE: used for Splunk dashboard
+	log.Infof("Job '%s' (%s) finished", job.Id(), job.Type()) // DO NOT EDIT/REMOVE: used for Splunk dashboard
 	return nil
 }
 

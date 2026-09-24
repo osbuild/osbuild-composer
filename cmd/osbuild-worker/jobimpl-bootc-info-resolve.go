@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"os/exec"
 
-	"github.com/sirupsen/logrus"
-
 	"github.com/osbuild/image-builder/pkg/bootc"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
@@ -33,7 +31,7 @@ type BootcInfoResolveJobImpl struct {
 }
 
 func (impl *BootcInfoResolveJobImpl) Run(job worker.Job) error {
-	logWithId := logrus.WithField("jobId", job.Id())
+	logWithId := jobLog(job)
 
 	result := worker.BootcInfoResolveJobResult{}
 	defer func() {

@@ -9,7 +9,6 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/common"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
-	"github.com/sirupsen/logrus"
 )
 
 type ImageBuilderManifestJobImpl struct {
@@ -17,7 +16,7 @@ type ImageBuilderManifestJobImpl struct {
 }
 
 func (impl *ImageBuilderManifestJobImpl) Run(job worker.Job) error {
-	logWithId := logrus.WithField("jobId", job.Id().String())
+	logWithId := jobLog(job)
 
 	result := &worker.ImageBuilderManifestJobResult{
 		Manifest: nil,

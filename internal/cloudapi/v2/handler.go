@@ -31,6 +31,7 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/target"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
+	"github.com/osbuild/osbuild-composer/pkg/jobqueue"
 )
 
 type apiHandlers struct {
@@ -1297,7 +1298,23 @@ func (h *apiHandlers) postCloneComposeImpl(ctx echo.Context, jobId uuid.UUID) er
 			// Let the share job use dynArgs
 			shareAmi = ""
 			shareRegion = ""
+		}
 
+		var shares []string
+		awsT, ok := (osbuildJob.Targets[0].Options).(*target.AWSTargetOptions)
+		if !ok {
+			return HTTPError(ErrorUnknownUploadTarget)
+		}
+		if len(awsT.ShareWithAccounts) > 0 {
+			shares = append(shares, awsT.ShareWithAccounts...)
+		}
+		if img.ShareWithAccounts != nil && len(*img.ShareWithAccounts) > 0 {
+			shares = append(shares, (*img.ShareWithAccounts)...)
+		}
+		willShare := len(shares) > 0
+		composeID := uuid.New()
+
+		if img.Region != options.Region {
 			// Check dependents if we need to do a copyjob
 			foundDep := false
 			for _, d := range osbuildInfo.Dependents {
@@ -1327,31 +1344,24 @@ func (h *apiHandlers) postCloneComposeImpl(ctx echo.Context, jobId uuid.UUID) er
 					TargetRegion: img.Region,
 					TargetName:   fmt.Sprintf("composer-api-%s", uuid.New().String()),
 				}
-				finalJob, err = h.server.workers.EnqueueAWSEC2CopyJob(copyJob, finalJob, channel)
+				copyParams := jobqueue.Child(composeID)
+				if !willShare {
+					copyParams = jobqueue.Root(composeID)
+				}
+				finalJob, err = h.server.workers.EnqueueAWSEC2CopyJob(copyJob, finalJob, channel, copyParams)
 				if err != nil {
 					return HTTPErrorWithInternal(ErrorEnqueueingJob, err)
 				}
 			}
 		}
 
-		var shares []string
-		awsT, ok := (osbuildJob.Targets[0].Options).(*target.AWSTargetOptions)
-		if !ok {
-			return HTTPError(ErrorUnknownUploadTarget)
-		}
-		if len(awsT.ShareWithAccounts) > 0 {
-			shares = append(shares, awsT.ShareWithAccounts...)
-		}
-		if img.ShareWithAccounts != nil && len(*img.ShareWithAccounts) > 0 {
-			shares = append(shares, (*img.ShareWithAccounts)...)
-		}
-		if len(shares) > 0 {
+		if willShare {
 			shareJob := &worker.AWSEC2ShareJob{
 				Ami:               shareAmi,
 				Region:            shareRegion,
 				ShareWithAccounts: shares,
 			}
-			finalJob, err = h.server.workers.EnqueueAWSEC2ShareJob(shareJob, finalJob, channel)
+			finalJob, err = h.server.workers.EnqueueAWSEC2ShareJob(shareJob, finalJob, channel, jobqueue.Root(composeID))
 			if err != nil {
 				return HTTPErrorWithInternal(ErrorEnqueueingJob, err)
 			}

@@ -153,7 +153,7 @@ func workerClientErrorFrom(err error, logWithId *logrus.Entry) *clienterrors.Err
 }
 
 func (impl *DepsolveJobImpl) Run(job worker.Job) error {
-	logWithId := logrus.WithField("jobId", job.Id())
+	logWithId := jobLog(job)
 
 	var result worker.DepsolveJobResult
 	// ALWAYS return a result
