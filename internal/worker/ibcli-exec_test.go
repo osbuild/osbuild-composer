@@ -130,6 +130,35 @@ func TestRunImageBuilderManifestCall(t *testing.T) {
 				"azure-rhui",
 			},
 		},
+
+		"with-repos-ssl": {
+			args: worker.ImageBuilderArgs{
+				Distro:    "rhel-9",
+				Arch:      "x86_64",
+				ImageType: "qcow2",
+				Repositories: []rpmmd.RepoConfig{
+					{
+						Id:             "satellite-baseos",
+						Name:           "Red Hat Enterprise Linux 9 for x86_64 - BaseOS (RPMs)",
+						BaseURLs:       []string{"https://satellite.example.com/pulp/content/rhel9/x86_64/baseos/os"},
+						MetadataExpire: "1",
+						SSLCACert:      "/etc/rhsm/ca/katello-server-ca.pem",
+						SSLClientKey:   "/etc/pki/entitlement/1234567890-key.pem",
+						SSLClientCert:  "/etc/pki/entitlement/1234567890.pem",
+					},
+				},
+			},
+			expCall: []string{
+				"image-builder",
+				"manifest",
+				"--use-librepo=false",
+				"--distro", "rhel-9",
+				"--arch", "x86_64",
+				"--data-dir", "*/datadir",
+				"--",
+				"qcow2",
+			},
+		},
 		"with-sub": {
 			args: worker.ImageBuilderArgs{
 				Distro:    "rhel-9.10",
@@ -330,4 +359,71 @@ func TestRunImageBuilderManifestCall(t *testing.T) {
 			assert.Subset(cmd.Env, tc.extraEnv)
 		})
 	}
+}
+
+// TestHandleRepositoriesSSLFields verifies that SSL certificate fields from a
+// RepoConfig are written into the on-disk repository JSON file that is passed
+// to image-builder. This is a regression test: the repository struct previously
+// lacked sslcacert/sslclientkey/sslclientcert fields, causing them to be
+// silently dropped and making DNF fail against Satellite/mTLS repos.
+func TestHandleRepositoriesSSLFields(t *testing.T) {
+	args := worker.ImageBuilderArgs{
+		Distro: "rhel-9",
+		Arch:   "x86_64",
+		Repositories: []rpmmd.RepoConfig{
+			{
+				Id:             "satellite-baseos",
+				Name:           "BaseOS",
+				BaseURLs:       []string{"https://satellite.example.com/rhel9/baseos"},
+				MetadataExpire: "1",
+				SSLCACert:      "/etc/rhsm/ca/katello-server-ca.pem",
+				SSLClientKey:   "/etc/pki/entitlement/1234-key.pem",
+				SSLClientCert:  "/etc/pki/entitlement/1234.pem",
+			},
+		},
+	}
+
+	restoreExec := worker.MockExecCommand(func(name string, arg ...string) *exec.Cmd {
+		datadirIdx := slices.Index(arg, "--data-dir") + 1
+		if datadirIdx <= 0 {
+			t.Error("expected --data-dir argument not found")
+			return exec.Command("/usr/bin/true")
+		}
+		datadir := arg[datadirIdx]
+		reposPath := filepath.Join(datadir, "repositories", "rhel-9.json")
+
+		data, err := os.ReadFile(reposPath)
+		if err != nil {
+			t.Errorf("failed to read repos file: %v", err)
+			return exec.Command("/usr/bin/true")
+		}
+
+		// Unmarshal into a generic map so we're not affected by the
+		// repository struct — this is what image-builder actually sees.
+		var raw map[string][]map[string]interface{}
+		if err := json.Unmarshal(data, &raw); err != nil {
+			t.Errorf("failed to unmarshal repos file: %v", err)
+			return exec.Command("/usr/bin/true")
+		}
+
+		repos, ok := raw["x86_64"]
+		if !ok || len(repos) == 0 {
+			t.Error("no repos found for x86_64 in repos file")
+			return exec.Command("/usr/bin/true")
+		}
+		repo := repos[0]
+
+		assert.Equal(t, "/etc/rhsm/ca/katello-server-ca.pem", repo["sslcacert"],
+			"sslcacert must be present in on-disk repo JSON")
+		assert.Equal(t, "/etc/pki/entitlement/1234-key.pem", repo["sslclientkey"],
+			"sslclientkey must be present in on-disk repo JSON")
+		assert.Equal(t, "/etc/pki/entitlement/1234.pem", repo["sslclientcert"],
+			"sslclientcert must be present in on-disk repo JSON")
+
+		return exec.Command("/usr/bin/true")
+	})
+	defer restoreExec()
+
+	_, err := worker.RunImageBuilderManifest(args, nil, os.Stderr)
+	assert.NoError(t, err)
 }
