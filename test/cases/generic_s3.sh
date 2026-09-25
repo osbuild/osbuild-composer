@@ -6,7 +6,7 @@ set -euo pipefail
 
 # Container images for MinIO Server and Client
 CONTAINER_MINIO_CLIENT="quay.io/minio/mc:latest"
-CONTAINER_MINIO_SERVER="quay.io/minio/minio:latest"
+CONTAINER_MINIO_SERVER="docker.io/rustfs/rustfs:latest"
 
 # Provision the software under test.
 /usr/libexec/osbuild-composer-test/provision.sh none
