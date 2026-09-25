@@ -1,6 +1,7 @@
 #!/bin/bash
 
 source /usr/libexec/osbuild-composer-test/set-env-variables.sh
+source /usr/libexec/tests/osbuild-composer/shared_lib.sh
 
 CERTS_DIR=${1:-""}
 CA_BUNDLE_FILENAME=${2:-""}
