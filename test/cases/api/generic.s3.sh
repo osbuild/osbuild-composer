@@ -26,7 +26,7 @@ function cleanup() {
 }
 
 function installClient() {
-  local CONTAINER_MINIO_SERVER="quay.io/minio/minio:latest"
+  local CONTAINER_MINIO_SERVER="docker.io/rustfs/rustfs:latest"
   MINIO_CONTAINER_NAME="minio-server"
   MINIO_ENDPOINT="http://localhost:9000"
   local MINIO_ROOT_USER="X29DU5Q6C5NKDQ8PLGVT"

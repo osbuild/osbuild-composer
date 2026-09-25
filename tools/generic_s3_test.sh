@@ -23,7 +23,7 @@ fi
 set -euo pipefail
 
 # Container images for MinIO Server
-CONTAINER_MINIO_SERVER="quay.io/minio/minio:latest"
+CONTAINER_MINIO_SERVER="docker.io/rustfs/rustfs:latest"
 # Container image used for cloud provider CLI tools
 CONTAINER_IMAGE_CLOUD_TOOLS="quay.io/osbuild/cloud-tools:latest"
 
@@ -133,8 +133,9 @@ else
         -e MINIO_BROWSER=off \
         -e MINIO_ROOT_USER="${MINIO_ROOT_USER}" \
         -e MINIO_ROOT_PASSWORD="${MINIO_ROOT_PASSWORD}" \
-        -v "${CERTS_DIR}":/root/.minio/certs:z \
-        ${CONTAINER_MINIO_SERVER} server /data
+        -e RUSTFS_TLS_PATH="/opt/tls" \
+        -v "${CERTS_DIR}":/opt/tls:z \
+        ${CONTAINER_MINIO_SERVER}
 fi
 # Kill the server once we're done
 trap 'sudo ${CONTAINER_RUNTIME} kill ${MINIO_CONTAINER_NAME}' EXIT
