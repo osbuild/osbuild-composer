@@ -79,6 +79,14 @@ type Handler struct {
 	next          http.Handler
 }
 
+// acceptedJWTSigningMethods is the JWT alg allow-list for inbound bearer verification.
+// Matches Red Hat SSO JWKS keys with use=sig (RS256 and RS512). Encryption algs
+// (RSA-OAEP*) are intentionally excluded. Future PQC algorithms (e.g. ML-DSA) go here.
+var acceptedJWTSigningMethods = []string{
+	jwt.SigningMethodRS256.Alg(),
+	jwt.SigningMethodRS512.Alg(),
+}
+
 // NewHandler creates a builder that can then be configured and used to create authentication
 // handlers.
 func NewHandler() *HandlerBuilder {
@@ -343,8 +351,9 @@ func (b *HandlerBuilder) Build() (handler *Handler, err error) {
 		}
 	}
 
-	// Create the bearer token parser:
-	tokenParser := &jwt.Parser{}
+	// Create the bearer token parser with an explicit signing-method allow-list so
+	// algorithm-confusion attacks (e.g. alg=none, HMAC/RSA confusion) are rejected:
+	tokenParser := jwt.NewParser(jwt.WithValidMethods(acceptedJWTSigningMethods))
 
 	// Make copies of the lists of keys files and URLs:
 	keysFiles := make([]string, len(b.keysFiles))
