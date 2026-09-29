@@ -597,7 +597,7 @@ func (a *AWS) createOrReplaceLT(hostInstanceID, imageID, sgID, iamProfile, keyNa
 					Ebs: &ec2types.LaunchTemplateEbsBlockDeviceRequest{
 						DeleteOnTermination: aws.Bool(true),
 						Encrypted:           aws.Bool(true),
-						VolumeSize:          aws.Int32(50),
+						VolumeSize:          aws.Int32(100),
 						VolumeType:          ec2types.VolumeTypeGp3,
 					},
 				},
