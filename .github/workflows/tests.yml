@@ -19,8 +19,9 @@ jobs:
 
     steps:
         # krb5-devel is needed to test internal/upload/koji package
+        # gpg is needed for the codecov action
       - name: Install build and test dependencies
-        run: dnf -y install krb5-devel git-core go
+        run: dnf -y install krb5-devel git-core go gnupg2
 
       - name: Check out code into the Go module directory
         uses: actions/checkout@v7
