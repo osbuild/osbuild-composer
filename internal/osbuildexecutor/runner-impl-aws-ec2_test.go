@@ -81,6 +81,10 @@ func (j *testJob) Id() uuid.UUID {
 	return uuid.Nil
 }
 
+func (j *testJob) ComposeId() uuid.UUID {
+	return uuid.Nil
+}
+
 func (j *testJob) Type() string {
 	return "test-job"
 }

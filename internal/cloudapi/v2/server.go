@@ -220,7 +220,7 @@ func (mjd manifestJobDependencies) IDs() []uuid.UUID {
 // enqueueResolveJobs adds all the necessary content resolve jobs for the
 // manifest to the queue and returns a [manifestJobDependencies] that holds
 // resolve job IDs by type.
-func (s *Server) enqueueResolveJobs(manifestSource *manifest.Manifest, it distro.ImageType, channel string) (manifestJobDependencies, error) {
+func (s *Server) enqueueResolveJobs(manifestSource *manifest.Manifest, it distro.ImageType, channel string, composeID uuid.UUID) (manifestJobDependencies, error) {
 	var jobDependencies manifestJobDependencies
 
 	arch := it.Arch()
@@ -236,7 +236,7 @@ func (s *Server) enqueueResolveJobs(manifestSource *manifest.Manifest, it distro
 		Arch:             arch.Name(),
 		Releasever:       distribution.Releasever(),
 		SbomType:         sbom.StandardTypeSpdx,
-	}, channel)
+	}, channel, jobqueue.Child(composeID))
 	if err != nil {
 		return jobDependencies, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
 	}
@@ -258,7 +258,7 @@ func (s *Server) enqueueResolveJobs(manifestSource *manifest.Manifest, it distro
 			PipelineSpecs: pipelineSpecs,
 		}
 
-		containerResolveJobID, err := s.workers.EnqueueContainerResolveJob(&job, nil, channel)
+		containerResolveJobID, err := s.workers.EnqueueContainerResolveJob(&job, nil, channel, jobqueue.Child(composeID))
 		if err != nil {
 			return jobDependencies, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
 		}
@@ -285,7 +285,7 @@ func (s *Server) enqueueResolveJobs(manifestSource *manifest.Manifest, it distro
 			}
 
 		}
-		ostreeResolveJobID, err := s.workers.EnqueueOSTreeResolveJob(&worker.OSTreeResolveJob{Specs: workerResolveSpecs}, channel)
+		ostreeResolveJobID, err := s.workers.EnqueueOSTreeResolveJob(&worker.OSTreeResolveJob{Specs: workerResolveSpecs}, channel, jobqueue.Child(composeID))
 		if err != nil {
 			return jobDependencies, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
 		}
@@ -303,6 +303,7 @@ func (s *Server) enqueueCompose(irs []imageRequest, channel string) (uuid.UUID, 
 		return id, HTTPError(ErrorInvalidNumberOfImageBuilds)
 	}
 	ir := irs[0]
+	composeID := uuid.New()
 
 	manifestSource, _, err := ir.imageType.Manifest(&ir.blueprint, ir.imageOptions, ir.repositories, &ir.manifestSeed)
 	if err != nil {
@@ -310,13 +311,13 @@ func (s *Server) enqueueCompose(irs []imageRequest, channel string) (uuid.UUID, 
 		return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
 	}
 
-	dependencies, err := s.enqueueResolveJobs(manifestSource, ir.imageType, channel)
+	dependencies, err := s.enqueueResolveJobs(manifestSource, ir.imageType, channel, composeID)
 	if err != nil {
 		logrus.Warningf("ErrorEnqueueingJob, failed creating resolve jobs: %v", err)
 		return id, err
 	}
 
-	manifestJobID, err := s.workers.EnqueueManifestJobByID(&worker.ManifestJobByID{}, dependencies.IDs(), channel)
+	manifestJobID, err := s.workers.EnqueueManifestJobByID(&worker.ManifestJobByID{}, dependencies.IDs(), channel, jobqueue.Child(composeID))
 	if err != nil {
 		logrus.Warningf("ErrorEnqueueingJob, failed creating manifest job (ByID): %v", err)
 		return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
@@ -324,6 +325,7 @@ func (s *Server) enqueueCompose(irs []imageRequest, channel string) (uuid.UUID, 
 
 	id, err = s.workers.EnqueueOSBuildAsDependency(
 		ir.imageType.Arch().Name(), &worker.OSBuildJob{Targets: ir.targets}, []uuid.UUID{manifestJobID}, channel,
+		jobqueue.Root(composeID),
 	)
 	if err != nil {
 		logrus.Warningf("ErrorEnqueueingJob, failed creating osbuild job: %v", err)
@@ -349,6 +351,7 @@ func (s *Server) enqueueComposeIBCLI(irs []imageRequest, channel string) (uuid.U
 		return osbuildJobID, HTTPErrorWithInternal(ErrorInvalidNumberOfImageBuilds, fmt.Errorf("expected 1 image request, got %d", len(irs)))
 	}
 	ir := irs[0]
+	composeID := uuid.New()
 
 	arch := ir.imageType.Arch()
 	distribution := arch.Distro()
@@ -381,7 +384,7 @@ func (s *Server) enqueueComposeIBCLI(irs []imageRequest, channel string) (uuid.U
 		ExtraEnv: []string{"XDG_CACHE_HOME=/var/cache/osbuild-composer/rpmmd"},
 	}
 
-	manifestJobID, err := s.workers.EnqueueImageBuilderManifestJob(&manifestJob, channel)
+	manifestJobID, err := s.workers.EnqueueImageBuilderManifestJob(&manifestJob, channel, jobqueue.Child(composeID))
 	if err != nil {
 		return osbuildJobID, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
 	}
@@ -389,6 +392,7 @@ func (s *Server) enqueueComposeIBCLI(irs []imageRequest, channel string) (uuid.U
 
 	osbuildJobID, err = s.workers.EnqueueOSBuildAsDependency(
 		arch.Name(), &worker.OSBuildJob{Targets: ir.targets}, []uuid.UUID{manifestJobID}, channel,
+		jobqueue.Root(composeID),
 	)
 	if err != nil {
 		return osbuildJobID, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
@@ -400,6 +404,7 @@ func (s *Server) enqueueComposeIBCLI(irs []imageRequest, channel string) (uuid.U
 
 func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, release string, irs []imageRequest, channel string) (uuid.UUID, error) {
 	var id uuid.UUID
+	composeID := uuid.New()
 	kojiDirectory := "osbuild-cg/osbuild-composer-koji-" + uuid.New().String()
 
 	initID, err := s.workers.EnqueueKojiInit(&worker.KojiInitJob{
@@ -407,7 +412,7 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 		Name:    name,
 		Version: version,
 		Release: release,
-	}, channel)
+	}, channel, jobqueue.Child(composeID))
 	if err != nil {
 		return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
 	}
@@ -422,13 +427,13 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 			return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
 		}
 
-		dependencies, err := s.enqueueResolveJobs(manifestSource, ir.imageType, channel)
+		dependencies, err := s.enqueueResolveJobs(manifestSource, ir.imageType, channel, composeID)
 		if err != nil {
 			logrus.Warningf("ErrorEnqueueingJob, failed creating resolve jobs: %v", err)
 			return id, err
 		}
 
-		manifestJobID, err := s.workers.EnqueueManifestJobByID(&worker.ManifestJobByID{}, dependencies.IDs(), channel)
+		manifestJobID, err := s.workers.EnqueueManifestJobByID(&worker.ManifestJobByID{}, dependencies.IDs(), channel, jobqueue.Child(composeID))
 		if err != nil {
 			return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
 		}
@@ -462,7 +467,7 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 			ManifestDynArgsIdx: common.ToPtr(1),
 			DepsolveDynArgsIdx: common.ToPtr(2),
 			ImageBootMode:      ir.imageType.BootMode().String(),
-		}, []uuid.UUID{initID, manifestJobID, dependencies.depsolveJobID}, channel)
+		}, []uuid.UUID{initID, manifestJobID, dependencies.depsolveJobID}, channel, jobqueue.Child(composeID))
 		if err != nil {
 			return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
 		}
@@ -488,7 +493,7 @@ func (s *Server) enqueueKojiCompose(taskID uint64, server, name, version, releas
 		KojiDirectory: kojiDirectory,
 		TaskID:        taskID,
 		StartTime:     uint64(time.Now().Unix()), // nolint: gosec
-	}, initID, buildIDs, channel)
+	}, initID, buildIDs, channel, jobqueue.Root(composeID))
 	if err != nil {
 		return id, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
 	}
@@ -571,6 +576,8 @@ func (s *Server) enqueueBootcCompose(request ComposeRequest, channel string) (uu
 	} else {
 		return uuid.Nil, HTTPError(ErrorInvalidNumberOfImageBuilds)
 	}
+
+	composeID := uuid.New()
 
 	bp, err := request.GetBlueprint()
 	if err != nil {
@@ -675,7 +682,7 @@ func (s *Server) enqueueBootcCompose(request ComposeRequest, channel string) (uu
 
 	bootcInfoResolveJobID, err := s.workers.EnqueueBootcInfoResolveJob(ir.Architecture, &worker.BootcInfoResolveJob{
 		Specs: bootcInfoResolveSpecs,
-	}, channel)
+	}, channel, jobqueue.Child(composeID))
 	if err != nil {
 		return uuid.Nil, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
 	}
@@ -694,7 +701,7 @@ func (s *Server) enqueueBootcCompose(request ComposeRequest, channel string) (uu
 	if request.Bootc.BuildReference != nil {
 		preManifestArgs.BuildInfoIdx = common.ToPtr(1)
 	}
-	preManifestJobID, err := s.workers.EnqueueBootcPreManifestJob(preManifestArgs, preManifestDeps, channel)
+	preManifestJobID, err := s.workers.EnqueueBootcPreManifestJob(preManifestArgs, preManifestDeps, channel, jobqueue.Child(composeID))
 	if err != nil {
 		return uuid.Nil, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
 	}
@@ -707,6 +714,7 @@ func (s *Server) enqueueBootcCompose(request ComposeRequest, channel string) (uu
 		},
 		[]uuid.UUID{preManifestJobID},
 		channel,
+		jobqueue.Child(composeID),
 	)
 	if err != nil {
 		return uuid.Nil, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
@@ -728,6 +736,7 @@ func (s *Server) enqueueBootcCompose(request ComposeRequest, channel string) (uu
 		&worker.ManifestJobByID{},
 		dependencies.IDs(),
 		channel,
+		jobqueue.Child(composeID),
 	)
 	if err != nil {
 		return uuid.Nil, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
@@ -738,7 +747,7 @@ func (s *Server) enqueueBootcCompose(request ComposeRequest, channel string) (uu
 		// Targets are empty — filled by worker from BootcPreManifest dynargs.
 		ManifestDynArgsIdx:    common.ToPtr(0), // dynArgs[0] = ManifestByID result
 		PreManifestDynArgsIdx: common.ToPtr(1), // dynArgs[1] = BootcPreManifest result
-	}, []uuid.UUID{manifestJobID, preManifestJobID}, channel)
+	}, []uuid.UUID{manifestJobID, preManifestJobID}, channel, jobqueue.Root(composeID))
 	if err != nil {
 		return uuid.Nil, HTTPErrorWithInternal(ErrorEnqueueingJob, err)
 	}

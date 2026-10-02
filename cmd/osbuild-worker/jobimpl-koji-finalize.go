@@ -83,7 +83,7 @@ func (impl *KojiFinalizeJobImpl) kojiFail(server string, buildID int, token stri
 }
 
 func (impl *KojiFinalizeJobImpl) Run(job worker.Job) error {
-	logWithId := logrus.WithField("jobId", job.Id().String())
+	logWithId := jobLog(job)
 
 	// initialize the result variable to be used to report status back to composer
 	var kojiFinalizeJobResult = &worker.KojiFinalizeJobResult{}
