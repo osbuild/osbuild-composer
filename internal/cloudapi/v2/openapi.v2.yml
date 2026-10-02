@@ -1796,6 +1796,24 @@ components:
           example: ['123456789012']
           items:
             type: string
+        tags:
+          type: array
+          description: Optional tags applied to the AMI and snapshot.
+          items:
+            $ref: '#/components/schemas/AWSTag'
+    AWSTag:
+      type: object
+      additionalProperties: false
+      required:
+        - key
+        - value
+      properties:
+        key:
+          type: string
+          example: 'environment'
+        value:
+          type: string
+          example: 'production'
     AWSS3UploadOptions:
       type: object
       additionalProperties: false

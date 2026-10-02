@@ -279,3 +279,38 @@ func TestGetTargets(t *testing.T) {
 		})
 	}
 }
+
+func TestAWSTargetPreservesSnapshotNameAndTags(t *testing.T) {
+	r9 := distrofactory.NewDefault().GetDistro("rhel-9.3")
+	require.NotNil(t, r9)
+	archObj, err := r9.GetArch(arch.ARCH_X86_64.String())
+	require.NoError(t, err)
+	amiType, err := archObj.GetImageType("ami")
+	require.NoError(t, err)
+
+	var uploadOptions UploadOptions
+	require.NoError(t, uploadOptions.FromAWSEC2UploadOptions(AWSEC2UploadOptions{
+		Region:            "us-east-1",
+		ShareWithAccounts: []string{"123456789012"},
+		SnapshotName:      common.ToPtr("preferred-ami-name"),
+		Tags: &[]AWSTag{
+			{Key: "environment", Value: "production"},
+		},
+	}))
+
+	ir := ImageRequest{
+		Architecture:  arch.ARCH_X86_64.String(),
+		ImageType:     ImageTypesAws,
+		UploadOptions: &uploadOptions,
+	}
+	targets, err := ir.GetTargets(amiType)
+	require.NoError(t, err)
+	require.Len(t, targets, 1)
+	require.Equal(t, "preferred-ami-name", targets[0].ImageName)
+	awsOpts, ok := targets[0].Options.(*target.AWSTargetOptions)
+	require.True(t, ok)
+	require.Equal(t, []target.AWSTag{
+		{Key: "environment", Value: "production"},
+		{Key: "composer-api", Value: awsOpts.Key},
+	}, awsOpts.Tags)
+}
