@@ -47,6 +47,7 @@ const (
 	ErrorDepsolveTimeout      ClientErrorCode = 40
 	ErrorBootcInfoResolve     ClientErrorCode = 41
 	ErrorBuildVersionMismatch ClientErrorCode = 42
+	ErrorSecureInstance       ClientErrorCode = 43
 )
 
 type ClientErrorCode int

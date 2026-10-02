@@ -3,6 +3,7 @@ package main
 var (
 	WorkerClientErrorFrom         = workerClientErrorFrom
 	MakeJobErrorFromOsbuildOutput = makeJobErrorFromOsbuildOutput
+	JobErrorFromOSBuildRun        = jobErrorFromOSBuildRun
 	Main                          = main
 	ParseManifestPipelines        = parseManifestPipelines
 )

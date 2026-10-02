@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math"
 	"math/big"
@@ -345,6 +346,13 @@ func makeJobErrorFromOsbuildOutput(result *osbuild.Result) *clienterrors.Error {
 	return clienterrors.New(clienterrors.ErrorBuildJob, "build failure", errors)
 }
 
+func jobErrorFromOSBuildRun(err error) *clienterrors.Error {
+	if errors.Is(err, osbuildexecutor.ErrSecureInstanceGone) {
+		return clienterrors.New(clienterrors.ErrorSecureInstance, "secure instance died", err.Error())
+	}
+	return clienterrors.New(clienterrors.ErrorBuildJob, "osbuild failed", err.Error())
+}
+
 func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 	logWithId := logrus.WithField("jobId", job.Id().String())
 	// Initialize variable needed for reporting back to osbuild-composer.
@@ -580,7 +588,7 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 	osbuildJobResult.OSBuildOutput, err = executor.RunOSBuild(jobArgs.Manifest, logWithId, job, opts)
 	// handle the case where something around running osbuild failed (starting, IO errors, etc.)
 	if err != nil {
-		osbuildJobResult.JobError = clienterrors.New(clienterrors.ErrorBuildJob, "osbuild failed", err.Error())
+		osbuildJobResult.JobError = jobErrorFromOSBuildRun(err)
 		return err
 	}
 
