@@ -2,7 +2,6 @@ package authentication
 
 import (
 	"context"
-	"crypto/tls"
 	"fmt"
 	"io"
 	"log"
@@ -16,10 +15,10 @@ import (
 )
 
 var (
-	conf      *oauth2.Config
-	ctx       context.Context
-	verifier  string
-	authToken string
+	conf        *oauth2.Config
+	exchangeCtx context.Context
+	verifier    string
+	authToken   string
 )
 
 const (
@@ -36,7 +35,7 @@ func callbackHandler(w http.ResponseWriter, r *http.Request) {
 	code := queryParts["code"][0]
 
 	// Exchange will do the handshake to retrieve the initial token.
-	tok, err := conf.Exchange(ctx, code, oauth2.VerifierOption(verifier))
+	tok, err := conf.Exchange(exchangeCtx, code, oauth2.VerifierOption(verifier))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -72,28 +71,40 @@ func shutdown(server *http.Server) {
 	}
 }
 
+// InitiateAuthCode runs the browser-based OAuth2 authorization code (PKCE) flow using the given
+// client identifier. TLS certificate verification is enabled by default. Use AuthCodeConfig to
+// configure additional trusted CAs or to opt in to insecure TLS for development only.
 func InitiateAuthCode(clientID string) (string, error) {
+	return NewAuthCodeConfig().
+		Client(clientID).
+		InitiateAuthCode(context.Background())
+}
+
+// InitiateAuthCode runs the browser-based OAuth2 authorization code (PKCE) flow.
+func (c *AuthCodeConfig) InitiateAuthCode(ctx context.Context) (string, error) {
+	if c.ClientID == "" {
+		return "", fmt.Errorf("client identifier is mandatory")
+	}
+
 	authToken = ""
-	ctx = context.Background()
 	// Create config for OAuth2, redirect to localhost for callback verification and retrieving tokens
 	conf = &oauth2.Config{
-		ClientID:     clientID,
+		ClientID:     c.ClientID,
 		ClientSecret: "",
 		Scopes:       []string{"openid"},
 		Endpoint: oauth2.Endpoint{
 			AuthURL:  DefaultAuthURL,
-			TokenURL: DefaultTokenURL,
+			TokenURL: c.tokenEndpoint(),
 		},
 		RedirectURL: fmt.Sprintf("%s:%s%s", RedirectURL, RedirectPort, CallbackHandler),
 	}
 	verifier = oauth2.GenerateVerifier()
 
-	// add transport for self-signed certificate to context
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	oauthClient, err := c.oauth2HTTPClient(ctx)
+	if err != nil {
+		return "", err
 	}
-	sslcli := &http.Client{Transport: tr}
-	ctx = context.WithValue(ctx, oauth2.HTTPClient, sslcli)
+	exchangeCtx = context.WithValue(ctx, oauth2.HTTPClient, oauthClient)
 
 	// Create URL with PKCE
 	url := conf.AuthCodeURL("state", oauth2.AccessTypeOffline, oauth2.S256ChallengeOption(verifier))
@@ -103,7 +114,7 @@ func InitiateAuthCode(clientID string) (string, error) {
 	httpServerExitDone.Add(1)
 	server := serve(httpServerExitDone)
 
-	err := open.Run(url)
+	err = open.Run(url)
 	if err != nil {
 		return authToken, err
 	}
