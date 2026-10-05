@@ -47,7 +47,7 @@ OCI_CONFIG=${TEMPDIR}/oci-config
 BLUEPRINT_FILE=${TEMPDIR}/blueprint.toml
 COMPOSE_START=${TEMPDIR}/compose-start-${TEST_ID}.json
 OCI_IMAGE_DATA=${TEMPDIR}/oci-image-data-${TEST_ID}.json
-SSH_DATA_DIR=$(tools/gen-ssh.sh)
+SSH_DATA_DIR=$(/usr/libexec/osbuild-composer-test/gen-ssh.sh)
 SSH_KEY=${SSH_DATA_DIR}/id_rsa
 
 OCI_USER=$(jq -r '.user' "$OCI_SECRETS")

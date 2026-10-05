@@ -16,7 +16,7 @@ function cleanup() {
 # Set up temporary files.
 TEMPDIR=$(mktemp -d)
 OCI_CONFIG=${TEMPDIR}/oci-config
-SSH_DATA_DIR=$(tools/gen-ssh.sh)
+SSH_DATA_DIR=$(/usr/libexec/osbuild-composer-test/gen-ssh.sh)
 SSH_KEY=${SSH_DATA_DIR}/id_rsa
 
 OCI_USER=$(jq -r '.user' "$OCI_SECRETS")
