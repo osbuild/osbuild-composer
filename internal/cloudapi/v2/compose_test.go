@@ -873,6 +873,7 @@ func TestGetImageRequests_ImageTypeConversion(t *testing.T) {
 	centos8 := "centos-8"
 	rhel9 := "rhel-9.10"
 	centos9 := "centos-9"
+	rhel10 := "rhel-10.2"
 	tests := []struct {
 		requestedImageType ImageTypes
 		requestedDistros   []string
@@ -889,6 +890,12 @@ func TestGetImageRequests_ImageTypeConversion(t *testing.T) {
 			requestedImageType: ImageTypesAws,
 			requestedDistros:   []string{fedora},
 			expectedImageType:  "generic-ami",
+			expectedTargetName: target.TargetNameAWS,
+		},
+		{
+			requestedImageType: ImageTypesAwsNvidia,
+			requestedDistros:   []string{rhel10},
+			expectedImageType:  "ami-nvidia",
 			expectedTargetName: target.TargetNameAWS,
 		},
 		{

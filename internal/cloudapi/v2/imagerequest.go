@@ -212,6 +212,8 @@ func getDefaultTarget(imageType ImageTypes) (UploadTypes, error) {
 		fallthrough
 	case ImageTypesAwsHaRhui:
 		fallthrough
+	case ImageTypesAwsNvidia:
+		fallthrough
 	case ImageTypesAwsRhui:
 		fallthrough
 	case ImageTypesAwsSapRhui:
@@ -292,6 +294,7 @@ func targetSupportMap() map[UploadTypes]map[ImageTypes]bool {
 			ImageTypesAwsCvm:     true,
 			ImageTypesAwsRhui:    true,
 			ImageTypesAwsHaRhui:  true,
+			ImageTypesAwsNvidia:  true,
 			ImageTypesAwsSapRhui: true,
 		},
 		UploadTypesAwsS3: {
@@ -337,6 +340,7 @@ func targetSupportMap() map[UploadTypes]map[ImageTypes]bool {
 			ImageTypesAwsCvm:                     true,
 			ImageTypesAwsRhui:                    true,
 			ImageTypesAwsHaRhui:                  true,
+			ImageTypesAwsNvidia:                  true,
 			ImageTypesAwsSapRhui:                 true,
 			ImageTypesAzure:                      true,
 			ImageTypesAzureCvm:                   true,

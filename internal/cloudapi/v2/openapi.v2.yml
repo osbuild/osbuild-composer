@@ -1448,6 +1448,7 @@ components:
         - aws
         - aws-cvm
         - aws-ha-rhui
+        - aws-nvidia
         - aws-rhui
         - aws-sap-rhui
         - azure
