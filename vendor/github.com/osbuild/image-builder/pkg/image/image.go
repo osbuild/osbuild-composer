@@ -35,18 +35,31 @@ func NewBase(name string, platform platform.Platform, filename string) Base {
 	}
 }
 
-func GetCompressionPipeline(compression string, buildPipeline manifest.Build, inputPipeline manifest.FilePipeline) manifest.FilePipeline {
+func GetCompressionPipeline(compression string, buildPipeline manifest.Build, inputPipeline manifest.FilePipeline, name string) manifest.FilePipeline {
 	switch compression {
 	case "xz":
-		return manifest.NewXZ(buildPipeline, inputPipeline)
+		return manifest.NewXZ(buildPipeline, inputPipeline, name)
 	case "zstd":
-		return manifest.NewZstd(buildPipeline, inputPipeline)
+		return manifest.NewZstd(buildPipeline, inputPipeline, name)
 	case "gzip":
-		return manifest.NewGzip(buildPipeline, inputPipeline)
+		return manifest.NewGzip(buildPipeline, inputPipeline, name)
 	case "":
 		return inputPipeline
 	default:
 		// panic on unknown strings
+		panic(fmt.Sprintf("unsupported compression type %q", compression))
+	}
+}
+
+func compressionExt(compression string) string {
+	switch compression {
+	case "xz":
+		return "xz"
+	case "zstd":
+		return "zst"
+	case "gzip":
+		return "gz"
+	default:
 		panic(fmt.Sprintf("unsupported compression type %q", compression))
 	}
 }

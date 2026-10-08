@@ -180,6 +180,7 @@ func (ac Client) CreateStorageAccount(ctx context.Context, resourceGroup, name, 
 	}
 
 	poller, err := ac.accounts.BeginCreate(ctx, resourceGroup, name, armstorage.AccountCreateParameters{
+		Kind: common.ToPtr(armstorage.KindStorageV2),
 		SKU: &armstorage.SKU{
 			Name: common.ToPtr(armstorage.SKUNameStandardLRS),
 			Tier: common.ToPtr(armstorage.SKUTierStandard),

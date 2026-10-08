@@ -207,14 +207,15 @@ func (c *Container) Stop() error {
 }
 
 // ResolveInfo loads all information from the running container.
-func (c *Container) ResolveInfo() (*Info, error) {
+// When variant is non-empty, variant-specific configuration is loaded.
+func (c *Container) ResolveInfo(variant string) (*Info, error) {
 	bootcInfo := &Info{
 		Imgref:  c.ref,
 		ImageID: c.id,
 		Arch:    c.Arch(),
 	}
 
-	os, err := osinfo.Load(c.RootFS())
+	os, err := osinfo.Load(c.RootFS(), variant)
 	if err != nil {
 		return nil, err
 	}
@@ -616,12 +617,12 @@ func runContainer(ref string, fn func(c *Container) error) (err error) {
 }
 
 // ResolveBootcInfo resolves the bootc container reference and returns the relevant info structure
-// for a container
-func ResolveBootcInfo(ref string) (*Info, error) {
+// for a container. When variant is non-empty, variant-specific configuration is loaded.
+func ResolveBootcInfo(ref, variant string) (*Info, error) {
 	var info *Info
 	err := runContainer(ref, func(c *Container) error {
 		var err error
-		info, err = c.ResolveInfo()
+		info, err = c.ResolveInfo(variant)
 		return err
 	})
 	return info, err
@@ -637,4 +638,16 @@ func ResolveBootcBuildInfo(ref string) (*Info, error) {
 		return err
 	})
 	return info, err
+}
+
+// ResolveBootcVariants resolves the bootc container reference and returns the
+// list of available deployment variant names.
+func ResolveBootcVariants(ref string) ([]string, error) {
+	var variants []string
+	err := runContainer(ref, func(c *Container) error {
+		var err error
+		variants, err = osinfo.ListVariants(c.RootFS())
+		return err
+	})
+	return variants, err
 }

@@ -16,6 +16,7 @@ func MockRun(new func()) (restore func()) {
 }
 
 type ResolveBootcInfoFuncType = resolveBootcInfoFuncType
+type ResolveBootcBuildInfoFuncType = resolveBootcBuildInfoFuncType
 
 func MockResolveBootcInfoFunc(mockFunc ResolveBootcInfoFuncType) (restore func()) {
 	saved := resolveBootcInfoFunc
@@ -25,7 +26,7 @@ func MockResolveBootcInfoFunc(mockFunc ResolveBootcInfoFuncType) (restore func()
 	}
 }
 
-func MockResolveBootcBuildInfoFunc(mockFunc ResolveBootcInfoFuncType) (restore func()) {
+func MockResolveBootcBuildInfoFunc(mockFunc ResolveBootcBuildInfoFuncType) (restore func()) {
 	saved := resolveBootcBuildInfoFunc
 	resolveBootcBuildInfoFunc = mockFunc
 	return func() {

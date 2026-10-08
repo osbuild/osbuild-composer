@@ -112,6 +112,12 @@ const (
 	ESPFstabOptions = "defaults,uid=0,gid=0,umask=077,shortname=winnt"
 )
 
+// RootPartitionTypeGUID returns the Discoverable Partitions Specification
+// root partition type for the given architecture.
+func RootPartitionTypeGUID(architecture arch.Arch) (string, error) {
+	return getPartitionTypeIDfor(PT_GPT, "root", architecture)
+}
+
 func getPartitionTypeIDfor(ptType PartitionTableType, partTypeName string, architecture arch.Arch) (string, error) {
 	switch ptType {
 	case PT_DOS:

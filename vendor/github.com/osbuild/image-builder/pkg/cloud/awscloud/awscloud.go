@@ -579,13 +579,18 @@ func (a *AWS) CheckBucketPermission(bucketName string, permission s3types.Permis
 	return false, nil
 }
 
-func (a *AWS) CreateSecurityGroupEC2(name, description string) (*ec2.CreateSecurityGroupOutput, error) {
+func (a *AWS) CreateSecurityGroupEC2(name, description, vpcID string) (*ec2.CreateSecurityGroupOutput, error) {
+	input := &ec2.CreateSecurityGroupInput{
+		GroupName:   aws.String(name),
+		Description: aws.String(description),
+	}
+	if vpcID != "" {
+		input.VpcId = aws.String(vpcID)
+	}
+
 	return a.ec2.CreateSecurityGroup(
 		context.TODO(),
-		&ec2.CreateSecurityGroupInput{
-			GroupName:   aws.String(name),
-			Description: aws.String(description),
-		},
+		input,
 	)
 }
 
@@ -609,22 +614,28 @@ func (a *AWS) AuthorizeSecurityGroupIngressEC2(groupID, address string, from, to
 		})
 }
 
-func (a *AWS) RunInstanceEC2(imageID, secGroupID, userData, instanceType string) (*ec2types.Reservation, error) {
+func (a *AWS) RunInstanceEC2(imageID, secGroupID, userData, instanceType, subnetID string) (*ec2types.Reservation, error) {
 	ec2InstanceType := ec2types.InstanceType(instanceType)
 	if !slices.Contains(ec2InstanceType.Values(), ec2InstanceType) {
 		return nil, fmt.Errorf("ec2 doesn't support the following instance type: %s", instanceType)
 	}
 
+	input := &ec2.RunInstancesInput{
+		MaxCount:         aws.Int32(1),
+		MinCount:         aws.Int32(1),
+		ImageId:          &imageID,
+		InstanceType:     ec2InstanceType,
+		SecurityGroupIds: []string{secGroupID},
+		UserData:         aws.String(encodeBase64(userData)),
+	}
+	if subnetID != "" {
+		input.SubnetId = aws.String(subnetID)
+	}
+
 	runInstanceOutput, err := a.ec2.RunInstances(
 		context.TODO(),
-		&ec2.RunInstancesInput{
-			MaxCount:         aws.Int32(1),
-			MinCount:         aws.Int32(1),
-			ImageId:          &imageID,
-			InstanceType:     ec2InstanceType,
-			SecurityGroupIds: []string{secGroupID},
-			UserData:         aws.String(encodeBase64(userData)),
-		})
+		input,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -686,7 +697,15 @@ func (a *AWS) GetInstanceAddress(instanceID string) (string, error) {
 		return "", err
 	}
 
-	return *reservation.Instances[0].PublicIpAddress, nil
+	instance := reservation.Instances[0]
+	if instance.PublicIpAddress != nil && *instance.PublicIpAddress != "" {
+		return *instance.PublicIpAddress, nil
+	}
+	if instance.PrivateIpAddress != nil && *instance.PrivateIpAddress != "" {
+		return *instance.PrivateIpAddress, nil
+	}
+
+	return "", fmt.Errorf("instance %s has no public or private IP address", instanceID)
 }
 
 // DeleteEC2Image deletes the specified image and all of its associated snapshots

@@ -22,10 +22,13 @@ func (p *XZ) SetFilename(filename string) {
 }
 
 // NewXZ creates a new XZ pipeline. imgPipeline is the pipeline producing the
-// raw image that will be xz compressed.
-func NewXZ(buildPipeline Build, imgPipeline FilePipeline) *XZ {
+// raw image that will be xz compressed. If name is empty, "xz" is used.
+func NewXZ(buildPipeline Build, imgPipeline FilePipeline, name string) *XZ {
+	if name == "" {
+		name = "xz"
+	}
 	p := &XZ{
-		Base:        NewBase("xz", buildPipeline),
+		Base:        NewBase(name, buildPipeline),
 		filename:    "image.xz",
 		imgPipeline: imgPipeline,
 	}

@@ -146,7 +146,7 @@ func (img *BootcPXEImage) InstantiateManifestFromContainers(m *manifest.Manifest
 	tarPipeline := manifest.NewTar(buildPipeline, pxeTreePipeline, "tar")
 	tarPipeline.Paths = pxeTreePipeline.GetTarFiles()
 
-	compressionPipeline := GetCompressionPipeline(img.Compression, buildPipeline, tarPipeline)
+	compressionPipeline := GetCompressionPipeline(img.Compression, buildPipeline, tarPipeline, "")
 	compressionPipeline.SetFilename(img.filename)
 	return nil
 }

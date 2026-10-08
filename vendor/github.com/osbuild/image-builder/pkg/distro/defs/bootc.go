@@ -169,6 +169,16 @@ func NewBootcWithLoader(loader *Loader, name string, cinfo *bootc.Info) (*BootcD
 		imageTypes: map[string]distro.ImageType{},
 	}
 	for _, imgTypeYaml := range distroYAML.ImageTypes() {
+		if osInfo.ExtrasInfo.Partitions != nil && imgTypeYaml.Extras.Partitions == nil {
+			imgTypeYaml.Extras.Partitions = make(map[string]partitionDef)
+		}
+		for name, p := range osInfo.ExtrasInfo.Partitions {
+			imgTypeYaml.Extras.Partitions[name] = partitionDef{
+				Mountpoint:  p.Mountpoint,
+				Filename:    p.Filename,
+				Compression: p.Compression,
+			}
+		}
 		err := ba.addBootcImageType(bootcImageType{
 			ImageTypeYAML: imgTypeYaml,
 		})

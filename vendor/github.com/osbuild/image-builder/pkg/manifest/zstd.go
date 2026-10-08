@@ -22,10 +22,13 @@ func (p *Zstd) SetFilename(filename string) {
 }
 
 // NewZstd creates a new Zstd pipeline. imgPipeline is the pipeline producing the
-// raw image that will be zstd compressed.
-func NewZstd(buildPipeline Build, imgPipeline FilePipeline) *Zstd {
+// raw image that will be zstd compressed. If name is empty, "zstd" is used.
+func NewZstd(buildPipeline Build, imgPipeline FilePipeline, name string) *Zstd {
+	if name == "" {
+		name = "zstd"
+	}
 	p := &Zstd{
-		Base:        NewBase("zstd", buildPipeline),
+		Base:        NewBase(name, buildPipeline),
 		filename:    "image.zst",
 		imgPipeline: imgPipeline,
 	}

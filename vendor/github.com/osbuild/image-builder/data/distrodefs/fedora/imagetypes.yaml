@@ -654,6 +654,12 @@
       - "fragments"
     cluster-size: 1048576
 
+  # ostree filesystem access involves many small reads, so a large
+  # pcluster size causes read amplification
+  atomic_erofs_options: &atomic_erofs_options
+    <<: *default_erofs_options
+    cluster-size: 32768
+
   image_config:
     iot_enabled_services: &image_config_iot_enabled_services
       enabled_services:
@@ -1286,7 +1292,7 @@
     iso_config:
       <<: *default_iso_config
       rootfs_type: "erofs"
-      erofs_options: *default_erofs_options
+      erofs_options: *atomic_erofs_options
     installer_config: &atomic_installer_installer_config_common
       <<: *default_installer_config
       install_weak_deps: false
@@ -2623,6 +2629,7 @@ image_types:
         - "customizations.fips"
         - "customizations.group"
         - "customizations.installer"
+        - "customizations.iso"
         - "customizations.kernel.append"
         - "customizations.locale"
         - "customizations.user"

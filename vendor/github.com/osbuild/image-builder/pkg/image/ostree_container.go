@@ -30,6 +30,12 @@ type OSTreeContainer struct {
 	OSVersion              string
 	ExtraContainerPackages rpmmd.PackageSet // FIXME: this is never read
 	ContainerLanguage      string
+
+	// Bootupd enables bootupd metadata generation for the OSTree commit
+	// embedded in the container. When true, runs bootupctl backend
+	// generate-update-metadata so /usr/lib/bootupd/updates/ is present for
+	// later edge-installer / Anaconda bootupctl backend install.
+	Bootupd bool
 }
 
 func NewOSTreeContainer(platform platform.Platform, filename string, ref string) *OSTreeContainer {
@@ -53,6 +59,10 @@ func (img *OSTreeContainer) InstantiateManifest(m *manifest.Manifest,
 	osPipeline.OSTreeRef = img.OSTreeRef
 	osPipeline.OSTreeParent = img.OSTreeParent
 
+	if img.Bootupd {
+		osPipeline.Bootupd = true
+	}
+
 	commitPipeline := manifest.NewOSTreeCommit(buildPipeline, osPipeline, img.OSTreeRef)
 	commitPipeline.OSVersion = img.OSVersion
 
@@ -68,7 +78,9 @@ func (img *OSTreeContainer) InstantiateManifest(m *manifest.Manifest,
 	)
 	serverPipeline.OSTreeCommitServerCustomizations = img.OSTreeCommitServerCustomizations
 	serverPipeline.Language = img.ContainerLanguage
-	serverPipeline.RPMKeysBinary = img.OSCustomizations.RPMKeysBinary
+	if img.OSCustomizations.BaseRPMOptions.RPMKeys != nil {
+		serverPipeline.RPMKeysBinary = img.OSCustomizations.BaseRPMOptions.RPMKeys.BinPath
+	}
 
 	containerPipeline := manifest.NewOCIContainer(buildPipeline, serverPipeline)
 	containerPipeline.OCIContainerCustomizations = img.OCIContainerCustomizations

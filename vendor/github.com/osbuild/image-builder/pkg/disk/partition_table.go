@@ -750,6 +750,19 @@ func (pt *PartitionTable) FindMountableOnPlain(mountpoint string) Mountable {
 	return path[0].(Mountable)
 }
 
+// FindPartitionForMountpoint returns the Partition containing the given
+// mountpoint regardless of intermediate containers like Btrfs or LVM.
+// Returns nil if the mountpoint is not found.
+func (pt *PartitionTable) FindPartitionForMountpoint(mountpoint string) *Partition {
+	path := entityPath(pt, mountpoint)
+	for _, ent := range path {
+		if p, ok := ent.(*Partition); ok {
+			return p
+		}
+	}
+	return nil
+}
+
 // ESPSize returns the size of the EFI system partition in the PartitionTable.
 // Returns 0 if the table has no ESP.
 // For DOS partition tables we match type "ef" or "06" if mounted at /boot/efi.

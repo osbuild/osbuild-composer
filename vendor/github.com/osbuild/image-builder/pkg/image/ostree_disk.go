@@ -109,7 +109,7 @@ func (img *OSTreeDiskImage) InstantiateManifest(m *manifest.Manifest,
 		qcow2Pipeline.SetFilename(img.filename)
 		return qcow2Pipeline.Export(), nil
 	default:
-		compressionPipeline := GetCompressionPipeline(img.Compression, buildPipeline, baseImage)
+		compressionPipeline := GetCompressionPipeline(img.Compression, buildPipeline, baseImage, "")
 		compressionPipeline.SetFilename(img.filename)
 
 		return compressionPipeline.Export(), nil

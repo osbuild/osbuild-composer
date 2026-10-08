@@ -156,3 +156,10 @@ Or if the error looks like:
 ostree-prepare-root: Failed to mount composefs: composefs: failed to mount: Input/output error
 
 Check the prepare-root.conf file to make sure composefs has been disabled.
+
+## Waits for mountpoints at boot time
+
+If you see it waiting for mountpoint (eg. /boot) devices to appear and then it
+times out you should make sure `fstab=no` is on the kernel cmdline -- this
+prevents the system from reading fstab and trying to create mounts for
+non-existant partitions.

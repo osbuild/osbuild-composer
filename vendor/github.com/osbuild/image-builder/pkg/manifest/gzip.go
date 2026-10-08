@@ -22,10 +22,13 @@ func (p *Gzip) SetFilename(filename string) {
 }
 
 // NewGzip creates a new Gzip pipeline. imgPipeline is the pipeline producing the
-// raw image that will be gzip compressed.
-func NewGzip(buildPipeline Build, imgPipeline FilePipeline) *Gzip {
+// raw image that will be gzip compressed. If name is empty, "gzip" is used.
+func NewGzip(buildPipeline Build, imgPipeline FilePipeline, name string) *Gzip {
+	if name == "" {
+		name = "gzip"
+	}
 	p := &Gzip{
-		Base:        NewBase("gzip", buildPipeline),
+		Base:        NewBase(name, buildPipeline),
 		filename:    "image.gz",
 		imgPipeline: imgPipeline,
 	}
