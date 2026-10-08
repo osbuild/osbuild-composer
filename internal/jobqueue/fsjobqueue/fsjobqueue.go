@@ -77,6 +77,7 @@ type job struct {
 	Token        uuid.UUID       `json:"token"`
 	Type         string          `json:"type"`
 	Args         json.RawMessage `json:"args,omitempty"`
+	ComposeId    uuid.UUID       `json:"compose_id,omitempty"`
 	Dependencies []uuid.UUID     `json:"dependencies"`
 	Dependents   []uuid.UUID     `json:"dependents"`
 	Result       json.RawMessage `json:"result,omitempty"`
@@ -146,14 +147,25 @@ func New(dir string) (*fsJobQueue, error) {
 	return q, nil
 }
 
-func (q *fsJobQueue) Enqueue(jobType string, args interface{}, dependencies []uuid.UUID, channel string) (uuid.UUID, error) {
+func (q *fsJobQueue) Enqueue(jobType string, args interface{}, dependencies []uuid.UUID, channel string, params ...jobqueue.EnqueueParams) (uuid.UUID, error) {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 
+	var p jobqueue.EnqueueParams
+	if len(params) > 0 {
+		p = params[0]
+	}
+	if p.ID == uuid.Nil {
+		p.ID = uuid.New()
+	}
+	if p.ComposeID == uuid.Nil {
+		p.ComposeID = p.ID
+	}
 	var j = job{
-		Id:           uuid.New(),
+		Id:           p.ID,
 		Token:        uuid.Nil,
 		Type:         jobType,
+		ComposeId:    p.ComposeID,
 		Dependencies: dependencies,
 		QueuedAt:     time.Now(),
 		Channel:      channel,
@@ -515,6 +527,14 @@ func (q *fsJobQueue) Job(id uuid.UUID) (jobType string, args json.RawMessage, de
 	channel = j.Channel
 
 	return
+}
+
+func (q *fsJobQueue) ComposeID(id uuid.UUID) (uuid.UUID, error) {
+	j, err := q.readJob(id)
+	if err != nil {
+		return uuid.Nil, err
+	}
+	return j.ComposeId, nil
 }
 
 func (q *fsJobQueue) IdFromToken(token uuid.UUID) (id uuid.UUID, err error) {

@@ -3,8 +3,6 @@ package main
 import (
 	"fmt"
 
-	"github.com/sirupsen/logrus"
-
 	"github.com/osbuild/image-builder/pkg/container"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
@@ -15,7 +13,7 @@ type ContainerResolveJobImpl struct {
 }
 
 func (impl *ContainerResolveJobImpl) Run(job worker.Job) error {
-	logWithId := logrus.WithField("jobId", job.Id())
+	logWithId := jobLog(job)
 
 	result := worker.ContainerResolveJobResult{}
 	defer func() {

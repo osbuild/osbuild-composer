@@ -3,11 +3,13 @@ package logger
 import (
 	"context"
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 )
 
@@ -61,5 +63,35 @@ func TestSplunkLoggerContext(t *testing.T) {
 	defer cancel()
 	sl := NewSplunkLogger(ctx, srv.URL, "", "image-builder", "test-host")
 	require.NoError(t, sl.LogWithTime(time.Now(), "message"))
+	require.True(t, <-ch)
+}
+
+func TestSplunkHookComposeAndJobID(t *testing.T) {
+	ch := make(chan bool)
+	time.AfterFunc(time.Second*10, func() {
+		ch <- false
+	})
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		require.Equal(t, "application/json", r.Header.Get("Content-Type"))
+		var sp SplunkPayload
+		err := json.NewDecoder(r.Body).Decode(&sp)
+		require.NoError(t, err)
+		require.Equal(t, "image-builder", sp.Event.Ident)
+		require.Equal(t, "compose-uuid", sp.Event.ComposeID)
+		require.Equal(t, "job-uuid", sp.Event.JobID)
+		require.NotEmpty(t, sp.Event.Message)
+		ch <- true
+	}))
+	hook := &SplunkHook{sl: NewSplunkLogger(context.Background(), srv.URL, "", "image-builder", "test-host")}
+	logger := logrus.New()
+	logger.SetOutput(io.Discard)
+	entry := logger.WithFields(logrus.Fields{
+		"compose_id": "compose-uuid",
+		"job_id":     "job-uuid",
+	})
+	entry.Time = time.Now()
+	entry.Message = "Dequeued job"
+	entry.Level = logrus.InfoLevel
+	require.NoError(t, hook.Fire(entry))
 	require.True(t, <-ch)
 }

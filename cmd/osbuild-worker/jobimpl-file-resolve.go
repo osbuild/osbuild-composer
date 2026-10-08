@@ -1,8 +1,6 @@
 package main
 
 import (
-	"github.com/sirupsen/logrus"
-
 	"github.com/osbuild/osbuild-composer/internal/remotefile"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
@@ -11,7 +9,7 @@ import (
 type FileResolveJobImpl struct{}
 
 func (impl *FileResolveJobImpl) Run(job worker.Job) error {
-	logWithId := logrus.WithField("jobId", job.Id())
+	logWithId := jobLog(job)
 
 	var err error
 	result := worker.FileResolveJobResult{
@@ -20,7 +18,6 @@ func (impl *FileResolveJobImpl) Run(job worker.Job) error {
 	}
 
 	defer func() {
-		logWithId := logrus.WithField("jobId", job.Id().String())
 		if result.JobError != nil {
 			logWithId.Errorf("file content resolve job failed: %s", result.JobError.Reason)
 			if result.JobError.Details != nil {

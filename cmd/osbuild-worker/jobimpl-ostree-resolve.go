@@ -5,8 +5,6 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/sirupsen/logrus"
-
 	"github.com/osbuild/image-builder/pkg/ostree"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
@@ -63,7 +61,7 @@ func setError(err error, result *worker.OSTreeResolveJobResult) {
 }
 
 func (impl *OSTreeResolveJobImpl) Run(job worker.Job) error {
-	logWithId := logrus.WithField("jobId", job.Id())
+	logWithId := jobLog(job)
 	var args worker.OSTreeResolveJob
 	err := job.Args(&args)
 	if err != nil {

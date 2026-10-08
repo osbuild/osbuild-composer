@@ -5,7 +5,6 @@ import (
 	"github.com/osbuild/image-builder/pkg/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/worker"
 	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
-	"github.com/sirupsen/logrus"
 )
 
 // SearchPackagesJobImpl shares the solver with the depsolve job.
@@ -28,7 +27,7 @@ func (impl *SearchPackagesJobImpl) search(repos []rpmmd.RepoConfig, modulePlatfo
 
 // Run executes the search and returns the results
 func (impl *SearchPackagesJobImpl) Run(job worker.Job) error {
-	logWithId := logrus.WithField("jobId", job.Id())
+	logWithId := jobLog(job)
 
 	var result worker.SearchPackagesJobResult
 	// ALWAYS return a result

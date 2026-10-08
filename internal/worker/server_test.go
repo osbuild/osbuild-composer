@@ -173,7 +173,28 @@ func TestCreate(t *testing.T) {
 	emptyManifest := `{"version":"2","pipelines":[{"name":"build"},{"name":"os"}],"sources":{}}`
 	test.TestRoute(t, handler, false, "POST", "/api/worker/v1/jobs",
 		fmt.Sprintf(`{"types":["%s"],"arch":"%s"}`, worker.JobTypeOSBuild, test_distro.TestArchName), http.StatusCreated,
-		fmt.Sprintf(`{"kind":"RequestJob","href":"/api/worker/v1/jobs","type":"%s","args":{"manifest":`+emptyManifest+`}}`, worker.JobTypeOSBuild), "id", "location", "artifact_location")
+		fmt.Sprintf(`{"kind":"RequestJob","href":"/api/worker/v1/jobs","type":"%s","args":{"manifest":`+emptyManifest+`}}`, worker.JobTypeOSBuild), "id", "location", "artifact_location", "compose_id")
+}
+
+func TestRequestJobComposeID(t *testing.T) {
+	server := newTestServer(t, t.TempDir(), defaultConfig, false)
+	handler := server.Handler()
+
+	composeID := uuid.New()
+	depsolveID, err := server.EnqueueDepsolve(&worker.DepsolveJob{}, "", jobqueue.Child(composeID))
+	require.NoError(t, err)
+	osbuildID, err := server.EnqueueOSBuildAsDependency(test_distro.TestArchName, &worker.OSBuildJob{}, []uuid.UUID{depsolveID}, "", jobqueue.Root(composeID))
+	require.NoError(t, err)
+	require.Equal(t, composeID, osbuildID)
+
+	reply := test.TestRouteWithReply(t, handler, false, "POST", "/api/worker/v1/jobs",
+		fmt.Sprintf(`{"types":["%s"],"arch":"%s"}`, worker.JobTypeDepsolve, test_distro.TestArchName),
+		http.StatusCreated, "*")
+	var jr api.RequestJobResponse
+	require.NoError(t, json.Unmarshal(reply, &jr))
+	require.Equal(t, depsolveID.String(), jr.Id)
+	require.NotNil(t, jr.ComposeId)
+	require.Equal(t, composeID.String(), *jr.ComposeId)
 }
 
 func TestCancel(t *testing.T) {

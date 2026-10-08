@@ -32,7 +32,10 @@ type JobQueue interface {
 	// have finished.
 	//
 	// Returns the id of the new job, or an error.
-	Enqueue(jobType string, args interface{}, dependencies []uuid.UUID, channel string) (uuid.UUID, error)
+	//
+	// Optional EnqueueParams set the job UUID and compose_id. Omit them for a
+	// generated job id that is also its own compose_id.
+	Enqueue(jobType string, args interface{}, dependencies []uuid.UUID, channel string, params ...EnqueueParams) (uuid.UUID, error)
 
 	// Dequeues a job, blocking until one is available.
 	//
@@ -92,6 +95,10 @@ type JobQueue interface {
 	// Job returns all the parameters that define a job (everything provided during Enqueue).
 	Job(id uuid.UUID) (jobType string, args json.RawMessage, dependencies []uuid.UUID, channel string, err error)
 
+	// ComposeID returns the compose / graph root UUID stored for this job.
+	// Returns uuid.Nil if the job has none recorded (legacy rows).
+	ComposeID(id uuid.UUID) (uuid.UUID, error)
+
 	// Find job by token, this will return an error if the job hasn't been dequeued
 	IdFromToken(token uuid.UUID) (id uuid.UUID, err error)
 
@@ -148,4 +155,21 @@ type Worker struct {
 	ID      uuid.UUID
 	Channel string
 	Arch    string
+}
+
+// EnqueueParams optionally sets the new job's UUID and compose_id.
+// Zero values mean: generate a job ID, and use that ID as compose_id.
+type EnqueueParams struct {
+	ID        uuid.UUID
+	ComposeID uuid.UUID
+}
+
+// Child stamps a job as belonging to composeID without pinning the job UUID.
+func Child(composeID uuid.UUID) EnqueueParams {
+	return EnqueueParams{ComposeID: composeID}
+}
+
+// Root pins the job UUID to composeID so the graph root is the compose id.
+func Root(composeID uuid.UUID) EnqueueParams {
+	return EnqueueParams{ID: composeID, ComposeID: composeID}
 }
