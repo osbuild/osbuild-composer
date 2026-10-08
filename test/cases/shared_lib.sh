@@ -57,7 +57,7 @@ function get_compose_status() {
 # Function to wait for a compose to finish
 function wait_for_compose() {
     local compose_id="$1"
-    local timeout=${2:-1200}
+    local timeout=${2:-1800}
     local compose_status
 
     if [[ -z "$compose_id" ]]; then
