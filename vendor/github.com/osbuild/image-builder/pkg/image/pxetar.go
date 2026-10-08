@@ -68,7 +68,7 @@ func (img *PXETar) InstantiateManifest(m *manifest.Manifest,
 
 	tarPipeline := manifest.NewTar(buildPipeline, pxeTreePipeline, "tar")
 
-	compressionPipeline := GetCompressionPipeline(img.Compression, buildPipeline, tarPipeline)
+	compressionPipeline := GetCompressionPipeline(img.Compression, buildPipeline, tarPipeline, "")
 	compressionPipeline.SetFilename(img.filename)
 
 	return compressionPipeline.Export(), nil

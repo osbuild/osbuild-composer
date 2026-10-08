@@ -151,6 +151,13 @@ func (p *ISOTree) serialize() (osbuild.Pipeline, error) {
 	copyStage := osbuild.NewCopyStageSimple(copyStageOptions, copyStageInputs)
 	pipeline.AddStage(copyStage)
 
+	pipeline.AddStage(osbuild.NewChmodStage(&osbuild.ChmodStageOptions{
+		Items: map[string]osbuild.ChmodStagePathOptions{
+			"/images/pxeboot/vmlinuz":    {Mode: "0644"},
+			"/images/pxeboot/initrd.img": {Mode: "0644"},
+		},
+	}))
+
 	// Add the selected rootfs stage
 	switch p.RootfsType {
 	case SquashfsRootfs:

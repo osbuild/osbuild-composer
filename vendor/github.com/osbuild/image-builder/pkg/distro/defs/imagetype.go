@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/rand"
 	"slices"
+	"strings"
 	"text/template"
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
@@ -76,6 +77,10 @@ type imageType struct {
 
 	diskImageVPCForceSize *bool
 	diskImageGiBAligned   bool
+
+	sysexts    []SysextDef
+	partitions []PartitionDef
+	files      []FileDef
 
 	supportedPartitioningModes []partition.PartitioningMode
 
@@ -196,6 +201,13 @@ func newImageTypeFrom(d *distribution, ar *architecture, imgYAML ImageTypeYAML) 
 	}
 
 	it.partitionTable = basePT
+	it.sysexts = imgYAML.Sysexts(d.ID(), ar.Name())
+	it.partitions = imgYAML.Partitions()
+	files, err := imgYAML.Files(d.ID(), ar.Name())
+	if err != nil {
+		return imageType{}, err
+	}
+	it.files = files
 
 	it.packageSets = imgYAML.PackageSets(d.ID(), ar.Name())
 
@@ -254,6 +266,74 @@ func (t *imageType) PayloadPackageSets() []string {
 
 func (t *imageType) Exports() []string {
 	return t.exports
+}
+
+func (t *imageType) Extras() []string {
+	var names []string
+	for _, s := range t.sysexts {
+		names = append(names, "sysext:"+s.Name)
+	}
+	for _, sp := range t.partitions {
+		names = append(names, "partition:"+sp.Name)
+	}
+	for _, f := range t.files {
+		names = append(names, "file:"+f.Name)
+	}
+	return names
+}
+
+func (t *imageType) ExportsWithExtras(refs []string) ([]string, map[string]distro.ExtraRef, error) {
+	exports := slices.Clone(t.exports)
+	extraRefs := make(map[string]distro.ExtraRef)
+	for _, ref := range refs {
+		typ, name, ok := strings.Cut(ref, ":")
+		if !ok {
+			return nil, nil, fmt.Errorf("invalid extra reference %q, expected type:name (e.g. sysext:nginx)", ref)
+		}
+		er := distro.ExtraRef{Type: typ, Name: name}
+		var found bool
+		switch typ {
+		case "sysext":
+			for _, s := range t.sysexts {
+				if s.Name == name {
+					for _, p := range s.ExportPipelineNames() {
+						extraRefs[p] = er
+					}
+					exports = append(exports, s.ExportPipelineNames()...)
+					found = true
+					break
+				}
+			}
+		case "partition":
+			for _, sp := range t.partitions {
+				if sp.Name == name {
+					for _, p := range sp.ExportPipelineNames() {
+						extraRefs[p] = er
+					}
+					exports = append(exports, sp.ExportPipelineNames()...)
+					found = true
+					break
+				}
+			}
+		case "file":
+			for _, f := range t.files {
+				if f.Name == name {
+					for _, p := range f.ExportPipelineNames() {
+						extraRefs[p] = er
+					}
+					exports = append(exports, f.ExportPipelineNames()...)
+					found = true
+					break
+				}
+			}
+		default:
+			return nil, nil, fmt.Errorf("unknown extra type %q in %q", typ, ref)
+		}
+		if !found {
+			return nil, nil, fmt.Errorf("unknown extra %q", ref)
+		}
+	}
+	return exports, extraRefs, nil
 }
 
 func (t *imageType) BootMode() platform.BootMode {

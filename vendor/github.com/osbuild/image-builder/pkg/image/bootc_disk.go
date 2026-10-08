@@ -24,6 +24,8 @@ type BootcDiskImage struct {
 	Bootloader    *string
 	UnifiedKernel bool
 
+	Partitions []PartitionConfig
+
 	// Customizations
 	OSCustomizations   manifest.OSCustomizations
 	DiskCustomizations manifest.DiskCustomizations
@@ -115,6 +117,21 @@ func (img *BootcDiskImage) InstantiateManifestFromContainers(m *manifest.Manifes
 	rawImage.PartitionTable = img.PartitionTable
 	rawImage.OSCustomizations = img.OSCustomizations
 	rawImage.DiskCustomizations = img.DiskCustomizations
+
+	for _, sp := range img.Partitions {
+		partPipelineName := PartitionPipelineName(sp.Name, "")
+		partPipeline := manifest.NewPartitionImage(buildPipeline, rawImage, sp.Mountpoint, img.PartitionTable, partPipelineName)
+		partPipeline.SetFilename(sp.Name + ".raw")
+		var exportPipeline manifest.FilePipeline = partPipeline
+		if sp.Compression != "" {
+			exportPipeline = GetCompressionPipeline(sp.Compression, buildPipeline, partPipeline, PartitionPipelineName(sp.Name, sp.Compression))
+			exportPipeline.SetFilename(fmt.Sprintf("%s.raw.%s", sp.Name, compressionExt(sp.Compression)))
+		}
+		if sp.Filename != "" {
+			exportPipeline.SetFilename(sp.Filename)
+		}
+		exportPipeline.Export()
+	}
 
 	// In BIB, we export multiple images from the same pipeline so we use the
 	// filename as the basename for each export and set the extensions based on

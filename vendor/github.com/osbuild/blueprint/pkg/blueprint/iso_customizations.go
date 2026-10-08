@@ -13,8 +13,8 @@ type ISOCustomization struct {
 }
 
 func validateVolumeID(volumeID string) error {
-	if regexp.MustCompile(`^[\w\d_-]+$`).MatchString(volumeID) {
+	if regexp.MustCompile(`^[\w\d._$-]+$`).MatchString(volumeID) {
 		return nil
 	}
-	return fmt.Errorf("invalid volume id %q, may contain letters, numbers, -, and _ only", volumeID)
+	return fmt.Errorf("invalid volume id %q, may contain letters, numbers, -, _, ., and $ only", volumeID)
 }

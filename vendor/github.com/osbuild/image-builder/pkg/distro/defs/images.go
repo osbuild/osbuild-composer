@@ -75,13 +75,13 @@ func osCustomizations(t *imageType, osPackageSet rpmmd.PackageSet, options distr
 	osc.BlueprintModules = bp.GetEnabledModules()
 	osc.Containers = containers
 
-	osc.GPGKeyFiles = imageConfig.GPGKeyFiles
+	osc.BaseRPMOptions.GPGKeysFromTree = imageConfig.GPGKeyFiles
 	if rpm := c.GetRPM(); rpm != nil && rpm.ImportKeys != nil {
-		osc.GPGKeyFiles = append(osc.GPGKeyFiles, rpm.ImportKeys.Files...)
+		osc.BaseRPMOptions.GPGKeysFromTree = append(osc.BaseRPMOptions.GPGKeysFromTree, rpm.ImportKeys.Files...)
 	}
 
-	if imageConfig.ExcludeDocs != nil {
-		osc.ExcludeDocs = *imageConfig.ExcludeDocs
+	if imageConfig.ExcludeDocs != nil && *imageConfig.ExcludeDocs {
+		osc.BaseRPMOptions.Exclude = &osbuild.Exclude{Docs: true}
 	}
 
 	if imageConfig.Hostonly != nil {
@@ -167,7 +167,7 @@ func osCustomizations(t *imageType, osPackageSet rpmmd.PackageSet, options distr
 		osc.InstallWeakDeps = *imageConfig.InstallWeakDeps
 	}
 
-	osc.InstallLangs = imageConfig.InstallLangs
+	osc.BaseRPMOptions.InstallLangs = imageConfig.InstallLangs
 
 	if imageConfig.RPM != nil {
 		osc.RPMMacros = imageConfig.RPM.Macros
@@ -381,12 +381,21 @@ func osCustomizations(t *imageType, osPackageSet rpmmd.PackageSet, options distr
 	osc.VersionlockPackages = imageConfig.VersionlockPackages
 
 	if tweaks := t.arch.distro.GetTweaks(); tweaks != nil && tweaks.RPMKeys != nil && tweaks.RPMKeys.BinPath != "" {
-		osc.RPMKeysBinary = tweaks.RPMKeys.BinPath
+		osc.BaseRPMOptions.RPMKeys = &osbuild.RPMKeys{BinPath: tweaks.RPMKeys.BinPath}
 	}
 
 	distroID := t.arch.distro.ID()
-	osc.ImageID = distroID.ImageID
-	osc.ImageVersion = distroID.ImageVersion
+	if distroID.ImageID != "" || distroID.ImageVersion != "" {
+		if osc.BaseRPMOptions.GenericEnv == nil {
+			osc.BaseRPMOptions.GenericEnv = make(map[string]string)
+		}
+		if distroID.ImageID != "" {
+			osc.BaseRPMOptions.GenericEnv["IMAGE_ID"] = distroID.ImageID
+		}
+		if distroID.ImageVersion != "" {
+			osc.BaseRPMOptions.GenericEnv["IMAGE_VERSION"] = distroID.ImageVersion
+		}
+	}
 
 	if sshdCust := c.GetSshd(); sshdCust != nil && imageConfig.SshdConfig != nil {
 		if sshdCust.PasswordAuthentication != nil {
@@ -592,7 +601,7 @@ type ISOImageType interface {
 	getDefaultISOConfig() *distro.ISOConfig
 }
 
-func isoCustomizations(t ISOImageType, c *blueprint.Customizations) (manifest.ISOCustomizations, error) {
+func isoCustomizations(t ISOImageType, c *blueprint.Customizations, architecture arch.Arch) (manifest.ISOCustomizations, error) {
 	isoLabel, err := t.ISOLabel()
 	if err != nil {
 		return manifest.ISOCustomizations{}, err
@@ -654,7 +663,7 @@ func isoCustomizations(t ISOImageType, c *blueprint.Customizations) (manifest.IS
 		}
 
 		if isoCust.VolumeID != "" {
-			isc.Label = isoCust.VolumeID
+			isc.Label = replaceBasicTemplate(isoCust.VolumeID, architecture)
 		}
 
 		if isoCust.ApplicationID != "" {
@@ -810,6 +819,38 @@ func diskImage(t *imageType,
 
 	img.VPCForceSize = t.diskImageVPCForceSize
 
+	d := t.Arch().Distro()
+	for _, sysext := range t.sysexts {
+		img.Sysexts = append(img.Sysexts, image.SysextConfig{
+			Name:                      sysext.Name,
+			Format:                    sysext.Format,
+			ExtensionReleaseID:        strings.ToLower(d.Product()),
+			ExtensionReleaseVersionID: d.OsVersion(),
+			Paths:                     sysext.Paths,
+			ExcludePaths:              sysext.ExcludePaths,
+			PackageSet:                sysext.Packages,
+			Standalone:                sysext.Standalone,
+		})
+	}
+
+	for _, sp := range t.partitions {
+		img.Partitions = append(img.Partitions, image.PartitionConfig{
+			Name:        sp.Name,
+			Mountpoint:  sp.Mountpoint,
+			Filename:    sp.Filename,
+			Compression: sp.Compression,
+		})
+	}
+
+	for _, f := range t.files {
+		img.Files = append(img.Files, image.FileConfig{
+			Name:        f.Name,
+			Path:        f.Path,
+			Filename:    f.Filename,
+			Compression: f.Compression,
+		})
+	}
+
 	if img.OSCustomizations.NoBLS {
 		img.OSProduct = t.Arch().Distro().Product()
 		img.OSVersion = t.Arch().Distro().OsVersion()
@@ -898,7 +939,7 @@ func liveInstallerImage(t *imageType,
 		return nil, err
 	}
 
-	img.ISOCustomizations, err = isoCustomizations(t, bp.Customizations)
+	img.ISOCustomizations, err = isoCustomizations(t, bp.Customizations, t.arch.arch)
 	if err != nil {
 		return nil, err
 	}
@@ -947,7 +988,7 @@ func imageInstallerImage(t *imageType,
 		return nil, err
 	}
 
-	img.ISOCustomizations, err = isoCustomizations(t, bp.Customizations)
+	img.ISOCustomizations, err = isoCustomizations(t, bp.Customizations, t.arch.arch)
 	if err != nil {
 		return nil, err
 	}
@@ -1093,6 +1134,11 @@ func ostreeContainerImage(t *imageType,
 	img.OCIContainerCustomizations = ociContainerCustomizations(t)
 	img.OSTreeCommitServerCustomizations = ostreeCommitServerCustomizations(t)
 
+	// Enable bootupd metadata generation if configured
+	if imgConfig.BootupdGenMetadata != nil && *imgConfig.BootupdGenMetadata {
+		img.Bootupd = true
+	}
+
 	return img, nil
 }
 
@@ -1122,7 +1168,7 @@ func ostreeInstallerImage(t *imageType,
 		return nil, err
 	}
 
-	img.ISOCustomizations, err = isoCustomizations(t, bp.Customizations)
+	img.ISOCustomizations, err = isoCustomizations(t, bp.Customizations, t.arch.arch)
 	if err != nil {
 		return nil, err
 	}
@@ -1287,7 +1333,7 @@ func ostreeSimplifiedInstallerImage(t *imageType,
 	rawImg.PartitionTable = pt
 
 	if tweaks := t.arch.distro.GetTweaks(); tweaks != nil && tweaks.RPMKeys != nil && tweaks.RPMKeys.BinPath != "" {
-		rawImg.OSCustomizations.RPMKeysBinary = tweaks.RPMKeys.BinPath
+		rawImg.OSCustomizations.BaseRPMOptions.RPMKeys = &osbuild.RPMKeys{BinPath: tweaks.RPMKeys.BinPath}
 	}
 
 	// XXX: can we take platform/filename in NewOSTreeSimplifiedInstaller from rawImg instead?
@@ -1316,7 +1362,7 @@ func ostreeSimplifiedInstallerImage(t *imageType,
 		return nil, err
 	}
 
-	img.ISOCustomizations, err = isoCustomizations(t, bp.Customizations)
+	img.ISOCustomizations, err = isoCustomizations(t, bp.Customizations, t.arch.arch)
 	if err != nil {
 		return nil, err
 	}
@@ -1324,7 +1370,7 @@ func ostreeSimplifiedInstallerImage(t *imageType,
 	img.OSName = t.ostree.Name
 
 	if tweaks := t.arch.distro.GetTweaks(); tweaks != nil && tweaks.RPMKeys != nil && tweaks.RPMKeys.BinPath != "" {
-		img.OSCustomizations.RPMKeysBinary = tweaks.RPMKeys.BinPath
+		img.OSCustomizations.BaseRPMOptions.RPMKeys = &osbuild.RPMKeys{BinPath: tweaks.RPMKeys.BinPath}
 	}
 
 	return img, nil
@@ -1373,7 +1419,7 @@ func networkInstallerImage(t *imageType,
 		return nil, err
 	}
 
-	img.ISOCustomizations, err = isoCustomizations(t, bp.Customizations)
+	img.ISOCustomizations, err = isoCustomizations(t, bp.Customizations, t.arch.arch)
 	if err != nil {
 		return nil, err
 	}
@@ -1488,10 +1534,8 @@ func makeOSTreePayloadCommit(options *ostree.ImageOptions, defaultURL, defaultRe
 	}, nil
 }
 
-// replace basic variables that might come from blueprint(s), these are not intended to be
-// used elsewhere and are thus called only in specific places
-// concretely this is because we need to template the flatpak references coming from pungi
-// configs. they're currently only applied there; other places will need further discussion
+// replace basic variables that might come from blueprint(s), e.g. $arch
+// in flatpak references and ISO volume IDs
 func replaceBasicTemplate(input string, architecture arch.Arch) string {
 	return strings.ReplaceAll(input, "$arch", architecture.String())
 }

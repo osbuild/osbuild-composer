@@ -42,7 +42,7 @@ func (img *Archive) InstantiateManifest(m *manifest.Manifest,
 	tarPipeline := manifest.NewTar(buildPipeline, osPipeline, "archive")
 	tarPipeline.NumericOwner = common.ToPtr(true)
 
-	compressionPipeline := GetCompressionPipeline(img.Compression, buildPipeline, tarPipeline)
+	compressionPipeline := GetCompressionPipeline(img.Compression, buildPipeline, tarPipeline, "")
 	compressionPipeline.SetFilename(img.filename)
 
 	return compressionPipeline.Export(), nil

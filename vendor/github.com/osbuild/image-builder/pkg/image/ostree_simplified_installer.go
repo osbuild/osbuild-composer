@@ -64,7 +64,7 @@ func (img *OSTreeSimplifiedInstaller) InstantiateManifest(m *manifest.Manifest,
 	imageFilename := "image.raw.xz"
 
 	// image in simplified installer is always compressed
-	compressedImage := manifest.NewXZ(buildPipeline, baseRawOstreeImage(img.rawImage, buildPipeline, nil))
+	compressedImage := manifest.NewXZ(buildPipeline, baseRawOstreeImage(img.rawImage, buildPipeline, nil), "")
 	compressedImage.SetFilename(imageFilename)
 
 	coiPipeline := manifest.NewCoreOSInstaller(
@@ -84,7 +84,9 @@ func (img *OSTreeSimplifiedInstaller) InstantiateManifest(m *manifest.Manifest,
 	coiPipeline.Variant = img.InstallerCustomizations.Variant
 	coiPipeline.AdditionalDracutModules = img.InstallerCustomizations.AdditionalDracutModules
 	coiPipeline.AdditionalDrivers = img.InstallerCustomizations.AdditionalDrivers
-	coiPipeline.RPMKeysBinary = img.OSCustomizations.RPMKeysBinary
+	if img.OSCustomizations.BaseRPMOptions.RPMKeys != nil {
+		coiPipeline.RPMKeysBinary = img.OSCustomizations.BaseRPMOptions.RPMKeys.BinPath
+	}
 
 	if len(img.ISOCustomizations.Label) == 0 {
 		img.ISOCustomizations.Label = fmt.Sprintf(img.ISOLabelTmpl, img.platform.GetArch())
