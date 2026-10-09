@@ -449,17 +449,19 @@ func (p *RawBootcImage) genMountpointSELinuxStages() ([]*osbuild.Stage, error) {
 
 	// 1a. Create /boot directory on root filesystem (only root mounted,
 	//     so /boot is just a directory on the root fs, not a mount point)
-	mkdirBootStage := osbuild.NewMkdirStage(&osbuild.MkdirStageOptions{
-		Paths: []osbuild.MkdirStagePath{
-			{
-				Path: "mount://-/boot",
-				Mode: common.ToPtr(os.FileMode(0755)),
+	if hasBootPartition || hasEFIPartition {
+		mkdirBootStage := osbuild.NewMkdirStage(&osbuild.MkdirStageOptions{
+			Paths: []osbuild.MkdirStagePath{
+				{
+					Path: "mount://-/boot",
+					Mode: common.ToPtr(os.FileMode(0755)),
+				},
 			},
-		},
-	})
-	mkdirBootStage.Devices = devices
-	mkdirBootStage.Mounts = rootMounts
-	stages = append(stages, mkdirBootStage)
+		})
+		mkdirBootStage.Devices = devices
+		mkdirBootStage.Mounts = rootMounts
+		stages = append(stages, mkdirBootStage)
+	}
 
 	// 1b. Create /boot/efi directory on the boot filesystem (needs both
 	//     root and boot mounted so the boot partition is accessible)

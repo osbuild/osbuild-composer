@@ -197,18 +197,19 @@ func parseRepoFile(content []byte) ([]subscription, error) {
 	return subscriptions, nil
 }
 
-// baseurlToRegex turns a redhat.repo baseurl into a matcher by replacing the yum
-// variables ($releasever, $arch, $basearch, $uuid) with a non-slash wildcard,
-// mirroring osbuild's util/rhsm.py so depsolve-time secret lookup agrees with
-// osbuild's download-time matching. Wildcarding $releasever rather than
-// substituting the major-only releasever is what lets both rolling (9) and
-// point-release (9.8) requests match; substituting would bind it to "9" and send
-// point releases to the fallback.
+// the RHEL major release version path segment in a content URL i.e. rhel8, rhel9, rhel10, etc...
+var rhelMajorPath = regexp.MustCompile(`/rhel[0-9]+/`)
+
+// baseurlToRegex turns a redhat.repo baseurl into a matcher by replacing yum
+// variables ($releasever, $arch, $basearch, $uuid) and the RHEL major path
+// segment (rhel8 / rhel9 / rhel10) with a non-slash wildcard.
 func baseurlToRegex(baseurl string) (*regexp.Regexp, error) {
 	escaped := regexp.QuoteMeta(baseurl)
 	for _, variable := range []string{`\$releasever`, `\$arch`, `\$basearch`, `\$uuid`} {
 		escaped = strings.ReplaceAll(escaped, variable, `[^/]*`)
 	}
+	// the major release version must be escaped to support cross major builds - otherwise the matcher fails because the subscription baseurl has rhelX and the image baseurl has rhelY
+	escaped = rhelMajorPath.ReplaceAllString(escaped, `/rhel[^/]*/`)
 	// anchored at the start only, matching Python's re.match
 	return regexp.Compile("^" + escaped)
 }

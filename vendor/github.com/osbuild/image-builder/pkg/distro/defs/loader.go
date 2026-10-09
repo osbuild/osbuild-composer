@@ -25,6 +25,7 @@ import (
 	"github.com/osbuild/image-builder/pkg/disk/partition"
 	"github.com/osbuild/image-builder/pkg/distro"
 	"github.com/osbuild/image-builder/pkg/experimentalflags"
+	"github.com/osbuild/image-builder/pkg/image"
 	"github.com/osbuild/image-builder/pkg/manifest"
 	"github.com/osbuild/image-builder/pkg/olog"
 	"github.com/osbuild/image-builder/pkg/platform"
@@ -571,8 +572,40 @@ type ImageTypeYAML struct {
 		RequiredOptions  []string `yaml:"required_options"`
 	} `yaml:"blueprint"`
 
+	Extras extrasYAML `yaml:"extras,omitempty"`
+
 	// name is set by the loader
 	name string
+}
+
+type extrasYAML struct {
+	Sysexts    map[string]sysextDef    `yaml:"sysexts,omitempty"`
+	Partitions map[string]partitionDef `yaml:"partitions,omitempty"`
+	Files      map[string]fileDef      `yaml:"files,omitempty"`
+}
+
+type packageConfDef struct {
+	Standalone bool `yaml:"standalone,omitempty"`
+}
+
+type sysextDef struct {
+	Format       string         `yaml:"format"`
+	Paths        []string       `yaml:"paths,omitempty"`
+	ExcludePaths []string       `yaml:"exclude_paths,omitempty"`
+	PackageSets  []packageSet   `yaml:"package_sets"`
+	PackageConf  packageConfDef `yaml:"package_conf,omitempty"`
+}
+
+type partitionDef struct {
+	Mountpoint  string `yaml:"mountpoint"`
+	Filename    string `yaml:"filename,omitempty"`
+	Compression string `yaml:"compression,omitempty"`
+}
+
+type fileDef struct {
+	Path        string `yaml:"path"`
+	Filename    string `yaml:"filename,omitempty"`
+	Compression string `yaml:"compression,omitempty"`
 }
 
 func (it *ImageTypeYAML) IsOSTreeBasedImageType() bool {
@@ -857,6 +890,160 @@ func (imgType *ImageTypeYAML) PackageSets(id distro.ID, archName string) map[str
 	}
 
 	return res
+}
+
+// SysextDef holds a resolved sysext definition with its name and packages.
+type SysextDef struct {
+	Name         string
+	Format       string
+	Paths        []string
+	ExcludePaths []string
+	Packages     rpmmd.PackageSet
+	Standalone   bool
+}
+
+func (s SysextDef) ExportPipelineNames() []string {
+	return []string{image.SysextPipelineName(s.Name, s.Format)}
+}
+
+// Sysexts returns the resolved sysext definitions for this image type.
+func (imgType *ImageTypeYAML) Sysexts(id distro.ID, archName string) []SysextDef {
+	names := make([]string, 0, len(imgType.Extras.Sysexts))
+	for name := range imgType.Extras.Sysexts {
+		names = append(names, name)
+	}
+	slices.Sort(names)
+
+	var res []SysextDef
+	for _, name := range names {
+		sysext := imgType.Extras.Sysexts[name]
+		var pkgSet rpmmd.PackageSet
+		for _, ps := range sysext.PackageSets {
+			pkgSet = pkgSet.Append(rpmmd.PackageSet{
+				Include: ps.Include,
+				Exclude: ps.Exclude,
+			})
+			for _, cond := range ps.Conditions {
+				if cond.When.Eval(id, archName) {
+					pkgSet = pkgSet.Append(rpmmd.PackageSet{
+						Include: cond.Append.Include,
+						Exclude: cond.Append.Exclude,
+					})
+				}
+			}
+		}
+		slices.Sort(pkgSet.Include)
+		slices.Sort(pkgSet.Exclude)
+		format := sysext.Format
+		if format == "" {
+			format = "erofs"
+		}
+		paths := sysext.Paths
+		if len(paths) == 0 {
+			paths = []string{"/usr", "/opt"}
+		}
+		res = append(res, SysextDef{
+			Name:         name,
+			Format:       format,
+			Paths:        paths,
+			ExcludePaths: sysext.ExcludePaths,
+			Packages:     pkgSet,
+			Standalone:   sysext.PackageConf.Standalone,
+		})
+	}
+	return res
+}
+
+type PartitionDef struct {
+	Name        string
+	Mountpoint  string
+	Filename    string
+	Compression string
+}
+
+func (s PartitionDef) ExportPipelineNames() []string {
+	return []string{image.PartitionPipelineName(s.Name, s.Compression)}
+}
+
+type FileDef struct {
+	Name        string
+	Path        string
+	Filename    string
+	Compression string
+}
+
+func (s FileDef) ExportPipelineNames() []string {
+	return []string{image.FilePipelineName(s.Name, s.Compression)}
+}
+
+// Partitions returns the resolved partition definitions for this image type.
+func (imgType *ImageTypeYAML) Partitions() []PartitionDef {
+	names := make([]string, 0, len(imgType.Extras.Partitions))
+	for name := range imgType.Extras.Partitions {
+		names = append(names, name)
+	}
+	slices.Sort(names)
+
+	var res []PartitionDef
+	for _, name := range names {
+		sp := imgType.Extras.Partitions[name]
+		res = append(res, PartitionDef{
+			Name:        name,
+			Mountpoint:  sp.Mountpoint,
+			Filename:    sp.Filename,
+			Compression: sp.Compression,
+		})
+	}
+	return res
+}
+
+// Files returns the resolved file definitions for this image type.
+// The path field supports Go templates with {{.Arch}} and {{.Distro.*}}.
+func (imgType *ImageTypeYAML) Files(id distro.ID, archName string) ([]FileDef, error) {
+	names := make([]string, 0, len(imgType.Extras.Files))
+	for name := range imgType.Extras.Files {
+		names = append(names, name)
+	}
+	slices.Sort(names)
+
+	var res []FileDef
+	for _, name := range names {
+		f := imgType.Extras.Files[name]
+		path := f.Path
+		if strings.Contains(path, "{{") {
+			rendered, err := renderFilePathTemplate(path, id, archName)
+			if err != nil {
+				return nil, err
+			}
+			path = rendered
+		}
+		res = append(res, FileDef{
+			Name:        name,
+			Path:        path,
+			Filename:    f.Filename,
+			Compression: f.Compression,
+		})
+	}
+	return res, nil
+}
+
+func renderFilePathTemplate(path string, id distro.ID, archName string) (string, error) {
+	data := struct {
+		Arch   string
+		Distro distro.ID
+	}{
+		Arch:   archName,
+		Distro: id,
+	}
+	tmpl, err := template.New("file-path").Option("missingkey=error").Parse(path)
+	if err != nil {
+		return "", fmt.Errorf("cannot parse template for file path %q: %w", path, err)
+	}
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, data); err != nil {
+		return "", fmt.Errorf("cannot execute template for file path %q: %w", path, err)
+	}
+	return buf.String(), nil
 }
 
 // PartitionTable returns the partionTable for the given distro/imgType.

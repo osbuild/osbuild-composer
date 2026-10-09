@@ -15,15 +15,18 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
 )
 
-func mockResolveBootcInfoFunc(t *testing.T, resolveMode worker.BootcInfoResolveMode) main.ResolveBootcInfoFuncType {
-	t.Helper()
-
-	baseInfo := bootc.Info{
+func mockBootcInfo(ref string) bootc.Info {
+	return bootc.Info{
+		Imgref:        ref,
 		ImageID:       "sha256:abc123",
 		Arch:          "x86_64",
 		DefaultRootFs: "xfs",
 		Size:          1073741824,
 	}
+}
+
+func mockResolveBootcInfoFunc(t *testing.T) main.ResolveBootcInfoFuncType {
+	t.Helper()
 
 	// NOTE: if the consumer of the info or any of the closures below starts
 	// to modify the OSInfo struct or any of its composite fields, we need to
@@ -38,22 +41,18 @@ func mockResolveBootcInfoFunc(t *testing.T, resolveMode worker.BootcInfoResolveM
 		},
 	}
 
-	switch resolveMode {
-	case worker.BootcInfoResolveModeFull:
-		return func(ref string) (*bootc.Info, error) {
-			info := baseInfo
-			info.Imgref = ref
-			info.OSInfo = baseOSInfo
-			return &info, nil
-		}
-	case worker.BootcInfoResolveModeBuild:
-		return func(ref string) (*bootc.Info, error) {
-			info := baseInfo
-			info.Imgref = ref
-			return &info, nil
-		}
-	default:
-		panic(fmt.Sprintf("invalid resolve mode: %s", resolveMode))
+	return func(ref, variant string) (*bootc.Info, error) {
+		assert.Empty(t, variant)
+		info := mockBootcInfo(ref)
+		info.OSInfo = baseOSInfo
+		return &info, nil
+	}
+}
+
+func mockResolveBootcBuildInfoFunc() main.ResolveBootcBuildInfoFuncType {
+	return func(ref string) (*bootc.Info, error) {
+		info := mockBootcInfo(ref)
+		return &info, nil
 	}
 }
 
@@ -68,7 +67,7 @@ func TestBootcInfoResolveJobRun(t *testing.T) {
 		jobArgs              *worker.BootcInfoResolveJob
 		jobArgsRaw           json.RawMessage
 		mockResolveFullInfo  main.ResolveBootcInfoFuncType                                                                    // if nil, use the default mock function
-		mockResolveBuildInfo main.ResolveBootcInfoFuncType                                                                    // if nil, use the default mock function
+		mockResolveBuildInfo main.ResolveBootcBuildInfoFuncType                                                               // if nil, use the default mock function
 		mockMockJobFunc      func(t *testing.T, jobType string, rawArgs json.RawMessage, dynamicArgs ...interface{}) *mockJob // if nil, use the default mock job creator
 		cleanupImages        bool
 		mockRemoveImageFunc  main.RemoveContainerImageFuncType
@@ -125,7 +124,7 @@ func TestBootcInfoResolveJobRun(t *testing.T) {
 					},
 				},
 			},
-			mockResolveFullInfo: func(ref string) (*bootc.Info, error) {
+			mockResolveFullInfo: func(ref, variant string) (*bootc.Info, error) {
 				return nil, fmt.Errorf("pull failed for ref %s", ref)
 			},
 			wantRunErrSubstr: "pull failed for ref",
@@ -282,10 +281,10 @@ func TestBootcInfoResolveJobRun(t *testing.T) {
 			jobMock := tt.mockMockJobFunc(t, worker.JobTypeBootcInfoResolve, rawArgs)
 
 			if tt.mockResolveFullInfo == nil {
-				tt.mockResolveFullInfo = mockResolveBootcInfoFunc(t, worker.BootcInfoResolveModeFull)
+				tt.mockResolveFullInfo = mockResolveBootcInfoFunc(t)
 			}
 			if tt.mockResolveBuildInfo == nil {
-				tt.mockResolveBuildInfo = mockResolveBootcInfoFunc(t, worker.BootcInfoResolveModeBuild)
+				tt.mockResolveBuildInfo = mockResolveBootcBuildInfoFunc()
 			}
 			t.Cleanup(main.MockResolveBootcInfoFunc(tt.mockResolveFullInfo))
 			t.Cleanup(main.MockResolveBootcBuildInfoFunc(tt.mockResolveBuildInfo))

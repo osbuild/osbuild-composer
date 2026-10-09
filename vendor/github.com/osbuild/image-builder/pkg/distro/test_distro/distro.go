@@ -243,6 +243,17 @@ func (t *TestImageType) Exports() []string {
 	return distro.ExportsFallback()
 }
 
+func (t *TestImageType) Extras() []string {
+	return nil
+}
+
+func (t *TestImageType) ExportsWithExtras(refs []string) ([]string, map[string]distro.ExtraRef, error) {
+	if len(refs) > 0 {
+		return nil, nil, fmt.Errorf("image type %q does not support extras", t.Name())
+	}
+	return t.Exports(), nil, nil
+}
+
 func (t *TestImageType) Manifest(b *blueprint.Blueprint, options distro.ImageOptions, repos []rpmmd.RepoConfig, seedp *int64) (*manifest.Manifest, []string, error) {
 	var bpPkgs []string
 	if b != nil {

@@ -11,12 +11,13 @@ import (
 	"github.com/osbuild/osbuild-composer/internal/worker/clienterrors"
 )
 
-type resolveBootcInfoFuncType func(ref string) (*bootc.Info, error)
+type resolveBootcInfoFuncType func(ref, variant string) (*bootc.Info, error)
+type resolveBootcBuildInfoFuncType func(ref string) (*bootc.Info, error)
 type removeContainerImageFuncType func(ref string) error
 
 // variables to allow for testing
 var resolveBootcInfoFunc resolveBootcInfoFuncType = bootc.ResolveBootcInfo
-var resolveBootcBuildInfoFunc resolveBootcInfoFuncType = bootc.ResolveBootcBuildInfo
+var resolveBootcBuildInfoFunc resolveBootcBuildInfoFuncType = bootc.ResolveBootcBuildInfo
 var removeContainerImageFunc removeContainerImageFuncType = removeContainerImage
 
 func removeContainerImage(ref string) error {
@@ -63,7 +64,7 @@ func (impl *BootcInfoResolveJobImpl) Run(job worker.Job) error {
 		if spec.ResolveMode == worker.BootcInfoResolveModeFull {
 			// Full resolution for the base container:
 			// ResolveBootcInfo handles container lifecycle (start + stop)
-			info, err = resolveBootcInfoFunc(spec.Ref)
+			info, err = resolveBootcInfoFunc(spec.Ref, "")
 		} else if spec.ResolveMode == worker.BootcInfoResolveModeBuild {
 			// Minimal resolution for the build container:
 			// ResolveBootcBuildInfo handles container lifecycle (start + stop)

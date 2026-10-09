@@ -24,6 +24,7 @@ distros:
         when:
           not_distro_name: "rhel"
         ignore_image_types:
+          - ami-nvidia
           - azure-cvm
           - azure-rhui
           - azure-sap-rhui
@@ -38,6 +39,16 @@ distros:
           - azure
           - container
           - container-minimal
+      "ami-nvidia is only available for rhel10.2+":
+        when:
+          version_less_than: "10.2"
+        ignore_image_types:
+          - ami-nvidia
+      "ami-nvidia is not available for unreleased versions":
+        when:
+          version_greater_or_equal: "10.3"
+        ignore_image_types:
+          - ami-nvidia
       "handle PQC for rhel only":
         when:
           distro_name: "rhel"
@@ -56,6 +67,7 @@ distros:
       - "xccdf_org.ssgproject.content_profile_cis_server_l1"
       - "xccdf_org.ssgproject.content_profile_cis_workstation_l1"
       - "xccdf_org.ssgproject.content_profile_cis_workstation_l2"
+      - "xccdf_org.ssgproject.content_profile_cui"
       - "xccdf_org.ssgproject.content_profile_e8"
       - "xccdf_org.ssgproject.content_profile_hipaa"
       - "xccdf_org.ssgproject.content_profile_ism_o"

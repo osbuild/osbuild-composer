@@ -162,6 +162,19 @@ type ImageType interface {
 	// A custom seed for the rng can be specified, if nil the seed will
 	// be random.
 	Manifest(bp *blueprint.Blueprint, options ImageOptions, repos []rpmmd.RepoConfig, seed *int64) (*manifest.Manifest, []string, error)
+
+	// Extras returns the list of additional artifacts (sysexts, partition
+	// images) this image type can build alongside the main image.
+	Extras() []string
+
+	// ExportsWithExtras returns the combined exports and extra refs for the
+	// given extra references.
+	ExportsWithExtras([]string) ([]string, map[string]ExtraRef, error)
+}
+
+type ExtraRef struct {
+	Type string
+	Name string
 }
 
 type BootcImageOptions struct {

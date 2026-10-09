@@ -1745,6 +1745,162 @@ image_types:
     blueprint:
       supported_options: *supported_options_disk
 
+  "ami-nvidia":
+    <<: *ami
+    name_aliases: []
+    default_size: "20 GiB"
+    platforms:
+      - <<: *x86_64_bios_platform
+        image_format: "raw"
+    package_sets:
+      os:
+        - *ami_pkgset
+        - include:
+            - "cuda-toolkit"
+            - "kmod-nvidia-open"
+            - "libnccl"
+            - "nvidia-driver"
+            - "nvidia-driver-cuda"
+            - "nvidia-fabricmanager"
+            - "nvidia-persistenced"
+    image_config:
+      <<: *ami_image_config
+      kernel_options:
+        # XXX: duplicated with ami.image_config.kernel_options :(
+        - "console=tty0"
+        - "console=ttyS0,115200n8"
+        - "nvme_core.io_timeout=4294967295"
+        # same as AWS DLAMI
+        - "processor.max_cstate=1"
+        - "intel_idle.max_cstate=1"
+      directories:
+        - path: /usr/lib/systemd/system/nvidia-fabricmanager.service.d
+          ensure_parent_dirs: true
+        - path: /usr/lib/systemd/system/nvidia-persistenced.service.d
+          ensure_parent_dirs: true
+      files:
+        - path: /usr/lib/systemd/system/nvidia-fabricmanager.service.d/fabricmanager.conf
+          data: |
+            [Unit]
+            # Check if any NVSwitches are available
+            ConditionDirectoryNotEmpty=/proc/driver/nvidia-nvswitch/devices
+        - path: /usr/lib/systemd/system/nvidia-persistenced.service.d/persistenced.conf
+          data: |
+            [Unit]
+            After=nvidia-fabricmanager.service
+        - path: &nvidia_gpu_tweaks_script "/usr/libexec/nvidia-gpu-tweaks"
+          mode: 0755
+          data: |
+            #!/bin/bash
+            # Set NVIDIA GPU clocks to the AWS-recommended maximums for this GPU type.
+            #
+            # Clock values from:
+            #   https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/optimize_gpu.html
+
+            if ! command -v nvidia-smi >/dev/null 2>&1; then
+                echo "nvidia-smi not found; skipping GPU clock settings"
+                exit 0
+            fi
+
+            if ! nvidia-smi >/dev/null 2>&1; then
+                echo "nvidia-smi failed; skipping GPU clock settings"
+                exit 0
+            fi
+
+            GPU_NAME=$(nvidia-smi --query-gpu=name --format=csv,noheader -i 0 | head -n1)
+            echo "Detected GPU: ${GPU_NAME}"
+
+            # Prints: <mem_mhz> <gpu_mhz> <arch>
+            # arch: turing (no -lmc), hopper (-lmcd), default (-lmc)
+            resolve_profile() {
+                case $1 in
+                    *T4*)                echo "5001 1590 turing"  ;;
+                    *A10G*)              echo "6250 1710 default" ;;
+                    *L40S*)              echo "9001 2520 default" ;;
+                    *"NVIDIA L4"*)       echo "6251 2040 default" ;;
+                    *"RTX PRO 4500"*)    echo "12501 2415 default" ;;
+                    *"RTX PRO 6000"*)    echo "12481 2430 default" ;;
+                    *V100*)              echo "877 1530 default"  ;;
+                    *A100-SXM4-40GB*)    echo "1215 1410 default" ;;
+                    *A100-SXM4-80GB*)    echo "1593 1410 default" ;;
+                    *H200*)              echo "3201 1980 hopper"  ;;
+                    *H100*)              echo "2619 1980 hopper"  ;;
+                    *B300*)              echo "3996 2032 default" ;;
+                    *B200*)              echo "3996 1965 default" ;;
+                    *M60*)               echo "2505 1177 default" ;;
+                    *)                   return 1 ;;
+                esac
+            }
+
+            set_clocks() {
+                local mem=$1 gpu=$2 arch=$3
+
+                echo "Set clocks: memory=${mem} MHz gpu=${gpu} MHz arch=${arch}"
+
+                # Setting GPU clock is supported across all GPUs
+                if ! nvidia-smi -lgc "${gpu},${gpu}"; then
+                    echo "warning: failed to set GPU clock to ${gpu}"
+                fi
+
+                case $arch in
+                    turing)
+                        # Turing (T4) does not support -lmc.
+                        ;;
+                    hopper)
+                        if ! nvidia-smi -lmcd "${mem}"; then
+                            echo "warning: failed to set memory clock (lmcd) to ${mem}"
+                        fi
+                        ;;
+                    *)
+                        if ! nvidia-smi -lmc "${mem},${mem}"; then
+                            echo "warning: failed to set memory clock to ${mem}"
+                        fi
+                        ;;
+                esac
+            }
+
+            PROFILE=$(resolve_profile "${GPU_NAME}") || {
+                echo "unsupported GPU: ${GPU_NAME}; skipping clock settings"
+                exit 0
+            }
+
+            read -r MEM_MHZ GPU_MHZ ARCH <<< "${PROFILE}"
+            set_clocks "${MEM_MHZ}" "${GPU_MHZ}" "${ARCH}"
+      systemd_unit:
+        - filename: &nvidia_gpu_tweaks_unit "nvidia-gpu-tweaks.service"
+          "unit-type": "system"
+          "unit-path": "usr"
+          config:
+            "Unit":
+              Description: "Set NVIDIA GPU/memory clocks to maximum frequency"
+              After: ["nvidia-persistenced.service"]
+              Requires: ["nvidia-persistenced.service"]
+            "Service":
+              Type: "oneshot"
+              ExecStart: [*nvidia_gpu_tweaks_script]
+              RemainAfterExit: true
+            "Install":
+              WantedBy: ["multi-user.target"]
+      # XXX: duplicated service list
+      enabled_services:
+        # inherited from 'ami'
+        - "sshd"
+        - "NetworkManager"
+        - "nm-cloud-setup.service"
+        - "nm-cloud-setup.timer"
+        - "cloud-init"
+        - "cloud-init-local"
+        - "cloud-config"
+        - "cloud-final"
+        - "reboot.target"
+        - "tuned"
+        # 'ami-nvidia' specific
+        - "nvidia-fabricmanager"
+        - "nvidia-persistenced"
+        - *nvidia_gpu_tweaks_unit
+    blueprint:
+      supported_options: *supported_options_disk
+
   "ec2-ha":
     <<: *ec2
     filename: "image.raw.xz"
