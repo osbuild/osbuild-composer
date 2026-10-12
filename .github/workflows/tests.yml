@@ -49,7 +49,7 @@ jobs:
     services:
       postgres:
         # 12 is used in deployments
-        image: postgres:12
+        image: postgres:18
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: foobar
