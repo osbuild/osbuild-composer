@@ -175,8 +175,8 @@ github.com/getsentry/sentry-go v0.50.0 h1:gkO59rn/i0RCAXUUTflC5QVbTQGPXbaFabs2ol
 github.com/getsentry/sentry-go v0.50.0/go.mod h1:+xsDuN+SoRN/xfs1hdq78wnrE3omIZf+FCuh9FOW1C8=
 github.com/getsentry/sentry-go/echo v0.43.0 h1:gnUIu6KmjaJZtC9FElRHqfaM5SMhNs8riM0VGaf3zjI=
 github.com/getsentry/sentry-go/echo v0.43.0/go.mod h1:cdaygDIQM4qJszdIuNdXJLsYxFA5F7MNqHmfjieGbII=
-github.com/getsentry/sentry-go/logrus v0.49.0 h1:8Samwv5Ol/v7W/l0gc/4s/EBzhKAM/uGrx+sXDYimiE=
-github.com/getsentry/sentry-go/logrus v0.49.0/go.mod h1:2SI0YcRW46n5c/vO+4Mvy9EmXCu9wMp5cVpNtS+Zaq8=
+github.com/getsentry/sentry-go/logrus v0.50.0 h1:yvxe5f8fxj8I+O2vSAuuvq4pdVeqm4Gd86raYQkL2u8=
+github.com/getsentry/sentry-go/logrus v0.50.0/go.mod h1:Q0gwi/7rKUaf9ZwhrBWyEWWhCcn/WzvfB2nrviyux3I=
 github.com/go-errors/errors v1.4.2 h1:J6MZopCL4uSllY1OfXM374weqZFFItUbrImctkmUxIA=
 github.com/go-errors/errors v1.4.2/go.mod h1:sIVyrIiJhuEF+Pj9Ebtd6P/rEYROXFi3BopGUQ5a5Og=
 github.com/go-jose/go-jose/v4 v4.1.4 h1:moDMcTHmvE6Groj34emNPLs/qtYXRVcd6S7NHbHz3kA=
