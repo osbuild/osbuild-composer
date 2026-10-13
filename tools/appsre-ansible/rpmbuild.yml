@@ -15,6 +15,10 @@
 
   - name: Add EPEL
     become: yes
+    retries: 5
+    delay: 20
+    register: result
+    until: result is success
     dnf:
       state: present
       name: https://dl.fedoraproject.org/pub/epel/epel-release-latest-10.noarch.rpm
