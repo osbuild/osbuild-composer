@@ -97,9 +97,10 @@ func GetTestBlueprint() blueprint.Blueprint {
 			},
 		},
 		Services: &blueprint.ServicesCustomization{
-			Enabled:  []string{"sshd"},
-			Disabled: []string{"cleanup"},
-			Masked:   []string{"firewalld"},
+			Enabled:       []string{"sshd"},
+			Disabled:      []string{"cleanup"},
+			Masked:        []string{"firewalld"},
+			DefaultTarget: "multi-user.target",
 		},
 		OpenSCAP: &blueprint.OpenSCAPCustomization{
 			ProfileID: "B 263-59",
@@ -385,9 +386,10 @@ func TestGetBlueprintFromCustomizations(t *testing.T) {
 			},
 		},
 		Services: &Services{
-			Disabled: &[]string{"cleanup"},
-			Enabled:  &[]string{"sshd"},
-			Masked:   &[]string{"firewalld"},
+			Disabled:      &[]string{"cleanup"},
+			Enabled:       &[]string{"sshd"},
+			Masked:        &[]string{"firewalld"},
+			DefaultTarget: common.ToPtr("multi-user.target"),
 		},
 		Openscap: &OpenSCAP{ProfileId: "B 263-59"},
 		CustomRepositories: &[]CustomRepository{
@@ -648,9 +650,10 @@ func TestGetBlueprintFromCompose(t *testing.T) {
 				},
 			},
 			Services: &Services{
-				Disabled: &[]string{"cleanup"},
-				Enabled:  &[]string{"sshd"},
-				Masked:   &[]string{"firewalld"},
+				Disabled:      &[]string{"cleanup"},
+				Enabled:       &[]string{"sshd"},
+				Masked:        &[]string{"firewalld"},
+				DefaultTarget: common.ToPtr("multi-user.target"),
 			},
 			Openscap: &BlueprintOpenSCAP{ProfileId: "B 263-59"},
 			Repositories: &[]BlueprintRepository{
