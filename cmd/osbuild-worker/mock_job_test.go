@@ -27,6 +27,10 @@ func (j *mockJob) Id() uuid.UUID {
 	return j.jobID
 }
 
+func (j *mockJob) ComposeId() uuid.UUID {
+	return j.jobID
+}
+
 func (j *mockJob) Type() string {
 	return j.jobType
 }
