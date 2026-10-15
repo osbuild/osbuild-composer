@@ -2656,6 +2656,10 @@ components:
           items:
             type: string
             example: "telnetd"
+        default_target:
+          description: Default systemd target to boot into
+          type: string
+          example: multi-user.target
     Timezone:
       type: object
       description: Timezone configuration
