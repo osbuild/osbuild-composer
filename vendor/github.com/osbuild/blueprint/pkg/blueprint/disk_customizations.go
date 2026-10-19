@@ -364,6 +364,9 @@ func (v *PartitionCustomization) UnmarshalTOML(data any) error {
 	}
 
 	v.Type = partType
+	v.PartType, _ = d["part_type"].(string)
+	v.PartLabel, _ = d["part_label"].(string)
+	v.PartUUID, _ = d["part_uuid"].(string)
 
 	minsizeField, ok := d["minsize"]
 	if !ok {
