@@ -7,6 +7,7 @@ type InstallerCustomization struct {
 	Modules      *AnacondaModules     `json:"modules,omitempty" toml:"modules,omitempty"`
 	Bootloader   *InstallerBootloader `json:"bootloader,omitempty" toml:"bootloader,omitempty"`
 	Payload      *InstallerPayload    `json:"payload,omitempty" toml:"payload,omitempty"`
+	Packages     []Package            `json:"packages,omitempty" toml:"packages,omitempty"`
 }
 
 type Kickstart struct {
