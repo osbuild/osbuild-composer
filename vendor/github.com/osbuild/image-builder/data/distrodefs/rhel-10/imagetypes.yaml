@@ -1756,13 +1756,13 @@ image_types:
       os:
         - *ami_pkgset
         - include:
+            - "cuda-compat"
             - "cuda-toolkit"
-            - "kmod-nvidia-open"
             - "libnccl"
-            - "nvidia-driver"
-            - "nvidia-driver-cuda"
-            - "nvidia-fabricmanager"
-            - "nvidia-persistenced"
+            - "nvidia-driver-3:595*"
+            - "nvidia-driver-cuda-3:595*"
+            - "nvidia-fabricmanager-595*"
+            - "nvidia-persistenced-3:595*"
     image_config:
       <<: *ami_image_config
       kernel_options:

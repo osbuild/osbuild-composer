@@ -4,6 +4,7 @@ package osbuild
 
 type LUKS2DeviceOptions struct {
 	Passphrase string `json:"passphrase"`
+	Partnum    *int   `json:"partnum,omitempty"`
 }
 
 func (LUKS2DeviceOptions) isDeviceOptions() {}

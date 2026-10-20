@@ -39,6 +39,32 @@ the initrd and the root filesystem.
     echo rootfs.img | cpio -H newc --quiet -L -o > rootfs.cpio
     cat initrd.img rootfs.cpio > combined.img
 
+
+## Embedded containers
+
+You can add containers to the pxe-tar-xz image by using the blueprint's
+`containers` section. If you do this you will also need to include `podman` and
+`fuse-overlayfs` in your package list. For example, add this to your blueprint
+to include the Fedora 44 container.
+
+```
+[[packages]]
+name = "podman"
+
+[[packages]]
+name = "fuse-overlayfs"
+
+[[containers]]
+name = "registry.fedoraproject.org/fedora:44"
+source = "registry.fedoraproject.org/fedora:44"
+local-storage = true
+```
+
+After booting the PXE system you can run the container as root using:
+
+    sudo podman run --rm -it fedora:44
+
+
 # bootc
 
 You can create a bootc based PXE system using the 'pxe-tar-xz' image type with

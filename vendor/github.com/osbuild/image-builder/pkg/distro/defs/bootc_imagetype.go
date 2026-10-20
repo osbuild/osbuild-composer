@@ -163,6 +163,10 @@ func (t *bootcImageType) SupportedBlueprintOptions() []string {
 	// The blueprint contains a few fields that are essentially metadata and
 	// not configuration / customizations. These should always be implicitly
 	// supported by all image types.
+	bd := t.arch.distro.(*BootcDistro)
+	if bd.unifiedKernel && t.Image == "bootc_disk" {
+		return []string{"customizations.disk", "name", "version", "description"}
+	}
 	return append(t.ImageTypeYAML.Blueprint.SupportedOptions, "name", "version", "description")
 }
 
