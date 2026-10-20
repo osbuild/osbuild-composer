@@ -286,14 +286,24 @@ func (p *AnacondaInstaller) getPackageSetChain(Distro) ([]rpmmd.PackageSet, erro
 		packages = append(packages, fmt.Sprintf("selinux-policy-%s", p.SELinux))
 	}
 
-	return []rpmmd.PackageSet{
+	chain := []rpmmd.PackageSet{
 		{
 			Include:         append(packages, p.ExtraPackages...),
 			Exclude:         p.ExcludePackages,
 			Repositories:    slices.Concat(p.depsolveRepos, p.ExtraRepos),
 			InstallWeakDeps: p.InstallerCustomizations.InstallWeakDeps,
 		},
-	}, nil
+	}
+
+	if len(p.InstallerCustomizations.Packages) > 0 {
+		chain = append(chain, rpmmd.PackageSet{
+			Include:         p.InstallerCustomizations.Packages,
+			Repositories:    slices.Concat(p.depsolveRepos, p.ExtraRepos),
+			InstallWeakDeps: false,
+		})
+	}
+
+	return chain, nil
 }
 
 func (p *AnacondaInstaller) getPackageSpecs() rpmmd.PackageList {

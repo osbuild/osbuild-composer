@@ -1,0 +1,36 @@
+---
+distros:
+  - &rhivos
+    name: rhivos-{{.MajorVersion}}.{{.MinorVersion}}
+    match: rhivos-2\.[0-9]{1,2}
+    os_version: 2.{{.MinorVersion}}
+    release_version: 2
+    default_fs_type: xfs
+    defs_path: rhivos-2
+    distro_like: rhel-10
+    bootstrap_containers:
+      x86_64: "registry.access.redhat.com/ubi10/ubi:latest"
+      aarch64: "registry.access.redhat.com/ubi10/ubi:latest"
+    image_config:
+      default:
+        default_kernel: kernel-automotive
+        install_weak_deps: true
+        locale: C.UTF-8
+        permissive_rhc: true
+        sysconfig:
+          networking: true
+          no_zero_conf: true
+        timezone: UTC
+        update_default_kernel: true
+    product: Red Hat In-Vehicle Operating System
+    runner:
+      build_packages:
+        - glibc
+        - systemd
+        - python3
+      name: org.osbuild.rhel{{.MajorVersion}}{{.MinorVersion}}
+    vendor: redhat
+  - <<: *rhivos
+    name: rhivos-core-{{.MajorVersion}}.{{.MinorVersion}}
+    match: rhivos-core-2\.[0-9]{1,2}
+    defs_path: rhivos-core-2

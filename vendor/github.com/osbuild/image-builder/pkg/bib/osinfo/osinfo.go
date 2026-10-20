@@ -192,28 +192,29 @@ func readSelinuxPolicy(fsys fs.FS) (string, error) {
 	return policy, nil
 }
 
-func readImageCustomization(fsys fs.FS) (*blueprint.Customizations, error) {
-	// note that we only look at the 'old' search path here, we do want to
-	// look in the new path as well but i'd like to only support the actual
-	// blueprint format there instead of buildconfig as well
-	prefix := searchPaths[1]
-
-	config, err := blueprintload.LoadFS(fsys, path.Join(prefix, "config.json"))
-	if err != nil && !os.IsNotExist(err) {
-		return nil, err
-	}
-	if config == nil {
-		config, err = blueprintload.LoadFS(fsys, path.Join(prefix, "config.toml"))
-		if err != nil && !os.IsNotExist(err) {
-			return nil, err
+func readImageCustomization(fsys fs.FS, prefix, variant string) (*blueprint.Customizations, error) {
+	searchDirs := []string{prefix}
+	if variant != "" {
+		searchDirs = []string{
+			path.Join(prefix, "variant.d", variant),
+			prefix,
 		}
 	}
-	// no config found in either toml/json
-	if config == nil {
-		return nil, nil
+
+	for _, dir := range searchDirs {
+		for _, filename := range []string{"blueprint.json", "blueprint.toml", "config.json", "config.toml"} {
+			config, err := blueprintload.LoadFS(fsys, path.Join(dir, filename))
+			if err != nil {
+				if os.IsNotExist(err) {
+					continue
+				}
+				return nil, err
+			}
+			return config.Customizations, nil
+		}
 	}
 
-	return config.Customizations, nil
+	return nil, nil
 }
 
 type diskYAML struct {
@@ -438,7 +439,7 @@ func Load(fsys fs.FS, variant string) (*Info, error) {
 		return nil, fmt.Errorf("variant %q not found", variant)
 	}
 
-	customization, err := readImageCustomization(fsys)
+	customization, err := readImageCustomization(fsys, prefix, variant)
 	if err != nil {
 		return nil, err
 	}

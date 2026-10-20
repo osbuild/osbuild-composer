@@ -90,8 +90,24 @@ func genMountsForBootupd(source string, pt *disk.PartitionTable) ([]Mount, error
 			continue
 		}
 
-		// TODO: support things like LUKS here via supporting "disk.Container"?
 		switch payload := part.Payload.(type) {
+		case *disk.LUKSContainer:
+			filesystem, ok := payload.Payload.(*disk.Filesystem)
+			if !ok {
+				return nil, fmt.Errorf(
+					"expected LUKS payload to be filesystem, got %T",
+					payload.Payload,
+				)
+			}
+
+			luksDeviceName := pathEscape(filesystem.Mountpoint)
+
+			mount, err := genOsbuildMount(luksDeviceName, filesystem)
+			if err != nil {
+				return nil, err
+			}
+
+			mounts = append(mounts, *mount)
 		case disk.Mountable:
 			mount, err := genOsbuildMount(source, payload)
 			if err != nil {
@@ -156,6 +172,25 @@ func genDevicesForBootupd(filename, devName string, pt *disk.PartitionTable) (ma
 	}
 	for idx, part := range pt.Partitions {
 		switch payload := part.Payload.(type) {
+		case *disk.LUKSContainer:
+			filesystem, ok := payload.Payload.(*disk.Filesystem)
+			if !ok {
+				return nil, fmt.Errorf(
+					"expected LUKS payload to be filesystem, got %T",
+					payload.Payload,
+				)
+			}
+
+			partnum := idx + 1
+			deviceName := pathEscape(filesystem.Mountpoint)
+
+			devices[deviceName] = *NewLUKS2Device(
+				devName,
+				&LUKS2DeviceOptions{
+					Passphrase: payload.Passphrase,
+					Partnum:    common.ToPtr(partnum),
+				},
+			)
 		case *disk.LVMVolumeGroup:
 			for _, lv := range payload.LogicalVolumes {
 				// partitions start with "1", so add "1"

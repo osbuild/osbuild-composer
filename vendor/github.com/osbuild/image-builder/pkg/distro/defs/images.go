@@ -554,6 +554,10 @@ func installerCustomizations(t *imageType, c *blueprint.Customizations, o distro
 			isc.MenuTimeout = installerCust.Bootloader.Grub2.MenuTimeout
 		}
 
+		for _, pkg := range installerCust.Packages {
+			isc.Packages = append(isc.Packages, pkg.ToNameVersion())
+		}
+
 		if installerCust.Payload != nil && installerCust.Payload.Flatpaks != nil {
 			flatpakMeta := installerCust.Payload.Flatpaks
 

@@ -161,6 +161,10 @@ type InstallerCustomizations struct {
 	}
 
 	Flatpaks []flatpak.SourceSpec
+
+	// Additional packages to install in the installer environment,
+	// from blueprint installer customizations.
+	Packages []string
 }
 
 type InstallerLoraxTemplate struct {
