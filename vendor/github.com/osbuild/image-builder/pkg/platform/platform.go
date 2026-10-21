@@ -149,6 +149,10 @@ func (f *ImageFormat) UnmarshalYAML(unmarshal func(any) error) error {
 	return common.UnmarshalYAMLviaJSON(f, unmarshal)
 }
 
+// BootFile describes a file copied into the disk image. Src and Dst support Go
+// templates, rendered during manifest serialization. For RPM-based images,
+// .KernelVersion is the resolved target kernel version, including release and
+// architecture. Referencing an unavailable template value is an error.
 type BootFile struct {
 	Src       string `yaml:"src" json:"src"`
 	Dst       string `yaml:"dst" json:"dst"`

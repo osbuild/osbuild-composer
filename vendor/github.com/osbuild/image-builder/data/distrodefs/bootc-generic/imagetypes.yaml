@@ -85,6 +85,19 @@
           - *default_partition_table_part_boot
           - *default_partition_table_part_root
 
+  rootfs_excludes: &default_rootfs_excludes
+    - "boot/efi/.*"
+    - "boot/grub2/.*"
+    - "boot/config-.*"
+    - "boot/initramfs-.*"
+    - "boot/loader/.*"
+    - "boot/symvers-.*"
+    - "boot/System.map-.*"
+    - "usr/lib/sysimage/rpm/.*"
+    - "var/lib/rpm/.*"
+    - "var/lib/yum/.*"
+    - "var/lib/dnf/.*"
+
   supported_options_lists:
     supported_options_disk: &supported_options_disk
       - "customizations.bootloader"
@@ -182,15 +195,29 @@ image_types:
   # image. Additionally, the image type is not tied to anaconda as
   # bootc-installer is. This allows users to create a very customized ISOs.
   # TODO: Discuss names of container-based isos: anaconda-iso,
-  # bootc-generic-iso and bootc-installer are all confusing.
-  bootc-generic-iso:
+  # generic-iso and bootc-installer are all confusing.
+  generic-iso: &generic-iso
+    <<: *raw_image_type
     mime_type: "application/x-iso9660-image"
     exports: ["bootiso"]
     filename: "install.iso"
     boot_iso: true
     image_func: "bootc_generic_iso"
+    iso_config:
+      rootfs_type: "squashfs"
+      rootfs_excludes: *default_rootfs_excludes
+      conditions:
+        "x86_64 uses grub2":
+          when:
+            arch: "x86_64"
+          shallow_merge:
+            boot_type: "grub2"
     blueprint:
       supported_options: *supported_options_iso
+
+  # XXX: ideally we would use name_aliases but the loader lib
+  # does not not fully support this yet
+  bootc-generic-iso: *generic-iso
 
   # this image type is special (in many ways) and all is a bit ugly:
   # - we want to get rid of it (here for compat with bib)

@@ -13,12 +13,13 @@ import (
 // SysextCustomizations holds options for a sysext image. It is shared across
 // the various Sysext* pipeline generators and might be used in different places.
 type SysextCustomizations struct {
-	PackageSet       rpmmd.PackageSet
-	Paths            []string
-	ExcludePaths     []string
-	ExtensionRelease osbuild.OSReleaseStageOptions
-	BaseRPMOptions   *osbuild.RPMStageOptions
-	SELinux          string
+	PackageSet           rpmmd.PackageSet
+	Paths                []string
+	ExcludePaths         []string
+	ExtensionRelease     osbuild.OSReleaseStageOptions
+	ExtensionReleaseName string
+	BaseRPMOptions       *osbuild.RPMStageOptions
+	SELinux              string
 }
 
 // SysextTree installs packages into a tree that serves as the overlay for a
@@ -171,7 +172,11 @@ func (p *SysextPrep) serialize() (osbuild.Pipeline, error) {
 
 func (p *SysextPrep) writeExtensionRelease(pipeline osbuild.Pipeline) osbuild.Pipeline {
 	opts := p.Customizations.ExtensionRelease
-	opts.Path = "usr/lib/extension-release.d/extension-release." + p.name
+	name := p.Customizations.ExtensionReleaseName
+	if name == "" {
+		name = p.name
+	}
+	opts.Path = "usr/lib/extension-release.d/extension-release." + name
 	pipeline.AddStage(osbuild.NewOSReleaseStage(&opts))
 	return pipeline
 }

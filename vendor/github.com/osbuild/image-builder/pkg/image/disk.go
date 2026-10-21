@@ -21,6 +21,8 @@ type SysextConfig struct {
 	Format                    string
 	ExtensionReleaseID        string
 	ExtensionReleaseVersionID string
+	ExtensionReleaseName      string
+	ExtensionReleaseStrict    *bool
 	Paths                     []string
 	ExcludePaths              []string
 	PackageSet                rpmmd.PackageSet
@@ -100,6 +102,8 @@ func (img *DiskImage) InstantiateManifest(m *manifest.Manifest,
 		sp.Prep.Customizations.ExcludePaths = sysext.ExcludePaths
 		sp.Prep.Customizations.ExtensionRelease.Vars.ID = sysext.ExtensionReleaseID
 		sp.Prep.Customizations.ExtensionRelease.Vars.VersionID = sysext.ExtensionReleaseVersionID
+		sp.Prep.Customizations.ExtensionReleaseName = sysext.ExtensionReleaseName
+		sp.Prep.Customizations.ExtensionRelease.ExtensionReleaseStrict = sysext.ExtensionReleaseStrict
 		sp.Prep.Customizations.SELinux = img.OSCustomizations.SELinux
 
 		switch sysext.Format {

@@ -1759,6 +1759,22 @@ image_types:
             distro_name: "ol"
           shallow_merge:
             hostonly: true
+        "rhel-9.10+ gets OCI iSCSI dracut configuration":
+          when:
+            distro_name: "rhel"
+            version_greater_or_equal: "9.10"
+          shallow_merge:
+            # iSCSI in initramfs so OCI BM can attach the boot LUN.
+            dracut_conf:
+              - filename: "oci.conf"
+                config:
+                  add_drivers:
+                    - "mlx5_core"
+                    - "iscsi_ibft"
+                  add_dracutmodules:
+                    - "iscsi"
+                  install:
+                    - "/usr/sbin/iscsiadm"
         "rhel needs the rhel release rpm gpg key":
           when:
             distro_name: "rhel"
@@ -1768,6 +1784,15 @@ image_types:
     package_sets:
       os:
         - *qcow2_pkgset
+        - conditions:
+            "rhel-9.10+ gets OCI iSCSI tools":
+              when:
+                distro_name: "rhel"
+                version_greater_or_equal: "9.10"
+              append:
+                include:
+                  # Required so dracut iscsi module check passes during kernel-core %posttrans.
+                  - "iscsi-initiator-utils"
         - conditions:
             "system reinstall bootc": *conditions_pkgsets_system_reinstall_bootc
     partition_table:

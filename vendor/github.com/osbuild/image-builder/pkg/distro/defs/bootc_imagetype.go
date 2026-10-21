@@ -36,7 +36,8 @@ var _ = distro.ImageType(&bootcImageType{})
 type bootcImageType struct {
 	ImageTypeYAML
 
-	arch *architecture
+	arch     *architecture
+	isoLabel string
 }
 
 func (t *bootcImageType) Name() string {
@@ -64,7 +65,7 @@ func (t *bootcImageType) OSTreeRef() string {
 }
 
 func (t *bootcImageType) ISOLabel() (string, error) {
-	return "", nil
+	return t.isoLabel, nil
 }
 
 func (t *bootcImageType) Size(size uint64) uint64 {
@@ -534,6 +535,16 @@ func (t *bootcImageType) manifestForGenericISO(options distro.ImageOptions, rng 
 	if bd.imgref == "" {
 		return nil, nil, fmt.Errorf("internal error: no base image defined")
 	}
+	if bd.sourceInfo == nil {
+		return nil, nil, fmt.Errorf("internal error: Missing sourceInfo")
+	}
+
+	// Set the iso label, must be done before calling isoCustomizations
+	if label := bd.sourceInfo.ISOInfo.Label; label != "" {
+		t.isoLabel = label
+	} else {
+		t.isoLabel = bootc.LabelForISO(&bd.sourceInfo.OSRelease, t.arch.Name())
+	}
 
 	local := t.useLocalStorage(options)
 	containerSource := container.SourceSpec{
@@ -553,50 +564,42 @@ func (t *bootcImageType) manifestForGenericISO(options distro.ImageOptions, rng 
 			Local:  local,
 		}
 	}
-	img.RootfsCompression = "zstd"
-	img.RootfsType = manifest.SquashfsRootfs
-	img.RootfsExcludes = []string{
-		"boot/efi/.*",
-		"boot/grub2/.*",
-		"boot/config-.*",
-		"boot/initramfs-.*",
-		"boot/loader/.*",
-		"boot/symvers-.*",
-		"boot/System.map-.*",
-		"usr/lib/sysimage/rpm/.*",
-		"var/lib/rpm/.*",
-		"var/lib/yum/.*",
-		"var/lib/dnf/.*",
-	}
 
 	// Potentially KernelInfo is nil when we couldn't read it from the container; handle that so
 	// we don't panic
 	if bd.sourceInfo.KernelInfo == nil {
 		return nil, nil, fmt.Errorf("could not read kernel info from container")
 	}
-
 	img.KernelPath = fmt.Sprintf("lib/modules/%s/vmlinuz", bd.sourceInfo.KernelInfo.Version)
 	img.InitramfsPath = fmt.Sprintf("lib/modules/%s/initramfs.img", bd.sourceInfo.KernelInfo.Version)
-	img.Product = bd.sourceInfo.OSRelease.Name
-	img.Version = bd.sourceInfo.OSRelease.VersionID
-	img.Release = bd.sourceInfo.OSRelease.VersionID
+
+	// Setup the iso customizations from the YAML
+	var err error
+	img.ISOCustomizations, err = isoCustomizations(t, nil, t.arch.arch)
+	if err != nil {
+		return nil, nil, err
+	}
+	// TODO This should come from the YAML/ISOCustomizations
+	img.RootfsCompression = "zstd"
+
+	img.InstallerCustomizations = manifest.InstallerCustomizations{
+		Product:   bd.sourceInfo.OSRelease.Name,
+		OSVersion: bd.sourceInfo.OSRelease.VersionID,
+		Release:   bd.sourceInfo.OSRelease.VersionID,
+	}
 
 	isoi := bd.sourceInfo.ISOInfo
-
-	if isoi.Label != "" {
-		img.ISOLabel = isoi.Label
-	} else {
-		img.ISOLabel = bootc.LabelForISO(&bd.sourceInfo.OSRelease, t.arch.Name())
+	// TODO These settings really belong in ISOCustomization
+	if isoi.Grub2.Default != nil {
+		img.InstallerCustomizations.DefaultMenu = *isoi.Grub2.Default
 	}
+	img.InstallerCustomizations.MenuTimeout = isoi.Grub2.Timeout
 
 	if len(isoi.KernelArgs) > 0 {
 		img.KernelOpts = isoi.KernelArgs
 	}
 
-	img.Grub2MenuDefault = isoi.Grub2.Default
-	img.Grub2MenuTimeout = isoi.Grub2.Timeout
 	img.Grub2MenuEntries = []manifest.ISOGrub2MenuEntry{}
-
 	for _, entry := range isoi.Grub2.Entries {
 		img.Grub2MenuEntries = append(img.Grub2MenuEntries, manifest.ISOGrub2MenuEntry{
 			Name:   entry.Name,

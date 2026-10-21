@@ -1,7 +1,9 @@
 package manifest
 
 import (
+	"bytes"
 	"fmt"
+	"text/template"
 
 	"github.com/osbuild/image-builder/pkg/arch"
 	"github.com/osbuild/image-builder/pkg/artifact"
@@ -73,7 +75,7 @@ func (p *RawImage) serialize() (osbuild.Pipeline, error) {
 	if len(treeBootFiles) > 0 {
 		treeInputName := "root-tree"
 		bootCopyInputs := osbuild.NewPipelineTreeInputs(treeInputName, p.treePipeline.Name())
-		stage, err := bootFilesCopyStage(treeBootFiles, bootCopyInputs, treeInputName, p.Filename(), pt)
+		stage, err := bootFilesCopyStage(treeBootFiles, bootCopyInputs, treeInputName, p.Filename(), pt, p.treePipeline.kernelVer)
 		if err != nil {
 			return osbuild.Pipeline{}, err
 		}
@@ -82,7 +84,7 @@ func (p *RawImage) serialize() (osbuild.Pipeline, error) {
 	if len(buildBootFiles) > 0 {
 		buildInputName := "build-tree"
 		buildCopyInputs := osbuild.NewPipelineTreeInputs(buildInputName, p.build.Name())
-		stage, err := bootFilesCopyStage(buildBootFiles, buildCopyInputs, buildInputName, p.Filename(), pt)
+		stage, err := bootFilesCopyStage(buildBootFiles, buildCopyInputs, buildInputName, p.Filename(), pt, p.treePipeline.kernelVer)
 		if err != nil {
 			return osbuild.Pipeline{}, err
 		}
@@ -149,6 +151,7 @@ func bootFilesCopyStage(
 	inputs osbuild.Inputs,
 	srcPrefix, filename string,
 	pt *disk.PartitionTable,
+	kernelVersion string,
 ) (*osbuild.Stage, error) {
 	_, devices, mounts := osbuild.GenCopyFSTreeOptions("", "", filename, pt)
 
@@ -165,9 +168,17 @@ func bootFilesCopyStage(
 
 	options := &osbuild.CopyStageOptions{}
 	for _, bf := range bootFiles {
+		src, err := renderBootFilePath(bf.Src, kernelVersion)
+		if err != nil {
+			return nil, fmt.Errorf("cannot render boot file source: %w", err)
+		}
+		dst, err := renderBootFilePath(bf.Dst, kernelVersion)
+		if err != nil {
+			return nil, fmt.Errorf("cannot render boot file destination: %w", err)
+		}
 		options.Paths = append(options.Paths, osbuild.CopyStagePath{
-			From: fmt.Sprintf("input://%s%s", srcPrefix, bf.Src),
-			To:   fmt.Sprintf("mount://%s%s", fsRootMntName, bf.Dst),
+			From: fmt.Sprintf("input://%s%s", srcPrefix, src),
+			To:   fmt.Sprintf("mount://%s%s", fsRootMntName, dst),
 		})
 	}
 
@@ -177,4 +188,22 @@ func bootFilesCopyStage(
 func (p *RawImage) Export() *artifact.Artifact {
 	p.Base.export = true
 	return artifact.New(p.Name(), p.Filename(), nil)
+}
+
+// renderBootFilePath expands paths after the target kernel has been resolved.
+// Unavailable values fail rather than emit a broken path.
+func renderBootFilePath(path, kernelVersion string) (string, error) {
+	data := map[string]string{}
+	if kernelVersion != "" {
+		data["KernelVersion"] = kernelVersion
+	}
+	tmpl, err := template.New("boot-file-path").Option("missingkey=error").Parse(path)
+	if err != nil {
+		return "", fmt.Errorf("cannot parse boot file path %q: %w", path, err)
+	}
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, data); err != nil {
+		return "", fmt.Errorf("cannot execute boot file path %q: %w", path, err)
+	}
+	return buf.String(), nil
 }

@@ -589,11 +589,17 @@ type packageConfDef struct {
 }
 
 type sysextDef struct {
-	Format       string         `yaml:"format"`
-	Paths        []string       `yaml:"paths,omitempty"`
-	ExcludePaths []string       `yaml:"exclude_paths,omitempty"`
-	PackageSets  []packageSet   `yaml:"package_sets"`
-	PackageConf  packageConfDef `yaml:"package_conf,omitempty"`
+	Format           string              `yaml:"format"`
+	Paths            []string            `yaml:"paths,omitempty"`
+	ExcludePaths     []string            `yaml:"exclude_paths,omitempty"`
+	PackageSets      []packageSet        `yaml:"package_sets"`
+	PackageConf      packageConfDef      `yaml:"package_conf,omitempty"`
+	ExtensionRelease extensionReleaseDef `yaml:"extension_release,omitempty"`
+}
+
+type extensionReleaseDef struct {
+	Name   string `yaml:"name,omitempty"`
+	Strict *bool  `yaml:"strict,omitempty"`
 }
 
 type partitionDef struct {
@@ -894,12 +900,14 @@ func (imgType *ImageTypeYAML) PackageSets(id distro.ID, archName string) map[str
 
 // SysextDef holds a resolved sysext definition with its name and packages.
 type SysextDef struct {
-	Name         string
-	Format       string
-	Paths        []string
-	ExcludePaths []string
-	Packages     rpmmd.PackageSet
-	Standalone   bool
+	Name                   string
+	Format                 string
+	Paths                  []string
+	ExcludePaths           []string
+	Packages               rpmmd.PackageSet
+	Standalone             bool
+	ExtensionReleaseName   string
+	ExtensionReleaseStrict *bool
 }
 
 func (s SysextDef) ExportPipelineNames() []string {
@@ -943,12 +951,14 @@ func (imgType *ImageTypeYAML) Sysexts(id distro.ID, archName string) []SysextDef
 			paths = []string{"/usr", "/opt"}
 		}
 		res = append(res, SysextDef{
-			Name:         name,
-			Format:       format,
-			Paths:        paths,
-			ExcludePaths: sysext.ExcludePaths,
-			Packages:     pkgSet,
-			Standalone:   sysext.PackageConf.Standalone,
+			Name:                   name,
+			Format:                 format,
+			Paths:                  paths,
+			ExcludePaths:           sysext.ExcludePaths,
+			Packages:               pkgSet,
+			Standalone:             sysext.PackageConf.Standalone,
+			ExtensionReleaseName:   sysext.ExtensionRelease.Name,
+			ExtensionReleaseStrict: sysext.ExtensionRelease.Strict,
 		})
 	}
 	return res
