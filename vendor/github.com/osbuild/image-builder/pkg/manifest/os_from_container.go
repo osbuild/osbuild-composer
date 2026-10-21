@@ -6,11 +6,13 @@ import (
 
 	"github.com/osbuild/image-builder/pkg/container"
 	"github.com/osbuild/image-builder/pkg/osbuild"
+	"github.com/osbuild/image-builder/pkg/platform"
 )
 
 // OSFromContainer represents a pipeline that deploys an OS tree from a container.
 type OSFromContainer struct {
 	Base
+	platform platform.Platform
 
 	SourceContainer *container.SourceSpec
 
@@ -25,13 +27,19 @@ type OSFromContainer struct {
 
 var _ Pipeline = (*OSFromContainer)(nil)
 
-func NewOSFromContainer(name string, build Build, srcContainer *container.SourceSpec) *OSFromContainer {
+func NewOSFromContainer(name string, build Build, srcContainer *container.SourceSpec, platform platform.Platform) *OSFromContainer {
 	p := &OSFromContainer{
 		Base:            NewBase(name, build),
+		platform:        platform,
 		SourceContainer: srcContainer,
 	}
 	build.addDependent(p)
 	return p
+}
+
+// Platform satisfies TreePipeline interface for OSFromContainer
+func (p *OSFromContainer) Platform() platform.Platform {
+	return p.platform
 }
 
 func (p *OSFromContainer) getContainerSources() []container.SourceSpec {
