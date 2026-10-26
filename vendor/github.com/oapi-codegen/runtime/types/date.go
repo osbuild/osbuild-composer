@@ -33,6 +33,10 @@ func (d Date) String() string {
 	return d.Format(DateFormat)
 }
 
+func (d Date) MarshalText() ([]byte, error) {
+	return []byte(d.Format(DateFormat)), nil
+}
+
 func (d *Date) UnmarshalText(data []byte) error {
 	parsed, err := time.Parse(DateFormat, string(data))
 	if err != nil {
