@@ -83,6 +83,17 @@ func MarshalDeepObject(i interface{}, paramName string) (string, error) {
 	// can then walk the generic object structure to produce a deepObject. This
 	// isn't efficient and it would be more efficient to reflect on our own,
 	// but it's complicated, error-prone code.
+
+	// Handle concrete-typed nil maps and nil slices via
+	// reflection. Without this, json.Marshal encodes them as "null", which
+	// round-trips to a nil interface{} and emits an undesired "param[]=null" pair.
+	v := reflect.ValueOf(i)
+	switch v.Kind() {
+	case reflect.Map, reflect.Slice:
+		if v.IsNil() {
+			return "", nil
+		}
+	}
 	buf, err := json.Marshal(i)
 	if err != nil {
 		return "", fmt.Errorf("failed to marshal input to JSON: %w", err)
