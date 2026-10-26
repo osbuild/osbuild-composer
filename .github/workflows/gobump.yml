@@ -10,7 +10,7 @@ on:  # yamllint disable-line rule:truthy
 jobs:
   update-and-push:
     runs-on: ubuntu-latest
-    container: registry.fedoraproject.org/fedora:43
+    container: registry.fedoraproject.org/fedora:46
     steps:
       - name: Prepare environment and run tests
         run: |

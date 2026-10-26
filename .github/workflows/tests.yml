@@ -15,7 +15,7 @@ jobs:
     name: "🛃 Unit tests"
     runs-on: ubuntu-24.04
     container:
-      image: registry.fedoraproject.org/fedora:42
+      image: registry.fedoraproject.org/fedora:46
 
     steps:
         # krb5-devel is needed to test internal/upload/koji package
@@ -82,7 +82,7 @@ jobs:
     name: "🐍 Lint python scripts"
     runs-on: ubuntu-24.04
     container:
-      image: registry.fedoraproject.org/fedora:42
+      image: registry.fedoraproject.org/fedora:46
     steps:
 
       - name: Install build and test dependencies
@@ -229,7 +229,7 @@ jobs:
   rpmlint:
     name: "📦 RPMlint"
     runs-on: ubuntu-24.04
-    container: registry.fedoraproject.org/fedora:42
+    container: registry.fedoraproject.org/fedora:46
     steps:
       - name: Install dependencies
         run: sudo dnf install -y rpmlint rpm-build make git-core
