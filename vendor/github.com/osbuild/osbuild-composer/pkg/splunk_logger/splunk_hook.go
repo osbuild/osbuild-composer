@@ -30,7 +30,20 @@ func (sh *SplunkHook) Fire(entry *logrus.Entry) error {
 		return err
 	}
 
-	return sh.sl.LogWithTime(entry.Time, msg)
+	event := SplunkEvent{
+		Message:   msg,
+		ComposeID: stringField(entry.Data, "compose_id"),
+		JobID:     stringField(entry.Data, "job_id"),
+	}
+	return sh.sl.LogEventWithTime(entry.Time, event)
+}
+
+func stringField(data logrus.Fields, key string) string {
+	v, ok := data[key]
+	if !ok || v == nil {
+		return ""
+	}
+	return fmt.Sprint(v)
 }
 
 func (sh *SplunkHook) Levels() []logrus.Level {
