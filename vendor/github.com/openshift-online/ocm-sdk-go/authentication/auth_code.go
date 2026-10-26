@@ -16,6 +16,7 @@ type AuthCodeConfig struct {
 	logger     logging.Logger
 	trustedCAs []interface{}
 	insecure   bool
+	allowTLS12 bool
 	tokenURL   string
 }
 
@@ -66,6 +67,16 @@ func (c *AuthCodeConfig) Insecure(flag bool) *AuthCodeConfig {
 	return c
 }
 
+// AllowTLS12 lowers the minimum accepted TLS version from 1.3 to 1.2 for the token exchange HTTP
+// client. This is intended only for compatibility with legacy middleboxes that can't negotiate TLS
+// 1.3. It only lowers the floor: TLS 1.3-capable servers still negotiate 1.3, but any connection
+// negotiated at TLS 1.2 won't have post-quantum (ML-KEM) key exchange, so it isn't recommended for a
+// production environment.
+func (c *AuthCodeConfig) AllowTLS12(flag bool) *AuthCodeConfig {
+	c.allowTLS12 = flag
+	return c
+}
+
 func (c *AuthCodeConfig) resolveLogger() (logging.Logger, error) {
 	if c.logger != nil {
 		return c.logger, nil
@@ -75,6 +86,7 @@ func (c *AuthCodeConfig) resolveLogger() (logging.Logger, error) {
 
 func (c *AuthCodeConfig) oauth2HTTPClient(ctx context.Context) (*http.Client, error) {
 	tlsConfig := &tls.Config{
+		MinVersion:         internal.MinTLSVersion(c.allowTLS12),
 		InsecureSkipVerify: c.insecure, // #nosec G402 -- off by default; opt-in via Insecure
 	}
 	if len(c.trustedCAs) > 0 {
