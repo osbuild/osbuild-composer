@@ -41,6 +41,7 @@ type ClientSelectorBuilder struct {
 	logger            logging.Logger
 	trustedCAs        []interface{}
 	insecure          bool
+	allowTLS12        bool
 	disableKeepAlives bool
 	transportWrappers []func(http.RoundTripper) http.RoundTripper
 }
@@ -51,6 +52,7 @@ type ClientSelector struct {
 	logger            logging.Logger
 	trustedCAs        *x509.CertPool
 	insecure          bool
+	allowTLS12        bool
 	disableKeepAlives bool
 	transportWrappers []func(http.RoundTripper) http.RoundTripper
 	cookieJar         http.CookieJar
@@ -98,6 +100,15 @@ func (b *ClientSelectorBuilder) TrustedCAs(values ...interface{}) *ClientSelecto
 // certificates and host names and it isn't recommended for a production environment.
 func (b *ClientSelectorBuilder) Insecure(flag bool) *ClientSelectorBuilder {
 	b.insecure = flag
+	return b
+}
+
+// AllowTLS12 lowers the minimum accepted TLS version from 1.3 to 1.2. This is intended only for
+// compatibility with legacy middleboxes or proxies that can't negotiate TLS 1.3. It only lowers the
+// floor: TLS 1.3-capable servers still negotiate 1.3, but any connection negotiated at TLS 1.2 won't
+// have post-quantum (ML-KEM) key exchange, so it isn't recommended for a production environment.
+func (b *ClientSelectorBuilder) AllowTLS12(flag bool) *ClientSelectorBuilder {
+	b.allowTLS12 = flag
 	return b
 }
 
@@ -152,6 +163,7 @@ func (b *ClientSelectorBuilder) Build(ctx context.Context) (result *ClientSelect
 		logger:            b.logger,
 		trustedCAs:        trustedCAs,
 		insecure:          b.insecure,
+		allowTLS12:        b.allowTLS12,
 		disableKeepAlives: b.disableKeepAlives,
 		transportWrappers: b.transportWrappers,
 		cookieJar:         cookieJar,
@@ -317,15 +329,25 @@ func (s *ClientSelector) create(ctx context.Context, address *ServerAddress) (re
 	return
 }
 
+// MinTLSVersion returns the minimum TLS version to use for client connections. By default this is
+// TLS 1.3, which keeps post-quantum (ML-KEM) key exchange available. When allowTLS12 is true the
+// floor is lowered to TLS 1.2 for compatibility with legacy infrastructure.
+func MinTLSVersion(allowTLS12 bool) uint16 {
+	if allowTLS12 {
+		return tls.VersionTLS12
+	}
+	return tls.VersionTLS13
+}
+
 // createTransport creates a new HTTP transport to use to connect to the given server address.
 func (s *ClientSelector) createTransport(ctx context.Context,
 	address *ServerAddress) (result http.RoundTripper, err error) {
 	// Prepare the TLS configuration:
-	// #nosec 402
 	config := &tls.Config{
 		// ServerName is not included to allow the tls library to set it based on the hostname
 		// provided in the request. This is necessary to support OCM region redirects.
-		InsecureSkipVerify: s.insecure,
+		MinVersion:         MinTLSVersion(s.allowTLS12),
+		InsecureSkipVerify: s.insecure, // #nosec G402 -- disabled by default; opt-in via Insecure
 		RootCAs:            s.trustedCAs,
 	}
 
@@ -406,6 +428,11 @@ func (s *ClientSelector) TrustedCAs() *x509.CertPool {
 // Insecure returns the flag that indicates if insecure communication with the server is enabled.
 func (s *ClientSelector) Insecure() bool {
 	return s.insecure
+}
+
+// AllowTLS12 returns the flag that indicates if the minimum TLS version has been lowered to 1.2.
+func (s *ClientSelector) AllowTLS12() bool {
+	return s.allowTLS12
 }
 
 // DisableKeepAlives retursnt the flag that indicates if HTTP keep alive is disabled.

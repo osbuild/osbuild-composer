@@ -18,6 +18,7 @@ package authentication
 
 import (
 	"context"
+	"crypto"
 	"crypto/rsa"
 	"crypto/tls"
 	"crypto/x509"
@@ -38,25 +39,27 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/openshift-online/ocm-sdk-go/errors"
+	"github.com/openshift-online/ocm-sdk-go/internal"
 	"github.com/openshift-online/ocm-sdk-go/logging"
 )
 
 // HandlerBuilder contains the data and logic needed to create a new authentication handler. Don't
 // create objects of this type directly, use the NewHandler function instead.
 type HandlerBuilder struct {
-	logger       logging.Logger
-	publicPaths  []string
-	keysFiles    []string
-	keysURLs     []string
-	keysCAs      *x509.CertPool
-	keysInsecure bool
-	aclFiles     []string
-	service      string
-	error        string
-	operationID  func(*http.Request) string
-	tolerance    time.Duration
-	cookie       string
-	next         http.Handler
+	logger         logging.Logger
+	publicPaths    []string
+	keysFiles      []string
+	keysURLs       []string
+	keysCAs        *x509.CertPool
+	keysInsecure   bool
+	keysAllowTLS12 bool
+	aclFiles       []string
+	service        string
+	error          string
+	operationID    func(*http.Request) string
+	tolerance      time.Duration
+	cookie         string
+	next           http.Handler
 }
 
 // Handler is an HTTP handler that checks authentication using the JWT tokens from the authorization
@@ -146,6 +149,16 @@ func (b *HandlerBuilder) KeysCAs(value *x509.CertPool) *HandlerBuilder {
 // token verification insecure, so refrain from doing that in security sensitive environments.
 func (b *HandlerBuilder) KeysInsecure(value bool) *HandlerBuilder {
 	b.keysInsecure = value
+	return b
+}
+
+// KeysAllowTLS12 lowers the minimum accepted TLS version from 1.3 to 1.2 for the HTTP client that
+// loads the keys. This is intended only for compatibility with legacy middleboxes that can't
+// negotiate TLS 1.3. It only lowers the floor: TLS 1.3-capable servers still negotiate 1.3, but any
+// connection negotiated at TLS 1.2 won't have post-quantum (ML-KEM) key exchange, so it isn't
+// recommended for a security sensitive environment.
+func (b *HandlerBuilder) KeysAllowTLS12(value bool) *HandlerBuilder {
+	b.keysAllowTLS12 = value
 	return b
 }
 
@@ -335,8 +348,9 @@ func (b *HandlerBuilder) Build() (handler *Handler, err error) {
 	keysClient := &http.Client{
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{
+				MinVersion:         internal.MinTLSVersion(b.keysAllowTLS12),
 				RootCAs:            b.keysCAs,
-				InsecureSkipVerify: b.keysInsecure, // nolint
+				InsecureSkipVerify: b.keysInsecure, // #nosec G402 -- off by default; opt-in via KeysInsecure
 			},
 		},
 	}
@@ -564,6 +578,8 @@ type keyData struct {
 	Use string `json:"use"`
 	N   string `json:"n"`
 	E   string `json:"e"`
+	Crv string `json:"crv"`
+	X   string `json:"x"`
 }
 
 // setData is the type used to read a collection of keys from a JSON document.
@@ -672,23 +688,26 @@ func (h *Handler) readKeys(ctx context.Context, reader io.Reader) error {
 			)
 			continue
 		}
-		if keyData.E == "" {
-			h.logger.Error(
-				ctx,
-				"Can't read key '%s' because 'e' is empty",
-				keyData.Kid,
-			)
-			continue
+		switch keyData.Kty {
+		case "RSA":
+			if keyData.N == "" {
+				h.logger.Error(
+					ctx,
+					"Can't read key '%s' because 'n' is empty",
+					keyData.Kid,
+				)
+				continue
+			}
+			if keyData.E == "" {
+				h.logger.Error(
+					ctx,
+					"Can't read key '%s' because 'e' is empty",
+					keyData.Kid,
+				)
+				continue
+			}
 		}
-		if keyData.E == "" {
-			h.logger.Error(
-				ctx,
-				"Can't read key '%s' because 'n' is empty",
-				keyData.Kid,
-			)
-			continue
-		}
-		var key interface{}
+		var key crypto.PublicKey
 		key, err = h.parseKey(keyData)
 		if err != nil {
 			h.logger.Error(
@@ -707,30 +726,29 @@ func (h *Handler) readKeys(ctx context.Context, reader io.Reader) error {
 
 // parseKey converts the key data loaded from the JSON document to an actual key that can be used
 // to verify the signatures of tokens.
-func (h *Handler) parseKey(data keyData) (key interface{}, err error) {
-	// Check key type:
-	if data.Kty != "RSA" {
+func (h *Handler) parseKey(data keyData) (key crypto.PublicKey, err error) {
+	switch data.Kty {
+	case "RSA":
+		key, err = parseRSAKey(data)
+	default:
 		err = fmt.Errorf("key type '%s' isn't supported", data.Kty)
-		return
 	}
+	return
+}
 
-	// Decode the e and n values:
+func parseRSAKey(data keyData) (crypto.PublicKey, error) {
 	nb, err := base64.RawURLEncoding.DecodeString(data.N)
 	if err != nil {
-		return
+		return nil, err
 	}
 	eb, err := base64.RawURLEncoding.DecodeString(data.E)
 	if err != nil {
-		return
+		return nil, err
 	}
-
-	// Create the key:
-	key = &rsa.PublicKey{
+	return &rsa.PublicKey{
 		N: new(big.Int).SetBytes(nb),
 		E: int(new(big.Int).SetBytes(eb).Int64()),
-	}
-
-	return
+	}, nil
 }
 
 // checkToken checks if the token is valid. If it is valid it returns the parsed token, the

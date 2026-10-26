@@ -73,6 +73,7 @@ type TransportWrapperBuilder struct {
 	agent             string
 	trustedCAs        []interface{}
 	insecure          bool
+	allowTLS12        bool
 	transportWrappers []func(http.RoundTripper) http.RoundTripper
 
 	// Fields used for metrics:
@@ -258,6 +259,16 @@ func (b *TransportWrapperBuilder) TrustedCAs(values ...interface{}) *TransportWr
 // certificates and host names and it isn't recommended for a production environment.
 func (b *TransportWrapperBuilder) Insecure(flag bool) *TransportWrapperBuilder {
 	b.insecure = flag
+	return b
+}
+
+// AllowTLS12 lowers the minimum accepted TLS version from 1.3 to 1.2 for the HTTP client used to
+// request tokens. This is intended only for compatibility with legacy middleboxes that can't
+// negotiate TLS 1.3. It only lowers the floor: TLS 1.3-capable servers still negotiate 1.3, but any
+// connection negotiated at TLS 1.2 won't have post-quantum (ML-KEM) key exchange, so it isn't
+// recommended for a production environment.
+func (b *TransportWrapperBuilder) AllowTLS12(flag bool) *TransportWrapperBuilder {
+	b.allowTLS12 = flag
 	return b
 }
 
@@ -496,6 +507,7 @@ func (b *TransportWrapperBuilder) Build(ctx context.Context) (result *TransportW
 		Logger(b.logger).
 		TrustedCAs(b.trustedCAs...).
 		Insecure(b.insecure).
+		AllowTLS12(b.allowTLS12).
 		TransportWrappers(b.transportWrappers...).
 		Build(ctx)
 	if err != nil {
