@@ -92,6 +92,8 @@ func (img *DiskImage) InstantiateManifest(m *manifest.Manifest,
 
 	for _, sysext := range img.Sysexts {
 		var depsolveRef manifest.Pipeline
+		// Standalone extensions resolve and install their full package set
+		// into a fresh tree, without copying the OS tree or its RPM database.
 		if !sysext.Standalone {
 			depsolveRef = osPipeline
 		}

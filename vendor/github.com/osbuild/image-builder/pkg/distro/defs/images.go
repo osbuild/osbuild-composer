@@ -111,14 +111,18 @@ func osCustomizations(t *imageType, osPackageSet rpmmd.PackageSet, options distr
 	osc.EnabledServices = imageConfig.EnabledServices
 	osc.DisabledServices = imageConfig.DisabledServices
 	osc.MaskedServices = imageConfig.MaskedServices
+	if imageConfig.DefaultTarget != nil {
+		osc.DefaultTarget = *imageConfig.DefaultTarget
+	}
+
 	if services := bp.Customizations.GetServices(); services != nil {
 		osc.EnabledServices = append(osc.EnabledServices, services.Enabled...)
 		osc.DisabledServices = append(osc.DisabledServices, services.Disabled...)
 		osc.MaskedServices = append(osc.MaskedServices, services.Masked...)
-	}
 
-	if imageConfig.DefaultTarget != nil {
-		osc.DefaultTarget = *imageConfig.DefaultTarget
+		if services.DefaultTarget != "" {
+			osc.DefaultTarget = services.DefaultTarget
+		}
 	}
 
 	osc.Firewall = imageConfig.Firewall
