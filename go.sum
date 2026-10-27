@@ -361,8 +361,8 @@ github.com/oracle/oci-go-sdk/v54 v54.0.0 h1:CDLjeSejv2aDpElAJrhKpi6zvT/zhZCZuXch
 github.com/oracle/oci-go-sdk/v54 v54.0.0/go.mod h1:+t+yvcFGVp+3ZnztnyxqXfQDsMlq8U25faBLa+mqCMc=
 github.com/osbuild/blueprint v1.36.0 h1:Jdn+IabRN2DOZF6RNz+CKdCMlisSxQYnRW1Rdz4bSi4=
 github.com/osbuild/blueprint v1.36.0/go.mod h1:zFiI1IULOe85F/OM8YPhHek7YCpWZENJoxZezJgRvto=
-github.com/osbuild/image-builder v0.274.1-0.20261021150919-f43ddf4e0a62 h1:OI0zLXJKLBNFlZplpdwmgxufOKDssiYqo2chvx43juc=
-github.com/osbuild/image-builder v0.274.1-0.20261021150919-f43ddf4e0a62/go.mod h1:IQDviSNX6sTrK9wSo/G/Qle3k9EAlbWQQRr7VcE+kXY=
+github.com/osbuild/image-builder v0.274.1-0.20261026230958-608a55027c56 h1:HuI+lHm/6uy1nG2W8q86aUWGx7OmKSE3Wqh8sXY9fK8=
+github.com/osbuild/image-builder v0.274.1-0.20261026230958-608a55027c56/go.mod h1:KSCn/5eNptJEUNtiHV9uX2D1Psll7QGuglOA2pqBPcg=
 github.com/osbuild/osbuild-composer/pkg/splunk_logger v0.0.0-20240814102216-0239db53236d h1:r9BFPDv0uuA9k1947Jybcxs36c/pTywWS1gjeizvtcQ=
 github.com/osbuild/osbuild-composer/pkg/splunk_logger v0.0.0-20240814102216-0239db53236d/go.mod h1:zR1iu/hOuf+OQNJlk70tju9IqzzM4ycq0ectkFBm94U=
 github.com/perimeterx/marshmallow v1.1.5 h1:a2LALqQ1BlHM8PZblsDdidgv1mWi1DgC2UmX50IvK2s=

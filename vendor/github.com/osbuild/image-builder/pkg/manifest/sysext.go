@@ -3,6 +3,7 @@ package manifest
 import (
 	"errors"
 	"fmt"
+	"slices"
 
 	"github.com/osbuild/image-builder/pkg/depsolvednf"
 	"github.com/osbuild/image-builder/pkg/osbuild"
@@ -33,9 +34,8 @@ type SysextTree struct {
 
 	platform platform.Platform
 
-	// When non-nil, this pipeline's package sets are merged with the
-	// reference's sets so that shared dependencies resolve to the same
-	// versions as the base OS.
+	// When non-nil, copy this tree and install only packages not already
+	// present in it. Its package set chain precedes the extension transaction.
 	depsolveReferencePipeline Pipeline
 
 	Customizations SysextCustomizations
@@ -79,8 +79,34 @@ func (p *SysextTree) serialize() (osbuild.Pipeline, error) {
 		return osbuild.Pipeline{}, err
 	}
 
-	// Do not copy the reference pipeline tree here; it causes issues with the RPM database and package selections.
-	rpmStages, err := osbuild.GenRPMStagesFromTransactions(p.depsolveResult.Transactions, p.Customizations.BaseRPMOptions)
+	transactions := p.depsolveResult.Transactions
+	baseRPMOptions := p.Customizations.BaseRPMOptions.Clone()
+	if ref := p.depsolveReferencePipeline; ref != nil {
+		// The reference transactions are already installed in the copied tree.
+		// The final transaction contains only the extension's additional packages.
+		if len(transactions) > 0 {
+			transactions = transactions[len(transactions)-1:]
+		}
+		pipeline.AddStage(osbuild.NewCopyStageSimple(
+			&osbuild.CopyStageOptions{Paths: []osbuild.CopyStagePath{{
+				From: "input://tree/",
+				To:   "tree:///",
+			}}},
+			osbuild.NewPipelineTreeInputs("tree", ref.Name()),
+		))
+
+		// Keys provided by the reference packages have already been imported
+		// into the copied RPM database. Only import keys from new packages.
+		if baseRPMOptions != nil {
+			installed := ref.getPackageSpecs()
+			inheritedKeys := (depsolvednf.TransactionList{installed}).GetFilesTransactionInfo(baseRPMOptions.GPGKeysFromTree)
+			baseRPMOptions.GPGKeysFromTree = slices.DeleteFunc(baseRPMOptions.GPGKeysFromTree, func(path string) bool {
+				_, inherited := inheritedKeys[path]
+				return inherited
+			})
+		}
+	}
+	rpmStages, err := osbuild.GenRPMStagesFromTransactions(transactions, baseRPMOptions)
 	if err != nil {
 		return osbuild.Pipeline{}, err
 	}
@@ -95,20 +121,22 @@ func (p *SysextTree) getPackageSetChain(d Distro) ([]rpmmd.PackageSet, error) {
 		return nil, nil
 	}
 
+	pkgSet.Repositories = slices.Concat(pkgSet.Repositories, p.depsolveRepos)
+	pkgSet.InstallWeakDeps = false
+	var chain []rpmmd.PackageSet
 	if p.depsolveReferencePipeline != nil {
-		refChain, err := p.depsolveReferencePipeline.getPackageSetChain(d)
+		var err error
+		chain, err = p.depsolveReferencePipeline.getPackageSetChain(d)
 		if err != nil {
 			return nil, fmt.Errorf("getting reference package set chain: %w", err)
 		}
-		for _, refSet := range refChain {
-			pkgSet = pkgSet.Append(refSet)
-			pkgSet.Repositories = append(pkgSet.Repositories, refSet.Repositories...)
+		if len(chain) > 0 {
+			// Each transaction must retain its predecessor's repositories in order.
+			pkgSet.Repositories = slices.Concat(chain[len(chain)-1].Repositories, pkgSet.Repositories)
 		}
 	}
 
-	pkgSet.Repositories = append(pkgSet.Repositories, p.depsolveRepos...)
-	pkgSet.InstallWeakDeps = false
-	return []rpmmd.PackageSet{pkgSet}, nil
+	return append(chain, pkgSet), nil
 }
 
 // SysextPrep computes the file-level difference between a reference tree
@@ -191,8 +219,8 @@ type SysextPipelines struct {
 // NewSysextPipelines creates the full Tree -> Prep chain for a named sysext.
 // filesystemReferencePipeline is used by the Prep stage to compute the
 // tree-delta and is always required. depsolveReferencePipeline is optional:
-// when non-nil, its package sets are merged into the tree's depsolve so that
-// shared dependencies resolve to the same versions as the base OS.
+// when non-nil, its tree is copied and its package set chain precedes the
+// extension's own transaction. Only the final transaction is installed.
 func NewSysextPipelines(buildPipeline Build, platform platform.Platform, repos []rpmmd.RepoConfig, filesystemReferencePipeline Pipeline, depsolveReferencePipeline Pipeline, name string) SysextPipelines {
 	tree := NewSysextTree(buildPipeline, platform, repos, name)
 	tree.depsolveReferencePipeline = depsolveReferencePipeline

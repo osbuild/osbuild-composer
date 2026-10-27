@@ -788,6 +788,8 @@ image_types:
             - "libertas-usb8388-firmware"
             # RHBZ#2075815
             - "qemu-guest-agent"
+            # system-reinstall-bootc Recommends podman; AMI/EC2 does not need it preinstalled
+            - "podman"
           conditions:
             "add insights client on rhel":
               when:
