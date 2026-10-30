@@ -27,9 +27,9 @@ func (BootcInstallToFilesystemOptions) isStageOptions() {}
 // NewBootcInstallToFilesystem creates a new stage for the
 // org.osbuild.bootc.install-to-filesystem stage.
 //
-// It requires a mount setup so that bootupd can be run by bootc. I.e
-// "/", "/boot" and "/boot/efi" need to be set up so that
-// bootc/bootupd find and install all required bootloader bits.
+// It requires a root mount, and on UEFI platforms also an ESP mount so
+// bootupd can run. Aboot callers pass a platform without a UEFI vendor:
+// bootc discovers and mounts an ESP itself for ukiboot.
 //
 // The mounts input should be generated with GenBootupdDevicesMounts.
 func NewBootcInstallToFilesystemStage(options *BootcInstallToFilesystemOptions, inputs ContainerDeployInputs, devices map[string]Device, mounts []Mount, pltf platform.Platform) (*Stage, error) {

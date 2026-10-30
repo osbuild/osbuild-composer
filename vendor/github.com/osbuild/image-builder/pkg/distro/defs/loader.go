@@ -585,7 +585,8 @@ type extrasYAML struct {
 }
 
 type packageConfDef struct {
-	Standalone bool `yaml:"standalone,omitempty"`
+	Standalone   bool               `yaml:"standalone,omitempty"`
+	Repositories []rpmmd.Repository `yaml:"repositories,omitempty"`
 }
 
 type sysextDef struct {
@@ -926,6 +927,9 @@ func (imgType *ImageTypeYAML) Sysexts(id distro.ID, archName string) []SysextDef
 	for _, name := range names {
 		sysext := imgType.Extras.Sysexts[name]
 		var pkgSet rpmmd.PackageSet
+		for _, repo := range sysext.PackageConf.Repositories {
+			pkgSet.Repositories = append(pkgSet.Repositories, repo.RepoConfig())
+		}
 		for _, ps := range sysext.PackageSets {
 			pkgSet = pkgSet.Append(rpmmd.PackageSet{
 				Include: ps.Include,

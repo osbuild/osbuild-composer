@@ -1047,6 +1047,7 @@
         shallow_merge:
           kernel_options:
             - "ro"
+            - "loglevel=3"
             - "console=tty1"
             - "console=ttyS0"
             - "earlyprintk=ttyS0"
@@ -1058,6 +1059,7 @@
         shallow_merge:
           kernel_options:
             - "ro"
+            - "loglevel=3"
             - "console=tty1"
             - "console=ttyS0"
             - "earlyprintk=ttyS0"
@@ -1093,6 +1095,7 @@
         shallow_merge:
           kernel_options:
             - "ro"
+            - "loglevel=3"
             - "console=ttyAMA0"
       "aarch64 specific kernel options for rhel 9.7":
         when:
@@ -1101,6 +1104,7 @@
         shallow_merge:
           kernel_options:
             - "ro"
+            - "loglevel=3"
             - "console=ttyAMA0"
             - "nvme_core.io_timeout=240"
       "x86_64 specific kernel options rhel-9.5 or below":

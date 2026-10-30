@@ -559,3 +559,19 @@ distros:
   # definitions
   - name: bootc-generic-1
     defs_path: bootc-generic
+    conditions:
+      "pqc: ignore rpm key import failures":
+        when:
+          distro_name: "rhel"
+          version_greater_or_equal: "9.7"
+        tweaks:
+          rpmkeys:
+            ignore_build_import_failures: true
+      "pqc: use pqrpm for rhel 9":
+        when:
+          distro_name: "rhel"
+          version_greater_or_equal: "9.7"
+          version_less_than: "10.0"
+        tweaks:
+          rpmkeys:
+            binary_path: "/usr/lib/pqrpm/bin/rpmkeys"
