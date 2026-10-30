@@ -9,7 +9,6 @@ import (
 	"io/fs"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -235,11 +234,12 @@ func (c *Container) ResolveInfo(variant string) (*Info, error) {
 	bootcInfo.DefaultRootFs = bootcInstallConfig.Filesystem.Root.Type
 	bootcInfo.Bootloader = bootcInstallConfig.Bootloader
 
-	unifiedKernel, err := c.UnifiedKernel()
+	unifiedKernel, containerType, err := c.bootArtifacts()
 	if err != nil {
 		return nil, err
 	}
 	bootcInfo.UnifiedKernel = unifiedKernel
+	bootcInfo.ContainerType = containerType
 
 	size, err := getContainerSize(c.ref, c.storeOpts)
 	if err != nil {
@@ -384,6 +384,17 @@ func (c *Container) InitrdModules(kver string) ([]string, error) {
 
 // UnifiedKernel finds out if the kernel inside the bootc container is unified
 func (c *Container) UnifiedKernel() (bool, error) {
+	unified, _, err := c.bootArtifacts()
+	return unified, err
+}
+
+// HasAboot finds out if the bootc container has an aboot image.
+func (c *Container) HasAboot() (bool, error) {
+	_, containerType, err := c.bootArtifacts()
+	return containerType.IsAboot(), err
+}
+
+func (c *Container) bootArtifacts() (bool, ContainerType, error) {
 	args := []string{"exec"}
 	args = append(args, c.storeOpts...)
 	args = append(args, c.id, "bootc", "container", "inspect", "--json")
@@ -394,13 +405,14 @@ func (c *Container) UnifiedKernel() (bool, error) {
 		if exitErr, ok := err.(*exec.ExitError); ok && exitErr.ExitCode() == 2 {
 			// NOTE: the 'bootc container inspect' was added in version 1.12.0, which was not in RHEL-10.1.
 			// Treat exit value '2' as a non-error, since it means the command is not available and return false.
-			return false, nil
+			return false, "", nil
 		}
-		return false, fmt.Errorf("failed to run bootc container inspect: %w, output:\n%s", err, output)
+		return false, "", fmt.Errorf("failed to run bootc container inspect: %w, output:\n%s", err, output)
 	}
 
 	var bootcInspect struct {
-		Kargs  []string `json:"kargs"`
+		Type   ContainerType `json:"type"`
+		Kargs  []string      `json:"kargs"`
 		Kernel struct {
 			Version string `json:"version"`
 			Unified bool   `json:"unified"`
@@ -408,10 +420,10 @@ func (c *Container) UnifiedKernel() (bool, error) {
 	}
 
 	if err := json.Unmarshal(output, &bootcInspect); err != nil {
-		return false, fmt.Errorf("failed to unmarshal bootc inspect : %w", err)
+		return false, "", fmt.Errorf("failed to unmarshal bootc inspect : %w", err)
 	}
 
-	return bootcInspect.Kernel.Unified, nil
+	return bootcInspect.Kernel.Unified, bootcInspect.Type, nil
 }
 
 func findImageIdFor(cntId, ref string, extraOpts []string) (string, error) {
@@ -499,74 +511,6 @@ func (c *Container) InitDNF() error {
 	return nil
 }
 
-func (cnt *Container) hasRunSecrets() bool {
-	_, err := os.Stat(filepath.Join(cnt.root, "/run/secrets/redhat.repo"))
-	return err == nil
-}
-
-// setupRunSecretsBindMount will synthesise a /run/secrets dir
-// in the container root
-func (cnt *Container) setupRunSecrets() error {
-	if cnt.hasRunSecrets() {
-		return nil
-	}
-	dst := filepath.Join(cnt.root, "/run/secrets")
-	if err := os.MkdirAll(dst, 0755); err != nil {
-		return err
-	}
-
-	// We cannot just bind mount here because
-	// /usr/share/rhel/secrets contains a bunch of relative symlinks
-	// that will point to the container root not the host when resolved
-	// from the outside (via the host container mount).
-	//
-	// So instead of bind mounting we create a copy of the
-	// /run/secrets/ - they are static so that should be fine.
-	//
-	// We want to support /usr/share/rhel/secrets too to be able
-	// to run "bootc-image-builder manifest" directly on the host
-	// (which is useful for e.g. composer).
-	for _, src := range []string{"/run/secrets", "/usr/share/rhel/secrets"} {
-		if st, err := os.Stat(src); err != nil || !st.IsDir() {
-			continue
-		}
-
-		dents, err := filepath.Glob(src + "/*")
-		if err != nil {
-			return err
-		}
-		for _, ent := range dents {
-			// Check if the target file actually exists (i.e. for
-			// symlinks that they are valid) and only copy if so.
-			// This covers unsubscribed machines.
-			if _, err := os.Stat(ent); err != nil {
-				continue
-			}
-
-			// Note the use of "-L" here to dereference/copy links
-			if output, err := exec.Command("cp", "-rvL", ent, dst).CombinedOutput(); err != nil {
-				return fmt.Errorf("failed to setup /run/secrets: %w, output:\n%s", err, string(output))
-			}
-		}
-	}
-
-	// workaround broken containers (like f41) that use absolute symlinks
-	// to point to the entitlements-host and rhsm-host, they need to be
-	// relative so that the "SetRootdir()" from the resolver works, i.e.
-	// they need to point into the mounted container.
-	symlink := filepath.Join(cnt.root, "/etc/pki/entitlement-host")
-	target := "../../run/secrets/etc-pki-entitlement"
-	if err := forceSymlink(symlink, target); err != nil {
-		return err
-	}
-	symlink = filepath.Join(cnt.root, "/etc/rhsm-host")
-	target = "../run/secrets/rhsm"
-	if err := forceSymlink(symlink, target); err != nil {
-		return err
-	}
-	return nil
-}
-
 func (cnt *Container) NewContainerSolver(cacheRoot string, architecture arch.Arch, sourceInfo *osinfo.Info) (*depsolvednf.Solver, error) {
 	if cnt.unprivileged {
 		return nil, errors.New("Container depsolver is only supported when running as root")
@@ -578,24 +522,10 @@ func (cnt *Container) NewContainerSolver(cacheRoot string, architecture arch.Arc
 		architecture.String(),
 		fmt.Sprintf("%s-%s", sourceInfo.OSRelease.ID, sourceInfo.OSRelease.VersionID),
 		cacheRoot)
-
-	// we copy the data directly into the cnt.root, no need to
-	// cleanup here because podman stop will remove the dir
-	if err := cnt.setupRunSecrets(); err != nil {
-		return nil, err
-	}
-	solver.SetRootDir(cnt.root)
 	return solver, nil
 }
 
 var ErrNoDnf = errors.New("no dnf in container")
-
-func forceSymlink(symlinkPath, target string) error {
-	if output, err := exec.Command("ln", "-sf", target, symlinkPath).CombinedOutput(); err != nil {
-		return fmt.Errorf("cannot run ln: %w, output:\n%s", err, output)
-	}
-	return nil
-}
 
 func runContainer(ref string, fn func(c *Container) error) (err error) {
 	c, err := NewContainer(ref)

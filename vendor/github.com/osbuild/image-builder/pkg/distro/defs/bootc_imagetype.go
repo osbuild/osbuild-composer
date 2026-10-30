@@ -11,6 +11,7 @@ import (
 	"github.com/osbuild/image-builder/internal/common"
 	"github.com/osbuild/image-builder/pkg/arch"
 	"github.com/osbuild/image-builder/pkg/bib/osinfo"
+	bootccontainer "github.com/osbuild/image-builder/pkg/bootc"
 	"github.com/osbuild/image-builder/pkg/container"
 	"github.com/osbuild/image-builder/pkg/customizations/anaconda"
 	"github.com/osbuild/image-builder/pkg/customizations/ignition"
@@ -94,17 +95,21 @@ func (t *bootcImageType) BasePartitionTable() (*disk.PartitionTable, error) {
 }
 
 func (t *bootcImageType) BootMode() platform.BootMode {
-	// We really never want HYBRID or LEGACY on aarch64 platforms. In the future
-	// it might be much nicer to take the same apporach as `Bootmode()` in the
-	// generic distro but that's a bit more involved. Let's start here.
+	bd := t.arch.distro.(*BootcDistro)
+	// Android aboot is firmware-managed, including on aarch64. The inspect
+	// API reports both Android and EFI aboot payloads as unified kernels.
+	if bd.containerType == bootccontainer.ContainerTypeAboot {
+		return platform.BOOT_NONE
+	}
+
+	// Other aarch64 images use UEFI.
 	if t.arch.arch == arch.ARCH_AARCH64 {
 		return platform.BOOT_UEFI
 	}
 
-	// Sealed images don't need a BIOSBOOT partition as they don't use bootupd
-	// (which requires it to exist), let's set ourselves to UEFI
-	bd := t.arch.distro.(*BootcDistro)
-	if bd.unifiedKernel {
+	// UKIs and EFI aboot payloads boot through UEFI without bootupd,
+	// so they do not need a BIOSBOOT partition.
+	if bd.unifiedKernel || bd.containerType.IsAbootEFI() {
 		return platform.BOOT_UEFI
 	}
 
@@ -165,6 +170,9 @@ func (t *bootcImageType) SupportedBlueprintOptions() []string {
 	// not configuration / customizations. These should always be implicitly
 	// supported by all image types.
 	bd := t.arch.distro.(*BootcDistro)
+	if bd.containerType.IsAboot() && t.Image == "bootc_disk" {
+		return []string{"name", "version", "description"}
+	}
 	if bd.unifiedKernel && t.Image == "bootc_disk" {
 		return []string{"customizations.disk", "name", "version", "description"}
 	}
@@ -266,6 +274,7 @@ func (t *bootcImageType) manifestForDisk(bp *blueprint.Blueprint, options distro
 
 	img.Bootloader = bd.bootloader
 	img.UnifiedKernel = bd.unifiedKernel
+	img.Aboot = bd.containerType.IsAboot()
 
 	img.OSCustomizations.Subscription = options.Subscription
 	img.OSCustomizations.Users = users.UsersFromBP(customizations.GetUsers())
@@ -916,6 +925,10 @@ func (t *bootcImageType) genPartitionTable(customizations *blueprint.Customizati
 	if err != nil {
 		return nil, fmt.Errorf("error reading disk customizations: %w", err)
 	}
+	bd := t.arch.distro.(*BootcDistro)
+	if bd.containerType.IsAboot() && (bd.sourceInfo == nil || bd.sourceInfo.PartitionTable == nil) {
+		return nil, fmt.Errorf("aboot containers require an A/B partition table in disk.yaml")
+	}
 	basept, err := t.basePartitionTable()
 	if err != nil {
 		return nil, err
@@ -924,7 +937,7 @@ func (t *bootcImageType) genPartitionTable(customizations *blueprint.Customizati
 		return nil, fmt.Errorf("pipelines: no partition tables defined for %s", t.arch.Name())
 	}
 
-	bd := t.arch.distro.(*BootcDistro)
+	isUKI := bd.unifiedKernel && !bd.containerType.IsAboot()
 
 	// the user's own customizations, before the embedded ones are applied
 	userBootCust := slices.ContainsFunc(fsCust, func(fs blueprint.FilesystemCustomization) bool {
@@ -932,10 +945,9 @@ func (t *bootcImageType) genPartitionTable(customizations *blueprint.Customizati
 	})
 	userDiskCust := diskCust != nil
 
-	// When there's a unified kernel we don't want to auto-create a /boot even *if* the
-	// root filesystem is btrfs or lvm. Set a policy that disables the creation. Otherwise
-	// the default partition table policy is used.
-	if bd.unifiedKernel {
+	// Unified kernels and aboot payloads do not use a separate /boot, even *if*
+	// the root filesystem is btrfs or lvm. Otherwise use the default policy.
+	if bd.unifiedKernel || bd.containerType.IsAboot() {
 		// basept may be the table from the YAML definitions or the container,
 		// work on a copy: the changes below modify its policy and partitions
 		basept = basept.Clone().(*disk.PartitionTable)
@@ -944,7 +956,7 @@ func (t *bootcImageType) genPartitionTable(customizations *blueprint.Customizati
 		}
 		basept.Policy.EnsureXBOOTLDR = false
 		// A partition table that comes from the container is used as-is.
-		if bd.sourceInfo == nil || bd.sourceInfo.PartitionTable == nil {
+		if isUKI && (bd.sourceInfo == nil || bd.sourceInfo.PartitionTable == nil) {
 			if err := setDPSRootPartitionType(basept, t.arch.arch); err != nil {
 				return nil, err
 			}
@@ -968,6 +980,12 @@ func (t *bootcImageType) genPartitionTable(customizations *blueprint.Customizati
 		}
 	}
 
+	// Disk customizations replace the whole table and cannot describe the raw
+	// A/B payloads. Keep those partitions and their initial contents in disk.yaml.
+	if bd.containerType.IsAboot() && diskCust != nil {
+		return nil, fmt.Errorf("disk customizations are not supported for aboot containers: configure the A/B partition table in disk.yaml")
+	}
+
 	var partitionTable *disk.PartitionTable
 	switch {
 	case fsCust != nil && diskCust != nil:
@@ -986,7 +1004,7 @@ func (t *bootcImageType) genPartitionTable(customizations *blueprint.Customizati
 
 	// A disk customization builds a new partition table, so any /boot in it
 	// was asked for by the user.
-	if bd.unifiedKernel && (userBootCust || (userDiskCust && partitionTable.FindMountable("/boot") != nil)) {
+	if isUKI && (userBootCust || (userDiskCust && partitionTable.FindMountable("/boot") != nil)) {
 		return nil, fmt.Errorf("a /boot partition is not supported for bootc containers with a unified kernel (UKI): the UKI is installed into the ESP")
 	}
 

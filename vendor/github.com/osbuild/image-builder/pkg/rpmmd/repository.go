@@ -13,8 +13,8 @@ import (
 	"github.com/osbuild/image-builder/internal/common"
 )
 
-// repository is the presentation of a on-disk repository json file
-type repository struct {
+// Repository represents a repository entry in an on-disk repository file.
+type Repository struct {
 	Name           string   `json:"name"`
 	BaseURL        []string `json:"baseurl,omitempty"`
 	Metalink       string   `json:"metalink,omitempty"`
@@ -30,8 +30,8 @@ type repository struct {
 	PackageSets    []string `json:"package_sets,omitempty"`
 }
 
-func (r *repository) UnmarshalJSON(data []byte) (err error) {
-	type repoAlias repository
+func (r *Repository) UnmarshalJSON(data []byte) (err error) {
+	type repoAlias Repository
 	var raw struct {
 		repoAlias
 		BaseURL interface{} `json:"baseurl,omitempty"`
@@ -40,7 +40,7 @@ func (r *repository) UnmarshalJSON(data []byte) (err error) {
 	if err = json.Unmarshal(data, &raw); err != nil {
 		return err
 	}
-	*r = repository(raw.repoAlias)
+	*r = Repository(raw.repoAlias)
 
 	switch v := raw.BaseURL.(type) {
 	case string:
@@ -62,7 +62,7 @@ func (r *repository) UnmarshalJSON(data []byte) (err error) {
 	return nil
 }
 
-func (r *repository) UnmarshalYAML(unmarshal func(any) error) error {
+func (r *Repository) UnmarshalYAML(unmarshal func(any) error) error {
 	return common.UnmarshalYAMLviaJSON(r, unmarshal)
 }
 
@@ -138,7 +138,7 @@ func LoadRepositoriesFromFile(filename string) (map[string][]RepoConfig, error) 
 }
 
 func LoadRepositoriesFromReader(r io.Reader) (map[string][]RepoConfig, error) {
-	var reposMap map[string][]repository
+	var reposMap map[string][]Repository
 	repoConfigs := make(map[string][]RepoConfig)
 
 	err := yaml.NewDecoder(r).Decode(&reposMap)
@@ -148,32 +148,35 @@ func LoadRepositoriesFromReader(r io.Reader) (map[string][]RepoConfig, error) {
 
 	for arch, repos := range reposMap {
 		for idx := range repos {
-			repo := repos[idx]
-			var keys []string
-			if repo.GPGKey != "" {
-				keys = []string{repo.GPGKey}
-			}
-			if len(repo.GPGKeys) > 0 {
-				keys = append(keys, repo.GPGKeys...)
-			}
-			config := RepoConfig{
-				Name:           repo.Name,
-				BaseURLs:       repo.BaseURL,
-				Metalink:       repo.Metalink,
-				MirrorList:     repo.MirrorList,
-				GPGKeys:        keys,
-				CheckGPG:       &repo.CheckGPG,
-				IgnoreSSL:      repo.IgnoreSSL,
-				RHSM:           repo.RHSM,
-				MetadataExpire: repo.MetadataExpire,
-				ModuleHotfixes: repo.ModuleHotfixes,
-				ImageTypeTags:  repo.ImageTypeTags,
-				PackageSets:    repo.PackageSets,
-			}
-
+			config := repos[idx].RepoConfig()
 			repoConfigs[arch] = append(repoConfigs[arch], config)
 		}
 	}
 
 	return repoConfigs, nil
+}
+
+// RepoConfig converts a repository file entry to the configuration used for depsolving.
+func (repo Repository) RepoConfig() RepoConfig {
+	var keys []string
+	if repo.GPGKey != "" {
+		keys = []string{repo.GPGKey}
+	}
+	if len(repo.GPGKeys) > 0 {
+		keys = append(keys, repo.GPGKeys...)
+	}
+	return RepoConfig{
+		Name:           repo.Name,
+		BaseURLs:       repo.BaseURL,
+		Metalink:       repo.Metalink,
+		MirrorList:     repo.MirrorList,
+		GPGKeys:        keys,
+		CheckGPG:       &repo.CheckGPG,
+		IgnoreSSL:      repo.IgnoreSSL,
+		RHSM:           repo.RHSM,
+		MetadataExpire: repo.MetadataExpire,
+		ModuleHotfixes: repo.ModuleHotfixes,
+		ImageTypeTags:  repo.ImageTypeTags,
+		PackageSets:    repo.PackageSets,
+	}
 }
