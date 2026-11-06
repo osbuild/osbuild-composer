@@ -642,6 +642,7 @@ func (request *ComposeRequest) GetBlueprintFromCustomizations() (blueprint.Bluep
 					Key:      user.Key,
 					Password: user.Password,
 					Groups:   groups,
+					UID:      user.Uid,
 				},
 			)
 		}
