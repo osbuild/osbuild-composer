@@ -2580,6 +2580,9 @@ components:
             If the password starts with $6$, $5$, or $2b$ it will be stored as
             an encrypted password. Otherwise it will be treated as a plain text
             password.
+        uid:
+          type: integer
+          description: User id to use instead of the default
     BlueprintUser:
       type: object
       additionalProperties: false

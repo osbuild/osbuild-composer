@@ -70,6 +70,7 @@ func GetTestBlueprint() blueprint.Blueprint {
 				Key:      common.ToPtr("dummy ssh-key"),
 				Password: common.ToPtr("$6$secret-password"),
 				Groups:   []string{"users", "wheel"},
+				UID:      common.ToPtr(1001),
 			},
 		},
 		Directories: []blueprint.DirectoryCustomization{
@@ -346,6 +347,7 @@ func TestGetBlueprintFromCustomizations(t *testing.T) {
 				Key:      common.ToPtr("dummy ssh-key"),
 				Password: common.ToPtr("$6$secret-password"),
 				Groups:   &[]string{"users", "wheel"},
+				Uid:      common.ToPtr(1001),
 			}},
 		Packages: &[]string{"bash", "tmux"},
 		EnabledModules: &[]Module{
@@ -624,6 +626,7 @@ func TestGetBlueprintFromCompose(t *testing.T) {
 					Key:      common.ToPtr("dummy ssh-key"),
 					Password: common.ToPtr("$6$secret-password"),
 					Groups:   &[]string{"users", "wheel"},
+					Uid:      common.ToPtr(1001),
 				}},
 			Directories: &[]Directory{
 				Directory{
