@@ -30,7 +30,7 @@ require (
 	github.com/labstack/gommon v0.5.0
 	github.com/oapi-codegen/oapi-codegen/v2 v2.6.0
 	github.com/oapi-codegen/runtime v1.8.0
-	github.com/openshift-online/ocm-sdk-go v0.1.519
+	github.com/openshift-online/ocm-sdk-go v0.1.521
 	github.com/osbuild/blueprint v1.36.0
 	github.com/osbuild/image-builder v0.274.1-0.20261029174137-cb6903844136
 	github.com/osbuild/osbuild-composer/pkg/splunk_logger v0.0.0-20240814102216-0239db53236d
