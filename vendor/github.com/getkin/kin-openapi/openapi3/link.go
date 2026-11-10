@@ -3,22 +3,21 @@ package openapi3
 import (
 	"context"
 	"encoding/json"
-	"errors"
-	"fmt"
+	"maps"
 )
 
 // Link is specified by OpenAPI/Swagger standard version 3.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#link-object
 type Link struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
-	Origin     *Origin        `json:"__origin__,omitempty" yaml:"__origin__,omitempty"`
+	Origin     *Origin        `json:"-" yaml:"-"`
 
-	OperationRef string         `json:"operationRef,omitempty" yaml:"operationRef,omitempty"`
-	OperationID  string         `json:"operationId,omitempty" yaml:"operationId,omitempty"`
-	Description  string         `json:"description,omitempty" yaml:"description,omitempty"`
-	Parameters   map[string]any `json:"parameters,omitempty" yaml:"parameters,omitempty"`
-	Server       *Server        `json:"server,omitempty" yaml:"server,omitempty"`
-	RequestBody  any            `json:"requestBody,omitempty" yaml:"requestBody,omitempty"`
+	OperationRef string         `json:"operationRef,omitempty,case:strict" yaml:"operationRef,omitempty"`
+	OperationID  string         `json:"operationId,omitempty,case:strict" yaml:"operationId,omitempty"`
+	Description  string         `json:"description,omitempty,case:strict" yaml:"description,omitempty"`
+	Parameters   map[string]any `json:"parameters,omitempty,case:strict" yaml:"parameters,omitempty"`
+	Server       *Server        `json:"server,omitempty,case:strict" yaml:"server,omitempty"`
+	RequestBody  any            `json:"requestBody,omitempty,case:strict" yaml:"requestBody,omitempty"`
 }
 
 // MarshalJSON returns the JSON encoding of Link.
@@ -33,9 +32,7 @@ func (link Link) MarshalJSON() ([]byte, error) {
 // MarshalYAML returns the YAML encoding of Link.
 func (link Link) MarshalYAML() (any, error) {
 	m := make(map[string]any, 6+len(link.Extensions))
-	for k, v := range link.Extensions {
-		m[k] = v
-	}
+	maps.Copy(m, link.Extensions)
 
 	if x := link.OperationRef; x != "" {
 		m["operationRef"] = x
@@ -63,12 +60,13 @@ func (link Link) MarshalYAML() (any, error) {
 func (link *Link) UnmarshalJSON(data []byte) error {
 	type LinkBis Link
 	var x LinkBis
-	if err := json.Unmarshal(data, &x); err != nil {
+	if err := unmarshalJSON(data, &x); err != nil {
 		return unmarshalError(err)
 	}
-	_ = json.Unmarshal(data, &x.Extensions)
+	if err := unmarshalJSON(data, &x.Extensions); err != nil {
+		return unmarshalError(err)
+	}
 
-	delete(x.Extensions, originKey)
 	delete(x.Extensions, "operationRef")
 	delete(x.Extensions, "operationId")
 	delete(x.Extensions, "description")
@@ -87,17 +85,11 @@ func (link *Link) Validate(ctx context.Context, opts ...ValidationOption) error 
 	ctx = WithValidationOptions(ctx, opts...)
 
 	if link.OperationID == "" && link.OperationRef == "" {
-		return errors.New("missing operationId or operationRef on link")
+		return newLinkOperationIDOrRefRequired(link.Origin)
 	}
 	if link.OperationID != "" && link.OperationRef != "" {
-		return fmt.Errorf("operationId %q and operationRef %q are mutually exclusive", link.OperationID, link.OperationRef)
+		return newLinkOperationIDRefExclusive(link.OperationID, link.OperationRef, link.Origin)
 	}
 
-	return validateExtensions(ctx, link.Extensions)
-}
-
-// UnmarshalJSON sets Links to a copy of data.
-func (links *Links) UnmarshalJSON(data []byte) (err error) {
-	*links, _, err = unmarshalStringMapP[LinkRef](data)
-	return
+	return validateExtensions(ctx, link.Extensions, link.Origin)
 }

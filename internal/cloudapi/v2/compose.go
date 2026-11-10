@@ -1417,7 +1417,7 @@ func convertDiskCustomizations(disk *Disk) (*blueprint.DiskCustomization, error)
 				}
 				bpPartition.Subvolumes = append(bpPartition.Subvolumes, bpSubvol)
 			}
-		case string(Lvm):
+		case string(VolumeGroupTypeLvm):
 			vg, err := partition.AsVolumeGroup()
 			if err != nil {
 				return nil, fmt.Errorf("failed to deserialize disk customization partition %d with type %q", idx, partType)

@@ -13,13 +13,19 @@ type ValidationOptions struct {
 	schemaFormatValidationEnabled                    bool
 	schemaPatternValidationDisabled                  bool
 	schemaExtensionsInRefProhibited                  bool
+	jsonSchema2020ValidationEnabled                  bool
+	isOpenAPI31OrLater                               bool
+	isOpenAPI32OrLater                               bool
+	multiErrorEnabled                                bool
 	regexCompilerFunc                                RegexCompilerFunc
 	extraSiblingFieldsAllowed                        map[string]struct{}
 }
 
 type validationOptionsKey struct{}
 
-// AllowExtraSiblingFields called as AllowExtraSiblingFields("description") makes Validate not return an error when said field appears next to a $ref.
+// AllowExtraSiblingFields called as AllowExtraSiblingFields("description") makes Validate not return an error when said field appears
+// where it is not expected: as an unknown field of an object, as an OpenAPI 3.1 schema keyword in an OpenAPI 3.0 document,
+// or as an extension next to a $ref under ProhibitExtensionsWithRef. Other fields next to a $ref are never an error.
 func AllowExtraSiblingFields(fields ...string) ValidationOption {
 	return func(options *ValidationOptions) {
 		if options.extraSiblingFieldsAllowed == nil && len(fields) != 0 {
@@ -28,6 +34,23 @@ func AllowExtraSiblingFields(fields ...string) ValidationOption {
 		for _, field := range fields {
 			options.extraSiblingFieldsAllowed[field] = struct{}{}
 		}
+	}
+}
+
+// IsOpenAPI31OrLater enables "JSON Schema Draft 2020-12"-compliant validation (for OpenAPI 3.1 documents).
+func IsOpenAPI31OrLater() ValidationOption {
+	return func(options *ValidationOptions) {
+		options.isOpenAPI31OrLater = true              // To distinguish from v3.0
+		options.jsonSchema2020ValidationEnabled = true // TODO: use even for v3.0
+	}
+}
+
+// IsOpenAPI32OrLater enables validation for OpenAPI 3.2 documents.
+func IsOpenAPI32OrLater() ValidationOption {
+	return func(options *ValidationOptions) {
+		options.isOpenAPI31OrLater = true
+		options.isOpenAPI32OrLater = true
+		options.jsonSchema2020ValidationEnabled = true
 	}
 }
 
@@ -96,8 +119,7 @@ func DisableExamplesValidation() ValidationOption {
 
 // AllowExtensionsWithRef allows extensions (fields starting with 'x-')
 // as siblings for $ref fields. This is the default.
-// Non-extension fields are prohibited unless allowed explicitly with the
-// AllowExtraSiblingFields option.
+// OpenAPI 3.0 Reference Object siblings are ignored by default.
 func AllowExtensionsWithRef() ValidationOption {
 	return func(options *ValidationOptions) {
 		options.schemaExtensionsInRefProhibited = false
@@ -106,11 +128,30 @@ func AllowExtensionsWithRef() ValidationOption {
 
 // ProhibitExtensionsWithRef causes the validation to return an
 // error if extensions (fields starting with 'x-') are found as
-// siblings for $ref fields. Non-extension fields are prohibited
-// unless allowed explicitly with the AllowExtraSiblingFields option.
+// siblings for $ref fields, in every OpenAPI version. Use AllowExtraSiblingFields
+// to allow specific extensions.
 func ProhibitExtensionsWithRef() ValidationOption {
 	return func(options *ValidationOptions) {
 		options.schemaExtensionsInRefProhibited = true
+	}
+}
+
+// EnableMultiError makes Validate aggregate independent validation errors and
+// return them together as a MultiError instead of returning the first error
+// and stopping. By default, Validate is fail-fast.
+//
+// Not every validator reports more than one error yet. Some, such as Schema,
+// run checks that build on earlier ones, so continuing past a failure can hit
+// a nil dereference or produce nonsense secondary errors.
+// We will keep converting more validators in follow-up changes as each one
+// is analyzed.
+//
+// To pull a specific error type out of the result, use errors.As(err, &target).
+// It walks into the MultiError automatically, so the same call works whether
+// Validate returned one error or many.
+func EnableMultiError() ValidationOption {
+	return func(options *ValidationOptions) {
+		options.multiErrorEnabled = true
 	}
 }
 

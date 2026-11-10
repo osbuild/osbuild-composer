@@ -21,13 +21,26 @@ type schemaValidationSettings struct {
 	patternValidationDisabled   bool
 	readOnlyValidationDisabled  bool
 	writeOnlyValidationDisabled bool
+	useJSONSchema2020           bool // Use JSON Schema 2020-12 validator for OpenAPI 3.1
 
 	regexCompiler RegexCompilerFunc
 
 	onceSettingDefaults sync.Once
 	defaultsSet         func()
 
-	customizeMessageError func(err *SchemaError) string
+	customizeMessageError      func(err *SchemaError) string
+	schemaErrorDetailsDisabled bool
+
+	// Per-validation format validators (checked before global ones)
+	stringFormats  map[string]StringFormatValidator
+	numberFormats  map[string]NumberFormatValidator
+	integerFormats map[string]IntegerFormatValidator
+
+	// visitedSchemas provides pointer-identity cycle detection for runtime
+	// validation, matching the stack-based detection in Schema.validate().
+	// Only visitedSchemas[visitedSchemasStart:] were visited for the current value.
+	visitedSchemas []*Schema
+	visitedBase    int
 }
 
 // FailFast returns schema validation errors quicker.
@@ -78,9 +91,93 @@ func SetSchemaErrorMessageCustomizer(f func(err *SchemaError) string) SchemaVali
 	return func(s *schemaValidationSettings) { s.customizeMessageError = f }
 }
 
+// DisableSchemaErrorDetails leaves the schema and the value out of the message of schema errors,
+// so that it presents only the reason. Values may hold sensitive inputs, such as secrets.
+//
+// It also applies to the SchemaErrors that format validators return, wrapped or not.
+//
+// It cannot be used together with EnableJSONSchema2020 (hence with openapi3filter on
+// OpenAPI 3.1+ documents): validation then fails with ErrSchemaErrorDetailsWithJSONSchema2020.
+func DisableSchemaErrorDetails() SchemaValidationOption {
+	return func(s *schemaValidationSettings) { s.schemaErrorDetailsDisabled = true }
+}
+
 // SetSchemaRegexCompiler allows to override the regex implementation used to validate field "pattern".
 func SetSchemaRegexCompiler(c RegexCompilerFunc) SchemaValidationOption {
 	return func(s *schemaValidationSettings) { s.regexCompiler = c }
+}
+
+// WithStringFormatValidators adds per-validation string format validators.
+// These validators are checked before global SchemaStringFormats and allow
+// different validations for the same format name across different specs.
+func WithStringFormatValidators(validators map[string]StringFormatValidator) SchemaValidationOption {
+	return func(s *schemaValidationSettings) {
+		s.stringFormats = validators
+	}
+}
+
+// WithStringFormatValidator adds a single per-validation string format validator.
+// This validator is checked before global SchemaStringFormats and allows
+// different validations for the same format name across different specs.
+func WithStringFormatValidator(name string, validator StringFormatValidator) SchemaValidationOption {
+	return func(s *schemaValidationSettings) {
+		if s.stringFormats == nil {
+			s.stringFormats = make(map[string]StringFormatValidator)
+		}
+		s.stringFormats[name] = validator
+	}
+}
+
+// WithNumberFormatValidators adds per-validation number format validators.
+// These validators are checked before global SchemaNumberFormats and allow
+// different validations for the same format name across different specs.
+func WithNumberFormatValidators(validators map[string]NumberFormatValidator) SchemaValidationOption {
+	return func(s *schemaValidationSettings) {
+		s.numberFormats = validators
+	}
+}
+
+// WithNumberFormatValidator adds a single per-validation number format validator.
+// This validator is checked before global SchemaNumberFormats and allows
+// different validations for the same format name across different specs.
+func WithNumberFormatValidator(name string, validator NumberFormatValidator) SchemaValidationOption {
+	return func(s *schemaValidationSettings) {
+		if s.numberFormats == nil {
+			s.numberFormats = make(map[string]NumberFormatValidator)
+		}
+		s.numberFormats[name] = validator
+	}
+}
+
+// WithIntegerFormatValidators adds per-validation integer format validators.
+// These validators are checked before global SchemaIntegerFormats and allow
+// different validations for the same format name across different specs.
+func WithIntegerFormatValidators(validators map[string]IntegerFormatValidator) SchemaValidationOption {
+	return func(s *schemaValidationSettings) {
+		s.integerFormats = validators
+	}
+}
+
+// WithIntegerFormatValidator adds a single per-validation integer format validator.
+// This validator is checked before global SchemaIntegerFormats and allows
+// different validations for the same format name across different specs.
+func WithIntegerFormatValidator(name string, validator IntegerFormatValidator) SchemaValidationOption {
+	return func(s *schemaValidationSettings) {
+		if s.integerFormats == nil {
+			s.integerFormats = make(map[string]IntegerFormatValidator)
+		}
+		s.integerFormats[name] = validator
+	}
+}
+
+// EnableJSONSchema2020 enables JSON Schema 2020-12 compliant validation.
+// This enables support for OpenAPI 3.1 and JSON Schema 2020-12 features.
+// When enabled, validation uses the jsonschema library instead of the built-in validator.
+// When JSON Schema 2020-12 keywords are used, unresolved schema references are
+// returned to the caller instead of being silently ignored by falling back to
+// the built-in validator.
+func EnableJSONSchema2020() SchemaValidationOption {
+	return func(s *schemaValidationSettings) { s.useJSONSchema2020 = true }
 }
 
 func newSchemaValidationSettings(opts ...SchemaValidationOption) *schemaValidationSettings {

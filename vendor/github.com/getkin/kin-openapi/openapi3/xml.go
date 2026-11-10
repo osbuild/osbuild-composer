@@ -3,19 +3,20 @@ package openapi3
 import (
 	"context"
 	"encoding/json"
+	"maps"
 )
 
 // XML is specified by OpenAPI/Swagger standard version 3.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#xml-object
 type XML struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
-	Origin     *Origin        `json:"__origin__,omitempty" yaml:"__origin__,omitempty"`
+	Origin     *Origin        `json:"-" yaml:"-"`
 
-	Name      string `json:"name,omitempty" yaml:"name,omitempty"`
-	Namespace string `json:"namespace,omitempty" yaml:"namespace,omitempty"`
-	Prefix    string `json:"prefix,omitempty" yaml:"prefix,omitempty"`
-	Attribute bool   `json:"attribute,omitempty" yaml:"attribute,omitempty"`
-	Wrapped   bool   `json:"wrapped,omitempty" yaml:"wrapped,omitempty"`
+	Name      string `json:"name,omitempty,case:strict" yaml:"name,omitempty"`
+	Namespace string `json:"namespace,omitempty,case:strict" yaml:"namespace,omitempty"`
+	Prefix    string `json:"prefix,omitempty,case:strict" yaml:"prefix,omitempty"`
+	Attribute bool   `json:"attribute,omitempty,case:strict" yaml:"attribute,omitempty"`
+	Wrapped   bool   `json:"wrapped,omitempty,case:strict" yaml:"wrapped,omitempty"`
 }
 
 // MarshalJSON returns the JSON encoding of XML.
@@ -30,9 +31,7 @@ func (xml XML) MarshalJSON() ([]byte, error) {
 // MarshalYAML returns the YAML encoding of XML.
 func (xml XML) MarshalYAML() (any, error) {
 	m := make(map[string]any, 5+len(xml.Extensions))
-	for k, v := range xml.Extensions {
-		m[k] = v
-	}
+	maps.Copy(m, xml.Extensions)
 	if x := xml.Name; x != "" {
 		m["name"] = x
 	}
@@ -55,11 +54,12 @@ func (xml XML) MarshalYAML() (any, error) {
 func (xml *XML) UnmarshalJSON(data []byte) error {
 	type XMLBis XML
 	var x XMLBis
-	if err := json.Unmarshal(data, &x); err != nil {
+	if err := unmarshalJSON(data, &x); err != nil {
 		return unmarshalError(err)
 	}
-	_ = json.Unmarshal(data, &x.Extensions)
-	delete(x.Extensions, originKey)
+	if err := unmarshalJSON(data, &x.Extensions); err != nil {
+		return unmarshalError(err)
+	}
 	delete(x.Extensions, "name")
 	delete(x.Extensions, "namespace")
 	delete(x.Extensions, "prefix")
@@ -76,5 +76,5 @@ func (xml *XML) UnmarshalJSON(data []byte) error {
 func (xml *XML) Validate(ctx context.Context, opts ...ValidationOption) error {
 	ctx = WithValidationOptions(ctx, opts...)
 
-	return validateExtensions(ctx, xml.Extensions)
+	return validateExtensions(ctx, xml.Extensions, xml.Origin)
 }

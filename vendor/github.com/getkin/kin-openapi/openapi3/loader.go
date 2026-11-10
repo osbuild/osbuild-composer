@@ -1,11 +1,13 @@
 package openapi3
 
 import (
+	"cmp"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"net/url"
 	"os"
 	"path"
@@ -13,16 +15,9 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+
+	"go.yaml.in/yaml/v4"
 )
-
-// IncludeOrigin specifies whether to include the origin of the OpenAPI elements
-// Set this to true before loading a spec to include the origin of the OpenAPI elements
-// Note it is global and affects all loaders
-var IncludeOrigin = false
-
-func foundUnresolvedRef(ref string) error {
-	return fmt.Errorf("found unresolved ref: %q", ref)
-}
 
 func failedToResolveRefFragmentPart(value, what string) error {
 	return fmt.Errorf("failed to resolve %q in fragment in URI: %q", what, value)
@@ -30,11 +25,32 @@ func failedToResolveRefFragmentPart(value, what string) error {
 
 // Loader helps deserialize an OpenAPIv3 document
 type Loader struct {
-	// IsExternalRefsAllowed enables visiting other files
+	// IsExternalRefsAllowed enables visiting other files. Enforced only when
+	// ReadFromURIFunc is nil; a custom ReadFromURIFunc bypasses this flag and
+	// owns the access policy itself — see ReadFromURIFunc.
 	IsExternalRefsAllowed bool
 
-	// ReadFromURIFunc allows overriding the any file/URL reading func
+	// IncludeOrigin enables recording the file/line/column of each OpenAPI element.
+	IncludeOrigin bool
+
+	// ReadFromURIFunc overrides how the loader reads a referenced file or URL.
+	//
+	// SECURITY: when a custom ReadFromURIFunc is set, IsExternalRefsAllowed is
+	// NOT enforced — this function alone decides which locations may be read. A
+	// func that reads whatever URI it is handed (e.g. by delegating to
+	// DefaultReadFromURI) resolves external $refs even when IsExternalRefsAllowed
+	// is false, which on untrusted documents enables local file reads
+	// (`$ref: "/etc/passwd"`) and SSRF (`$ref: "http://169.254.169.254/..."`).
+	// A custom func must apply its own scheme/host allowlist, or re-check
+	// IsExternalRefsAllowed, before reading.
 	ReadFromURIFunc ReadFromURIFunc
+
+	// JoinFunc allows overriding how relative $ref paths are resolved against
+	// a base path. When set, it is called instead of the default join logic
+	// that uses path.Dir and path.Join. This is useful when loading specs from
+	// non-filesystem sources (e.g. git objects, remote archives) where the base
+	// path follows a different convention than filesystem paths.
+	JoinFunc func(basePath *url.URL, relativePath *url.URL) *url.URL
 
 	Context context.Context
 
@@ -45,9 +61,23 @@ type Loader struct {
 
 	visitedDocuments map[string]*T
 
+	// originTrees retains a loaded document's parsed node tree, keyed by the
+	// document itself so insert and lookup cannot disagree. Populated only for
+	// the documents rememberOriginTree keeps, which is the condition described
+	// there. resolveComponent uses it to re-attach origins to components that
+	// lose them in the generic-map path, without re-reading or re-parsing the
+	// file.
+	originTrees map[*T]*originTree
+
 	visitedRefs map[string]struct{}
 	visitedPath []string
 	backtrack   map[string][]func(value any)
+
+	// rootDoc is the document whose refs are being resolved, as opposed to
+	// the documents it refers to, and resolvingDepth how deep in these the
+	// loader currently is.
+	rootDoc        *T
+	resolvingDepth int
 }
 
 // NewLoader returns an empty Loader
@@ -84,19 +114,39 @@ func (loader *Loader) loadFromURIInternal(location *url.URL) (*T, error) {
 	return loader.loadFromDataWithPathInternal(data, location)
 }
 
-func (loader *Loader) allowsExternalRefs(ref string) (err error) {
+// DisallowedExternalRefError is returned for a $ref to another document
+// encountered while Loader.IsExternalRefsAllowed is false. A caller that tells
+// a refused $ref apart from a document that failed to load for another reason,
+// to report the setting as the remedy or to map it to its own error, matches
+// this type with errors.As rather than the message text.
+type DisallowedExternalRefError struct {
+	// Ref is the $ref value as it appears in the document, e.g.
+	// "other.yaml#/components/schemas/Thing".
+	Ref string
+}
+
+func (e *DisallowedExternalRefError) Error() string {
+	return fmt.Sprintf("encountered disallowed external reference: %q", e.Ref)
+}
+
+func (loader *Loader) allowsExternalRefs(ref string) error {
 	if !loader.IsExternalRefsAllowed {
-		err = fmt.Errorf("encountered disallowed external reference: %q", ref)
+		return &DisallowedExternalRefError{Ref: ref}
 	}
-	return
+	return nil
 }
 
 func (loader *Loader) loadSingleElementFromURI(ref string, rootPath *url.URL, element any) (*url.URL, error) {
-	if err := loader.allowsExternalRefs(ref); err != nil {
-		return nil, err
+	// IsExternalRefsAllowed is enforced here only when no custom ReadFromURIFunc
+	// is installed; otherwise the custom func owns the access policy (see the
+	// SECURITY note on the ReadFromURIFunc field).
+	if loader.ReadFromURIFunc == nil {
+		if err := loader.allowsExternalRefs(ref); err != nil {
+			return nil, err
+		}
 	}
 
-	resolvedPath, err := resolvePathWithRef(ref, rootPath)
+	resolvedPath, err := loader.resolvePathWithRef(ref, rootPath)
 	if err != nil {
 		return nil, err
 	}
@@ -108,11 +158,42 @@ func (loader *Loader) loadSingleElementFromURI(ref string, rootPath *url.URL, el
 	if err != nil {
 		return nil, err
 	}
-	if err := unmarshal(data, element, IncludeOrigin); err != nil {
+	if _, err := unmarshal(data, element, loader.IncludeOrigin, resolvedPath); err != nil {
 		return nil, err
 	}
 
 	return resolvedPath, nil
+}
+
+// rememberOriginTree retains doc's parsed node tree for
+// attachOriginToResolved. tree is nil when origins are off or the data took
+// the json path.
+//
+// The tree is kept only for a document a $ref can reach into untyped, which is
+// what attachOriginToResolved exists to re-origin. In practice that means a
+// file of shared fragments, whose top level is the fragment name itself rather
+// than the fields of an OpenAPI Object:
+//
+//	User:            # a $ref to "./schemas.yaml#/User" lands here, untyped
+//	  type: object
+//
+// Anything OpenAPI defines a field for resolves through typed structures and
+// keeps its origins on the way, so its tree could never be read. That includes
+// a referenced document that is itself an OpenAPI Object: a $ref to
+// "#/components/schemas/User" needs no tree. (A top-level x- extension is
+// undefined by the same rule, so a document carrying one keeps its tree too,
+// whether or not anything ever points at it.)
+//
+// Worth the condition: the node tree is most of what a loaded document
+// costs, so keeping one per document would dominate the loader's memory.
+func (loader *Loader) rememberOriginTree(doc *T, tree *originTree) {
+	if tree == nil || len(doc.Extensions) == 0 {
+		return
+	}
+	if loader.originTrees == nil {
+		loader.originTrees = make(map[*T]*originTree)
+	}
+	loader.originTrees[doc] = tree
 }
 
 func (loader *Loader) readURL(location *url.URL) ([]byte, error) {
@@ -144,9 +225,11 @@ func (loader *Loader) LoadFromIoReader(reader io.Reader) (*T, error) {
 func (loader *Loader) LoadFromData(data []byte) (*T, error) {
 	loader.resetVisitedPathItemRefs()
 	doc := &T{}
-	if err := unmarshal(data, doc, IncludeOrigin); err != nil {
+	tree, err := unmarshal(data, doc, loader.IncludeOrigin, nil)
+	if err != nil {
 		return nil, err
 	}
+	loader.rememberOriginTree(doc, tree)
 	if err := loader.ResolveRefsIn(doc, nil); err != nil {
 		return nil, err
 	}
@@ -173,9 +256,11 @@ func (loader *Loader) loadFromDataWithPathInternal(data []byte, location *url.UR
 	doc := &T{}
 	loader.visitedDocuments[uri] = doc
 
-	if err := unmarshal(data, doc, IncludeOrigin); err != nil {
+	tree, err := unmarshal(data, doc, loader.IncludeOrigin, location)
+	if err != nil {
 		return nil, err
 	}
+	loader.rememberOriginTree(doc, tree)
 
 	doc.url = copyURI(location)
 
@@ -191,6 +276,12 @@ func (loader *Loader) ResolveRefsIn(doc *T, location *url.URL) (err error) {
 	if loader.Context == nil {
 		loader.Context = context.Background()
 	}
+
+	if loader.resolvingDepth == 0 {
+		loader.rootDoc = doc
+	}
+	loader.resolvingDepth++
+	defer func() { loader.resolvingDepth-- }()
 
 	if loader.visitedPathItemRefs == nil {
 		loader.resetVisitedPathItemRefs()
@@ -239,6 +330,12 @@ func (loader *Loader) ResolveRefsIn(doc *T, location *url.URL) (err error) {
 				return
 			}
 		}
+		for _, name := range componentNames(components.Links) {
+			component := components.Links[name]
+			if err = loader.resolveLinkRef(doc, component, location); err != nil {
+				return
+			}
+		}
 		for _, name := range componentNames(components.Callbacks) {
 			component := components.Callbacks[name]
 			if err = loader.resolveCallbackRef(doc, component, location); err != nil {
@@ -259,10 +356,18 @@ func (loader *Loader) ResolveRefsIn(doc *T, location *url.URL) (err error) {
 		}
 	}
 
+	for _, name := range componentNames(doc.Webhooks) {
+		if pathItem := doc.Webhooks[name]; pathItem != nil {
+			if err = loader.resolvePathItemRef(doc, pathItem, location); err != nil {
+				return
+			}
+		}
+	}
+
 	return
 }
 
-func join(basePath *url.URL, relativePath *url.URL) *url.URL {
+func defaultJoin(basePath *url.URL, relativePath *url.URL) *url.URL {
 	if basePath == nil {
 		return relativePath
 	}
@@ -271,24 +376,27 @@ func join(basePath *url.URL, relativePath *url.URL) *url.URL {
 	return &newPath
 }
 
-func resolvePath(basePath *url.URL, componentPath *url.URL) *url.URL {
+func (loader *Loader) resolvePath(basePath *url.URL, componentPath *url.URL) *url.URL {
 	if is_file(componentPath) {
 		// support absolute paths
 		if filepath.IsAbs(componentPath.Path) {
 			return componentPath
 		}
-		return join(basePath, componentPath)
+		if loader.JoinFunc != nil {
+			return loader.JoinFunc(basePath, componentPath)
+		}
+		return defaultJoin(basePath, componentPath)
 	}
 	return componentPath
 }
 
-func resolvePathWithRef(ref string, rootPath *url.URL) (*url.URL, error) {
+func (loader *Loader) resolvePathWithRef(ref string, rootPath *url.URL) (*url.URL, error) {
 	parsedURL, err := url.Parse(ref)
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse reference: %q: %w", ref, err)
 	}
 
-	resolvedPath := resolvePath(rootPath, parsedURL)
+	resolvedPath := loader.resolvePath(rootPath, parsedURL)
 	resolvedPath.Fragment = parsedURL.Fragment
 	return resolvedPath, nil
 }
@@ -306,11 +414,16 @@ func (loader *Loader) resolveRefPath(ref string, path *url.URL) (*url.URL, error
 		return path, nil
 	}
 
-	if err := loader.allowsExternalRefs(ref); err != nil {
-		return nil, err
+	// IsExternalRefsAllowed is enforced here only when no custom ReadFromURIFunc
+	// is installed; otherwise the custom func owns the access policy (see the
+	// SECURITY note on the ReadFromURIFunc field).
+	if loader.ReadFromURIFunc == nil {
+		if err := loader.allowsExternalRefs(ref); err != nil {
+			return nil, err
+		}
 	}
 
-	resolvedPath, err := resolvePathWithRef(ref, path)
+	resolvedPath, err := loader.resolvePathWithRef(ref, path)
 	if err != nil {
 		return nil, err
 	}
@@ -322,29 +435,39 @@ func isSingleRefElement(ref string) bool {
 	return !strings.Contains(ref, "#")
 }
 
-func (loader *Loader) visitRef(ref string) {
+// visitedRefKey identifies a $ref being resolved as an object of the given
+// kind. The same $ref can be written where different kinds of objects are
+// expected, as in a path item and in one of its responses: resolving one must
+// not hand its value over to the other.
+func visitedRefKey(kind, ref string) string { return kind + " " + ref }
+
+func (loader *Loader) visitRef(kind, ref string) {
 	if loader.visitedRefs == nil {
 		loader.visitedRefs = make(map[string]struct{})
 		loader.backtrack = make(map[string][]func(value any))
 	}
-	loader.visitedPath = append(loader.visitedPath, ref)
-	loader.visitedRefs[ref] = struct{}{}
+	key := visitedRefKey(kind, ref)
+	loader.visitedPath = append(loader.visitedPath, key)
+	loader.visitedRefs[key] = struct{}{}
 }
 
-func (loader *Loader) unvisitRef(ref string, value any) {
-	if value != nil {
-		for _, fn := range loader.backtrack[ref] {
+func (loader *Loader) unvisitRef(kind, ref string, value any) {
+	key := visitedRefKey(kind, ref)
+	// value is a typed pointer, nil when the cycle resolved to nothing.
+	if v := reflect.ValueOf(value); v.IsValid() && !(v.Kind() == reflect.Pointer && v.IsNil()) {
+		for _, fn := range loader.backtrack[key] {
 			fn(value)
 		}
 	}
-	delete(loader.visitedRefs, ref)
-	delete(loader.backtrack, ref)
+	delete(loader.visitedRefs, key)
+	delete(loader.backtrack, key)
 	loader.visitedPath = loader.visitedPath[:len(loader.visitedPath)-1]
 }
 
-func (loader *Loader) shouldVisitRef(ref string, fn func(value any)) bool {
-	if _, ok := loader.visitedRefs[ref]; ok {
-		loader.backtrack[ref] = append(loader.backtrack[ref], fn)
+func (loader *Loader) shouldVisitRef(kind, ref string, fn func(value any)) bool {
+	key := visitedRefKey(kind, ref)
+	if _, ok := loader.visitedRefs[key]; ok {
+		loader.backtrack[key] = append(loader.backtrack[key], fn)
 		return false
 	}
 	return true
@@ -372,7 +495,8 @@ func (loader *Loader) resolveComponent(doc *T, ref string, path *url.URL, resolv
 	}
 
 	drill := func(cursor any) (any, error) {
-		for _, pathPart := range strings.Split(fragment[1:], "/") {
+		var err error // not the named result, which a failed drill must not clear
+		for pathPart := range strings.SplitSeq(fragment[1:], "/") {
 			pathPart = unescapeRefString(pathPart)
 			attempted := false
 
@@ -388,10 +512,12 @@ func (loader *Loader) resolveComponent(doc *T, ref string, path *url.URL, resolv
 			// Special case due to multijson
 			case *SchemaRef:
 				if pathPart == "additionalProperties" {
-					if ap := c.Value.AdditionalProperties.Has; ap != nil {
-						cursor = *ap
-					} else {
-						cursor = c.Value.AdditionalProperties.Schema
+					if s := c.Value; s != nil {
+						if ap := s.AdditionalProperties.Has; ap != nil {
+							cursor = *ap
+						} else {
+							cursor = s.AdditionalProperties.Schema
+						}
 					}
 					attempted = true
 				}
@@ -411,7 +537,7 @@ func (loader *Loader) resolveComponent(doc *T, ref string, path *url.URL, resolv
 				}
 			}
 
-			if cursor == nil {
+			if cursor == nil || isNonNilIfaceHoldingNilPtr(cursor) {
 				return nil, failedToResolveRefFragmentPart(ref, pathPart)
 			}
 		}
@@ -427,7 +553,7 @@ func (loader *Loader) resolveComponent(doc *T, ref string, path *url.URL, resolv
 		if err2 != nil {
 			return nil, nil, err
 		}
-		if err2 = unmarshal(data, &cursor, IncludeOrigin); err2 != nil {
+		if _, err2 = unmarshal(data, &cursor, loader.IncludeOrigin, path); err2 != nil {
 			return nil, nil, err
 		}
 		if cursor, err2 = drill(cursor); err2 != nil || cursor == nil {
@@ -459,13 +585,13 @@ func (loader *Loader) resolveComponent(doc *T, ref string, path *url.URL, resolv
 		reflect.ValueOf(resolved).Elem().Set(reflect.ValueOf(cursor).Elem())
 		return componentDoc, componentPath, nil
 
-	case reflect.TypeOf(cursor) == reflect.TypeOf(map[string]any{}):
+	case reflect.TypeOf(cursor) == reflect.TypeFor[map[string]any]():
 		codec := func(got, expect any) error {
 			enc, err := json.Marshal(got)
 			if err != nil {
 				return err
 			}
-			if err = json.Unmarshal(enc, expect); err != nil {
+			if err = unmarshalJSON(enc, expect); err != nil {
 				return err
 			}
 
@@ -475,11 +601,69 @@ func (loader *Loader) resolveComponent(doc *T, ref string, path *url.URL, resolv
 		if err := codec(cursor, resolved); err != nil {
 			return nil, nil, fmt.Errorf("bad data in %q (expecting %s)", ref, readableType(resolved))
 		}
+		// The value came from a generic map in T.Extensions (a $ref to an
+		// arbitrary top-level key), so the json round-trip above stripped its
+		// origins. Re-attach them from the file, best-effort.
+		loader.attachOriginToResolved(resolved, componentDoc, fragment)
 		return componentDoc, componentPath, nil
 
 	default:
 		return nil, nil, fmt.Errorf("bad data in %q (expecting %s)", ref, readableType(resolved))
 	}
+}
+
+// attachOriginToResolved re-attaches source origins to a component resolved
+// through the generic-map path: a $ref to a schema under an arbitrary top-level
+// key lands in T.Extensions, and the json round-trip in resolveComponent strips
+// its origin. It walks the document's retained node tree (see originTrees,
+// kept when the document was first unmarshaled: no re-read, no re-parse) down
+// to the ref fragment and decodes that subtree, which runs the type's
+// UnmarshalYAML and so produces origins, giving the object what a typed
+// resolution would have, with the original file's line numbers.
+// Best-effort: a missing tree or fragment leaves the object without origins.
+func (loader *Loader) attachOriginToResolved(resolved any, componentDoc *T, fragment string) {
+	if !loader.IncludeOrigin {
+		return
+	}
+	tree := loader.originTrees[componentDoc]
+	if tree == nil {
+		return
+	}
+	// Stamp against the file this tree came from, not the document being
+	// loaded. The lock is held across the decode below, so nothing that decode
+	// reaches may load a document: that would wait here for a lock this call
+	// holds, and hang rather than fail.
+	originMu.Lock()
+	defer originMu.Unlock()
+	// Set rather than inherited: resolution runs after the load that produced
+	// the tree, so no decode is in progress and there is nothing to inherit.
+	originState.Store(&originDecode{file: tree.file, ends: tree.ends})
+	defer originState.Store(nil)
+
+	node := tree.node
+	// Walk the retained node tree down to the fragment and decode that subtree
+	// into the resolved value, which runs its UnmarshalYAML and so produces
+	// origins. The generic-map resolution path that produced `resolved` has
+	// none, because an extension value decodes as plain data.
+	var keyNode *yaml.Node
+	for part := range strings.SplitSeq(strings.Trim(fragment, "/"), "/") {
+		if part == "" {
+			continue
+		}
+		if keyNode, node = mappingEntry(node, unescapeRefString(part)); node == nil {
+			return
+		}
+	}
+	// Defensive: the json round trip in the caller already decoded this data
+	// into this type, so a failure here means the two decode paths disagree,
+	// which nothing is known to trigger. The object is resolved either way, so
+	// a failure costs positions rather than the load.
+	if err := node.Decode(resolved); err != nil {
+		return
+	}
+	// The key location is normally stamped by the mapping above, which does not
+	// run on this path: the last fragment part is that key.
+	setOriginKey(reflect.ValueOf(resolved), keyNode, node, tree.file)
 }
 
 func readableType(x any) string {
@@ -511,6 +695,11 @@ func readableType(x any) string {
 	}
 }
 
+func isNonNilIfaceHoldingNilPtr(cursor any) bool {
+	value := reflect.ValueOf(cursor)
+	return value.Kind() == reflect.Pointer && value.IsNil()
+}
+
 func drillIntoField(cursor any, fieldName string) (any, error) {
 	switch val := reflect.Indirect(reflect.ValueOf(cursor)); val.Kind() {
 
@@ -522,22 +711,24 @@ func drillIntoField(cursor any, fieldName string) (any, error) {
 		return elementValue.Interface(), nil
 
 	case reflect.Slice:
-		i, err := strconv.ParseUint(fieldName, 10, 32)
+		if strings.HasPrefix(fieldName, "+") || strings.HasPrefix(fieldName, "-") {
+			return nil, fmt.Errorf("invalid slice index %q", fieldName)
+		}
+		index, err := strconv.Atoi(fieldName)
 		if err != nil {
 			return nil, err
 		}
-		index := int(i)
-		if 0 > index || index >= val.Len() {
+		if index >= val.Len() {
 			return nil, errors.New("slice index out of bounds")
 		}
 		return val.Index(index).Interface(), nil
 
 	case reflect.Struct:
 		hasFields := false
-		for i := 0; i < val.NumField(); i++ {
+		for i := range val.NumField() {
 			hasFields = true
 			if yamlTag := val.Type().Field(i).Tag.Get("yaml"); yamlTag != "-" {
-				if tagName := strings.Split(yamlTag, ",")[0]; tagName != "" {
+				if tagName, _, _ := strings.Cut(yamlTag, ","); tagName != "" {
 					if fieldName == tagName {
 						return val.Field(i).Interface(), nil
 					}
@@ -606,7 +797,17 @@ var (
 	errMUSTSecurityScheme = errors.New("invalid securityScheme: value MUST be an object")
 )
 
+func applyHeaderRefMetadata(value *Header, component *HeaderRef, isOpenAPI31OrLater bool) {
+	if !isOpenAPI31OrLater || value == nil || component.Description == nil {
+		return
+	}
+
+	value.Description = *component.Description
+}
+
 func (loader *Loader) resolveHeaderRef(doc *T, component *HeaderRef, documentPath *url.URL) (err error) {
+	isOpenAPI31OrLater := doc.IsOpenAPI31OrLater()
+
 	if component.isEmpty() {
 		return errMUSTHeader
 	}
@@ -615,21 +816,30 @@ func (loader *Loader) resolveHeaderRef(doc *T, component *HeaderRef, documentPat
 		if component.Value != nil {
 			return nil
 		}
-		if !loader.shouldVisitRef(ref, func(value any) {
+		if !loader.shouldVisitRef("Header", ref, func(value any) {
 			component.Value = value.(*Header)
+			applyHeaderRefMetadata(component.Value, component, isOpenAPI31OrLater)
 			refPath, _ := loader.resolveRefPath(ref, documentPath)
 			component.setRefPath(refPath)
 		}) {
 			return nil
 		}
-		loader.visitRef(ref)
+		loader.visitRef("Header", ref)
 		if isSingleRefElement(ref) {
-			var header Header
-			if documentPath, err = loader.loadSingleElementFromURI(ref, documentPath, &header); err != nil {
+			var resolved HeaderRef
+			if documentPath, err = loader.loadSingleElementFromURI(ref, documentPath, &resolved); err != nil {
 				return err
 			}
-			component.Value = &header
-			component.setRefPath(documentPath)
+			// The file holds the Header itself or a $ref to it, to follow from there.
+			if err := loader.resolveHeaderRef(doc, &resolved, documentPath); err != nil {
+				if err == errMUSTHeader {
+					return nil
+				}
+				return err
+			}
+			if component.Value = resolved.Value; component.Value != nil {
+				component.setRefPath(cmp.Or(resolved.RefPath(), documentPath))
+			}
 		} else {
 			var resolved HeaderRef
 			doc, componentPath, err := loader.resolveComponent(doc, ref, documentPath, &resolved)
@@ -642,30 +852,47 @@ func (loader *Loader) resolveHeaderRef(doc *T, component *HeaderRef, documentPat
 				}
 				return err
 			}
-			component.Value = resolved.Value
-			component.setRefPath(resolved.RefPath())
+			if component.Value = resolved.Value; component.Value != nil {
+				component.setRefPath(resolved.RefPath())
+			}
 		}
-		defer loader.unvisitRef(ref, component.Value)
+		defer loader.unvisitRef("Header", ref, component.Value)
+		applyHeaderRefMetadata(component.Value, component, isOpenAPI31OrLater)
 	}
 	value := component.Value
 	if value == nil {
 		return nil
 	}
 
+	for _, name := range componentNames(value.Content) {
+		if err := loader.resolveMediaTypeRefs(doc, value.Content[name], documentPath); err != nil {
+			return err
+		}
+	}
 	if schema := value.Schema; schema != nil {
 		if err := loader.resolveSchemaRef(doc, schema, documentPath, []string{}); err != nil {
 			return err
 		}
 	}
-	for _, example := range value.Examples {
-		if err := loader.resolveExampleRef(doc, example, documentPath); err != nil {
+	for _, k := range componentNames(value.Examples) {
+		if err := loader.resolveExampleRef(doc, value.Examples[k], documentPath); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
+func applyParameterRefMetadata(value *Parameter, component *ParameterRef, isOpenAPI31OrLater bool) {
+	if !isOpenAPI31OrLater || value == nil || component.Description == nil {
+		return
+	}
+
+	value.Description = *component.Description
+}
+
 func (loader *Loader) resolveParameterRef(doc *T, component *ParameterRef, documentPath *url.URL) (err error) {
+	isOpenAPI31OrLater := doc.IsOpenAPI31OrLater()
+
 	if component.isEmpty() {
 		return errMUSTParameter
 	}
@@ -674,21 +901,30 @@ func (loader *Loader) resolveParameterRef(doc *T, component *ParameterRef, docum
 		if component.Value != nil {
 			return nil
 		}
-		if !loader.shouldVisitRef(ref, func(value any) {
+		if !loader.shouldVisitRef("Parameter", ref, func(value any) {
 			component.Value = value.(*Parameter)
+			applyParameterRefMetadata(component.Value, component, isOpenAPI31OrLater)
 			refPath, _ := loader.resolveRefPath(ref, documentPath)
 			component.setRefPath(refPath)
 		}) {
 			return nil
 		}
-		loader.visitRef(ref)
+		loader.visitRef("Parameter", ref)
 		if isSingleRefElement(ref) {
-			var param Parameter
-			if documentPath, err = loader.loadSingleElementFromURI(ref, documentPath, &param); err != nil {
+			var resolved ParameterRef
+			if documentPath, err = loader.loadSingleElementFromURI(ref, documentPath, &resolved); err != nil {
 				return err
 			}
-			component.Value = &param
-			component.setRefPath(documentPath)
+			// The file holds the Parameter itself or a $ref to it, to follow from there.
+			if err := loader.resolveParameterRef(doc, &resolved, documentPath); err != nil {
+				if err == errMUSTParameter {
+					return nil
+				}
+				return err
+			}
+			if component.Value = resolved.Value; component.Value != nil {
+				component.setRefPath(cmp.Or(resolved.RefPath(), documentPath))
+			}
 		} else {
 			var resolved ParameterRef
 			doc, componentPath, err := loader.resolveComponent(doc, ref, documentPath, &resolved)
@@ -701,10 +937,12 @@ func (loader *Loader) resolveParameterRef(doc *T, component *ParameterRef, docum
 				}
 				return err
 			}
-			component.Value = resolved.Value
-			component.setRefPath(resolved.RefPath())
+			if component.Value = resolved.Value; component.Value != nil {
+				component.setRefPath(resolved.RefPath())
+			}
 		}
-		defer loader.unvisitRef(ref, component.Value)
+		defer loader.unvisitRef("Parameter", ref, component.Value)
+		applyParameterRefMetadata(component.Value, component, isOpenAPI31OrLater)
 	}
 	value := component.Value
 	if value == nil {
@@ -715,16 +953,8 @@ func (loader *Loader) resolveParameterRef(doc *T, component *ParameterRef, docum
 		return errors.New("cannot contain both schema and content in a parameter")
 	}
 	for _, name := range componentNames(value.Content) {
-		contentType := value.Content[name]
-		if schema := contentType.Schema; schema != nil {
-			if err := loader.resolveSchemaRef(doc, schema, documentPath, []string{}); err != nil {
-				return err
-			}
-		}
-		for _, example := range contentType.Examples {
-			if err := loader.resolveExampleRef(doc, example, documentPath); err != nil {
-				return err
-			}
+		if err := loader.resolveMediaTypeRefs(doc, value.Content[name], documentPath); err != nil {
+			return err
 		}
 	}
 	if schema := value.Schema; schema != nil {
@@ -732,15 +962,25 @@ func (loader *Loader) resolveParameterRef(doc *T, component *ParameterRef, docum
 			return err
 		}
 	}
-	for _, example := range value.Examples {
-		if err := loader.resolveExampleRef(doc, example, documentPath); err != nil {
+	for _, k := range componentNames(value.Examples) {
+		if err := loader.resolveExampleRef(doc, value.Examples[k], documentPath); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
+func applyRequestBodyRefMetadata(value *RequestBody, component *RequestBodyRef, isOpenAPI31OrLater bool) {
+	if !isOpenAPI31OrLater || value == nil || component.Description == nil {
+		return
+	}
+
+	value.Description = *component.Description
+}
+
 func (loader *Loader) resolveRequestBodyRef(doc *T, component *RequestBodyRef, documentPath *url.URL) (err error) {
+	isOpenAPI31OrLater := doc.IsOpenAPI31OrLater()
+
 	if component.isEmpty() {
 		return errMUSTRequestBody
 	}
@@ -749,37 +989,48 @@ func (loader *Loader) resolveRequestBodyRef(doc *T, component *RequestBodyRef, d
 		if component.Value != nil {
 			return nil
 		}
-		if !loader.shouldVisitRef(ref, func(value any) {
+		if !loader.shouldVisitRef("RequestBody", ref, func(value any) {
 			component.Value = value.(*RequestBody)
+			applyRequestBodyRefMetadata(component.Value, component, isOpenAPI31OrLater)
 			refPath, _ := loader.resolveRefPath(ref, documentPath)
 			component.setRefPath(refPath)
 		}) {
 			return nil
 		}
-		loader.visitRef(ref)
+		loader.visitRef("RequestBody", ref)
 		if isSingleRefElement(ref) {
-			var requestBody RequestBody
-			if documentPath, err = loader.loadSingleElementFromURI(ref, documentPath, &requestBody); err != nil {
+			var resolved RequestBodyRef
+			if documentPath, err = loader.loadSingleElementFromURI(ref, documentPath, &resolved); err != nil {
 				return err
 			}
-			component.Value = &requestBody
-			component.setRefPath(documentPath)
+			// The file holds the RequestBody itself or a $ref to it, to follow from there.
+			if err := loader.resolveRequestBodyRef(doc, &resolved, documentPath); err != nil {
+				if err == errMUSTRequestBody {
+					return nil
+				}
+				return err
+			}
+			if component.Value = resolved.Value; component.Value != nil {
+				component.setRefPath(cmp.Or(resolved.RefPath(), documentPath))
+			}
 		} else {
 			var resolved RequestBodyRef
 			doc, componentPath, err := loader.resolveComponent(doc, ref, documentPath, &resolved)
 			if err != nil {
 				return err
 			}
-			if err = loader.resolveRequestBodyRef(doc, &resolved, componentPath); err != nil {
+			if err := loader.resolveRequestBodyRef(doc, &resolved, componentPath); err != nil {
 				if err == errMUSTRequestBody {
 					return nil
 				}
 				return err
 			}
-			component.Value = resolved.Value
-			component.setRefPath(resolved.RefPath())
+			if component.Value = resolved.Value; component.Value != nil {
+				component.setRefPath(resolved.RefPath())
+			}
 		}
-		defer loader.unvisitRef(ref, component.Value)
+		defer loader.unvisitRef("RequestBody", ref, component.Value)
+		applyRequestBodyRefMetadata(component.Value, component, isOpenAPI31OrLater)
 	}
 	value := component.Value
 	if value == nil {
@@ -787,27 +1038,24 @@ func (loader *Loader) resolveRequestBodyRef(doc *T, component *RequestBodyRef, d
 	}
 
 	for _, name := range componentNames(value.Content) {
-		contentType := value.Content[name]
-		if contentType == nil {
-			continue
-		}
-		for _, name := range componentNames(contentType.Examples) {
-			example := contentType.Examples[name]
-			if err := loader.resolveExampleRef(doc, example, documentPath); err != nil {
-				return err
-			}
-			contentType.Examples[name] = example
-		}
-		if schema := contentType.Schema; schema != nil {
-			if err := loader.resolveSchemaRef(doc, schema, documentPath, []string{}); err != nil {
-				return err
-			}
+		if err := loader.resolveMediaTypeRefs(doc, value.Content[name], documentPath); err != nil {
+			return err
 		}
 	}
 	return nil
 }
 
+func applyResponseRefMetadata(value *Response, component *ResponseRef, isOpenAPI31OrLater bool) {
+	if !isOpenAPI31OrLater || value == nil || component.Description == nil {
+		return
+	}
+
+	value.Description = component.Description
+}
+
 func (loader *Loader) resolveResponseRef(doc *T, component *ResponseRef, documentPath *url.URL) (err error) {
+	isOpenAPI31OrLater := doc.IsOpenAPI31OrLater()
+
 	if component.isEmpty() {
 		return errMUSTResponse
 	}
@@ -816,21 +1064,30 @@ func (loader *Loader) resolveResponseRef(doc *T, component *ResponseRef, documen
 		if component.Value != nil {
 			return nil
 		}
-		if !loader.shouldVisitRef(ref, func(value any) {
+		if !loader.shouldVisitRef("Response", ref, func(value any) {
 			component.Value = value.(*Response)
+			applyResponseRefMetadata(component.Value, component, isOpenAPI31OrLater)
 			refPath, _ := loader.resolveRefPath(ref, documentPath)
 			component.setRefPath(refPath)
 		}) {
 			return nil
 		}
-		loader.visitRef(ref)
+		loader.visitRef("Response", ref)
 		if isSingleRefElement(ref) {
-			var resp Response
-			if documentPath, err = loader.loadSingleElementFromURI(ref, documentPath, &resp); err != nil {
+			var resolved ResponseRef
+			if documentPath, err = loader.loadSingleElementFromURI(ref, documentPath, &resolved); err != nil {
 				return err
 			}
-			component.Value = &resp
-			component.setRefPath(documentPath)
+			// The file holds the Response itself or a $ref to it, to follow from there.
+			if err := loader.resolveResponseRef(doc, &resolved, documentPath); err != nil {
+				if err == errMUSTResponse {
+					return nil
+				}
+				return err
+			}
+			if component.Value = resolved.Value; component.Value != nil {
+				component.setRefPath(cmp.Or(resolved.RefPath(), documentPath))
+			}
 		} else {
 			var resolved ResponseRef
 			doc, componentPath, err := loader.resolveComponent(doc, ref, documentPath, &resolved)
@@ -843,10 +1100,12 @@ func (loader *Loader) resolveResponseRef(doc *T, component *ResponseRef, documen
 				}
 				return err
 			}
-			component.Value = resolved.Value
-			component.setRefPath(resolved.RefPath())
+			if component.Value = resolved.Value; component.Value != nil {
+				component.setRefPath(resolved.RefPath())
+			}
 		}
-		defer loader.unvisitRef(ref, component.Value)
+		defer loader.unvisitRef("Response", ref, component.Value)
+		applyResponseRefMetadata(component.Value, component, isOpenAPI31OrLater)
 	}
 	value := component.Value
 	if value == nil {
@@ -860,22 +1119,8 @@ func (loader *Loader) resolveResponseRef(doc *T, component *ResponseRef, documen
 		}
 	}
 	for _, name := range componentNames(value.Content) {
-		contentType := value.Content[name]
-		if contentType == nil {
-			continue
-		}
-		for _, name := range componentNames(contentType.Examples) {
-			example := contentType.Examples[name]
-			if err := loader.resolveExampleRef(doc, example, documentPath); err != nil {
-				return err
-			}
-			contentType.Examples[name] = example
-		}
-		if schema := contentType.Schema; schema != nil {
-			if err := loader.resolveSchemaRef(doc, schema, documentPath, []string{}); err != nil {
-				return err
-			}
-			contentType.Schema = schema
+		if err := loader.resolveMediaTypeRefs(doc, value.Content[name], documentPath); err != nil {
+			return err
 		}
 	}
 	for _, name := range componentNames(value.Links) {
@@ -887,6 +1132,30 @@ func (loader *Loader) resolveResponseRef(doc *T, component *ResponseRef, documen
 	return nil
 }
 
+func (loader *Loader) resolveMediaTypeRefs(doc *T, mediaType *MediaType, documentPath *url.URL) (err error) {
+	if mediaType == nil {
+		return
+	}
+	if schema := mediaType.Schema; schema != nil {
+		if err = loader.resolveSchemaRef(doc, schema, documentPath, []string{}); err != nil {
+			return
+		}
+	}
+	if itemSchema := mediaType.ItemSchema; itemSchema != nil {
+		if err = loader.resolveSchemaRef(doc, itemSchema, documentPath, []string{}); err != nil {
+			return
+		}
+	}
+	for _, name := range componentNames(mediaType.Examples) {
+		example := mediaType.Examples[name]
+		if err = loader.resolveExampleRef(doc, example, documentPath); err != nil {
+			return
+		}
+		mediaType.Examples[name] = example
+	}
+	return
+}
+
 func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPath *url.URL, visited []string) (err error) {
 	if component.isEmpty() {
 		return errMUSTSchema
@@ -896,21 +1165,50 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 		if component.Value != nil {
 			return nil
 		}
-		if !loader.shouldVisitRef(ref, func(value any) {
+		if loader.isOpenAPI31OrLater(doc) && component.siblingErr != nil {
+			return fmt.Errorf("the fields next to $ref %q are not a schema: %w", ref, component.siblingErr)
+		}
+		if loader.isOpenAPI31OrLater(doc) && component.sibling != nil {
+			// Resolve the $refs within the siblings themselves, such as those of
+			// the properties they add, before applyRefSiblings shares them with
+			// Value: it may run from the callback below, which resolves nothing.
+			if err := loader.resolveSchemaRef(doc, &SchemaRef{Value: component.sibling}, documentPath, visited); err != nil {
+				return err
+			}
+		}
+		if !loader.shouldVisitRef("Schema", ref, func(value any) {
 			component.Value = value.(*Schema)
 			refPath, _ := loader.resolveRefPath(ref, documentPath)
 			component.setRefPath(refPath)
+			// A $ref reached again while its target is still being resolved is
+			// filled in here when the cycle unwinds, which can overwrite a value
+			// that already had its siblings applied, so apply them here as well.
+			component.applyRefSiblings(loader.isOpenAPI31OrLater(doc))
 		}) {
 			return nil
 		}
-		loader.visitRef(ref)
+		loader.visitRef("Schema", ref)
 		if isSingleRefElement(ref) {
-			var schema Schema
-			if documentPath, err = loader.loadSingleElementFromURI(ref, documentPath, &schema); err != nil {
+			var resolved SchemaRef
+			if documentPath, err = loader.loadSingleElementFromURI(ref, documentPath, &resolved); err != nil {
 				return err
 			}
-			component.Value = &schema
-			component.setRefPath(documentPath)
+			if strings.HasPrefix(resolved.Ref, "#") {
+				// Local fragments belong to the referenced file, not the referring document.
+				if doc, err = loader.loadFromURIInternal(documentPath); err != nil {
+					return err
+				}
+			}
+			// The file holds the Schema itself or a $ref to it, to follow from there.
+			if err := loader.resolveSchemaRef(doc, &resolved, documentPath, visited); err != nil {
+				if err == errMUSTSchema {
+					return nil
+				}
+				return err
+			}
+			if component.Value = resolved.Value; component.Value != nil {
+				component.setRefPath(cmp.Or(resolved.RefPath(), documentPath))
+			}
 		} else {
 			var resolved SchemaRef
 			doc, componentPath, err := loader.resolveComponent(doc, ref, documentPath, &resolved)
@@ -923,10 +1221,18 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 				}
 				return err
 			}
-			component.Value = resolved.Value
-			component.setRefPath(resolved.RefPath())
+			if component.Value = resolved.Value; component.Value != nil {
+				component.setRefPath(resolved.RefPath())
+			}
 		}
-		defer loader.unvisitRef(ref, component.Value)
+		defer loader.unvisitRef("Schema", ref, component.Value)
+
+		// OAS 3.1 / JSON Schema 2020-12: apply sibling keywords from the original schema
+		// object on top of the resolved $ref value. In 3.1, siblings are not ignored —
+		// they augment the referenced schema (e.g. deprecated:true alongside $ref).
+		// Only apply for OAS 3.1+ — in 3.0 $ref replaces its entire object and siblings
+		// are (validly) ignored.
+		component.applyRefSiblings(loader.isOpenAPI31OrLater(doc))
 	}
 	value := component.Value
 	if value == nil {
@@ -970,10 +1276,109 @@ func (loader *Loader) resolveSchemaRef(doc *T, component *SchemaRef, documentPat
 			return err
 		}
 	}
+	// Discriminator mapping refs are a special case since they are not full
+	// ref objects but are plain strings that reference schema objects.
+	// Plain schema names like "Dog" are not references and are left alone.
+	if value.Discriminator != nil {
+		inExternalDoc := documentPath != nil && documentPath.Path != "" && documentPath.Path != loader.rootLocation
+		for _, k := range componentNames(value.Discriminator.Mapping) {
+			v := value.Discriminator.Mapping[k]
+			if !strings.Contains(v.Ref, "/") {
+				continue
+			}
+			// A document-local mapping needs resolving only when it lives in
+			// another document, because InternalizeRefs then has to rewrite it
+			// against that document. One in the root document is already
+			// written against the document it will end up in.
+			if strings.HasPrefix(v.Ref, "#") && !inExternalDoc {
+				continue
+			}
+			if err := loader.resolveSchemaRef(doc, (*SchemaRef)(&v), documentPath, visited); err != nil {
+				return err
+			}
+			value.Discriminator.Mapping[k] = v
+		}
+	}
+
+	// OpenAPI 3.1 / JSON Schema 2020-12 fields
+	for _, v := range value.PrefixItems {
+		if err := loader.resolveSchemaRef(doc, v, documentPath, visited); err != nil {
+			return err
+		}
+	}
+	if v := value.Contains; v != nil {
+		if err := loader.resolveSchemaRef(doc, v, documentPath, visited); err != nil {
+			return err
+		}
+	}
+	for _, name := range componentNames(value.PatternProperties) {
+		v := value.PatternProperties[name]
+		if err := loader.resolveSchemaRef(doc, v, documentPath, visited); err != nil {
+			return err
+		}
+	}
+	for _, name := range componentNames(value.DependentSchemas) {
+		v := value.DependentSchemas[name]
+		if err := loader.resolveSchemaRef(doc, v, documentPath, visited); err != nil {
+			return err
+		}
+	}
+	for _, name := range componentNames(value.Defs) {
+		v := value.Defs[name]
+		if err := loader.resolveSchemaRef(doc, v, documentPath, visited); err != nil {
+			return err
+		}
+	}
+	if v := value.PropertyNames; v != nil {
+		if err := loader.resolveSchemaRef(doc, v, documentPath, visited); err != nil {
+			return err
+		}
+	}
+	if v := value.UnevaluatedItems.Schema; v != nil {
+		if err := loader.resolveSchemaRef(doc, v, documentPath, visited); err != nil {
+			return err
+		}
+	}
+	if v := value.UnevaluatedProperties.Schema; v != nil {
+		if err := loader.resolveSchemaRef(doc, v, documentPath, visited); err != nil {
+			return err
+		}
+	}
+	if v := value.If; v != nil {
+		if err := loader.resolveSchemaRef(doc, v, documentPath, visited); err != nil {
+			return err
+		}
+	}
+	if v := value.Then; v != nil {
+		if err := loader.resolveSchemaRef(doc, v, documentPath, visited); err != nil {
+			return err
+		}
+	}
+	if v := value.Else; v != nil {
+		if err := loader.resolveSchemaRef(doc, v, documentPath, visited); err != nil {
+			return err
+		}
+	}
+	if v := value.ContentSchema; v != nil {
+		if err := loader.resolveSchemaRef(doc, v, documentPath, visited); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
+func applySecuritySchemeRefMetadata(value *SecurityScheme, component *SecuritySchemeRef, isOpenAPI31OrLater bool) {
+	if !isOpenAPI31OrLater || value == nil || component.Description == nil {
+		return
+	}
+
+	value.Description = *component.Description
+}
+
 func (loader *Loader) resolveSecuritySchemeRef(doc *T, component *SecuritySchemeRef, documentPath *url.URL) (err error) {
+	isOpenAPI31OrLater := doc.IsOpenAPI31OrLater()
+
 	if component.isEmpty() {
 		return errMUSTSecurityScheme
 	}
@@ -982,21 +1387,30 @@ func (loader *Loader) resolveSecuritySchemeRef(doc *T, component *SecurityScheme
 		if component.Value != nil {
 			return nil
 		}
-		if !loader.shouldVisitRef(ref, func(value any) {
+		if !loader.shouldVisitRef("SecurityScheme", ref, func(value any) {
 			component.Value = value.(*SecurityScheme)
+			applySecuritySchemeRefMetadata(component.Value, component, isOpenAPI31OrLater)
 			refPath, _ := loader.resolveRefPath(ref, documentPath)
 			component.setRefPath(refPath)
 		}) {
 			return nil
 		}
-		loader.visitRef(ref)
+		loader.visitRef("SecurityScheme", ref)
 		if isSingleRefElement(ref) {
-			var scheme SecurityScheme
-			if _, err = loader.loadSingleElementFromURI(ref, documentPath, &scheme); err != nil {
+			var resolved SecuritySchemeRef
+			if documentPath, err = loader.loadSingleElementFromURI(ref, documentPath, &resolved); err != nil {
 				return err
 			}
-			component.Value = &scheme
-			component.setRefPath(documentPath)
+			// The file holds the SecurityScheme itself or a $ref to it, to follow from there.
+			if err := loader.resolveSecuritySchemeRef(doc, &resolved, documentPath); err != nil {
+				if err == errMUSTSecurityScheme {
+					return nil
+				}
+				return err
+			}
+			if component.Value = resolved.Value; component.Value != nil {
+				component.setRefPath(cmp.Or(resolved.RefPath(), documentPath))
+			}
 		} else {
 			var resolved SecuritySchemeRef
 			doc, componentPath, err := loader.resolveComponent(doc, ref, documentPath, &resolved)
@@ -1009,34 +1423,64 @@ func (loader *Loader) resolveSecuritySchemeRef(doc *T, component *SecurityScheme
 				}
 				return err
 			}
-			component.Value = resolved.Value
-			component.setRefPath(resolved.RefPath())
+			if component.Value = resolved.Value; component.Value != nil {
+				component.setRefPath(resolved.RefPath())
+			}
 		}
-		defer loader.unvisitRef(ref, component.Value)
+		defer loader.unvisitRef("SecurityScheme", ref, component.Value)
+		applySecuritySchemeRefMetadata(component.Value, component, isOpenAPI31OrLater)
 	}
 	return nil
 }
 
+func applyExampleRefMetadata(value *Example, component *ExampleRef, isOpenAPI31OrLater bool) {
+	if !isOpenAPI31OrLater || value == nil || (component.Summary == nil && component.Description == nil) {
+		return
+	}
+
+	if component.Summary != nil {
+		value.Summary = *component.Summary
+	}
+	if component.Description != nil {
+		value.Description = *component.Description
+	}
+}
+
 func (loader *Loader) resolveExampleRef(doc *T, component *ExampleRef, documentPath *url.URL) (err error) {
+	isOpenAPI31OrLater := doc.IsOpenAPI31OrLater()
+
+	if component.isEmpty() {
+		return errMUSTExample
+	}
+
 	if ref := component.Ref; ref != "" {
 		if component.Value != nil {
 			return nil
 		}
-		if !loader.shouldVisitRef(ref, func(value any) {
+		if !loader.shouldVisitRef("Example", ref, func(value any) {
 			component.Value = value.(*Example)
+			applyExampleRefMetadata(component.Value, component, isOpenAPI31OrLater)
 			refPath, _ := loader.resolveRefPath(ref, documentPath)
 			component.setRefPath(refPath)
 		}) {
 			return nil
 		}
-		loader.visitRef(ref)
+		loader.visitRef("Example", ref)
 		if isSingleRefElement(ref) {
-			var example Example
-			if _, err = loader.loadSingleElementFromURI(ref, documentPath, &example); err != nil {
+			var resolved ExampleRef
+			if documentPath, err = loader.loadSingleElementFromURI(ref, documentPath, &resolved); err != nil {
 				return err
 			}
-			component.Value = &example
-			component.setRefPath(documentPath)
+			// The file holds the Example itself or a $ref to it, to follow from there.
+			if err := loader.resolveExampleRef(doc, &resolved, documentPath); err != nil {
+				if err == errMUSTExample {
+					return nil
+				}
+				return err
+			}
+			if component.Value = resolved.Value; component.Value != nil {
+				component.setRefPath(cmp.Or(resolved.RefPath(), documentPath))
+			}
 		} else {
 			var resolved ExampleRef
 			doc, componentPath, err := loader.resolveComponent(doc, ref, documentPath, &resolved)
@@ -1049,10 +1493,12 @@ func (loader *Loader) resolveExampleRef(doc *T, component *ExampleRef, documentP
 				}
 				return err
 			}
-			component.Value = resolved.Value
-			component.setRefPath(resolved.RefPath())
+			if component.Value = resolved.Value; component.Value != nil {
+				component.setRefPath(resolved.RefPath())
+			}
 		}
-		defer loader.unvisitRef(ref, component.Value)
+		defer loader.unvisitRef("Example", ref, component.Value)
+		applyExampleRefMetadata(component.Value, component, isOpenAPI31OrLater)
 	}
 	return nil
 }
@@ -1066,37 +1512,46 @@ func (loader *Loader) resolveCallbackRef(doc *T, component *CallbackRef, documen
 		if component.Value != nil {
 			return nil
 		}
-		if !loader.shouldVisitRef(ref, func(value any) {
+		if !loader.shouldVisitRef("Callback", ref, func(value any) {
 			component.Value = value.(*Callback)
 			refPath, _ := loader.resolveRefPath(ref, documentPath)
 			component.setRefPath(refPath)
 		}) {
 			return nil
 		}
-		loader.visitRef(ref)
+		loader.visitRef("Callback", ref)
 		if isSingleRefElement(ref) {
-			var resolved Callback
+			var resolved CallbackRef
 			if documentPath, err = loader.loadSingleElementFromURI(ref, documentPath, &resolved); err != nil {
 				return err
 			}
-			component.Value = &resolved
-			component.setRefPath(documentPath)
+			// The file holds the Callback itself or a $ref to it, to follow from there.
+			if err := loader.resolveCallbackRef(doc, &resolved, documentPath); err != nil {
+				if err == errMUSTCallback {
+					return nil
+				}
+				return err
+			}
+			if component.Value = resolved.Value; component.Value != nil {
+				component.setRefPath(cmp.Or(resolved.RefPath(), documentPath))
+			}
 		} else {
 			var resolved CallbackRef
 			doc, componentPath, err := loader.resolveComponent(doc, ref, documentPath, &resolved)
 			if err != nil {
 				return err
 			}
-			if err = loader.resolveCallbackRef(doc, &resolved, componentPath); err != nil {
+			if err := loader.resolveCallbackRef(doc, &resolved, componentPath); err != nil {
 				if err == errMUSTCallback {
 					return nil
 				}
 				return err
 			}
-			component.Value = resolved.Value
-			component.setRefPath(resolved.RefPath())
+			if component.Value = resolved.Value; component.Value != nil {
+				component.setRefPath(resolved.RefPath())
+			}
 		}
-		defer loader.unvisitRef(ref, component.Value)
+		defer loader.unvisitRef("Callback", ref, component.Value)
 	}
 	value := component.Value
 	if value == nil {
@@ -1113,7 +1568,17 @@ func (loader *Loader) resolveCallbackRef(doc *T, component *CallbackRef, documen
 	return nil
 }
 
+func applyLinkRefMetadata(value *Link, component *LinkRef, isOpenAPI31OrLater bool) {
+	if !isOpenAPI31OrLater || value == nil || component.Description == nil {
+		return
+	}
+
+	value.Description = *component.Description
+}
+
 func (loader *Loader) resolveLinkRef(doc *T, component *LinkRef, documentPath *url.URL) (err error) {
+	isOpenAPI31OrLater := doc.IsOpenAPI31OrLater()
+
 	if component.isEmpty() {
 		return errMUSTLink
 	}
@@ -1122,21 +1587,30 @@ func (loader *Loader) resolveLinkRef(doc *T, component *LinkRef, documentPath *u
 		if component.Value != nil {
 			return nil
 		}
-		if !loader.shouldVisitRef(ref, func(value any) {
+		if !loader.shouldVisitRef("Link", ref, func(value any) {
 			component.Value = value.(*Link)
+			applyLinkRefMetadata(component.Value, component, isOpenAPI31OrLater)
 			refPath, _ := loader.resolveRefPath(ref, documentPath)
 			component.setRefPath(refPath)
 		}) {
 			return nil
 		}
-		loader.visitRef(ref)
+		loader.visitRef("Link", ref)
 		if isSingleRefElement(ref) {
-			var link Link
-			if _, err = loader.loadSingleElementFromURI(ref, documentPath, &link); err != nil {
+			var resolved LinkRef
+			if documentPath, err = loader.loadSingleElementFromURI(ref, documentPath, &resolved); err != nil {
 				return err
 			}
-			component.Value = &link
-			component.setRefPath(documentPath)
+			// The file holds the Link itself or a $ref to it, to follow from there.
+			if err := loader.resolveLinkRef(doc, &resolved, documentPath); err != nil {
+				if err == errMUSTLink {
+					return nil
+				}
+				return err
+			}
+			if component.Value = resolved.Value; component.Value != nil {
+				component.setRefPath(cmp.Or(resolved.RefPath(), documentPath))
+			}
 		} else {
 			var resolved LinkRef
 			doc, componentPath, err := loader.resolveComponent(doc, ref, documentPath, &resolved)
@@ -1149,10 +1623,12 @@ func (loader *Loader) resolveLinkRef(doc *T, component *LinkRef, documentPath *u
 				}
 				return err
 			}
-			component.Value = resolved.Value
-			component.setRefPath(resolved.RefPath())
+			if component.Value = resolved.Value; component.Value != nil {
+				component.setRefPath(resolved.RefPath())
+			}
 		}
-		defer loader.unvisitRef(ref, component.Value)
+		defer loader.unvisitRef("Link", ref, component.Value)
+		applyLinkRefMetadata(component.Value, component, isOpenAPI31OrLater)
 	}
 	return nil
 }
@@ -1164,21 +1640,38 @@ func (loader *Loader) resolvePathItemRef(doc *T, pathItem *PathItem, documentPat
 	}
 
 	if ref := pathItem.Ref; ref != "" {
-		if !pathItem.isEmpty() {
+		if pathItem.refResolved {
 			return
 		}
-		if !loader.shouldVisitRef(ref, func(value any) {
-			*pathItem = *value.(*PathItem)
+		// The fields written next to $ref used to stop it from being resolved.
+		// They are merged with the item it points to instead; see mergeRefSiblings.
+		var siblings *PathItem
+		if !pathItem.isEmpty() || len(pathItem.Extensions) != 0 {
+			local := *pathItem
+			local.Ref = ""
+			siblings = &local
+		}
+		resolvedTo := func(resolved PathItem) {
+			*pathItem = resolved
+			pathItem.Ref = ref
+			pathItem.refResolved = true
+			if siblings != nil {
+				pathItem.mergeRefSiblings(siblings)
+				pathItem.refSiblings = siblings
+			}
+		}
+		if !loader.shouldVisitRef("PathItem", ref, func(value any) {
+			resolvedTo(*value.(*PathItem))
 		}) {
 			return nil
 		}
-		loader.visitRef(ref)
+		loader.visitRef("PathItem", ref)
 		if isSingleRefElement(ref) {
 			var p PathItem
 			if documentPath, err = loader.loadSingleElementFromURI(ref, documentPath, &p); err != nil {
 				return
 			}
-			*pathItem = p
+			resolvedTo(p)
 		} else {
 			var resolved PathItem
 			if doc, documentPath, err = loader.resolveComponent(doc, ref, documentPath, &resolved); err != nil {
@@ -1187,10 +1680,9 @@ func (loader *Loader) resolvePathItemRef(doc *T, pathItem *PathItem, documentPat
 				}
 				return
 			}
-			*pathItem = resolved
+			resolvedTo(resolved)
 		}
-		pathItem.Ref = ref
-		defer loader.unvisitRef(ref, pathItem)
+		defer loader.unvisitRef("PathItem", ref, pathItem)
 	}
 
 	for _, parameter := range pathItem.Parameters {
@@ -1228,6 +1720,231 @@ func (loader *Loader) resolvePathItemRef(doc *T, pathItem *PathItem, documentPat
 	return
 }
 
+// refSiblingAnnotations are the keywords that, written next to a $ref, replace
+// the referenced schema's own. They describe the instance rather than constrain
+// it, so the one closest to where it is used wins, as summary and description
+// do on a Reference Object.
+var refSiblingAnnotations = map[string]struct{}{
+	"$comment":        {},
+	"allowEmptyValue": {},
+	"default":         {},
+	"deprecated":      {},
+	"description":     {},
+	"discriminator":   {},
+	"example":         {},
+	"examples":        {},
+	"externalDocs":    {},
+	"nullable":        {},
+	"readOnly":        {},
+	"title":           {},
+	"writeOnly":       {},
+	"xml":             {},
+}
+
+// applyRefSiblings applies the sibling keywords of an OAS 3.1 $ref to its
+// resolved value, and does nothing for OAS 3.0, where $ref replaces its object.
+//
+// In JSON Schema 2020-12 the keywords next to a $ref apply alongside it: an
+// instance must satisfy both the referenced schema and its siblings. So the
+// annotations above override the referenced schema's, while every other
+// keyword is added as one more allOf entry rather than replacing the
+// referenced schema's own: a sibling maxLength: 10 next to a $ref to a schema
+// with maxLength: 3 still rejects "abcd". Value thus keeps the shape of the
+// referenced schema, with its properties, type and so on.
+//
+// It works on a copy so a schema shared by other references is not mutated.
+func (component *SchemaRef) applyRefSiblings(isOpenAPI31OrLater bool) {
+	if !isOpenAPI31OrLater || component.Value == nil {
+		return
+	}
+	// An extension can be the only thing written next to the $ref, in which
+	// case there is no sibling schema but there is still something to apply.
+	if component.sibling == nil && len(component.Extensions) == 0 {
+		return
+	}
+	component.target = component.Value
+	var annotations, assertions []string
+	for _, field := range component.extra {
+		// An extension describes the member carrying the $ref and asserts
+		// nothing about the value, so it belongs on the copy rather than in
+		// a conjunct, and applySiblingSchemaFields has no field to set for it.
+		if strings.HasPrefix(field, "x-") {
+			continue
+		}
+		if _, ok := refSiblingAnnotations[field]; ok {
+			annotations = append(annotations, field)
+		} else {
+			assertions = append(assertions, field)
+		}
+	}
+	schemaCopy := *component.Value
+	if component.sibling != nil {
+		applySiblingSchemaFields(&schemaCopy, component.sibling, annotations)
+	}
+	if len(component.Extensions) != 0 {
+		extensions := make(map[string]any, len(schemaCopy.Extensions)+len(component.Extensions))
+		maps.Copy(extensions, schemaCopy.Extensions)
+		// The nearer extension wins, as the annotations above do.
+		maps.Copy(extensions, component.Extensions)
+		schemaCopy.Extensions = extensions
+	}
+	if component.sibling != nil && len(assertions) != 0 {
+		// The siblings sit in the same object as the $ref, so they share its origin.
+		conjunct := Schema{Origin: component.Origin}
+		applySiblingSchemaFields(&conjunct, component.sibling, assertions)
+		if !conjunct.IsEmpty() {
+			allOf := make(SchemaRefs, 0, len(schemaCopy.AllOf)+1)
+			allOf = append(allOf, schemaCopy.AllOf...)
+			schemaCopy.AllOf = append(allOf, &SchemaRef{Value: &conjunct})
+		}
+	}
+	component.Value = &schemaCopy
+}
+
+// isOpenAPI31OrLater tells whether doc follows OAS 3.1 or later. A document
+// that does not say, such as a file of bare schemas a $ref points into, follows
+// the version of the document that refers to it.
+func (loader *Loader) isOpenAPI31OrLater(doc *T) bool {
+	if doc.OpenAPI == "" && loader.rootDoc != nil {
+		doc = loader.rootDoc
+	}
+	return doc.IsOpenAPI31OrLater()
+}
+
 func unescapeRefString(ref string) string {
 	return strings.ReplaceAll(strings.ReplaceAll(ref, "~1", "/"), "~0", "~")
+}
+
+// applySiblingSchemaFields overlays the fields listed in presentFields from sibling onto dst.
+// It is used to honour keyword siblings of $ref in OpenAPI 3.1 / JSON Schema 2020-12, where
+// sibling keywords are applied in addition to (not instead of) the referenced schema.
+// Only fields that were explicitly present in the original YAML/JSON are applied; the presentFields
+// slice (derived from SchemaRef.extra) carries this information.
+func applySiblingSchemaFields(dst, sibling *Schema, presentFields []string) {
+	for _, field := range presentFields {
+		switch field {
+		case "oneOf":
+			dst.OneOf = sibling.OneOf
+		case "anyOf":
+			dst.AnyOf = sibling.AnyOf
+		case "allOf":
+			dst.AllOf = sibling.AllOf
+		case "not":
+			dst.Not = sibling.Not
+		case "type":
+			dst.Type = sibling.Type
+		case "title":
+			dst.Title = sibling.Title
+		case "format":
+			dst.Format = sibling.Format
+		case "description":
+			dst.Description = sibling.Description
+		case "enum":
+			dst.Enum = sibling.Enum
+		case "default":
+			dst.Default = sibling.Default
+		case "example":
+			dst.Example = sibling.Example
+		case "externalDocs":
+			dst.ExternalDocs = sibling.ExternalDocs
+		case "uniqueItems":
+			dst.UniqueItems = sibling.UniqueItems
+		case "exclusiveMinimum":
+			dst.ExclusiveMin = sibling.ExclusiveMin
+		case "exclusiveMaximum":
+			dst.ExclusiveMax = sibling.ExclusiveMax
+		case "nullable":
+			dst.Nullable = sibling.Nullable
+		case "readOnly":
+			dst.ReadOnly = sibling.ReadOnly
+		case "writeOnly":
+			dst.WriteOnly = sibling.WriteOnly
+		case "allowEmptyValue":
+			dst.AllowEmptyValue = sibling.AllowEmptyValue
+		case "deprecated":
+			dst.Deprecated = sibling.Deprecated
+		case "xml":
+			dst.XML = sibling.XML
+		case "minimum":
+			dst.Min = sibling.Min
+		case "maximum":
+			dst.Max = sibling.Max
+		case "multipleOf":
+			dst.MultipleOf = sibling.MultipleOf
+		case "minLength":
+			dst.MinLength = sibling.MinLength
+		case "maxLength":
+			dst.MaxLength = sibling.MaxLength
+		case "pattern":
+			dst.Pattern = sibling.Pattern
+		case "minItems":
+			dst.MinItems = sibling.MinItems
+		case "maxItems":
+			dst.MaxItems = sibling.MaxItems
+		case "items":
+			dst.Items = sibling.Items
+		case "required":
+			dst.Required = sibling.Required
+		case "properties":
+			dst.Properties = sibling.Properties
+		case "minProperties":
+			dst.MinProps = sibling.MinProps
+		case "maxProperties":
+			dst.MaxProps = sibling.MaxProps
+		case "additionalProperties":
+			dst.AdditionalProperties = sibling.AdditionalProperties
+		case "discriminator":
+			dst.Discriminator = sibling.Discriminator
+		case "const":
+			dst.Const = sibling.Const
+		case "examples":
+			dst.Examples = sibling.Examples
+		case "prefixItems":
+			dst.PrefixItems = sibling.PrefixItems
+		case "contains":
+			dst.Contains = sibling.Contains
+		case "minContains":
+			dst.MinContains = sibling.MinContains
+		case "maxContains":
+			dst.MaxContains = sibling.MaxContains
+		case "patternProperties":
+			dst.PatternProperties = sibling.PatternProperties
+		case "dependentSchemas":
+			dst.DependentSchemas = sibling.DependentSchemas
+		case "propertyNames":
+			dst.PropertyNames = sibling.PropertyNames
+		case "unevaluatedItems":
+			dst.UnevaluatedItems = sibling.UnevaluatedItems
+		case "unevaluatedProperties":
+			dst.UnevaluatedProperties = sibling.UnevaluatedProperties
+		case "if":
+			dst.If = sibling.If
+		case "then":
+			dst.Then = sibling.Then
+		case "else":
+			dst.Else = sibling.Else
+		case "dependentRequired":
+			dst.DependentRequired = sibling.DependentRequired
+		case "$defs":
+			dst.Defs = sibling.Defs
+		case "$schema":
+			dst.SchemaDialect = sibling.SchemaDialect
+		case "$comment":
+			dst.Comment = sibling.Comment
+		case "$id":
+			dst.SchemaID = sibling.SchemaID
+		case "$anchor":
+			dst.Anchor = sibling.Anchor
+		case "$dynamicRef":
+			dst.DynamicRef = sibling.DynamicRef
+		case "$dynamicAnchor":
+			dst.DynamicAnchor = sibling.DynamicAnchor
+		case "contentMediaType":
+			dst.ContentMediaType = sibling.ContentMediaType
+		case "contentEncoding":
+			dst.ContentEncoding = sibling.ContentEncoding
+		case "contentSchema":
+			dst.ContentSchema = sibling.ContentSchema
+		}
+	}
 }

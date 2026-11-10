@@ -28,6 +28,9 @@ type Options struct {
 	// Set RegexCompiler to override the regex implementation
 	RegexCompiler openapi3.RegexCompilerFunc
 
+	// Set RejectWhenRequestBodyNotSpecified so ValidateRequest fails when request body is present but not defined in the specification
+	RejectWhenRequestBodyNotSpecified bool
+
 	// A document with security schemes defined will not pass validation
 	// unless an AuthenticationFunc is defined.
 	// See NoopAuthenticationFunc
@@ -37,7 +40,15 @@ type Options struct {
 	// request. If true, then they are not set
 	SkipSettingDefaults bool
 
+	// Set KeepValidatedValue so ValidateRequest gives req.Body a ValidatedValue() any
+	// method returning the validated request body value, defaults included
+	KeepValidatedValue bool
+
 	customSchemaErrorFunc CustomSchemaErrorFunc
+
+	// Additional schema validation options to pass through to schema validation.
+	// Use this to pass document-scoped format validators or other per-validation options.
+	SchemaValidationOptions []openapi3.SchemaValidationOption
 }
 
 // CustomSchemaErrorFunc allows for custom the schema error message.

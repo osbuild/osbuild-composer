@@ -15,13 +15,14 @@ package codegen
 
 import (
 	"bytes"
+	"cmp"
 	"fmt"
 	"go/token"
+	"maps"
 	"net/url"
 	"reflect"
 	"regexp"
 	"slices"
-	"sort"
 	"strconv"
 	"strings"
 	"unicode"
@@ -82,7 +83,7 @@ func (m NameNormalizerMap) Options() []string {
 		options = append(options, string(key))
 	}
 
-	sort.Strings(options)
+	slices.Sort(options)
 
 	return options
 }
@@ -350,7 +351,7 @@ func SortedMapKeys[T any](m map[string]T) []string {
 	for k := range m {
 		keys = append(keys, k)
 	}
-	sort.Strings(keys)
+	slices.Sort(keys)
 	return keys
 }
 
@@ -372,11 +373,11 @@ func SortedSchemaKeys(dict map[string]*openapi3.SchemaRef) []string {
 		}
 	}
 
-	sort.Slice(keys, func(i, j int) bool {
-		if i, j := orders[keys[i]], orders[keys[j]]; i != j {
-			return i < j
-		}
-		return keys[i] < keys[j]
+	slices.SortFunc(keys, func(a, b string) int {
+		return cmp.Or(
+			cmp.Compare(orders[a], orders[b]),
+			cmp.Compare(a, b),
+		)
 	})
 	return keys
 }
@@ -405,10 +406,11 @@ func schemaXOrder(v *openapi3.SchemaRef) (int64, bool) {
 	return 0, false
 }
 
-// StringInArray checks whether the specified string is present in an array
-// of strings
-func StringInArray(str string, array []string) bool {
-	return slices.Contains(array, str)
+// SortedSecuritySchemeKeys returns sorted keys for a SecuritySchemeRef dict
+func SortedSecuritySchemeKeys(dict map[string]*openapi3.SecuritySchemeRef) []string {
+	keys := slices.Collect(maps.Keys(dict))
+	slices.Sort(keys)
+	return keys
 }
 
 // RefPathToObjName returns the name of referenced object without changes.
@@ -474,6 +476,20 @@ func refPathToGoTypeSelf(refPath string, local bool) (string, error) {
 		return "", fmt.Errorf("unexpected reference depth: %d for ref: %s local: %t", depth, refPath, local)
 	}
 
+	// When multi-pass name resolution is active, the resolved name takes
+	// precedence over the spec-given name. For a $ref like
+	// #/components/schemas/Thing, we pass the section ("schemas") and
+	// name ("Thing") to resolvedNameForComponent, which looks up the
+	// final Go type name assigned by the collision resolver.
+	// Note: the resolver prioritizes component schemas — if a schema and
+	// a response both claim "Thing", the component schema keeps the original
+	// name and the response becomes "ThingResponse".
+	if depth == 4 && pathParts[0] == "#" && pathParts[1] == "components" {
+		if resolved := resolvedNameForComponent(pathParts[2], pathParts[3]); resolved != "" {
+			return resolved, nil
+		}
+	}
+
 	// Schemas may have been renamed locally, so look up the actual name in
 	// the spec.
 	name, err := findSchemaNameByRefPath(refPath, globalState.spec)
@@ -531,6 +547,23 @@ func SwaggerUriToIrisUri(uri string) string {
 	return pathParamRE.ReplaceAllString(uri, ":$1")
 }
 
+// escapeLiteralPathColons escapes literal ':' characters in an OpenAPI path so
+// that routers which use ':' to introduce a path parameter (Echo, Gin, Fiber)
+// treat them as literals rather than parameter delimiters. Without this, a path
+// like "/pets:validate" registers a parameter named "validate", so multiple
+// such paths collide on the same prefix (issue #1726).
+//
+// The escaped form is a single backslash before the colon (`\:`). The register
+// templates render the result through toGoString (strconv.Quote), which turns
+// the backslash into `\\` in the emitted Go source, so the value the router
+// sees at runtime is exactly `\:` — the escape those routers understand.
+//
+// It must run before parameter substitution, which introduces its own ':'
+// delimiters that must stay unescaped.
+func escapeLiteralPathColons(uri string) string {
+	return strings.ReplaceAll(uri, ":", `\:`)
+}
+
 // SwaggerUriToEchoUri converts a OpenAPI style path URI with parameters to an
 // Echo compatible path URI. We need to replace all of OpenAPI parameters with
 // ":param". Valid input parameters are:
@@ -544,6 +577,7 @@ func SwaggerUriToIrisUri(uri string) string {
 //	{?param}
 //	{?param*}
 func SwaggerUriToEchoUri(uri string) string {
+	uri = escapeLiteralPathColons(uri)
 	return pathParamRE.ReplaceAllString(uri, ":$1")
 }
 
@@ -560,6 +594,7 @@ func SwaggerUriToEchoUri(uri string) string {
 //	{?param}
 //	{?param*}
 func SwaggerUriToFiberUri(uri string) string {
+	uri = escapeLiteralPathColons(uri)
 	return pathParamRE.ReplaceAllString(uri, ":$1")
 }
 
@@ -592,6 +627,7 @@ func SwaggerUriToChiUri(uri string) string {
 //	{?param}
 //	{?param*}
 func SwaggerUriToGinUri(uri string) string {
+	uri = escapeLiteralPathColons(uri)
 	return pathParamRE.ReplaceAllString(uri, ":$1")
 }
 
@@ -612,8 +648,9 @@ func SwaggerUriToGorillaUri(uri string) string {
 }
 
 // SwaggerUriToStdHttpUri converts a swagger style path URI with parameters to a
-// Chi compatible path URI. We need to replace all Swagger parameters with
-// "{param}". Valid input parameters are:
+// net/http ServeMux compatible path URI. Parameter names are sanitized to be
+// valid Go identifiers, as required by ServeMux wildcard segments. Valid input
+// parameters are:
 //
 //	{param}
 //	{param*}
@@ -624,13 +661,25 @@ func SwaggerUriToGorillaUri(uri string) string {
 //	{?param}
 //	{?param*}
 func SwaggerUriToStdHttpUri(uri string) string {
+	uri = pathParamRE.ReplaceAllStringFunc(uri, func(match string) string {
+		sub := pathParamRE.FindStringSubmatch(match)
+		return "{" + SanitizeGoIdentifier(sub[1]) + "}"
+	})
+
 	// https://pkg.go.dev/net/http#hdr-Patterns-ServeMux
-	// The special wildcard {$} matches only the end of the URL. For example, the pattern "/{$}" matches only the path "/", whereas the pattern "/" matches every path.
-	if uri == "/" {
-		return "/{$}"
+	// A ServeMux pattern ending in '/' matches the whole subtree below it,
+	// while an OpenAPI path ending in '/' means exactly that path. The
+	// special wildcard {$} anchors the pattern to the end of the URL:
+	// "/foo/{$}" matches only "/foo/", whereas "/foo/" matches every path
+	// under it. Anchoring also prevents registration panics when subtree
+	// patterns from independent spec paths overlap ambiguously (#2065).
+	// Appended after parameter sanitization so the '$' is not treated as a
+	// parameter name.
+	if strings.HasSuffix(uri, "/") {
+		uri += "{$}"
 	}
 
-	return pathParamRE.ReplaceAllString(uri, "{$1}")
+	return uri
 }
 
 // OrderedParamsFromUri returns the argument names, in order, in a given URI string, so for
@@ -729,9 +778,12 @@ func IsValidGoIdentity(str string) bool {
 	return !IsPredeclaredGoIdentifier(str)
 }
 
-// SanitizeGoIdentity deletes and replaces the illegal runes in the given
-// string to use the string as a valid identity.
-func SanitizeGoIdentity(str string) string {
+// SanitizeGoIdentifier replaces illegal runes in the given string so that
+// it is a valid Go identifier. Unlike SanitizeGoIdentity, it does not
+// prefix reserved keywords or predeclared identifiers. This is useful for
+// contexts where the name must be a valid identifier but is not used as a
+// Go symbol (e.g. net/http ServeMux wildcard names).
+func SanitizeGoIdentifier(str string) string {
 	sanitized := []rune(str)
 
 	for i, c := range sanitized {
@@ -742,7 +794,14 @@ func SanitizeGoIdentity(str string) string {
 		}
 	}
 
-	str = string(sanitized)
+	return string(sanitized)
+}
+
+// SanitizeGoIdentity deletes and replaces the illegal runes in the given
+// string to use the string as a valid identity. It also prefixes reserved
+// keywords and predeclared identifiers with an underscore.
+func SanitizeGoIdentity(str string) string {
+	str = SanitizeGoIdentifier(str)
 
 	if IsGoKeyword(str) || IsPredeclaredGoIdentifier(str) {
 		str = "_" + str
@@ -875,10 +934,12 @@ func PathToTypeName(path []string) string {
 }
 
 // StringToGoString takes an arbitrary string and converts it to a valid Go string literal,
-// including the quotes. For instance, `foo "bar"` would be converted to `"foo \"bar\""`
+// including the quotes. For instance, `foo "bar"` would be converted to `"foo \"bar\""`.
+//
+// strconv.Quote escapes backslashes, newlines and other control characters too,
+// so untrusted spec text cannot break out of the generated string literal.
 func StringToGoString(in string) string {
-	esc := strings.ReplaceAll(in, "\"", "\\\"")
-	return fmt.Sprintf("\"%s\"", esc)
+	return strconv.Quote(in)
 }
 
 // StringToGoComment renders a possible multi-line string as a valid Go-Comment.
@@ -1064,11 +1125,28 @@ func findSchemaNameByRefPath(refPath string, spec *openapi3.T) (string, error) {
 }
 
 func ParseGoImportExtension(v *openapi3.SchemaRef) (*goImport, error) {
-	if v.Value.Extensions[extPropGoImport] == nil || v.Value.Extensions[extPropGoType] == nil {
+	// An x-go-type-import is only meaningful in concert with an x-go-type
+	// override. Without one, the imported package is never referenced in
+	// the generated code, producing an "imported and not used" compile
+	// error. Require at least one x-go-type to be in scope (either next to
+	// the $ref or on the referenced schema) before collecting an import.
+	hasGoType := v.Extensions[extPropGoType] != nil ||
+		(v.Value != nil && v.Value.Extensions[extPropGoType] != nil)
+	if !hasGoType {
 		return nil, nil
 	}
 
-	goTypeImportExt := v.Value.Extensions[extPropGoImport]
+	var goTypeImportExt any
+
+	// check extensions next to the $ref before checking the schema itself
+	// values next to $ref will be used before those in the actual schema
+	if v.Extensions[extPropGoImport] != nil {
+		goTypeImportExt = v.Extensions[extPropGoImport]
+	} else if v.Value != nil && v.Value.Extensions[extPropGoImport] != nil {
+		goTypeImportExt = v.Value.Extensions[extPropGoImport]
+	} else {
+		return nil, nil
+	}
 
 	importI, ok := goTypeImportExt.(map[string]any)
 	if !ok {
@@ -1096,12 +1174,6 @@ func ParseGoImportExtension(v *openapi3.SchemaRef) (*goImport, error) {
 	return &gi, nil
 }
 
-func MergeImports(dst, src map[string]goImport) {
-	for k, v := range src {
-		dst[k] = v
-	}
-}
-
 // TypeDefinitionsEquivalent checks for equality between two type definitions, but
 // not every field is considered. We only want to know if they are fundamentally
 // the same type.
@@ -1118,92 +1190,12 @@ func isAdditionalPropertiesExplicitFalse(s *openapi3.Schema) bool {
 		return false
 	}
 
-	return *s.AdditionalProperties.Has == false //nolint:staticcheck
+	return !*s.AdditionalProperties.Has
 }
 
-func sliceContains[E comparable](s []E, v E) bool {
-	return slices.Contains(s, v)
-}
-
-// FixDuplicateTypeNames renames duplicate type names.
-func FixDuplicateTypeNames(typeDefs []TypeDefinition) []TypeDefinition {
-	if !hasDuplicatedTypeNames(typeDefs) {
-		return typeDefs
-	}
-
-	// try to fix duplicate type names with their definition section
-	typeDefs = fixDuplicateTypeNamesWithCompName(typeDefs)
-	if !hasDuplicatedTypeNames(typeDefs) {
-		return typeDefs
-	}
-
-	const maxIter = 100
-	for i := 0; i < maxIter && hasDuplicatedTypeNames(typeDefs); i++ {
-		typeDefs = fixDuplicateTypeNamesDupCounts(typeDefs)
-	}
-
-	if hasDuplicatedTypeNames(typeDefs) {
-		panic("too much duplicate type names")
-	}
-
-	return typeDefs
-}
-
-func hasDuplicatedTypeNames(typeDefs []TypeDefinition) bool {
-	dupCheck := make(map[string]int, len(typeDefs))
-
-	for _, d := range typeDefs {
-		dupCheck[d.TypeName]++
-
-		if dupCheck[d.TypeName] != 1 {
-			return true
-		}
-	}
-
-	return false
-}
-
-func fixDuplicateTypeNamesWithCompName(typeDefs []TypeDefinition) []TypeDefinition {
-	dupCheck := make(map[string]int, len(typeDefs))
-	deDup := make([]TypeDefinition, len(typeDefs))
-
-	for i, d := range typeDefs {
-		dupCheck[d.TypeName]++
-
-		if dupCheck[d.TypeName] != 1 {
-			switch d.Schema.DefinedComp {
-			case ComponentTypeSchema:
-				d.TypeName += "Schema"
-			case ComponentTypeParameter:
-				d.TypeName += "Parameter"
-			case ComponentTypeRequestBody:
-				d.TypeName += "RequestBody"
-			case ComponentTypeResponse:
-				d.TypeName += "Response"
-			case ComponentTypeHeader:
-				d.TypeName += "Header"
-			}
-		}
-
-		deDup[i] = d
-	}
-
-	return deDup
-}
-
-func fixDuplicateTypeNamesDupCounts(typeDefs []TypeDefinition) []TypeDefinition {
-	dupCheck := make(map[string]int, len(typeDefs))
-	deDup := make([]TypeDefinition, len(typeDefs))
-
-	for i, d := range typeDefs {
-		dupCheck[d.TypeName]++
-
-		if dupCheck[d.TypeName] != 1 {
-			d.TypeName = d.TypeName + strconv.Itoa(dupCheck[d.TypeName])
-		}
-
-		deDup[i] = d
-	}
-
-	return deDup
+// normalizeWhitespace converts `\n`, `\r` and `\r\n` to `\n`, and removes any trailing newline(s)
+func normalizeWhitespace(s string) string {
+	s = strings.ReplaceAll(s, "\r\n", "\n")
+	s = strings.ReplaceAll(s, "\r", "\n")
+	return strings.TrimRight(s, "\n\r")
 }
