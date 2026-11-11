@@ -1365,6 +1365,10 @@ func convertDiskCustomizations(disk *Disk) (*blueprint.DiskCustomization, error)
 		Type:    string(common.DerefOrDefault(disk.Type)),
 	}
 
+	if disk.SectorSize != nil {
+		bpDisk.SectorSize = *disk.SectorSize
+	}
+
 	for idx, partition := range disk.Partitions {
 		// partition successfully converts to all three types, so convert to
 		// filesystem to sniff the type string
