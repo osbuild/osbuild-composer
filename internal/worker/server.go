@@ -1145,7 +1145,7 @@ type apiHandlers struct {
 }
 
 func (h *apiHandlers) GetOpenapi(ctx echo.Context) error {
-	spec, err := api.GetSwagger()
+	spec, err := api.GetSpec()
 	if err != nil {
 		return api.HTTPErrorWithInternal(api.ErrorFailedLoadingOpenAPISpec, err)
 	}
