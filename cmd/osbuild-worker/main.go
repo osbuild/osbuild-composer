@@ -430,6 +430,29 @@ var run = func() {
 		}
 	}
 
+	var repositoryBasicAuthConfig *RepositoryBasicAuthConfig
+	if config.RepositoryBasicAuthConfig != nil {
+		baseURL, err := url.Parse(config.RepositoryBasicAuthConfig.BaseURL)
+		if err != nil {
+			logrus.Fatalf("Repository MTL baseurl not valid: %v", err)
+		}
+
+		var proxyURL *url.URL
+		if config.RepositoryBasicAuthConfig.Proxy != "" {
+			proxyURL, err = url.Parse(config.RepositoryBasicAuthConfig.Proxy)
+			if err != nil {
+				logrus.Fatalf("Repository Proxy url not valid: %v", err)
+			}
+		}
+
+		repositoryBasicAuthConfig = &RepositoryBasicAuthConfig{
+			BaseURL:      baseURL,
+			UsernamePath: config.RepositoryBasicAuthConfig.UsernamePath,
+			PasswordPath: config.RepositoryBasicAuthConfig.PasswordPath,
+			Proxy:        proxyURL,
+		}
+	}
+
 	// depsolve and search jobs can be done during other jobs
 	depsolveCtx, depsolveCtxCancel := context.WithCancel(context.Background())
 	solver := depsolvednf.NewBaseSolver(rpmmd_cache)
@@ -440,15 +463,18 @@ var run = func() {
 	go func() {
 		jobImpls := map[string]JobImplementation{
 			worker.JobTypeDepsolve: &DepsolveJobImpl{
-				Solver:               solver,
-				RepositoryMTLSConfig: repositoryMTLSConfig,
+				Solver:                    solver,
+				RepositoryMTLSConfig:      repositoryMTLSConfig,
+				RepositoryBasicAuthConfig: repositoryBasicAuthConfig,
 			},
 			worker.JobTypeSearchPackages: &SearchPackagesJobImpl{
-				Solver:               solver,
-				RepositoryMTLSConfig: repositoryMTLSConfig,
+				Solver:                    solver,
+				RepositoryMTLSConfig:      repositoryMTLSConfig,
+				RepositoryBasicAuthConfig: repositoryBasicAuthConfig,
 			},
 			worker.JobTypeImageBuilderManifest: &ImageBuilderManifestJobImpl{
-				RepositoryMTLSConfig: repositoryMTLSConfig,
+				RepositoryMTLSConfig:      repositoryMTLSConfig,
+				RepositoryBasicAuthConfig: repositoryBasicAuthConfig,
 			},
 		}
 		acceptedJobTypes := []string{}
@@ -505,7 +531,8 @@ var run = func() {
 				CertPath:     containersCertPath,
 				TLSVerify:    &containersTLSVerify,
 			},
-			RepositoryMTLSConfig: repositoryMTLSConfig,
+			RepositoryMTLSConfig:      repositoryMTLSConfig,
+			RepositoryBasicAuthConfig: repositoryBasicAuthConfig,
 		},
 		worker.JobTypeKojiInit: &KojiInitJobImpl{
 			KojiServers: kojiServers,

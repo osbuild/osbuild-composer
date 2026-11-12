@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"os"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -36,14 +37,63 @@ func (rmc *RepositoryMTLSConfig) CompareBaseURL(baseURLStr string) (bool, error)
 	if err != nil {
 		return false, err
 	}
+	return compareURL(rmc.BaseURL, baseURL)
+}
 
-	if baseURL.Scheme != rmc.BaseURL.Scheme {
+// Used by both depsolve and osbuild jobs
+type RepositoryBasicAuthConfig struct {
+	BaseURL      *url.URL
+	UsernamePath string
+	PasswordPath string
+	Proxy        *url.URL
+}
+
+func (rbc *RepositoryBasicAuthConfig) Username() (string, error) {
+	user, err := os.ReadFile(rbc.UsernamePath)
+	if err != nil {
+		return "", err
+	}
+	return string(user), nil
+}
+
+func (rbc *RepositoryBasicAuthConfig) Password() (string, error) {
+	pwd, err := os.ReadFile(rbc.PasswordPath)
+	if err != nil {
+		return "", err
+	}
+	return string(pwd), nil
+}
+
+func (rbc *RepositoryBasicAuthConfig) CompareBaseURL(baseURLStr string) (bool, error) {
+	baseURL, err := url.Parse(baseURLStr)
+	if err != nil {
+		return false, err
+	}
+	return compareURL(rbc.BaseURL, baseURL)
+}
+
+func (rbc *RepositoryBasicAuthConfig) SetupRepoBasicAuth(repo *rpmmd.RepoConfig) error {
+	username, err := rbc.Username()
+	if err != nil {
+		return err
+	}
+	repo.Username = username
+	password, err := rbc.Password()
+	if err != nil {
+		return err
+	}
+	repo.Password = password
+	return nil
+}
+
+func compareURL(urlA, urlB *url.URL) (bool, error) {
+	if urlA.Scheme != urlB.Scheme {
 		return false, nil
 	}
-	if baseURL.Host != rmc.BaseURL.Host {
+	if urlA.Host != urlB.Host {
 		return false, nil
 	}
-	if !strings.HasPrefix(baseURL.Path, rmc.BaseURL.Path) {
+	if !strings.HasPrefix(urlA.Path, urlB.Path) {
 		return false, nil
 	}
 
@@ -51,8 +101,9 @@ func (rmc *RepositoryMTLSConfig) CompareBaseURL(baseURLStr string) (bool, error)
 }
 
 type DepsolveJobImpl struct {
-	Solver               *depsolvednf.BaseSolver
-	RepositoryMTLSConfig *RepositoryMTLSConfig
+	Solver                    *depsolvednf.BaseSolver
+	RepositoryMTLSConfig      *RepositoryMTLSConfig
+	RepositoryBasicAuthConfig *RepositoryBasicAuthConfig
 }
 
 // depsolve each package set in the packageSets map. The repositories defined
@@ -67,6 +118,13 @@ func (impl *DepsolveJobImpl) depsolve(packageSets map[string][]rpmmd.PackageSet,
 	solver := impl.Solver.NewWithConfig(modulePlatformID, releasever, arch, "")
 	if impl.RepositoryMTLSConfig != nil && impl.RepositoryMTLSConfig.Proxy != nil {
 		err := solver.SetProxy(impl.RepositoryMTLSConfig.Proxy.String())
+		if err != nil {
+			result.JobError = workerClientErrorFrom(err, logWithId)
+			return result
+		}
+	}
+	if impl.RepositoryBasicAuthConfig != nil && impl.RepositoryBasicAuthConfig.Proxy != nil {
+		err := solver.SetProxy(impl.RepositoryBasicAuthConfig.Proxy.String())
 		if err != nil {
 			result.JobError = workerClientErrorFrom(err, logWithId)
 			return result
@@ -182,6 +240,33 @@ func (impl *DepsolveJobImpl) Run(job worker.Job) error {
 						}
 						if match {
 							impl.RepositoryMTLSConfig.SetupRepoSSL(&args.PackageSets[pkgsetsi][pkgseti].Repositories[repoi])
+						}
+					}
+				}
+			}
+		}
+	}
+
+	if impl.RepositoryBasicAuthConfig != nil {
+		for pkgsetsi, pkgsets := range args.PackageSets {
+			for pkgseti, pkgset := range pkgsets {
+				for repoi, repo := range pkgset.Repositories {
+					for _, baseurlstr := range repo.BaseURLs {
+						match, err := impl.RepositoryBasicAuthConfig.CompareBaseURL(baseurlstr)
+						if err != nil {
+							result.JobError = clienterrors.New(clienterrors.ErrorInvalidRepositoryURL, "Repository URL is malformed", err.Error())
+							return err
+						}
+						if match {
+							err = impl.RepositoryBasicAuthConfig.SetupRepoBasicAuth(&args.PackageSets[pkgsetsi][pkgseti].Repositories[repoi])
+							if err != nil {
+								result.JobError = clienterrors.New(
+									clienterrors.ErrorInvalidConfig,
+									fmt.Sprintf("Adding basic authentication for repository (%s) failed", baseurlstr),
+									err.Error(),
+								)
+								return err
+							}
 						}
 					}
 				}
