@@ -67,6 +67,7 @@ func TestJobQueue(t *testing.T, makeJobQueue MakeJobQueue) {
 	t.Run("workers", wrap(testWorkers))
 	t.Run("fail", wrap(testFail))
 	t.Run("all-root-jobs", wrap(testAllRootJobs))
+	t.Run("compose-id", wrap(testComposeID))
 	t.Run("delete-jobs", wrap(testDeleteJobs))
 }
 
@@ -996,6 +997,43 @@ func testAllRootJobs(t *testing.T, q jobqueue.JobQueue) {
 	require.Greater(t, len(roots), 0)
 	sortUUIDs(roots)
 	require.Equal(t, rootJobs, roots)
+}
+
+func testComposeID(t *testing.T, q jobqueue.JobQueue) {
+	composeID := uuid.New()
+	child := pushTestJobParams(t, q, "child", nil, nil, "ComposeID", jobqueue.Child(composeID))
+	stored, err := q.ComposeID(child)
+	require.NoError(t, err)
+	require.Equal(t, composeID, stored)
+
+	parent, err := q.Enqueue("parent", nil, []uuid.UUID{child}, "ComposeID", jobqueue.Root(composeID))
+	require.NoError(t, err)
+	require.Equal(t, composeID, parent)
+	stored, err = q.ComposeID(parent)
+	require.NoError(t, err)
+	require.Equal(t, composeID, stored)
+	stored, err = q.ComposeID(child)
+	require.NoError(t, err)
+	require.Equal(t, composeID, stored)
+
+	// jobs without params: compose_id defaults to the job id (weldr/search)
+	alone := pushTestJob(t, q, "alone", nil, nil, "ComposeIDAlone")
+	stored, err = q.ComposeID(alone)
+	require.NoError(t, err)
+	require.Equal(t, alone, stored)
+
+	// missing row: do not treat the job UUID as compose_id
+	stored, err = q.ComposeID(uuid.New())
+	require.Error(t, err)
+	require.Equal(t, uuid.Nil, stored)
+}
+
+func pushTestJobParams(t *testing.T, q jobqueue.JobQueue, jobType string, args interface{}, dependencies []uuid.UUID, channel string, params jobqueue.EnqueueParams) uuid.UUID {
+	t.Helper()
+	id, err := q.Enqueue(jobType, args, dependencies, channel, params)
+	require.NoError(t, err)
+	require.NotEmpty(t, id)
+	return id
 }
 
 // Test Deleting jobs

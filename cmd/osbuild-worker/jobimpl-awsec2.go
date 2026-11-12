@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	smithy "github.com/aws/smithy-go"
-	"github.com/sirupsen/logrus"
 
 	"github.com/osbuild/osbuild-composer/internal/cloud/awscloud"
 	"github.com/osbuild/osbuild-composer/internal/worker"
@@ -24,7 +23,7 @@ type AWSEC2CopyJobImpl struct {
 }
 
 func (impl *AWSEC2CopyJobImpl) Run(job worker.Job) error {
-	logWithId := logrus.WithField("jobId", job.Id())
+	logWithId := jobLog(job)
 	result := worker.AWSEC2CopyJobResult{}
 
 	defer func() {
@@ -82,7 +81,7 @@ type AWSEC2ShareJobImpl struct {
 }
 
 func (impl *AWSEC2ShareJobImpl) Run(job worker.Job) error {
-	logWithId := logrus.WithField("jobId", job.Id())
+	logWithId := jobLog(job)
 	result := worker.AWSEC2ShareJobResult{}
 
 	defer func() {

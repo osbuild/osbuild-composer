@@ -36,9 +36,11 @@ type SplunkPayload struct {
 }
 
 type SplunkEvent struct {
-	Message string `json:"message"`
-	Ident   string `json:"ident"`
-	Host    string `json:"host"`
+	Message   string `json:"message"`
+	Ident     string `json:"ident"`
+	Host      string `json:"host"`
+	ComposeID string `json:"compose_id,omitempty"`
+	JobID     string `json:"job_id,omitempty"`
 }
 
 func NewSplunkLogger(context context.Context, url, token, source, hostname string) *SplunkLogger {
@@ -138,14 +140,20 @@ func (sl *SplunkLogger) SendPayloads(payloads []*SplunkPayload) error {
 }
 
 func (sl *SplunkLogger) LogWithTime(t time.Time, msg string) error {
+	return sl.LogEventWithTime(t, SplunkEvent{Message: msg})
+}
+
+func (sl *SplunkLogger) LogEventWithTime(t time.Time, event SplunkEvent) error {
+	if event.Ident == "" {
+		event.Ident = sl.source
+	}
+	if event.Host == "" {
+		event.Host = sl.hostname
+	}
 	sp := SplunkPayload{
-		Time: t.Unix(),
-		Host: sl.hostname,
-		Event: SplunkEvent{
-			Message: msg,
-			Ident:   sl.source,
-			Host:    sl.hostname,
-		},
+		Time:  t.Unix(),
+		Host:  sl.hostname,
+		Event: event,
 	}
 	select {
 	case sl.payloads <- &sp:
