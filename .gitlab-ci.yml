@@ -607,9 +607,11 @@ API-unit:
           - aws/rhel-10.2-ga-x86_64
         INTERNAL_NETWORK: ["true"]
 
+# we would like to run these with GCP, but there is some issue which causes it to run very slowly
+# temporarily moving to aws
 .libvirt_integration:
   stage: test
-  extends: .terraform/gcp
+  extends: .terraform
   rules:
     - !reference [.upstream_rules_all, rules]
     - !reference [.nightly_rules_all, rules]
@@ -620,12 +622,12 @@ API-unit:
   parallel:
     matrix:
       - RUNNER:
-          - gcp/rhel-9.8-ga-x86_64
-          - gcp/rhel-9.9-nightly-x86_64
-          - gcp/rhel-10.2-ga-x86_64
-          - gcp/rhel-10.3-nightly-x86_64
-          - gcp/centos-stream-9-x86_64
-          - gcp/fedora-44-x86_64
+          - aws/rhel-9.8-ga-x86_64-kvm
+          - aws/rhel-9.9-nightly-x86_64-kvm
+          - aws/rhel-10.2-ga-x86_64-kvm
+          - aws/rhel-10.3-nightly-x86_64-kvm
+          - aws/centos-stream-9-x86_64-kvm
+          - aws/fedora-44-x86_64-kvm
         INTERNAL_NETWORK: ["true"]
 
 libvirt.sh:
@@ -775,7 +777,7 @@ GA_SUCCESS:
 
 Installer:
   stage: test
-  extends: .terraform/gcp
+  extends: .terraform
   rules:
     - !reference [.upstream_rules_all, rules]
     - !reference [.nightly_rules_all, rules]
@@ -786,12 +788,12 @@ Installer:
   parallel:
     matrix:
       - RUNNER:
-          - gcp/rhel-9.8-ga-x86_64
-          - gcp/rhel-9.9-nightly-x86_64
-          - gcp/centos-stream-9-x86_64
-          - gcp/rhel-10.2-ga-x86_64
-          - gcp/rhel-10.3-nightly-x86_64
-          - gcp/centos-stream-10-x86_64
+          - aws/rhel-9.8-ga-x86_64-kvm
+          - aws/rhel-9.9-nightly-x86_64-kvm
+          - aws/centos-stream-9-x86_64-kvm
+          - aws/rhel-10.2-ga-x86_64-kvm
+          - aws/rhel-10.3-nightly-x86_64-kvm
+          - aws/centos-stream-10-x86_64-kvm
         INTERNAL_NETWORK: ["true"]
 
 ContainerUpload:
