@@ -66,6 +66,12 @@ func (l *Loader) ParseID(nameVer string) (*distro.ID, error) {
 	}
 
 	for _, d := range distros.Distros {
+		// Literal names such as "centos-9" have no match rule of their own.
+		if d.Name == nameVer {
+			if id, err := distro.ParseID(nameVer); err == nil {
+				return id, nil
+			}
+		}
 		found, err := matchAndNormalize(d.Match, nameVer)
 		if err != nil {
 			return nil, err

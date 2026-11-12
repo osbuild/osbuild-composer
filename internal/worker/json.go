@@ -681,10 +681,11 @@ type DepsolvedRepoConfig struct {
 	Enabled        *bool    `json:"enabled,omitempty"`
 	ImageTypeTags  []string `json:"image_type_tags,omitempty"`
 	PackageSets    []string `json:"package_sets,omitempty"`
-
-	SSLCACert     string `json:"sslcacert,omitempty"`
-	SSLClientKey  string `json:"sslclientkey,omitempty"`
-	SSLClientCert string `json:"sslclientcert,omitempty"`
+	SSLCACert      string   `json:"sslcacert,omitempty"`
+	SSLClientKey   string   `json:"sslclientkey,omitempty"`
+	SSLClientCert  string   `json:"sslclientcert,omitempty"`
+	Username       string   `json:"username,omitempty"`
+	Password       string   `json:"password,omitempty"`
 }
 
 func (d DepsolvedRepoConfig) ToRPMMD() rpmmd.RepoConfig {
