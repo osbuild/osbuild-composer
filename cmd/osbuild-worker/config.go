@@ -82,6 +82,13 @@ type repositoryMTLSConfig struct {
 	Proxy          string `toml:"proxy"`
 }
 
+type repositoryBasicAuthConfig struct {
+	BaseURL      string `toml:"baseurl"`
+	UsernamePath string `toml:"basic_auth_username_path"`
+	PasswordPath string `toml:"basic_auth_password_path"`
+	Proxy        string `toml:"proxy"`
+}
+
 type bootcInfoResolveConfig struct {
 	// NOTE: When enabled, the worker removes container images from local
 	// storage after resolving bootc info. This prevents storage buildup
@@ -104,9 +111,10 @@ type workerConfig struct {
 	BasePath string `toml:"base_path"`
 	DNFJson  string `toml:"dnf-json"`
 	// default value: &{ Type: host }
-	OSBuildExecutor      *executorConfig         `toml:"osbuild_executor"`
-	RepositoryMTLSConfig *repositoryMTLSConfig   `toml:"repository_mtls"`
-	BootcInfoResolve     *bootcInfoResolveConfig `toml:"bootc_info_resolve"`
+	OSBuildExecutor           *executorConfig            `toml:"osbuild_executor"`
+	RepositoryMTLSConfig      *repositoryMTLSConfig      `toml:"repository_mtls"`
+	RepositoryBasicAuthConfig *repositoryBasicAuthConfig `toml:"repository_basic_auth"`
+	BootcInfoResolve          *bootcInfoResolveConfig    `toml:"bootc_info_resolve"`
 	// something like "production" or "staging" to be added to logging
 	DeploymentChannel string `toml:"deployment_channel"`
 	// clean store between runs, this should only be used with workers running on AWS within an ASG
