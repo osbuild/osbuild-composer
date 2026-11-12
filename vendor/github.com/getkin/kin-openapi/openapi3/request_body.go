@@ -3,18 +3,18 @@ package openapi3
 import (
 	"context"
 	"encoding/json"
-	"errors"
+	"maps"
 )
 
 // RequestBody is specified by OpenAPI/Swagger 3.0 standard.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#request-body-object
 type RequestBody struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
-	Origin     *Origin        `json:"__origin__,omitempty" yaml:"__origin__,omitempty"`
+	Origin     *Origin        `json:"-" yaml:"-"`
 
-	Description string  `json:"description,omitempty" yaml:"description,omitempty"`
-	Required    bool    `json:"required,omitempty" yaml:"required,omitempty"`
-	Content     Content `json:"content" yaml:"content"`
+	Description string  `json:"description,omitempty,case:strict" yaml:"description,omitempty"`
+	Required    bool    `json:"required,omitempty,case:strict" yaml:"required,omitempty"`
+	Content     Content `json:"content,case:strict" yaml:"content"`
 }
 
 func NewRequestBody() *RequestBody {
@@ -86,17 +86,19 @@ func (requestBody RequestBody) MarshalJSON() ([]byte, error) {
 // MarshalYAML returns the YAML encoding of RequestBody.
 func (requestBody RequestBody) MarshalYAML() (any, error) {
 	m := make(map[string]any, 3+len(requestBody.Extensions))
-	for k, v := range requestBody.Extensions {
-		m[k] = v
-	}
+	maps.Copy(m, requestBody.Extensions)
 	if x := requestBody.Description; x != "" {
 		m["description"] = requestBody.Description
 	}
 	if x := requestBody.Required; x {
 		m["required"] = x
 	}
-	if x := requestBody.Content; true {
+	// Required, so written even when missing. A nil map would be written
+	// "null" as JSON and "{}" as YAML: write null both ways.
+	if x := requestBody.Content; x != nil {
 		m["content"] = x
+	} else {
+		m["content"] = nil
 	}
 	return m, nil
 }
@@ -105,11 +107,12 @@ func (requestBody RequestBody) MarshalYAML() (any, error) {
 func (requestBody *RequestBody) UnmarshalJSON(data []byte) error {
 	type RequestBodyBis RequestBody
 	var x RequestBodyBis
-	if err := json.Unmarshal(data, &x); err != nil {
+	if err := unmarshalJSON(data, &x); err != nil {
 		return unmarshalError(err)
 	}
-	_ = json.Unmarshal(data, &x.Extensions)
-	delete(x.Extensions, originKey)
+	if err := unmarshalJSON(data, &x.Extensions); err != nil {
+		return unmarshalError(err)
+	}
 	delete(x.Extensions, "description")
 	delete(x.Extensions, "required")
 	delete(x.Extensions, "content")
@@ -125,22 +128,17 @@ func (requestBody *RequestBody) Validate(ctx context.Context, opts ...Validation
 	ctx = WithValidationOptions(ctx, opts...)
 
 	if requestBody.Content == nil {
-		return errors.New("content of the request body is required")
+		return newRequestBodyContentRequired(requestBody.Origin)
 	}
 
-	if vo := getValidationOptions(ctx); !vo.examplesValidationDisabled {
+	if vo := *getValidationOptions(ctx); !vo.examplesValidationDisabled {
 		vo.examplesValidationAsReq, vo.examplesValidationAsRes = true, false
+		ctx = context.WithValue(ctx, validationOptionsKey{}, &vo)
 	}
 
 	if err := requestBody.Content.Validate(ctx); err != nil {
 		return err
 	}
 
-	return validateExtensions(ctx, requestBody.Extensions)
-}
-
-// UnmarshalJSON sets RequestBodies to a copy of data.
-func (requestBodies *RequestBodies) UnmarshalJSON(data []byte) (err error) {
-	*requestBodies, _, err = unmarshalStringMapP[RequestBodyRef](data)
-	return
+	return validateExtensions(ctx, requestBody.Extensions, requestBody.Origin)
 }

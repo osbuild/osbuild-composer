@@ -3,17 +3,18 @@ package openapi3
 import (
 	"context"
 	"encoding/json"
+	"maps"
 )
 
 // Contact is specified by OpenAPI/Swagger standard version 3.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#contact-object
 type Contact struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
-	Origin     *Origin        `json:"__origin__,omitempty" yaml:"__origin__,omitempty"`
+	Origin     *Origin        `json:"-" yaml:"-"`
 
-	Name  string `json:"name,omitempty" yaml:"name,omitempty"`
-	URL   string `json:"url,omitempty" yaml:"url,omitempty"`
-	Email string `json:"email,omitempty" yaml:"email,omitempty"`
+	Name  string `json:"name,omitempty,case:strict" yaml:"name,omitempty"`
+	URL   string `json:"url,omitempty,case:strict" yaml:"url,omitempty"`
+	Email string `json:"email,omitempty,case:strict" yaml:"email,omitempty"`
 }
 
 // MarshalJSON returns the JSON encoding of Contact.
@@ -28,9 +29,7 @@ func (contact Contact) MarshalJSON() ([]byte, error) {
 // MarshalYAML returns the YAML encoding of Contact.
 func (contact Contact) MarshalYAML() (any, error) {
 	m := make(map[string]any, 3+len(contact.Extensions))
-	for k, v := range contact.Extensions {
-		m[k] = v
-	}
+	maps.Copy(m, contact.Extensions)
 	if x := contact.Name; x != "" {
 		m["name"] = x
 	}
@@ -47,12 +46,13 @@ func (contact Contact) MarshalYAML() (any, error) {
 func (contact *Contact) UnmarshalJSON(data []byte) error {
 	type ContactBis Contact
 	var x ContactBis
-	if err := json.Unmarshal(data, &x); err != nil {
+	if err := unmarshalJSON(data, &x); err != nil {
 		return unmarshalError(err)
 	}
-	_ = json.Unmarshal(data, &x.Extensions)
+	if err := unmarshalJSON(data, &x.Extensions); err != nil {
+		return unmarshalError(err)
+	}
 
-	delete(x.Extensions, originKey)
 	delete(x.Extensions, "name")
 	delete(x.Extensions, "url")
 	delete(x.Extensions, "email")
@@ -67,5 +67,5 @@ func (contact *Contact) UnmarshalJSON(data []byte) error {
 func (contact *Contact) Validate(ctx context.Context, opts ...ValidationOption) error {
 	ctx = WithValidationOptions(ctx, opts...)
 
-	return validateExtensions(ctx, contact.Extensions)
+	return validateExtensions(ctx, contact.Extensions, contact.Origin)
 }

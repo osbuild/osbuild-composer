@@ -43,15 +43,27 @@ func (security SecurityRequirement) Authenticate(provider string, scopes ...stri
 	return security
 }
 
-// Validate returns an error if SecurityRequirement does not comply with the OpenAPI spec.
-func (security *SecurityRequirement) Validate(ctx context.Context, opts ...ValidationOption) error {
-	ctx = WithValidationOptions(ctx, opts...)
-
-	return nil
+// MarshalYAML returns the YAML encoding of SecurityRequirement. A nil
+// SecurityRequirement or list of scopes is written null, as JSON writes it,
+// rather than the "{}" or "[]" YAML would make of it.
+func (security SecurityRequirement) MarshalYAML() (any, error) {
+	if security == nil {
+		return nil, nil
+	}
+	m := make(map[string]any, len(security))
+	for name, scopes := range security {
+		if scopes == nil {
+			m[name] = nil
+		} else {
+			m[name] = scopes
+		}
+	}
+	return m, nil
 }
 
-// UnmarshalJSON sets SecurityRequirement to a copy of data.
-func (security *SecurityRequirement) UnmarshalJSON(data []byte) (err error) {
-	*security, _, err = unmarshalStringMap[[]string](data)
-	return
+// Validate returns an error if SecurityRequirement does not comply with the OpenAPI spec.
+func (security *SecurityRequirement) Validate(ctx context.Context, opts ...ValidationOption) error {
+	// ctx = WithValidationOptions(ctx, opts...)
+
+	return nil
 }

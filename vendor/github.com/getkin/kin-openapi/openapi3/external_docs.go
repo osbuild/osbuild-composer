@@ -3,8 +3,7 @@ package openapi3
 import (
 	"context"
 	"encoding/json"
-	"errors"
-	"fmt"
+	"maps"
 	"net/url"
 )
 
@@ -12,10 +11,10 @@ import (
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#external-documentation-object
 type ExternalDocs struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
-	Origin     *Origin        `json:"__origin__,omitempty" yaml:"__origin__,omitempty"`
+	Origin     *Origin        `json:"-" yaml:"-"`
 
-	Description string `json:"description,omitempty" yaml:"description,omitempty"`
-	URL         string `json:"url,omitempty" yaml:"url,omitempty"`
+	Description string `json:"description,omitempty,case:strict" yaml:"description,omitempty"`
+	URL         string `json:"url,omitempty,case:strict" yaml:"url,omitempty"`
 }
 
 // MarshalJSON returns the JSON encoding of ExternalDocs.
@@ -30,9 +29,7 @@ func (e ExternalDocs) MarshalJSON() ([]byte, error) {
 // MarshalYAML returns the YAML encoding of ExternalDocs.
 func (e ExternalDocs) MarshalYAML() (any, error) {
 	m := make(map[string]any, 2+len(e.Extensions))
-	for k, v := range e.Extensions {
-		m[k] = v
-	}
+	maps.Copy(m, e.Extensions)
 	if x := e.Description; x != "" {
 		m["description"] = x
 	}
@@ -46,11 +43,12 @@ func (e ExternalDocs) MarshalYAML() (any, error) {
 func (e *ExternalDocs) UnmarshalJSON(data []byte) error {
 	type ExternalDocsBis ExternalDocs
 	var x ExternalDocsBis
-	if err := json.Unmarshal(data, &x); err != nil {
+	if err := unmarshalJSON(data, &x); err != nil {
 		return unmarshalError(err)
 	}
-	_ = json.Unmarshal(data, &x.Extensions)
-	delete(x.Extensions, originKey)
+	if err := unmarshalJSON(data, &x.Extensions); err != nil {
+		return unmarshalError(err)
+	}
 	delete(x.Extensions, "description")
 	delete(x.Extensions, "url")
 	if len(x.Extensions) == 0 {
@@ -63,13 +61,18 @@ func (e *ExternalDocs) UnmarshalJSON(data []byte) error {
 // Validate returns an error if ExternalDocs does not comply with the OpenAPI spec.
 func (e *ExternalDocs) Validate(ctx context.Context, opts ...ValidationOption) error {
 	ctx = WithValidationOptions(ctx, opts...)
+	me := newErrCollector(ctx)
 
 	if e.URL == "" {
-		return errors.New("url is required")
+		if err := me.emit(newExternalDocsURLRequired(e.Origin)); err != nil {
+			return err
+		}
 	}
 	if _, err := url.Parse(e.URL); err != nil {
-		return fmt.Errorf("url is incorrect: %w", err)
+		if err := me.emit(&ExternalDocsURLValidationError{Cause: err}); err != nil {
+			return err
+		}
 	}
 
-	return validateExtensions(ctx, e.Extensions)
+	return me.finalize(validateExtensions(ctx, e.Extensions, e.Origin))
 }

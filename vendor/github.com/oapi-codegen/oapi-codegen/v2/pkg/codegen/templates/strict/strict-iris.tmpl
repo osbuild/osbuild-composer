@@ -1,5 +1,5 @@
-type StrictHandlerFunc = strictiris.StrictIrisHandlerFunc
-type StrictMiddlewareFunc = strictiris.StrictIrisMiddlewareFunc
+type StrictHandlerFunc func(ctx iris.Context, request any) (any, error)
+type StrictMiddlewareFunc func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
 
 func NewStrictHandler(ssi StrictServerInterface, middlewares []StrictMiddlewareFunc) ServerInterface {
     return &strictHandler{ssi: ssi, middlewares: middlewares}
@@ -12,6 +12,7 @@ type strictHandler struct {
 
 {{range .}}
     {{$opid := .OperationId}}
+    {{if not .IsAlias}}
     // {{$opid}} operation middleware
     func (sh *strictHandler) {{.OperationId}}(ctx iris.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}}) {
         var request {{$opid | ucFirst}}RequestObject
@@ -30,10 +31,21 @@ type strictHandler struct {
 
         {{$multipleBodies := gt (len .Bodies) 1 -}}
         {{range .Bodies -}}
-            {{if $multipleBodies}}if strings.HasPrefix(ctx.GetHeader("Content-Type"), "{{.ContentType}}") { {{end}}
+            {{if $multipleBodies}}if strings.HasPrefix(ctx.GetHeader("Content-Type"), {{.ContentType | toGoString}}) { {{end}}
                 {{if .IsJSON }}
                     var body {{$opid}}{{.NameTag}}RequestBody
-                    if err := ctx.ReadJSON(&body); err != nil {
+                    var err error
+                    // A request validator built on kin-openapi's openapi3filter with
+                    // KeepValidatedValue leaves the value it validated on the body. Bind
+                    // that value, matching member names exactly, so the handler receives
+                    // what was validated instead of a second, case-insensitive decode.
+                    if vb, ok := ctx.Request().Body.(interface{ ValidatedValue() any }); !ok || runtime.BindJSONValue(vb.ValidatedValue(), &body) != nil {
+                        err = ctx.ReadJSON(&body)
+                    } else {
+                        // ReadJSON runs the application's validator after decoding; keep that.
+                        err = ctx.Application().Validate(&body)
+                    }
+                    if err != nil {
                         {{if not .Required -}}
                         if !errors.Is(err, io.EOF) {
                             ctx.StopWithError(http.StatusBadRequest, err)
@@ -106,16 +118,17 @@ type strictHandler struct {
         response, err := handler(ctx, request)
 
         if err != nil {
-            ctx.StopWithError(http.StatusBadRequest, err)
+            ctx.StopWithError(http.StatusInternalServerError, err)
             return
         } else if validResponse, ok := response.({{$opid | ucFirst}}ResponseObject); ok {
             if err := validResponse.Visit{{$opid}}Response(ctx); err != nil {
-                ctx.StopWithError(http.StatusBadRequest, err)
+                ctx.StopWithError(http.StatusInternalServerError, err)
                 return
             }
         } else if response != nil {
-            ctx.Writef("Unexpected response type: %T", response)
+            ctx.StopWithError(http.StatusInternalServerError, fmt.Errorf("unexpected response type: %T", response))
             return
         }
     }
+    {{end}}
 {{end}}

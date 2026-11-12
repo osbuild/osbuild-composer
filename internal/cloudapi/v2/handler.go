@@ -1432,17 +1432,17 @@ func (h *apiHandlers) getCloneStatus(ctx echo.Context, jobId uuid.UUID) error {
 // TODO: determine upload status based on the target results, not job results
 func uploadStatusFromJobStatus(js *worker.JobStatus, je *clienterrors.Error) UploadStatusValue {
 	if je != nil || js.Canceled {
-		return UploadStatusValue(Failure)
+		return UploadStatusValue(UploadStatusValueFailure)
 	}
 
 	if js.Started.IsZero() {
-		return UploadStatusValue(Pending)
+		return UploadStatusValue(UploadStatusValuePending)
 	}
 
 	if js.Finished.IsZero() {
-		return UploadStatusValue(Running)
+		return UploadStatusValue(UploadStatusValueRunning)
 	}
-	return UploadStatusValue(Success)
+	return UploadStatusValue(UploadStatusValueSuccess)
 }
 
 // PostDepsolveBlueprint depsolves the packages in a blueprint and returns
@@ -1725,7 +1725,7 @@ func partitionTableToDisk(partitionTable *disk.PartitionTable) (*Disk, error) {
 		case *disk.LVMVolumeGroup:
 			if pt != nil {
 				vg := VolumeGroup{
-					Type: VolumeGroupType(Lvm),
+					Type: VolumeGroupType(VolumeGroupTypeLvm),
 					Name: &pt.Name,
 				}
 

@@ -8,7 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"sort"
+	"slices"
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -66,6 +66,9 @@ func ValidateRequest(ctx context.Context, input *RequestValidationInput) error {
 				continue
 			}
 		}
+		if options.ExcludeRequestQueryParams && parameter.In == openapi3.ParameterInQuery {
+			continue
+		}
 
 		if err := ValidateParameter(ctx, input, parameter); err != nil {
 			if !options.MultiError {
@@ -90,8 +93,23 @@ func ValidateRequest(ctx context.Context, input *RequestValidationInput) error {
 
 	// RequestBody
 	requestBody := operation.RequestBody
-	if requestBody != nil && !options.ExcludeRequestBody {
-		if err := ValidateRequestBody(ctx, input, requestBody.Value); err != nil {
+	if !options.ExcludeRequestBody {
+		// Validate specification request body if present
+		if requestBody != nil {
+			if err := ValidateRequestBody(ctx, input, requestBody.Value); err != nil {
+				if !options.MultiError {
+					return err
+				}
+				me = append(me, err)
+			}
+		}
+
+		// Reject if specification request body if not present (not wanted) but is present in the HTTP request
+		if requestBody == nil && options.RejectWhenRequestBodyNotSpecified && input.Request.ContentLength > 0 {
+			err := &RequestError{
+				Input: input,
+				Err:   errors.New("request body not allowed for this request"),
+			}
 			if !options.MultiError {
 				return err
 			}
@@ -120,14 +138,24 @@ func joinValues(values []any, sep string) string {
 	return strings.Join(strValues, sep)
 }
 
-// populateDefaultQueryParameters populates default values inside query parameters, while ensuring types are respected
-func populateDefaultQueryParameters(q url.Values, parameterName string, value any, explode bool) {
+// populateDefaultQueryParameters populates default values inside query parameters, while ensuring types are respected.
+// Existing values for the parameter (for example an empty/unparseable query value) are replaced so defaults
+// do not create duplicate keys (see #1255).
+func populateDefaultQueryParameters(q url.Values, parameterName string, value any, sm *openapi3.SerializationMethod) {
+	q.Del(parameterName)
 	switch t := value.(type) {
 	case []any:
-		if explode {
+		if sm.Explode {
 			appendToQueryValues(q, parameterName, t)
 		} else {
-			q.Add(parameterName, joinValues(t, ","))
+			sep := ","
+			switch sm.Style {
+			case openapi3.SerializationSpaceDelimited:
+				sep = " "
+			case openapi3.SerializationPipeDelimited:
+				sep = "|"
+			}
+			q.Add(parameterName, joinValues(t, sep))
 		}
 	default:
 		q.Add(parameterName, fmt.Sprint(value))
@@ -169,8 +197,8 @@ func ValidateParameter(ctx context.Context, input *RequestValidationInput, param
 		schema = parameter.Schema.Value
 	}
 
-	// Set default value if needed
-	if !options.SkipSettingDefaults && value == nil && schema != nil {
+	// Set the default only when the parameter is not sent, or sent empty with allowEmptyValue: true
+	if !options.SkipSettingDefaults && value == nil && (!found || parameter.AllowEmptyValue) && schema != nil {
 		value = schema.Default
 		for _, subSchema := range schema.AllOf {
 			if subSchema.Value.Default != nil {
@@ -186,9 +214,12 @@ func ValidateParameter(ctx context.Context, input *RequestValidationInput, param
 				// Path parameters are required.
 				// Next check `parameter.Required && !found` will catch this.
 			case openapi3.ParameterInQuery:
+				sm, err := parameter.SerializationMethod()
+				if err != nil {
+					return &RequestError{Input: input, Parameter: parameter, Err: err}
+				}
 				q := req.URL.Query()
-				explode := parameter.Explode != nil && *parameter.Explode
-				populateDefaultQueryParameters(q, parameter.Name, value, explode)
+				populateDefaultQueryParameters(q, parameter.Name, value, sm)
 				req.URL.RawQuery = q.Encode()
 			case openapi3.ParameterInHeader:
 				req.Header.Add(parameter.Name, fmt.Sprint(value))
@@ -212,6 +243,11 @@ func ValidateParameter(ctx context.Context, input *RequestValidationInput, param
 		}
 		return nil
 	}
+	// #1096 keeps empty strings as ""; with allowEmptyValue skip schema checks
+	// (format, pattern, ...) like we used to when the value was nil.
+	if s, ok := value.(string); ok && s == "" && parameter.AllowEmptyValue {
+		return nil
+	}
 	if schema == nil {
 		// A parameter's schema is not defined so skip validation of a parameter's value.
 		return nil
@@ -219,11 +255,14 @@ func ValidateParameter(ctx context.Context, input *RequestValidationInput, param
 
 	var opts []openapi3.SchemaValidationOption
 	if options.MultiError {
-		opts = make([]openapi3.SchemaValidationOption, 0, 1)
 		opts = append(opts, openapi3.MultiErrors())
 	}
 	if options.customSchemaErrorFunc != nil {
 		opts = append(opts, openapi3.SetSchemaErrorMessageCustomizer(options.customSchemaErrorFunc))
+	}
+	opts = append(opts, options.SchemaValidationOptions...)
+	if input.Route != nil && input.Route.Spec.IsOpenAPI31OrLater() {
+		opts = append(opts, openapi3.EnableJSONSchema2020())
 	}
 	if err = schema.VisitJSON(value, opts...); err != nil {
 		return &RequestError{Input: input, Parameter: parameter, Err: err}
@@ -315,9 +354,10 @@ func ValidateRequestBody(ctx context.Context, input *RequestValidationInput, req
 	}
 
 	defaultsSet := false
-	opts := make([]openapi3.SchemaValidationOption, 0, 4) // 4 potential opts here
+	var opts []openapi3.SchemaValidationOption
 	opts = append(opts, openapi3.VisitAsRequest())
-	if !options.SkipSettingDefaults {
+	// Defaults are written back into the body, which needs an encoder.
+	if !options.SkipSettingDefaults && (RegisteredBodyEncoder(mediaType) != nil || strings.HasSuffix(mediaType, "+json")) {
 		opts = append(opts, openapi3.DefaultsSet(func() { defaultsSet = true }))
 	}
 	if options.MultiError {
@@ -331,6 +371,11 @@ func ValidateRequestBody(ctx context.Context, input *RequestValidationInput, req
 	}
 	if options.RegexCompiler != nil {
 		opts = append(opts, openapi3.SetSchemaRegexCompiler(options.RegexCompiler))
+	}
+	// Append additional schema validation options (e.g., document-scoped format validators)
+	opts = append(opts, options.SchemaValidationOptions...)
+	if input.Route != nil && input.Route.Spec.IsOpenAPI31OrLater() {
+		opts = append(opts, openapi3.EnableJSONSchema2020())
 	}
 
 	// Validate JSON with the schema
@@ -366,8 +411,20 @@ func ValidateRequestBody(ctx context.Context, input *RequestValidationInput, req
 		req.Body, _ = req.GetBody() // no error return
 	}
 
+	if options.KeepValidatedValue {
+		req.Body = validatedBody{ReadCloser: req.Body, value: value}
+	}
 	return nil
 }
+
+// validatedBody is the request body left by Options.KeepValidatedValue.
+type validatedBody struct {
+	io.ReadCloser
+	value any
+}
+
+// ValidatedValue returns the request body value that was validated.
+func (b validatedBody) ValidatedValue() any { return b.value }
 
 // ValidateSecurityRequirements goes through multiple OpenAPI 3 security
 // requirements in order and returns nil on the first valid requirement.
@@ -399,7 +456,7 @@ func validateSecurityRequirement(ctx context.Context, input *RequestValidationIn
 	for name := range securityRequirement {
 		names = append(names, name)
 	}
-	sort.Strings(names)
+	slices.Sort(names)
 
 	// Get authentication function
 	options := input.Options

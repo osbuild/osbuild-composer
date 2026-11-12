@@ -3,16 +3,31 @@ package openapi3
 import (
 	"context"
 	"encoding/json"
+	"maps"
 )
 
 // Discriminator is specified by OpenAPI/Swagger standard version 3.
 // See https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#discriminator-object
 type Discriminator struct {
 	Extensions map[string]any `json:"-" yaml:"-"`
-	Origin     *Origin        `json:"__origin__,omitempty" yaml:"__origin__,omitempty"`
+	Origin     *Origin        `json:"-" yaml:"-"`
 
-	PropertyName string    `json:"propertyName" yaml:"propertyName"` // required
-	Mapping      StringMap `json:"mapping,omitempty" yaml:"mapping,omitempty"`
+	PropertyName string                `json:"propertyName,case:strict" yaml:"propertyName"` // required
+	Mapping      map[string]MappingRef `json:"mapping,omitempty,case:strict" yaml:"mapping,omitempty"`
+}
+
+// MappingRef is a ref to a Schema objects. Unlike SchemaRefs it is serialised
+// as a plain string instead of an object with a $ref key, as such it also does
+// not support extensions.
+type MappingRef SchemaRef
+
+func (mr *MappingRef) UnmarshalText(data []byte) error {
+	mr.Ref = string(data)
+	return nil
+}
+
+func (mr MappingRef) MarshalText() ([]byte, error) {
+	return []byte(mr.Ref), nil
 }
 
 // MarshalJSON returns the JSON encoding of Discriminator.
@@ -27,9 +42,7 @@ func (discriminator Discriminator) MarshalJSON() ([]byte, error) {
 // MarshalYAML returns the YAML encoding of Discriminator.
 func (discriminator Discriminator) MarshalYAML() (any, error) {
 	m := make(map[string]any, 2+len(discriminator.Extensions))
-	for k, v := range discriminator.Extensions {
-		m[k] = v
-	}
+	maps.Copy(m, discriminator.Extensions)
 	m["propertyName"] = discriminator.PropertyName
 	if x := discriminator.Mapping; len(x) != 0 {
 		m["mapping"] = x
@@ -41,12 +54,13 @@ func (discriminator Discriminator) MarshalYAML() (any, error) {
 func (discriminator *Discriminator) UnmarshalJSON(data []byte) error {
 	type DiscriminatorBis Discriminator
 	var x DiscriminatorBis
-	if err := json.Unmarshal(data, &x); err != nil {
+	if err := unmarshalJSON(data, &x); err != nil {
 		return unmarshalError(err)
 	}
-	_ = json.Unmarshal(data, &x.Extensions)
+	if err := unmarshalJSON(data, &x.Extensions); err != nil {
+		return unmarshalError(err)
+	}
 
-	delete(x.Extensions, originKey)
 	delete(x.Extensions, "propertyName")
 	delete(x.Extensions, "mapping")
 	if len(x.Extensions) == 0 {
@@ -60,5 +74,5 @@ func (discriminator *Discriminator) UnmarshalJSON(data []byte) error {
 func (discriminator *Discriminator) Validate(ctx context.Context, opts ...ValidationOption) error {
 	ctx = WithValidationOptions(ctx, opts...)
 
-	return validateExtensions(ctx, discriminator.Extensions)
+	return validateExtensions(ctx, discriminator.Extensions, discriminator.Origin)
 }
