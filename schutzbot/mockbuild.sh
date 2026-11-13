@@ -30,7 +30,12 @@ function template_override {
     fi
 
     if sudo subscription-manager status; then
-        greenprint "📋 Running on subscribed RHEL machine, no mock template override done."
+        if [[ "$ID" == rhel && "$VERSION_ID" == 9.8* ]]; then
+            greenprint "📋 Subscribed RHEL ${VERSION_ID}: pinning mock releasever to ${VERSION_ID}"
+            sudo sed -i "s/config_opts\\['releasever'\\] = '[^']*'/config_opts['releasever'] = '${VERSION_ID}'/" /etc/mock/templates/rhel-9.tpl
+        else
+            greenprint "📋 Running on subscribed RHEL machine, no mock template override done."
+        fi
         return 0
     fi
 
@@ -86,11 +91,12 @@ MOCK_REPO_BASE_URL="http://${REPO_BUCKET}.s3-website.us-east-2.amazonaws.com"
 # Distro version in whose buildroot was the RPM built.
 DISTRO_VERSION=${ID}-${VERSION_ID}
 
-if [[ "$ID" == rhel ]] && sudo subscription-manager status; then
-  # If this script runs on a subscribed RHEL, the RPMs are actually built
-  # using the latest CDN content, therefore rhel-*-cdn is used as the distro
-  # version.
-  DISTRO_VERSION=rhel-${VERSION_ID%.*}-cdn
+if [[ "$ID" == rhel ]] && sudo subscription-manager status &>/dev/null; then
+  if [[ "$VERSION_ID" == 9.8* ]]; then
+      DISTRO_VERSION=${ID}-${VERSION_ID}
+  else
+      DISTRO_VERSION=rhel-${VERSION_ID%.*}-cdn
+  fi
 fi
 
 # EL8 aarch64 builds run out of memory and get killed. A swapfile fixes this.

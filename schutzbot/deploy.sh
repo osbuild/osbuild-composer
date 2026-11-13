@@ -91,9 +91,11 @@ fi
 DISTRO_VERSION=${ID}-${VERSION_ID}
 
 if [[ "$ID" == rhel ]] && sudo subscription-manager status; then
-  # If this script runs on subscribed RHEL, install content built using CDN
-  # repositories.
-  DISTRO_VERSION=rhel-${VERSION_ID%.*}-cdn
+  if [[ "$VERSION_ID" == 9.8* ]]; then
+    DISTRO_VERSION=${ID}-${VERSION_ID}
+  else
+    DISTRO_VERSION=rhel-${VERSION_ID%.*}-cdn
+  fi
 
   # workaround for https://github.com/osbuild/osbuild/issues/717
   sudo subscription-manager config --rhsm.manage_repos=1
