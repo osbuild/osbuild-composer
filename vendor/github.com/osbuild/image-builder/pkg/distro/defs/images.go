@@ -990,6 +990,7 @@ func imageInstallerImage(t *imageType,
 	img.Kickstart.Language = &img.OSCustomizations.Language
 	img.Kickstart.Keyboard = img.OSCustomizations.Keyboard
 	img.Kickstart.Timezone = &img.OSCustomizations.Timezone
+	img.Kickstart.Hostname = &img.OSCustomizations.Hostname
 
 	img.ExtraBasePackages = packageSets[installerPkgsKey]
 

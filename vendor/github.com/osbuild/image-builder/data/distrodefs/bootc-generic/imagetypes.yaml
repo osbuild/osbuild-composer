@@ -85,6 +85,14 @@
           - *default_partition_table_part_boot
           - *default_partition_table_part_root
 
+  erofs_options: &default_erofs_options
+    compression:
+      method: "lzma"
+      level: 6
+    options:
+      - "fragments"
+    cluster-size: 1048576
+
   rootfs_excludes: &default_rootfs_excludes
     - "boot/efi/.*"
     - "boot/grub2/.*"
@@ -218,6 +226,27 @@ image_types:
   # XXX: ideally we would use name_aliases but the loader lib
   # does not not fully support this yet
   bootc-generic-iso: *generic-iso
+
+  # This is a bootable bootc iso that uses ostree as the rootfs
+  ostree-iso:
+    <<: *raw_image_type
+    mime_type: "application/x-iso9660-image"
+    exports: ["bootiso"]
+    filename: "ostree.iso"
+    boot_iso: true
+    image_func: "bootc_ostree_iso"
+    iso_config:
+      rootfs_type: "erofs"
+      erofs_options: *default_erofs_options
+      rootfs_excludes: *default_rootfs_excludes
+      conditions:
+        "x86_64 uses grub2":
+          when:
+            arch: "x86_64"
+          shallow_merge:
+            boot_type: "grub2"
+    blueprint:
+      supported_options: *supported_options_iso
 
   # this image type is special (in many ways) and all is a bit ugly:
   # - we want to get rid of it (here for compat with bib)

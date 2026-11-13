@@ -85,20 +85,21 @@ type ExecutorConfiguration struct {
 }
 
 type OSBuildJobImpl struct {
-	Store                string
-	Output               string
-	OSBuildExecutor      ExecutorConfiguration
-	KojiServers          map[string]kojiServer
-	GCPConfig            GCPConfiguration
-	AzureConfig          AzureConfiguration
-	OCIConfig            OCIConfiguration
-	AWSCreds             string
-	AWSS3Creds           string
-	AWSBucket            string
-	S3Config             S3Configuration
-	ContainersConfig     ContainersConfiguration
-	PulpConfig           PulpConfiguration
-	RepositoryMTLSConfig *RepositoryMTLSConfig
+	Store                     string
+	Output                    string
+	OSBuildExecutor           ExecutorConfiguration
+	KojiServers               map[string]kojiServer
+	GCPConfig                 GCPConfiguration
+	AzureConfig               AzureConfiguration
+	OCIConfig                 OCIConfiguration
+	AWSCreds                  string
+	AWSS3Creds                string
+	AWSBucket                 string
+	S3Config                  S3Configuration
+	ContainersConfig          ContainersConfiguration
+	PulpConfig                PulpConfiguration
+	RepositoryMTLSConfig      *RepositoryMTLSConfig
+	RepositoryBasicAuthConfig *RepositoryBasicAuthConfig
 }
 
 // Returns an *awscloud.AWS object with the credentials of the request. If they
@@ -541,6 +542,25 @@ func (impl *OSBuildJobImpl) Run(job worker.Job) error {
 		if impl.RepositoryMTLSConfig.Proxy != nil {
 			extraEnv = append(extraEnv, fmt.Sprintf("OSBUILD_SOURCES_CURL_PROXY=%s", impl.RepositoryMTLSConfig.Proxy.String()))
 			extraEnv = append(extraEnv, fmt.Sprintf("OSBUILD_SOURCES_OSTREE_PROXY=%s", impl.RepositoryMTLSConfig.Proxy.String()))
+		}
+	}
+
+	if impl.RepositoryBasicAuthConfig != nil {
+		username, err := impl.RepositoryBasicAuthConfig.Username()
+		if err != nil {
+			osbuildJobResult.JobError = clienterrors.New(clienterrors.ErrorInvalidConfig, "Unable to read basic auth user", nil)
+			return err
+		}
+		extraEnv = append(extraEnv, fmt.Sprintf("OSBUILD_SOURCES_HTTP_BASIC_AUTH_USER=%s", username))
+
+		password, err := impl.RepositoryBasicAuthConfig.Password()
+		if err != nil {
+			osbuildJobResult.JobError = clienterrors.New(clienterrors.ErrorInvalidConfig, "Unable to read basic auth password", nil)
+			return err
+		}
+		extraEnv = append(extraEnv, fmt.Sprintf("OSBUILD_SOURCES_HTTP_BASIC_AUTH_PASSWORD=%s", password))
+		if impl.RepositoryBasicAuthConfig.Proxy != nil {
+			extraEnv = append(extraEnv, fmt.Sprintf("OSBUILD_SOURCES_CURL_PROXY=%s", impl.RepositoryBasicAuthConfig.Proxy.String()))
 		}
 	}
 

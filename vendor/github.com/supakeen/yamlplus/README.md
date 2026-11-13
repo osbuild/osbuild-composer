@@ -203,6 +203,38 @@ Attempting to unmarshal will result in an error: `circular dependency detected`.
 
 A `Loader` is safe for concurrent `Unmarshal` calls after all files have been registered. However, `RegisterFile`, `RegisterDirectory`, and `RegisterRecursively` should not be called concurrently with each other or with `Unmarshal`.
 
+## CLI: yamlplus-flatten
+
+A command-line tool to resolve all `!xref` tags in a YAML file and output plain YAML.
+
+### Installation
+
+```bash
+go install github.com/supakeen/yamlplus/cmd/yamlplus-flatten@latest
+```
+
+### Usage
+
+```bash
+yamlplus-flatten [flags] <input.yaml>
+```
+
+Flags:
+
+| Long | Short | Description |
+|------|-------|-------------|
+| `--register-file PATH` | `-f PATH` | Register a single YAML file (repeatable) |
+| `--register-directory PATH` | `-d PATH` | Register all YAML files in a directory (repeatable) |
+| `--register-recursively PATH` | `-r PATH` | Register all YAML files in a directory tree (repeatable) |
+
+### Example
+
+```bash
+yamlplus-flatten -f defaults.yaml -f database.yaml service.yaml
+```
+
+This registers `defaults.yaml` and `database.yaml`, then resolves all `!xref` tags in `service.yaml` and prints the flattened result to stdout.
+
 ## Examples
 
 See the [examples in the documentation](https://pkg.go.dev/github.com/supakeen/yamlplus#pkg-examples) for more usage patterns.

@@ -1,6 +1,8 @@
 package distroidparser
 
 import (
+	"sync"
+
 	"github.com/osbuild/image-builder/pkg/distro"
 	"github.com/osbuild/image-builder/pkg/distro/defs"
 )
@@ -12,6 +14,7 @@ type ParserFunc func(idStr string) (*distro.ID, error)
 // Parser is a list of distro-specific idStr parsers.
 type Parser struct {
 	parsers []ParserFunc
+	cache   sync.Map // map[string]distro.ID
 }
 
 func New(parsers ...ParserFunc) *Parser {
@@ -28,6 +31,21 @@ func New(parsers ...ParserFunc) *Parser {
 // actually supported or implemented. This functionality is provided as an easy
 // and consistent way to parse distro IDs, while allowing distro-specific parsers.
 func (p *Parser) Parse(idStr string) (*distro.ID, error) {
+	if cached, ok := p.cache.Load(idStr); ok {
+		id := cached.(distro.ID)
+		return &id, nil
+	}
+
+	id, recognized, err := p.parse(idStr)
+	// Only existing definitions are cached
+	if !recognized || err != nil {
+		return id, err
+	}
+	p.cache.Store(idStr, *id)
+	return id, nil
+}
+
+func (p *Parser) parse(idStr string) (id *distro.ID, recognized bool, err error) {
 	var match *distro.ID
 	for _, f := range p.parsers {
 		if d, err := f(idStr); err == nil {
@@ -40,10 +58,11 @@ func (p *Parser) Parse(idStr string) (*distro.ID, error) {
 
 	// Fall back to the default parser
 	if match == nil {
-		return distro.ParseID(idStr)
+		id, err = distro.ParseID(idStr)
+		return id, false, err
 	}
 
-	return match, nil
+	return match, true, nil
 }
 
 // Standardize returns the standardized distro ID string for the given distro ID

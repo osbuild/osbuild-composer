@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/osbuild/image-builder/pkg/depsolvednf"
 	"github.com/osbuild/image-builder/pkg/rpmmd"
 	"github.com/osbuild/osbuild-composer/internal/worker"
@@ -10,14 +12,21 @@ import (
 
 // SearchPackagesJobImpl shares the solver with the depsolve job.
 type SearchPackagesJobImpl struct {
-	Solver               *depsolvednf.BaseSolver
-	RepositoryMTLSConfig *RepositoryMTLSConfig
+	Solver                    *depsolvednf.BaseSolver
+	RepositoryMTLSConfig      *RepositoryMTLSConfig
+	RepositoryBasicAuthConfig *RepositoryBasicAuthConfig
 }
 
 func (impl *SearchPackagesJobImpl) search(repos []rpmmd.RepoConfig, modulePlatformID, arch, releasever string, packages []string) (rpmmd.PackageList, error) {
 	solver := impl.Solver.NewWithConfig(modulePlatformID, releasever, arch, "")
 	if impl.RepositoryMTLSConfig != nil && impl.RepositoryMTLSConfig.Proxy != nil {
 		err := solver.SetProxy(impl.RepositoryMTLSConfig.Proxy.String())
+		if err != nil {
+			return nil, err
+		}
+	}
+	if impl.RepositoryBasicAuthConfig != nil && impl.RepositoryBasicAuthConfig.Proxy != nil {
+		err := solver.SetProxy(impl.RepositoryBasicAuthConfig.Proxy.String())
 		if err != nil {
 			return nil, err
 		}
@@ -55,6 +64,29 @@ func (impl *SearchPackagesJobImpl) Run(job worker.Job) error {
 				}
 				if match {
 					impl.RepositoryMTLSConfig.SetupRepoSSL(&args.Repositories[repoi])
+				}
+			}
+		}
+	}
+
+	if impl.RepositoryBasicAuthConfig != nil {
+		for repoi, repo := range args.Repositories {
+			for _, baseurlstr := range repo.BaseURLs {
+				match, err := impl.RepositoryBasicAuthConfig.CompareBaseURL(baseurlstr)
+				if err != nil {
+					result.JobError = clienterrors.New(clienterrors.ErrorInvalidRepositoryURL, "Repository URL is malformed", err.Error())
+					return err
+				}
+				if match {
+					err = impl.RepositoryBasicAuthConfig.SetupRepoBasicAuth(&args.Repositories[repoi])
+					if err != nil {
+						result.JobError = clienterrors.New(
+							clienterrors.ErrorInvalidConfig,
+							fmt.Sprintf("Adding basic authentication for repository (%s) failed", baseurlstr),
+							err.Error(),
+						)
+						return err
+					}
 				}
 			}
 		}

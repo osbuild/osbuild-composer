@@ -13,7 +13,8 @@ import (
 )
 
 type ImageBuilderManifestJobImpl struct {
-	RepositoryMTLSConfig *RepositoryMTLSConfig
+	RepositoryMTLSConfig      *RepositoryMTLSConfig
+	RepositoryBasicAuthConfig *RepositoryBasicAuthConfig
 }
 
 func (impl *ImageBuilderManifestJobImpl) Run(job worker.Job) error {
@@ -51,6 +52,28 @@ func (impl *ImageBuilderManifestJobImpl) Run(job worker.Job) error {
 				}
 				if match {
 					impl.RepositoryMTLSConfig.SetupRepoSSL(&args.Args.Repositories[repoi])
+				}
+			}
+		}
+	}
+	if impl.RepositoryBasicAuthConfig != nil {
+		for repoi, repo := range args.Args.Repositories {
+			for _, baseurlstr := range repo.BaseURLs {
+				match, err := impl.RepositoryBasicAuthConfig.CompareBaseURL(baseurlstr)
+				if err != nil {
+					result.JobError = clienterrors.New(clienterrors.ErrorInvalidRepositoryURL, "Repository URL is malformed", err.Error())
+					return err
+				}
+				if match {
+					err = impl.RepositoryBasicAuthConfig.SetupRepoBasicAuth(&args.Args.Repositories[repoi])
+					if err != nil {
+						result.JobError = clienterrors.New(
+							clienterrors.ErrorInvalidConfig,
+							fmt.Sprintf("Adding basic authentication for repository (%s) failed", baseurlstr),
+							err.Error(),
+						)
+						return err
+					}
 				}
 			}
 		}

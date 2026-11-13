@@ -137,6 +137,10 @@ func newImageTypeFrom(d *distribution, ar *architecture, imgYAML ImageTypeYAML) 
 	if imageConfig == nil {
 		return imageType{}, fmt.Errorf("image type initialisation failed: nil image config for %s %s %s", d.Name(), ar.Name(), imgYAML.Name())
 	}
+	imageConfig, err = expandKernelOptions(imageConfig, d.ID(), ar.Name())
+	if err != nil {
+		return imageType{}, err
+	}
 	it.imageConfig = *imageConfig
 
 	installerConfig, err := imgYAML.InstallerConfig(d.ID(), ar.Name())

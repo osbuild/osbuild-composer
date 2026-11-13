@@ -48,6 +48,11 @@ func (boot *ISOLinuxBoot) GetISOBootStages(inputName string, _ *disk.PartitionTa
 	return []*osbuild.Stage{osbuild.NewISOLinuxStage(options, inputName)}, []*fsnode.File{}, nil
 }
 
+// GetISOConfigFiles returns a list of config files containing kernel options
+func (boot *ISOLinuxBoot) GetISOConfigFiles() []string {
+	return []string{"/isolinux/isolinux.cfg"}
+}
+
 // grub2 x86 booting
 type Grub2X86Boot struct {
 	Base
@@ -136,6 +141,11 @@ func (boot *Grub2X86Boot) GetISOBootStages(inputName string, _ *disk.PartitionTa
 	stages = append(stages, osbuild.NewGrub2InstStage(osbuild.NewGrub2InstISO9660StageOption("images/eltorito.img", "/boot/grub2")))
 
 	return stages, []*fsnode.File{}, nil
+}
+
+// GetISOConfigFiles returns a list of config files containing kernel options
+func (boot *Grub2X86Boot) GetISOConfigFiles() []string {
+	return []string{"/boot/grub2/grub.cfg"}
 }
 
 // grub2 PPC64le booting
@@ -244,6 +254,11 @@ func (boot *Grub2PPC64Boot) GetISOBootStages(inputName string, _ *disk.Partition
 	return stages, []*fsnode.File{f}, nil
 }
 
+// GetISOConfigFiles returns a list of config files containing kernel options
+func (boot *Grub2PPC64Boot) GetISOConfigFiles() []string {
+	return []string{"/boot/grub/grub.cfg"}
+}
+
 type S390Boot struct {
 	Base
 
@@ -308,4 +323,9 @@ func (boot *S390Boot) GetISOBootStages(inputName string, _ *disk.PartitionTable)
 	stages = append(stages, osbuild.NewMkS390ImageStage(mkS390ImageOptions))
 
 	return stages, files, nil
+}
+
+// GetISOConfigFiles returns a list of config files containing kernel options
+func (boot *S390Boot) GetISOConfigFiles() []string {
+	return []string{"/images/cdboot.prm"}
 }
