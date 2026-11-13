@@ -39,8 +39,9 @@ function setup_repo {
   local project=$1
   local commit=$2
   local priority=${3:-10}
+  local repo_distro_version=${4:-$DISTRO_VERSION}
 
-  local REPO_PATH=${project}/${DISTRO_VERSION}/${ARCH}/${commit}
+  local REPO_PATH=${project}/${repo_distro_version}/${ARCH}/${commit}
   if [[ "${NIGHTLY:=false}" == "true" && "${project}" == "osbuild-composer" ]]; then
     REPO_PATH=nightly/${REPO_PATH}
   fi
@@ -91,9 +92,11 @@ fi
 DISTRO_VERSION=${ID}-${VERSION_ID}
 
 if [[ "$ID" == rhel ]] && sudo subscription-manager status; then
-  # If this script runs on subscribed RHEL, install content built using CDN
-  # repositories.
-  DISTRO_VERSION=rhel-${VERSION_ID%.*}-cdn
+  if [[ "$VERSION_ID" == 9.8* ]]; then
+    DISTRO_VERSION=${ID}-${VERSION_ID}
+  else
+    DISTRO_VERSION=rhel-${VERSION_ID%.*}-cdn
+  fi
 
   # workaround for https://github.com/osbuild/osbuild/issues/717
   sudo subscription-manager config --rhsm.manage_repos=1
@@ -112,7 +115,12 @@ setup_repo osbuild-composer "${GIT_COMMIT}" 5
 
 OSBUILD_GIT_COMMIT=$(cat Schutzfile | jq -r '.["'"${ID}-${VERSION_ID}"'"].dependencies.osbuild.commit')
 if [[ "${OSBUILD_GIT_COMMIT}" != "null" ]]; then
-  setup_repo osbuild "${OSBUILD_GIT_COMMIT}" 10
+  # osbuild RPMs for subscribed RHEL are published under rhel-*-cdn, not rhel-X.Y.
+  OSBUILD_REPO_DISTRO="${DISTRO_VERSION}"
+  if [[ "$ID" == rhel ]] && sudo subscription-manager status &>/dev/null; then
+    OSBUILD_REPO_DISTRO="rhel-${VERSION_ID%.*}-cdn"
+  fi
+  setup_repo osbuild "${OSBUILD_GIT_COMMIT}" 10 "${OSBUILD_REPO_DISTRO}"
 fi
 
 if [[ "$PROJECT" != "osbuild-composer" ]]; then
