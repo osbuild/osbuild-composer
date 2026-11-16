@@ -184,7 +184,8 @@ func GetTestBlueprint() blueprint.Blueprint {
 			},
 		},
 		Disk: &blueprint.DiskCustomization{
-			MinSize: 20 * datasizes.GiB,
+			MinSize:    20 * datasizes.GiB,
+			SectorSize: 4096,
 			Partitions: []blueprint.PartitionCustomization{
 				{
 					Type: "plain",
@@ -471,7 +472,8 @@ func TestGetBlueprintFromCustomizations(t *testing.T) {
 			},
 		},
 		Disk: &Disk{
-			Minsize: &diskSize,
+			Minsize:    &diskSize,
+			SectorSize: common.ToPtr(uint64(4096)),
 			Partitions: []Partition{
 				plainPart,
 				btrfsPart,
@@ -735,7 +737,8 @@ func TestGetBlueprintFromCompose(t *testing.T) {
 				},
 			},
 			Disk: &Disk{
-				Minsize: &diskSize,
+				Minsize:    &diskSize,
+				SectorSize: common.ToPtr(uint64(4096)),
 				Partitions: []Partition{
 					plainPart,
 					btrfsPart,

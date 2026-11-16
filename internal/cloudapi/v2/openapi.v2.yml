@@ -2938,6 +2938,13 @@ components:
             Type of the partition table
         minsize:
           $ref: '#/components/schemas/minsize'
+        sector_size:
+          x-go-type: uint64
+          description: |
+            Logical sector size in bytes for the disk image. Must be a power
+            of 2 (commonly 512 or 4096). Defaults to 512 when not specified.
+          type: integer
+          example: 4096
         partitions:
           type: array
           items:
