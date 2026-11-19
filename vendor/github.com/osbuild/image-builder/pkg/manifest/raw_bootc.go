@@ -25,7 +25,11 @@ type RawBootcImage struct {
 	platform platform.Platform
 
 	containers     []container.SourceSpec
-	containerSpecs []container.Spec
+	containerSpecs []container.Spec // 0=root container, 1+ are payload containers
+
+	// PayloadContainers are optional container to embed in the image's
+	// container storage
+	PayloadContainers []container.SourceSpec
 
 	// Source pipeline for files written to raw partitions
 	SourcePipeline string
@@ -85,7 +89,10 @@ func NewRawBootcImage(buildPipeline Build, containers []container.SourceSpec, pl
 }
 
 func (p *RawBootcImage) getContainerSources() []container.SourceSpec {
-	return p.containers
+	var sources []container.SourceSpec
+
+	sources = append(sources, p.containers...)
+	return append(sources, p.PayloadContainers...)
 }
 
 func (p *RawBootcImage) getContainerSpecs() []container.Spec {
@@ -171,8 +178,8 @@ func (p *RawBootcImage) serialize() (osbuild.Pipeline, error) {
 		}
 	}
 
-	if len(p.containerSpecs) != 1 {
-		return osbuild.Pipeline{}, fmt.Errorf("expected a single container input got %v", p.containerSpecs)
+	if len(p.containerSpecs) != 1+len(p.PayloadContainers) {
+		return osbuild.Pipeline{}, fmt.Errorf("expected %d container(s) but got %v", 1+len(p.PayloadContainers), p.containerSpecs)
 	}
 	opts := &osbuild.BootcInstallToFilesystemOptions{}
 	// Unified kernels cannot have custom kernel options
@@ -217,6 +224,15 @@ func (p *RawBootcImage) serialize() (osbuild.Pipeline, error) {
 
 		mounts = append(mounts, *osbuild.NewOSTreeDeploymentMountDefault("ostree.deployment", osbuild.OSTreeMountSourceMount))
 		mounts = append(mounts, *osbuild.NewBindMount("bind-ostree-deployment-to-tree", "mount://", "tree://"))
+
+		// Install the container payloads into the default container storage
+		// The first entry in containerSpecs is the image's root container, any additional ones
+		// are payloads
+		if len(p.containerSpecs) > 1 {
+			for _, stage := range osbuild.GenContainerStorageStagesWithMounts("", p.containerSpecs[1:], devices, mounts) {
+				pipeline.AddStage(stage)
+			}
+		}
 
 		postStages := []*osbuild.Stage{}
 

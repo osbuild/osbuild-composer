@@ -32,7 +32,7 @@ require (
 	github.com/oapi-codegen/runtime v1.8.0
 	github.com/openshift-online/ocm-sdk-go v0.1.521
 	github.com/osbuild/blueprint v1.36.0
-	github.com/osbuild/image-builder v0.274.1-0.20261029174137-cb6903844136
+	github.com/osbuild/image-builder v0.274.1-0.20261113091434-754425a83cff
 	github.com/osbuild/osbuild-composer/pkg/splunk_logger v0.0.0-20240814102216-0239db53236d
 	github.com/prometheus/client_golang v1.24.1
 	github.com/segmentio/ksuid v1.0.4
@@ -144,7 +144,7 @@ require (
 	github.com/speakeasy-api/jsonpath v0.6.0 // indirect
 	github.com/speakeasy-api/openapi-overlay v0.10.2 // indirect
 	github.com/spiffe/go-spiffe/v2 v2.7.0 // indirect
-	github.com/supakeen/yamlplus v1.1.0 // indirect
+	github.com/supakeen/yamlplus v1.2.1 // indirect
 	github.com/ubccr/kerby v0.0.0-20230802201021-412be7bfaee5 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
@@ -160,7 +160,7 @@ require (
 	go.opentelemetry.io/otel/sdk v1.44.0 // indirect
 	go.opentelemetry.io/otel/sdk/metric v1.44.0 // indirect
 	go.opentelemetry.io/otel/trace v1.44.0 // indirect
-	go.yaml.in/yaml/v3 v3.0.5 // indirect
+	go.yaml.in/yaml/v3 v3.0.6 // indirect
 	golang.org/x/crypto v0.55.0 // indirect
 	golang.org/x/mod v0.38.0 // indirect
 	golang.org/x/net v0.58.0 // indirect
