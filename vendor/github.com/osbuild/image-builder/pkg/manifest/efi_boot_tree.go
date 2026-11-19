@@ -159,3 +159,8 @@ func (bt *EFIBootTree) GetISOBootStages(inputName string, pt *disk.PartitionTabl
 func (p *EFIBootTree) getBuildPackages(distro Distro) ([]string, error) {
 	return p.Platform.GetBuildPackages(), nil
 }
+
+// GetISOConfigFiles returns a list of config files containing kernel options
+func (p *EFIBootTree) GetISOConfigFiles() []string {
+	return []string{"/EFI/BOOT/grub.cfg"}
+}

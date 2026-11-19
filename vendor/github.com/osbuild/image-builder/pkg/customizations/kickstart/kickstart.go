@@ -40,6 +40,7 @@ type Options struct {
 	Language *string
 	Keyboard *string
 	Timezone *string
+	Hostname *string
 
 	// Users to create during installation
 	Users []users.User

@@ -1578,7 +1578,7 @@ image_types:
       - <<: *s390x_zipl_platform
         image_format: "qcow2"
         qcow2_compat: "0.10"
-    image_config:
+    image_config: &qcow2_image_config
       default_target: "multi-user.target"
       kernel_options:
         - "console=tty0"
@@ -2634,6 +2634,26 @@ image_types:
       - <<: *x86_64_bios_platform
         image_format: "qcow2"
         qcow2_compat: "0.10"
+    image_config:
+      <<: *qcow2_image_config
+      time_synchronization:
+        servers:
+          - hostname: "169.254.169.254"
+            prefer: true
+            iburst: true
+            minpoll: 4
+            maxpoll: 4
+        leapsectz: ""
+      cloud_init:
+        - filename: "00-rhel-default-user.cfg"
+          config:
+            system_info:
+              default_user:
+                name: "opc"
+        - filename: "10_oracle.cfg"
+          config:
+            datasource_list:
+              - "Oracle"
     partition_table:
       x86_64:
         type: "gpt"

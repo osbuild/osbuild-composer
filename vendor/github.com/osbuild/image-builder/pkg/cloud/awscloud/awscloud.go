@@ -614,15 +614,53 @@ func (a *AWS) AuthorizeSecurityGroupIngressEC2(groupID, address string, from, to
 		})
 }
 
+// AuthorizeSecurityGroupSelfEC2 permits all traffic between members of the
+// group in both directions, as required for EFA.
+func (a *AWS) AuthorizeSecurityGroupSelfEC2(groupID string) error {
+	permission := []ec2types.IpPermission{{
+		IpProtocol:       aws.String("-1"),
+		UserIdGroupPairs: []ec2types.UserIdGroupPair{{GroupId: aws.String(groupID)}},
+	}}
+	if _, err := a.ec2.AuthorizeSecurityGroupIngress(context.TODO(), &ec2.AuthorizeSecurityGroupIngressInput{
+		GroupId: aws.String(groupID), IpPermissions: permission,
+	}); err != nil {
+		return err
+	}
+	_, err := a.ec2.AuthorizeSecurityGroupEgress(context.TODO(), &ec2.AuthorizeSecurityGroupEgressInput{
+		GroupId: aws.String(groupID), IpPermissions: permission,
+	})
+	return err
+}
+
 func (a *AWS) RunInstanceEC2(imageID, secGroupID, userData, instanceType, subnetID string) (*ec2types.Reservation, error) {
+	instanceIDs, err := a.LaunchInstancesEC2(imageID, secGroupID, userData, instanceType, subnetID, 1, false)
+	if err != nil {
+		return nil, err
+	}
+	instanceID := instanceIDs[0]
+	if err := a.WaitInstanceRunningEC2(instanceID); err != nil {
+		return nil, err
+	}
+	reservation, err := a.instanceReservation(instanceID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get reservation for instance %s: %w", instanceID, err)
+	}
+	return reservation, nil
+}
+
+// LaunchInstancesEC2 starts count instances in one request without waiting for them to run.
+func (a *AWS) LaunchInstancesEC2(imageID, secGroupID, userData, instanceType, subnetID string, count int32, efa bool) ([]string, error) {
+	if count < 1 {
+		return nil, fmt.Errorf("instances must be at least 1")
+	}
 	ec2InstanceType := ec2types.InstanceType(instanceType)
 	if !slices.Contains(ec2InstanceType.Values(), ec2InstanceType) {
 		return nil, fmt.Errorf("ec2 doesn't support the following instance type: %s", instanceType)
 	}
 
 	input := &ec2.RunInstancesInput{
-		MaxCount:         aws.Int32(1),
-		MinCount:         aws.Int32(1),
+		MaxCount:         aws.Int32(count),
+		MinCount:         aws.Int32(count),
 		ImageId:          &imageID,
 		InstanceType:     ec2InstanceType,
 		SecurityGroupIds: []string{secGroupID},
@@ -631,7 +669,25 @@ func (a *AWS) RunInstanceEC2(imageID, secGroupID, userData, instanceType, subnet
 	if subnetID != "" {
 		input.SubnetId = aws.String(subnetID)
 	}
-
+	if efa {
+		if subnetID == "" {
+			return nil, fmt.Errorf("EFA requires a subnet ID")
+		}
+		input.SecurityGroupIds = nil
+		input.SubnetId = nil
+		// NOTE: One EFA-with-ENA interface on network card 0. Enough for instance
+		// types with a single EFA, such as g7.12xlarge. Types with multiple
+		// network cards (g7.48xlarge, p5, p6) need one EFA per card; those extra
+		// interfaces are not created here.
+		input.NetworkInterfaces = []ec2types.InstanceNetworkInterfaceSpecification{{
+			NetworkCardIndex:    aws.Int32(0),
+			DeviceIndex:         aws.Int32(0),
+			InterfaceType:       aws.String("efa"),
+			SubnetId:            aws.String(subnetID),
+			Groups:              []string{secGroupID},
+			DeleteOnTermination: aws.Bool(true),
+		}}
+	}
 	runInstanceOutput, err := a.ec2.RunInstances(
 		context.TODO(),
 		input,
@@ -640,27 +696,35 @@ func (a *AWS) RunInstanceEC2(imageID, secGroupID, userData, instanceType, subnet
 		return nil, err
 	}
 
-	if len(runInstanceOutput.Instances) == 0 {
-		return nil, fmt.Errorf("no instances were created")
+	if runInstanceOutput == nil {
+		return nil, fmt.Errorf("no instance launch response")
+	}
+	if len(runInstanceOutput.Instances) != int(count) {
+		return nil, fmt.Errorf("expected %d created instances, got %d", count, len(runInstanceOutput.Instances))
+	}
+	ids := make([]string, count)
+	for i, instance := range runInstanceOutput.Instances {
+		ids[i] = aws.ToString(instance.InstanceId)
+		if ids[i] == "" {
+			return nil, fmt.Errorf("instance launch response contains an instance without an ID")
+		}
+	}
+	return ids, nil
+}
+
+// WaitInstanceRunningEC2 waits until every instance is running.
+func (a *AWS) WaitInstanceRunningEC2(instanceIDs ...string) error {
+	if len(instanceIDs) == 0 {
+		return fmt.Errorf("no instance IDs to wait for")
 	}
 	instanceWaiter := newInstanceRunningWaiterEC2(a.ec2)
-	err = instanceWaiter.Wait(
+	return instanceWaiter.Wait(
 		context.TODO(),
 		&ec2.DescribeInstancesInput{
-			InstanceIds: []string{aws.ToString(runInstanceOutput.Instances[0].InstanceId)},
+			InstanceIds: slices.Clone(instanceIDs),
 		},
 		time.Hour,
 	)
-	if err != nil {
-		return nil, err
-	}
-
-	reservation, err := a.instanceReservation(aws.ToString(runInstanceOutput.Instances[0].InstanceId))
-	if err != nil {
-		return nil, fmt.Errorf("failed to get reservation for instance %s: %w", aws.ToString(runInstanceOutput.Instances[0].InstanceId), err)
-	}
-
-	return reservation, nil
 }
 
 // TerminateInstancesEC2 terminates the specified EC2 instances and waits for them to be terminated if timeout is greater than 0.

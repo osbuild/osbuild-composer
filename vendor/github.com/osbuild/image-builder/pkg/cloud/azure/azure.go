@@ -79,17 +79,15 @@ func newTestClient(
 
 // NewClient creates a client for accessing the Azure API.
 // See https://docs.microsoft.com/en-us/rest/api/azure/
-// It uses Azure CLI credentials when service principal credentials are absent.
+// It uses the default Azure credential chain when service principal credentials are absent.
 // If you need to work with the Azure Storage API, see NewStorageClient.
 func NewClient(credentials Credentials, tenantID, subscriptionID string) (*Client, error) {
 	if credentials.ClientID == "" && credentials.ClientSecret == "" {
-		// Use Azure CLI credentials when service principal credentials are absent.
-		creds, err := azidentity.NewAzureCLICredential(&azidentity.AzureCLICredentialOptions{
-			TenantID:     tenantID,
-			Subscription: subscriptionID,
+		creds, err := azidentity.NewDefaultAzureCredential(&azidentity.DefaultAzureCredentialOptions{
+			TenantID: tenantID,
 		})
 		if err != nil {
-			return nil, fmt.Errorf("creating Azure CLI credential failed: %w", err)
+			return nil, fmt.Errorf("creating default Azure credential failed: %w", err)
 		}
 		return newClientWithCredential(creds, subscriptionID)
 	}

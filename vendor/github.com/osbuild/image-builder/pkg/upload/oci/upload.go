@@ -284,6 +284,10 @@ func NewClient(clientParams *ClientParams) (Client, error) {
 	} else {
 		configProvider = common.DefaultConfigProvider()
 	}
+	region, err := configProvider.Region()
+	if err != nil {
+		return Client{}, fmt.Errorf("failed to read OCI configuration region: %w", err)
+	}
 	storageClient, err := objectstorage.NewObjectStorageClientWithConfigurationProvider(configProvider)
 	// this disables the default 60 seconds timeout, to support big files upload (the common scenario)
 	storageClient.HTTPClient = &http.Client{}
@@ -303,7 +307,7 @@ func NewClient(clientParams *ClientParams) (Client, error) {
 		return Client{}, fmt.Errorf("failed to create an Oracle workrequests client: %w", err)
 	}
 	return Client{ociClient: ociClient{
-		region:             clientParams.Region,
+		region:             region,
 		storageClient:      storageClient,
 		identityClient:     identityClient,
 		computeClient:      computeClient,

@@ -919,6 +919,8 @@ func TestDepsolvedRepoConfigJSONRoundtrip(t *testing.T) {
 				SSLCACert:      "/etc/pki/ca.crt",
 				SSLClientKey:   "/etc/pki/client.key",
 				SSLClientCert:  "/etc/pki/client.crt",
+				Username:       "test-user",
+				Password:       "test-password",
 			},
 		},
 	}
@@ -955,6 +957,8 @@ func TestDepsolvedRepoConfigRPMMDConversion(t *testing.T) {
 				CheckGPG:  common.ToPtr(true),
 				IgnoreSSL: common.ToPtr(false),
 				RHSM:      true,
+				Username:  "test-user",
+				Password:  "test-password",
 			},
 		},
 	}
