@@ -92,6 +92,8 @@ type RepoConfig struct {
 	SSLCACert     string `json:"sslcacert,omitempty"`
 	SSLClientKey  string `json:"sslclientkey,omitempty"`
 	SSLClientCert string `json:"sslclientcert,omitempty"`
+	Username      string `json:"username,omitempty"`
+	Password      string `json:"password,omitempty"`
 }
 
 // Hash calculates an ID string that uniquely represents a repository
@@ -122,7 +124,8 @@ func (r *RepoConfig) Hash() string {
 		bpts(r.ModuleHotfixes)+
 		r.SSLCACert+
 		r.SSLClientKey+
-		r.SSLClientCert)))
+		r.SSLClientCert+
+		r.Username)))
 }
 
 type DistrosRepoConfigs map[string]map[string][]RepoConfig

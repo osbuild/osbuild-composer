@@ -5,6 +5,10 @@ import (
 )
 
 func GenContainerStorageStages(storagePath string, containerSpecs []container.Spec) (stages []*Stage) {
+	return GenContainerStorageStagesWithMounts(storagePath, containerSpecs, nil, nil)
+}
+
+func GenContainerStorageStagesWithMounts(storagePath string, containerSpecs []container.Spec, devices map[string]Device, mounts []Mount) (stages []*Stage) {
 	if storagePath != "" {
 		storageConf := "/etc/containers/storage.conf"
 
@@ -23,6 +27,16 @@ func GenContainerStorageStages(storagePath string, containerSpecs []container.Sp
 	if len(localImages.References) > 0 {
 		stages = append(stages, NewSkopeoStageWithContainersStorage(storagePath, localImages, nil))
 
+	}
+
+	// Setup mounts on all stages if they are needed
+	for _, s := range stages {
+		if len(devices) > 0 {
+			s.Devices = devices
+		}
+		if len(mounts) > 0 {
+			s.Mounts = mounts
+		}
 	}
 
 	return stages
