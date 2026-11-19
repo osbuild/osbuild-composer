@@ -1,7 +1,11 @@
-.PHONY: test test-coverage lint fmt vet clean help
+.PHONY: build test test-coverage lint fmt vet clean help
 
 # Default target
 .DEFAULT_GOAL := help
+
+## build: Build yamlplus-flatten
+build:
+	go build -o yamlplus-flatten ./cmd/yamlplus-flatten
 
 ## test: Run all tests
 test:
@@ -34,7 +38,7 @@ check: fmt vet staticcheck test
 
 ## clean: Remove build artifacts and coverage files
 clean:
-	rm -f coverage.out coverage.html
+	rm -f coverage.out coverage.html yamlplus-flatten
 	go clean -cache -testcache
 
 ## help: Display this help message

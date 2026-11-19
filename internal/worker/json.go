@@ -685,6 +685,8 @@ type DepsolvedRepoConfig struct {
 	SSLCACert     string `json:"sslcacert,omitempty"`
 	SSLClientKey  string `json:"sslclientkey,omitempty"`
 	SSLClientCert string `json:"sslclientcert,omitempty"`
+	Username      string `json:"username,omitempty"`
+	Password      string `json:"password,omitempty"`
 }
 
 func (d DepsolvedRepoConfig) ToRPMMD() rpmmd.RepoConfig {

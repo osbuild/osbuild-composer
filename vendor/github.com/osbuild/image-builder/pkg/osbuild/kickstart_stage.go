@@ -214,7 +214,8 @@ func adjustRootUserOptions(userOptions map[string]UsersStageOptionsUser) (*RootP
 func NewKickstartStageOptions(
 	path string,
 	userCustomizations []users.User,
-	groupCustomizations []users.Group) (*KickstartStageOptions, error) {
+	groupCustomizations []users.Group,
+	hostname *string) (*KickstartStageOptions, error) {
 
 	invalidPathRegex := regexp.MustCompile(invalidPathRegex)
 	if invalidPathRegex.FindAllString(path, -1) != nil {
@@ -238,14 +239,23 @@ func NewKickstartStageOptions(
 		return nil, fmt.Errorf("%s: %w", kickstartStageType, err)
 	}
 
-	return &KickstartStageOptions{
+	opts := &KickstartStageOptions{
 		Path:         path,
 		OSTreeCommit: nil,
 		LiveIMG:      nil,
 		Users:        users,
 		Groups:       groups,
 		RootPassword: rootpw,
-	}, nil
+	}
+	if hostname != nil {
+		opts.Network = []NetworkOptions{
+			{
+				Device:   "link",
+				Hostname: *hostname,
+			},
+		}
+	}
+	return opts, nil
 }
 
 func NewKickstartStageOptionsWithOSTreeCommit(
@@ -257,7 +267,7 @@ func NewKickstartStageOptionsWithOSTreeCommit(
 	ostreeRemote string,
 	osName string) (*KickstartStageOptions, error) {
 
-	options, err := NewKickstartStageOptions(path, userCustomizations, groupCustomizations)
+	options, err := NewKickstartStageOptions(path, userCustomizations, groupCustomizations, nil)
 
 	if err != nil {
 		return nil, err
@@ -287,7 +297,7 @@ func NewKickstartStageOptionsWithOSTreeContainer(
 	containerRemote string,
 	containerStateRoot string) (*KickstartStageOptions, error) {
 
-	options, err := NewKickstartStageOptions(path, userCustomizations, groupCustomizations)
+	options, err := NewKickstartStageOptions(path, userCustomizations, groupCustomizations, nil)
 
 	if err != nil {
 		return nil, err
@@ -312,9 +322,10 @@ func NewKickstartStageOptionsWithLiveIMG(
 	path string,
 	userCustomizations []users.User,
 	groupCustomizations []users.Group,
+	hostname *string,
 	imageURL string) (*KickstartStageOptions, error) {
 
-	options, err := NewKickstartStageOptions(path, userCustomizations, groupCustomizations)
+	options, err := NewKickstartStageOptions(path, userCustomizations, groupCustomizations, hostname)
 
 	if err != nil {
 		return nil, err
