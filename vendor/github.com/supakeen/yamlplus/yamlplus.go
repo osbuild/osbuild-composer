@@ -95,7 +95,8 @@ type Loader struct {
 	// It should not be modified after the Loader is created.
 	Filesystem fs.FS
 
-	anchorRegistry map[string]*yaml.Node
+	anchorRegistry    map[string]*yaml.Node
+	fileRegistrations map[string][]string
 }
 
 // NewLoader creates a new Loader that reads YAML files from the given filesystem.
@@ -108,8 +109,9 @@ type Loader struct {
 //	loader.RegisterFile("app.yaml")
 func NewLoader(f fs.FS) *Loader {
 	return &Loader{
-		Filesystem:     f,
-		anchorRegistry: make(map[string]*yaml.Node),
+		Filesystem:        f,
+		anchorRegistry:    make(map[string]*yaml.Node),
+		fileRegistrations: make(map[string][]string),
 	}
 }
 
@@ -166,12 +168,15 @@ func (d *Decoder) Decode(out any) error {
 	}
 
 	stack := make(map[string]bool)
+	if err := validateNodeGraph(&root); err != nil {
+		return err
+	}
 	if err := d.loader.replaceXrefs(&root, stack); err != nil {
 		return err
 	}
 
 	if d.knownFields {
-		data, err := yaml.Marshal(&root)
+		data, err := yaml.Marshal(nodeForEncoding(&root))
 		if err != nil {
 			return err
 		}
@@ -193,8 +198,9 @@ func (d *Decoder) Decode(out any) error {
 // If the file contains multiple documents, all anchors from all documents are registered,
 // but document-level references (without #anchor) return only the first document.
 //
-// RegisterFile can be called multiple times with the same path, which will overwrite
-// previous registrations. This is not recommended.
+// RegisterFile can be called multiple times with the same path. A successful
+// registration replaces all previous anchors for that file. A failed registration
+// leaves the previous registration intact.
 //
 // Returns an error if the file cannot be opened, read, or parsed as valid YAML.
 func (l *Loader) RegisterFile(path string) error {
@@ -204,21 +210,35 @@ func (l *Loader) RegisterFile(path string) error {
 	}
 	defer f.Close()
 
-	var root yaml.Node
 	decoder := yaml.NewDecoder(f)
-	if err := decoder.Decode(&root); err != nil {
-		return err
-	}
-
-	if len(root.Content) > 0 {
-		// set up an anchor directly to the document so !xref "somefile.yaml"
-		// works
-		l.anchorRegistry[path] = root.Content[0]
-
-		for _, doc := range root.Content {
-			l.scanAnchors(path, doc)
+	registration := NewLoader(l.Filesystem)
+	documents := 0
+	for {
+		var root yaml.Node
+		if err := decoder.Decode(&root); err != nil {
+			if err == io.EOF && documents > 0 {
+				break
+			}
+			return err
 		}
+		if documents == 0 && len(root.Content) > 0 {
+			registration.anchorRegistry[path] = root.Content[0]
+		}
+		for _, doc := range root.Content {
+			registration.scanAnchors(path, doc)
+		}
+		documents++
 	}
+	// Publish only after every document has been parsed successfully.
+	for _, ref := range l.fileRegistrations[path] {
+		delete(l.anchorRegistry, ref)
+	}
+	refs := make([]string, 0, len(registration.anchorRegistry))
+	for ref, node := range registration.anchorRegistry {
+		l.anchorRegistry[ref] = node
+		refs = append(refs, ref)
+	}
+	l.fileRegistrations[path] = refs
 
 	return nil
 }
@@ -315,6 +335,9 @@ func (l *Loader) replaceXrefs(node *yaml.Node, stack map[string]bool) error {
 		// recurses
 		return l.resolveDirectXRef(node, stack)
 	}
+	if node.Kind == yaml.AliasNode {
+		return l.replaceXrefs(node.Alias, stack)
+	}
 
 	if node.Kind == yaml.MappingNode {
 		if err := l.resolveMapMergeXRef(node, stack); err != nil {
@@ -404,6 +427,9 @@ func (l *Loader) resolveDirectXRef(node *yaml.Node, stack map[string]bool) error
 	}
 
 	clone := cloneNode(resolved)
+	if err := validateNodeGraph(clone); err != nil {
+		return err
+	}
 
 	node.Kind = clone.Kind
 	node.Style = clone.Style
@@ -425,7 +451,8 @@ func (l *Loader) resolveMapMergeXRef(node *yaml.Node, stack map[string]bool) err
 		key := node.Content[i]
 		val := node.Content[i+1]
 
-		if key.Value == "<<" {
+		if key.Kind == yaml.ScalarNode && key.Value == "<<" &&
+			(key.Tag == "" || key.Tag == "!" || key.ShortTag() == "!!merge") {
 			toMerge, err := l.extractMapMergeTargets(val)
 			if err != nil {
 				return err
@@ -460,6 +487,9 @@ func (l *Loader) resolveMapMergeXRef(node *yaml.Node, stack map[string]bool) err
 
 						// Clone before modifying to avoid mutating the anchor registry
 						resolved = cloneNode(resolved)
+						if err := validateNodeGraph(resolved); err != nil {
+							return err
+						}
 
 						if err := l.replaceXrefs(resolved, stack); err != nil {
 							return err
@@ -473,6 +503,9 @@ func (l *Loader) resolveMapMergeXRef(node *yaml.Node, stack map[string]bool) err
 						}
 					}
 
+					if resolved.Kind != yaml.MappingNode {
+						return fmt.Errorf("map merge requires map or sequence of maps as the value")
+					}
 					newKeys += l.applyMerge(resolved, node)
 				}
 
@@ -485,31 +518,111 @@ func (l *Loader) resolveMapMergeXRef(node *yaml.Node, stack map[string]bool) err
 }
 
 func (l *Loader) extractMapMergeTargets(val *yaml.Node) ([]*yaml.Node, error) {
-	var targets []*yaml.Node
-
-	// Follow direct alias before processing
 	actualVal := val
 	if val.Kind == yaml.AliasNode && val.Alias != nil {
 		actualVal = val.Alias
 	}
 
 	if actualVal.Tag == "!xref" || actualVal.Kind == yaml.MappingNode {
-		targets = append(targets, actualVal)
-		return targets, nil
+		return []*yaml.Node{actualVal}, nil
 	}
-
-	if actualVal.Kind == yaml.SequenceNode {
-		for _, item := range actualVal.Content {
-			actualItem := item
-			if item.Kind == yaml.AliasNode && item.Alias != nil {
-				actualItem = item.Alias
-			}
-			if actualItem.Tag == "!xref" || actualItem.Kind == yaml.MappingNode {
-				targets = append(targets, actualItem)
-			}
+	if actualVal.Kind != yaml.SequenceNode {
+		return nil, fmt.Errorf("map merge requires map or sequence of maps as the value")
+	}
+	var targets []*yaml.Node
+	for _, item := range actualVal.Content {
+		actualItem := item
+		if item.Kind == yaml.AliasNode && item.Alias != nil {
+			actualItem = item.Alias
 		}
+		if actualItem.Tag != "!xref" && actualItem.Kind != yaml.MappingNode {
+			return nil, fmt.Errorf("map merge requires map or sequence of maps as the value")
+		}
+		targets = append(targets, actualItem)
 	}
 	return targets, nil
+}
+
+// Validate the original graph before merge rewriting can hide duplicate keys
+// or turn recursive alias edges into Content edges.
+func validateNodeGraph(root *yaml.Node) error {
+	active := make(map[*yaml.Node]bool)
+	done := make(map[*yaml.Node]bool)
+	var visit func(*yaml.Node) error
+	visit = func(node *yaml.Node) error {
+		if node == nil || done[node] {
+			return nil
+		}
+		if active[node] {
+			return fmt.Errorf("circular dependency detected: YAML alias at line %d", node.Line)
+		}
+		active[node] = true
+		if node.Kind == yaml.MappingNode {
+			type keyID struct {
+				kind  yaml.Kind
+				value string
+			}
+			keys := make(map[keyID]*yaml.Node)
+			for i := 0; i < len(node.Content); i += 2 {
+				key := node.Content[i]
+				id := keyID{key.Kind, key.Value}
+				if previous, ok := keys[id]; ok {
+					return &yaml.TypeError{Errors: []string{fmt.Sprintf(
+						"line %d: mapping key %#v already defined at line %d",
+						key.Line, key.Value, previous.Line)}}
+				}
+				keys[id] = key
+			}
+		}
+		if err := visit(node.Alias); err != nil {
+			return err
+		}
+		for _, child := range node.Content {
+			if err := visit(child); err != nil {
+				return err
+			}
+		}
+		delete(active, node)
+		done[node] = true
+		return nil
+	}
+	return visit(root)
+}
+
+// Emit each shared target before its aliases, assigning fresh anchor names.
+// Referenced fragments may include aliases whose definitions are outside their
+// Content subtree, and independent fragments may use the same anchor names.
+func nodeForEncoding(root *yaml.Node) *yaml.Node {
+	seen := make(map[*yaml.Node]*yaml.Node)
+	nextAnchor := 0
+	var visit func(*yaml.Node) *yaml.Node
+	visit = func(node *yaml.Node) *yaml.Node {
+		if node == nil {
+			return nil
+		}
+		if node.Kind == yaml.AliasNode {
+			return visit(node.Alias)
+		}
+		if previous, ok := seen[node]; ok {
+			if previous.Anchor == "" {
+				nextAnchor++
+				previous.Anchor = fmt.Sprintf("yamlplus%d", nextAnchor)
+			}
+			return &yaml.Node{Kind: yaml.AliasNode, Value: previous.Anchor, Alias: previous}
+		}
+		clone := *node
+		clone.Anchor = ""
+		clone.Alias = nil
+		seen[node] = &clone
+		if node.Content != nil {
+			clone.Content = make([]*yaml.Node, len(node.Content))
+			for i, child := range node.Content {
+				clone.Content[i] = visit(child)
+			}
+		}
+		return &clone
+	}
+	return visit(root)
 }
 
 func cloneNode(n *yaml.Node) *yaml.Node {
@@ -517,24 +630,22 @@ func cloneNode(n *yaml.Node) *yaml.Node {
 		return nil
 	}
 
-	oldToNew := make(map[*yaml.Node]*yaml.Node)
-	clone := cloneNodeWithMap(n, oldToNew)
-
-	// fix up alias pointers to point to cloned nodes
-	fixAliases(clone, oldToNew)
-
-	return clone
+	return cloneNodeWithMap(n, make(map[*yaml.Node]*yaml.Node))
 }
 
 func cloneNodeWithMap(n *yaml.Node, oldToNew map[*yaml.Node]*yaml.Node) *yaml.Node {
 	if n == nil {
 		return nil
 	}
+	if clone, ok := oldToNew[n]; ok {
+		return clone
+	}
 
 	clone := *n       // copy value types (Kind, Style, Tag, Value, etc.)
 	clone.Anchor = "" // Clear anchor name - cloned nodes shouldn't carry over anchor identities
 	clonePtr := &clone
 	oldToNew[n] = clonePtr
+	clone.Alias = cloneNodeWithMap(n.Alias, oldToNew)
 
 	if n.Content != nil {
 		clone.Content = make([]*yaml.Node, len(n.Content))
@@ -544,24 +655,6 @@ func cloneNodeWithMap(n *yaml.Node, oldToNew map[*yaml.Node]*yaml.Node) *yaml.No
 	}
 
 	return clonePtr
-}
-
-func fixAliases(n *yaml.Node, oldToNew map[*yaml.Node]*yaml.Node) {
-	if n == nil {
-		return
-	}
-
-	// If this node has an Alias pointer, remap it to the cloned version
-	if n.Alias != nil {
-		if newAlias, ok := oldToNew[n.Alias]; ok {
-			n.Alias = newAlias
-		}
-	}
-
-	// Recursively fix aliases in children
-	for _, child := range n.Content {
-		fixAliases(child, oldToNew)
-	}
 }
 
 func hasYAMLSuffix(name string) bool {

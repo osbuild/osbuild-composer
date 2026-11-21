@@ -1094,6 +1094,35 @@ func (imgType *ImageTypeYAML) ImageConfig(id distro.ID, archName string) *distro
 	return imgConfig
 }
 
+func expandKernelOptions(config *distro.ImageConfig, id distro.ID, archName string) (*distro.ImageConfig, error) {
+	if config == nil {
+		return nil, nil
+	}
+	result := *config
+	if config.KernelOptions != nil {
+		result.KernelOptions = slices.Clone(config.KernelOptions)
+	}
+	data := struct {
+		Arch   string
+		Distro distro.ID
+	}{archName, id}
+	for i, option := range result.KernelOptions {
+		if !strings.Contains(option, "{{") {
+			continue
+		}
+		tmpl, err := template.New("kernel-option").Option("missingkey=error").Parse(option)
+		if err != nil {
+			return nil, fmt.Errorf("cannot parse template for kernel option %q: %w", option, err)
+		}
+		var buf bytes.Buffer
+		if err := tmpl.Execute(&buf, data); err != nil {
+			return nil, fmt.Errorf("cannot execute template for kernel option %q: %w", option, err)
+		}
+		result.KernelOptions[i] = buf.String()
+	}
+	return &result, nil
+}
+
 // InstallerConfig returns the InstallerConfig for the given imgType
 // Note that on conditions the InstallerConfig is fully replaced, do
 // any merging in YAML

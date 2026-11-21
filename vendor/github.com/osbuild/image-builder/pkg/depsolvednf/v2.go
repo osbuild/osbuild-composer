@@ -44,6 +44,8 @@ type v2Repository struct {
 	SSLCACert      string   `json:"sslcacert,omitempty"`
 	SSLClientKey   string   `json:"sslclientkey,omitempty"`
 	SSLClientCert  string   `json:"sslclientcert,omitempty"`
+	Username       string   `json:"username,omitempty"`
+	Password       string   `json:"password,omitempty"`
 	MetadataExpire string   `json:"metadata_expire,omitempty"`
 	ModuleHotfixes *bool    `json:"module_hotfixes,omitempty"`
 	Priority       *int     `json:"priority,omitempty"`
@@ -423,6 +425,8 @@ func (h *v2Handler) reposFromRPMMD(cfg *solverConfig, rpmRepos []rpmmd.RepoConfi
 			SSLCACert:      rr.SSLCACert,
 			SSLClientKey:   rr.SSLClientKey,
 			SSLClientCert:  rr.SSLClientCert,
+			Username:       rr.Username,
+			Password:       rr.Password,
 			ModuleHotfixes: common.ClonePtr(rr.ModuleHotfixes),
 			Priority:       common.ClonePtr(rr.Priority),
 		}
@@ -547,6 +551,12 @@ func (h *v2Handler) toRPMMDPackage(pkg v2Package, repo *rpmmd.RepoConfig) (rpmmd
 		rpmPkg.Secrets = "org.osbuild.mtls"
 	}
 
+	// Set basic auth secrets if Username is set.
+	// The Solver will override secrets to 'org.osbuild.rhsm' if the repo needs RHSM secrets.
+	if repo.Username != "" {
+		rpmPkg.Secrets = "org.osbuild.basic_auth"
+	}
+
 	return rpmPkg, nil
 }
 
@@ -606,6 +616,8 @@ func (h *v2Handler) toRPMMDRepoConfig(repo v2Repository) rpmmd.RepoConfig {
 		SSLClientKey:   repo.SSLClientKey,
 		SSLClientCert:  repo.SSLClientCert,
 		RHSM:           repo.RHSM,
+		Username:       repo.Username,
+		Password:       repo.Password,
 	}
 }
 
