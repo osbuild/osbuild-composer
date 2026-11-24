@@ -73,7 +73,7 @@ function determine_composer_repo_sha {
     fi
 
     local TRIES=0
-    while [[ $TRIES -lt 10 ]]; do
+    while [[ $TRIES -lt 30 ]]; do
         if ! check_s3_repo_for_composer_sha "$DESIRED_COMMIT_SHA"; then
             greenprint "Found working composer RPM repository for commit ${DESIRED_COMMIT_SHA}"
             echo "$DESIRED_COMMIT_SHA"
