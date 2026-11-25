@@ -136,7 +136,13 @@ EOF
 
 greenprint "Installing osbuild-composer-worker from commit ${DESIRED_COMMIT_SHA}"
 setup_repo osbuild-composer "$DESIRED_COMMIT_SHA" 20
-sudo dnf install -y osbuild-composer-worker podman composer-cli
+# podman should already be on the host from deploy; do not reinstall it here;
+# a lone podman upgrade (e.g. 5.x -> 6.x) without matching netavark 2.x breaks
+# "podman run" with: netavark:...invalid type: sequence, expected a map
+sudo dnf install -y osbuild-composer-worker composer-cli
+if ! command -v podman &>/dev/null; then
+    sudo dnf install -y podman netavark aardvark-dns
+fi
 
 # verify the right worker is installed just to be sure
 #
