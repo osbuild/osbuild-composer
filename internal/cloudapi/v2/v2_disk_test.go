@@ -29,6 +29,22 @@ func TestComposeDiskCustomizationsValidation(t *testing.T) {
 }
 `,
 
+		"simple-with-sector-size": `
+{
+	"disk": {
+		"minsize": "100 GiB",
+		"sector_size": 4096,
+		"partitions": [
+			{
+				"mountpoint": "/home",
+				"fs_type": "ext4",
+				"minsize": "2 GiB"
+			}
+		]
+	}
+}
+`,
+
 		"simple-with-type": `
 {
 	"disk": {
@@ -297,6 +313,23 @@ func TestComposeDiskCustomizationsErrors(t *testing.T) {
 }
 `,
 			expResponse: validationErrorResp,
+		},
+		"invalid-sector-size": {
+			customizations: `
+{
+	"disk": {
+		"sector_size": 3000,
+		"partitions": [
+			{
+				"mountpoint": "/",
+				"minsize": "2 GiB",
+				"fs_type": "ext4"
+			}
+		]
+	}
+}
+`,
+			expResponse: invalidCustomizationResp,
 		},
 		"no-fs-type": {
 			customizations: `
