@@ -23,6 +23,7 @@ if [ "$ARCH" != "x86_64" ] || [ "$ID" != rhel ] || ! sudo subscription-manager s
 fi
 
 # Provision the software under test.
+
 /usr/libexec/osbuild-composer-test/provision.sh
 
 # Check if there is a working repository for the given commit SHA on the S3 AWS bucket.
@@ -184,12 +185,10 @@ EOF
 # The host entitlement doesn't get picked up by composer
 # see https://github.com/osbuild/osbuild-composer/issues/1845
 sudo "${CONTAINER_RUNTIME}" run  \
-     --name=${COMPOSER_CONTAINER_NAME} \
      -d \
      -v /etc/osbuild-composer:/etc/osbuild-composer:Z \
      -v /etc/rhsm:/etc/rhsm:Z \
      -v /etc/pki/entitlement:/etc/pki/entitlement:Z \
-     -v "$REPOS/repositories":/usr/share/osbuild-composer/repositories:Z \
      -p 8700:8700 \
      -p 8080:8080 \
      "quay.io/osbuild/osbuild-composer-ubi-pr:${CI_COMMIT_SHA}" \

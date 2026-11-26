@@ -181,6 +181,15 @@ EOF
         set -x
     fi
 
+    echo 'admin' | sudo tee -a /etc/osbuild-worker/ba-user
+    echo 'foobar' | sudo tee -a /etc/osbuild-worker/ba-pass
+    sudo tee -a /etc/osbuild-worker/osbuild-worker.toml > /dev/null <<EOF
+[repository_basic_auth]
+baseurl = "http://localhost"
+basic_auth_username_path = "/etc/osbuild-worker/ba-user"
+basic_auth_password_path = "/etc/osbuild-worker/ba-pass"
+EOF
+
 else # AUTH_METHOD_NONE
     # Repositories in /etc/osbuild-composer/repositories are used only in the
     # on-premise scenario (Weldr).
