@@ -1680,6 +1680,15 @@ components:
           type: array
           items:
             type: string
+        kickstart:
+          $ref: '#/components/schemas/Kickstart'
+    Kickstart:
+      type: object
+      required:
+        - contents
+      properties:
+        contents:
+          type: string
     ImportKeys:
       type: object
       properties:
