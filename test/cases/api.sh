@@ -86,7 +86,6 @@ export CONTAINER_IMAGE_CLOUD_TOOLS="quay.io/osbuild/cloud-tools:latest-202509011
 #
 # Provision the software under test.
 #
-
 /usr/libexec/osbuild-composer-test/provision.sh
 
 #
@@ -212,7 +211,23 @@ mkdir -p "$DUMMYRPMDIR/repo"
 cp "$DUMMYRPMDIR"/rpmbuild/RPMS/noarch/*rpm "$DUMMYRPMDIR/repo"
 pushd "$DUMMYRPMDIR/repo"
 createrepo .
-sudo python3 -m http.server "$PAYLOAD_REPO_PORT" &
+REPO_SERVER=$(mktemp)
+cat <<EOF > "$REPO_SERVER"
+import base64
+import http.server
+auth = "Basic " + base64.b64encode(b"admin:foobar").decode()
+class AuthHandler(http.server.SimpleHTTPRequestHandler):
+    def do_GET(self):
+        if self.headers.get("Authorization") == auth:
+            return super().do_GET()
+        self.send_response(401)
+        self.send_header("WWW-Authenticate", 'Basic realm="Restricted"')
+        self.end_headers()
+
+http.server.ThreadingHTTPServer(("", 9999), AuthHandler).serve_forever()
+EOF
+sudo python3 "$REPO_SERVER" &
+
 KILL_PIDS+=("$!")
 popd
 popd
