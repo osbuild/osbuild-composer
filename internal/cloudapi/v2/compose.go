@@ -458,6 +458,11 @@ func (rbp *Blueprint) GetCustomizationsFromBlueprintRequest() (*blueprint.Custom
 		if installer.SudoNopasswd != nil {
 			c.Installer.SudoNopasswd = *installer.SudoNopasswd
 		}
+		if installer.Kickstart != nil {
+			c.Installer.Kickstart = &blueprint.Kickstart{
+				Contents: installer.Kickstart.Contents,
+			}
+		}
 	}
 
 	if rpm := rbpc.Rpm; rpm != nil && rpm.ImportKeys != nil {
@@ -1033,6 +1038,11 @@ func (request *ComposeRequest) GetBlueprintFromCustomizations() (blueprint.Bluep
 		}
 		if request.Customizations.Installer.SudoNopasswd != nil {
 			installer.SudoNopasswd = *request.Customizations.Installer.SudoNopasswd
+		}
+		if request.Customizations.Installer.Kickstart != nil {
+			installer.Kickstart = &blueprint.Kickstart{
+				Contents: request.Customizations.Installer.Kickstart.Contents,
+			}
 		}
 		bp.Customizations.Installer = installer
 	}

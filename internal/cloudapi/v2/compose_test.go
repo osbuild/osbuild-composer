@@ -155,6 +155,9 @@ func GetTestBlueprint() blueprint.Blueprint {
 		Installer: &blueprint.InstallerCustomization{
 			Unattended:   true,
 			SudoNopasswd: []string{`%wheel`},
+			Kickstart: &blueprint.Kickstart{
+				Contents: "kickstart content",
+			},
 		},
 		RPM: &blueprint.RPMCustomization{
 			ImportKeys: &blueprint.RPMImportKeys{
@@ -443,6 +446,9 @@ func TestGetBlueprintFromCustomizations(t *testing.T) {
 		Installer: &Installer{
 			Unattended:   common.ToPtr(true),
 			SudoNopasswd: &[]string{`%wheel`},
+			Kickstart: &Kickstart{
+				Contents: "kickstart content",
+			},
 		},
 		Rpm: &RPMCustomization{
 			ImportKeys: &ImportKeys{
@@ -708,6 +714,9 @@ func TestGetBlueprintFromCompose(t *testing.T) {
 			Installer: &Installer{
 				Unattended:   common.ToPtr(true),
 				SudoNopasswd: &[]string{`%wheel`},
+				Kickstart: &Kickstart{
+					Contents: "kickstart content",
+				},
 			},
 			Rpm: &RPMCustomization{
 				ImportKeys: &ImportKeys{
